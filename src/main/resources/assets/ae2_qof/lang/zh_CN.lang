@@ -1,39 +1,67 @@
-gui.ae2_qof.add=娣诲姞
-gui.ae2_qof.reload=鍒锋柊
-gui.ae2_qof.delete=鍒犻櫎
-gui.ae2_qof.mapping_label=鏄犲皠鍚嶇О
-ae2_qof.select_provider=閫夋嫨渚涘簲鍣?ae2_qof.info.mappings_reloaded=鏄犲皠宸查噸鏂拌浇鍏ャ€?ae2_qof.info.enter_keyword=璇峰厛杈撳叆鎼滅储鍏抽敭瀛椼€?ae2_qof.info.enter_mapping_name=璇疯緭鍏ユ槧灏勫悕绉般€?ae2_qof.info.mapping_added=宸叉坊鍔犳槧灏勶細%s -> %s
-ae2_qof.info.mapping_add_failed=鏄犲皠娣诲姞澶辫触銆?ae2_qof.info.enter_mapping_delete=璇疯緭鍏ヨ鍒犻櫎鐨勬槧灏勫悕绉般€?ae2_qof.info.mapping_deleted=宸插垹闄?%d 鏉″尮閰嶇殑鏄犲皠銆?ae2_qof.info.mapping_not_found=鏈壘鍒板搴旂殑鏄犲皠銆?ae2_qof.error.read_mappings=鏃犳硶璇诲彇閰嶆柟鏄犲皠锛?s
-ae2_qof.error.create_template=鏃犳硶鍒涘缓榛樿鏄犲皠妯℃澘锛?s
-ae2_qof.error.write_mappings=鏃犳硶鍐欏叆閰嶆柟鏄犲皠锛?s
-tile.wireless_transceiver.name=AE 鏃犵嚎鏀跺彂鍣?item.wireless_connect.name=鏃犵嚎杩炴帴鍣?gui.ae2_qof.wireless.mode=妯″紡
-gui.ae2_qof.wireless.mode.sender=鍙戦€佺
-gui.ae2_qof.wireless.mode.receiver=鎺ユ敹绔?gui.ae2_qof.wireless.freq=棰戦亾
-gui.ae2_qof.wireless.status=鐘舵€?gui.ae2_qof.wireless.status.connected=宸茶繛鎺?gui.ae2_qof.wireless.status.disconnected=鏈繛鎺?gui.ae2_qof.wireless.status.paused=宸叉殏鍋?gui.ae2_qof.wireless.none=鏃?gui.ae2_qof.wireless.channels=棰戦亾:
-gui.ae2_qof.wireless.remove=绉婚櫎
-gui.ae2_qof.wireless.highlight=楂樹寒
-gui.ae2_qof.wireless.disconnect=鏂紑
-gui.ae2_qof.wireless.confirm_delete=纭鍒犻櫎锛?gui.ae2_qof.wireless.channels_used=棰戦亾鏁?gui.yes=鏄?gui.no=鍚?ae2_qof.wireless.bind.success=宸茬粦瀹氶閬? %s
-ae2_qof.wireless.connect.success=宸茶繛鎺ラ閬? %s
-ae2_qof.wireless.bind.cleared=宸叉竻闄ょ粦瀹?ae2_qof.wireless.bind.fail.not_sender=鐩爣涓嶆槸鍙戦€佺
-ae2_qof.wireless.bind.fail.no_channel=鍙戦€佺鏈缃閬?ae2_qof.wireless.bind.fail.no_binding=杩炴帴鍣ㄦ湭缁戝畾棰戦亾锛岃鍏圫hift+鍙抽敭鐐瑰嚮鍙戦€佺
-ae2_qof.wireless.bind.fail.cross_dimension=缁戝畾鍣ㄤ笉鏀寔璺ㄧ淮搴︼紝璇蜂娇鐢ㄤ袱涓敹鍙戝櫒
-ae2_qof.wireless.bind.fail.no_grid=鐩爣鏂瑰潡鏃犲彲鐢ㄧ殑AE缃戠粶鑺傜偣
-ae2_qof.wireless.bind.fail.invalid_target=鐩爣鏂瑰潡涓嶆敮鎸佹棤绾胯繛鎺?ae2_qof.wireless.hint.bind_first=璇峰厛Shift+鍙抽敭鐐瑰嚮涓€涓彂閫佺鏉ョ粦瀹氶閬?ae2_qof.wireless.hint.use_device=宸茬粦瀹氶閬?%s锛岃鍙抽敭鐐瑰嚮ME璁惧鏉ュ缓绔嬫棤绾胯繛鎺?ae2_qof.wireless.blocklink.success=宸茬粦瀹氭棤绾胯繛鎺ュ埌棰戦亾: %s
-ae2_qof.wireless.unlink.success=宸茶В闄ゆ棤绾胯繛鎺? %s
-tile.wireless_transceiver.tooltip.1=鍙抽敭鎵撳紑GUI璁剧疆棰戦亾鍜屾ā寮?tile.wireless_transceiver.tooltip.2=鍙戦€佺锛氭敞鍐岄閬撳埌鏃犵嚎缃戠粶
-tile.wireless_transceiver.tooltip.3=鎺ユ敹绔細杩炴帴鍒板悓棰戦亾鐨勫彂閫佺
-tile.wireless_transceiver.tooltip.4=鏀寔璺ㄧ淮搴﹁繛鎺ワ紙闇€涓や釜鏀跺彂鍣級
-tile.wireless_transceiver.tooltip.5=鍙娇鐢ㄦ棤绾胯繛鎺ュ櫒缁戝畾浠绘剰ME璁惧
-item.wireless_connect.tooltip.1=鏃犵嚎杩炴帴宸ュ叿
-item.wireless_connect.tooltip.2=Shift+鍙抽敭鏀跺彂鍣細缁戝畾棰戦亾鍒拌繛鎺ュ櫒
-item.wireless_connect.tooltip.3=鍙抽敭ME璁惧锛氬缓绔嬫棤绾胯繛鎺?item.wireless_connect.tooltip.4=鍙抽敭宸茬粦瀹氳澶囷細瑙ｉ櫎杩炴帴
-item.wireless_connect.tooltip.5=Shift+鍙抽敭绌烘皵锛氭竻闄ょ粦瀹?item.wireless_connect.tooltip.bound=宸茬粦瀹氶閬? %s
-gui.ae2qol.replan=閲嶆柊瑙勫垝
-item.infinity_water_lava_cell.name=鏃犻檺姘翠笌宀╂祮纾佺洏
-item.infinity_water_lava_cell.tooltip=鏀惧叆ME椹卞姩鍣ㄥ悗鎻愪緵鏃犻檺鐨勬按涓庡博娴嗭紙姣忕2^52-1锛?
-tile.ae2qol.ex_io_port.name=寮哄寲 IO 绔彛
-ae2qol.extract.success=宸蹭粠 ME 缃戠粶鍙栧嚭 %s
-ae2qol.extract.no_items=ME 缃戠粶涓湭鎵惧埌 %s
-ae2qol.extract.not_craftable=鏃犳硶鍚堟垚 %s
-ae2qol.extract.inventory_full=鑳屽寘宸叉弧锛屾棤娉曞彇鍑?%s
+gui.ae2_qof.add=添加
+gui.ae2_qof.reload=刷新
+gui.ae2_qof.delete=删除
+gui.ae2_qof.mapping_label=映射名称
+ae2_qof.select_provider=选择供应器
+ae2_qof.info.mappings_reloaded=映射已重新载入。
+ae2_qof.info.enter_keyword=请先输入搜索关键字。
+ae2_qof.info.enter_mapping_name=请输入映射名称。
+ae2_qof.info.mapping_added=已添加映射：%s -> %s
+ae2_qof.info.mapping_add_failed=映射添加失败。
+ae2_qof.info.enter_mapping_delete=请输入要删除的映射名称。
+ae2_qof.info.mapping_deleted=已删除 %d 条匹配的映射。
+ae2_qof.info.mapping_not_found=未找到对应的映射。
+ae2_qof.error.read_mappings=无法读取配方映射：%s
+ae2_qof.error.create_template=无法创建默认映射模板：%s
+ae2_qof.error.write_mappings=无法写入配方映射：%s
+tile.wireless_transceiver.name=AE 无线收发器
+item.wireless_connect.name=无线连接器
+gui.ae2_qof.wireless.mode=模式
+gui.ae2_qof.wireless.mode.sender=发送端
+gui.ae2_qof.wireless.mode.receiver=接收端
+gui.ae2_qof.wireless.freq=频道
+gui.ae2_qof.wireless.status=状态
+gui.ae2_qof.wireless.status.connected=已连接
+gui.ae2_qof.wireless.status.disconnected=未连接
+gui.ae2_qof.wireless.status.paused=已暂停
+gui.ae2_qof.wireless.none=无
+gui.ae2_qof.wireless.channels=频道:
+gui.ae2_qof.wireless.remove=移除
+gui.ae2_qof.wireless.highlight=高亮
+gui.ae2_qof.wireless.disconnect=断开
+gui.ae2_qof.wireless.confirm_delete=确认删除？
+gui.ae2_qof.wireless.channels_used=频道数
+gui.yes=是
+gui.no=否
+ae2_qof.wireless.bind.success=已绑定频道: %s
+ae2_qof.wireless.connect.success=已连接频道: %s
+ae2_qof.wireless.bind.cleared=已清除绑定
+ae2_qof.wireless.bind.fail.not_sender=目标不是发送端
+ae2_qof.wireless.bind.fail.no_channel=发送端未设置频道
+ae2_qof.wireless.bind.fail.no_binding=连接器未绑定频道，请先Shift+右键点击发送端
+ae2_qof.wireless.bind.fail.cross_dimension=绑定器不支持跨维度，请使用两个收发器
+ae2_qof.wireless.bind.fail.no_grid=目标方块无可用的AE网络节点
+ae2_qof.wireless.bind.fail.invalid_target=目标方块不支持无线连接
+ae2_qof.wireless.hint.bind_first=请先Shift+右键点击一个发送端来绑定频道
+ae2_qof.wireless.hint.use_device=已绑定频道 %s，请右键点击ME设备来建立无线连接
+ae2_qof.wireless.blocklink.success=已绑定无线连接到频道: %s
+ae2_qof.wireless.unlink.success=已解除无线连接: %s
+tile.wireless_transceiver.tooltip.1=右键打开GUI设置频道和模式
+tile.wireless_transceiver.tooltip.2=发送端：注册频道到无线网络
+tile.wireless_transceiver.tooltip.3=接收端：连接到同频道的发送端
+tile.wireless_transceiver.tooltip.4=支持跨维度连接（需两个收发器）
+tile.wireless_transceiver.tooltip.5=可使用无线连接器绑定任意ME设备
+item.wireless_connect.tooltip.1=无线连接工具
+item.wireless_connect.tooltip.2=Shift+右键收发器：绑定频道到连接器
+item.wireless_connect.tooltip.3=右键ME设备：建立无线连接
+item.wireless_connect.tooltip.4=右键已绑定设备：解除连接
+item.wireless_connect.tooltip.5=Shift+右键空气：清除绑定
+item.wireless_connect.tooltip.bound=已绑定频道: %s
+gui.ae2qol.replan=重新规划
+item.infinity_water_lava_cell.name=无限水与岩浆磁盘
+item.infinity_water_lava_cell.tooltip=放入ME驱动器后提供无限的水与岩浆（每种2^52-1）
+tile.ae2qol.ex_io_port.name=强化 IO 端口
+ae2qol.extract.success=已从 ME 网络取出 %s
+ae2qol.extract.no_items=ME 网络中未找到 %s
+ae2qol.extract.not_craftable=无法合成 %s
+ae2qol.extract.inventory_full=背包已满，无法取出 %s
