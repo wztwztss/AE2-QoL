@@ -14,8 +14,9 @@ import net.minecraftforge.fluids.FluidStack;
 /**
  * 客户端缓存 AE2 网络库存数据（物品 + 流体）。
  * 由 GuiMEMonitorable.postUpdate 的 Mixin 写入，NEI 渲染时读取。
- * 流体以 FluidStack 的 NBT（"FluidStack" compound）承载在 ItemFluidPacket 等物品上，按键为流体名。
- * 注意：流体判定必须按物品类名（ae2fc ItemFluidPacket）+ NBT，绝不能按 itemDamage 查 FluidRegistry——
+ * 流体以三种方式承载：ae2fc ItemFluidPacket（NBT "FluidStack" 复合标签）、GT Display_Fluid
+ * （ItemFluidDisplay，damage 即流体注册 ID）、流体方块物品（fluidItemMap 反查）。
+ * 注意：流体判定必须按物品类名限定，绝不能对所有物品按 itemDamage 查 FluidRegistry——
  * FluidRegistry 的 ID 是注册序（水=0、岩浆=1…），damage 命中即误判，导致随机物品显示流体量。
  */
 public final class NetworkInventoryCache {
@@ -118,9 +119,12 @@ public final class NetworkInventoryCache {
     /**
      * 判定某物品是否携带可识别的流体：
      * 1) ae2fc 纯流体 packet：按物品类名识别（不 import ae2fc，保持模组独立），流体从 NBT "FluidStack" 复合标签读取；
-     * 2) 已注册的流体方块物品（fluidItemMap 反查）；
+     * 2) GT Display_Fluid（ItemFluidDisplay）：按物品类名识别，damage 值即流体注册 ID——这是 GT 在 NEI 配方中
+     *    展示流体的唯一表示，只对该物品按 damage 查 FluidRegistry，绝不作用到任意物品上（3.1.2 误修导致 GT 流体
+     *    显示丢失，3.3.3 恢复）；
+     * 3) 已注册的流体方块物品（fluidItemMap 反查）。
      * 其余一律返回 null，按普通物品处理。
-     * 切勿用 itemDamage 查 FluidRegistry——damage 是物品元数据，与流体注册 ID 无对应关系。
+     * 切勿对所有物品按 itemDamage 查 FluidRegistry——damage 是物品元数据，与流体注册 ID 无对应关系。
      */
     private static Fluid getFluid(ItemStack stack) {
         if (stack == null) {
@@ -130,8 +134,22 @@ public final class NetworkInventoryCache {
             FluidStack packetFluid = readPacketFluid(stack);
             return packetFluid != null ? packetFluid.getFluid() : null;
         }
+        if (isGtFluidDisplay(stack)) {
+            return FluidRegistry.getFluid(stack.getItemDamage());
+        }
         String fluidName = fluidItemMap.get(key(stack));
         return fluidName != null ? FluidRegistry.getFluid(fluidName) : null;
+    }
+
+    private static boolean isGtFluidDisplay(ItemStack stack) {
+        try {
+            String className = stack.getItem()
+                .getClass()
+                .getName();
+            return className.equals("gregtech.common.items.ItemFluidDisplay");
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 
     private static boolean isAe2fcFluidPacket(ItemStack stack) {

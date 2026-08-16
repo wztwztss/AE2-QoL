@@ -41,4 +41,7 @@ dependencies {
     implementation("com.github.GTNewHorizons:AE2FluidCraft-Rework:1.5.88-gtnh:dev")
     implementation(project.files("libs/NotEnoughEnergistics-1.7.14.jar"))
     compileOnly(project.files("libs/sciencenotleisure-0.2.7-pre1-dev-290.jar"))
+    compileOnly(project.files("libs/gregtech-5.09.52.594.jar"))
+    compileOnly(project.files("libs/modularui2-2.3.73-1.7.10.jar"))
+    compileOnly(project.files("libs/programmablehatches-0.2.0p8.jar"))
 }

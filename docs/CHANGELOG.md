@@ -4,6 +4,14 @@
 
 ---
 
+### 3.3.3 — 样板输入机（GT/SNL/PH）智能倍增（2026-08-16，作者 wztwzt）
+- **新增**：GT 样板输入总成/输入总线 (ME)（meta 2714/2715）GUI 左下角新增「智能倍增」循环箭头按钮，勾选后合成 CPU 对挂在其上的样板一次性推送多轮材料，机器连做多轮不再逐轮补料
+- **新增**：ProgrammableHatches 双口输入仓（`PatternDualInputHatch`）同样支持，ModularUI 内 `(7,62)` 位置新增开关按钮
+- **新增**：GTNotLeisure 超级二合一 ME 接口（SuperDualInterface）方块与线缆面板两形态 GUI 左侧新增「智能倍增」复选框
+- **改进**：开关状态随机器 NBT 存档持久化，默认关闭；普通输入总线/补货输入仓/样板提供仓不受影响
+- **修复**：包含 3.1.2 流体误判修复的回归验证（GT 流体容器 NEI 角标/提示按 mB 显示）
+- **兼容**：GT、ProgrammableHatches、ModularUI2、GTNotLeisure 均为可选依赖，缺失时对应注入静默跳过
+
 ### 3.3.2 — 修复与 GTNotLeisure 的同步字段冲突崩溃（2026-08-16，作者 wztwzt）
 - **修复**：修复与 GTNotLeisure 一起加载时的崩溃——本模组智能倍增在 ME 接口容器注入的同步字段 id 与 GTNL 超级接口容器的同步字段 id 相同（19），AE2 同步系统检测到重复 id 后直接崩溃。现改为 30，与 AE2 与 GTNL 均不冲突
 - **新增**：GTNotLeisure 超级接口（Super Interface / 样板总成）GUI 左侧新增「智能倍增」复选框，勾选后同样支持合成 CPU 一次性多轮推送

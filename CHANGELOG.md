@@ -1,6 +1,6 @@
 # AE2 QoL - Changelog
 
-> 当前版本：3.3.2 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
+> 当前版本：3.3.3 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
 
 ---
 
@@ -25,7 +25,7 @@
 | 石英切割刀 Shift+右键复制方块/AE部件/GT机器名 | `client/event/KnifeNameCopyHandler` | ✅ 可用 |
 | F 键将鼠标下物品名填入终端搜索框 | `client/event/KeyInputHandler` | ✅ 可用 |
 | 叠加层开关 `/apu-overlay` + GUI OV 按钮 | `client/CommandOverlay` + `client/OverlayConfig` | ✅ 可用 |
-| **智能倍增（Smart Doubling）**：ME 接口复选框 + CPU 一次性推送 N 轮（上限 64 可配） | `api/ISmartDoublingMedium` + `mixin/ae/MixinDualityInterface` + `mixin/ae/MixinCraftingCPUCluster` + `mixin/ae/MixinGuiInterface`/`MixinContainerInterface` | ✅ 可用（3.2.0；3.3.2 兼容 GTNotLeisure 超级接口） |
+| **智能倍增（Smart Doubling）**：ME 接口/样板输入机复选框 + CPU 一次性推送 N 轮（上限 64 可配） | `api/ISmartDoublingMedium` + `mixin/ae/MixinDualityInterface` + `mixin/ae/MixinCraftingCPUCluster` + `mixin/ae/MixinGuiInterface`/`MixinContainerInterface` + `mixin/gt/MixinMTEHatchInputBus` | ✅ 可用（3.2.0；3.3.2 兼容 GTNotLeisure 超级接口；3.3.3 支持 GT/SNL/PH 样板输入机） |
 | 统一配置文件 `settings.json` + 热加载 + OP 命令 `/ae2qof reload` | `Config` + `CommandAe2QoL` | ✅ 可用（3.3.0） |
 | **F：样板 + 接口双页面二合一终端** | —（3.0.0 调研后搁置） | 🕐 规划中，待重新发布（详见文末） |
 
@@ -61,12 +61,15 @@
 | 22 | 配置文件热加载：`settings.json` 语法错误 / 值越界 / 编辑中途被读取 → 解析失败或字段不一致 | `Config.reload` + `ensureFresh`（3.3.0 引入） | 🟢 | ⏳ 已兜底（解析失败保留上次生效值；数值越界 clamp 回默认；mtime 校验限流 1 秒一次） |
 | 23 | mixin 冲突：`@Overwrite executeCrafting` 整体替换方法体 → 其它模组（ProgrammableHatches `MixinInstantComplete`）对同一方法的 `@Inject/INVOKE` 找不到注入点崩溃 | `mixin/ae/MixinCraftingCPUCluster.java`（3.2.0 引入 @Overwrite） | 🔴 | ✅ 已修复（3.3.1 改 `@Inject(HEAD)+cancel`，保留原方法字节码结构；仅在存在智能倍增任务时接管 tick） |
 | 24 | `@GuiSync(19)` 与 GTNotLeisure `ContainerSuperInterface` 的 `@GuiSync(19) sidelessMode` 同 id 冲突 → `DataSynchronization.collectFields` 遍历类层级发现重复 key 抛 `IllegalStateException` 崩溃 | `mixin/ae/MixinContainerInterface.java`（3.2.0 引入 @GuiSync(19)） | 🔴 | ✅ 已修复（3.3.2 改 `@GuiSync(30)`，高于 AE2 链内 18 且不与 GTNL 19 冲突） |
+| 25 | `MixinMTEHatchInputBus` 应用于 GT 输入仓全族（普通总线/补货输入仓/样板输入仓），注入的 NBT 保存/加载方法对全类族生效 | `mixin/gt/MixinMTEHatchInputBus.java`（3.3.3 引入） | 🟢 | ⏳ 已兜底（`instanceof ICraftingProvider` 门控，仅样板输入机启用；开关默认关闭；NBT key `ae2qolSmartDoubling` 带独立前缀不冲突） |
+| 26 | GT/PH/GTNL ModularUI 与 GUI 按钮注入点偏移：GTNL 超级二合一接口方块/面板两形态布局相差 18px；PH 面板布局不同 → 按钮不显示或遮住翻页 | `mixin/gt/MixinMTEHatchCraftingInputMEGui.java` + `mixin/gt/MixinDualInputHatchUI.java` + `mixin/ae/MixinGuiSuperDualInterface.java`（3.3.3 引入） | 🟢 | ⏳ 已兜底（GTNL 按 host 形态动态计算偏移；注入点经 javap 逐一验证存在；配置级 `required=false`，注入失败仅警告不崩溃） |
 
 # 回滚指南
 
 | 目标版本 | 使用 jar | 说明 |
 |---|---|---|
-| 3.3.2（当前） | `build/libs/AE2-QoL-3.3.2.jar` | 修复与 GTNotLeisure 的同步 id 冲突崩溃 + 超级接口智能倍增 |
+| 3.3.3（当前） | `build/libs/AE2-QoL-3.3.3.jar` | 样板输入机（GT/SNL/PH）智能倍增 + 流体显示回归验证 |
+| 3.3.2 | `build/libs/AE2-QoL-3.3.2.jar` | 修复与 GTNotLeisure 的同步 id 冲突崩溃 + 超级接口智能倍增 |
 | 3.3.1 | `build/libs/AE2-QoL-3.3.1.jar` | 修复与 ProgrammableHatches 的 mixin 冲突崩溃 |
 | 3.3.0 | `build/libs/AE2-QoL-3.3.0.jar` | 统一配置文件 + 热加载 + `/ae2qof` OP 命令 |
 | 3.2.0 | `build/libs/AE2-QoL-3.2.0.jar` | 智能倍增（Smart Doubling） |
@@ -79,6 +82,32 @@
 
 回退步骤：删除测试包 `mods/AE2-QoL-<旧版本>.jar`，复制目标 jar 为 `mods/AE2-QoL-<目标版本>.jar`，重启客户端。
 依赖固定：AE2 `rv3-beta-977-GTNH`、ae2fc `1.5.88-gtnh`、NEI `2.8.19-GTNH`。
+
+---
+
+## 3.3.3 - 样板输入机（GT/SNL/PH）智能倍增 + 流体显示修复
+
+> 作者：wztwzt | 更新时间：2026-08-16
+
+### 新功能
+
+- **GT 样板输入机（ME）智能倍增**：`MTEHatchCraftingInputME`（GT 机器「样板输入总成 (ME)」meta 2714 / 「样板输入总线 (ME)」meta 2715）GUI 左下角新增循环箭头开关按钮（ModularUI），勾选后合成 CPU 对挂在其上的样板**一次性推送多轮材料**，机器连做多轮不再逐轮补料
+  - 通过 `mixin/gt/MixinMTEHatchInputBus` 为 GT 输入仓全族（`MTEHatchInputBus` 及子类）注入 `ISmartDoublingMedium` 实现，仅 `instanceof ICraftingProvider`（即样板输入机）生效，普通输入总线、补货输入仓、`MTEHatchPatternProvider` 不受影响
+  - 开关状态写入机器 NBT（键 `ae2qolSmartDoubling`）随存档持久化，默认关闭
+  - 每轮最大轮数沿用配置 `smart_doubling_max_rounds`（默认 64），CPU 侧剩余轮数与原料可取性会进一步裁剪
+- **ProgrammableHatches 双口输入仓智能倍增**：`PatternDualInputHatch`（meta 22130 / 22179）同样支持，ModularUI 内 `(7, 62)` 位置新增开关按钮（`populateUI` TAIL 注入）
+- **GTNotLeisure 超级二合一 ME 接口（SuperDualInterface）智能倍增**：方块与线缆面板两形态 GUI 左侧新增复选框（方块 `guiTop+134`、面板 `guiTop+116`，位于 fuzzyMode 与翻页之间，按 host 形态自适应偏移）；物品侧 `DualityInterface` 已由 `MixinDualityInterface` 覆盖、容器同步字段已具备，无需重复注入
+- **流体显示回归验证**：3.1.2 流体误判修复（`isGtFluidDisplay` 类名识别）并入本次发布，回归确认 GT 流体容器在 NEI 角标与悬浮提示中仍按 `mB` 显示流体量
+- **兼容性**：GT（`MTEHatchInputBus`/`MTEHatchCraftingInputME` 等）、ProgrammableHatches、ModularUI2、GTNotLeisure 均为可选依赖（compileOnly + mixin 配置级 `required=false`），任一缺失时对应注入静默跳过，不影响其余功能
+
+### 修改文件
+
+- `mixin/gt/MixinMTEHatchInputBus.java` —— **新增**：GT 输入仓族 `ISmartDoublingMedium` 实现 + NBT 持久化（`saveNBTData`/`loadNBTData` TAIL 注入，`remap=false`）
+- `mixin/gt/MixinMTEHatchCraftingInputMEGui.java` —— **新增**：GT 样板输入机 ModularUI 左下角开关按钮（构造器 TAIL 捕获机器引用，规避继承字段 @Shadow 风险；`createBottomLeftCornerFlow` RETURN 注入）
+- `mixin/gt/MixinDualInputHatchUI.java` —— **新增**：PH 双口输入仓 `DualInputHatch.populateUI` RETURN 注入开关按钮
+- `mixin/ae/MixinGuiSuperDualInterface.java` —— **新增**：GTNL 超级二合一接口 GUI 智能倍增复选框（addButtons/`func_146284_a`/drawFG 三处 TAIL，`remap=false`，按 host 形态计算偏移）
+- `mixins.ae2_qof.json` —— 公共列表新增 `gt.MixinMTEHatchInputBus`；客户端列表新增 `ae.MixinGuiSuperDualInterface`、`gt.MixinMTEHatchCraftingInputMEGui`、`gt.MixinDualInputHatchUI`
+- `dependencies.gradle` —— 新增 `compileOnly`：GT（`libs/gregtech-5.09.52.594.jar`）、ModularUI2（`libs/modularui2-2.3.73-1.7.10.jar`）、ProgrammableHatches（`libs/programmablehatches-0.2.0p8.jar`）
 
 ---
 
