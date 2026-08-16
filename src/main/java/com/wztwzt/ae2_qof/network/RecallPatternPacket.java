@@ -18,10 +18,10 @@ import appeng.api.networking.IMachineSet;
 import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.networking.security.IActionHost;
 import appeng.api.networking.security.ISecurityGrid;
+import appeng.api.util.IInterfaceViewable;
 import appeng.container.implementations.ContainerPatternTerm;
 import appeng.container.implementations.ContainerPatternTermEx;
 import appeng.container.slot.SlotRestrictedInput;
-import appeng.helpers.IInterfaceHost;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
@@ -106,16 +106,24 @@ public class RecallPatternPacket implements IMessage {
                 }
 
                 System.out.println("[APU] Recall: searching providerId=" + message.providerId);
-                IInventory provider = findProviderInventory(grid, message.providerId);
-                if (provider == null) {
+                ICraftingProvider machine = findProvider(grid, message.providerId);
+                if (machine == null) {
                     System.out.println("[APU] Recall: provider not found for id=" + message.providerId);
                     return;
                 }
-                System.out.println("[APU] Recall: provider found, size=" + provider.getSizeInventory());
+                IInventory provider = resolvePatternInventory(machine);
+                if (provider == null) {
+                    System.out.println("[APU] Recall: provider has no inventory");
+                    return;
+                }
+                // 只扫描专属样板槽区域（IInterfaceViewable 提供 rows*rowSize 上界），
+                // 避免把 GT/PH 机器原料缓存误当作样板库存
+                int scanLimit = resolvePatternLimit(machine, provider);
+                System.out.println("[APU] Recall: provider found, size=" + provider.getSizeInventory() + ", scanLimit=" + scanLimit);
 
                 // 从后往前搜索，找到最后一个编码样板
                 ItemStack recalled = null;
-                for (int i = provider.getSizeInventory() - 1; i >= 0; i--) {
+                for (int i = scanLimit - 1; i >= 0; i--) {
                     ItemStack slot = provider.getStackInSlot(i);
                     if (slot != null && slot.stackSize > 0 && isEncodedPattern(slot)) {
                         recalled = slot.copy();
@@ -142,7 +150,7 @@ public class RecallPatternPacket implements IMessage {
             }
         }
 
-        private IInventory findProviderInventory(IGrid grid, long providerId) {
+        private ICraftingProvider findProvider(IGrid grid, long providerId) {
             for (Class<? extends IGridHost> hostClass : grid.getMachinesClasses()) {
                 if (!ICraftingProvider.class.isAssignableFrom(hostClass)) {
                     continue;
@@ -159,21 +167,30 @@ public class RecallPatternPacket implements IMessage {
                     if (!(machine instanceof ICraftingProvider)) {
                         continue;
                     }
-                    if (System.identityHashCode(machine) != providerId) {
-                        continue;
-                    }
-                    if (machine instanceof IInterfaceHost) {
-                        IInventory patterns = ((IInterfaceHost) machine).getPatterns();
-                        if (patterns != null) {
-                            return patterns;
-                        }
-                    }
-                    if (machine instanceof IInventory) {
-                        return (IInventory) machine;
+                    if (System.identityHashCode(machine) == providerId) {
+                        return (ICraftingProvider) machine;
                     }
                 }
             }
             return null;
+        }
+
+        private IInventory resolvePatternInventory(ICraftingProvider provider) {
+            // 与 UploadPatternPacket 一致：优先取专属样板槽库存（IInterfaceViewable.getPatterns()）
+            if (provider instanceof IInterfaceViewable viewable) {
+                return viewable.getPatterns();
+            }
+            if (provider instanceof IInventory inv) {
+                return inv;
+            }
+            return null;
+        }
+
+        private int resolvePatternLimit(ICraftingProvider provider, IInventory patterns) {
+            if (provider instanceof IInterfaceViewable viewable) {
+                return Math.min(viewable.rows() * viewable.rowSize(), patterns.getSizeInventory());
+            }
+            return patterns.getSizeInventory();
         }
 
         private boolean isEncodedPattern(ItemStack stack) {

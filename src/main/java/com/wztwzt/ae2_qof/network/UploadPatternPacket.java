@@ -18,6 +18,7 @@ import appeng.api.networking.IMachineSet;
 import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.networking.security.IActionHost;
 import appeng.api.networking.security.ISecurityGrid;
+import appeng.api.util.IInterfaceViewable;
 import appeng.container.implementations.ContainerPatternTerm;
 import appeng.container.implementations.ContainerPatternTermEx;
 import appeng.container.slot.SlotRestrictedInput;
@@ -193,12 +194,16 @@ public class UploadPatternPacket implements IMessage {
         }
 
         private boolean insertPatternIntoProvider(ICraftingProvider provider, ItemStack pattern) {
-            if (provider instanceof IInterfaceHost host) {
-                IInventory patterns = host.getPatterns();
+            // 优先使用提供器自带的专属样板槽库存：
+            // AE2 接口(IInterfaceHost)、GT 样板输入机(MTEHatchCraftingInputME)、ProgrammableHatches
+            // 双口输入仓(PatternDualInputHatch) 都实现 appeng.api.util.IInterfaceViewable，
+            // getPatterns() 返回的是样板专用库存；否则回落通用 IInventory 会把样板误投进原料缓存槽。
+            if (provider instanceof IInterfaceViewable viewable) {
+                IInventory patterns = viewable.getPatterns();
                 if (patterns != null) {
-                    int availableSlots = host.rows() * host.rowSize();
+                    int availableSlots = viewable.rows() * viewable.rowSize();
                     if (insertIntoPatternInventory(patterns, pattern, availableSlots)) {
-                        host.saveChanges();
+                        markProviderDirty(provider);
                         return true;
                     }
                 }
@@ -210,6 +215,15 @@ public class UploadPatternPacket implements IMessage {
             }
 
             return false;
+        }
+
+        private void markProviderDirty(ICraftingProvider provider) {
+            if (provider instanceof IInterfaceHost host) {
+                host.saveChanges();
+            } else if (provider instanceof gregtech.api.metatileentity.MetaTileEntity mte) {
+                // GT/PH 机器：setInventorySlotContents 已触发网络同步，这里仅标记 tile 以便 NBT 持久化
+                mte.markDirty();
+            }
         }
 
         private boolean insertIntoPatternInventory(IInventory patterns, ItemStack pattern, int maxSlots) {

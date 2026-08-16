@@ -1,6 +1,6 @@
 # AE2 QoL - Changelog
 
-> 当前版本：3.3.3 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
+> 当前版本：3.3.4 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
 
 ---
 
@@ -63,12 +63,14 @@
 | 24 | `@GuiSync(19)` 与 GTNotLeisure `ContainerSuperInterface` 的 `@GuiSync(19) sidelessMode` 同 id 冲突 → `DataSynchronization.collectFields` 遍历类层级发现重复 key 抛 `IllegalStateException` 崩溃 | `mixin/ae/MixinContainerInterface.java`（3.2.0 引入 @GuiSync(19)） | 🔴 | ✅ 已修复（3.3.2 改 `@GuiSync(30)`，高于 AE2 链内 18 且不与 GTNL 19 冲突） |
 | 25 | `MixinMTEHatchInputBus` 应用于 GT 输入仓全族（普通总线/补货输入仓/样板输入仓），注入的 NBT 保存/加载方法对全类族生效 | `mixin/gt/MixinMTEHatchInputBus.java`（3.3.3 引入） | 🟢 | ⏳ 已兜底（`instanceof ICraftingProvider` 门控，仅样板输入机启用；开关默认关闭；NBT key `ae2qolSmartDoubling` 带独立前缀不冲突） |
 | 26 | GT/PH/GTNL ModularUI 与 GUI 按钮注入点偏移：GTNL 超级二合一接口方块/面板两形态布局相差 18px；PH 面板布局不同 → 按钮不显示或遮住翻页 | `mixin/gt/MixinMTEHatchCraftingInputMEGui.java` + `mixin/gt/MixinDualInputHatchUI.java` + `mixin/ae/MixinGuiSuperDualInterface.java`（3.3.3 引入） | 🟢 | ⏳ 已兜底（GTNL 按 host 形态动态计算偏移；注入点经 javap 逐一验证存在；配置级 `required=false`，注入失败仅警告不崩溃） |
+| 27 | 自动上传把 GT/PH 样板输入机当普通 `IInventory`（GT `IMetaTileEntity extends ISidedInventory`），通用库存排样板槽之前 → 编码样板误投进原料缓存槽，多方块收不到配方 | `network/UploadPatternPacket.java` + `network/RequestProvidersListPacket.java` + `network/RecallPatternPacket.java`（3.3.4 修复） | 🟢 | ✅ 已修复（3.3.4 改用 `IInterfaceViewable.getPatterns()` 优先定位专属样板槽；GT/PH 写入后 `markDirty` 持久化，`setInventorySlotContents` 触发机器内部重建与网络同步） |
 
 # 回滚指南
 
 | 目标版本 | 使用 jar | 说明 |
 |---|---|---|
-| 3.3.3（当前） | `build/libs/AE2-QoL-3.3.3.jar` | 样板输入机（GT/SNL/PH）智能倍增 + 流体显示回归验证 |
+| 3.3.4（当前） | `build/libs/AE2-QoL-3.3.4.jar` | 修复自动上传把样板误投进 GT/PH 样板输入机原料缓存槽 |
+| 3.3.3 | `build/libs/AE2-QoL-3.3.3.jar` | 样板输入机（GT/SNL/PH）智能倍增 + 流体显示回归验证 |
 | 3.3.2 | `build/libs/AE2-QoL-3.3.2.jar` | 修复与 GTNotLeisure 的同步 id 冲突崩溃 + 超级接口智能倍增 |
 | 3.3.1 | `build/libs/AE2-QoL-3.3.1.jar` | 修复与 ProgrammableHatches 的 mixin 冲突崩溃 |
 | 3.3.0 | `build/libs/AE2-QoL-3.3.0.jar` | 统一配置文件 + 热加载 + `/ae2qof` OP 命令 |
@@ -82,6 +84,28 @@
 
 回退步骤：删除测试包 `mods/AE2-QoL-<旧版本>.jar`，复制目标 jar 为 `mods/AE2-QoL-<目标版本>.jar`，重启客户端。
 依赖固定：AE2 `rv3-beta-977-GTNH`、ae2fc `1.5.88-gtnh`、NEI `2.8.19-GTNH`。
+
+---
+
+## 3.3.4 - 修复自动上传把样板误投进 GT/PH 样板输入机原料缓存槽
+
+> 作者：wztwzt | 更新时间：2026-08-16
+
+### 修复
+
+- **根因**：AE2 Auto Pattern Upload 自动上传/撤回把「样板输入机」当普通 `IInventory` 处理。GT 机器与 PH 机器（GT `MTEHatchCraftingInputME` meta 2714/2715、PH `PatternDualInputHatch` meta 22130/22179）经 GT `IMetaTileEntity extends ISidedInventory` 实现了 `IInventory`，而其通用库存（原料缓冲槽）排号在专属样板槽之前——自动上传遍历空槽时把编码样板投进了原料缓存槽，多方块收不到配方；样板槽只能手动打开 GUI 放置
+- **修复方案**：上传 / 空位统计 / 撤回三处逻辑统一改为**优先使用提供器自带的专属样板槽库存** `appeng.api.util.IInterfaceViewable.getPatterns()`：
+  - AE2 接口（`IInterfaceHost extends IInterfaceViewable`）、GT 样板输入机、PH 双口输入仓均实现 `IInterfaceViewable`，其 `getPatterns()`/`rows()`/`rowSize()` 指向样板专用区域
+  - `UploadPatternPacket.insertPatternIntoProvider`：先走 `IInterfaceViewable` 分支写入样板槽；GT/PH 写入后调 `MetaTileEntity.markDirty()` 标记存档（`setInventorySlotContents` 已自动触发机器内部样板重建与 ME 网络同步）；AE2 接口仍走 `IInterfaceHost.saveChanges()`，行为不变
+  - `RequestProvidersListPacket.estimateEmptySlots`：只统计样板槽空位，避免把原料缓存槽误报为可用空位导致自动选择投递目标
+  - `RecallPatternPacket`：撤回限定在 `rows()*rowSize()` 样板区域，不再把缓存槽里的原料误当样板
+- **影响范围**：GT「样板输入总成/总线 (ME)」（2714/2715）、ProgrammableHatches「编程样板输入总线」（22130）、「编程样板输入总成 MK.II」（22179）；AE2 ME 接口 / 超级接口原有自动上传行为不变
+
+### 修改文件
+
+- `network/UploadPatternPacket.java` —— `insertPatternIntoProvider` 改用 `IInterfaceViewable` 优先 + 新增 `markProviderDirty`（`IInterfaceHost`→`saveChanges`；`MetaTileEntity`→`markDirty`）
+- `network/RequestProvidersListPacket.java` —— `estimateEmptySlots` 改用 `IInterfaceViewable` 统计样板空位
+- `network/RecallPatternPacket.java` —— `findProviderInventory` 重构为 `findProvider` + `resolvePatternInventory`/`resolvePatternLimit`，撤回限定在样板槽区域
 
 ---
 

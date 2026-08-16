@@ -15,10 +15,10 @@ import appeng.api.networking.IGridNode;
 import appeng.api.networking.IMachineSet;
 import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.networking.security.IActionHost;
+import appeng.api.util.IInterfaceViewable;
 import appeng.container.implementations.ContainerPatternTerm;
 import appeng.container.implementations.ContainerPatternTermEx;
 import appeng.helpers.ICustomNameObject;
-import appeng.helpers.IInterfaceHost;
 import appeng.parts.AEBasePart;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -294,10 +294,12 @@ public class RequestProvidersListPacket implements IMessage {
         }
 
         private int estimateEmptySlots(ICraftingProvider provider) {
-            if (provider instanceof IInterfaceHost host) {
-                IInventory patterns = host.getPatterns();
+            // 与 UploadPatternPacket 一致：优先统计专属样板槽（IInterfaceViewable.getPatterns()），
+            // 避免把 GT/PH 机器 IInventory 原料缓存槽误计为样板空位
+            if (provider instanceof IInterfaceViewable viewable) {
+                IInventory patterns = viewable.getPatterns();
                 if (patterns != null) {
-                    int availableSlots = host.rows() * host.rowSize();
+                    int availableSlots = viewable.rows() * viewable.rowSize();
                     int limit = Math.min(availableSlots, patterns.getSizeInventory());
                     int empty = 0;
                     for (int i = 0; i < limit; i++) {
