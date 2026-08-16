@@ -81,5 +81,11 @@ public final class ModNetwork {
             Side.CLIENT);
 
         CHANNEL.registerMessage(ReplanPacket.Handler.class, ReplanPacket.class, discriminator++, Side.SERVER);
+
+        CHANNEL.registerMessage(
+            SmartDoublingTogglePacket.Handler.class,
+            SmartDoublingTogglePacket.class,
+            discriminator++,
+            Side.SERVER);
     }
 }

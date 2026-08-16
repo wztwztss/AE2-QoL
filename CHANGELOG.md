@@ -1,6 +1,6 @@
 # AE2 QoL - Changelog
 
-> 当前版本：3.1.2 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
+> 当前版本：3.2.0 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
 
 ---
 
@@ -25,6 +25,7 @@
 | 石英切割刀 Shift+右键复制方块/AE部件/GT机器名 | `client/event/KnifeNameCopyHandler` | ✅ 可用 |
 | F 键将鼠标下物品名填入终端搜索框 | `client/event/KeyInputHandler` | ✅ 可用 |
 | 叠加层开关 `/apu-overlay` + GUI OV 按钮 | `client/CommandOverlay` + `client/OverlayConfig` | ✅ 可用 |
+| **智能倍增（Smart Doubling）**：ME 接口复选框 + CPU 一次性推送 N 轮（上限 64 可配） | `api/ISmartDoublingMedium` + `mixin/ae/MixinDualityInterface` + `mixin/ae/MixinCraftingCPUCluster` + `mixin/ae/MixinGuiInterface`/`MixinContainerInterface` | ✅ 可用（3.2.0） |
 | **F：样板 + 接口双页面二合一终端** | —（3.0.0 调研后搁置） | 🕐 规划中，待重新发布（详见文末） |
 
 # 已知风险登记表
@@ -54,12 +55,15 @@
 | 17 | Replan 点击 `lists.clear()` 误清 map 导致 NPE 崩溃 | `util/Replanner.java` | 🔴 | ✅ 已修复（3.0.1） |
 | 18 | 合成通知/IO 端口 mixin 在 `server` 列表单机不注入 → 功能无效 | `mixins.ae2_auto_pattern_upload.json` | 🟡 | ✅ 已修复（3.0.1 移入公共列表） |
 | 19 | 流体误判：`FluidRegistry.getFluid(itemDamage)` 把 damage 命中流体 ID 的物品（damage=0→水）误判为流体 → 随机物品显示 mB 量 | `client/NetworkInventoryCache.java`（3.0.2 引入，3.1.2 修复） | 🟡 | ✅ 已修复（3.1.2 改类名+NBT 识别，见 3.1.2 条目） |
+| 20 | 智能倍增 `@Overwrite executeCrafting` 全量重写 CPU 主循环：移植偏差导致合成丢物/倍率错账；N× 放大 long 溢出 | `mixin/ae/MixinCraftingCPUCluster.java` | 🔴 | ⏳ 已兜底（3.2.0 逐行移植 + N==1 走原版路径；提取失败自动回退 N==1；反射失败安全降级） |
+| 21 | 智能倍增 `pushPattern` 只返回成功布尔，无实际轮数反馈：部分提取/缓冲时 CPU 与接口记账不一致 → 超产或漏产 | `mixin/ae/MixinCraftingCPUCluster.java` + `MixinDualityInterface.getMaxMultiplier` | 🟡 | ⏳ 已兜底（3.2.0 提取前 SIMULATE 全槽探测 N，任一面/输入放不下则整体回退 N==1） |
 
 # 回滚指南
 
 | 目标版本 | 使用 jar | 说明 |
 |---|---|---|
-| 3.1.2（当前） | `build/libs/AE2-QoL-3.1.2.jar` | 修复流体误判显示 bug |
+| 3.2.0（当前） | `build/libs/AE2-QoL-3.2.0.jar` | 智能倍增（Smart Doubling） |
+| 3.1.2 | `build/libs/AE2-QoL-3.1.2.jar` | 修复流体误判显示 bug |
 | 3.1.1 | `build/libs/AE2-QoL-3.1.1.jar` | 修复汉化乱码 |
 | 3.1.0 | `build/libs/AE2-QoL-3.1.0.jar` | 全量安全加固（14 项风险修复） |
 | 3.0.2 | `build/libs/AE2-QoL-3.0.2.jar` | 含流体直接显示 + 刷屏日志清理 |
@@ -68,6 +72,43 @@
 
 回退步骤：删除测试包 `mods/AE2-QoL-<旧版本>.jar`，复制目标 jar 为 `mods/AE2-QoL-<目标版本>.jar`，重启客户端。
 依赖固定：AE2 `rv3-beta-977-GTNH`、ae2fc `1.5.88-gtnh`、NEI `2.8.19-GTNH`。
+
+---
+
+## 3.2.0 - 智能倍增（Smart Doubling）
+
+> 作者：wztwzt | 更新时间：2026-08-16
+
+### 新功能
+
+- **智能倍增**：ME 接口（DualityInterface）新增「智能倍增」复选框。勾选后，CPU 对挂在接口上的样板一次性推送 **N 轮**材料，GT 机器连做 N 次，补料不再逐轮等待。
+- N 计算：`N = min(剩余轮数, 配置上限 smartDoublingMaxRounds（默认 64）, 各输入槽可提取量/单轮量)`；接口侧 `getMaxMultiplier` 按面×输入用 `simulateAddStack` 二分探测机器最大可吞轮数，任一面/输入放不下则整体回退 N==1。
+- 安全边界（N==1 与逐轮原版路径逐行等价）：
+  - craftable 输入、假合成（fake crafting）、流体接口、阻塞模式（BLOCKING）、接口有滞留未推送物品、机器无任何面有 adaptor、GT `ICraftingMachine.acceptsPlans()` 机器 → 一律 N==1
+  - 提取前全槽 SIMULATE 探测 N，提取中任一模槽部分提取 → 回退单轮路径（防丢物/超产）
+- 能耗按 N×sum 记账；`value -= N`、`waitingFor` 累加 N× 产出、`executedTasks += N`；每轮 `consumeCraftSession()`，产出分批推送（接口次 tick 缓冲）。
+- 私有内部类（`TaskProgress`/`finalOutput`/`CraftingCpuDiagnostics`）与 CPU 私有字段经**缓存反射**访问；反射失败自动降级为不启用智能倍增，不影响原版合成。
+
+### 新增文件
+
+- `api/ISmartDoublingMedium.java` — 介质接口（`isSmartDoublingEnabled`/`setSmartDoubling`/`getMaxMultiplier`）
+- `api/ISmartDoublingContainer.java` — 容器接口（同步界面开关）
+- `mixin/ae/MixinDualityInterface.java` — 实现介质接口；`writeToNBT`/`readFromNBT` 注入持久化开关；`getMaxMultiplier` 全安全边界探测
+- `mixin/ae/MixinContainerInterface.java` — `@GuiSync(19)` 布尔开关 + 构造初始化
+- `mixin/ae/MixinGuiInterface.java` — 复刻 `patternOptimization` 的 `GuiToggleButton` 复选框（icon 178/194）
+- `network/SmartDoublingTogglePacket.java` — C2S 切换，归队 `ServerThreadUtil.addScheduledTask`
+
+### 修改文件
+
+- `mixin/ae/MixinCraftingCPUCluster.java` — `@Overwrite executeCrafting`（逐行移植 + 智能倍增 N 分支）
+- `network/ModNetwork.java` — 注册 `SmartDoublingTogglePacket`
+- `Config.java` — `smartDoublingMaxRounds = 64`（范围 1..4096）
+- `lang/zh_CN.lang` + `lang/en_US.lang` — `gui.ae2_qof.smart_doubling` / `.hint`
+- `mixins.ae2_qof.json` — 注册 `MixinDualityInterface`/`MixinContainerInterface`（公共列表）、`MixinGuiInterface`（client 列表）
+
+### 使用说明
+
+在 ME 接口的 GUI 左侧点击「智能倍增」复选框（图标为循环箭头），将该接口设为支持一次推送多轮的介质；机器只吃 N 轮时接口会缓冲补推。全局上限在 `config/ae2_qof.cfg` 的 `smartDoublingMaxRounds` 调整。
 
 ---
 
@@ -1444,6 +1485,8 @@ Forge 1.7.10 调用链：`onItemUseFirst → onBlockActivated → onItemUse`，`
 
 ### 1. 智能倍增（Smart Doubling）调研与实现计划
 
+> 状态：✅ **已实现（3.2.0，2026-08-16）**，下文为开发前的调研与计划存档。
+
 #### 需求
 
 ME 接口的样板在 GT 机器上每次只推 1 轮材料，材料补料慢、不便于自动化。目标：让接口**一次性推送 N 轮**材料，机器连做 N 次（N 可配置，默认上限 64）。
@@ -1501,5 +1544,5 @@ ME 接口的样板在 GT 机器上每次只推 1 轮材料，材料补料慢、�
 
 > 供下一次会话直接接手，按序执行。
 
-1. **智能倍增（3.2.0）**：按上文「实现计划」新建 7 个文件 + 改 `Config.java`/lang/mixins json，`@Overwrite executeCrafting` 逐行移植并回归
+1. **智能倍增（3.2.0）**：✅ **已完成并发布**（`@Overwrite executeCrafting` 逐行移植 + 接口复选框 + 配置上限）。回归要点见风险表 #20/#21 与 3.2.0 条目
 2. **F 模块**：维持搁置；若重开，先与使用者对齐上文 4 个确认点

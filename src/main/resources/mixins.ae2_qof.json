@@ -7,7 +7,9 @@
   "target": "@env(DEFAULT)",
   "mixins": [
     "ae.MixinCraftingCPUCluster",
-    "ae.MixinTileIOPort"
+    "ae.MixinTileIOPort",
+    "ae.MixinDualityInterface",
+    "ae.MixinContainerInterface"
   ],
   "client": [
     "nei.MixinRecipeHandlerRef",
@@ -17,6 +19,7 @@
     "nei.MixinNEIRecipeWidget",
     "nei.MixinPanelWidgetClick",
     "ae.MixinGuiCraftConfirm",
+    "ae.MixinGuiInterface",
     "GuiContainerAccessor"
   ],
   "injectors": {

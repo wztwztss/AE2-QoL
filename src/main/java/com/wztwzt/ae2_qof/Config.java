@@ -10,6 +10,8 @@ public class Config {
 
     public static int exIOPortTransferContentsRate = 1024;
 
+    public static int smartDoublingMaxRounds = 64;
+
     public static void synchronizeConfiguration(File configFile) {
         Configuration configuration = new Configuration(configFile);
 
@@ -21,6 +23,13 @@ public class Config {
             1,
             Integer.MAX_VALUE,
             "Multiplier for the item transfer rate of the Enhanced IO Port. Base transfer quantity = 256.");
+        smartDoublingMaxRounds = configuration.getInt(
+            "smartDoublingMaxRounds",
+            Configuration.CATEGORY_GENERAL,
+            smartDoublingMaxRounds,
+            1,
+            4096,
+            "Maximum multiplier for Smart Doubling: how many pattern rounds an ME Interface with the Smart Doubling toggle enabled may receive at once from the crafting CPU.");
 
         if (configuration.hasChanged()) {
             configuration.save();
