@@ -4,23 +4,30 @@
 
 **为 GTNH 打造的 AE2 效率增强模组**：把 NEI 配方一键推送进 AE 样板终端、从 NEI 面板直接提取 AE 网络物品、查看每个物品在 AE 网络中的存量与可合成状态、无线传输 AE 网络等。
 
-适配：GTNH 2.9.0-beta-1（Minecraft 1.7.10）| 当前版本：**3.2.0** | 作者：wztwzt
+适配：GTNH 2.9.0-beta-1（Minecraft 1.7.10）| 当前版本：**3.3.0** | 作者：wztwzt
 
 ---
 
 ## 📦 安装
 
-1. 将 `AE2-QoL-3.2.0.jar` 放入 `.minecraft/mods/`
+1. 将 `AE2-QoL-3.3.0.jar` 放入 `.minecraft/mods/`
 2. 确认已安装依赖：AE2（`rv3-beta-977-GTNH`）、ae2fc（`1.5.88-gtnh`）、NotEnoughItems（NEI）
 3. 启动游戏。配置会生成在 `config/` 下
 
-**配置文件**（均在 `config/ae2_qof/` 目录）：
+**配置文件**（均在 `config/ae2_qof/` 目录，**支持热加载**：直接编辑保存后约 1 秒自动生效，无需重启）：
 
 | 文件 | 作用 |
 |---|---|
-| `settings.json` | NEI 叠加层开关（`nei_overlay_enabled`，也可用 `/apu-overlay` 命令或样板终端内 OV 按钮切换） |
+| `settings.json` | 统一配置文件：`io_port_rate`（强化 IO 端口传输倍率，默认 1024）、`smart_doubling_max_rounds`（智能倍增最大轮数，默认 64，范围 1~4096）、`nei_overlay_enabled`（NEI 叠加层开关） |
 | `remembered_providers.json` | 记住的"配方 → 供应器"映射，用于自动上传（可自行编辑，格式为配方名→供应器名） |
 | `recipe_names.json` | 用户配方映射表（内置 GTNH 47+ 条默认映射，随 jar 打包） |
+
+**OP 管理命令**：
+
+- `/ae2qof reload` —— 立即热重载 `settings.json` + `recipe_names.json`（改完文件不想等 1 秒就用它）
+- `/ae2qof status` —— 查看当前生效的配置值
+- 服务端需 **OP 权限**（等级 2）；单机 / 局域网主机默认即 OP，可直接使用
+- `/apu-overlay` 仍用于快速切换 NEI 叠加层显示（无需 OP）
 
 ---
 
@@ -59,7 +66,7 @@ AE 合成 CPU 完成一次合成任务时，屏幕右上角弹出**合成完成�
 
 ### 7. 强化 IO 端口（`ex_io_port`）
 
-外观与 AE2 原生一致，但**每次传输的物品数量放大 1024 倍**（可在 `config/<mod>.cfg` 中 `exIOPortTransferContentsRate` 调整）。合成配方：`[铁][玻璃][铁] / [红石][钻石][红石] / [铁][玻璃][铁]`。
+外观与 AE2 原生一致，但**每次传输的物品数量放大 1024 倍**（可在 `config/ae2_qof/settings.json` 中 `io_port_rate` 调整，改完自动热加载）。合成配方：`[铁][玻璃][铁] / [红石][钻石][红石] / [铁][玻璃][铁]`。
 
 ### 8. 无限水与岩浆磁盘
 
@@ -84,7 +91,16 @@ AE 合成 CPU 完成一次合成任务时，屏幕右上角弹出**合成完成�
 
 - 命令：`/apu-overlay`（切换 NEI 配方页/书签叠加层显示）
 - 或样板终端 GUI 中的 **OV** 按钮
-- 持久化到 `config/ae2_qof/settings.json`
+- 持久化到 `config/ae2_qof/settings.json`（`nei_overlay_enabled`）
+
+### 13. 智能倍增（Smart Doubling）
+
+**ME 接口**的 GUI 左侧新增**智能倍增**复选框（循环箭头按钮）。勾选后，合成 CPU 会把挂在接口上的样板**一次性推送 N 轮**材料，机器连做 N 轮再回来补料，补料不再逐轮等待，大幅加快 GT 流水线。
+
+- **N 的确定**：`N = min(剩余合成轮数, smart_doubling_max_rounds, 各输入槽可提取量/单轮量, 机器每面可吞轮数)`；接口侧用模拟探测机器最大可吞轮数
+- **默认上限**：64 轮（`config/ae2_qof/settings.json` 的 `smart_doubling_max_rounds`，范围 1~4096，改完自动热加载）
+- **安全边界**（自动退回逐轮推送，与原版行为完全一致）：假合成、流体接口、阻塞/智能阻塞模式、接口有滞留未推送物品、GT 直接吃样板的机器（`acceptsPlans`）、机器任一面/任一输入放不下、材料不足
+- **能耗**：按 N 倍一次扣取；产出与剩余轮数按 N 记账，不会超产或丢物
 
 ---
 

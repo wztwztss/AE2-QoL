@@ -4,9 +4,16 @@
 
 ---
 
+### 3.3.0 — 统一配置文件 + 热加载 + OP 管理命令（2026-08-16，作者 wztwzt）
+- **新增**：统一配置文件 `config/ae2_qof/settings.json`，可直接修改 `io_port_rate`（强化 IO 端口倍率，默认 1024）和 `smart_doubling_max_rounds`（智能倍增最大轮数，默认 64）
+- **新增**：**热加载**——直接编辑 `settings.json` 保存后约 1 秒自动生效，单机与服务端均可，无需重启
+- **新增**：OP 命令 `/ae2qof reload`（立即重载配置 + 配方映射）、`/ae2qof status`（查看当前配置值）。服务端需 OP（等级 2），单机/局域网主机默认可直接用
+- **改进**：旧 `config/ae2_qof.cfg` 中的数值配置首次启动自动迁移到 `settings.json` 并清理旧文件
+- **配方映射** `recipe_names.json` 也可通过 `/ae2qof reload` 热重载
+
 ### 3.2.0 — 智能倍增 Smart Doubling（2026-08-16，作者 wztwzt）
 - **新增**：ME 接口新增「智能倍增」复选框（接口 GUI 左侧循环箭头按钮）。勾选后，合成 CPU 对挂在接口上的样板**一次性推送多轮**材料，机器连做多轮，补料不再逐轮等待，大幅加快 GT 流水线
-- **新增**：新增配置项 `smartDoublingMaxRounds`（`config/ae2_qof.cfg`，默认 64），控制单次最多推送轮数
+- **新增**：新增配置项 `smartDoublingMaxRounds`（默认 64），控制单次最多推送轮数（3.3.0 起位于 `config/ae2_qof/settings.json` 的 `smart_doubling_max_rounds`，可热加载）
 - **安全**：假合成 / 流体接口 / 阻塞模式 / 机器接不下（经模拟探测）等场景自动退回单轮推送，与原版行为一致，不会超产或丢物
 - **适用**：标准 GT 机器（非 `acceptsPlans`）、AE2 合成器（流体接口暂不支持多轮）
 

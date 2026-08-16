@@ -18,6 +18,7 @@ public abstract class MixinTileIOPort {
     @ModifyVariable(method = "transferContents", at = @At(value = "HEAD"), remap = false, ordinal = 0, argsOnly = true)
     private long ae2qol$transferContents(long itemsToMove) {
         if ((Object) this instanceof TileExIOPort) {
+            Config.ensureFresh();
             int rate = Config.exIOPortTransferContentsRate;
             if (rate > 1 && itemsToMove > 0) {
                 // 溢出保护：极端配置（Integer.MAX_VALUE）下乘积不超过 long 上界

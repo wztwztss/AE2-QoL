@@ -1,6 +1,6 @@
 # AE2 QoL - Changelog
 
-> 当前版本：3.2.0 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
+> 当前版本：3.3.0 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
 
 ---
 
@@ -26,6 +26,7 @@
 | F 键将鼠标下物品名填入终端搜索框 | `client/event/KeyInputHandler` | ✅ 可用 |
 | 叠加层开关 `/apu-overlay` + GUI OV 按钮 | `client/CommandOverlay` + `client/OverlayConfig` | ✅ 可用 |
 | **智能倍增（Smart Doubling）**：ME 接口复选框 + CPU 一次性推送 N 轮（上限 64 可配） | `api/ISmartDoublingMedium` + `mixin/ae/MixinDualityInterface` + `mixin/ae/MixinCraftingCPUCluster` + `mixin/ae/MixinGuiInterface`/`MixinContainerInterface` | ✅ 可用（3.2.0） |
+| 统一配置文件 `settings.json` + 热加载 + OP 命令 `/ae2qof reload` | `Config` + `CommandAe2QoL` | ✅ 可用（3.3.0） |
 | **F：样板 + 接口双页面二合一终端** | —（3.0.0 调研后搁置） | 🕐 规划中，待重新发布（详见文末） |
 
 # 已知风险登记表
@@ -57,12 +58,14 @@
 | 19 | 流体误判：`FluidRegistry.getFluid(itemDamage)` 把 damage 命中流体 ID 的物品（damage=0→水）误判为流体 → 随机物品显示 mB 量 | `client/NetworkInventoryCache.java`（3.0.2 引入，3.1.2 修复） | 🟡 | ✅ 已修复（3.1.2 改类名+NBT 识别，见 3.1.2 条目） |
 | 20 | 智能倍增 `@Overwrite executeCrafting` 全量重写 CPU 主循环：移植偏差导致合成丢物/倍率错账；N× 放大 long 溢出 | `mixin/ae/MixinCraftingCPUCluster.java` | 🔴 | ⏳ 已兜底（3.2.0 逐行移植 + N==1 走原版路径；提取失败自动回退 N==1；反射失败安全降级） |
 | 21 | 智能倍增 `pushPattern` 只返回成功布尔，无实际轮数反馈：部分提取/缓冲时 CPU 与接口记账不一致 → 超产或漏产 | `mixin/ae/MixinCraftingCPUCluster.java` + `MixinDualityInterface.getMaxMultiplier` | 🟡 | ⏳ 已兜底（3.2.0 提取前 SIMULATE 全槽探测 N，任一面/输入放不下则整体回退 N==1） |
+| 22 | 配置文件热加载：`settings.json` 语法错误 / 值越界 / 编辑中途被读取 → 解析失败或字段不一致 | `Config.reload` + `ensureFresh`（3.3.0 引入） | 🟢 | ⏳ 已兜底（解析失败保留上次生效值；数值越界 clamp 回默认；mtime 校验限流 1 秒一次） |
 
 # 回滚指南
 
 | 目标版本 | 使用 jar | 说明 |
 |---|---|---|
-| 3.2.0（当前） | `build/libs/AE2-QoL-3.2.0.jar` | 智能倍增（Smart Doubling） |
+| 3.3.0（当前） | `build/libs/AE2-QoL-3.3.0.jar` | 统一配置文件 + 热加载 + `/ae2qof` OP 命令 |
+| 3.2.0 | `build/libs/AE2-QoL-3.2.0.jar` | 智能倍增（Smart Doubling） |
 | 3.1.2 | `build/libs/AE2-QoL-3.1.2.jar` | 修复流体误判显示 bug |
 | 3.1.1 | `build/libs/AE2-QoL-3.1.1.jar` | 修复汉化乱码 |
 | 3.1.0 | `build/libs/AE2-QoL-3.1.0.jar` | 全量安全加固（14 项风险修复） |
@@ -72,6 +75,39 @@
 
 回退步骤：删除测试包 `mods/AE2-QoL-<旧版本>.jar`，复制目标 jar 为 `mods/AE2-QoL-<目标版本>.jar`，重启客户端。
 依赖固定：AE2 `rv3-beta-977-GTNH`、ae2fc `1.5.88-gtnh`、NEI `2.8.19-GTNH`。
+
+---
+
+## 3.3.0 - 统一配置文件 + 热加载 + OP 管理命令
+
+> 作者：wztwzt | 更新时间：2026-08-16
+
+### 新功能
+
+- **统一配置文件** `config/ae2_qof/settings.json`（取代旧 `config/ae2_qof.cfg`）：
+  - `io_port_rate`：强化 IO 端口传输倍率（默认 1024，1..Integer.MAX_VALUE）
+  - `smart_doubling_max_rounds`：智能倍增最大轮数（默认 64，1..4096）
+  - `nei_overlay_enabled`：NEI 叠加层开关（吸收原 `OverlayConfig` 同路径文件，避免覆盖其它字段）
+- **热加载**：直接编辑 `settings.json` 保存后约 1 秒自动生效（单机/服务端均可，无需重启）。`MixinTileIOPort`、`MixinDualityInterface.getMaxMultiplier`、`MixinCraftingCPUCluster.executeCrafting` 均接入 mtime 限流校验。
+- **OP 命令** `CommandAe2QoL`（`/ae2qof`，权限等级 2）：
+  - `/ae2qof reload` —— 立即热重载 `settings.json` + `recipe_names.json`（含 `RecipeMapNameConfig` 缓存刷新）
+  - `/ae2qof status` —— 显示当前生效配置值
+  - 服务端需 OP；单机/局域网主机默认 OP 可直接使用；`/apu-overlay` 维持无需 OP
+- **旧配置迁移**：首次启动检测到旧 `config/ae2_qof.cfg` 时自动把 `exIOPortTransferContentsRate`/`smartDoublingMaxRounds` 数值迁入 `settings.json`，并删除旧 cfg，玩家已有调优值不丢失。
+
+### 修改文件
+
+- `Config.java` —— 重写为 `settings.json` 管理器（JSON 读写 + 数值 clamp + mtime 热加载 + 旧 cfg 迁移）
+- `client/OverlayConfig.java` —— 改为委托 `Config`（统一文件、保留其它字段）
+- `mixin/ae/MixinTileIOPort.java` —— 传输前 `Config.ensureFresh()`
+- `mixin/ae/MixinDualityInterface.java` / `mixin/ae/MixinCraftingCPUCluster.java` —— 计算前 `Config.ensureFresh()`
+- `CommonProxy.java` —— `serverStarting` 注册 `CommandAe2QoL`
+- `README.md` / `README.en.md` —— 新增智能倍增功能说明 + 配置文件/命令文档
+- `gradle.properties` / `mcmod.info` —— 版本 3.3.0
+
+### 新增文件
+
+- `CommandAe2QoL.java` —— `/ae2qof` 管理命令
 
 ---
 
@@ -1546,3 +1582,4 @@ ME 接口的样板在 GT 机器上每次只推 1 轮材料，材料补料慢、�
 
 1. **智能倍增（3.2.0）**：✅ **已完成并发布**（`@Overwrite executeCrafting` 逐行移植 + 接口复选框 + 配置上限）。回归要点见风险表 #20/#21 与 3.2.0 条目
 2. **F 模块**：维持搁置；若重开，先与使用者对齐上文 4 个确认点
+3. **统一配置 + 热加载（3.3.0）**：✅ **已完成并发布**（`config/ae2_qof/settings.json` + `/ae2qof` OP 命令 + 旧 cfg 迁移）。改动面见 3.3.0 条目与风险表 #22

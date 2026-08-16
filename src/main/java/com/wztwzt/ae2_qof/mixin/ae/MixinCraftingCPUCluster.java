@@ -466,9 +466,11 @@ public abstract class MixinCraftingCPUCluster {
      * @author wztwzt
      * @reason 为 ME 接口实现智能倍增（Smart Doubling）必须修改该私有主循环。
      */
-    @Overwrite(remap = false)
+@Overwrite(remap = false)
     private void executeCrafting(IEnergyGrid eg, CraftingGridCache cc) {
         if (this.suspended) return;
+
+        Config.ensureFresh();
 
         final Map<ICraftingPatternDetails, Object> workableTasks = ae2qol$getWorkableTasks();
         final Map<ICraftingPatternDetails, Object> tasks = ae2qol$getTasks();

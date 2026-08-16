@@ -71,6 +71,7 @@ public abstract class MixinDualityInterface implements ISmartDoublingMedium {
 
     @Override
     public int getMaxMultiplier(ICraftingPatternDetails details) {
+        Config.ensureFresh();
         if (!isSmartDoublingEnabled()) {
             return 1;
         }
