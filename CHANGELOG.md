@@ -1,6 +1,6 @@
 # AE2 QoL - Changelog
 
-> 当前版本：3.3.1 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
+> 当前版本：3.3.2 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
 
 ---
 
@@ -25,7 +25,7 @@
 | 石英切割刀 Shift+右键复制方块/AE部件/GT机器名 | `client/event/KnifeNameCopyHandler` | ✅ 可用 |
 | F 键将鼠标下物品名填入终端搜索框 | `client/event/KeyInputHandler` | ✅ 可用 |
 | 叠加层开关 `/apu-overlay` + GUI OV 按钮 | `client/CommandOverlay` + `client/OverlayConfig` | ✅ 可用 |
-| **智能倍增（Smart Doubling）**：ME 接口复选框 + CPU 一次性推送 N 轮（上限 64 可配） | `api/ISmartDoublingMedium` + `mixin/ae/MixinDualityInterface` + `mixin/ae/MixinCraftingCPUCluster` + `mixin/ae/MixinGuiInterface`/`MixinContainerInterface` | ✅ 可用（3.2.0） |
+| **智能倍增（Smart Doubling）**：ME 接口复选框 + CPU 一次性推送 N 轮（上限 64 可配） | `api/ISmartDoublingMedium` + `mixin/ae/MixinDualityInterface` + `mixin/ae/MixinCraftingCPUCluster` + `mixin/ae/MixinGuiInterface`/`MixinContainerInterface` | ✅ 可用（3.2.0；3.3.2 兼容 GTNotLeisure 超级接口） |
 | 统一配置文件 `settings.json` + 热加载 + OP 命令 `/ae2qof reload` | `Config` + `CommandAe2QoL` | ✅ 可用（3.3.0） |
 | **F：样板 + 接口双页面二合一终端** | —（3.0.0 调研后搁置） | 🕐 规划中，待重新发布（详见文末） |
 
@@ -60,12 +60,14 @@
 | 21 | 智能倍增 `pushPattern` 只返回成功布尔，无实际轮数反馈：部分提取/缓冲时 CPU 与接口记账不一致 → 超产或漏产 | `mixin/ae/MixinCraftingCPUCluster.java` + `MixinDualityInterface.getMaxMultiplier` | 🟡 | ⏳ 已兜底（3.2.0 提取前 SIMULATE 全槽探测 N，任一面/输入放不下则整体回退 N==1） |
 | 22 | 配置文件热加载：`settings.json` 语法错误 / 值越界 / 编辑中途被读取 → 解析失败或字段不一致 | `Config.reload` + `ensureFresh`（3.3.0 引入） | 🟢 | ⏳ 已兜底（解析失败保留上次生效值；数值越界 clamp 回默认；mtime 校验限流 1 秒一次） |
 | 23 | mixin 冲突：`@Overwrite executeCrafting` 整体替换方法体 → 其它模组（ProgrammableHatches `MixinInstantComplete`）对同一方法的 `@Inject/INVOKE` 找不到注入点崩溃 | `mixin/ae/MixinCraftingCPUCluster.java`（3.2.0 引入 @Overwrite） | 🔴 | ✅ 已修复（3.3.1 改 `@Inject(HEAD)+cancel`，保留原方法字节码结构；仅在存在智能倍增任务时接管 tick） |
+| 24 | `@GuiSync(19)` 与 GTNotLeisure `ContainerSuperInterface` 的 `@GuiSync(19) sidelessMode` 同 id 冲突 → `DataSynchronization.collectFields` 遍历类层级发现重复 key 抛 `IllegalStateException` 崩溃 | `mixin/ae/MixinContainerInterface.java`（3.2.0 引入 @GuiSync(19)） | 🔴 | ✅ 已修复（3.3.2 改 `@GuiSync(30)`，高于 AE2 链内 18 且不与 GTNL 19 冲突） |
 
 # 回滚指南
 
 | 目标版本 | 使用 jar | 说明 |
 |---|---|---|
-| 3.3.1（当前） | `build/libs/AE2-QoL-3.3.1.jar` | 修复与 ProgrammableHatches 的 mixin 冲突崩溃 |
+| 3.3.2（当前） | `build/libs/AE2-QoL-3.3.2.jar` | 修复与 GTNotLeisure 的同步 id 冲突崩溃 + 超级接口智能倍增 |
+| 3.3.1 | `build/libs/AE2-QoL-3.3.1.jar` | 修复与 ProgrammableHatches 的 mixin 冲突崩溃 |
 | 3.3.0 | `build/libs/AE2-QoL-3.3.0.jar` | 统一配置文件 + 热加载 + `/ae2qof` OP 命令 |
 | 3.2.0 | `build/libs/AE2-QoL-3.2.0.jar` | 智能倍增（Smart Doubling） |
 | 3.1.2 | `build/libs/AE2-QoL-3.1.2.jar` | 修复流体误判显示 bug |
@@ -77,6 +79,36 @@
 
 回退步骤：删除测试包 `mods/AE2-QoL-<旧版本>.jar`，复制目标 jar 为 `mods/AE2-QoL-<目标版本>.jar`，重启客户端。
 依赖固定：AE2 `rv3-beta-977-GTNH`、ae2fc `1.5.88-gtnh`、NEI `2.8.19-GTNH`。
+
+---
+
+## 3.3.2 - 修复与 GTNotLeisure 的同步字段冲突崩溃 + 超级接口智能倍增
+
+> 作者：wztwzt | 更新时间：2026-08-16
+
+### 修复
+
+- **崩溃根因**：智能倍增在 `ContainerInterface` 注入的同步字段用了 `@GuiSync(19)`，而 GTNotLeisure 的 `ContainerSuperInterface`（extends `ContainerInterface`）自己声明了 `@GuiSync(19) sidelessMode`。AE2 的 `DataSynchronization.collectFields` 会遍历整个类层级收集 `@GuiSync` 字段，发现同一个 sync id 被声明两次时直接抛 `IllegalStateException`，游戏崩溃。
+- **修复方案**：同步 id 从 `@GuiSync(19)` 改为 `@GuiSync(30)`：
+  - AE2 `ContainerInterface` 继承链已用 id：`ContainerUpgradeable`=0/1/5/6，`ContainerInterface`=3/4/7~18
+  - GTNL `ContainerSuperInterface` 用 19，AE2 无其它子类占用 19~30
+  - `@GuiSync(30)` 与两边都不冲突，`DataSynchronization` 不再抛异常，智能倍增同步功能不变
+
+### 新功能
+
+- **GTNotLeisure 超级接口智能倍增**：GTNL 超级接口（Super Interface，即样板总成）GUI 左侧新增「智能倍增」复选框（位于 fuzzyMode 与翻页按钮之间，`guiTop + 152`）。
+  - GTNL 超级接口方块基于 AE2 `DualityInterface`（`TileEntitySuperInterface` 直接持真实 duality），本模组的 `MixinDualityInterface`/`MixinContainerInterface` 天然作用于其上，其容器自动获得同步字段与持久化
+  - 新增 `MixinGuiSuperInterface` 注入 GTNL `GuiSuperInterface`（extends `GuiUpgradeable`，非 `GuiInterface`），复刻原版 ME 接口的复选框逻辑
+  - 勾选后，挂在该超级接口上的样板同样由合成 CPU 一次性推送多轮材料
+- **兼容性**：GTNotLeisure 为可选依赖（compileOnly + mixin 配置级 `required=false`），不安装时其余功能不受影响；GTNL 发布包为 SRG 混淆，`actionPerformed` 运行时名为 `func_146284_a`，注入按该名处理
+- **ProgrammableHatches**：其样板合成器（`TileMolecularAssemblerInterface`）实现 `ICraftingMachine.acceptsPlans()`，本模组自动按单轮（N==1）处理，不超产
+
+### 修改文件
+
+- `mixin/ae/MixinContainerInterface.java` —— `@GuiSync(19)` → `@GuiSync(30)`（含 javadoc）
+- `mixin/ae/MixinGuiSuperInterface.java` —— **新增**：GTNL 超级接口 GUI 智能倍增复选框（addButtons/drawFG/`func_146284_a` 三处 TAIL 注入）
+- `mixins.ae2_qof.json` —— 客户端列表新增 `ae.MixinGuiSuperInterface`
+- `dependencies.gradle` —— 新增 `compileOnly` GTNotLeisure（`libs/sciencenotleisure-0.2.7-pre1-dev-290.jar`）
 
 ---
 
@@ -1606,3 +1638,4 @@ ME 接口的样板在 GT 机器上每次只推 1 轮材料，材料补料慢、�
 2. **F 模块**：维持搁置；若重开，先与使用者对齐上文 4 个确认点
 3. **统一配置 + 热加载（3.3.0）**：✅ **已完成并发布**（`config/ae2_qof/settings.json` + `/ae2qof` OP 命令 + 旧 cfg 迁移）。改动面见 3.3.0 条目与风险表 #22
 4. **mixin 冲突修复（3.3.1）**：✅ **已完成并发布**（`@Overwrite executeCrafting` → `@Inject(HEAD)+cancel` + 智能倍增任务预扫描）。见 3.3.1 条目与风险表 #23
+5. **GTNotLeisure 兼容（3.3.2）**：✅ **已完成并发布**（`@GuiSync(19)`→`@GuiSync(30)` 修复同步 id 冲突崩溃 + `MixinGuiSuperInterface` 超级接口 GUI 复选框；PH 样板合成器按 `acceptsPlans` 单轮处理）。见 3.3.2 条目与风险表 #24

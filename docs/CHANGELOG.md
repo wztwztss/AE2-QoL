@@ -4,6 +4,11 @@
 
 ---
 
+### 3.3.2 — 修复与 GTNotLeisure 的同步字段冲突崩溃（2026-08-16，作者 wztwzt）
+- **修复**：修复与 GTNotLeisure 一起加载时的崩溃——本模组智能倍增在 ME 接口容器注入的同步字段 id 与 GTNL 超级接口容器的同步字段 id 相同（19），AE2 同步系统检测到重复 id 后直接崩溃。现改为 30，与 AE2 与 GTNL 均不冲突
+- **新增**：GTNotLeisure 超级接口（Super Interface / 样板总成）GUI 左侧新增「智能倍增」复选框，勾选后同样支持合成 CPU 一次性多轮推送
+- **兼容**：GTNotLeisure 为可选依赖，不安装不影响其它功能；ProgrammableHatches 样板合成器按单轮处理
+
 ### 3.3.1 — 修复与 ProgrammableHatches 的 mixin 冲突崩溃（2026-08-16，作者 wztwzt）
 - **修复**：修复了与 ProgrammableHatches 一起加载时的崩溃——本模组智能倍增此前整体重写了 AE2 合成主循环方法，导致 ProgrammableHatches 的注入找不到位置。现改为只在实际用到智能倍增时才接管合成流程，其它情况完全走原版逻辑，两模组可共存
 
