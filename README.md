@@ -155,20 +155,26 @@ AE 合成 CPU 完成一次合成任务时，屏幕右上角弹出**合成完成�
 
 本模组由 [**AE2-Auto-Pattern-Upload**](https://github.com/GaLicn/AE2-Auto-Pattern-Upload/)（作者 GaLicn）改造而来，最初版本的上传与 F 键搜索功能直接取自原项目，并针对 GTNH 2.9.0 进行了适配，特此向原作者致谢。
 
-本模组还参考了以下模组的代码与资源：
+开发中还参考了大量其他模组的代码与材质，主要来源如下（完整明细与许可证核对见 **`CREDITS.md`**）：
 
 ### 代码参考
-- **Applied Energistics 2**（AE2，`Applied-Energistics-2-Unofficial`）—— AE 网络、终端、IO 端口等大量 API 与内部逻辑
-- **AE2FluidCraft**（ae2fc，`AE2FluidCraft-Rework`）—— 流体样板、流体容器相关实现
-- **NotEnoughItems**（NEI）—— NEI 面板、tooltip、书签、叠加层相关实现
-- **NotEnoughEnergistics** —— NEI 与 AE2 联动的样板上传相关实现
-- **GTNH ExampleMod 模板** —— 工程脚手架、Mixin 配置、Gradle 构建体系
+- **Applied Energistics 2 GTNH**（`Applied-Energistics-2-Unofficial`）—— AE 网络、存储、网格、合成逻辑几乎全部直接调用其 API 与内部类；无限水岩浆磁盘继承 `AEBaseInfiniteCell`、复用 `CreativeCellInventory` 机制
+- **AE-Wireless-Transceiver**（作者：小飘 / mynamexiaopiao）—— 无线收发器方块/终端/连接器整套实现（已通过 B 站联系作者确认借用许可）
+- **AE2FluidCraft-Rework**（ae2fc）—— 流体样板（`ItemFluidEncodedPattern`）、纯流体识别
+- **AE2Things**（asdflj）—— 强化 IO 端口、无限流体磁盘、创意单元等概念参考
+- **NotEnoughItems**（NEI）—— NEI 配方页 AE 角标、tooltip 注入
+- **Waila** —— 无线收发器等方块的高亮显示支持
+- 其他参考：`GT-Not-Leisure`、`GT5-Unofficial`、`GTLCore`、`Programmable-Hatches`、`ExtendedAE_Plus`、`ExampleMod1.7.10`（GTNH 模板）等
 
 ### 材质参考
-- **Applied Energistics 2**（AE2）—— 强化 IO 端口等方块外观
+- **AE-Wireless-Transceiver** —— 无线收发器方块贴图、`de.png` / `de1.png` / `widgets.png`、无线连接器贴图（已获作者许可）
+- **Applied Energistics 2** —— `guis/states.png`、`gui/wireless.png` 等（CC BY-NC-SA 3.0，非商业使用）
+- **AE2Things** —— `ex_io_port*.png` 强化 IO 端口贴图、无限流体磁盘概念
+- **Minecraft 原版** —— `textures/gui/widgets.png`（运行时引用）
+- `logo.png` 为自绘
 
-### 依赖模组
-- AE2 `rv3-beta-977-GTNH`、ae2fc `1.5.88-gtnh`、NEI `2.8.19-GTNH`、CodeChickenLib、NotEnoughEnergistics
+### 版权与合规
+本仓库**仅供个人存档，暂不开放分发**。沿用来源代码与贴图作个人备份使用，版权风险已大幅降低。开放分发前请务必核对原仓库最新 LICENSE（详见 `CREDITS.md` 中的许可证核对表）。
 
 ---
 
