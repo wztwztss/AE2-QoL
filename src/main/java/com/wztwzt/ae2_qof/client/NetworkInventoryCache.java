@@ -5,6 +5,7 @@ import java.util.Map;
 
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidContainerRegistry;
 import net.minecraftforge.fluids.FluidRegistry;
@@ -14,6 +15,8 @@ import net.minecraftforge.fluids.FluidStack;
  * 客户端缓存 AE2 网络库存数据（物品 + 流体）。
  * 由 GuiMEMonitorable.postUpdate 的 Mixin 写入，NEI 渲染时读取。
  * 流体以 FluidStack 的 NBT（"FluidStack" compound）承载在 ItemFluidPacket 等物品上，按键为流体名。
+ * 注意：流体判定必须按物品类名（ae2fc ItemFluidPacket）+ NBT，绝不能按 itemDamage 查 FluidRegistry——
+ * FluidRegistry 的 ID 是注册序（水=0、岩浆=1…），damage 命中即误判，导致随机物品显示流体量。
  */
 public final class NetworkInventoryCache {
 
@@ -69,13 +72,13 @@ public final class NetworkInventoryCache {
 
     /**
      * 查询某 ItemStack 在 AE2 网络中的数量，返回 -1 表示无数据。
-     * 仅 ae2fc 纯流体 packet（damage 编码流体）返回流体量（mB）；
+     * 仅 ae2fc 纯流体 packet（类名识别 + NBT 读流体）返回流体量（mB）；
      * 桶/单元等容器物品一律按普通物品返回其在网络中的容器数量（AE 里没有则不显示）。
      */
     public static long getCount(ItemStack stack) {
-        Fluid damageFluid = getFluidByDamage(stack);
-        if (damageFluid != null) {
-            CacheEntry entry = fluidCache.get(damageFluid.getName());
+        Fluid stackFluid = getFluid(stack);
+        if (stackFluid != null) {
+            CacheEntry entry = fluidCache.get(stackFluid.getName());
             return entry != null ? entry.count : -1;
         }
         CacheEntry entry = cache.get(key(stack));
@@ -95,9 +98,9 @@ public final class NetworkInventoryCache {
      * 仅 ae2fc 纯流体 packet 走流体缓存；其余按普通物品查物品缓存。
      */
     public static boolean isCraftable(ItemStack stack) {
-        Fluid damageFluid = getFluidByDamage(stack);
-        if (damageFluid != null) {
-            CacheEntry entry = fluidCache.get(damageFluid.getName());
+        Fluid stackFluid = getFluid(stack);
+        if (stackFluid != null) {
+            CacheEntry entry = fluidCache.get(stackFluid.getName());
             return entry != null && entry.craftable;
         }
         CacheEntry entry = cache.get(key(stack));
@@ -113,28 +116,62 @@ public final class NetworkInventoryCache {
     }
 
     /**
-     * 是否为 ae2fc 纯流体 packet：damage 值直接编码流体注册 ID（FluidRegistry.getFluid(damage)）。
-     * 只有此类物品才被当作"流体"显示流体量；水桶/单元等容器不在此列。
+     * 判定某物品是否携带可识别的流体：
+     * 1) ae2fc 纯流体 packet：按物品类名识别（不 import ae2fc，保持模组独立），流体从 NBT "FluidStack" 复合标签读取；
+     * 2) 已注册的流体方块物品（fluidItemMap 反查）；
+     * 其余一律返回 null，按普通物品处理。
+     * 切勿用 itemDamage 查 FluidRegistry——damage 是物品元数据，与流体注册 ID 无对应关系。
      */
-    public static boolean isFluidPacket(ItemStack stack) {
-        return stack != null && FluidRegistry.getFluid(stack.getItemDamage()) != null;
+    private static Fluid getFluid(ItemStack stack) {
+        if (stack == null) {
+            return null;
+        }
+        if (isAe2fcFluidPacket(stack)) {
+            FluidStack packetFluid = readPacketFluid(stack);
+            return packetFluid != null ? packetFluid.getFluid() : null;
+        }
+        String fluidName = fluidItemMap.get(key(stack));
+        return fluidName != null ? FluidRegistry.getFluid(fluidName) : null;
     }
 
-    private static Fluid getFluidByDamage(ItemStack stack) {
-        return stack != null ? FluidRegistry.getFluid(stack.getItemDamage()) : null;
+    private static boolean isAe2fcFluidPacket(ItemStack stack) {
+        try {
+            String className = stack.getItem()
+                .getClass()
+                .getName();
+            return className.equals("com.glodblock.github.common.item.ItemFluidPacket");
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    private static FluidStack readPacketFluid(ItemStack stack) {
+        try {
+            if (!stack.hasTagCompound()) {
+                return null;
+            }
+            NBTTagCompound tag = stack.getTagCompound()
+                .getCompoundTag("FluidStack");
+            if (tag == null || tag.hasNoTags()) {
+                return null;
+            }
+            return FluidStack.loadFluidStackFromNBT(tag);
+        } catch (Throwable ignored) {
+            return null;
+        }
     }
 
     /**
      * 从 ItemStack 提取 FluidStack（仅用于 tooltip 显示流体名）。
-     * 仅 ae2fc 纯流体 packet（damage 编码）返回对应流体；容器物品返回 null。
+     * 仅 ae2fc 纯流体 packet 与已注册流体方块物品返回对应流体；容器物品返回 null。
      */
     public static FluidStack getFluidStack(ItemStack stack) {
         if (stack == null) {
             return null;
         }
-        Fluid damageFluid = FluidRegistry.getFluid(stack.getItemDamage());
-        if (damageFluid != null) {
-            return new FluidStack(damageFluid, FluidContainerRegistry.BUCKET_VOLUME);
+        Fluid stackFluid = getFluid(stack);
+        if (stackFluid != null) {
+            return new FluidStack(stackFluid, FluidContainerRegistry.BUCKET_VOLUME);
         }
         return null;
     }

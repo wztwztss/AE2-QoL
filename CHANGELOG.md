@@ -1,6 +1,6 @@
 # AE2 QoL - Changelog
 
-> 当前版本：3.1.1 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
+> 当前版本：3.1.2 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
 
 ---
 
@@ -53,12 +53,14 @@
 | 16 | `CraftingResponsePacket` ItemStack 序列化字节错位 → `DecoderException` 踢人 | `network/CraftingResponsePacket.java` | 🔴 | ✅ 已修复（3.0.1 改 String 传输） |
 | 17 | Replan 点击 `lists.clear()` 误清 map 导致 NPE 崩溃 | `util/Replanner.java` | 🔴 | ✅ 已修复（3.0.1） |
 | 18 | 合成通知/IO 端口 mixin 在 `server` 列表单机不注入 → 功能无效 | `mixins.ae2_auto_pattern_upload.json` | 🟡 | ✅ 已修复（3.0.1 移入公共列表） |
+| 19 | 流体误判：`FluidRegistry.getFluid(itemDamage)` 把 damage 命中流体 ID 的物品（damage=0→水）误判为流体 → 随机物品显示 mB 量 | `client/NetworkInventoryCache.java`（3.0.2 引入，3.1.2 修复） | 🟡 | ✅ 已修复（3.1.2 改类名+NBT 识别，见 3.1.2 条目） |
 
 # 回滚指南
 
 | 目标版本 | 使用 jar | 说明 |
 |---|---|---|
-| 3.1.1（当前） | `build/libs/AE2-QoL-3.1.1.jar` | 修复汉化乱码 |
+| 3.1.2（当前） | `build/libs/AE2-QoL-3.1.2.jar` | 修复流体误判显示 bug |
+| 3.1.1 | `build/libs/AE2-QoL-3.1.1.jar` | 修复汉化乱码 |
 | 3.1.0 | `build/libs/AE2-QoL-3.1.0.jar` | 全量安全加固（14 项风险修复） |
 | 3.0.2 | `build/libs/AE2-QoL-3.0.2.jar` | 含流体直接显示 + 刷屏日志清理 |
 | 3.0.0 | `build/libs/AE2-QoL-3.0.0.jar` | 功能最全（无限磁盘/角标/通知/Replan/IO端口），但含 B/C 已知崩溃问题 |
@@ -66,6 +68,23 @@
 
 回退步骤：删除测试包 `mods/AE2-QoL-<旧版本>.jar`，复制目标 jar 为 `mods/AE2-QoL-<目标版本>.jar`，重启客户端。
 依赖固定：AE2 `rv3-beta-977-GTNH`、ae2fc `1.5.88-gtnh`、NEI `2.8.19-GTNH`。
+
+---
+
+## 3.1.2 - 修复流体数量随机出现在物品上的显示 bug
+
+> 作者：wztwzt | 更新时间：2026-08-16
+
+### 修复
+
+- **J（流体误判）**：`NetworkInventoryCache` 用 `FluidRegistry.getFluid(itemDamage)` 判定"是否为流体"。Forge `FluidRegistry` 按注册序分配 ID（水=0、岩浆=1…），任何 damage 恰好命中流体 ID 的物品（最常见 damage=0 → 水）都被误判为流体，导致 NEI 配方角标/书签角标/tooltip 在**随机物品**上显示 `X mB 水/岩浆/…`（"随机"取决于网络缓存里当时有哪些流体），并干扰 NEI 面板 Shift+左键提取/中键合成的取出/合成判定
+- **J（识别方式修正）**：ae2fc `ItemFluidPacket` 实际把流体编码在物品 NBT（`"FluidStack"` 复合标签 + `"Amount"` long），`newStack()` 从不写 damage——3.0.2"damage 编码流体 ID"假设错误（damage 仅用于 `getColorFromItemStack` 取渲染色）。现改为：① 按物品类名精确识别 ae2fc `ItemFluidPacket`（不 import ae2fc，保持模组独立）；② 流体直接从 NBT 读取；③ 流体方块物品走 `fluidItemMap` 反查（该 map 此前写了从未读，为死代码，现启用）；④ 其余物品一律按普通物品处理
+- **J（回归确认）**：水/岩浆/蒸馏水等纯流体在 NEI 角标/tooltip 仍正确显示流体量（mB）；桶/单元等容器物品仍按容器数量显示；普通物品不再出现流体量
+
+### 技术说明
+
+- 消费方 `MixinNEIRecipeWidget`/`NetworkTooltipHandler`/`NetworkInventoryDrawHandler`/`MixinPanelWidgetClick` 无需改动，统一走修正后的 `getCount`/`isCraftable`/`getFluidStack`
+- 对应风险表 #19；开发调研备忘见文末「附：开发调研记录（2026-08-16）」
 
 ---
 
@@ -1414,3 +1433,73 @@ Forge 1.7.10 调用链：`onItemUseFirst → onBlockActivated → onItemUse`，`
 2. 样板页与接口页是否需要同步显示同一网络的数据
 3. 与 AE2 977 原生接口终端的功能差异（避免重复造轮子）
 4. 无线版（复用无线终端）是否纳入
+
+---
+
+## 附：开发调研记录（2026-08-16）
+
+> 作者：wztwzt | 记录时间：2026-08-16
+
+本节记录后续功能（智能倍增、F 模块）的前置调研结论，供后续会话直接接手。
+
+### 1. 智能倍增（Smart Doubling）调研与实现计划
+
+#### 需求
+
+ME 接口的样板在 GT 机器上每次只推 1 轮材料，材料补料慢、不便于自动化。目标：让接口**一次性推送 N 轮**材料，机器连做 N 次（N 可配置，默认上限 64）。
+
+#### 调研结论
+
+- AE2 rv3-beta-977-GTNH 与 ae2fc **均没有**"扩展样板供应器（Extended Pattern Provider）"方块；rv3 的样板供应角色 = **ME 接口（`DualityInterface`，1896 行）** + ae2fc 流体接口
+- GTNH 已内置 `PatternMultiplierHelper` + `doublePatterns`/`PatternOptimization`（位运算直接改样板 NBT，把 1 轮材料的样板"加倍"）——方向相反，用户**明确不要**这种改样板方案
+- 合成执行流（`CraftingCPUCluster.executeCrafting`，每 tick 调用）：
+  1. 对每个样板任务（`TaskProgress`，`value` = 剩余轮数）从 CPU 私有 `MECraftingInventory` 提取 **1 轮**构建 `MEInventoryCrafting`（槽位无上限——`setInventorySlotContents` 直接存 `IAEStack`，已验证可放 N× 材料）
+  2. 经 `CraftingGridCache.getMediums(details)` 找所有非忙 `ICraftingMedium`
+  3. 调 `pushPattern(details, table)`；成功 → `value--`，产出累加进 `waitingFor`（`IItemList`）；非阻塞模式下同 tick 继续循环
+- **关键结论：多轮推送必须由 CPU 协同**——剩余轮数与预留材料都归 CPU 私有；供应器自己从网络存储自取会**超产**。且 `pushPattern` 返回 boolean，无法告知 CPU 实际消耗了几轮
+- `DualityInterface.pushPattern` 把表推到相邻机器（`InventoryAdaptor.addStack`，放不下的部分缓冲进发送列表，次 tick 再推）
+
+#### 用户决策
+
+1. 载体 = **现有 ME 接口加复选框**（不新增方块）
+2. F 模块**维持搁置**，先做智能倍增
+3. 默认合并上限 **64 轮**
+
+#### 实现计划（版本 3.2.0）
+
+| 文件 | 内容 |
+|---|---|
+| `api/ISmartDoublingMedium.java`（新） | 接口：`boolean supportsSmartDoubling()` / `int getMaxMultiplier()` |
+| `mixin/ae/MixinDualityInterface.java`（新） | implements 上述接口；`writeToNBT`/`readFromNBT` 注入持久化布尔 `smartDoubling`（ConfigManager 按 `Settings` 枚举建字段，**不能加新枚举**，必须走 data 复合标签）；`getMaxMultiplier`：阻塞模式或机器是 GT `ICraftingMachine.acceptsPlans()` 时返回 1 |
+| `mixin/ae/MixinCraftingCPUCluster.java` | `@Overwrite executeCrafting`（逐行移植约 250 行）：建表处按 N× 提取材料；成功分支 `value -= effectiveN`、`waitingFor` 累加 N× 产出、能耗 N×sum；`N = min(剩余轮数, 机器容量估计, 配置上限 64, 防溢出)`，`effectiveN = min(各输入槽 提取量/单轮量)` |
+| `mixin/ae/MixinGuiInterface.java`（新） | 复刻 `patternOptimization` 的 `GuiToggleButton` 复选框（smartDoubling 按钮） |
+| `mixin/ae/MixinContainerInterface.java`（新） | 新增 `@GuiSync(n)` 布尔字段（`standardDetectAndSendChanges` 反射同步，mixin 加字段可行） |
+| `network/SmartDoublingTogglePacket.java`（新） | C2S，归队 `ServerThreadUtil.addScheduledTask`（风险 #5 合规） |
+| `Config.java` | `smartDoublingMaxRounds = 64` |
+| `lang/zh_CN.lang` + `lang/en_US.lang` | `gui.ae2_qof.smart_doubling` 等 |
+| `mixins.ae2_qof.json` | 注册新 mixin |
+
+#### 风险（写代码时对照风险表）
+
+- `@Overwrite executeCrafting` 是关键路径，必须全量回归原版合成行为
+- GT `ICraftingMachine.acceptsPlans()` 机器与阻塞模式必须 N=1（否则机器可能吞掉多轮材料或行为异常）
+- 流体量按 N× 放大，注意 long 溢出（`waitingFor` 累加 + 消耗扣减）
+
+### 2. F 模块（样板 + 接口双页面二合一终端）调研更新
+
+- 复核确认：AE2 977 原生已有**完整接口终端**（`GuiInterfaceTerminal` 1958 行自定义动态槽 GUI、`ContainerInterfaceTerminal`、`PartInterfaceTerminal`、无线版 `ItemWirelessInterfaceTerminal`/`WirelessInterfaceTerminalGuiObject`），以及 `PartPatternTerminal`/`PartPatternTerminalEx`/`GuiPatternTerm`/`GuiPatternTermEx` 样板终端
+- 结论：**维持搁置**（原生已覆盖接口管理；F 的增量价值仅剩"单窗口双页 + 写样板自动填机器名"联动）。重开条件与 4 个确认点见上文「F 功能规划记录」
+- 若后续重开，推荐直接扩展 AE2 原生 `GuiInterfaceTerminal`（注入其类添加页面切换 + 嵌入样板编码区），而非 6000 行移植
+
+### 3. 流体显示 bug（3.1.2 修复）备忘
+
+- 根因、识别方式修正、回归点见上文 3.1.2 条目；风险表 #19
+
+---
+
+## 附：后续工作入口（checklist）
+
+> 供下一次会话直接接手，按序执行。
+
+1. **智能倍增（3.2.0）**：按上文「实现计划」新建 7 个文件 + 改 `Config.java`/lang/mixins json，`@Overwrite executeCrafting` 逐行移植并回归
+2. **F 模块**：维持搁置；若重开，先与使用者对齐上文 4 个确认点
