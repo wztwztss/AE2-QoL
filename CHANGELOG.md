@@ -1217,7 +1217,7 @@ Forge 1.7.10 调用链：`onItemUseFirst → onBlockActivated → onItemUse`，`
 
 ## 2.4.0 - 石英切割刀名称复制
 
-> 作者：GaLi（原作者），wztwzt（GTNH 适配）| 更新时间：2026-08-06
+> 作者：wztwzt（GTNH 适配）| 更新时间：2026-08-06
 
 **新增文件：**
 - `client/event/KnifeNameCopyHandler.java` — Forge `PlayerInteractEvent` 事件监听器
@@ -1350,7 +1350,7 @@ Forge 1.7.10 调用链：`onItemUseFirst → onBlockActivated → onItemUse`，`
 
 ## 1.2.0 - 初始版本
 
-> 作者：GaLi wztwzt | 更新时间：2026-08-06
+> 作者：wztwzt | 更新时间：2026-08-06
 
 - 基础 AE2 样板上传功能
 - 支持标准编码样板和 ae2fc 流体编码样板

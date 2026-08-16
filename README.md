@@ -1,6 +1,6 @@
 # AE2 QoL — 用户指南与更新日志
 
-> 适配：GTNH 2.9.0-beta-1（Minecraft 1.7.10）| 当前版本：**3.0.2** | 作者：wztwzt / GaLi
+> 适配：GTNH 2.9.0-beta-1（Minecraft 1.7.10）| 当前版本：**3.0.2** | 作者：wztwzt
 > 依赖：AE2 `rv3-beta-977-GTNH`、ae2fc `1.5.88-gtnh`、NEI `2.8.19-GTNH`
 
 AE2 QoL 是为 GTNH 打造的 **AE2 效率增强模组**：把 NEI 配方一键推送进 AE 样板终端、从 NEI 面板直接提取 AE 网络物品、查看每个物品在 AE 网络中的存量与可合成状态、无线传输 AE 网络等。本文件面向使用者，记录每个功能的用途与操作方法。
@@ -153,7 +153,9 @@ AE 合成 CPU 完成一次合成任务时，屏幕右上角弹出**合成完成�
 
 ## 🙏 致谢
 
-本模组参考了以下模组的代码与资源，特此致谢：
+本模组由 [**AE2-Auto-Pattern-Upload**](https://github.com/GaLicn/AE2-Auto-Pattern-Upload/)（作者 GaLicn）改造而来，最初版本的上传与 F 键搜索功能直接取自原项目，并针对 GTNH 2.9.0 进行了适配，特此向原作者致谢。
+
+本模组还参考了以下模组的代码与资源：
 
 ### 代码参考
 - **Applied Energistics 2**（AE2，`Applied-Energistics-2-Unofficial`）—— AE 网络、终端、IO 端口等大量 API 与内部逻辑
