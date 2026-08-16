@@ -50,30 +50,62 @@ public class ExtractItemPacket implements IMessage {
 
         @Override
         public IMessage onMessage(ExtractItemPacket message, MessageContext ctx) {
-            EntityPlayerMP player = ctx.getServerHandler().playerEntity;
+            final EntityPlayerMP player = ctx.getServerHandler().playerEntity;
             if (player == null) return null;
 
+            // 归队到服务端 tick 线程执行，避免 Netty IO 线程并发访问 grid/container
+            ServerTerminalHelper.scheduleServerTask(() -> {
+                try {
+                    handleMessage(player, message);
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                    sendResponse(player, CraftingResponsePacket.RESULT_NO_ITEMS, itemName(message.targetStack));
+                }
+            });
+            return null;
+        }
+
+        private void handleMessage(EntityPlayerMP player, ExtractItemPacket message) {
+            // 恶意负数 count 钳制为 0，避免负数数量破坏库存
+            long count = message.count < 0 ? 0 : message.count;
+            if (message.targetStack == null || count <= 0) {
+                sendResponse(player, CraftingResponsePacket.RESULT_NO_ITEMS, itemName(message.targetStack));
+                return;
+            }
+
             WirelessTerminalGuiObject terminal = ServerTerminalHelper.resolveTerminal(player);
-            if (terminal == null) return new CraftingResponsePacket((byte) 1, itemName(message.targetStack));
+            if (terminal == null) {
+                sendResponse(player, CraftingResponsePacket.RESULT_NO_ITEMS, itemName(message.targetStack));
+                return;
+            }
 
             IAEItemStack target = AEItemStack.create(message.targetStack);
-            if (target == null) return new CraftingResponsePacket((byte) 1, itemName(message.targetStack));
+            if (target == null) {
+                sendResponse(player, CraftingResponsePacket.RESULT_NO_ITEMS, itemName(message.targetStack));
+                return;
+            }
 
             IAEItemStack stored = terminal.getItemInventory()
                 .getStorageList()
                 .findPrecise(target);
             if (stored == null || stored.getStackSize() <= 0) {
-                return new CraftingResponsePacket((byte) 1, itemName(message.targetStack));
+                sendResponse(player, CraftingResponsePacket.RESULT_NO_ITEMS, itemName(message.targetStack));
+                return;
             }
 
-            long extractCount = Math.min(message.count, stored.getStackSize());
+            long extractCount = Math.min(count, stored.getStackSize());
             boolean success = ServerTerminalHelper.extractItemToInventory(terminal, target, extractCount);
 
-            if (success) {
-                return new CraftingResponsePacket((byte) 0, itemName(message.targetStack));
-            } else {
-                return new CraftingResponsePacket((byte) 3, itemName(message.targetStack));
-            }
+            sendResponse(
+                player,
+                success ? CraftingResponsePacket.RESULT_SUCCESS : CraftingResponsePacket.RESULT_INVENTORY_FULL,
+                itemName(message.targetStack));
+        }
+
+        private static void sendResponse(EntityPlayerMP player, byte result, String itemName) {
+            try {
+                ModNetwork.CHANNEL.sendTo(new CraftingResponsePacket(result, itemName), player);
+            } catch (Throwable ignored) {}
         }
     }
 

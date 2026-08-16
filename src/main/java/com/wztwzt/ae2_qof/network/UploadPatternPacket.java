@@ -10,12 +10,14 @@ import net.minecraft.item.ItemStack;
 import com.glodblock.github.common.item.ItemFluidEncodedPattern;
 
 import appeng.api.AEApi;
+import appeng.api.config.SecurityPermissions;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridHost;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IMachineSet;
 import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.networking.security.IActionHost;
+import appeng.api.networking.security.ISecurityGrid;
 import appeng.container.implementations.ContainerPatternTerm;
 import appeng.container.implementations.ContainerPatternTermEx;
 import appeng.container.slot.SlotRestrictedInput;
@@ -54,44 +56,56 @@ public class UploadPatternPacket implements IMessage {
 
         @Override
         public IMessage onMessage(UploadPatternPacket message, MessageContext ctx) {
-            EntityPlayerMP player = ctx.getServerHandler().playerEntity;
+            final EntityPlayerMP player = ctx.getServerHandler().playerEntity;
             if (player == null) {
                 return null;
             }
 
-            Container container = player.openContainer;
-            IActionHost terminal = resolveTerminal(container);
-            if (terminal == null) {
-                return null;
-            }
+            // 归队到服务端 tick 线程执行，避免 Netty IO 线程并发访问 grid/container
+            ServerTerminalHelper.scheduleServerTask(() -> handleMessage(player, message));
+            return null;
+        }
 
-            SlotRestrictedInput outputSlot = resolveOutputSlot(container);
-            if (outputSlot == null) {
-                return null;
-            }
-
-            ItemStack encodedPattern = outputSlot.getStack();
-            if (encodedPattern == null || encodedPattern.stackSize <= 0) {
-                return null;
-            }
-
-            if (!isSupportedPattern(encodedPattern)) {
-                return null;
-            }
-
+        private void handleMessage(EntityPlayerMP player, UploadPatternPacket message) {
             try {
+                Container container = player.openContainer;
+                IActionHost terminal = resolveTerminal(container);
+                if (terminal == null) {
+                    return;
+                }
+
+                SlotRestrictedInput outputSlot = resolveOutputSlot(container);
+                if (outputSlot == null) {
+                    return;
+                }
+
+                ItemStack encodedPattern = outputSlot.getStack();
+                if (encodedPattern == null || encodedPattern.stackSize <= 0) {
+                    return;
+                }
+
+                if (!isSupportedPattern(encodedPattern)) {
+                    return;
+                }
+
                 IGridNode node = terminal.getActionableNode();
                 if (node == null) {
-                    return null;
+                    return;
                 }
                 IGrid grid = node.getGrid();
                 if (grid == null) {
-                    return null;
+                    return;
+                }
+
+                // 所有权校验：无安全站的网络默认放行，有安全站的共享网络仅允许有注入权限的玩家上传
+                ISecurityGrid security = grid.getCache(ISecurityGrid.class);
+                if (security != null && !security.hasPermission(player, SecurityPermissions.INJECT)) {
+                    return;
                 }
 
                 ICraftingProvider target = findProvider(grid, message.providerId);
                 if (target == null) {
-                    return null;
+                    return;
                 }
 
                 boolean placedInProvider = insertPatternIntoProvider(target, encodedPattern.copy());
@@ -104,8 +118,6 @@ public class UploadPatternPacket implements IMessage {
             } catch (Throwable t) {
                 t.printStackTrace();
             }
-
-            return null;
         }
 
         private boolean isSupportedPattern(ItemStack stack) {

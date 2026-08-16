@@ -10,12 +10,14 @@ import net.minecraft.item.ItemStack;
 import com.glodblock.github.common.item.ItemFluidEncodedPattern;
 
 import appeng.api.AEApi;
+import appeng.api.config.SecurityPermissions;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridHost;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IMachineSet;
 import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.networking.security.IActionHost;
+import appeng.api.networking.security.ISecurityGrid;
 import appeng.container.implementations.ContainerPatternTerm;
 import appeng.container.implementations.ContainerPatternTermEx;
 import appeng.container.slot.SlotRestrictedInput;
@@ -53,48 +55,61 @@ public class RecallPatternPacket implements IMessage {
 
         @Override
         public IMessage onMessage(RecallPatternPacket message, MessageContext ctx) {
-            EntityPlayerMP player = ctx.getServerHandler().playerEntity;
+            final EntityPlayerMP player = ctx.getServerHandler().playerEntity;
             if (player == null) {
                 return null;
             }
 
-            Container container = player.openContainer;
-            SlotRestrictedInput outputSlot = resolveOutputSlot(container);
-            if (outputSlot == null) {
-                System.out.println("[APU] Recall: outputSlot is null");
-                return null;
-            }
+            // 归队到服务端 tick 线程执行，避免 Netty IO 线程并发访问 grid/container
+            ServerTerminalHelper.scheduleServerTask(() -> handleMessage(player, message));
+            return null;
+        }
 
-            // 只能在输出槽为空时撤回
-            if (outputSlot.getStack() != null && outputSlot.getStack().stackSize > 0) {
-                System.out.println("[APU] Recall: outputSlot not empty, stack=" + outputSlot.getStack());
-                return null;
-            }
-
+        private void handleMessage(EntityPlayerMP player, RecallPatternPacket message) {
             try {
+                Container container = player.openContainer;
+                SlotRestrictedInput outputSlot = resolveOutputSlot(container);
+                if (outputSlot == null) {
+                    System.out.println("[APU] Recall: outputSlot is null");
+                    return;
+                }
+
+                // 只能在输出槽为空时撤回
+                if (outputSlot.getStack() != null && outputSlot.getStack().stackSize > 0) {
+                    System.out.println("[APU] Recall: outputSlot not empty, stack=" + outputSlot.getStack());
+                    return;
+                }
+
                 IActionHost terminal = resolveTerminal(container);
                 if (terminal == null) {
                     System.out.println("[APU] Recall: terminal is null");
-                    return null;
+                    return;
                 }
 
                 IGridNode node = terminal.getActionableNode();
                 if (node == null) {
                     System.out.println("[APU] Recall: node is null");
-                    return null;
+                    return;
                 }
 
                 IGrid grid = node.getGrid();
                 if (grid == null) {
                     System.out.println("[APU] Recall: grid is null");
-                    return null;
+                    return;
+                }
+
+                // 所有权校验：无安全站的网络默认放行，有安全站的共享网络仅允许有对应权限的玩家操作
+                ISecurityGrid security = grid.getCache(ISecurityGrid.class);
+                if (security != null && !security.hasPermission(player, SecurityPermissions.EXTRACT)) {
+                    System.out.println("[APU] Recall: no security permission, denied");
+                    return;
                 }
 
                 System.out.println("[APU] Recall: searching providerId=" + message.providerId);
                 IInventory provider = findProviderInventory(grid, message.providerId);
                 if (provider == null) {
                     System.out.println("[APU] Recall: provider not found for id=" + message.providerId);
-                    return null;
+                    return;
                 }
                 System.out.println("[APU] Recall: provider found, size=" + provider.getSizeInventory());
 
@@ -125,8 +140,6 @@ public class RecallPatternPacket implements IMessage {
             } catch (Throwable t) {
                 t.printStackTrace();
             }
-
-            return null;
         }
 
         private IInventory findProviderInventory(IGrid grid, long providerId) {

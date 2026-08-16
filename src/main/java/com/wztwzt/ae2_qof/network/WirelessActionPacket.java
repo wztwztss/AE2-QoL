@@ -6,6 +6,7 @@ import net.minecraft.tileentity.TileEntity;
 import com.wztwzt.ae2_qof.wireless.TileWirelessTransceiver;
 import com.wztwzt.ae2_qof.wireless.WirelessData;
 import com.wztwzt.ae2_qof.wireless.WirelessWorldData;
+import com.wztwzt.ae2_qof.wireless.gui.ContainerWireless;
 import com.wztwzt.ae2_qof.wireless.link.WirelessBlockLinkManager;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
@@ -89,39 +90,55 @@ public class WirelessActionPacket implements IMessage {
 
         @Override
         public IMessage onMessage(WirelessActionPacket msg, MessageContext ctx) {
-            EntityPlayerMP player = ctx.getServerHandler().playerEntity;
+            final EntityPlayerMP player = ctx.getServerHandler().playerEntity;
             if (player == null) return null;
 
-            TileEntity te = player.worldObj.getTileEntity(msg.x, msg.y, msg.z);
-            if (!(te instanceof TileWirelessTransceiver)) return null;
-
-            TileWirelessTransceiver twt = (TileWirelessTransceiver) te;
-
-            switch (msg.action) {
-                case ACTION_ADD_CHANNEL:
-                    handleAddChannel(twt, msg, player);
-                    break;
-                case ACTION_REMOVE_CHANNEL:
-                    handleRemoveChannel(twt, msg, player);
-                    break;
-                case ACTION_SET_MODE:
-                    handleSetMode(twt, msg);
-                    break;
-                case ACTION_DISCONNECT:
-                    handleDisconnect(twt);
-                    break;
-                case ACTION_SET_FREQUENCY:
-                    handleSetFrequency(twt, msg);
-                    break;
-                case ACTION_TOGGLE_HIGHLIGHT:
-                    handleToggleHighlight(twt, player);
-                    break;
-            }
-
-            twt.markDirty();
-            twt.getWorldObj()
-                .markBlockForUpdate(twt.xCoord, twt.yCoord, twt.zCoord);
+            // 归队到服务端 tick 线程执行，避免 Netty IO 线程并发访问 Tile/World
+            ServerTerminalHelper.scheduleServerTask(() -> handleServer(player, msg));
             return null;
+        }
+
+        private void handleServer(EntityPlayerMP player, WirelessActionPacket msg) {
+            try {
+                TileEntity te = player.worldObj.getTileEntity(msg.x, msg.y, msg.z);
+                if (!(te instanceof TileWirelessTransceiver twt)) return;
+
+                // 权限校验：仅允许操作玩家自己当前打开 GUI 的收发器，防止对任意坐标 Tile 发动作
+                if (!(player.openContainer instanceof ContainerWireless cw) || cw.tile != twt) {
+                    return;
+                }
+
+                switch (msg.action) {
+                    case ACTION_ADD_CHANNEL:
+                        handleAddChannel(twt, msg, player);
+                        break;
+                    case ACTION_REMOVE_CHANNEL:
+                        handleRemoveChannel(twt, msg, player);
+                        break;
+                    case ACTION_SET_MODE:
+                        handleSetMode(twt, msg);
+                        break;
+                    case ACTION_DISCONNECT:
+                        handleDisconnect(twt);
+                        break;
+                    case ACTION_SET_FREQUENCY:
+                        handleSetFrequency(twt, msg);
+                        break;
+                    case ACTION_TOGGLE_HIGHLIGHT:
+                        handleToggleHighlight(twt, player);
+                        break;
+                    default:
+                        return;
+                }
+
+                if (twt.getWorldObj() != null) {
+                    twt.markDirty();
+                    twt.getWorldObj()
+                        .markBlockForUpdate(twt.xCoord, twt.yCoord, twt.zCoord);
+                }
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
         }
 
         private void handleAddChannel(TileWirelessTransceiver twt, WirelessActionPacket msg, EntityPlayerMP player) {

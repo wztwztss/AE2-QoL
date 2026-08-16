@@ -70,12 +70,18 @@ public abstract class MixinCraftingCPUCluster {
 
     @Inject(method = "completeJob", at = @At("TAIL"), remap = false)
     private void ae2qol$onJobComplete(CallbackInfo ci) {
-        if (this.player != null && this.output != null && this.networkKey != 0) {
-            for (int i = 0; i < this.player.inventory.mainInventory.length; i++) {
-                ItemStack stack = this.player.inventory.mainInventory[i];
-                if (isSameNetworkKey(stack)) {
-                    return;
-                }
+        if (this.player == null || this.output == null || this.networkKey == 0) {
+            return;
+        }
+        if (this.player instanceof EntityPlayerMP playerMP && playerMP.playerNetServerHandler == null) {
+            // 玩家已断线：放弃通知并清理捕获，避免 NPE 与内存滞留
+            setAsNull();
+            return;
+        }
+        for (int i = 0; i < this.player.inventory.mainInventory.length; i++) {
+            ItemStack stack = this.player.inventory.mainInventory[i];
+            if (isSameNetworkKey(stack)) {
+                return;
             }
         }
     }
@@ -84,7 +90,7 @@ public abstract class MixinCraftingCPUCluster {
     private boolean isSameNetworkKey(ItemStack item) {
         if (item != null && item.getItem() instanceof INetworkEncodable encodable) {
             String key = encodable.getEncryptionKey(item);
-            if (key != null && key.equals(Long.toString(this.networkKey))) {
+            if (key != null && key.equals(Long.toString(this.networkKey)) && this.player instanceof EntityPlayerMP) {
                 ModNetwork.CHANNEL.sendTo(
                     new CraftingCompletePacket(this.output, this.output.stackSize),
                     (EntityPlayerMP) this.player);

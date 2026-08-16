@@ -122,31 +122,41 @@ public class RequestProvidersListPacket implements IMessage {
                 return null;
             }
 
-            Container container = player.openContainer;
-            if (!(container instanceof ContainerPatternTerm) && !(container instanceof ContainerPatternTermEx)) {
-                return null;
-            }
+            // 归队到服务端 tick 线程执行，避免 Netty IO 线程并发访问 grid/container
+            ServerTerminalHelper.scheduleServerTask(() -> handleMessage(player, message));
+            return null;
+        }
 
+        private void handleMessage(EntityPlayerMP player, RequestProvidersListPacket message) {
             try {
+                Container container = player.openContainer;
+                if (!(container instanceof ContainerPatternTerm) && !(container instanceof ContainerPatternTermEx)) {
+                    return;
+                }
+
                 IActionHost terminal = resolveTerminal(container);
                 if (terminal == null) {
-                    return null;
+                    return;
                 }
 
                 IGridNode node = terminal.getActionableNode();
                 if (node == null) {
-                    return null;
+                    return;
                 }
 
                 IGrid grid = node.getGrid();
                 if (grid == null) {
-                    return null;
+                    return;
                 }
 
                 // 检测配方池：优先使用客户端直接提供的 recipeMap
                 String recipeMap = message.directRecipeMap;
                 if (recipeMap == null || recipeMap.isEmpty()) {
-                    recipeMap = detectRecipeMap(message.recipeInputs, message.recipeOutputs);
+                    recipeMap = detectRecipeMap(
+                        message.recipeInputs,
+                        message.recipeOutputs,
+                        player.getUniqueID()
+                            .toString());
                 }
 
                 List<Long> ids = new ArrayList<Long>();
@@ -188,11 +198,33 @@ public class RequestProvidersListPacket implements IMessage {
             } catch (Throwable t) {
                 t.printStackTrace();
             }
-
-            return null;
         }
 
-        private String detectRecipeMap(ItemStack[] inputs, ItemStack[] outputs) {
+        /** 每个玩家全量反射扫描 GT 配方池的冷却时间（毫秒），防恶意连发卡服 */
+        private static final long SCAN_COOLDOWN_MS = 3000L;
+        private static final java.util.concurrent.ConcurrentHashMap<String, Long> LAST_SCAN_TIMES =
+            new java.util.concurrent.ConcurrentHashMap<String, Long>();
+        private static final java.util.concurrent.ConcurrentHashMap<String, String> LAST_RECIPE_MAPS =
+            new java.util.concurrent.ConcurrentHashMap<String, String>();
+
+        private String detectRecipeMap(ItemStack[] inputs, ItemStack[] outputs, String playerKey) {
+            if (playerKey != null) {
+                long now = System.currentTimeMillis();
+                Long last = LAST_SCAN_TIMES.get(playerKey);
+                if (last != null && now - last < SCAN_COOLDOWN_MS) {
+                    // 冷却期内复用上次结果，避免全量反射扫描
+                    return LAST_RECIPE_MAPS.get(playerKey);
+                }
+                LAST_SCAN_TIMES.put(playerKey, now);
+            }
+            String detected = scanRecipeMaps(inputs, outputs);
+            if (playerKey != null) {
+                LAST_RECIPE_MAPS.put(playerKey, detected);
+            }
+            return detected;
+        }
+
+        private String scanRecipeMaps(ItemStack[] inputs, ItemStack[] outputs) {
             if (inputs == null || inputs.length == 0) {
                 System.out.println("[APU] detectRecipeMap: no inputs");
                 return null;

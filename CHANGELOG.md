@@ -1,6 +1,6 @@
 # AE2 QoL - Changelog
 
-> 当前版本：3.0.2 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
+> 当前版本：3.1.0 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
 
 ---
 
@@ -13,7 +13,7 @@
 | NEI 样板上传/撤回/交换（样板终端 GUI 内 4 个按钮） | `client/event/GuiUploadButtonHandler` + `network/UploadPatternPacket`/`RecallPatternPacket`/`SwapPatternPacket` | ✅ 可用 |
 | Provider 列表请求 + 三策略自动上传 + 选择界面 | `network/RequestProvidersListPacket` + `network/ProvidersListS2CPacket` + `client/gui/GuiProviderSelect` | ✅ 可用 |
 | 配方映射持久化（内置 47+ 条 GT 配方池映射） | `util/RecipeNameUtil` + `common/RecipeMapNameConfig` + `client/ClientRecipeNameUtil` | ✅ 可用 |
-| **NEI 配方页 AE 角标**（编码样板图标 + 数量角标） | `mixin/nei/MixinNEIRecipeWidget` | ⚠️ **已失效**：注入点 `drawItem(PositionedStack,IIIZ)V` 在 NEI 2.8.19-GTNH 不存在，mixin 被跳过 |
+| **NEI 配方页 AE 角标**（编码样板图标 + 数量角标） | `mixin/nei/MixinNEIRecipeWidget` | ✅ 可用（3.1.0 改为注入 `draw(II)V`，功能恢复） |
 | NEI 书签面板数量/可合成角标 | `mixin/nei/MixinPanelWidgetDraw` + `client/NetworkInventoryDrawHandler` | ✅ 可用 |
 | NEI 悬浮 tooltip（青色存量 + 绿色可合成；流体容器直接显示 `mB` 流体量） | `client/nei/NetworkTooltipHandler` | ✅ 可用 |
 | NEI Shift+左键提取 / 中键合成下单 | `mixin/nei/MixinPanelWidgetClick` + `network/ExtractItemPacket`/`RequestCraftingPacket`/`CraftingResponsePacket` | ✅ 可用（3.0.1 修复服务器踢出） |
@@ -35,20 +35,20 @@
 
 | # | 风险 | 位置 | 等级 | 状态 |
 |---|---|---|---|---|
-| 1 | 合成通知 `(EntityPlayerMP)` 强转：假玩家/非 MP 玩家发起合成 → `ClassCastException` 打崩服务端线程 | `mixin/ae/MixinCraftingCPUCluster.java:90` | 🔴 | ❌ |
-| 2 | 长合成任务期间玩家下线 → `completeJob` 遍历已断线玩家并 `sendTo` → NPE + 内存滞留 | `mixin/ae/MixinCraftingCPUCluster.java:74-90` | 🔴 | ❌ |
-| 3 | 提取物品丢失：先 `MODULATE` 从网络扣物品，再塞背包；背包满/部分失败时**剩余物品凭空消失** | `network/ServerTerminalHelper.java:145-156` | 🔴 | ❌ |
-| 4 | 样板撤回无所有权校验：共享网络可**窃取/清空**其他玩家接口中的样板 | `network/RecallPatternPacket.java` | 🔴 | ❌ |
-| 5 | 全部 C2S 包在 **Netty IO 线程**执行，未 `addScheduledTask` 归队 → 并发访问 grid/container 与 tick 竞争（CME/状态不一致） | 所有 C2S Handler | 🔴 | ❌ |
-| 6 | NEI 配方页 AE 角标注入点失效，功能不工作 | `mixin/nei/MixinNEIRecipeWidget.java:39` | 🟡 | ❌ |
-| 7 | 样板上传无所有权校验：共享网络可向任意 provider 植入垃圾样板 | `network/UploadPatternPacket.java` | 🟡 | ❌ |
-| 8 | GT `RecipeMap.ALL_RECIPE_MAPS` 全量反射扫描无速率限制 → 恶意连发卡服 | `network/RequestProvidersListPacket.java:146` | 🟡 | ❌ |
-| 9 | IO 端口传输倍率 `itemsToMove *= rate` 极端配置下 long 溢出（配置上限 Integer.MAX_VALUE） | `mixin/ae/MixinTileIOPort.java:21` | 🟡 | ❌ |
-| 10 | 收发器动作无权限校验 + 无 try/catch：可对任意坐标 Tile 发动作，异常踢人 | `network/WirelessActionPacket.java` | 🟡 | ❌ |
-| 11 | 合成下单无全局 try/catch：服务端异常直接踢人 | `network/RequestCraftingPacket.java` | 🟡 | ❌ |
-| 12 | 提取包无全局 try/catch + 恶意负数 count | `network/ExtractItemPacket.java` | 🟡 | ❌ |
-| 13 | 交换样板反射字段 null → NPE；改库后未 `saveChanges` → 输出槽显示与真实内容不同步 | `network/SwapPatternPacket.java` | 🟡 | ❌ |
-| 14 | 日志刷屏：流体缓存逐条 `LOG.info` / 书签每次传输 `System.out.println` | `mixin/nei/MixinGuiMEMonitorable.java` / `mixin/nei/MixinDefaultOverlayHandler.java` | 🟢 | ⏳ 部分修复（3.0.2 已删 4 条流体日志；书签 println 待处理） |
+| 1 | 合成通知 `(EntityPlayerMP)` 强转：假玩家/非 MP 玩家发起合成 → `ClassCastException` 打崩服务端线程 | `mixin/ae/MixinCraftingCPUCluster.java:90` | 🔴 | ✅ |
+| 2 | 长合成任务期间玩家下线 → `completeJob` 遍历已断线玩家并 `sendTo` → NPE + 内存滞留 | `mixin/ae/MixinCraftingCPUCluster.java:74-90` | 🔴 | ✅ |
+| 3 | 提取物品丢失：先 `MODULATE` 从网络扣物品，再塞背包；背包满/部分失败时**剩余物品凭空消失** | `network/ServerTerminalHelper.java:145-156` | 🔴 | ✅ |
+| 4 | 样板撤回无所有权校验：共享网络可**窃取/清空**其他玩家接口中的样板 | `network/RecallPatternPacket.java` | 🔴 | ✅ |
+| 5 | 全部 C2S 包在 **Netty IO 线程**执行，未 `addScheduledTask` 归队 → 并发访问 grid/container 与 tick 竞争（CME/状态不一致） | 所有 C2S Handler | 🔴 | ✅ |
+| 6 | NEI 配方页 AE 角标注入点失效，功能不工作 | `mixin/nei/MixinNEIRecipeWidget.java:39` | 🟡 | ✅ |
+| 7 | 样板上传无所有权校验：共享网络可向任意 provider 植入垃圾样板 | `network/UploadPatternPacket.java` | 🟡 | ✅ |
+| 8 | GT `RecipeMap.ALL_RECIPE_MAPS` 全量反射扫描无速率限制 → 恶意连发卡服 | `network/RequestProvidersListPacket.java:146` | 🟡 | ✅ |
+| 9 | IO 端口传输倍率 `itemsToMove *= rate` 极端配置下 long 溢出（配置上限 Integer.MAX_VALUE） | `mixin/ae/MixinTileIOPort.java:21` | 🟡 | ✅ |
+| 10 | 收发器动作无权限校验 + 无 try/catch：可对任意坐标 Tile 发动作，异常踢人 | `network/WirelessActionPacket.java` | 🟡 | ✅ |
+| 11 | 合成下单无全局 try/catch：服务端异常直接踢人 | `network/RequestCraftingPacket.java` | 🟡 | ✅ |
+| 12 | 提取包无全局 try/catch + 恶意负数 count | `network/ExtractItemPacket.java` | 🟡 | ✅ |
+| 13 | 交换样板反射字段 null → NPE；改库后未 `saveChanges` → 输出槽显示与真实内容不同步 | `network/SwapPatternPacket.java` | 🟡 | ✅ |
+| 14 | 日志刷屏：流体缓存逐条 `LOG.info` / 书签每次传输 `System.out.println` | `mixin/nei/MixinGuiMEMonitorable.java` / `mixin/nei/MixinDefaultOverlayHandler.java` | 🟢 | ✅ |
 | 15 | 所有自定义包 `fromBytes` 解码异常 → FML 断连踢玩家 | 全部 `network/*Packet` | 🔴 | ✅ 已兜底（3.0.1 全包 try-catch） |
 | 16 | `CraftingResponsePacket` ItemStack 序列化字节错位 → `DecoderException` 踢人 | `network/CraftingResponsePacket.java` | 🔴 | ✅ 已修复（3.0.1 改 String 传输） |
 | 17 | Replan 点击 `lists.clear()` 误清 map 导致 NPE 崩溃 | `util/Replanner.java` | 🔴 | ✅ 已修复（3.0.1） |
@@ -58,12 +58,38 @@
 
 | 目标版本 | 使用 jar | 说明 |
 |---|---|---|
-| 3.0.2（当前） | `build/libs/AE2-QoL-3.0.2.jar` | 含流体直接显示 + 刷屏日志清理 |
+| 3.1.0（当前） | `build/libs/AE2-QoL-3.1.0.jar` | 全量安全加固（14 项风险修复）+ 3.0.2 全部功能 |
+| 3.0.2 | `build/libs/AE2-QoL-3.0.2.jar` | 含流体直接显示 + 刷屏日志清理 |
 | 3.0.0 | `build/libs/AE2-QoL-3.0.0.jar` | 功能最全（无限磁盘/角标/通知/Replan/IO端口），但含 B/C 已知崩溃问题 |
 | 2.14.1 | `build/libs/AE2-QoL-2.14.1.jar` | 稳定基线（无线直连完整版），无 3.x 新功能 |
 
 回退步骤：删除测试包 `mods/AE2-QoL-<旧版本>.jar`，复制目标 jar 为 `mods/AE2-QoL-<目标版本>.jar`，重启客户端。
 依赖固定：AE2 `rv3-beta-977-GTNH`、ae2fc `1.5.88-gtnh`、NEI `2.8.19-GTNH`。
+
+---
+
+## 3.1.0 - 全量安全加固（14 项已知风险修复）
+
+> 作者：wztwzt | 更新时间：2026-08-16
+
+### 修复
+
+- **A（合成通知强转崩溃）**：`MixinCraftingCPUCluster` 合成通知增加 `instanceof EntityPlayerMP` 判断后再强转，假玩家/非 MP 玩家发起合成不再 `ClassCastException` 打崩服务端线程（风险 #1）
+- **A（下线玩家合成通知）**：长合成任务期间玩家下线时跳过已断线玩家（`playerNetServerHandler == null`），不再 `sendTo` NPE + 内存滞留（风险 #2）
+- **A（提取丢物）**：`ServerTerminalHelper` 提取物品改为先 `SIMULATE` 计算、背包容量预检，再按上限实际提取；放入失败/背包满时剩余物品经 `injectItems` 归还网络，杜绝凭空消失（风险 #3）
+- **A（样板上传/撤回权限）**：`RecallPatternPacket`（EXTRACT）与 `UploadPatternPacket`（INJECT）增加 `ISecurityGrid` 所有权校验；无安全站的网络默认放行（风险 #4/#7）
+- **A（C2S 归队服务端线程）**：全部 8 个 C2S 包处理改用 GTNHLib `ServerThreadUtil` 归队到服务端 tick 线程，不再于 Netty IO 线程并发访问 grid/container（风险 #5）
+- **C（NEI 配方页 AE 角标修复）**：注入点改为 NEI 2.8.19-GTNH 实际存在的 `draw(II)V`，经 `RecipeHandlerRef` 取配方栈绘制样板图标与数量角标，功能恢复（风险 #6）
+- **C（Provider 列表限流）**：`RequestProvidersListPacket` 全量反射扫描 GT 配方池增加 3 秒/玩家冷却 + 结果缓存，防恶意连发卡服（风险 #8）
+- **C（IO 端口溢出）**：`MixinTileIOPort` 传输倍率乘法改为溢出安全计算（风险 #9）
+- **C（无线动作加固）**：`WirelessActionPacket` 全局 try/catch + 仅允许操作玩家当前打开 GUI 的收发器（风险 #10）
+- **C（合成/提取包加固）**：`RequestCraftingPacket`、`ExtractItemPacket` 全局 try/catch + 恶意负数 count 钳制（风险 #11/#12）
+- **C（样板交换加固）**：`SwapPatternPacket` 反射字段异常兜底 + 改库后 `saveChanges` 持久化（风险 #13）
+- **C（日志清理）**：移除 NEI 书签传输的 `System.out.println`（风险 #14）
+
+### 技术说明
+
+- 本环境编译用的 RFG recompiled Minecraft 中 `MinecraftServer`/`Minecraft` 均无 MCP 名 `addScheduledTask`（1.7.10 Forge 运行时亦无该方法），故服务端线程归队改用 GTNHLib `ServerThreadUtil.addScheduledTask`（其 `MixinMinecraftServer` 每 tick 排空任务队列，AE2 依赖自带 GTNHLib）；客户端 `SwapPatternPacket` 归队使用 SRG 名 `func_152344_a`
 
 ---
 

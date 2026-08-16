@@ -28,14 +28,22 @@ public class ReplanPacket implements IMessage {
 
         @Override
         public IMessage onMessage(ReplanPacket message, MessageContext ctx) {
-            EntityPlayer player = ctx.getServerHandler().playerEntity;
+            final EntityPlayer player = ctx.getServerHandler().playerEntity;
             if (player == null) {
                 return null;
             }
-            Container c = player.openContainer;
-            if (c instanceof ContainerCraftConfirm ccc) {
-                Replanner.replan(player, ccc);
-            }
+
+            // 归队到服务端 tick 线程执行，避免 Netty IO 线程并发访问 container
+            ServerTerminalHelper.scheduleServerTask(() -> {
+                try {
+                    Container c = player.openContainer;
+                    if (c instanceof ContainerCraftConfirm ccc) {
+                        Replanner.replan(player, ccc);
+                    }
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                }
+            });
             return null;
         }
     }

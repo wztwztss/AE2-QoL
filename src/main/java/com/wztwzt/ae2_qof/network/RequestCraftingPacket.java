@@ -54,53 +54,75 @@ public class RequestCraftingPacket implements IMessage {
 
         @Override
         public IMessage onMessage(RequestCraftingPacket message, MessageContext ctx) {
-            EntityPlayerMP player = ctx.getServerHandler().playerEntity;
+            final EntityPlayerMP player = ctx.getServerHandler().playerEntity;
             if (player == null) return null;
 
+            // 归队到服务端 tick 线程执行，避免 Netty IO 线程并发访问 grid/container
+            ServerTerminalHelper.scheduleServerTask(() -> {
+                try {
+                    handleMessage(player, message);
+                } catch (Throwable e) {
+                    AELog.error("[APU] Failed to process craft request: {}", e.getMessage());
+                    sendResponse(player, CraftingResponsePacket.RESULT_NOT_CRAFTABLE, itemName(message.targetStack));
+                }
+            });
+            return null;
+        }
+
+        private void handleMessage(EntityPlayerMP player, RequestCraftingPacket message) {
             WirelessTerminalGuiObject terminal = ServerTerminalHelper.resolveTerminal(player);
             if (terminal == null) {
-                return new CraftingResponsePacket((byte) 2, itemName(message.targetStack));
+                sendResponse(player, CraftingResponsePacket.RESULT_NOT_CRAFTABLE, itemName(message.targetStack));
+                return;
             }
 
             IGrid grid = terminal.getGrid();
             if (grid == null) {
-                return new CraftingResponsePacket((byte) 2, itemName(message.targetStack));
+                sendResponse(player, CraftingResponsePacket.RESULT_NOT_CRAFTABLE, itemName(message.targetStack));
+                return;
             }
 
             ICraftingGrid cg = grid.getCache(ICraftingGrid.class);
             if (cg == null) {
-                return new CraftingResponsePacket((byte) 2, itemName(message.targetStack));
+                sendResponse(player, CraftingResponsePacket.RESULT_NOT_CRAFTABLE, itemName(message.targetStack));
+                return;
             }
 
             IAEItemStack target = AEItemStack.create(message.targetStack);
             if (target == null) {
-                return new CraftingResponsePacket((byte) 2, itemName(message.targetStack));
+                sendResponse(player, CraftingResponsePacket.RESULT_NOT_CRAFTABLE, itemName(message.targetStack));
+                return;
             }
 
             // 检查是否有 pattern 可以合成该物品
             ImmutableCollection<ICraftingPatternDetails> patterns = cg.getCraftingFor(target, null, 0, player.worldObj);
             if (patterns == null || patterns.isEmpty()) {
-                return new CraftingResponsePacket((byte) 2, itemName(message.targetStack));
+                sendResponse(player, CraftingResponsePacket.RESULT_NOT_CRAFTABLE, itemName(message.targetStack));
+                return;
             }
 
             int slotIndex = ServerTerminalHelper.findTerminalSlot(player);
             if (slotIndex < 0) {
-                return new CraftingResponsePacket((byte) 2, itemName(message.targetStack));
+                sendResponse(player, CraftingResponsePacket.RESULT_NOT_CRAFTABLE, itemName(message.targetStack));
+                return;
             }
 
+            Platform.openGUI(player, null, null, GuiBridge.GUI_CRAFTING_AMOUNT, slotIndex);
+
+            if (player.openContainer instanceof ContainerCraftAmount cca) {
+                cca.setItemToCraft(target);
+                cca.detectAndSendChanges();
+                sendResponse(player, CraftingResponsePacket.RESULT_SUCCESS, itemName(message.targetStack));
+                return;
+            }
+
+            sendResponse(player, CraftingResponsePacket.RESULT_NOT_CRAFTABLE, itemName(message.targetStack));
+        }
+
+        private static void sendResponse(EntityPlayerMP player, byte result, String itemName) {
             try {
-                Platform.openGUI(player, null, null, GuiBridge.GUI_CRAFTING_AMOUNT, slotIndex);
-
-                if (player.openContainer instanceof ContainerCraftAmount cca) {
-                    cca.setItemToCraft(target);
-                    cca.detectAndSendChanges();
-                    return new CraftingResponsePacket((byte) 0, itemName(message.targetStack));
-                }
-            } catch (Throwable e) {
-                AELog.error("[APU] Failed to open craft amount GUI: {}", e.getMessage());
-            }
-
-            return new CraftingResponsePacket((byte) 2, itemName(message.targetStack));
+                ModNetwork.CHANNEL.sendTo(new CraftingResponsePacket(result, itemName), player);
+            } catch (Throwable ignored) {}
         }
     }
 

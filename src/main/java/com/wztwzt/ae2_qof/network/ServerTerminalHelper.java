@@ -16,6 +16,8 @@ import appeng.api.networking.security.IActionHost;
 import appeng.api.networking.security.PlayerSource;
 import appeng.api.storage.IMEMonitor;
 import appeng.api.storage.data.IAEItemStack;
+import com.gtnewhorizon.gtnhlib.util.ServerThreadUtil;
+
 import appeng.helpers.WirelessTerminalGuiObject;
 import appeng.util.Platform;
 
@@ -118,6 +120,14 @@ public final class ServerTerminalHelper {
      * @return 提取到的物品堆，null 表示失败
      */
     public static IAEItemStack extractItem(WirelessTerminalGuiObject terminal, IAEItemStack target, long count) {
+        return extractItem(terminal, target, count, Actionable.MODULATE);
+    }
+
+    /**
+     * 从 AE2 网络中提取物品（可指定 SIMULATE 模拟 / MODULATE 真实扣减）。
+     */
+    public static IAEItemStack extractItem(
+        WirelessTerminalGuiObject terminal, IAEItemStack target, long count, Actionable mode) {
         if (terminal == null || target == null) return null;
 
         IMEMonitor<IAEItemStack> itemInv = terminal.getItemInventory();
@@ -134,11 +144,14 @@ public final class ServerTerminalHelper {
         if (player == null) return null;
 
         PlayerSource actionSrc = new PlayerSource(player, host);
-        return Platform.poweredExtraction(terminal, itemInv, request, actionSrc, Actionable.MODULATE);
+        return Platform.poweredExtraction(terminal, itemInv, request, actionSrc, mode);
     }
 
     /**
      * 从 AE2 网络中提取物品到玩家背包（自动放入背包）。
+     * <p>
+     * 保护措施：先 SIMULATE 计算实际可提取量并预先检查背包容量，再 MODULATE 扣减；
+     * 若扣减后背包放入失败（极端竞争），将物品归还网络，避免“扣物后物品凭空消失”。
      * 
      * @return true 表示成功
      */
@@ -146,13 +159,84 @@ public final class ServerTerminalHelper {
         EntityPlayer player = getPlayer(terminal);
         if (player == null) return false;
 
-        IAEItemStack extracted = extractItem(terminal, target, count);
-        if (extracted == null) return false;
+        IAEItemStack simulated = extractItem(terminal, target, count, Actionable.SIMULATE);
+        if (simulated == null || simulated.getStackSize() <= 0) return false;
 
-        ItemStack mcStack = extracted.getItemStack();
-        if (mcStack == null) return false;
+        ItemStack mcStack = simulated.getItemStack();
+        if (mcStack == null || mcStack.getItem() == null) return false;
 
-        return player.inventory.addItemStackToInventory(mcStack);
+        long canFit = canFitInInventory(player, mcStack);
+        if (canFit <= 0) return false;
+
+        long extractCount = Math.min(simulated.getStackSize(), canFit);
+        if (extractCount <= 0) return false;
+
+        IAEItemStack extracted = extractItem(terminal, target, extractCount, Actionable.MODULATE);
+        if (extracted == null || extracted.getStackSize() <= 0) return false;
+
+        ItemStack realStack = extracted.getItemStack();
+        if (realStack == null || realStack.getItem() == null) {
+            refund(terminal, extracted);
+            return false;
+        }
+
+        if (!player.inventory.addItemStackToInventory(realStack)) {
+            // 背包放不下（极端竞争）：归还网络，避免丢物
+            refund(terminal, extracted);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 计算玩家主背包还能容纳多少该物品（考虑可堆叠槽位与空格子）。
+     */
+    private static long canFitInInventory(EntityPlayer player, ItemStack stack) {
+        long remaining = stack.stackSize;
+        int maxStack = stack.getMaxStackSize();
+        if (maxStack <= 0) {
+            maxStack = 64;
+        }
+        for (int i = 0; i < player.inventory.mainInventory.length; i++) {
+            if (remaining <= 0) {
+                break;
+            }
+            ItemStack inv = player.inventory.mainInventory[i];
+            if (inv == null) {
+                remaining -= maxStack;
+            } else if (inv.isItemEqual(stack) && ItemStack.areItemStackTagsEqual(inv, stack)) {
+                remaining -= Math.min(remaining, inv.getMaxStackSize() - inv.stackSize);
+            }
+        }
+        long canFit = stack.stackSize - remaining;
+        return canFit > 0 ? canFit : 0;
+    }
+
+    /**
+     * 将已从网络扣减但未能放入背包的物品归还网络。
+     */
+    private static void refund(WirelessTerminalGuiObject terminal, IAEItemStack extracted) {
+        try {
+            IMEMonitor<IAEItemStack> itemInv = terminal.getItemInventory();
+            IGridNode node = terminal.getActionableNode();
+            if (itemInv == null || node == null || extracted == null) return;
+            IActionHost host = (IActionHost) node.getMachine();
+            EntityPlayer player = getPlayer(terminal);
+            if (player == null) return;
+            itemInv.injectItems(extracted, Actionable.MODULATE, new PlayerSource(player, host));
+        } catch (Throwable ignored) {}
+    }
+
+    /**
+     * 将任务归队到服务端 tick 线程执行（基于 GTNHLib ServerThreadUtil）。
+     * 服务端未就绪/已停止时静默丢弃，避免 Netty IO 线程抛异常踢人。
+     */
+    public static void scheduleServerTask(Runnable task) {
+        try {
+            if (task != null) {
+                ServerThreadUtil.addScheduledTask(task);
+            }
+        } catch (Throwable ignored) {}
     }
 
     /**

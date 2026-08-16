@@ -151,7 +151,6 @@ public abstract class MixinDefaultOverlayHandler {
                 }
             }
         } catch (Throwable ignored) {}
-        System.out.println("[APU] Bookmark priorities: " + bookmarks.size());
         return bookmarks;
     }
 
