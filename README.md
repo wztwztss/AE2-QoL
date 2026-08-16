@@ -151,6 +151,25 @@ AE 合成 CPU 完成一次合成任务时，屏幕右上角弹出**合成完成�
 
 ---
 
+## 🙏 致谢
+
+本模组参考了以下模组的代码与资源，特此致谢：
+
+### 代码参考
+- **Applied Energistics 2**（AE2，`Applied-Energistics-2-Unofficial`）—— AE 网络、终端、IO 端口等大量 API 与内部逻辑
+- **AE2FluidCraft**（ae2fc，`AE2FluidCraft-Rework`）—— 流体样板、流体容器相关实现
+- **NotEnoughItems**（NEI）—— NEI 面板、tooltip、书签、叠加层相关实现
+- **NotEnoughEnergistics** —— NEI 与 AE2 联动的样板上传相关实现
+- **GTNH ExampleMod 模板** —— 工程脚手架、Mixin 配置、Gradle 构建体系
+
+### 材质参考
+- **Applied Energistics 2**（AE2）—— 强化 IO 端口等方块外观
+
+### 依赖模组
+- AE2 `rv3-beta-977-GTNH`、ae2fc `1.5.88-gtnh`、NEI `2.8.19-GTNH`、CodeChickenLib、NotEnoughEnergistics
+
+---
+
 ## 🛠 开发者信息
 
 - 构建：`./gradlew build`（详见项目内 CHANGELOG.md 的开发日志版）
