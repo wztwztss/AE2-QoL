@@ -18,7 +18,6 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -68,9 +67,11 @@ import cpw.mods.fml.common.FMLCommonHandler;
 /**
  * 合成完成通知 + 智能倍增（Smart Doubling）。
  * <p>
- * executeCrafting 被整体重写（@Overwrite）：对实现了 {@link ISmartDoublingMedium}
- * 且已启用倍增的介质，一次性提取 N 轮原料并推送，随后按 N 轮记账（产出 / 能耗 / 诊断）。
- * 其余分支保持与原版逐行一致的语义。
+ * executeCrafting 通过 {@code @Inject(HEAD, cancellable)} 仅在存在智能倍增任务时接管整个 tick：
+ * 对实现了 {@link ISmartDoublingMedium} 且已启用倍增的介质，一次性提取 N 轮原料并推送，
+ * 随后按 N 轮记账（产出 / 能耗 / 诊断）。其余分支保持与原版逐行一致的语义。
+ * 采用 HEAD 注入 + cancel 而非 @Overwrite，保留原方法字节码结构，避免与其它模组
+ * （如 ProgrammableHatches 的 MixinInstantComplete）对同一方法的注入冲突崩溃。
  */
 @Mixin(CraftingCPUCluster.class)
 public abstract class MixinCraftingCPUCluster {
@@ -459,15 +460,69 @@ public abstract class MixinCraftingCPUCluster {
     }
 
 /**
-     * 重写合成执行主循环：对启用智能倍增的介质按 N 轮提取并推送、按 N 轮记账。
+     * executeCrafting 入口：仅当存在智能倍增任务时才接管整个 tick。
+     * 采用 HEAD 注入 + cancel，保留原方法字节码结构（INVOKE 指令不变），
+     * 其它模组对同一方法的 @Inject/@At("INVOKE") 注入点仍可正常定位，避免冲突崩溃。
+     *
+     * @param eg 能源网格
+     * @param cc 合成网格缓存
+     * @param ci 回调信息（用于 cancel）
+     */
+    @Inject(method = "executeCrafting", at = @At("HEAD"), cancellable = true, remap = false)
+    private void ae2qol$onExecuteCrafting(IEnergyGrid eg, CraftingGridCache cc, CallbackInfo ci) {
+        if (this.suspended) {
+            return;
+        }
+        if (ae2qol$hasSmartDoublingTask(cc)) {
+            ae2qol$executeCraftingSmart(eg, cc);
+            ci.cancel();
+        }
+    }
+
+    /**
+     * 检测当前待执行任务中是否存在启用智能倍增的介质（剩余轮数 &gt; 1 且非 craftable 样板）。
+     *
+     * @param cc 合成网格缓存
+     * @return 是否接管本 tick
+     */
+    @Unique
+    private boolean ae2qol$hasSmartDoublingTask(CraftingGridCache cc) {
+        final Map<ICraftingPatternDetails, Object> workableTasks = ae2qol$getWorkableTasks();
+        if (workableTasks == null || workableTasks.isEmpty()) {
+            return false;
+        }
+        for (final Entry<ICraftingPatternDetails, Object> e : workableTasks.entrySet()) {
+            if (ae2qol$taskValue(e.getValue()) <= 1L) {
+                continue;
+            }
+            final ICraftingPatternDetails details = e.getKey();
+            if (details.isCraftable()) {
+                continue;
+            }
+            final List<ICraftingMedium> mediums = cc.getMediums(details);
+            if (mediums == null) {
+                continue;
+            }
+            for (final ICraftingMedium medium : mediums) {
+                if (medium instanceof ISmartDoublingMedium sdm && sdm.isSmartDoublingEnabled()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 合成执行主循环（智能倍增版）：对启用智能倍增的介质按 N 轮提取并推送、按 N 轮记账。
      * 逐轮路径与原版语义一致；涉及私有内部类（TaskProgress / finalOutput /
      * CraftingCpuDiagnostics）的字段与方法通过缓存反射访问。
+     * 仅在检测到智能倍增任务时由 {@link #ae2qol$onExecuteCrafting} 调用。
      *
-     * @author wztwzt
-     * @reason 为 ME 接口实现智能倍增（Smart Doubling）必须修改该私有主循环。
+     * @param eg 能源网格
+     * @param cc 合成网格缓存
      */
-@Overwrite(remap = false)
-    private void executeCrafting(IEnergyGrid eg, CraftingGridCache cc) {
+    @Unique
+    private void ae2qol$executeCraftingSmart(IEnergyGrid eg, CraftingGridCache cc) {
         if (this.suspended) return;
 
         Config.ensureFresh();

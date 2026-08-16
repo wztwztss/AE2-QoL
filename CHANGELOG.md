@@ -1,6 +1,6 @@
 # AE2 QoL - Changelog
 
-> 当前版本：3.3.0 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
+> 当前版本：3.3.1 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
 
 ---
 
@@ -59,12 +59,14 @@
 | 20 | 智能倍增 `@Overwrite executeCrafting` 全量重写 CPU 主循环：移植偏差导致合成丢物/倍率错账；N× 放大 long 溢出 | `mixin/ae/MixinCraftingCPUCluster.java` | 🔴 | ⏳ 已兜底（3.2.0 逐行移植 + N==1 走原版路径；提取失败自动回退 N==1；反射失败安全降级） |
 | 21 | 智能倍增 `pushPattern` 只返回成功布尔，无实际轮数反馈：部分提取/缓冲时 CPU 与接口记账不一致 → 超产或漏产 | `mixin/ae/MixinCraftingCPUCluster.java` + `MixinDualityInterface.getMaxMultiplier` | 🟡 | ⏳ 已兜底（3.2.0 提取前 SIMULATE 全槽探测 N，任一面/输入放不下则整体回退 N==1） |
 | 22 | 配置文件热加载：`settings.json` 语法错误 / 值越界 / 编辑中途被读取 → 解析失败或字段不一致 | `Config.reload` + `ensureFresh`（3.3.0 引入） | 🟢 | ⏳ 已兜底（解析失败保留上次生效值；数值越界 clamp 回默认；mtime 校验限流 1 秒一次） |
+| 23 | mixin 冲突：`@Overwrite executeCrafting` 整体替换方法体 → 其它模组（ProgrammableHatches `MixinInstantComplete`）对同一方法的 `@Inject/INVOKE` 找不到注入点崩溃 | `mixin/ae/MixinCraftingCPUCluster.java`（3.2.0 引入 @Overwrite） | 🔴 | ✅ 已修复（3.3.1 改 `@Inject(HEAD)+cancel`，保留原方法字节码结构；仅在存在智能倍增任务时接管 tick） |
 
 # 回滚指南
 
 | 目标版本 | 使用 jar | 说明 |
 |---|---|---|
-| 3.3.0（当前） | `build/libs/AE2-QoL-3.3.0.jar` | 统一配置文件 + 热加载 + `/ae2qof` OP 命令 |
+| 3.3.1（当前） | `build/libs/AE2-QoL-3.3.1.jar` | 修复与 ProgrammableHatches 的 mixin 冲突崩溃 |
+| 3.3.0 | `build/libs/AE2-QoL-3.3.0.jar` | 统一配置文件 + 热加载 + `/ae2qof` OP 命令 |
 | 3.2.0 | `build/libs/AE2-QoL-3.2.0.jar` | 智能倍增（Smart Doubling） |
 | 3.1.2 | `build/libs/AE2-QoL-3.1.2.jar` | 修复流体误判显示 bug |
 | 3.1.1 | `build/libs/AE2-QoL-3.1.1.jar` | 修复汉化乱码 |
@@ -75,6 +77,26 @@
 
 回退步骤：删除测试包 `mods/AE2-QoL-<旧版本>.jar`，复制目标 jar 为 `mods/AE2-QoL-<目标版本>.jar`，重启客户端。
 依赖固定：AE2 `rv3-beta-977-GTNH`、ae2fc `1.5.88-gtnh`、NEI `2.8.19-GTNH`。
+
+---
+
+## 3.3.1 - 修复与 ProgrammableHatches 的 mixin 冲突崩溃
+
+> 作者：wztwzt | 更新时间：2026-08-16
+
+### 修复
+
+- **崩溃根因**：智能倍增此前用 `@Overwrite` 整体重写 `CraftingCPUCluster.executeCrafting()`，替换了整个方法体。ProgrammableHatches（`programmablehatches-0.2.0p8.jar`）的 `eucrafting.MixinInstantComplete` 也要向同一方法 `@Inject`（`@At("INVOKE")`），因找不到注入点而崩溃。
+- **修复方案**：`@Overwrite` → `@Inject(method = "executeCrafting", at = @At("HEAD"), cancellable = true)` + `ci.cancel()`：
+  - HEAD 注入不改动原方法字节码结构（INVOKE 指令原样保留），其它模组对同一方法的注入点仍可正常定位 → 不再崩溃
+  - 仅当检测到**存在启用智能倍增的介质任务**（剩余轮数 > 1 且非 craftable）时才接管整个 tick（`ae2qol$hasSmartDoublingTask` 预扫描）
+  - 无智能倍增任务时完全不接管，原版 executeCrafting（含其它模组的注入代码）原样执行
+  - 接管时内部 N==1 分支仍与原版逐行等价，功能与 3.2.0 完全一致
+- **兼容性**：智能倍增开启前/关闭后与 ProgrammableHatches 共存正常；开启期间该 tick 由本模组接管，PH 的注入代码该 tick 不执行（不影响其它 tick）。
+
+### 修改文件
+
+- `mixin/ae/MixinCraftingCPUCluster.java` —— `@Overwrite` 改 `@Inject(HEAD)+cancel` + 新增 `ae2qol$hasSmartDoublingTask` 预扫描 + 原循环体移入 `ae2qol$executeCraftingSmart`（逻辑不变）
 
 ---
 
@@ -1583,3 +1605,4 @@ ME 接口的样板在 GT 机器上每次只推 1 轮材料，材料补料慢、�
 1. **智能倍增（3.2.0）**：✅ **已完成并发布**（`@Overwrite executeCrafting` 逐行移植 + 接口复选框 + 配置上限）。回归要点见风险表 #20/#21 与 3.2.0 条目
 2. **F 模块**：维持搁置；若重开，先与使用者对齐上文 4 个确认点
 3. **统一配置 + 热加载（3.3.0）**：✅ **已完成并发布**（`config/ae2_qof/settings.json` + `/ae2qof` OP 命令 + 旧 cfg 迁移）。改动面见 3.3.0 条目与风险表 #22
+4. **mixin 冲突修复（3.3.1）**：✅ **已完成并发布**（`@Overwrite executeCrafting` → `@Inject(HEAD)+cancel` + 智能倍增任务预扫描）。见 3.3.1 条目与风险表 #23

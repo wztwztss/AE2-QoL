@@ -4,6 +4,9 @@
 
 ---
 
+### 3.3.1 — 修复与 ProgrammableHatches 的 mixin 冲突崩溃（2026-08-16，作者 wztwzt）
+- **修复**：修复了与 ProgrammableHatches 一起加载时的崩溃——本模组智能倍增此前整体重写了 AE2 合成主循环方法，导致 ProgrammableHatches 的注入找不到位置。现改为只在实际用到智能倍增时才接管合成流程，其它情况完全走原版逻辑，两模组可共存
+
 ### 3.3.0 — 统一配置文件 + 热加载 + OP 管理命令（2026-08-16，作者 wztwzt）
 - **新增**：统一配置文件 `config/ae2_qof/settings.json`，可直接修改 `io_port_rate`（强化 IO 端口倍率，默认 1024）和 `smart_doubling_max_rounds`（智能倍增最大轮数，默认 64）
 - **新增**：**热加载**——直接编辑 `settings.json` 保存后约 1 秒自动生效，单机与服务端均可，无需重启
