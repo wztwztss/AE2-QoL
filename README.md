@@ -120,7 +120,7 @@ AE 合成 CPU 完成一次合成任务时，屏幕右上角弹出**合成完成�
 - 其他参考：`GT-Not-Leisure`、`GT5-Unofficial`、`GTLCore`、`Programmable-Hatches`、`ExtendedAE_Plus`、`ExampleMod1.7.10`（GTNH 模板）等
 
 ### 材质参考
-- **AE-Wireless-Transceiver** —— 无线收发器方块贴图、`de.png` / `de1.png` / `widgets.png`、无线连接器贴图（已获作者许可）
+- **AE-Wireless-Transceiver**（作者：小飘 / mynamexiaopiao；贴图作者：麦淇淋 / @麦淇淋）—— 无线收发器方块贴图、`de.png` / `de1.png` / `widgets.png`、无线连接器贴图（已获作者许可）
 - **Applied Energistics 2** —— `guis/states.png`、`gui/wireless.png` 等（CC BY-NC-SA 3.0，非商业使用）
 - **AE2Things** —— `ex_io_port*.png` 强化 IO 端口贴图、无限流体磁盘概念
 - **Minecraft 原版** —— `textures/gui/widgets.png`（运行时引用）

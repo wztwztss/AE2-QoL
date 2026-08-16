@@ -38,15 +38,17 @@
 
 | 本项目贴图 | 来源模组 | 说明 |
 |---|---|---|
-| `blocks/wireless_transceiver*.png`（含 light/top/bottom） | AE-Wireless-Transceiver | 同名 `block/wireless_transceiver*.png`（已获作者许可） |
-| `textures/de.png` / `de1.png` / `widgets.png` | AE-Wireless-Transceiver | 同名 `assets/aewireless/textures/`（已获作者许可） |
+| `blocks/wireless_transceiver*.png`（含 light/top/bottom） | AE-Wireless-Transceiver | 同名 `block/wireless_transceiver*.png`（已获作者许可；贴图作者：麦淇淋） |
+| `textures/de.png` / `de1.png` / `widgets.png` | AE-Wireless-Transceiver | 同名 `assets/aewireless/textures/`（已获作者许可；贴图作者：麦淇淋） |
 | `guis/states.png` | AE2 / AE-Wireless | AE2 原生 `guis/states.png` |
 | `gui/wireless.png` | AE2 原生 | `guis/wireless.png` |
-| `items/wireless_connect.png` / `wireless_destroy.png` / `slot/wireless_connect.png` | AE-Wireless-Transceiver | 同名（已获作者许可） |
+| `items/wireless_connect.png` / `wireless_destroy.png` / `slot/wireless_connect.png` | AE-Wireless-Transceiver | 同名（已获作者许可；贴图作者：麦淇淋） |
 | `blocks/ex_io_port*.png` | AE2Things | 同名 `blocks/ex_io_port*.png` |
 | `items/infinity_water_lava_cell.png` | AE2Things / AE2（自绘简化） | 概念对应 AE2Things `infinity_fluid_cell.png` |
 | `logo.png` | 自绘 | 模组图标 |
 | `textures/gui/widgets.png`（运行时引用） | Minecraft 原版 | `CraftingNotificationOverlay.java` 引用 |
+
+> AE-Wireless-Transceiver 相关贴图由美术 **麦淇淋（@麦淇淋）** 绘制，代码作者 **小飘（mynamexiaopiao）**；两者均已获作者许可借用。
 
 ---
 
@@ -66,7 +68,7 @@
 ## 四、版权与合规说明
 
 - **当前策略：仅存档、不开放分发**。本仓库仅用于保存历代版本与源码，供作者本人备份使用，不向他人开放自由下载、修改或再分发。在此前提下，沿用上述来源代码与贴图作为个人存档使用，版权风险大幅降低。
-- **AE-Wireless-Transceiver（无线收发器）**：其仓库原本无许可证文件（默认保留所有权利）。作者（小飘 / mynamexiaopiao）已通过 B 站沟通确认同意借用其代码与贴图。发布或开放分发前请保留作者署名，并保留本记录以备查证。
+- **AE-Wireless-Transceiver（无线收发器）**：其仓库原本无许可证文件（默认保留所有权利）。代码作者（小飘 / mynamexiaopiao）已通过 B 站沟通确认同意借用其代码与贴图；贴图/美术作者（麦淇淋 / @麦淇淋）。发布或开放分发前请保留作者与美术署名，并保留本记录以备查证。
 - **AE2Things（GPL-3.0）**：若沿用其 `ex_io_port` 贴图或代码并开放分发，衍生作品须以 GPL-3.0 开源；否则建议更换/重制。
 - **AE2 材质（CC BY-NC-SA 3.0，非商业）**：`states.png`、`gui/wireless.png` 等 AE2 来源材质仅限非商业使用，需署名并相同方式共享。
 - 建议在仓库 README 中明确声明：**本仓库仅供个人存档，暂不开放分发**，以规避来源模组的版权风险。
@@ -78,6 +80,7 @@
 
 特别感谢以下作者与项目：
 - **小飘（mynamexiaopiao / xiaopiao）** — AE-Wireless-Transceiver（无线收发器），并慷慨授权本模组借用其代码与材质
+- **麦淇淋（@麦淇淋）** — AE-Wireless-Transceiver（无线收发器）贴图/美术作者，无线收发器方块、连接器及 GUI 材质均出自其手
 - **GTNH 团队** — Applied-Energistics-2-Unofficial、NotEnoughItems、ae2fc 等
 - **asdflj** — AE2Things
 - **ProfMobius** — Waila

@@ -120,7 +120,7 @@ During development, code and textures from many other mods were referenced. Main
 - Others referenced: `GT-Not-Leisure`, `GT5-Unofficial`, `GTLCore`, `Programmable-Hatches`, `ExtendedAE_Plus`, `ExampleMod1.7.10` (GTNH template), etc.
 
 ### Texture References
-- **AE-Wireless-Transceiver** — wireless transceiver block textures, `de.png` / `de1.png` / `widgets.png`, wireless connector textures (permission granted by the author)
+- **AE-Wireless-Transceiver** (by 小飘 / mynamexiaopiao; textures by 麦淇淋 / @麦淇淋) — wireless transceiver block textures, `de.png` / `de1.png` / `widgets.png`, wireless connector textures (permission granted by the authors)
 - **Applied Energistics 2** — `guis/states.png`, `gui/wireless.png`, etc. (CC BY-NC-SA 3.0, non-commercial use)
 - **AE2Things** — `ex_io_port*.png` enhanced IO port textures, infinite fluid cell concept
 - **Minecraft vanilla** — `textures/gui/widgets.png` (runtime reference)
