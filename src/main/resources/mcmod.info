@@ -1,7 +1,7 @@
-﻿{
+{
 	"modListVersion": 2,
 	"modList": [{
-		"modid": "ae2_auto_pattern_upload",
+		"modid": "ae2_qof",
 		"name": "AE2 QoL",
 		"description": "AE2 quality-of-life enhancements: auto pattern upload, wireless access, pattern terminal improvements, and NEI inventory overlay.",
 		"version": "3.0.2",
@@ -10,7 +10,7 @@
 		"updateUrl": "",
 		"authorList": ["wztwzt"],
 		"credits": "Adapted from AE2-Auto-Pattern-Upload by GaLicn. GTNH 2.9.0-beta-1 adaptation by wztwzt.",
-		"logoFile": "assets/ae2_auto_pattern_upload/logo.png",
+		"logoFile": "assets/ae2_qof/logo.png",
 		"screenshots": [],
 		"parent": "",
 		"requiredMods": [],

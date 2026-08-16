@@ -13,7 +13,7 @@ AE2 QoL 是为 GTNH 打造的 **AE2 效率增强模组**：把 NEI 配方一键�
 2. 确认已安装依赖：AE2（`rv3-beta-977-GTNH`）、ae2fc（`1.5.88-gtnh`）、NotEnoughItems（NEI）
 3. 启动游戏。配置会生成在 `config/` 下
 
-**配置文件**（均在 `config/ae2_auto_pattern_upload/` 目录）：
+**配置文件**（均在 `config/ae2_qof/` 目录）：
 | 文件 | 作用 |
 |---|---|
 | `settings.json` | NEI 叠加层开关（`nei_overlay_enabled`，也可用 `/apu-overlay` 命令或样板终端内 OV 按钮切换） |
@@ -105,7 +105,7 @@ AE 合成 CPU 完成一次合成任务时，屏幕右上角弹出**合成完成�
 
 - 命令：`/apu-overlay`（切换 NEI 配方页/书签叠加层显示）
 - 或样板终端 GUI 中的 **OV** 按钮
-- 持久化到 `config/ae2_auto_pattern_upload/settings.json`
+- 持久化到 `config/ae2_qof/settings.json`
 
 ---
 
