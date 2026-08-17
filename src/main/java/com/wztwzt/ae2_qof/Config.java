@@ -17,19 +17,19 @@ import net.minecraftforge.common.config.Configuration;
 /**
  * 统一玩家配置文件 {@code config/ae2_qof/settings.json}：
  * - io_port_rate：强化 IO 端口传输倍率（默认 1024，1..Integer.MAX_VALUE）
- * - smart_doubling_max_rounds：智能倍增最大轮数（默认 64，1..4096）
+ * - smart_doubling_max_rounds：智能倍增最大轮数（默认 0=不限，0..Integer.MAX_VALUE；0 表示一次发配剩余全部轮数）
  * - nei_overlay_enabled：NEI 叠加层开关（默认 true）
  *
  * 支持热加载：直接编辑文件后约 1 秒内自动生效（服务端/单机均可），
- * 也可用 OP 命令 {@code /ae2qof reload} 立即重载。
+ * 也可用 OP 命令 {@code /ae2qof reload} 立即重载；游戏内可在「Mods → AE2 QoL → Config」页面修改。
  */
 public class Config {
 
     /** 强化 IO 端口传输倍率（热加载字段）。 */
     public static volatile int exIOPortTransferContentsRate = 1024;
 
-    /** 智能倍增最大轮数（热加载字段）。 */
-    public static volatile int smartDoublingMaxRounds = 64;
+    /** 智能倍增最大轮数（热加载字段）：0 = 不限（一次发配剩余全部轮数）。 */
+    public static volatile int smartDoublingMaxRounds = 0;
 
     /** NEI 叠加层开关（热加载字段）。 */
     public static volatile boolean neiOverlayEnabled = true;
@@ -111,7 +111,7 @@ public class Config {
                     }
                     value = obj.get("smart_doubling_max_rounds");
                     if (value != null && value.isJsonPrimitive()) {
-                        rounds = clamp(value.getAsInt(), 1, 4096, rounds);
+                        rounds = clamp(value.getAsInt(), 0, Integer.MAX_VALUE, rounds);
                     }
                     value = obj.get("nei_overlay_enabled");
                     if (value != null && value.isJsonPrimitive()) {
@@ -158,6 +158,61 @@ public class Config {
         }
         writeFile(exIOPortTransferContentsRate, smartDoublingMaxRounds, enabled);
         lastLoadedMtime = currentMtime();
+    }
+
+    /**
+     * 按 key/value 应用配置（供游戏内配置 GUI / 服务端 C2S 处理复用）：
+     * 校验 key 与取值范围，成功则更新字段、写回 settings.json 并刷新加载时间戳。
+     *
+     * @param key 配置键（io_port_rate / smart_doubling_max_rounds / nei_overlay_enabled）
+     * @param value 新值
+     * @return 是否成功应用
+     */
+    public static synchronized boolean applySetting(String key, String value) {
+        if (key == null || value == null) {
+            return false;
+        }
+        try {
+            switch (key) {
+                case "io_port_rate":
+                    exIOPortTransferContentsRate = clamp(Integer.parseInt(value.trim()), 1, Integer.MAX_VALUE,
+                        exIOPortTransferContentsRate);
+                    break;
+                case "smart_doubling_max_rounds":
+                    smartDoublingMaxRounds = clamp(Integer.parseInt(value.trim()), 0, Integer.MAX_VALUE,
+                        smartDoublingMaxRounds);
+                    break;
+                case "nei_overlay_enabled":
+                    neiOverlayEnabled = Boolean.parseBoolean(value.trim());
+                    break;
+                default:
+                    return false;
+            }
+        } catch (Throwable t) {
+            return false;
+        }
+        if (SETTINGS_FILE != null) {
+            writeFile(exIOPortTransferContentsRate, smartDoublingMaxRounds, neiOverlayEnabled);
+            lastLoadedMtime = currentMtime();
+        }
+        return true;
+    }
+
+    /**
+     * 全量应用配置（供 S2C 同步 / 登录同步复用）：校验后更新字段、写回 settings.json 并刷新加载时间戳。
+     *
+     * @param io io_port_rate
+     * @param rounds smart_doubling_max_rounds
+     * @param overlay nei_overlay_enabled
+     */
+    public static synchronized void applyAll(int io, int rounds, boolean overlay) {
+        exIOPortTransferContentsRate = clamp(io, 1, Integer.MAX_VALUE, exIOPortTransferContentsRate);
+        smartDoublingMaxRounds = clamp(rounds, 0, Integer.MAX_VALUE, smartDoublingMaxRounds);
+        neiOverlayEnabled = overlay;
+        if (SETTINGS_FILE != null) {
+            writeFile(exIOPortTransferContentsRate, smartDoublingMaxRounds, neiOverlayEnabled);
+            lastLoadedMtime = currentMtime();
+        }
     }
 
     private static int clamp(int value, int min, int max, int fallback) {

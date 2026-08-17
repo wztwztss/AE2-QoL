@@ -1,6 +1,6 @@
 # AE2 QoL - Changelog
 
-> 当前版本：3.3.5 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
+> 当前版本：3.3.6 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
 
 ---
 
@@ -25,8 +25,8 @@
 | 石英切割刀 Shift+右键复制方块/AE部件/GT机器名 | `client/event/KnifeNameCopyHandler` | ✅ 可用 |
 | F 键将鼠标下物品名填入终端搜索框 | `client/event/KeyInputHandler` | ✅ 可用 |
 | 叠加层开关 `/apu-overlay` + GUI OV 按钮 | `client/CommandOverlay` + `client/OverlayConfig` | ✅ 可用 |
-| **智能倍增（Smart Doubling）**：ME 接口/样板输入机复选框 + CPU 一次性推送 N 轮（上限 64 可配） | `api/ISmartDoublingMedium` + `mixin/ae/MixinDualityInterface` + `mixin/ae/MixinCraftingCPUCluster` + `mixin/ae/MixinGuiInterface`/`MixinContainerInterface` + `mixin/gt/MixinMTEHatchInputBus` | ✅ 可用（3.2.0；3.3.2 兼容 GTNotLeisure 超级接口；3.3.3 支持 GT/SNL/PH 样板输入机；3.3.5 修复实测失效） |
-| 统一配置文件 `settings.json` + 热加载 + OP 命令 `/ae2qof reload` | `Config` + `CommandAe2QoL` | ✅ 可用（3.3.0） |
+| **智能倍增（Smart Doubling）**：ME 接口/样板输入机复选框 + CPU 一次性推送 N 轮（默认不限 0=不限，可配） | `api/ISmartDoublingMedium` + `mixin/ae/MixinDualityInterface` + `mixin/ae/MixinCraftingCPUCluster` + `mixin/ae/MixinGuiInterface`/`MixinContainerInterface` + `mixin/gt/MixinMTEHatchInputBus` | ✅ 可用（3.2.0；3.3.2 兼容 GTNotLeisure 超级接口；3.3.3 支持 GT/SNL/PH 样板输入机；3.3.5 修复实测失效；3.3.6 默认 0=不限） |
+| 统一配置文件 `settings.json` + 热加载 + OP 命令 `/ae2qof reload` + 游戏内配置 GUI | `Config` + `CommandAe2QoL` + `client/gui/ConfigGuiFactory`/`GuiConfigScreen` + `network/ConfigSetPacket`/`ConfigUpdatePacket` | ✅ 可用（3.3.0；3.3.6 新增 GUI 页面） |
 | **F：样板 + 接口双页面二合一终端** | —（3.0.0 调研后搁置） | 🕐 规划中，待重新发布（详见文末） |
 
 # 已知风险登记表
@@ -65,12 +65,16 @@
 | 26 | GT/PH/GTNL ModularUI 与 GUI 按钮注入点偏移：GTNL 超级二合一接口方块/面板两形态布局相差 18px；PH 面板布局不同 → 按钮不显示或遮住翻页 | `mixin/gt/MixinMTEHatchCraftingInputMEGui.java` + `mixin/gt/MixinDualInputHatchUI.java` + `mixin/ae/MixinGuiSuperDualInterface.java`（3.3.3 引入） | 🟢 | ⏳ 已兜底（GTNL 按 host 形态动态计算偏移；注入点经 javap 逐一验证存在；配置级 `required=false`，注入失败仅警告不崩溃） |
 | 27 | 自动上传把 GT/PH 样板输入机当普通 `IInventory`（GT `IMetaTileEntity extends ISidedInventory`），通用库存排样板槽之前 → 编码样板误投进原料缓存槽，多方块收不到配方 | `network/UploadPatternPacket.java` + `network/RequestProvidersListPacket.java` + `network/RecallPatternPacket.java`（3.3.4 修复） | 🟢 | ✅ 已修复（3.3.4 改用 `IInterfaceViewable.getPatterns()` 优先定位专属样板槽；GT/PH 写入后 `markDirty` 持久化，`setInventorySlotContents` 触发机器内部重建与网络同步） |
 | 28 | 智能倍增（GT/PH 样板输入机）实测失效：功率门槛 `sum*effectiveN` 不足即 `continue` 跳过介质（无回退）→ CPU 永不推送；`getExtractItems` 严格全量匹配导致 N 静默降为 1 → 勾选后完全无效 | `mixin/ae/MixinCraftingCPUCluster.java`（3.3.3 引入） | 🔴 | ✅ 已修复（3.3.5 改 GTLCore 式：原料不足按 SIMULATE 可提取轮数钳制 N、功率不足逐轮下调 N、N==1 走原版路径、`onExecuteCrafting` try/catch 异常回退原版不拖死 CPU） |
+| 29 | 游戏内配置 C2S 包无权限校验：任何玩家可改 `settings.json`（改 `io_port_rate` 刷倍率/改倍增上限） | `network/ConfigSetPacket.java`（3.3.6 引入） | 🟡 | ✅ 已修复（服务端 `canCommandSenderUseCommand(2, "ae2qof")` OP 校验 + key/范围白名单校验，非 OP 直接丢弃） |
+| 30 | 智能倍增 0=不限后 `N` 可能等于剩余全部轮数：`remaining` 为 long 但推送侧用 int，>2^31 时 `(int)` 强转溢出为负 → 死循环/错账 | `mixin/ae/MixinCraftingCPUCluster.java` `ae2qol$smartMultiplier`（3.3.6 引入） | 🔴 | ✅ 已修复（`cap = (int) Math.min(cap, Math.min(remaining, Integer.MAX_VALUE))` 封顶；GT 仓 `getMaxMultiplier` 返回 `Integer.MAX_VALUE`，`roundSize*mid` 为 long ≤2^62 不溢出） |
+| 31 | 智能倍增 0=不限且下单 10000+ 轮时 `ae2qol$accountSmartPush` 逐轮记账：大 N 下单有可见卡顿 | `mixin/ae/MixinCraftingCPUCluster.java`（3.3.6 行为变更） | 🟢 | ⏳ 已兜底（N≤1e5 毫秒级可接受；>1e6 极端配置才需关注，按需后续优化） |
 
 # 回滚指南
 
 | 目标版本 | 使用 jar | 说明 |
 |---|---|---|
-| 3.3.5（当前） | `build/libs/AE2-QoL-3.3.5.jar` | 修复智能倍增实测失效：功率/原料不足按轮数钳制 N、PH 走 pushPatternMulti、异常回退原版 |
+| 3.3.6（当前） | `build/libs/AE2-QoL-3.3.6.jar` | 智能倍增默认 0=不限 + 游戏内配置页面（Mods → AE2 QoL → Config） |
+| 3.3.5 | `build/libs/AE2-QoL-3.3.5.jar` | 修复智能倍增实测失效：功率/原料不足按轮数钳制 N、PH 走 pushPatternMulti、异常回退原版 |
 | 3.3.4 | `build/libs/AE2-QoL-3.3.4.jar` | 修复自动上传把样板误投进 GT/PH 样板输入机原料缓存槽 |
 | 3.3.3 | `build/libs/AE2-QoL-3.3.3.jar` | 样板输入机（GT/SNL/PH）智能倍增 + 流体显示回归验证 |
 | 3.3.2 | `build/libs/AE2-QoL-3.3.2.jar` | 修复与 GTNotLeisure 的同步 id 冲突崩溃 + 超级接口智能倍增 |
@@ -86,6 +90,33 @@
 
 回退步骤：删除测试包 `mods/AE2-QoL-<旧版本>.jar`，复制目标 jar 为 `mods/AE2-QoL-<目标版本>.jar`，重启客户端。
 依赖固定：AE2 `rv3-beta-977-GTNH`、ae2fc `1.5.88-gtnh`、NEI `2.8.19-GTNH`。
+
+---
+
+## 3.3.6 - 智能倍增默认不限 + 游戏内配置页面
+
+> 作者：wztwzt | 更新时间：2026-08-17
+
+### 新增：游戏内配置页面
+
+- 「Mods → AE2 QoL → Config」打开配置页（Forge 标准 `guiFactory` 入口，`IModGuiFactory`），可编辑 `io_port_rate` / `smart_doubling_max_rounds` / `nei_overlay_enabled` 并即时应用。
+- 改动经 `ConfigSetPacket`（C2S）提交服务端：**OP 校验**（`canCommandSenderUseCommand(2)`）+ key/范围白名单校验，成功后写服务端 `settings.json` 并广播 `ConfigUpdatePacket`（S2C）同步给所有客户端（含本地写盘）。
+- 玩家登录时服务端自动推送当前配置（`PlayerLoggedInEvent`，走 FML 总线），配置页面始终显示服务端真实值。
+- 新增 `Config.applySetting(key,value)` / `Config.applyAll(io,rounds,overlay)`，与热加载/`/ae2qof reload` 共用同一套校验与写盘逻辑。
+
+### 变更：`smart_doubling_max_rounds` 默认 0 = 不限
+
+- 默认值 `64 → 0`，范围 `1..4096 → 0..Integer.MAX_VALUE`；`0` 表示一次发配**剩余全部轮数**。
+- 三个取整点同步支持 0=不限：CPU `ae2qol$smartMultiplier`（0 时跳过配置钳制）、GT 输入仓 `getMaxMultiplier`（0→`Integer.MAX_VALUE`，GT 缓冲本就无上限）、ME 接口 `getMaxMultiplier`（二分上界放宽）。
+- 防溢出：`remaining` 为 long，取 N 时以 `Math.min(remaining, Integer.MAX_VALUE)` 封顶，避免 `(int)` 强转负数。
+- 实际效果：GT 仓一次全发（受功率/CPU 缓冲钳制）；PH 仓按缓冲空间自取；ME 接口按相邻机器容量上限发配（物理极限，无法字面全发）。
+- 旧 `settings.json` 里显式写的 64 仍生效（尊重玩家设置）；仅「未配置」时默认 0。
+
+### 风险登记（本版新增）
+
+- `#29`：配置 C2S 包权限 → OP 校验已修复。
+- `#30`：0=不限后 long→int 溢出 → 封顶已修复。
+- `#31`：大 N 逐轮记账性能 → 已兜底（N≤1e5 毫秒级；极端配置才需关注）。
 
 ---
 

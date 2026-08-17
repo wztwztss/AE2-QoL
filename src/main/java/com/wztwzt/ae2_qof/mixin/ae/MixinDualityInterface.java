@@ -89,7 +89,11 @@ public abstract class MixinDualityInterface implements ISmartDoublingMedium {
         final EnumSet<ForgeDirection> directions = this.iHost.getTargets();
         final IAEStack<?>[] inputs = details.getAEInputs();
 
-        int best = Config.smartDoublingMaxRounds;
+        // 0 = 不限：以 Integer.MAX_VALUE 作为二分上界，实际仍受相邻机器容量钳制。
+        final int cfgMax = Config.smartDoublingMaxRounds;
+        final int max = cfgMax <= 0 ? Integer.MAX_VALUE : cfgMax;
+
+        int best = max;
         boolean foundAdaptor = false;
         for (final ForgeDirection s : directions) {
             final TileEntity te = w.getTileEntity(tile.xCoord + s.offsetX, tile.yCoord + s.offsetY, tile.zCoord + s.offsetZ);
@@ -114,9 +118,9 @@ public abstract class MixinDualityInterface implements ISmartDoublingMedium {
                 if (roundSize <= 0) {
                     continue;
                 }
-                // 二分查找：该面上当前能整份吞下多少轮。
+                // 二分查找：该面上当前能整份吞下多少轮。roundSize 为 long，roundSize*mid ≤ 2^62 不溢出。
                 int lo = 1;
-                int hi = Config.smartDoublingMaxRounds;
+                int hi = max;
                 while (lo < hi) {
                     final int mid = (lo + hi + 1) >>> 1;
                     final IAEStack<?> probe = input.copy().setStackSize(roundSize * mid);

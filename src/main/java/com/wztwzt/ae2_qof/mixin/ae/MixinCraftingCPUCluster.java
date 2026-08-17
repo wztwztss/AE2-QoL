@@ -451,8 +451,12 @@ public abstract class MixinCraftingCPUCluster {
         if (medium instanceof ISmartDoublingMedium sdm && sdm.isSmartDoublingEnabled() && !details.isCraftable()
                 && remaining > 1L) {
             int cap = sdm.getMaxMultiplier(details);
-            cap = Math.min(cap, Config.smartDoublingMaxRounds);
-            cap = (int) Math.min(cap, remaining);
+            // 0 = 不限：跳过配置上限，一次发配剩余全部轮数（仍受介质容量与功率钳制）。
+            if (Config.smartDoublingMaxRounds > 0) {
+                cap = Math.min(cap, Config.smartDoublingMaxRounds);
+            }
+            // 防 long 溢出：剩余轮数超过 int 范围时按 int 上限封顶。
+            cap = (int) Math.min(cap, Math.min(remaining, Integer.MAX_VALUE));
             if (cap < 1) {
                 cap = 1;
             }

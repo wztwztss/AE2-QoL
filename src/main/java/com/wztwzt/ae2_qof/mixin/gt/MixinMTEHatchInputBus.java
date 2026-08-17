@@ -47,7 +47,8 @@ public abstract class MixinMTEHatchInputBus implements ISmartDoublingMedium {
     @Override
     public int getMaxMultiplier(ICraftingPatternDetails details) {
         Config.ensureFresh();
-        return Math.max(1, Config.smartDoublingMaxRounds);
+        // 0 = 不限：GT 仓缓冲无上限，交由 CPU 侧按剩余轮数裁。
+        return Config.smartDoublingMaxRounds <= 0 ? Integer.MAX_VALUE : Math.max(1, Config.smartDoublingMaxRounds);
     }
 
     @Inject(method = "saveNBTData", at = @At("TAIL"), remap = false)

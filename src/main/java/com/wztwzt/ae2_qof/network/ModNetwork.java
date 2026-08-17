@@ -87,5 +87,9 @@ public final class ModNetwork {
             SmartDoublingTogglePacket.class,
             discriminator++,
             Side.SERVER);
+
+        CHANNEL.registerMessage(ConfigSetPacket.Handler.class, ConfigSetPacket.class, discriminator++, Side.SERVER);
+
+        CHANNEL.registerMessage(ConfigUpdatePacket.Handler.class, ConfigUpdatePacket.class, discriminator++, Side.CLIENT);
     }
 }

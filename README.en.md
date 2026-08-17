@@ -4,13 +4,13 @@
 
 An **AE2 quality-of-life enhancement mod** for GTNH: push NEI recipes into AE pattern terminals with one click, extract AE network items directly from the NEI panel, view each item's stock and craftability in the AE network, and wirelessly transmit AE networks.
 
-Compat: GTNH 2.9.0-beta-1 (Minecraft 1.7.10) | Current version: **3.3.5** | Author: wztwzt
+Compat: GTNH 2.9.0-beta-1 (Minecraft 1.7.10) | Current version: **3.3.6** | Author: wztwzt
 
 ---
 
 ## 📦 Installation
 
-1. Put `AE2-QoL-3.3.5.jar` into `.minecraft/mods/`
+1. Put `AE2-QoL-3.3.6.jar` into `.minecraft/mods/`
 2. Make sure dependencies are installed: AE2 (`rv3-beta-977-GTNH`), ae2fc (`1.5.88-gtnh`), NotEnoughItems (NEI)
 3. Launch the game. Config is generated under `config/`
 
@@ -18,7 +18,7 @@ Compat: GTNH 2.9.0-beta-1 (Minecraft 1.7.10) | Current version: **3.3.5** | Auth
 
 | File | Purpose |
 |---|---|
-| `settings.json` | Unified config: `io_port_rate` (Enhanced IO Port transfer multiplier, default 1024), `smart_doubling_max_rounds` (Smart Doubling max rounds, default 64, range 1–4096), `nei_overlay_enabled` (NEI overlay toggle) |
+| `settings.json` | Unified config: `io_port_rate` (Enhanced IO Port transfer multiplier, default 1024), `smart_doubling_max_rounds` (Smart Doubling max rounds, default 0 = unlimited, range 0–2147483647), `nei_overlay_enabled` (NEI overlay toggle) |
 | `remembered_providers.json` | Remembered "recipe → provider" mappings for auto-upload (editable, format: recipe name → provider name) |
 | `recipe_names.json` | User recipe mapping table (bundles 47+ default GTNH mappings in the jar) |
 
@@ -28,6 +28,8 @@ Compat: GTNH 2.9.0-beta-1 (Minecraft 1.7.10) | Current version: **3.3.5** | Auth
 - `/ae2qof status` — shows the currently active config values
 - On a dedicated server these require **OP** (permission level 2); in single-player / LAN the host is OP by default and can use them directly
 - `/apu-overlay` still toggles the NEI overlay (no OP required)
+
+**In-game config GUI**: pause menu → Mods → AE2 QoL → **Config**. Edit `io_port_rate` / `smart_doubling_max_rounds` (0 = unlimited) / `nei_overlay_enabled` and apply immediately (requires OP on multiplayer; changes sync to all clients and are written to the server's `settings.json`).
 
 ---
 
@@ -98,10 +100,11 @@ In AE2 / ae2fc terminal GUIs, hover over an item and press **F** → automatical
 A new **Smart Doubling** checkbox (cycle-arrow icon) on the left of the **ME Interface** GUI. When enabled, the crafting CPU pushes **N rounds** of a pattern's inputs to the interface at once, so the machine processes N rounds before refilling — no more one-round-at-a-time refills, greatly speeding up GT pipelines.
 
 - **N is determined by**: `N = min(remaining craft rounds, smart_doubling_max_rounds, extractable per input slot / per round, power-payable rounds, max rounds the machine can accept)`; GT/PH hatches are probed CPU-side, ProgrammableHatches dual-input hatches self-limit by internal buffer space (`pushPatternMulti`)
-- **Default cap**: 64 rounds (`smart_doubling_max_rounds` in `config/ae2_qof/settings.json`, range 1–4096, hot-reloaded automatically)
+- **Default cap**: 0 = unlimited (dispatch all remaining rounds at once; `smart_doubling_max_rounds` in `config/ae2_qof/settings.json`, range 0–2147483647, hot-reloaded automatically or editable via the in-game Config page)
 - **Safety boundaries** (falls back to one-round behavior, identical to vanilla): fake crafting, fluid interfaces, blocking/conditional blocking mode, interface with pending un-pushed items, GT machines that accept plans directly (`acceptsPlans`); when materials/power are short, N is **clamped to the extractable rounds** instead of abandoning the push
 - **Energy**: charged once for the actually-pushed rounds; outputs and remaining rounds are accounted for the actual count — no overproduction or item loss
 - **3.3.5**: fixed GT/PH pattern input machines being "completely ineffective + unable to dispatch items" after enabling Smart Doubling — the power gate wrongly used N× total power with no fallback (skipped the medium), and the material probe required a strict full match, silently degrading N to 1
+- **3.3.6**: `smart_doubling_max_rounds` now defaults to 0 = unlimited (GT hatches have unbounded buffer, so all remaining rounds are dispatched at once; PH hatches self-limit by buffer space, ME interfaces cap at the adjacent machine's capacity); added an in-game config page (Mods → AE2 QoL → Config) where OP changes apply instantly and sync to all clients
 
 ---
 
