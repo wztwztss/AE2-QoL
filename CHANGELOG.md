@@ -1,6 +1,6 @@
 # AE2 QoL - Changelog
 
-> 当前版本：3.3.4 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
+> 当前版本：3.3.5 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
 
 ---
 
@@ -25,7 +25,7 @@
 | 石英切割刀 Shift+右键复制方块/AE部件/GT机器名 | `client/event/KnifeNameCopyHandler` | ✅ 可用 |
 | F 键将鼠标下物品名填入终端搜索框 | `client/event/KeyInputHandler` | ✅ 可用 |
 | 叠加层开关 `/apu-overlay` + GUI OV 按钮 | `client/CommandOverlay` + `client/OverlayConfig` | ✅ 可用 |
-| **智能倍增（Smart Doubling）**：ME 接口/样板输入机复选框 + CPU 一次性推送 N 轮（上限 64 可配） | `api/ISmartDoublingMedium` + `mixin/ae/MixinDualityInterface` + `mixin/ae/MixinCraftingCPUCluster` + `mixin/ae/MixinGuiInterface`/`MixinContainerInterface` + `mixin/gt/MixinMTEHatchInputBus` | ✅ 可用（3.2.0；3.3.2 兼容 GTNotLeisure 超级接口；3.3.3 支持 GT/SNL/PH 样板输入机） |
+| **智能倍增（Smart Doubling）**：ME 接口/样板输入机复选框 + CPU 一次性推送 N 轮（上限 64 可配） | `api/ISmartDoublingMedium` + `mixin/ae/MixinDualityInterface` + `mixin/ae/MixinCraftingCPUCluster` + `mixin/ae/MixinGuiInterface`/`MixinContainerInterface` + `mixin/gt/MixinMTEHatchInputBus` | ✅ 可用（3.2.0；3.3.2 兼容 GTNotLeisure 超级接口；3.3.3 支持 GT/SNL/PH 样板输入机；3.3.5 修复实测失效） |
 | 统一配置文件 `settings.json` + 热加载 + OP 命令 `/ae2qof reload` | `Config` + `CommandAe2QoL` | ✅ 可用（3.3.0） |
 | **F：样板 + 接口双页面二合一终端** | —（3.0.0 调研后搁置） | 🕐 规划中，待重新发布（详见文末） |
 
@@ -56,20 +56,22 @@
 | 17 | Replan 点击 `lists.clear()` 误清 map 导致 NPE 崩溃 | `util/Replanner.java` | 🔴 | ✅ 已修复（3.0.1） |
 | 18 | 合成通知/IO 端口 mixin 在 `server` 列表单机不注入 → 功能无效 | `mixins.ae2_auto_pattern_upload.json` | 🟡 | ✅ 已修复（3.0.1 移入公共列表） |
 | 19 | 流体误判：`FluidRegistry.getFluid(itemDamage)` 把 damage 命中流体 ID 的物品（damage=0→水）误判为流体 → 随机物品显示 mB 量 | `client/NetworkInventoryCache.java`（3.0.2 引入，3.1.2 修复） | 🟡 | ✅ 已修复（3.1.2 改类名+NBT 识别，见 3.1.2 条目） |
-| 20 | 智能倍增 `@Overwrite executeCrafting` 全量重写 CPU 主循环：移植偏差导致合成丢物/倍率错账；N× 放大 long 溢出 | `mixin/ae/MixinCraftingCPUCluster.java` | 🔴 | ⏳ 已兜底（3.2.0 逐行移植 + N==1 走原版路径；提取失败自动回退 N==1；反射失败安全降级） |
-| 21 | 智能倍增 `pushPattern` 只返回成功布尔，无实际轮数反馈：部分提取/缓冲时 CPU 与接口记账不一致 → 超产或漏产 | `mixin/ae/MixinCraftingCPUCluster.java` + `MixinDualityInterface.getMaxMultiplier` | 🟡 | ⏳ 已兜底（3.2.0 提取前 SIMULATE 全槽探测 N，任一面/输入放不下则整体回退 N==1） |
+| 20 | 智能倍增 `@Overwrite executeCrafting` 全量重写 CPU 主循环：移植偏差导致合成丢物/倍率错账；N× 放大 long 溢出 | `mixin/ae/MixinCraftingCPUCluster.java` | 🔴 | ✅ 已修复（3.2.0 逐行移植 + N==1 走原版路径；反射失败安全降级；3.3.5 改 GTLCore 式单次推送，功率/原料不足按可提取轮数钳制 N，异常回退原版） |
+| 21 | 智能倍增 `pushPattern` 只返回成功布尔，无实际轮数反馈：部分提取/缓冲时 CPU 与接口记账不一致 → 超产或漏产 | `mixin/ae/MixinCraftingCPUCluster.java` + `MixinDualityInterface.getMaxMultiplier` | 🟡 | ✅ 已修复（3.3.5 GT/PH 按实际推送轮数记账；PH 走 `pushPatternMulti` 返回实际轮数，GT 单次 `pushPattern` 收 N× 一次记账 N 轮） |
 | 22 | 配置文件热加载：`settings.json` 语法错误 / 值越界 / 编辑中途被读取 → 解析失败或字段不一致 | `Config.reload` + `ensureFresh`（3.3.0 引入） | 🟢 | ⏳ 已兜底（解析失败保留上次生效值；数值越界 clamp 回默认；mtime 校验限流 1 秒一次） |
 | 23 | mixin 冲突：`@Overwrite executeCrafting` 整体替换方法体 → 其它模组（ProgrammableHatches `MixinInstantComplete`）对同一方法的 `@Inject/INVOKE` 找不到注入点崩溃 | `mixin/ae/MixinCraftingCPUCluster.java`（3.2.0 引入 @Overwrite） | 🔴 | ✅ 已修复（3.3.1 改 `@Inject(HEAD)+cancel`，保留原方法字节码结构；仅在存在智能倍增任务时接管 tick） |
 | 24 | `@GuiSync(19)` 与 GTNotLeisure `ContainerSuperInterface` 的 `@GuiSync(19) sidelessMode` 同 id 冲突 → `DataSynchronization.collectFields` 遍历类层级发现重复 key 抛 `IllegalStateException` 崩溃 | `mixin/ae/MixinContainerInterface.java`（3.2.0 引入 @GuiSync(19)） | 🔴 | ✅ 已修复（3.3.2 改 `@GuiSync(30)`，高于 AE2 链内 18 且不与 GTNL 19 冲突） |
 | 25 | `MixinMTEHatchInputBus` 应用于 GT 输入仓全族（普通总线/补货输入仓/样板输入仓），注入的 NBT 保存/加载方法对全类族生效 | `mixin/gt/MixinMTEHatchInputBus.java`（3.3.3 引入） | 🟢 | ⏳ 已兜底（`instanceof ICraftingProvider` 门控，仅样板输入机启用；开关默认关闭；NBT key `ae2qolSmartDoubling` 带独立前缀不冲突） |
 | 26 | GT/PH/GTNL ModularUI 与 GUI 按钮注入点偏移：GTNL 超级二合一接口方块/面板两形态布局相差 18px；PH 面板布局不同 → 按钮不显示或遮住翻页 | `mixin/gt/MixinMTEHatchCraftingInputMEGui.java` + `mixin/gt/MixinDualInputHatchUI.java` + `mixin/ae/MixinGuiSuperDualInterface.java`（3.3.3 引入） | 🟢 | ⏳ 已兜底（GTNL 按 host 形态动态计算偏移；注入点经 javap 逐一验证存在；配置级 `required=false`，注入失败仅警告不崩溃） |
 | 27 | 自动上传把 GT/PH 样板输入机当普通 `IInventory`（GT `IMetaTileEntity extends ISidedInventory`），通用库存排样板槽之前 → 编码样板误投进原料缓存槽，多方块收不到配方 | `network/UploadPatternPacket.java` + `network/RequestProvidersListPacket.java` + `network/RecallPatternPacket.java`（3.3.4 修复） | 🟢 | ✅ 已修复（3.3.4 改用 `IInterfaceViewable.getPatterns()` 优先定位专属样板槽；GT/PH 写入后 `markDirty` 持久化，`setInventorySlotContents` 触发机器内部重建与网络同步） |
+| 28 | 智能倍增（GT/PH 样板输入机）实测失效：功率门槛 `sum*effectiveN` 不足即 `continue` 跳过介质（无回退）→ CPU 永不推送；`getExtractItems` 严格全量匹配导致 N 静默降为 1 → 勾选后完全无效 | `mixin/ae/MixinCraftingCPUCluster.java`（3.3.3 引入） | 🔴 | ✅ 已修复（3.3.5 改 GTLCore 式：原料不足按 SIMULATE 可提取轮数钳制 N、功率不足逐轮下调 N、N==1 走原版路径、`onExecuteCrafting` try/catch 异常回退原版不拖死 CPU） |
 
 # 回滚指南
 
 | 目标版本 | 使用 jar | 说明 |
 |---|---|---|
-| 3.3.4（当前） | `build/libs/AE2-QoL-3.3.4.jar` | 修复自动上传把样板误投进 GT/PH 样板输入机原料缓存槽 |
+| 3.3.5（当前） | `build/libs/AE2-QoL-3.3.5.jar` | 修复智能倍增实测失效：功率/原料不足按轮数钳制 N、PH 走 pushPatternMulti、异常回退原版 |
+| 3.3.4 | `build/libs/AE2-QoL-3.3.4.jar` | 修复自动上传把样板误投进 GT/PH 样板输入机原料缓存槽 |
 | 3.3.3 | `build/libs/AE2-QoL-3.3.3.jar` | 样板输入机（GT/SNL/PH）智能倍增 + 流体显示回归验证 |
 | 3.3.2 | `build/libs/AE2-QoL-3.3.2.jar` | 修复与 GTNotLeisure 的同步 id 冲突崩溃 + 超级接口智能倍增 |
 | 3.3.1 | `build/libs/AE2-QoL-3.3.1.jar` | 修复与 ProgrammableHatches 的 mixin 冲突崩溃 |
@@ -84,6 +86,42 @@
 
 回退步骤：删除测试包 `mods/AE2-QoL-<旧版本>.jar`，复制目标 jar 为 `mods/AE2-QoL-<目标版本>.jar`，重启客户端。
 依赖固定：AE2 `rv3-beta-977-GTNH`、ae2fc `1.5.88-gtnh`、NEI `2.8.19-GTNH`。
+
+---
+
+## 3.3.5 - 修复智能倍增（GT/PH 样板输入机）实测失效
+
+> 作者：wztwzt | 更新时间：2026-08-17
+
+### 背景
+
+3.3.3 为 GT 样板输入总成/输入总线 (ME)（meta 2714/2715）与 ProgrammableHatches 双口输入仓（meta 22130/22179）新增智能倍增，但实测发现：**勾选后完全无效，且无法发配物品**（关闭后恢复原版逐轮推送）。关闭仅影响智能倍增，其余功能正常。
+
+### 根因（两个独立 Bug）
+
+- **Bug 1（无法发配）**：倍增分支的功率门槛写成 `eg.extractAEPower(sum * effectiveN, SIMULATE) < sum*effectiveN - 0.01 → continue`，无任何回退。`extractAEPower` 的 SIMULATE 只返回**部分可提取值**（`Math.min(可提取, 请求)`），一旦网络 AE 不足 N 轮总电，该介质被**永久跳过**，CPU 对整个任务零推送；原版只查 `sum`（1×），所以关闭即恢复
+- **Bug 2（无效）**：原料探测用 `getExtractItems(N×, details)` 并要求**严格全量匹配**（候选堆大小 == 请求大小），缓冲稍差一点即判定放不下，`effectiveN` 被静默降为 1——看起来勾选了但实际还是逐轮推送
+
+### 修复方案（对齐 GTLCore 的单次推送模型）
+
+- **原料钳制**：改为 `inventory.extractItems(N×, SIMULATE)` 求每个输入实际可提取轮数，`N = min(N, 各输入可提取轮数)`，**允许部分提取**（不再严格全量匹配）；取不到任何材料时 N 自然降为 1
+- **功率钳制**：`while (N>1 且功率不足 sum*N) N--`，N 降到 1 时与原版一样只查 `sum`——**不再整体跳过介质**
+- **PH 双口输入仓**：走 `pushPatternMulti(details, ci(1×), N)`，由仓内缓冲空间自取轮数并返回**实际接受轮数** `m`，CPU 按 m 记账（一次推送 m 轮）
+- **GT 及其它**：构造 N× 配方缓冲调 `pushPattern`，成功即记账 N 轮
+- **记账**：按实际轮数一次性扣电、逐轮消耗诊断会话、逐轮追加 waitingFor/输出、`executedTasks += m`、`remainingOperations--`、任务剩余轮数 `-= m`；余量 ≤ 0 时按原版清理
+- **防御**：`ae2qol$onExecuteCrafting` 全链路 try/catch，异常记日志且**不 cancel**——回退到原版 `executeCrafting` 接管本 tick，任何情况下不会拖死 CPU
+- **结构不变**：保持 `@Inject(HEAD)+cancel`，保留原方法字节码，ProgrammableHatches `MixinInstantComplete` 的注入点不受影响
+
+### 变更文件
+
+- `mixin/ae/MixinCraftingCPUCluster.java` —— 倍增分支重写：原料/功率钳制、PH `pushPatternMulti` 路径、GT N× 单次推送、按实际轮数记账（`ae2qol$accountSmartPush`）、`onExecuteCrafting` try/catch 兜底
+
+### 回归要点
+
+- GT 2714/2715：任务一次推 N 轮、机器缓冲连续消耗、任务完成时 waitingFor 平衡、不超产不丢物
+- PH 22130/22179：`pushPatternMulti` 返回轮数与缓冲一致、开启 PH `fastPatternDualInput` 配置（默认开）
+- 材料不足 / 功率不足：按可提取轮数钳制 N，禁止再出现"整体跳过介质导致零推送"
+- 关闭智能倍增后行为与 3.3.2 完全一致（走原版路径）
 
 ---
 

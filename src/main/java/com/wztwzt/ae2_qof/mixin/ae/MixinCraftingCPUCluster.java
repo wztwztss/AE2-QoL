@@ -26,6 +26,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.wztwzt.ae2_qof.Config;
+import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.api.ISmartDoublingMedium;
 import com.wztwzt.ae2_qof.network.CraftingCompletePacket;
 import com.wztwzt.ae2_qof.network.ModNetwork;
@@ -63,6 +64,7 @@ import appeng.util.ScheduledReason;
 import appeng.util.inv.MEInventoryCrafting;
 import appeng.util.item.AEItemStack;
 import cpw.mods.fml.common.FMLCommonHandler;
+import reobf.proghatches.gt.metatileentity.util.IMultiplePatternPushable;
 
 /**
  * 合成完成通知 + 智能倍增（Smart Doubling）。
@@ -473,8 +475,21 @@ public abstract class MixinCraftingCPUCluster {
         if (this.suspended) {
             return;
         }
-        if (ae2qol$hasSmartDoublingTask(cc)) {
-            ae2qol$executeCraftingSmart(eg, cc);
+        boolean smart = false;
+        try {
+            smart = ae2qol$hasSmartDoublingTask(cc);
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] hasSmartDoublingTask failed, falling back to vanilla path: " + t, t);
+            return;
+        }
+        if (smart) {
+            try {
+                ae2qol$executeCraftingSmart(eg, cc);
+            } catch (Throwable t) {
+                // 兜底：倍增路径异常时不 cancel，让原版 executeCrafting 接管本 tick，避免拖死整个 CPU。
+                MyMod.LOG.warn("[AE2QoL] Smart doubling crashed, falling back to vanilla path: " + t, t);
+                return;
+            }
             ci.cancel();
         }
     }
@@ -600,6 +615,9 @@ public abstract class MixinCraftingCPUCluster {
                     // Find a valid craftingInventory for this craft.
                     double sum = 0;
                     int effectiveN = 1;
+                    // PH 仓走 pushPatternMulti：配方缓冲只需 1×，轮数由该仓自行决定。
+                    // 在构建缓冲时确定，避免 GT 构建的 N× 缓冲被误用于 PH 多推送。
+                    boolean useMulti = false;
                     if (craftingInventory == null) {
                         final boolean craftable = details.isCraftable();
                         final List<IAEStack<?>> expandedInputs = craftable ? Arrays.asList(details.getAEInputs())
@@ -611,21 +629,38 @@ public abstract class MixinCraftingCPUCluster {
                         // 智能倍增：确定本次推送的有效轮数 N（仅非 craftable 样板）。
                         effectiveN = ae2qol$smartMultiplier(medium, details,
                                 ae2qol$taskValue(craftingEntry.getValue()));
-                        if (effectiveN > 1) {
-                            boolean allExtractable = true;
+                        if (effectiveN > 1 && medium instanceof DualityInterface di && di.isFakeCraftingMode()
+                                && ae2qol$finalOutputIsFinalPattern(details)) {
+                            // 假合成模式的最终样板走原版语义，不倍增。
+                            effectiveN = 1;
+                        }
+                        // PH 仓走 pushPatternMulti：配方缓冲只需 1×，轮数由该仓自行决定。
+                        useMulti = effectiveN > 1 && medium instanceof IMultiplePatternPushable;
+                        // 原料钳制：仅对 GT/其它（CPU 缓冲需一次取 N×）生效。
+                        // PH 仓走 pushPatternMulti 只需 CPU 1×，轮数由仓内缓冲空间决定，跳过此钳制。
+                        if (effectiveN > 1 && !useMulti) {
+                            // SIMULATE 探测，允许部分提取，不再要求严格全量匹配，避免 N 被静默降为 1。
                             for (final IAEStack<?> slotInput : expandedInputs) {
                                 if (slotInput == null) {
                                     continue;
                                 }
-                                final IAEStack<?> probe = slotInput.copy()
-                                        .setStackSize(slotInput.getStackSize() * effectiveN);
-                                if (getExtractItems(probe, details).isEmpty()) {
-                                    allExtractable = false;
+                                final long perRound = slotInput.getStackSize();
+                                if (perRound <= 0) {
+                                    continue;
+                                }
+                                @SuppressWarnings("rawtypes")
+                                final IAEStack probe = slotInput.copy()
+                                        .setStackSize(perRound * effectiveN);
+                                @SuppressWarnings("rawtypes")
+                                final IAEStack avail = this.inventory.extractItems(probe, Actionable.SIMULATE);
+                                final long rounds = avail == null ? 1L
+                                        : Math.max(1L, avail.getStackSize() / perRound);
+                                if (rounds < effectiveN) {
+                                    effectiveN = (int) rounds;
+                                }
+                                if (effectiveN <= 1) {
                                     break;
                                 }
-                            }
-                            if (!allExtractable) {
-                                effectiveN = 1;
                             }
                         }
 
@@ -638,8 +673,16 @@ public abstract class MixinCraftingCPUCluster {
                         if (medium instanceof DualityInterface) sum *= Math
                                 .pow(4.0, ((DualityInterface) medium).getInstalledUpgrades(Upgrades.PATTERN_CAPACITY));
 
-                        // check if there is enough power for N 轮
-                        final double requiredPower = sum * effectiveN;
+                        // 功率钳制：一次性付不起 N 轮的电则逐轮下调，N=1 时与原版一致。
+                        double requiredPower = sum * effectiveN;
+                        while (effectiveN > 1
+                                && eg.extractAEPower(requiredPower, Actionable.SIMULATE, PowerMultiplier.CONFIG) < requiredPower
+                                        - 0.01) {
+                            effectiveN--;
+                            requiredPower = sum * effectiveN;
+                        }
+
+                        // check if there is enough power
                         if (eg.extractAEPower(requiredPower, Actionable.SIMULATE, PowerMultiplier.CONFIG) < requiredPower
                                 - 0.01) continue;
 
@@ -652,10 +695,11 @@ public abstract class MixinCraftingCPUCluster {
                             final IAEStack<?> slotInput = expandedInputs.get(x);
                             if (slotInput != null) {
                                 found = false;
-                                final IAEStack<?> target = effectiveN > 1
-                                        ? slotInput.copy().setStackSize(slotInput.getStackSize() * effectiveN)
-                                        : slotInput;
-for (IAEStack ias : getExtractItems(target, details)) {
+                                final IAEStack<?> target = useMulti ? slotInput
+                                        : (effectiveN > 1
+                                                ? slotInput.copy().setStackSize(slotInput.getStackSize() * effectiveN)
+                                                : slotInput);
+                                for (IAEStack ias : getExtractItems(target, details)) {
                                     IAEStack tempStack = ias.copy();
                                     if (craftable && !details.isValidItemForSlot(x, tempStack, this.getWorld()))
                                         continue;
@@ -665,7 +709,8 @@ for (IAEStack ias : getExtractItems(target, details)) {
                                         found = true;
                                         craftingInventory.setInventorySlotContents(x, aes);
                                         if (effectiveN > 1 && aes.getStackSize() != target.getStackSize()) {
-                                            // 探测已保证全量可取，此处不应出现部分提取；出现则回退逐轮。
+                                            // 防御：N× 配方缓冲必须是全量，否则 GT/PH 收到不足量会出错。
+                                            // 取消本介质，物品已归还，下一 tick 重试。
                                             found = false;
                                             break;
                                         }
@@ -692,29 +737,57 @@ for (IAEStack ias : getExtractItems(target, details)) {
                         }
                     }
 
-                    if (medium.pushPattern(details, craftingInventory)) {
+                    boolean smartPushed = false;
+                    if (useMulti && effectiveN > 1) {
+                        // ---- 智能倍增（PH）：pushPatternMulti 一次接受 N 轮 ----
+                        final int[] result = ((IMultiplePatternPushable) medium).pushPatternMulti(details,
+                                craftingInventory, effectiveN);
+                        final int accepted = result == null || result.length == 0 ? 0 : Math.max(0, result[0]);
+                        if (accepted > 0) {
+                            this.somethingChanged = true;
+                            this.remainingOperations--;
+                            pushedPattern = true;
+                            smartPushed = true;
+
+                            eg.extractAEPower(sum * accepted, Actionable.MODULATE, PowerMultiplier.CONFIG);
+                            ae2qol$accountSmartPush(accepted, details, craftingEntry.getValue());
+
+                            craftingInventory = null; // hand off complete!
+                            didPatternCraft = true;
+                            this.markDirty();
+
+                            executedTasks += accepted;
+                            ae2qol$taskValueAdd(craftingEntry.getValue(), -accepted);
+                            if (ae2qol$taskValue(craftingEntry.getValue()) <= 0) {
+                                // This craftingEntry is done.
+                                break doWhileCraftingLoop;
+                            }
+
+                            if (this.remainingOperations == 0) {
+                                if (mediumListCheck != null) parallelismProvider.put(details, mediumListCheck);
+                                return;
+                            }
+
+                            final List<IAEStack<?>> condensedInputsForRetry = getExpandedCondensedInputs(details, cc);
+                            if (condensedInputsForRetry == null) {
+                                throw new IllegalStateException("Input-only pattern expansion failed");
+                            }
+                            if (!this.canCraft(details, condensedInputsForRetry)) {
+                                sr = ScheduledReason.NOT_ENOUGH_INGREDIENTS;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!smartPushed && medium.pushPattern(details, craftingInventory)) {
                         this.somethingChanged = true;
                         this.remainingOperations--;
                         pushedPattern = true;
 
                         if (effectiveN > 1) {
-                            // ---- 智能倍增：一次性完成了 N 轮 ----
+                            // ---- 智能倍增（GT/其它）：pushPattern 一次收 N 轮 ----
                             eg.extractAEPower(sum * effectiveN, Actionable.MODULATE, PowerMultiplier.CONFIG);
-                            for (int i = 0; i < effectiveN; i++) {
-                                final CraftingDiagnosticSessionId diagnosticSessionId = ae2qol$consumeCraftSession(
-                                        craftingEntry.getValue());
-                                final long outputObservedAtTick = diagnosticSessionId == null
-                                        || !this.isCraftingDiagnosticsEnabled() ? 0L : ae2qol$getServerTick();
-                                for (final IAEStack<?> outputItemStack : details.getCondensedAEOutputs()) {
-                                    if (outputObservedAtTick > 0L) {
-                                        ae2qol$recordExpectedOutput(outputItemStack, outputObservedAtTick,
-                                                diagnosticSessionId);
-                                    }
-                                    this.postChange(outputItemStack, this.machineSrc);
-                                    this.waitingFor.add(outputItemStack.copy());
-                                    this.postCraftingStatusChange(outputItemStack.copy());
-                                }
-                            }
+                            ae2qol$accountSmartPush(effectiveN, details, craftingEntry.getValue());
 
                             craftingInventory = null; // hand off complete!
                             didPatternCraft = true;
@@ -852,10 +925,34 @@ for (IAEStack ias : getExtractItems(target, details)) {
             }
 
         }
-        for (CraftUpdateListener craftingStatusListener : craftUpdateListeners) {
+for (CraftUpdateListener craftingStatusListener : craftUpdateListeners) {
             // if executed tasks is 0 for too much long time, we may need to send an alert in callback registered by
             // addon mods, like an email.
             craftingStatusListener.accept(executedTasks);
+        }
+    }
+
+    /**
+     * 智能倍增记账：按 rounds 轮逐一消耗诊断会话，并按轮追加等待输出（与原版逐轮语义一致）。
+     *
+     * @param rounds 本轮实际完成的轮数
+     * @param details 合成样板
+     * @param task 任务对象（TaskProgress）
+     */
+    @Unique
+    private void ae2qol$accountSmartPush(int rounds, ICraftingPatternDetails details, Object task) {
+        for (int i = 0; i < rounds; i++) {
+            final CraftingDiagnosticSessionId diagnosticSessionId = ae2qol$consumeCraftSession(task);
+            final long outputObservedAtTick = diagnosticSessionId == null
+                    || !this.isCraftingDiagnosticsEnabled() ? 0L : ae2qol$getServerTick();
+            for (final IAEStack<?> outputItemStack : details.getCondensedAEOutputs()) {
+                if (outputObservedAtTick > 0L) {
+                    ae2qol$recordExpectedOutput(outputItemStack, outputObservedAtTick, diagnosticSessionId);
+                }
+                this.postChange(outputItemStack, this.machineSrc);
+                this.waitingFor.add(outputItemStack.copy());
+                this.postCraftingStatusChange(outputItemStack.copy());
+            }
         }
     }
 }
