@@ -16,10 +16,10 @@ import appeng.api.networking.IMachineSet;
 import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.networking.security.IActionHost;
 import appeng.api.util.IInterfaceViewable;
-import appeng.container.implementations.ContainerPatternTerm;
-import appeng.container.implementations.ContainerPatternTermEx;
 import appeng.helpers.ICustomNameObject;
 import appeng.parts.AEBasePart;
+import com.wztwzt.ae2_qof.util.ContainerTerminalResolver;
+import com.wztwzt.ae2_qof.util.RecipeMapDetector;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
@@ -130,11 +130,11 @@ public class RequestProvidersListPacket implements IMessage {
         private void handleMessage(EntityPlayerMP player, RequestProvidersListPacket message) {
             try {
                 Container container = player.openContainer;
-                if (!(container instanceof ContainerPatternTerm) && !(container instanceof ContainerPatternTermEx)) {
+                if (container == null) {
                     return;
                 }
 
-                IActionHost terminal = resolveTerminal(container);
+                IActionHost terminal = ContainerTerminalResolver.resolveTerminal(container);
                 if (terminal == null) {
                     return;
                 }
@@ -152,7 +152,7 @@ public class RequestProvidersListPacket implements IMessage {
                 // 检测配方池：优先使用客户端直接提供的 recipeMap
                 String recipeMap = message.directRecipeMap;
                 if (recipeMap == null || recipeMap.isEmpty()) {
-                    recipeMap = detectRecipeMap(
+                    recipeMap = RecipeMapDetector.detectRecipeMap(
                         message.recipeInputs,
                         message.recipeOutputs,
                         player.getUniqueID()
@@ -198,99 +198,6 @@ public class RequestProvidersListPacket implements IMessage {
             } catch (Throwable t) {
                 t.printStackTrace();
             }
-        }
-
-        /** 每个玩家全量反射扫描 GT 配方池的冷却时间（毫秒），防恶意连发卡服 */
-        private static final long SCAN_COOLDOWN_MS = 3000L;
-        private static final java.util.concurrent.ConcurrentHashMap<String, Long> LAST_SCAN_TIMES =
-            new java.util.concurrent.ConcurrentHashMap<String, Long>();
-        private static final java.util.concurrent.ConcurrentHashMap<String, String> LAST_RECIPE_MAPS =
-            new java.util.concurrent.ConcurrentHashMap<String, String>();
-
-        private String detectRecipeMap(ItemStack[] inputs, ItemStack[] outputs, String playerKey) {
-            if (playerKey != null) {
-                long now = System.currentTimeMillis();
-                Long last = LAST_SCAN_TIMES.get(playerKey);
-                if (last != null && now - last < SCAN_COOLDOWN_MS) {
-                    // 冷却期内复用上次结果，避免全量反射扫描
-                    return LAST_RECIPE_MAPS.get(playerKey);
-                }
-                LAST_SCAN_TIMES.put(playerKey, now);
-            }
-            String detected = scanRecipeMaps(inputs, outputs);
-            if (playerKey != null) {
-                LAST_RECIPE_MAPS.put(playerKey, detected);
-            }
-            return detected;
-        }
-
-        private String scanRecipeMaps(ItemStack[] inputs, ItemStack[] outputs) {
-            if (inputs == null || inputs.length == 0) {
-                System.out.println("[APU] detectRecipeMap: no inputs");
-                return null;
-            }
-
-            System.out.println(
-                "[APU] detectRecipeMap: inputs=" + inputs.length
-                    + ", outputs="
-                    + (outputs != null ? outputs.length : 0));
-            for (int i = 0; i < inputs.length; i++) {
-                if (inputs[i] != null) {
-                    System.out
-                        .println("[APU]   input[" + i + "]=" + inputs[i].getDisplayName() + " x" + inputs[i].stackSize);
-                }
-            }
-
-            try {
-                // 通过反射获取 RecipeMap.ALL_RECIPE_MAPS
-                Class<?> recipeMapClass = Class.forName("gregtech.api.recipe.RecipeMap");
-                System.out.println("[APU] RecipeMap class found: " + recipeMapClass.getName());
-
-                java.lang.reflect.Field allMapsField = recipeMapClass.getField("ALL_RECIPE_MAPS");
-                java.util.Map<?, ?> allMaps = (java.util.Map<?, ?>) allMapsField.get(null);
-                System.out.println("[APU] ALL_RECIPE_MAPS size: " + allMaps.size());
-
-                // 获取 findRecipeQuery() 方法
-                java.lang.reflect.Method findRecipeQueryMethod = recipeMapClass.getMethod("findRecipeQuery");
-                // 获取 FindRecipeQuery 的 items() 和 find() 方法
-                Class<?> queryClass = Class.forName("gregtech.api.recipe.FindRecipeQuery");
-                java.lang.reflect.Method itemsMethod = queryClass.getMethod("items", ItemStack[].class);
-                java.lang.reflect.Method findMethod = queryClass.getMethod("find");
-
-                for (Object map : allMaps.values()) {
-                    try {
-                        // 获取配方池名字用于日志
-                        java.lang.reflect.Field nameField = recipeMapClass.getField("unlocalizedName");
-                        String mapName = (String) nameField.get(map);
-
-                        Object query = findRecipeQueryMethod.invoke(map);
-                        query = itemsMethod.invoke(query, (Object) inputs);
-                        Object recipe = findMethod.invoke(query);
-
-                        if (recipe != null) {
-                            System.out.println("[APU] Detected recipe map: " + mapName);
-                            return mapName;
-                        }
-                    } catch (Throwable t) {
-                        // 单个配方池查找失败，继续下一个
-                    }
-                }
-                System.out.println("[APU] No recipe found in any map");
-            } catch (Throwable t) {
-                System.out.println("[APU] detectRecipeMap error: " + t.getMessage());
-                t.printStackTrace();
-            }
-            return null;
-        }
-
-        private IActionHost resolveTerminal(Container container) {
-            if (container instanceof ContainerPatternTerm term) {
-                return (IActionHost) term.getPatternTerminal();
-            }
-            if (container instanceof ContainerPatternTermEx termEx) {
-                return (IActionHost) termEx.getPatternTerminal();
-            }
-            return null;
         }
 
         private int estimateEmptySlots(ICraftingProvider provider) {

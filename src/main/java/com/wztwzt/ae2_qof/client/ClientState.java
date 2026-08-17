@@ -41,6 +41,9 @@ public class ClientState {
 
     public static String pendingRecipeMap = null;
 
+    /** 二合一终端编码成功后回传的机器中文名（服务端→客户端即时反馈） */
+    public static volatile String mergedMachineName = null;
+
     public static boolean highlightEnabled = false;
     public static java.util.List<int[]> highlightPositions = new java.util.ArrayList<int[]>();
 

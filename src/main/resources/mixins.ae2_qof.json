@@ -10,6 +10,7 @@
     "ae.MixinTileIOPort",
     "ae.MixinDualityInterface",
     "ae.MixinContainerInterface",
+    "ae.MixinContainerInterfaceTerminal",
     "gt.MixinMTEHatchInputBus"
   ],
   "client": [
@@ -19,10 +20,12 @@
     "nei.MixinPanelWidgetDraw",
     "nei.MixinNEIRecipeWidget",
     "nei.MixinPanelWidgetClick",
+    "nei.MixinGuiRecipe",
     "ae.MixinGuiCraftConfirm",
     "ae.MixinGuiInterface",
     "ae.MixinGuiSuperInterface",
     "ae.MixinGuiSuperDualInterface",
+    "ae.MixinGuiInterfaceTerminal",
     "gt.MixinMTEHatchCraftingInputMEGui",
     "gt.MixinDualInputHatchUI",
     "GuiContainerAccessor"

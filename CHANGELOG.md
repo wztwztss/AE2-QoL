@@ -1,6 +1,6 @@
 # AE2 QoL - Changelog
 
-> 当前版本：3.3.7 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
+> 当前版本：3.4.0 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
 
 ---
 
@@ -27,7 +27,7 @@
 | 叠加层开关 `/apu-overlay` + GUI OV 按钮 | `client/CommandOverlay` + `client/OverlayConfig` | ✅ 可用 |
 | **智能倍增（Smart Doubling）**：ME 接口/样板输入机复选框 + CPU 一次性推送 N 轮（默认不限 0=不限，可配） | `api/ISmartDoublingMedium` + `mixin/ae/MixinDualityInterface` + `mixin/ae/MixinCraftingCPUCluster` + `mixin/ae/MixinGuiInterface`/`MixinContainerInterface` + `mixin/gt/MixinMTEHatchInputBus` | ✅ 可用（3.2.0；3.3.2 兼容 GTNotLeisure 超级接口；3.3.3 支持 GT/SNL/PH 样板输入机；3.3.5 修复实测失效；3.3.6 默认 0=不限；3.3.7 批量记账/功率 O(1) 修复大订单卡死） |
 | 统一配置文件 `settings.json` + 热加载 + OP 命令 `/ae2qof reload` + 游戏内配置 GUI（含范围显示 + 名字映射热编辑） | `Config` + `CommandAe2QoL` + `client/gui/ConfigGuiFactory`/`GuiConfigScreen` + `network/ConfigSetPacket`/`ConfigUpdatePacket` | ✅ 可用（3.3.0；3.3.6 新增 GUI 页面；3.3.7 范围显示 + 映射编辑） |
-| **F：样板 + 接口双页面二合一终端** | —（3.0.0 调研后搁置） | 🕐 规划中，待重新发布（详见文末） |
+| **F：样板 + 接口双页面二合一终端** | `mixin/ae/MixinGuiInterfaceTerminal` + `MixinContainerInterfaceTerminal` + `client/event/MergedTerminalPanelHandler` + `client/gui/MergedPanelLayout` + `network/MergedTerminalActionPacket`/`MergedTerminalResultPacket` + `api/IMergedPatternTerminal` | ✅ 可用（3.4.0） |
 
 # 已知风险登记表
 
@@ -72,12 +72,17 @@
 | 33 | O(1) 功率钳制与逐轮递减存在 <0.01 AE 的舍入差 | `mixin/ae/MixinCraftingCPUCluster.java`（3.3.7） | 🟢 | ⏳ 已兜底（保留原版 `requiredPower - 0.01` 兜底判断，行为一致） |
 | 34 | `ClientState.removeRememberedProvider` 为新增客户端方法，仅本地生效 | `client/ClientState.java`（3.3.7） | 🟢 | ✅（映射本就仅客户端使用） |
 | 35 | 配置页两页切换 `initGui` 重建控件，字段值需保留 | `client/gui/GuiConfigScreen.java`（3.3.7） | 🟢 | ✅ 已核对（TextField 对象复用，跨页不清空） |
+| 36 | 二合一终端面板混入依赖 `@Shadow` MCP 名运行时解析（GTNH 去混淆环境正常；若未来 SRG 重映射则面板失效） | `mixin/ae/MixinGuiInterfaceTerminal.java`（3.4.0） | 🟢 | ⏳ 已兜底（`required=false`，注入失败仅警告不崩溃，接口终端仍原生可用） |
+| 37 | `InterfaceTerminalList` 为私有内部类 → mouseClicked HEAD 手动分发绕过 masterList：面板按钮/槽点击与列表项点击抢先后序；面板区域与视图口右缘重叠 | `mixin/ae/MixinGuiInterfaceTerminal.java`（3.4.0） | 🟢 | ⏳ 已兜底（按钮 id 940-950 高于列表项；重叠区面板优先，迭代 1 接受，用户反馈后调整） |
+| 38 | 二合一终端上传：编码槽为空或 NBT 无 `apu:recipeMap` 且无后备时静默返回，无提示 | `client/event/MergedTerminalPanelHandler.java` `handleUpload`（3.4.0） | 🟢 | ⏳ 已兜底（不抛异常；编码后上传走 recipeMap 分支；升级走 ICraftingPatternDetails 降级） |
+| 39 | NEI 配方填充（`MixinGuiRecipe`）依赖 NEI 配方页 GUI 内部结构，NEI 版本升级可能失效（仅影响 `N` 按钮） | `mixin/nei/MixinGuiRecipe.java`（3.4.0） | 🟡 | ⏳ 已兜底（`required=false` + try/catch，失败仅 N 按钮无效，其余面板功能正常） |
+| 40 | 二合一终端编码/清空/×2/模式包无服务端权限校验，但仅作用于玩家自身打开的容器 | `network/MergedTerminalActionPacket.java`（3.4.0） | 🟢 | ⏳ 已兜底（操作限于玩家 own container，无网络侧越权面） |
 
 # 回滚指南
 
 | 目标版本 | 使用 jar | 说明 |
 |---|---|---|
-| 3.3.6（当前） | `build/libs/AE2-QoL-3.3.6.jar` | 智能倍增默认 0=不限 + 游戏内配置页面（Mods → AE2 QoL → Config） |
+| 3.4.0（当前） | `build/libs/AE2-QoL-3.4.0.jar` | 样板 + 接口二合一终端（F 模块）+ 配置页「配方参考」子页 |
 | 3.3.5 | `build/libs/AE2-QoL-3.3.5.jar` | 修复智能倍增实测失效：功率/原料不足按轮数钳制 N、PH 走 pushPatternMulti、异常回退原版 |
 | 3.3.4 | `build/libs/AE2-QoL-3.3.4.jar` | 修复自动上传把样板误投进 GT/PH 样板输入机原料缓存槽 |
 | 3.3.3 | `build/libs/AE2-QoL-3.3.3.jar` | 样板输入机（GT/SNL/PH）智能倍增 + 流体显示回归验证 |
@@ -94,6 +99,40 @@
 
 回退步骤：删除测试包 `mods/AE2-QoL-<旧版本>.jar`，复制目标 jar 为 `mods/AE2-QoL-<目标版本>.jar`，重启客户端。
 依赖固定：AE2 `rv3-beta-977-GTNH`、ae2fc `1.5.88-gtnh`、NEI `2.8.19-GTNH`。
+
+---
+
+## 3.4.0 - 样板 + 接口二合一终端（F 模块）
+
+> 作者：wztwzt | 更新时间：2026-08-17
+
+### 功能：改造原生接口终端为「样板 + 接口」二合一
+
+- **思路**：原生 AE2 接口终端（`GuiInterfaceTerminal`/`ContainerInterfaceTerminal`）已经覆盖了接口/样板总成的浏览管理；样板终端（Pattern Terminal）则负责编码。F 模块直接把**样板编码面板**嵌入接口终端 GUI 右侧，实现「看接口 + 编样板」同一界面完成。因直接改造原生 GUI，**有线接口终端与 ae2fc 无线接口终端自动共用同一面板**，无需额外配置。
+- **新增文件**：
+  - `api/IMergedPatternTerminal.java`：面板契约 + 布局常量（`PANEL_X=149`/`PANEL_Y=56`/`SLOT_SIZE=18`/`INPUT_MAX=27`/`OUTPUT_MAX=9`）+ `mergedSwapOutputs()`。
+  - `client/gui/MergedPanelLayout.java`：面板几何计算（activeInputs/activeOutputs、输出/结果/空白/编码行、4 行按钮、机器名行、`isInPanel`）。
+  - `client/event/MergedTerminalPanelHandler.java`：按钮创建/摆位/标签刷新 + 全部动作分发（上传/召回/交换/NEI 填充/编码/清空/×2/模式/替代/备份替代/OV）。
+  - `mixin/ae/MixinGuiInterfaceTerminal.java`：drawFG TAIL 画面板（GL 关 SCISSOR/DEPTH、半透明底+边框、槽格、机器名）+ mouseClicked HEAD 面板点击拦截（按钮直发 `onButtonClicked`，槽点击 windowClick）。
+  - `mixin/ae/MixinContainerInterfaceTerminal.java`：容器侧槽布局/编码/填充/输出轮换 + 新增 `mergedSwapOutputs()`。
+  - `mixin/nei/MixinGuiRecipe.java` + `client/NeiRecipeCapture.java`：从 NEI 当前配方页提取输入/输出/是否处理配方。
+  - `util/ContainerTerminalResolver.java`：容器 → `IActionHost` 统一解析（含反射读 `ContainerInterfaceTerminal.anchor` 私有字段）。
+  - `network/MergedTerminalActionPacket.java`（C2S：ENCODE/CLEAR/DOUBLE/SET_MODE/SET_SUBSTITUTE/SET_BE_SUBSTITUTE/FILL）、`network/MergedTerminalResultPacket.java`（S2C：机器名回显）。
+- **网络包共用**：`RequestProvidersListPacket`/`RecallPatternPacket`/`SwapPatternPacket` 经 `ContainerTerminalResolver` 支持合并终端容器。
+- **上传链路**：优先读已编码槽 NBT `apu:recipeMap` → `RequestProvidersListPacket(recipeMap, forceGui)` 三策略；无映射则降级 `ICraftingPatternDetails` 读输入/输出再请求。
+- **点击拦截方案**：`InterfaceTerminalList` 为私有内部类无法 @Redirect → `@Inject mouseClicked HEAD + ci.cancel()` 手动分发（按钮 → `onButtonClicked`；槽 → `playerController.windowClick`），光标持有物品时的放置由 vanilla `mouseMovedOrUp` 完成；`findSlotAt` 复用 `GuiContainerAccessor.getGuiLeft()/getGuiTop()`。
+- **@Shadow 结论**：本工程编译时 AP 对 @Shadow 报 "Cannot find target" 警告为常态（既有 mixin 同样如此且运行正常），refmap 基本为空 → 运行时类为 MCP 名，@Shadow 用正确 MCP 名即可；但 **@Shadow 不能用于继承自父类的 protected 方法**（`isPointInRegion`/`handleMouseClick` 失败），字段无此限制。
+- **1.7.10 API 修正**（编译验证）：`CraftingManager.findMatchingRecipe(InventoryCrafting, World)` 返回 `ItemStack`；`maybeStack(int)` 返回 Guava `Optional` 用 `.orNull()`；`SoundHandler` 无 `playSoundEffect` → `mc.thePlayer.playSound("random.click", 1.0F, 1.0F)`。
+- **状态同步**：客户端静态字段 `mergedCraftingMode/mergedSubstitute/mergedBeSubstitute`；InitGuiEvent.Post 打开终端时重置并清 `ClientState.mergedMachineName`；包携带状态。
+- **已知接受项**：面板 x149..203 与玩家背包右侧 2 列 / 视图口右缘重叠；鼠标拖拽/双击未完整复刻（迭代 1 可接受）；`lastClickSlot/lastClickTime/lastClickButton/ignoreMouseUp/dragSplitting` 驱动部分已接入，完整复刻留待反馈。
+
+### 新增：配置页「配方参考」子页
+
+- 反射 `gregtech.api.recipe.RecipeMap.ALL_RECIPE_MAPS` 的 `unlocalizedName` 枚举**当前整合包全部配方池 UID**（含 GT++/gtpp），经 `RecipeMapNameConfig.resolveSearchKeyword` 解析中文，支持按 UID/中文筛选；新增 `RecipeNameUtil.getAllRecipeMapUids()`。供玩家对照填写「记住的供应器」配方名。
+
+### 风险登记（本版新增）
+
+- 见「已知风险登记表」#36-#40：@Shadow MCP 名解析、列表点击 vs 面板重叠、上传无提示、NEI 捕获依赖、包无越权面。
 
 ---
 

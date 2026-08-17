@@ -19,6 +19,7 @@ import appeng.container.implementations.ContainerPatternTerm;
 import appeng.container.implementations.ContainerPatternTermEx;
 import appeng.parts.AEBasePart;
 import appeng.tile.inventory.IAEStackInventory;
+import com.wztwzt.ae2_qof.api.IMergedPatternTerminal;
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -139,6 +140,13 @@ public class SwapPatternPacket implements IMessage {
 
         private SwapPatternPacket doServerSwap(EntityPlayerMP player) {
             Container container = player.openContainer;
+
+            // 二合一接口终端：输出格是 AppEngInternalInventory，直接在服务端轮换，无需客户端回写
+            if (container instanceof IMergedPatternTerminal merged) {
+                merged.mergedSwapOutputs();
+                return null;
+            }
+
             IAEStackInventory outputs = resolveOutputs(container);
             if (outputs == null) {
                 System.out.println("[APU] Swap: outputs is null on server");

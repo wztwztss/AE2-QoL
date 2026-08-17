@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 
 import com.glodblock.github.common.item.ItemFluidEncodedPattern;
@@ -19,9 +20,9 @@ import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.networking.security.IActionHost;
 import appeng.api.networking.security.ISecurityGrid;
 import appeng.api.util.IInterfaceViewable;
-import appeng.container.implementations.ContainerPatternTerm;
-import appeng.container.implementations.ContainerPatternTermEx;
 import appeng.container.slot.SlotRestrictedInput;
+import com.wztwzt.ae2_qof.api.IMergedPatternTerminal;
+import com.wztwzt.ae2_qof.util.ContainerTerminalResolver;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
@@ -68,7 +69,7 @@ public class RecallPatternPacket implements IMessage {
         private void handleMessage(EntityPlayerMP player, RecallPatternPacket message) {
             try {
                 Container container = player.openContainer;
-                SlotRestrictedInput outputSlot = resolveOutputSlot(container);
+                Slot outputSlot = resolveOutputSlot(container);
                 if (outputSlot == null) {
                     System.out.println("[APU] Recall: outputSlot is null");
                     return;
@@ -80,7 +81,7 @@ public class RecallPatternPacket implements IMessage {
                     return;
                 }
 
-                IActionHost terminal = resolveTerminal(container);
+                IActionHost terminal = ContainerTerminalResolver.resolveTerminal(container);
                 if (terminal == null) {
                     System.out.println("[APU] Recall: terminal is null");
                     return;
@@ -214,30 +215,27 @@ public class RecallPatternPacket implements IMessage {
             return stack.getItem() instanceof ItemFluidEncodedPattern;
         }
 
-        private IActionHost resolveTerminal(Container container) {
-            if (container instanceof ContainerPatternTerm term) {
-                return (IActionHost) term.getPatternTerminal();
-            }
-            if (container instanceof ContainerPatternTermEx termEx) {
-                return (IActionHost) termEx.getPatternTerminal();
-            }
-            return null;
-        }
-
-        private SlotRestrictedInput resolveOutputSlot(Container container) {
+        private SlotRestrictedInput resolvePatternTermOutputSlot(Container container) {
             try {
-                if (container instanceof ContainerPatternTerm term) {
-                    Field field = ContainerPatternTerm.class.getDeclaredField("patternSlotOUT");
+                if (container instanceof appeng.container.implementations.ContainerPatternTerm term) {
+                    Field field = appeng.container.implementations.ContainerPatternTerm.class.getDeclaredField("patternSlotOUT");
                     field.setAccessible(true);
                     return (SlotRestrictedInput) field.get(term);
                 }
-                if (container instanceof ContainerPatternTermEx termEx) {
-                    Field field = ContainerPatternTermEx.class.getDeclaredField("patternSlotOUT");
+                if (container instanceof appeng.container.implementations.ContainerPatternTermEx termEx) {
+                    Field field = appeng.container.implementations.ContainerPatternTermEx.class.getDeclaredField("patternSlotOUT");
                     field.setAccessible(true);
                     return (SlotRestrictedInput) field.get(termEx);
                 }
             } catch (Exception ignored) {}
             return null;
+        }
+
+        private Slot resolveOutputSlot(Container container) {
+            if (container instanceof IMergedPatternTerminal merged) {
+                return merged.getMergedEncodedSlot();
+            }
+            return resolvePatternTermOutputSlot(container);
         }
     }
 }

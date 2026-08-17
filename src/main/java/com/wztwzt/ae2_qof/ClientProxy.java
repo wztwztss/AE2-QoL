@@ -8,6 +8,7 @@ import com.wztwzt.ae2_qof.client.CommandOverlay;
 import com.wztwzt.ae2_qof.client.event.GuiUploadButtonHandler;
 import com.wztwzt.ae2_qof.client.event.KeyInputHandler;
 import com.wztwzt.ae2_qof.client.event.KnifeNameCopyHandler;
+import com.wztwzt.ae2_qof.client.event.MergedTerminalPanelHandler;
 import com.wztwzt.ae2_qof.client.render.CraftingNotificationOverlay;
 import com.wztwzt.ae2_qof.client.render.RenderBlockTransceiver;
 import com.wztwzt.ae2_qof.client.render.WirelessHighlightRenderer;
@@ -26,6 +27,7 @@ public class ClientProxy extends CommonProxy {
         super.init(event);
         RenderingRegistry.registerBlockHandler(RenderBlockTransceiver.INSTANCE);
         GuiUploadButtonHandler.register();
+        MergedTerminalPanelHandler.register();
         KeyInputHandler.register();
         KnifeNameCopyHandler.register();
         MinecraftForge.EVENT_BUS.register(WirelessHighlightRenderer.INSTANCE);
