@@ -6,7 +6,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -81,6 +83,34 @@ public class ClientState {
             return true;
         }
         return false;
+    }
+
+    /**
+     * 按供应器名删除映射（供游戏内配置页面按值删除使用）。
+     *
+     * @param providerName 供应器名
+     * @return 删除条数
+     */
+    public static synchronized int removeRememberedProvidersByValue(String providerName) {
+        if (providerName == null || providerName.trim()
+            .isEmpty()) {
+            return 0;
+        }
+        String target = providerName.trim();
+        int removed = 0;
+        Iterator<Map.Entry<String, String>> it = rememberedProviders.entrySet()
+            .iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, String> e = it.next();
+            if (Objects.equals(e.getValue(), target)) {
+                it.remove();
+                removed++;
+            }
+        }
+        if (removed > 0) {
+            saveRemembered();
+        }
+        return removed;
     }
 
     private static void saveRemembered() {

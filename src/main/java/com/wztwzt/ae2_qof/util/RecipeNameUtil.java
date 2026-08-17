@@ -119,6 +119,28 @@ public final class RecipeNameUtil {
         return removed;
     }
 
+    /**
+     * 按 key 删除单条映射（供游戏内配置页面编辑列表选中项使用）。
+     *
+     * @param key 配方 key
+     * @return 是否确实删除了该项
+     */
+    public static synchronized boolean removeMappingByKey(String key) {
+        if (key == null || key.trim()
+            .isEmpty()) {
+            return false;
+        }
+        String k = key.trim();
+        if (RAW_MAPPINGS.containsKey(k)) {
+            RAW_MAPPINGS.remove(k);
+            LOOKUP_MAPPINGS.remove(normalizeKey(k));
+            saveMappings();
+            com.wztwzt.ae2_qof.common.RecipeMapNameConfig.reload();
+            return true;
+        }
+        return false;
+    }
+
     public static synchronized void reloadMappings() {
         loadMappings();
     }

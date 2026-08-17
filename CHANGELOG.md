@@ -122,6 +122,7 @@
   - **配方名映射 `recipe_names.json`**：配方 key + 中文搜索词 输入框 + 添加/更新/删除（删除按中文搜索词）。
   - **记住的供应器 `remembered_providers.json`**：配方名 + 供应器名 输入框 + 添加/更新/删除。
   - 均为**客户端本地**即时生效并热写入文件（供 NEI 叠加层 / 自动上传使用），无需 OP。
+  - **3.3.7 增补**：映射页改为「列表 + 编辑」——左右两个分类切换按钮，左侧滚动列表展示全部已有映射（点击行选中并回填编辑框），右侧编辑框 + 添加/更新、删除(选中=按 key)、删除(按值)；新增 `RecipeNameUtil.removeMappingByKey` 与 `ClientState.removeRememberedProvidersByValue`。
 
 ### 风险登记（本版新增）
 
