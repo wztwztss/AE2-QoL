@@ -54,14 +54,13 @@ public abstract class MixinMTEHatchCraftingInputMEGui {
                 () -> ((ISmartDoublingMedium) (Object) this.ae2qol$machine).isSmartDoublingEnabled(),
                 val -> ((ISmartDoublingMedium) (Object) this.ae2qol$machine).setSmartDoubling(val)).allowC2S();
 
-        return new ToggleButton().value(smartDoublingSync)
-            .overlay(GTGuiTextures.OVERLAY_BUTTON_PATTERN_OPTIMIZE)
-            .addTooltipLine(StatCollector.translateToLocal("gui.ae2_qof.smart_doubling"))
-            .addTooltip(
-                true,
-                StatCollector.translateToLocal("gui.ae2_qof.smart_doubling.hint"))
-            .addTooltip(
-                false,
-                StatCollector.translateToLocal("gui.ae2_qof.smart_doubling.hint"));
+        ToggleButton btn = new ToggleButton().value(smartDoublingSync)
+            .overlay(GTGuiTextures.OVERLAY_BUTTON_PATTERN_OPTIMIZE);
+        btn.addTooltipLine(StatCollector.translateToLocal("gui.ae2_qof.smart_doubling"));
+        // lang 中的 \n 不会被 ModularUI 自动拆行，手动按 \n 拆成多行。
+        for (String line : StatCollector.translateToLocal("gui.ae2_qof.smart_doubling.hint").split("\\n")) {
+            btn.addTooltipLine(line);
+        }
+        return btn;
     }
 }

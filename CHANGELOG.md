@@ -1,6 +1,6 @@
 # AE2 QoL - Changelog
 
-> 当前版本：3.3.6 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
+> 当前版本：3.3.7 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
 
 ---
 
@@ -25,8 +25,8 @@
 | 石英切割刀 Shift+右键复制方块/AE部件/GT机器名 | `client/event/KnifeNameCopyHandler` | ✅ 可用 |
 | F 键将鼠标下物品名填入终端搜索框 | `client/event/KeyInputHandler` | ✅ 可用 |
 | 叠加层开关 `/apu-overlay` + GUI OV 按钮 | `client/CommandOverlay` + `client/OverlayConfig` | ✅ 可用 |
-| **智能倍增（Smart Doubling）**：ME 接口/样板输入机复选框 + CPU 一次性推送 N 轮（默认不限 0=不限，可配） | `api/ISmartDoublingMedium` + `mixin/ae/MixinDualityInterface` + `mixin/ae/MixinCraftingCPUCluster` + `mixin/ae/MixinGuiInterface`/`MixinContainerInterface` + `mixin/gt/MixinMTEHatchInputBus` | ✅ 可用（3.2.0；3.3.2 兼容 GTNotLeisure 超级接口；3.3.3 支持 GT/SNL/PH 样板输入机；3.3.5 修复实测失效；3.3.6 默认 0=不限） |
-| 统一配置文件 `settings.json` + 热加载 + OP 命令 `/ae2qof reload` + 游戏内配置 GUI | `Config` + `CommandAe2QoL` + `client/gui/ConfigGuiFactory`/`GuiConfigScreen` + `network/ConfigSetPacket`/`ConfigUpdatePacket` | ✅ 可用（3.3.0；3.3.6 新增 GUI 页面） |
+| **智能倍增（Smart Doubling）**：ME 接口/样板输入机复选框 + CPU 一次性推送 N 轮（默认不限 0=不限，可配） | `api/ISmartDoublingMedium` + `mixin/ae/MixinDualityInterface` + `mixin/ae/MixinCraftingCPUCluster` + `mixin/ae/MixinGuiInterface`/`MixinContainerInterface` + `mixin/gt/MixinMTEHatchInputBus` | ✅ 可用（3.2.0；3.3.2 兼容 GTNotLeisure 超级接口；3.3.3 支持 GT/SNL/PH 样板输入机；3.3.5 修复实测失效；3.3.6 默认 0=不限；3.3.7 批量记账/功率 O(1) 修复大订单卡死） |
+| 统一配置文件 `settings.json` + 热加载 + OP 命令 `/ae2qof reload` + 游戏内配置 GUI（含范围显示 + 名字映射热编辑） | `Config` + `CommandAe2QoL` + `client/gui/ConfigGuiFactory`/`GuiConfigScreen` + `network/ConfigSetPacket`/`ConfigUpdatePacket` | ✅ 可用（3.3.0；3.3.6 新增 GUI 页面；3.3.7 范围显示 + 映射编辑） |
 | **F：样板 + 接口双页面二合一终端** | —（3.0.0 调研后搁置） | 🕐 规划中，待重新发布（详见文末） |
 
 # 已知风险登记表
@@ -67,7 +67,11 @@
 | 28 | 智能倍增（GT/PH 样板输入机）实测失效：功率门槛 `sum*effectiveN` 不足即 `continue` 跳过介质（无回退）→ CPU 永不推送；`getExtractItems` 严格全量匹配导致 N 静默降为 1 → 勾选后完全无效 | `mixin/ae/MixinCraftingCPUCluster.java`（3.3.3 引入） | 🔴 | ✅ 已修复（3.3.5 改 GTLCore 式：原料不足按 SIMULATE 可提取轮数钳制 N、功率不足逐轮下调 N、N==1 走原版路径、`onExecuteCrafting` try/catch 异常回退原版不拖死 CPU） |
 | 29 | 游戏内配置 C2S 包无权限校验：任何玩家可改 `settings.json`（改 `io_port_rate` 刷倍率/改倍增上限） | `network/ConfigSetPacket.java`（3.3.6 引入） | 🟡 | ✅ 已修复（服务端 `canCommandSenderUseCommand(2, "ae2qof")` OP 校验 + key/范围白名单校验，非 OP 直接丢弃） |
 | 30 | 智能倍增 0=不限后 `N` 可能等于剩余全部轮数：`remaining` 为 long 但推送侧用 int，>2^31 时 `(int)` 强转溢出为负 → 死循环/错账 | `mixin/ae/MixinCraftingCPUCluster.java` `ae2qol$smartMultiplier`（3.3.6 引入） | 🔴 | ✅ 已修复（`cap = (int) Math.min(cap, Math.min(remaining, Integer.MAX_VALUE))` 封顶；GT 仓 `getMaxMultiplier` 返回 `Integer.MAX_VALUE`，`roundSize*mid` 为 long ≤2^62 不溢出） |
-| 31 | 智能倍增 0=不限且下单 10000+ 轮时 `ae2qol$accountSmartPush` 逐轮记账：大 N 下单有可见卡顿 | `mixin/ae/MixinCraftingCPUCluster.java`（3.3.6 行为变更） | 🟢 | ⏳ 已兜底（N≤1e5 毫秒级可接受；>1e6 极端配置才需关注，按需后续优化） |
+| 31 | 智能倍增 0=不限且下单 10000+ 轮时 `ae2qol$accountSmartPush` 逐轮记账：大 N 下单有可见卡顿 | `mixin/ae/MixinCraftingCPUCluster.java`（3.3.6 行为变更） | 🟢 | ✅ 已修复（3.3.7 批量记账 + 功率钳制 O(1) + int 溢出钳制） |
+| 32 | 批量记账后 `waitingFor` 单栈数量可超 `Integer.MAX_VALUE`（long 承载，语义等价） | `mixin/ae/MixinCraftingCPUCluster.java`（3.3.7） | 🟢 | ⏳ 已兜底（long 算术，无溢出；AE 内部以 long 承载堆叠） |
+| 33 | O(1) 功率钳制与逐轮递减存在 <0.01 AE 的舍入差 | `mixin/ae/MixinCraftingCPUCluster.java`（3.3.7） | 🟢 | ⏳ 已兜底（保留原版 `requiredPower - 0.01` 兜底判断，行为一致） |
+| 34 | `ClientState.removeRememberedProvider` 为新增客户端方法，仅本地生效 | `client/ClientState.java`（3.3.7） | 🟢 | ✅（映射本就仅客户端使用） |
+| 35 | 配置页两页切换 `initGui` 重建控件，字段值需保留 | `client/gui/GuiConfigScreen.java`（3.3.7） | 🟢 | ✅ 已核对（TextField 对象复用，跨页不清空） |
 
 # 回滚指南
 
@@ -90,6 +94,41 @@
 
 回退步骤：删除测试包 `mods/AE2-QoL-<旧版本>.jar`，复制目标 jar 为 `mods/AE2-QoL-<目标版本>.jar`，重启客户端。
 依赖固定：AE2 `rv3-beta-977-GTNH`、ae2fc `1.5.88-gtnh`、NEI `2.8.19-GTNH`。
+
+---
+
+## 3.3.7 - 性能修复 + tooltip 换行 + 配置页范围/映射编辑
+
+> 作者：wztwzt | 更新时间：2026-08-17
+
+### 性能：超大订单卡死修复（1T 量级）
+
+- **根因 1**：功率钳制 `while (N>1 && 电不足) N--` 每次 `extractAEPower(SIMULATE)` 都是一次网格查询，N 达 2^31 量级时直接卡死。
+- **根因 2**：`ae2qol$accountSmartPush` 逐轮循环执行 N 次 `postChange` + `waitingFor.add` + `postCraftingStatusChange`，同样 O(N)。
+- **修复**：
+  - 功率钳制改 **O(1)**：一次 `extractAEPower(Double.MAX_VALUE, SIMULATE)` 取可用电总量，`available/sum` 直接算出可负担最大轮数（收敛结果与原逐轮递减一致；`< sum - 0.01` 的兜底判断保留原版语义）。
+  - 批量记账：`accountSmartPush` 改为每输出栈一次，按 `rounds` 缩放总量后各记账一次（`waitingFor` 为 `IItemList` 同物品自动合并，语义等价）；诊断会话按本次 push 消耗 **1 个**（与原版 `pushPattern` 一致，顺带修正原先逐轮多消耗会话的问题）。
+  - 原料钳制加 **int 溢出钳制**：`perRound × N ≤ Integer.MAX_VALUE`，防止 GT 缓冲 ItemStack 数量为负导致合成错乱。
+
+### 修复：PH / GT 舱室 tooltip `\n` 换行不生效
+
+- 根因：lang 值中的 `\n` 是字面量（Minecraft lang 不转义），ModularUI `addTooltipLine` 不拆行。
+- 修复：`MixinDualInputHatchUI` / `MixinMTEHatchCraftingInputMEGui` 按 `\n` split 逐行 `addTooltipLine`；同步更新 hint 文案为「默认 0=不限，可在配置页修改」（zh/en）。
+
+### 新增：配置页显示可调范围 + 名字映射热编辑
+
+- 配置页标签补范围：`io_port_rate`(1~2147483647)、`smart_doubling_max_rounds`(0=不限/1~2147483647)、`nei_overlay_enabled`(true/false)。
+- 新增第二页「名字映射编辑」：
+  - **配方名映射 `recipe_names.json`**：配方 key + 中文搜索词 输入框 + 添加/更新/删除（删除按中文搜索词）。
+  - **记住的供应器 `remembered_providers.json`**：配方名 + 供应器名 输入框 + 添加/更新/删除。
+  - 均为**客户端本地**即时生效并热写入文件（供 NEI 叠加层 / 自动上传使用），无需 OP。
+
+### 风险登记（本版新增）
+
+- `#32`：批量记账后 `waitingFor` 单栈数量可超 `Integer.MAX_VALUE`（long 承载，语义等价）→ 低。
+- `#33`：O(1) 功率钳制与逐轮递减存在 <0.01 AE 的舍入差 → 兜底判断保留，行为一致。
+- `#34`：`removeRememberedProvider` 新客户端方法仅本地生效 → 低。
+- `#35`：配置页两页切换 `initGui` 重建控件，字段值保留 → 已核对。
 
 ---
 

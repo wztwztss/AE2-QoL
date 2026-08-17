@@ -652,6 +652,14 @@ public abstract class MixinCraftingCPUCluster {
                                 if (perRound <= 0) {
                                     continue;
                                 }
+                                // 防 int 溢出：perRound × N 必须落在 int 范围内，否则 GT 缓冲
+                                // ItemStack 的 stackSize 会变为负数导致合成错乱。钳制后再构造探测栈。
+                                if ((long) perRound * effectiveN > Integer.MAX_VALUE) {
+                                    effectiveN = (int) (Integer.MAX_VALUE / perRound);
+                                }
+                                if (effectiveN <= 1) {
+                                    break;
+                                }
                                 @SuppressWarnings("rawtypes")
                                 final IAEStack probe = slotInput.copy()
                                         .setStackSize(perRound * effectiveN);
@@ -677,16 +685,28 @@ public abstract class MixinCraftingCPUCluster {
                         if (medium instanceof DualityInterface) sum *= Math
                                 .pow(4.0, ((DualityInterface) medium).getInstalledUpgrades(Upgrades.PATTERN_CAPACITY));
 
-                        // 功率钳制：一次性付不起 N 轮的电则逐轮下调，N=1 时与原版一致。
-                        double requiredPower = sum * effectiveN;
-                        while (effectiveN > 1
-                                && eg.extractAEPower(requiredPower, Actionable.SIMULATE, PowerMultiplier.CONFIG) < requiredPower
-                                        - 0.01) {
-                            effectiveN--;
-                            requiredPower = sum * effectiveN;
+                        // 功率钳制（O(1)）：一次 SIMULATE 查询可用电总量，直接算出可负担的最大轮数。
+                        // 替代原版逐轮递减的 O(N) 次网格查询 —— 大订单（如 1T 量级）下会直接卡死。
+                        if (effectiveN > 1) {
+                            final double availablePower = eg.extractAEPower(Double.MAX_VALUE,
+                                    Actionable.SIMULATE, PowerMultiplier.CONFIG);
+                            if (availablePower < sum - 0.01) {
+                                // 连一轮电都付不起：与原版 while 循环收敛后一致，跳过本介质。
+                                continue;
+                            }
+                            if (sum > 0) {
+                                int affordable = (int) (availablePower / sum);
+                                if (affordable < 1) {
+                                    affordable = 1;
+                                }
+                                if (affordable < effectiveN) {
+                                    effectiveN = affordable;
+                                }
+                            }
                         }
 
                         // check if there is enough power
+                        double requiredPower = sum * effectiveN;
                         if (eg.extractAEPower(requiredPower, Actionable.SIMULATE, PowerMultiplier.CONFIG) < requiredPower
                                 - 0.01) continue;
 
@@ -937,7 +957,10 @@ for (CraftUpdateListener craftingStatusListener : craftUpdateListeners) {
     }
 
     /**
-     * 智能倍增记账：按 rounds 轮逐一消耗诊断会话，并按轮追加等待输出（与原版逐轮语义一致）。
+     * 智能倍增记账：按 rounds 轮一次性批量记账（等待输出按数量缩放，语义与原版逐轮一致）。
+     * 原先逐轮循环对 2^31 量级 N 会执行数十亿次 IItemList.add / postChange，直接卡死游戏；
+     * waitingFor 是 IItemList（同物品自动合并），按缩放后的总量各记账一次即可。
+     * 诊断会话按本次 push 消耗 1 个（与原版 pushPattern 消耗一致，而非逐轮消耗）。
      *
      * @param rounds 本轮实际完成的轮数
      * @param details 合成样板
@@ -945,18 +968,21 @@ for (CraftUpdateListener craftingStatusListener : craftUpdateListeners) {
      */
     @Unique
     private void ae2qol$accountSmartPush(int rounds, ICraftingPatternDetails details, Object task) {
-        for (int i = 0; i < rounds; i++) {
-            final CraftingDiagnosticSessionId diagnosticSessionId = ae2qol$consumeCraftSession(task);
-            final long outputObservedAtTick = diagnosticSessionId == null
-                    || !this.isCraftingDiagnosticsEnabled() ? 0L : ae2qol$getServerTick();
-            for (final IAEStack<?> outputItemStack : details.getCondensedAEOutputs()) {
-                if (outputObservedAtTick > 0L) {
-                    ae2qol$recordExpectedOutput(outputItemStack, outputObservedAtTick, diagnosticSessionId);
-                }
-                this.postChange(outputItemStack, this.machineSrc);
-                this.waitingFor.add(outputItemStack.copy());
-                this.postCraftingStatusChange(outputItemStack.copy());
+        if (rounds <= 0) {
+            return;
+        }
+        final CraftingDiagnosticSessionId diagnosticSessionId = ae2qol$consumeCraftSession(task);
+        final long outputObservedAtTick = diagnosticSessionId == null
+                || !this.isCraftingDiagnosticsEnabled() ? 0L : ae2qol$getServerTick();
+        for (final IAEStack<?> outputItemStack : details.getCondensedAEOutputs()) {
+            final IAEStack<?> total = outputItemStack.copy()
+                    .setStackSize(outputItemStack.getStackSize() * (long) rounds);
+            if (outputObservedAtTick > 0L) {
+                ae2qol$recordExpectedOutput(outputItemStack, outputObservedAtTick, diagnosticSessionId);
             }
+            this.postChange(total, this.machineSrc);
+            this.waitingFor.add(total);
+            this.postCraftingStatusChange(total);
         }
     }
 }

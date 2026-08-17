@@ -4,13 +4,13 @@
 
 An **AE2 quality-of-life enhancement mod** for GTNH: push NEI recipes into AE pattern terminals with one click, extract AE network items directly from the NEI panel, view each item's stock and craftability in the AE network, and wirelessly transmit AE networks.
 
-Compat: GTNH 2.9.0-beta-1 (Minecraft 1.7.10) | Current version: **3.3.6** | Author: wztwzt
+Compat: GTNH 2.9.0-beta-1 (Minecraft 1.7.10) | Current version: **3.3.7** | Author: wztwzt
 
 ---
 
 ## 📦 Installation
 
-1. Put `AE2-QoL-3.3.6.jar` into `.minecraft/mods/`
+1. Put `AE2-QoL-3.3.7.jar` into `.minecraft/mods/`
 2. Make sure dependencies are installed: AE2 (`rv3-beta-977-GTNH`), ae2fc (`1.5.88-gtnh`), NotEnoughItems (NEI)
 3. Launch the game. Config is generated under `config/`
 
@@ -105,6 +105,7 @@ A new **Smart Doubling** checkbox (cycle-arrow icon) on the left of the **ME Int
 - **Energy**: charged once for the actually-pushed rounds; outputs and remaining rounds are accounted for the actual count — no overproduction or item loss
 - **3.3.5**: fixed GT/PH pattern input machines being "completely ineffective + unable to dispatch items" after enabling Smart Doubling — the power gate wrongly used N× total power with no fallback (skipped the medium), and the material probe required a strict full match, silently degrading N to 1
 - **3.3.6**: `smart_doubling_max_rounds` now defaults to 0 = unlimited (GT hatches have unbounded buffer, so all remaining rounds are dispatched at once; PH hatches self-limit by buffer space, ME interfaces cap at the adjacent machine's capacity); added an in-game config page (Mods → AE2 QoL → Config) where OP changes apply instantly and sync to all clients
+- **3.3.7**: performance fix — huge orders (e.g. 1T) no longer freeze the game (O(1) power clamp via a single query, batched waiting-output accounting, int-overflow clamp); fixed PH/GT hatch tooltip line breaks; the Config page now shows each setting's range and gained a "Mapping editing" page (recipe name mapping `recipe_names.json` and remembered providers `remembered_providers.json` are both editable client-side with hot disk-write)
 
 ---
 

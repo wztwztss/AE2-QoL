@@ -64,6 +64,25 @@ public class ClientState {
         return recipeMap != null ? rememberedProviders.get(recipeMap) : null;
     }
 
+    /**
+     * 删除"配方 → 供应器名"映射（供游戏内配置页面热修改）。
+     *
+     * @param recipeMap 配方名 key
+     * @return 是否确实删除了某项
+     */
+    public static synchronized boolean removeRememberedProvider(String recipeMap) {
+        if (recipeMap == null || recipeMap.trim()
+            .isEmpty()) {
+            return false;
+        }
+        String key = recipeMap.trim();
+        if (rememberedProviders.remove(key) != null) {
+            saveRemembered();
+            return true;
+        }
+        return false;
+    }
+
     private static void saveRemembered() {
         try {
             JsonObject root = new JsonObject();

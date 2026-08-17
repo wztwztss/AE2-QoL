@@ -45,15 +45,14 @@ public abstract class MixinDualInputHatchUI {
 
     @Unique
     private ToggleButton ae2qol$createSmartDoublingToggle(BooleanSyncValue smartDoublingSync) {
-        return new ToggleButton().value(smartDoublingSync)
+        ToggleButton btn = new ToggleButton().value(smartDoublingSync)
             .overlay(GTGuiTextures.OVERLAY_BUTTON_PATTERN_OPTIMIZE)
-            .addTooltipLine(StatCollector.translateToLocal("gui.ae2_qof.smart_doubling"))
-            .addTooltip(
-                true,
-                StatCollector.translateToLocal("gui.ae2_qof.smart_doubling.hint"))
-            .addTooltip(
-                false,
-                StatCollector.translateToLocal("gui.ae2_qof.smart_doubling.hint"))
             .pos(7, 62);
+        btn.addTooltipLine(StatCollector.translateToLocal("gui.ae2_qof.smart_doubling"));
+        // lang 中的 \n 不会被 ModularUI 自动拆行，手动按 \n 拆成多行。
+        for (String line : StatCollector.translateToLocal("gui.ae2_qof.smart_doubling.hint").split("\\n")) {
+            btn.addTooltipLine(line);
+        }
+        return btn;
     }
 }
