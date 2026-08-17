@@ -6,9 +6,11 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -321,6 +323,39 @@ public final class RecipeNameUtil {
             return mapped;
         }
         return toDisplayString(path);
+    }
+
+    /**
+     * 枚举当前环境中全部 GT 配方池 UID（如 gt.recipe.compressor、gtpp.recipe.multiblockrockbreaker）。
+     * 与自动上传的 scanRecipeMaps 同源：反射 {@code gregtech.api.recipe.RecipeMap.ALL_RECIPE_MAPS} 的
+     * {@code unlocalizedName}。用于游戏内配置页「配方参考」子页，能覆盖整合包内的全部机器类型。
+     * GT 缺失或反射失败时返回空列表。
+     *
+     * @return 去重排序后的配方池 UID 列表
+     */
+    public static synchronized List<String> getAllRecipeMapUids() {
+        java.util.Set<String> uids = new java.util.TreeSet<String>();
+        try {
+            Class<?> recipeMapClass = Class.forName("gregtech.api.recipe.RecipeMap");
+            java.lang.reflect.Field allMapsField = recipeMapClass.getField("ALL_RECIPE_MAPS");
+            java.util.Map<?, ?> allMaps = (java.util.Map<?, ?>) allMapsField.get(null);
+            if (allMaps == null) {
+                return Collections.emptyList();
+            }
+            java.lang.reflect.Field nameField = recipeMapClass.getField("unlocalizedName");
+            for (Object map : allMaps.values()) {
+                try {
+                    String name = (String) nameField.get(map);
+                    if (name != null && !name.trim()
+                        .isEmpty()) {
+                        uids.add(name.trim());
+                    }
+                } catch (Throwable ignored) {}
+            }
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[APU] Failed to enumerate GT recipe maps: " + t.getMessage());
+        }
+        return new ArrayList<String>(uids);
     }
 
     public static String deriveSearchKeyFromClassName(Object recipeObj) {

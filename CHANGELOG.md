@@ -123,6 +123,7 @@
   - **记住的供应器 `remembered_providers.json`**：配方名 + 供应器名 输入框 + 添加/更新/删除。
   - 均为**客户端本地**即时生效并热写入文件（供 NEI 叠加层 / 自动上传使用），无需 OP。
   - **3.3.7 增补**：映射页改为「列表 + 编辑」——左右两个分类切换按钮，左侧滚动列表展示全部已有映射（点击行选中并回填编辑框），右侧编辑框 + 添加/更新、删除(选中=按 key)、删除(按值)；新增 `RecipeNameUtil.removeMappingByKey` 与 `ClientState.removeRememberedProvidersByValue`。
+  - **3.3.7 再增补（布局 + 配方参考）**：修复各层文字重叠（标题/切换按钮/列表头/副标题/编辑区全部垂直分离，副标题用 0.8 倍缩放灰色小字居列表上方）；新增第三个子页「配方参考」——反射 `gregtech.api.recipe.RecipeMap.ALL_RECIPE_MAPS` 的 `unlocalizedName` 枚举**当前整合包全部配方池 UID**（含 GT++/gtpp），经 `RecipeMapNameConfig.resolveSearchKeyword` 解析出中文，支持按 UID/中文筛选，供玩家对照填入「记住的供应器」配方名；新增 `RecipeNameUtil.getAllRecipeMapUids()`。
 
 ### 风险登记（本版新增）
 

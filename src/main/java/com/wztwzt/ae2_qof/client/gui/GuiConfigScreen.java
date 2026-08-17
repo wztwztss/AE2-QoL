@@ -12,6 +12,7 @@ import net.minecraft.client.gui.GuiTextField;
 
 import com.wztwzt.ae2_qof.Config;
 import com.wztwzt.ae2_qof.client.ClientState;
+import com.wztwzt.ae2_qof.common.RecipeMapNameConfig;
 import com.wztwzt.ae2_qof.network.ConfigSetPacket;
 import com.wztwzt.ae2_qof.network.ModNetwork;
 import com.wztwzt.ae2_qof.util.RecipeNameUtil;
@@ -20,13 +21,14 @@ import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
+import org.lwjgl.opengl.GL11;
 
 /**
  * 游戏内配置页面（Mods → AE2 QoL → Config）：
  * - 配置页：编辑 io_port_rate / smart_doubling_max_rounds / nei_overlay_enabled，
  *   点击「应用」对改动项发送 C2S 包，由服务端校验 OP 权限并广播回所有客户端。
- * - 映射页：展示并编辑配方名映射（recipe_names.json）与记住的供应器（remembered_providers.json），
- *   列表可滚动、点击选中后回填编辑框，客户端本地即时生效并热写入文件。
+ * - 映射页（三个子页）：展示并编辑配方名映射（recipe_names.json）、记住的供应器
+ *   （remembered_providers.json），以及全部 GT 配方池 UID 参考（配方参考）。
  */
 @SideOnly(Side.CLIENT)
 public class GuiConfigScreen extends GuiScreen {
@@ -37,15 +39,18 @@ public class GuiConfigScreen extends GuiScreen {
     private static final int BACK_ID = 4;
     private static final int SECTION_MAP_ID = 9;
     private static final int SECTION_PROV_ID = 10;
+    private static final int SECTION_REF_ID = 14;
     private static final int ADD_ID = 11;
     private static final int DEL_KEY_ID = 12;
     private static final int DEL_VALUE_ID = 13;
 
     private static final int ROW_HEIGHT = 12;
+    private static final int LIST_X = 155; // 相对屏幕中心：列表左边缘 = center - 155
+    private static final int EDIT_LIST_W = 200;
 
     private final GuiScreen parent;
     private int page; // 0 = 配置，1 = 映射
-    private boolean mapSection; // true = 配方名映射，false = 记住的供应器
+    private int subTab; // 0 = 配方名映射，1 = 记住的供应器，2 = 配方参考
 
     private GuiTextField ioField;
     private GuiTextField roundsField;
@@ -54,20 +59,24 @@ public class GuiConfigScreen extends GuiScreen {
     private GuiTextField mapValueField;
     private GuiTextField provKeyField;
     private GuiTextField provValueField;
+    private GuiTextField refFilterField;
     private GuiTextField focusField;
     private String statusText;
 
     private List<Entry<String, String>> mapEntries = new ArrayList<Entry<String, String>>();
     private List<Entry<String, String>> provEntries = new ArrayList<Entry<String, String>>();
+    private List<String> refUids = new ArrayList<String>();
+    private List<String> refFiltered = new ArrayList<String>();
     private int mapScroll = 0;
     private int provScroll = 0;
+    private int refScroll = 0;
     private int mapSelected = -1;
     private int provSelected = -1;
 
     public GuiConfigScreen(GuiScreen parent) {
         this.parent = parent;
         this.page = 0;
-        this.mapSection = true;
+        this.subTab = 0;
         this.statusText = "";
     }
 
@@ -86,10 +95,13 @@ public class GuiConfigScreen extends GuiScreen {
 
         int editX = this.width / 2 + 50;
         int fieldW = this.width - editX - 20;
-        this.mapKeyField = new GuiTextField(this.fontRendererObj, editX, 62, fieldW, 18);
-        this.mapValueField = new GuiTextField(this.fontRendererObj, editX, 94, fieldW, 18);
-        this.provKeyField = new GuiTextField(this.fontRendererObj, editX, 62, fieldW, 18);
-        this.provValueField = new GuiTextField(this.fontRendererObj, editX, 94, fieldW, 18);
+        this.mapKeyField = new GuiTextField(this.fontRendererObj, editX, 68, fieldW, 18);
+        this.mapValueField = new GuiTextField(this.fontRendererObj, editX, 106, fieldW, 18);
+        this.provKeyField = new GuiTextField(this.fontRendererObj, editX, 68, fieldW, 18);
+        this.provValueField = new GuiTextField(this.fontRendererObj, editX, 106, fieldW, 18);
+        this.refFilterField = new GuiTextField(this.fontRendererObj, this.width / 2 - LIST_X + 28, 58,
+            this.width - 40 - 28, 16);
+        this.refFilterField.setMaxStringLength(64);
 
         this.focusField = null;
         if (this.page == 0) {
@@ -100,15 +112,22 @@ public class GuiConfigScreen extends GuiScreen {
             this.focusField.setFocused(true);
         } else {
             this.refreshEntries();
-            this.buttonList.add(new GuiButton(BACK_ID, this.width / 2 - 155, this.height - 30, 100, 20, "← 设置"));
-            this.buttonList.add(new GuiButton(SECTION_MAP_ID, this.width / 2 - 155, 26, 98, 16, "配方名映射"));
-            this.buttonList.add(new GuiButton(SECTION_PROV_ID, this.width / 2 - 53, 26, 98, 16, "记住的供应器"));
-            int btnW = (fieldW - 6) / 2;
-            this.buttonList.add(new GuiButton(ADD_ID, editX, 120, btnW, 20, "添加/更新"));
-            this.buttonList.add(new GuiButton(DEL_KEY_ID, editX + btnW + 6, 120, btnW, 20, "删除(选中)"));
-            this.buttonList.add(new GuiButton(DEL_VALUE_ID, editX, 144, fieldW, 20, "删除(按值)"));
-            this.buttonList.add(new GuiButton(CLOSE_ID, this.width / 2 + 55, this.height - 30, 100, 20, "关闭"));
-            this.focusField = this.mapKeyField;
+            int centerX = this.width / 2;
+            this.buttonList.add(new GuiButton(BACK_ID, centerX - 155, this.height - 30, 100, 20, "← 设置"));
+            this.buttonList.add(new GuiButton(SECTION_MAP_ID, centerX - 144, 20, 92, 16, "配方名映射"));
+            this.buttonList.add(new GuiButton(SECTION_PROV_ID, centerX - 46, 20, 92, 16, "记住的供应器"));
+            this.buttonList.add(new GuiButton(SECTION_REF_ID, centerX + 52, 20, 92, 16, "配方参考"));
+            this.buttonList.add(new GuiButton(CLOSE_ID, centerX + 55, this.height - 30, 100, 20, "关闭"));
+            if (this.subTab != 2) {
+                int btnW = (fieldW - 6) / 2;
+                this.buttonList.add(new GuiButton(ADD_ID, editX, 132, btnW, 20, "添加/更新"));
+                this.buttonList.add(new GuiButton(DEL_KEY_ID, editX + btnW + 6, 132, btnW, 20, "删除(选中)"));
+                this.buttonList.add(new GuiButton(DEL_VALUE_ID, editX, 156, fieldW, 20, "删除(按值)"));
+                this.focusField = this.subTab == 0 ? this.mapKeyField : this.provKeyField;
+            } else {
+                this.focusField = this.refFilterField;
+                this.refreshRefFilter();
+            }
             this.focusField.setFocused(true);
         }
     }
@@ -131,59 +150,113 @@ public class GuiConfigScreen extends GuiScreen {
             this.roundsField.drawTextBox();
             this.overlayField.drawTextBox();
         } else {
-            this.drawCenteredString(this.fontRendererObj, "名字映射编辑", centerX, 10, 0xFFFFFF);
-            this.drawCenteredString(this.fontRendererObj,
-                "点击列表行选中并回填编辑框，改动即时写盘", centerX, 20, 0x808080);
-
-            int listX = this.width / 2 - 155;
-            int listW = 200;
-            int listY = 52;
-            int listH = 170;
-
-            List<Entry<String, String>> entries = this.mapSection ? this.mapEntries : this.provEntries;
-            int scroll = this.mapSection ? this.mapScroll : this.provScroll;
-            int selected = this.mapSection ? this.mapSelected : this.provSelected;
-
-            this.drawCenteredString(this.fontRendererObj,
-                this.mapSection ? "配方名映射 (recipe_names.json，NEI 搜索词)"
-                    : "记住的供应器 (remembered_providers.json，自动上传)",
-                this.width / 2 - 55, 46, 0xFFFFFF);
-
-            this.drawRect(listX - 2, listY - 2, listX + listW + 2, listY + listH + 2, 0x90000000);
-            int visible = listH / ROW_HEIGHT;
-            int maxScroll = Math.max(0, entries.size() - visible);
-            for (int i = 0; i < visible && scroll + i < entries.size(); i++) {
-                int idx = scroll + i;
-                int rowY = listY + i * ROW_HEIGHT;
-                Entry<String, String> e = entries.get(idx);
-                if (idx == selected) {
-                    this.drawRect(listX, rowY, listX + listW, rowY + ROW_HEIGHT, 0xA0FFFFFF);
-                }
-                String label = this.fontRendererObj.trimStringToWidth(
-                    e.getKey() + " \u2192 " + e.getValue(), listW - 8);
-                this.drawString(this.fontRendererObj, label, listX + 4, rowY + 2, idx == selected ? 0x000000 : 0xFFFFFF);
+            this.drawCenteredString(this.fontRendererObj, "名字映射编辑", centerX, 6, 0xFFFFFF);
+            if (this.subTab == 2) {
+                this.drawRefTab();
+            } else {
+                this.drawEditTab();
             }
-            this.drawCenteredString(this.fontRendererObj,
-                "共 " + entries.size() + " 条   " + (scroll > 0 ? "↑" : "  ") + (scroll < maxScroll ? "↓" : "  "),
-                listX + listW / 2, listY + listH + 2, 0x808080);
-
-            boolean activeMap = this.mapSection;
-            GuiTextField keyField = activeMap ? this.mapKeyField : this.provKeyField;
-            GuiTextField valueField = activeMap ? this.mapValueField : this.provValueField;
-            this.drawString(this.fontRendererObj,
-                activeMap ? "配方 key（如 compressor）" : "配方名",
-                keyField.xPosition, keyField.yPosition - 11, 0xA0A0A0);
-            this.drawString(this.fontRendererObj,
-                activeMap ? "中文搜索词（如 压缩机）" : "供应器名",
-                valueField.xPosition, valueField.yPosition - 11, 0xA0A0A0);
-            keyField.drawTextBox();
-            valueField.drawTextBox();
         }
 
-        if (!this.statusText.isEmpty()) {
-            this.drawCenteredString(this.fontRendererObj, this.statusText, centerX, this.height - 102, 0xFF5555);
+        if (this.page == 0 || this.subTab != 2) {
+            if (!this.statusText.isEmpty()) {
+                this.drawCenteredString(this.fontRendererObj, this.statusText, centerX, this.height - 102, 0xFF5555);
+            }
         }
         super.drawScreen(mouseX, mouseY, partialTicks);
+    }
+
+    private int editListY() {
+        return 58;
+    }
+
+    private int editListH() {
+        return Math.min(150, this.height - 92);
+    }
+
+    private void drawEditTab() {
+        int centerX = this.width / 2;
+        int listX = centerX - LIST_X;
+        int listY = this.editListY();
+        int listH = this.editListH();
+
+        boolean activeMap = this.subTab == 0;
+        List<Entry<String, String>> entries = activeMap ? this.mapEntries : this.provEntries;
+        int scroll = activeMap ? this.mapScroll : this.provScroll;
+        int selected = activeMap ? this.mapSelected : this.provSelected;
+
+        // 列表头（分类说明）
+        this.drawCenteredString(this.fontRendererObj,
+            activeMap ? "配方名映射 (recipe_names.json，NEI 搜索词)"
+                : "记住的供应器 (remembered_providers.json，自动上传)",
+            listX + EDIT_LIST_W / 2, 38, 0xFFFFFF);
+
+        // 副标题（0.8 倍缩小灰色小字，居中于列表框上方，不与其它元素重叠）
+        String hint = "点击列表行选中并回填编辑框，改动即时写盘";
+        int hintW = this.fontRendererObj.getStringWidth(hint);
+        GL11.glPushMatrix();
+        GL11.glTranslatef(listX + EDIT_LIST_W / 2, 48, 0.0F);
+        GL11.glScalef(0.8F, 0.8F, 1.0F);
+        this.fontRendererObj.drawStringWithShadow(hint, (int) (-hintW * 0.4F), 0, 0x808080);
+        GL11.glPopMatrix();
+
+        // 列表
+        this.drawRect(listX - 2, listY - 2, listX + EDIT_LIST_W + 2, listY + listH + 2, 0x90000000);
+        int visible = listH / ROW_HEIGHT;
+        int maxScroll = Math.max(0, entries.size() - visible);
+        for (int i = 0; i < visible && scroll + i < entries.size(); i++) {
+            int idx = scroll + i;
+            int rowY = listY + i * ROW_HEIGHT;
+            Entry<String, String> e = entries.get(idx);
+            if (idx == selected) {
+                this.drawRect(listX, rowY, listX + EDIT_LIST_W, rowY + ROW_HEIGHT, 0xA0FFFFFF);
+            }
+            String label = this.fontRendererObj.trimStringToWidth(
+                e.getKey() + " \u2192 " + e.getValue(), EDIT_LIST_W - 8);
+            this.drawString(this.fontRendererObj, label, listX + 4, rowY + 2, idx == selected ? 0x000000 : 0xFFFFFF);
+        }
+        this.drawCenteredString(this.fontRendererObj,
+            "共 " + entries.size() + " 条   " + (scroll > 0 ? "↑" : "  ") + (scroll < maxScroll ? "↓" : "  "),
+            listX + EDIT_LIST_W / 2, listY + listH + 2, 0x808080);
+
+        // 编辑区
+        GuiTextField keyField = activeMap ? this.mapKeyField : this.provKeyField;
+        GuiTextField valueField = activeMap ? this.mapValueField : this.provValueField;
+        this.drawString(this.fontRendererObj,
+            activeMap ? "配方 key（如 compressor）" : "配方名",
+            keyField.xPosition, keyField.yPosition - 11, 0xA0A0A0);
+        this.drawString(this.fontRendererObj,
+            activeMap ? "中文搜索词（如 压缩机）" : "供应器名",
+            valueField.xPosition, valueField.yPosition - 11, 0xA0A0A0);
+        keyField.drawTextBox();
+        valueField.drawTextBox();
+    }
+
+    private void drawRefTab() {
+        int centerX = this.width / 2;
+        int listX = centerX - LIST_X;
+        int listW = this.width - 40;
+        int listY = 82;
+        int listH = Math.min(240, this.height - 90 - listY);
+
+        this.drawCenteredString(this.fontRendererObj, "全部 GT 配方池参考（供「记住的供应器」配方名对照）",
+            centerX, 38, 0xFFFFFF);
+        this.drawString(this.fontRendererObj, "筛选:", listX, 62, 0xA0A0A0);
+        this.refFilterField.drawTextBox();
+
+        this.drawRect(listX - 2, listY - 2, listX + listW + 2, listY + listH + 2, 0x90000000);
+        int visible = listH / ROW_HEIGHT;
+        int maxScroll = Math.max(0, this.refFiltered.size() - visible);
+        for (int i = 0; i < visible && this.refScroll + i < this.refFiltered.size(); i++) {
+            int idx = this.refScroll + i;
+            int rowY = listY + i * ROW_HEIGHT;
+            String label = this.fontRendererObj.trimStringToWidth(this.refFiltered.get(idx), listW - 8);
+            this.drawString(this.fontRendererObj, label, listX + 4, rowY + 2, 0xFFFFFF);
+        }
+        this.drawCenteredString(this.fontRendererObj,
+            "共 " + this.refUids.size() + " 条  显示 " + this.refFiltered.size()
+                + "   " + (this.refScroll > 0 ? "↑" : "  ") + (this.refScroll < maxScroll ? "↓" : "  "),
+            centerX, listY + listH + 2, 0x808080);
     }
 
     @Override
@@ -195,10 +268,13 @@ public class GuiConfigScreen extends GuiScreen {
             this.overlayField.mouseClicked(mouseX, mouseY, mouseButton);
             this.focusField = this.ioField.isFocused() ? this.ioField
                 : (this.roundsField.isFocused() ? this.roundsField : this.overlayField);
+        } else if (this.subTab == 2) {
+            this.refFilterField.mouseClicked(mouseX, mouseY, mouseButton);
+            this.focusField = this.refFilterField;
         } else {
             int hit = this.hitRow(mouseX, mouseY);
             if (hit >= 0) {
-                if (this.mapSection) {
+                if (this.subTab == 0) {
                     this.mapSelected = hit;
                     this.mapKeyField.setText(this.mapEntries.get(hit).getKey());
                     this.mapValueField.setText(this.mapEntries.get(hit).getValue());
@@ -213,7 +289,7 @@ public class GuiConfigScreen extends GuiScreen {
             this.mapValueField.mouseClicked(mouseX, mouseY, mouseButton);
             this.provKeyField.mouseClicked(mouseX, mouseY, mouseButton);
             this.provValueField.mouseClicked(mouseX, mouseY, mouseButton);
-            this.focusField = this.mapSection
+            this.focusField = this.subTab == 0
                 ? (this.mapKeyField.isFocused() ? this.mapKeyField : this.mapValueField)
                 : (this.provKeyField.isFocused() ? this.provKeyField : this.provValueField);
         }
@@ -227,10 +303,14 @@ public class GuiConfigScreen extends GuiScreen {
         }
         if (this.focusField != null && this.focusField.isFocused()) {
             this.focusField.textboxKeyTyped(typedChar, keyCode);
+            if (this.focusField == this.refFilterField) {
+                this.refreshRefFilter();
+                this.refScroll = 0;
+            }
         } else if (keyCode == Keyboard.KEY_RETURN) {
             if (this.page == 0) {
                 this.applyConfigChanges();
-            } else {
+            } else if (this.subTab != 2) {
                 this.applyAdd();
             }
         }
@@ -244,10 +324,12 @@ public class GuiConfigScreen extends GuiScreen {
             return;
         }
         int dir = wheel > 0 ? -1 : 1;
-        if (this.mapSection) {
-            this.mapScroll = clampScroll(this.mapScroll + dir, this.mapEntries.size());
+        if (this.subTab == 0) {
+            this.mapScroll = clampScroll(this.mapScroll + dir, this.mapEntries.size(), this.editListH());
+        } else if (this.subTab == 1) {
+            this.provScroll = clampScroll(this.provScroll + dir, this.provEntries.size(), this.editListH());
         } else {
-            this.provScroll = clampScroll(this.provScroll + dir, this.provEntries.size());
+            this.refScroll = clampScroll(this.refScroll + dir, this.refFiltered.size(), 240);
         }
     }
 
@@ -268,12 +350,17 @@ public class GuiConfigScreen extends GuiScreen {
                 this.initGui();
                 break;
             case SECTION_MAP_ID:
-                this.mapSection = true;
+                this.subTab = 0;
                 this.statusText = "";
                 this.initGui();
                 break;
             case SECTION_PROV_ID:
-                this.mapSection = false;
+                this.subTab = 1;
+                this.statusText = "";
+                this.initGui();
+                break;
+            case SECTION_REF_ID:
+                this.subTab = 2;
                 this.statusText = "";
                 this.initGui();
                 break;
@@ -360,26 +447,55 @@ public class GuiConfigScreen extends GuiScreen {
             this.provEntries.add(e);
         }
         this.provEntries.sort(Entry.comparingByKey());
-        this.mapScroll = clampScroll(this.mapScroll, this.mapEntries.size());
-        this.provScroll = clampScroll(this.provScroll, this.provEntries.size());
+        this.mapScroll = clampScroll(this.mapScroll, this.mapEntries.size(), this.editListH());
+        this.provScroll = clampScroll(this.provScroll, this.provEntries.size(), this.editListH());
+        if (this.refUids.isEmpty()) {
+            this.refUids = RecipeNameUtil.getAllRecipeMapUids();
+            this.refFiltered = new ArrayList<String>(this.refUids);
+        }
+    }
+
+    private void refreshRefFilter() {
+        String q = this.refFilterField.getText() == null ? "" : this.refFilterField.getText().trim()
+            .toLowerCase(Locale.ROOT);
+        this.refFiltered.clear();
+        for (String uid : this.refUids) {
+            if (q.isEmpty() || uid.toLowerCase(Locale.ROOT)
+                .contains(q)) {
+                this.refFiltered.add(refRow(uid));
+            } else {
+                String zh = RecipeMapNameConfig.resolveSearchKeyword(uid);
+                if (zh != null && !zh.equals(uid) && zh.toLowerCase(Locale.ROOT)
+                    .contains(q)) {
+                    this.refFiltered.add(refRow(uid));
+                }
+            }
+        }
+    }
+
+    private String refRow(String uid) {
+        String zh = RecipeMapNameConfig.resolveSearchKeyword(uid);
+        if (zh != null && !zh.equals(uid)) {
+            return uid + " \u2192 " + zh;
+        }
+        return uid;
     }
 
     private int hitRow(int mouseX, int mouseY) {
-        int listX = this.width / 2 - 155;
-        int listW = 200;
-        int listY = 52;
-        int listH = 170;
-        if (mouseX < listX || mouseX >= listX + listW || mouseY < listY || mouseY >= listY + listH) {
+        int listX = this.width / 2 - LIST_X;
+        int listY = this.editListY();
+        int listH = this.editListH();
+        if (mouseX < listX || mouseX >= listX + EDIT_LIST_W || mouseY < listY || mouseY >= listY + listH) {
             return -1;
         }
-        List<Entry<String, String>> entries = this.mapSection ? this.mapEntries : this.provEntries;
-        int scroll = this.mapSection ? this.mapScroll : this.provScroll;
+        List<Entry<String, String>> entries = this.subTab == 0 ? this.mapEntries : this.provEntries;
+        int scroll = this.subTab == 0 ? this.mapScroll : this.provScroll;
         int idx = scroll + (mouseY - listY) / ROW_HEIGHT;
         return idx >= 0 && idx < entries.size() ? idx : -1;
     }
 
-    private int clampScroll(int scroll, int count) {
-        int visible = 170 / ROW_HEIGHT;
+    private int clampScroll(int scroll, int count, int listH) {
+        int visible = Math.max(1, listH / ROW_HEIGHT);
         return Math.max(0, Math.min(scroll, Math.max(0, count - visible)));
     }
 
@@ -387,10 +503,10 @@ public class GuiConfigScreen extends GuiScreen {
         String key = this.currentKey();
         String value = this.currentValue();
         if (key.isEmpty() || value.isEmpty()) {
-            this.statusText = this.mapSection ? "配方 key 与中文搜索词都不能为空" : "配方名与供应器名都不能为空";
+            this.statusText = this.subTab == 0 ? "配方 key 与中文搜索词都不能为空" : "配方名与供应器名都不能为空";
             return;
         }
-        if (this.mapSection) {
+        if (this.subTab == 0) {
             boolean ok = RecipeNameUtil.addOrUpdateMapping(key, value);
             this.statusText = ok ? "已添加/更新配方映射：" + key + " → " + value : "配方映射更新失败";
         } else {
@@ -403,11 +519,11 @@ public class GuiConfigScreen extends GuiScreen {
     private void applyDeleteKey() {
         String key = this.currentKey();
         if (key.isEmpty()) {
-            this.statusText = this.mapSection ? "请输入要删除的配方 key" : "请输入要删除的配方名";
+            this.statusText = this.subTab == 0 ? "请输入要删除的配方 key" : "请输入要删除的配方名";
             return;
         }
         boolean removed;
-        if (this.mapSection) {
+        if (this.subTab == 0) {
             removed = RecipeNameUtil.removeMappingByKey(key);
             this.statusText = removed ? "已删除配方映射：" + key : "未找到配方 key " + key;
             this.mapSelected = -1;
@@ -422,11 +538,11 @@ public class GuiConfigScreen extends GuiScreen {
     private void applyDeleteValue() {
         String value = this.currentValue();
         if (value.isEmpty()) {
-            this.statusText = this.mapSection ? "请输入要删除的中文搜索词" : "请输入要删除的供应器名";
+            this.statusText = this.subTab == 0 ? "请输入要删除的中文搜索词" : "请输入要删除的供应器名";
             return;
         }
         int removed;
-        if (this.mapSection) {
+        if (this.subTab == 0) {
             removed = RecipeNameUtil.removeMappingsByCnValue(value);
             this.statusText = removed > 0 ? "已删除 " + removed + " 条配方映射" : "未找到中文搜索词 " + value;
         } else {
@@ -437,12 +553,12 @@ public class GuiConfigScreen extends GuiScreen {
     }
 
     private String currentKey() {
-        GuiTextField f = this.mapSection ? this.mapKeyField : this.provKeyField;
+        GuiTextField f = this.subTab == 0 ? this.mapKeyField : this.provKeyField;
         return f.getText() == null ? "" : f.getText().trim();
     }
 
     private String currentValue() {
-        GuiTextField f = this.mapSection ? this.mapValueField : this.provValueField;
+        GuiTextField f = this.subTab == 0 ? this.mapValueField : this.provValueField;
         return f.getText() == null ? "" : f.getText().trim();
     }
 }
