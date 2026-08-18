@@ -4,13 +4,13 @@
 
 An **AE2 quality-of-life enhancement mod** for GTNH: push NEI recipes into AE pattern terminals with one click, extract AE network items directly from the NEI panel, view each item's stock and craftability in the AE network, and wirelessly transmit AE networks.
 
-Compat: GTNH 2.9.0-beta-1 (Minecraft 1.7.10) | Current version: **3.4.0** | Author: wztwzt
+Compat: GTNH 2.9.0-beta-1 (Minecraft 1.7.10) | Current version: **3.5.0** | Author: wztwzt
 
 ---
 
 ## 📦 Installation
 
-1. Put `AE2-QoL-3.4.0.jar` into `.minecraft/mods/`
+1. Put `AE2-QoL-3.5.0.jar` into `.minecraft/mods/`
 2. Make sure dependencies are installed: AE2 (`rv3-beta-977-GTNH`), ae2fc (`1.5.88-gtnh`), NotEnoughItems (NEI)
 3. Launch the game. Config is generated under `config/`
 
@@ -109,9 +109,20 @@ A new **Smart Doubling** checkbox (cycle-arrow icon) on the left of the **ME Int
 
 ---
 
+### 14. Pattern + Interface all-in-one terminal (standalone block "Pattern & Interface Terminal")
+
+A new wired block that merges the **pattern encoding panel** with the **interface management list** in one GUI — manage interface patterns and encode patterns in the same screen, no need to open a separate Pattern Terminal. Place the block and right-click to open (requires an AE network).
+
+- **Panel style**: native AE2Things style — Crafting/Processing tabs, native icon buttons (Encode/Clear/x2/Substitute/Be-Substitute/Invert), and a 4×4×2-page grid in Processing mode (scrollbar pages; the Invert button flips the input/output column direction); Crafting mode shows a 3×3 grid + result slot
+- **Top buttons**: `↑` (Upload — auto-upload the encoded pattern to an interface/assembler on the network; Shift+click forces the provider selection screen) / `←` (Recall — take back the last matching pattern) / `⇄` (Swap — rotate primary/secondary outputs) / `OV` (NEI overlay toggle)
+- **Usage**: put items directly into the panel to form a recipe, then press Encode; Clear empties the panel; x2 doubles the output ratio; Processing recipes support Substitute and Be-Substitute
+- **Interaction**: panel slot clicks and drag-place behave like the native AE2 terminal; the scrollbar supports click and wheel paging; clicks inside the panel take priority over the interface list
+
+---
+
 ## 🕐 Planned
 
-- **F: Pattern + Interface dual-page all-in-one terminal** — merging pattern encoding and interface management into one GUI with two switchable pages. Shelved in 3.0.0 because the native AE2 interface terminal already covers it; may be re-released in a later version.
+- **21504 SuperDualInputHatchME as a CPU crafting medium research** — research on hooking ProgrammableHatches' SuperDualInputHatch into the crafting CPU as a crafting medium.
 
 ---
 

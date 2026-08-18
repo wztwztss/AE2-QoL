@@ -1,121 +1,59 @@
 package com.wztwzt.ae2_qof.client.gui;
 
-import net.minecraft.client.gui.inventory.GuiContainer;
-
-import com.wztwzt.ae2_qof.api.IMergedPatternTerminal;
-
 /**
- * 二合一终端面板的几何布局计算。面板常驻接口终端 GUI 右上角，
- * 处理模式下网格随样板内容自动扩展（最多 27 输入 / 9 输出）。
+ * 二合一终端面板的固定几何常量（AE 原生 4×4 样板面板布局，移植自 AE2Things）。
  * <p>
- * 每次绘制/点击时由 GUI mixin 重新计算，槽与按钮按需重定位（隐藏的槽/按钮移到屏幕外）。
+ * 面板画在 GUI 内 (209,0) 起（133 宽主区 + 40 宽条带 + 32 方块），
+ * 槽位容器坐标为 AE 原生坐标，绘制时 y 方向 +68 重定位到面板上对应孔位。
  */
 public final class MergedPanelLayout {
 
-    public static final int PANEL_X = IMergedPatternTerminal.PANEL_X;
-    public static final int PANEL_Y = IMergedPatternTerminal.PANEL_Y;
-    public static final int SLOT = IMergedPatternTerminal.SLOT_SIZE;
-    public static final int BTN = 16;
+    public static final int PANEL_X = 209;
+    public static final int PANEL_Y = 0;
+    public static final int PANEL_W = 133;
+    public static final int PANEL_H = 93;
+    /** 面板总高：主区 93 + 条带 77 + 第三块 32 */
+    public static final int PANEL_BOTTOM = 202;
+
+    public static final int SLOT = 18;
+
+    /** 槽位绘制时 y 方向相对容器坐标的偏移 */
+    public static final int SLOT_Y_REPOSITION = 68;
+
+    // ===== 原生槽位坐标（容器坐标） =====
+
+    public static final int PATTERN_IN_X = 220;
+    public static final int PATTERN_IN_Y = 31;
+    public static final int PATTERN_OUT_X = 220;
+    public static final int PATTERN_OUT_Y = 74;
+    public static final int CRAFT_GRID_X = 224;
+    public static final int CRAFT_GRID_Y = -50;
+    public static final int EX_GRID_X = 224;
+    public static final int EX_GRID_Y = -59;
+    public static final int OUT_GRID_X = 321;
+    public static final int CRAFT_RESULT_X = 316;
+    public static final int CRAFT_RESULT_Y = -32;
+
+    // ===== 原生按钮坐标（相对面板左上角） =====
+
+    public static final int ENCODE_BTN_X = 220;
+    public static final int ENCODE_BTN_Y = 118;
+    public static final int TAB_BTN_X = 248;
+    public static final int TAB_BTN_Y = 93;
+
+    // ===== 顶部额外按钮（上传/召回/轮换/OV） =====
+
+    public static final int EXTRA_BTN_X = 211;
+    public static final int EXTRA_BTN_Y0 = 1;
+    public static final int EXTRA_BTN_STEP = 14;
+
+    /** 机器名绘制位置（面板右侧空白区） */
+    public static final int MACHINE_NAME_X = 250;
+    public static final int MACHINE_NAME_Y = 5;
 
     private MergedPanelLayout() {}
 
-    /** 统计库存中最后一个非空槽的下标 + 1，至少为 1 */
-    private static int countActive(net.minecraft.inventory.IInventory inv, int max) {
-        int last = -1;
-        for (int i = 0; i < max; i++) {
-            if (inv.getStackInSlot(i) != null) {
-                last = i;
-            }
-        }
-        return last + 1;
-    }
-
-    public static Layout compute(GuiContainer gui, boolean crafting) {
-        Layout l = new Layout();
-        if (gui == null || !(gui.inventorySlots instanceof IMergedPatternTerminal merged)) {
-            l.visible = false;
-            return l;
-        }
-        l.visible = true;
-
-        int activeInputs;
-        int activeOutputs;
-        if (crafting) {
-            activeInputs = 9;
-            activeOutputs = 1;
-        } else {
-            activeInputs = countActive(merged.getMergedInputInv(), IMergedPatternTerminal.INPUT_MAX);
-            activeOutputs = countActive(merged.getMergedOutputInv(), IMergedPatternTerminal.OUTPUT_MAX);
-        }
-        l.activeInputs = activeInputs;
-        l.activeOutputs = activeOutputs;
-        l.crafting = crafting;
-
-        int inputRows = (activeInputs + 2) / 3;
-        int outputRows = (activeOutputs + 2) / 3;
-        int outBaseY = PANEL_Y + inputRows * SLOT + 4;
-        int blankY = outBaseY + outputRows * SLOT + 4;
-
-        l.outBaseY = outBaseY;
-        l.blankY = blankY;
-
-        l.resultX = PANEL_X;
-        l.resultY = outBaseY;
-
-        l.blankX = PANEL_X;
-        l.blankY2 = blankY;
-        l.encodedX = PANEL_X + SLOT;
-        l.encodedY = blankY;
-
-        int btnY1 = blankY + SLOT + 4;
-        l.btnRow1Y = btnY1;
-        l.btnRow2Y = btnY1 + BTN;
-        l.btnRow3Y = btnY1 + BTN * 2;
-        l.btnRow4Y = btnY1 + BTN * 3;
-
-        l.machineNameY = l.btnRow4Y + BTN + 8;
-
-        l.panelLeft = PANEL_X - 3;
-        l.panelTop = PANEL_Y - 3;
-        l.panelRight = PANEL_X + 3 * SLOT + 3;
-        l.panelBottom = l.machineNameY + 11;
-        return l;
-    }
-
-    public static int panelXFor(int col) {
-        return PANEL_X + col * SLOT;
-    }
-
-    public static int gridYFor(int row) {
-        return PANEL_Y + row * SLOT;
-    }
-
-    public static boolean isInPanel(Layout l, int x, int y) {
-        return l.visible && x >= l.panelLeft && x <= l.panelRight && y >= l.panelTop && y <= l.panelBottom;
-    }
-
-    public static class Layout {
-
-        public boolean visible = false;
-        public boolean crafting;
-        public int activeInputs;
-        public int activeOutputs;
-        public int outBaseY;
-        public int blankY;
-        public int resultX;
-        public int resultY;
-        public int blankX;
-        public int blankY2;
-        public int encodedX;
-        public int encodedY;
-        public int btnRow1Y;
-        public int btnRow2Y;
-        public int btnRow3Y;
-        public int btnRow4Y;
-        public int machineNameY;
-        public int panelLeft;
-        public int panelTop;
-        public int panelRight;
-        public int panelBottom;
+    public static boolean isInPanel(int x, int y) {
+        return x >= PANEL_X && x <= PANEL_X + PANEL_W && y >= PANEL_Y && y <= PANEL_BOTTOM;
     }
 }

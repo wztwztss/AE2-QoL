@@ -67,3 +67,4 @@ ae2qol.extract.not_craftable=Cannot craft %s
 ae2qol.extract.inventory_full=Inventory full, cannot extract %s
 gui.ae2_qof.smart_doubling=Smart Doubling
 gui.ae2_qof.smart_doubling.hint=When enabled, the crafting CPU pushes multiple rounds of ingredients to this interface at once (default cap 0 = unlimited, editable via Mods → AE2 QoL → Config),\nreducing CPU trips and power usage. Best for interfaces feeding machines that can accept several rounds at a time.\nCrafting recipes, blocking mode and plan-eating machines always push one round at a time.
+tile.ae2qol.merged_terminal.name=Pattern & Interface Terminal

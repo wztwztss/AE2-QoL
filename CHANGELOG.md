@@ -1,6 +1,6 @@
 # AE2 QoL - Changelog
 
-> 当前版本：3.4.0 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
+> 当前版本：3.5.0 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
 
 ---
 
@@ -27,7 +27,7 @@
 | 叠加层开关 `/apu-overlay` + GUI OV 按钮 | `client/CommandOverlay` + `client/OverlayConfig` | ✅ 可用 |
 | **智能倍增（Smart Doubling）**：ME 接口/样板输入机复选框 + CPU 一次性推送 N 轮（默认不限 0=不限，可配） | `api/ISmartDoublingMedium` + `mixin/ae/MixinDualityInterface` + `mixin/ae/MixinCraftingCPUCluster` + `mixin/ae/MixinGuiInterface`/`MixinContainerInterface` + `mixin/gt/MixinMTEHatchInputBus` | ✅ 可用（3.2.0；3.3.2 兼容 GTNotLeisure 超级接口；3.3.3 支持 GT/SNL/PH 样板输入机；3.3.5 修复实测失效；3.3.6 默认 0=不限；3.3.7 批量记账/功率 O(1) 修复大订单卡死） |
 | 统一配置文件 `settings.json` + 热加载 + OP 命令 `/ae2qof reload` + 游戏内配置 GUI（含范围显示 + 名字映射热编辑） | `Config` + `CommandAe2QoL` + `client/gui/ConfigGuiFactory`/`GuiConfigScreen` + `network/ConfigSetPacket`/`ConfigUpdatePacket` | ✅ 可用（3.3.0；3.3.6 新增 GUI 页面；3.3.7 范围显示 + 映射编辑） |
-| **F：样板 + 接口双页面二合一终端** | `mixin/ae/MixinGuiInterfaceTerminal` + `MixinContainerInterfaceTerminal` + `client/event/MergedTerminalPanelHandler` + `client/gui/MergedPanelLayout` + `network/MergedTerminalActionPacket`/`MergedTerminalResultPacket` + `api/IMergedPatternTerminal` | ✅ 可用（3.4.0） |
+| **F：样板 + 接口二合一终端**（独立有线方块） | `merged/GuiMergedTerminal` + `ContainerMergedTerminal` + `PatternContainer` + `BlockMergedTerminal`/`TileMergedTerminal` + `client/event/MergedTerminalPanelHandler` + `client/gui/MergedPanelLayout` + `network/MergedTerminalActionPacket`/`MergedTerminalResultPacket` + `api/IMergedPatternTerminal` | ✅ 可用（3.4.0 起；3.5.0 改为独立有线方块 + 原生 AE2Things 风格面板，移除两个 mixin） |
 
 # 已知风险登记表
 
@@ -72,17 +72,21 @@
 | 33 | O(1) 功率钳制与逐轮递减存在 <0.01 AE 的舍入差 | `mixin/ae/MixinCraftingCPUCluster.java`（3.3.7） | 🟢 | ⏳ 已兜底（保留原版 `requiredPower - 0.01` 兜底判断，行为一致） |
 | 34 | `ClientState.removeRememberedProvider` 为新增客户端方法，仅本地生效 | `client/ClientState.java`（3.3.7） | 🟢 | ✅（映射本就仅客户端使用） |
 | 35 | 配置页两页切换 `initGui` 重建控件，字段值需保留 | `client/gui/GuiConfigScreen.java`（3.3.7） | 🟢 | ✅ 已核对（TextField 对象复用，跨页不清空） |
-| 36 | 二合一终端面板混入依赖 `@Shadow` MCP 名运行时解析（GTNH 去混淆环境正常；若未来 SRG 重映射则面板失效） | `mixin/ae/MixinGuiInterfaceTerminal.java`（3.4.0） | 🟢 | ⏳ 已兜底（`required=false`，注入失败仅警告不崩溃，接口终端仍原生可用） |
-| 37 | `InterfaceTerminalList` 为私有内部类 → mouseClicked HEAD 手动分发绕过 masterList：面板按钮/槽点击与列表项点击抢先后序；面板区域与视图口右缘重叠 | `mixin/ae/MixinGuiInterfaceTerminal.java`（3.4.0） | 🟢 | ⏳ 已兜底（按钮 id 940-950 高于列表项；重叠区面板优先，迭代 1 接受，用户反馈后调整） |
+| 36 | 二合一终端面板混入依赖 `@Shadow` MCP 名运行时解析（GTNH 去混淆环境正常；若未来 SRG 重映射则面板失效） | `mixin/ae/MixinGuiInterfaceTerminal.java`（3.4.0） | 🟢 | ✅ 已移除（3.5.0 删除该 mixin，改为直接继承 `GuiInterfaceTerminal`，不再依赖 `@Shadow`） |
+| 37 | `InterfaceTerminalList` 为私有内部类 → 面板按钮/槽点击需绕过 masterList 手动分发；面板区域与视图口右缘重叠 | `merged/GuiMergedTerminal.java`（3.4.0 起） | 🟢 | ✅ 已兜底（3.5.0 直接 override `mouseClicked`，`isInPanel` 判定优先于列表项；按钮 id 940-953 高于列表项；重叠区面板优先，用户反馈后调整） |
 | 38 | 二合一终端上传：编码槽为空或 NBT 无 `apu:recipeMap` 且无后备时静默返回，无提示 | `client/event/MergedTerminalPanelHandler.java` `handleUpload`（3.4.0） | 🟢 | ⏳ 已兜底（不抛异常；编码后上传走 recipeMap 分支；升级走 ICraftingPatternDetails 降级） |
 | 39 | NEI 配方填充（`MixinGuiRecipe`）依赖 NEI 配方页 GUI 内部结构，NEI 版本升级可能失效（仅影响 `N` 按钮） | `mixin/nei/MixinGuiRecipe.java`（3.4.0） | 🟡 | ⏳ 已兜底（`required=false` + try/catch，失败仅 N 按钮无效，其余面板功能正常） |
 | 40 | 二合一终端编码/清空/×2/模式包无服务端权限校验，但仅作用于玩家自身打开的容器 | `network/MergedTerminalActionPacket.java`（3.4.0） | 🟢 | ⏳ 已兜底（操作限于玩家 own container，无网络侧越权面） |
+| 41 | 面板悬垂区绘制采用 `xSize=1000` 放大法：槽位命中依赖 `GuiContainer.getSlotAtPosition` 使用 `guiLeft/guiTop` 字段（不随 xSize 重算），已验证不破坏槽点击 | `merged/GuiMergedTerminal.java` `drawScreen`（3.5.0） | 🟢 | ✅ 已兜底（javap 核对 `func_146978_c`/`getSlotAtPosition` 用字段坐标；`initGui` 按 xSize=209 计算 guiLeft，命中逻辑不受影响） |
+| 42 | 面板按钮/滚动条/页码为客户端静态字段，仅随 GUI 打开重置；多容器/多窗口切换时由每帧 `reposition` 从客户端容器刷新覆盖 | `client/event/MergedTerminalPanelHandler.java`（3.5.0） | 🟢 | ✅ 已兜底（drawFG 每帧以 `pc.isCraftingMode()/isInverted()/getActivePage()` 重刷静态，状态不串窗口） |
+| 43 | `GuiTabButton` 图标渲染需 `RenderItem`：反射读 `GuiScreen.itemRender`（protected static），失败回退 `new RenderItem()` | `client/event/MergedTerminalPanelHandler.java` `getRenderItem`（3.5.0） | 🟢 | ✅ 已兜底（try/catch + 回退，反射失败仅 tab 图标缺失，不影响按钮功能） |
 
 # 回滚指南
 
 | 目标版本 | 使用 jar | 说明 |
 |---|---|---|
-| 3.4.0（当前） | `build/libs/AE2-QoL-3.4.0.jar` | 样板 + 接口二合一终端（F 模块）+ 配置页「配方参考」子页 |
+| 3.5.0（当前） | `build/libs/AE2-QoL-3.5.0.jar` | F 模块改为独立有线方块「样板与接口终端」+ 原生 AE2Things 风格面板（4×4×2 页 + 滚动条 + 反转），移除两个 mixin |
+| 3.4.0 | `build/libs/AE2-QoL-3.4.0.jar` | 样板 + 接口二合一终端（F 模块）+ 配置页「配方参考」子页 |
 | 3.3.5 | `build/libs/AE2-QoL-3.3.5.jar` | 修复智能倍增实测失效：功率/原料不足按轮数钳制 N、PH 走 pushPatternMulti、异常回退原版 |
 | 3.3.4 | `build/libs/AE2-QoL-3.3.4.jar` | 修复自动上传把样板误投进 GT/PH 样板输入机原料缓存槽 |
 | 3.3.3 | `build/libs/AE2-QoL-3.3.3.jar` | 样板输入机（GT/SNL/PH）智能倍增 + 流体显示回归验证 |
@@ -99,6 +103,36 @@
 
 回退步骤：删除测试包 `mods/AE2-QoL-<旧版本>.jar`，复制目标 jar 为 `mods/AE2-QoL-<目标版本>.jar`，重启客户端。
 依赖固定：AE2 `rv3-beta-977-GTNH`、ae2fc `1.5.88-gtnh`、NEI `2.8.19-GTNH`。
+
+---
+
+## 3.5.0 - F 模块重构：独立有线方块 + 原生 AE2Things 风格面板
+
+> 作者：wztwzt | 更新时间：2026-08-18
+
+### 变更：二合一终端改为独立有线方块「样板与接口终端」
+
+- 原 3.4.0 通过 `MixinGuiInterfaceTerminal`/`MixinContainerInterfaceTerminal` 混入原生接口终端实现二合一；3.5.0 改为**独立有线方块**（`merged/BlockMergedTerminal` + `TileMergedTerminal` + `MergedGuiHandler` + `client/render/RenderBlockMergedTerminal`），合成配方 `[铁][玻璃][铁] / [红石][钻石][红石] / [铁][玻璃][铁]`，移除两个 mixin（不再依赖 `@Shadow` MCP 名解析）
+- GUI/容器直接继承原生实现：`merged/GuiMergedTerminal extends GuiInterfaceTerminal`、`ContainerMergedTerminal extends AEBaseContainer`，面板逻辑内聚到 `merged/PatternContainer`（移植 AE2Things `PatternContainer`：4×4×2 页槽布局、`isSlotEnabled`/`offsetSlots`、`updateOrderOfOutputSlots`）
+- 顶部保留上传(↑)/召回(←)/轮换(⇄)/OV 覆盖按钮（`GuiUploadButtonHandler` 同款样式，竖排放面板左上）
+
+### 变更：面板改为 AE2Things 原生样式
+
+- **原生控件**：`GuiImgButton`（编码/清空/×2/替代/备份替代/反转）、`GuiTabButton`（合成⇄处理 tab，`GuiText.CraftingPattern/ProcessingPattern`）、`GuiScrollbar`（处理模式翻页，`pattern.png` 纹理，非反转不显示）
+- **处理模式 4×4×2 页网格**：输入 4 列 × 4 行 × 2 页（滚动条翻页），输出 4 列；**反转按钮**切换输入/输出列方向；合成模式为 3×3 + 结果槽
+- **面板位置**：`offsetX+209` 绘制，槽显示 `y + 68` 与纹理孔位精确对齐（参照 AE2Things `PatternPanel` 布局常量）
+- **删除**：`N`（NEI 配方填充）按钮与 NEI 联动不再作为面板按钮
+- **交互**：面板槽点击走 `playerController.windowClick`（空光标）/ AE 拖拽放置（非空光标，`mouseClickMove` 完成）；滚动条点击与滚轮翻页；面板区域点击优先于接口列表
+- **悬垂绘制**：`drawScreen` 用 `xSize=1000` 放大法绘制面板悬垂区，槽位命中依赖 `guiLeft/guiTop` 字段，已验证不破坏点击
+- **状态同步**：`MergedTerminalActionPacket` 新增 `SET_INVERTED`/`SET_PAGE`（新增 `int value` 字段），面板模式/替代/反转/页码随包同步服务端容器
+
+### 修复
+
+- 修复 `en_US.lang` 中 `ae2qol.extract.success` 与上一 key 同行（缺换行）的文本丢失问题
+
+### 风险登记（本版新增）
+
+- 见「已知风险登记表」#41-#43：xSize 悬垂绘制槽位命中、面板客户端静态状态、`GuiTabButton` RenderItem 反射回退
 
 ---
 

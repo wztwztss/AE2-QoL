@@ -25,18 +25,28 @@ public class MergedTerminalActionPacket implements IMessage {
         SET_MODE,
         SET_SUBSTITUTE,
         SET_BE_SUBSTITUTE,
-        FILL
+        FILL,
+        SET_INVERTED,
+        SET_PAGE
     }
 
     private Action action;
     private boolean crafting;
     private boolean substitute;
     private boolean beSubstitute;
+    private int value;
     private ItemStack[] inputs = new ItemStack[0];
     private ItemStack[] outputs = new ItemStack[0];
 
     public MergedTerminalActionPacket() {
         this.action = Action.CLEAR;
+    }
+
+    public static MergedTerminalActionPacket value(Action action, int value) {
+        MergedTerminalActionPacket p = new MergedTerminalActionPacket();
+        p.action = action;
+        p.value = value;
+        return p;
     }
 
     public static MergedTerminalActionPacket flag(Action action, boolean value) {
@@ -78,6 +88,7 @@ public class MergedTerminalActionPacket implements IMessage {
             this.crafting = buf.readBoolean();
             this.substitute = buf.readBoolean();
             this.beSubstitute = buf.readBoolean();
+            this.value = buf.readInt();
             int inLen = buf.readInt();
             if (inLen < 0 || inLen > 64) {
                 inLen = 0;
@@ -108,6 +119,7 @@ public class MergedTerminalActionPacket implements IMessage {
         buf.writeBoolean(this.crafting);
         buf.writeBoolean(this.substitute);
         buf.writeBoolean(this.beSubstitute);
+        buf.writeInt(this.value);
         buf.writeInt(this.inputs.length);
         for (ItemStack s : this.inputs) {
             ByteBufUtils.writeItemStack(buf, s);
@@ -168,7 +180,13 @@ public class MergedTerminalActionPacket implements IMessage {
                     merged.setMergedSubstitute(message.substitute);
                     break;
                 case SET_BE_SUBSTITUTE:
-                    merged.setMergedBeSubstitute(message.beSubstitute);
+                    merged.setMergedBeSubstitute(message.substitute);
+                    break;
+                case SET_INVERTED:
+                    merged.setMergedInverted(message.crafting);
+                    break;
+                case SET_PAGE:
+                    merged.setMergedActivePage(message.value);
                     break;
                 case FILL:
                     merged.mergedFill(message.inputs, message.outputs, message.crafting);

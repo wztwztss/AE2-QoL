@@ -14,16 +14,9 @@ import appeng.tile.inventory.AppEngInternalInventory;
  */
 public interface IMergedPatternTerminal {
 
-    /** 编码面板左上角（GUI 内坐标） */
-    int PANEL_X = 149;
-    int PANEL_Y = 56;
-    int SLOT_SIZE = 18;
-    int INPUT_COLS = 3;
-    int INPUT_MAX = 27;
-    int OUTPUT_MAX = 9;
-
-    /** 输入格 y 向最多占 9 行，输出/结果/空白/已编码行在此基础上动态下移 */
-    int OUTPUT_ROW_BASE = 9;
+    /** 处理模式输入/输出格上限（4×4 网格 × 2 页） */
+    int INPUT_MAX = 32;
+    int OUTPUT_MAX = 32;
 
     AppEngInternalInventory getMergedInputInv();
 
@@ -55,6 +48,16 @@ public interface IMergedPatternTerminal {
     boolean isMergedBeSubstitute();
 
     void setMergedBeSubstitute(boolean beSubstitute);
+
+    /** 是否反转输入/输出网格（AE 原生 4×4 面板布局） */
+    boolean isMergedInverted();
+
+    void setMergedInverted(boolean inverted);
+
+    /** 处理模式当前激活页（0/1） */
+    int getMergedActivePage();
+
+    void setMergedActivePage(int page);
 
     /**
      * 服务端编码当前网格为一个已编码样板：消耗一张空白样板，写入 apu:recipeMap 并设置显示名为机器中文名。

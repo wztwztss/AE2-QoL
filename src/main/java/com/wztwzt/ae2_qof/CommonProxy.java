@@ -2,10 +2,12 @@ package com.wztwzt.ae2_qof;
 
 import com.wztwzt.ae2_qof.block.BlockExIOPort;
 import com.wztwzt.ae2_qof.item.ItemInfinityWaterLavaCell;
+import com.wztwzt.ae2_qof.merged.BlockMergedTerminal;
+import com.wztwzt.ae2_qof.merged.MergedGuiHandler;
+import com.wztwzt.ae2_qof.merged.TileMergedTerminal;
 import com.wztwzt.ae2_qof.tile.TileExIOPort;
 import com.wztwzt.ae2_qof.wireless.WirelessBlockEventListener;
 import com.wztwzt.ae2_qof.wireless.WirelessBlocks;
-import com.wztwzt.ae2_qof.wireless.WirelessGuiHandler;
 
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLInterModComms;
@@ -19,6 +21,7 @@ public class CommonProxy {
 
     public static BlockExIOPort blockExIOPort;
     public static ItemInfinityWaterLavaCell itemInfinityWaterLavaCell;
+    public static BlockMergedTerminal blockMergedTerminal;
 
     public void preInit(FMLPreInitializationEvent event) {
         Config.synchronizeConfiguration(event.getSuggestedConfigurationFile());
@@ -45,6 +48,14 @@ public class CommonProxy {
             MyMod.LOG.error("[APU] ItemInfinityWaterLavaCell registration FAILED", t);
             t.printStackTrace(System.err);
         }
+        try {
+            blockMergedTerminal = new BlockMergedTerminal();
+            GameRegistry.registerBlock(blockMergedTerminal, appeng.block.AEBaseItemBlock.class, "merged_terminal");
+            GameRegistry.registerTileEntity(TileMergedTerminal.class, "merged_terminalTile");
+        } catch (Throwable t) {
+            MyMod.LOG.error("[DIAG] BlockMergedTerminal registration FAILED", t);
+            t.printStackTrace(System.err);
+        }
         if (itemInfinityWaterLavaCell != null) {
             try {
                 GameRegistry.addShapedRecipe(
@@ -63,17 +74,13 @@ public class CommonProxy {
         }
         registerRecipes();
         try {
-            FMLInterModComms.sendMessage(
-                "Waila",
-                "register",
-                "com.wztwzt.ae2_qof.wireless.TransceiverWailaProvider.register");
+            FMLInterModComms
+                .sendMessage("Waila", "register", "com.wztwzt.ae2_qof.wireless.TransceiverWailaProvider.register");
         } catch (Throwable t) {
             MyMod.LOG.error("[APU] Waila registration failed with 'Waila', trying 'waila'", t);
             try {
-                FMLInterModComms.sendMessage(
-                    "waila",
-                    "register",
-                    "com.wztwzt.ae2_qof.wireless.TransceiverWailaProvider.register");
+                FMLInterModComms
+                    .sendMessage("waila", "register", "com.wztwzt.ae2_qof.wireless.TransceiverWailaProvider.register");
             } catch (Throwable t2) {
                 MyMod.LOG.error("[APU] Waila registration also failed with 'waila'", t2);
             }
@@ -81,7 +88,7 @@ public class CommonProxy {
     }
 
     public void init(FMLInitializationEvent event) {
-        NetworkRegistry.INSTANCE.registerGuiHandler(MyMod.instance, new WirelessGuiHandler());
+        NetworkRegistry.INSTANCE.registerGuiHandler(MyMod.instance, new MergedGuiHandler());
         cpw.mods.fml.common.FMLCommonHandler.instance()
             .bus()
             .register(new WirelessBlockEventListener());
@@ -111,6 +118,23 @@ public class CommonProxy {
                     net.minecraft.init.Items.redstone,
                     'd',
                     net.minecraft.init.Items.diamond);
+            }
+            if (blockMergedTerminal != null) {
+                GameRegistry.addShapedRecipe(
+                    new net.minecraft.item.ItemStack(blockMergedTerminal),
+                    "igi",
+                    "rdr",
+                    "iai",
+                    'i',
+                    net.minecraft.init.Items.iron_ingot,
+                    'g',
+                    net.minecraft.init.Blocks.glass,
+                    'r',
+                    net.minecraft.init.Items.redstone,
+                    'd',
+                    net.minecraft.init.Items.diamond,
+                    'a',
+                    net.minecraft.init.Items.paper);
             }
             if (WirelessBlocks.blockWirelessTransceiver != null) {
                 GameRegistry.addShapedRecipe(
