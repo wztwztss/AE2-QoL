@@ -52,12 +52,26 @@ public final class NeiRecipeCapture {
         if (!hasCapturedRecipe()) {
             return data;
         }
+        extractFrom(lastHandler, lastRecipeIndex, data);
+        return data;
+    }
+
+    /** 从指定配方 handler 的指定配方页提取输入/输出（供 NEI 覆盖层「+」直传使用）。 */
+    public static RecipeData extractFrom(IRecipeHandler handler, int recipeIndex) {
+        RecipeData data = new RecipeData();
+        if (handler == null || recipeIndex < 0) {
+            return data;
+        }
+        extractFrom(handler, recipeIndex, data);
+        return data;
+    }
+
+    private static void extractFrom(IRecipeHandler handler, int recipeIndex, RecipeData data) {
         try {
-            int idx = lastRecipeIndex;
             List<ItemStack> ins = new ArrayList<>();
             List<ItemStack> outs = new ArrayList<>();
 
-            List<PositionedStack> ingredients = lastHandler.getIngredientStacks(idx);
+            List<PositionedStack> ingredients = handler.getIngredientStacks(recipeIndex);
             if (ingredients != null) {
                 for (PositionedStack ps : ingredients) {
                     ItemStack item = pickStack(ps);
@@ -67,7 +81,7 @@ public final class NeiRecipeCapture {
                 }
             }
 
-            PositionedStack result = lastHandler.getResultStack(idx);
+            PositionedStack result = handler.getResultStack(recipeIndex);
             if (result != null) {
                 ItemStack item = pickStack(result);
                 if (item != null) {
@@ -75,7 +89,7 @@ public final class NeiRecipeCapture {
                 }
             }
 
-            List<PositionedStack> other = lastHandler.getOtherStacks(idx);
+            List<PositionedStack> other = handler.getOtherStacks(recipeIndex);
             if (other != null) {
                 for (PositionedStack ps : other) {
                     ItemStack item = pickStack(ps);
@@ -101,7 +115,6 @@ public final class NeiRecipeCapture {
         } catch (Throwable t) {
             data.valid = false;
         }
-        return data;
     }
 
     private static ItemStack pickStack(PositionedStack ps) {

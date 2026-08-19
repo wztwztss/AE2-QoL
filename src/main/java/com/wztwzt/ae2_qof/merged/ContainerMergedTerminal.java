@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.IInventory;
@@ -16,6 +17,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.common.util.ForgeDirection;
 
 import com.google.common.primitives.Ints;
@@ -26,13 +28,20 @@ import appeng.api.config.Settings;
 import appeng.api.config.YesNo;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
+import appeng.api.networking.energy.IEnergyGrid;
+import appeng.api.networking.energy.IEnergySource;
+import appeng.api.networking.storage.IStorageGrid;
 import appeng.api.parts.IInterfaceTerminal;
+import appeng.api.storage.IMEMonitor;
+import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStackType;
 import appeng.api.util.DimensionalCoord;
 import appeng.api.util.IInterfaceViewable;
 import appeng.client.gui.IGuiSub;
 import appeng.container.AEBaseContainer;
+import appeng.container.ContainerOpenContext;
 import appeng.container.interfaces.IContainerSubGui;
+import appeng.container.slot.SlotRestrictedInput;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.PacketInterfaceTerminalUpdate;
 import appeng.helpers.IInterfaceHost;
@@ -65,6 +74,10 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
     private final IInterfaceTerminal anchor;
     private boolean wasOff;
 
+    public IGrid getGrid() {
+        return grid;
+    }
+
     // ===== 样板编码面板 =====
 
     final PatternContainer patternContainer;
@@ -74,6 +87,14 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
         super(inv, anchor);
         if (anchor == null) throw new AssertionError();
         this.anchor = anchor;
+        this.setOpenContext(new ContainerOpenContext(anchor));
+        if (anchor instanceof TileEntity te) {
+            this.getOpenContext().setWorld(te.getWorldObj());
+            this.getOpenContext().setX(te.xCoord);
+            this.getOpenContext().setY(te.yCoord);
+            this.getOpenContext().setZ(te.zCoord);
+            this.getOpenContext().setSide(ForgeDirection.UNKNOWN);
+        }
         if (Platform.isServer()) {
             IGridNode node = anchor.getActionableNode();
             if (node != null) this.grid = node.getGrid();
@@ -155,6 +176,42 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
 
     public void scheduleUpdate() {
         this.forceNextUpdate = true;
+    }
+
+    /** 空手点击空白样板槽时，从 AE 网络扣取 1 张空白样板（镜像原生 ContainerPatternTerm.slotClick）。 */
+    @Override
+    public ItemStack slotClick(int slotId, int clickedButton, int mode, EntityPlayer player) {
+        if (slotId >= 0 && slotId < this.inventorySlots.size()
+                && this.inventorySlots.get(slotId) instanceof SlotRestrictedInput slot
+                && slot.getItemType() == SlotRestrictedInput.PlacableItemType.BLANK_PATTERN
+                && player instanceof EntityPlayerMP) {
+            final boolean leftClick = mode == 0 && clickedButton == 0;
+            final boolean rightClick = mode == 0 && clickedButton == 1;
+            if (!slot.getHasStack() && player.inventory.getItemStack() == null && (leftClick || rightClick)) {
+                if (this.grid == null) return null;
+                IEnergySource energy = (IEnergyGrid) this.grid.getCache(IEnergyGrid.class);
+                if (energy == null) return null;
+                IStorageGrid storageGrid = (IStorageGrid) this.grid.getCache(IStorageGrid.class);
+                IMEMonitor<IAEItemStack> monitor = storageGrid.getItemInventory();
+                ItemStack blankStack = AEApi.instance()
+                    .definitions()
+                    .materials()
+                    .blankPattern()
+                    .maybeStack(1)
+                    .orNull();
+                if (blankStack == null) return null;
+                IAEItemStack blank = AEApi.instance()
+                    .storage()
+                    .createItemStack(blankStack);
+                IAEItemStack extracted = Platform.poweredExtraction(energy, monitor, blank, this.getActionSource());
+                if (extracted != null && extracted.getStackSize() > 0) {
+                    slot.putStack(extracted.getItemStack());
+                    this.detectAndSendChanges();
+                }
+                return null;
+            }
+        }
+        return super.slotClick(slotId, clickedButton, mode, player);
     }
 
     @Override

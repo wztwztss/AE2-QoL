@@ -17,6 +17,10 @@ import com.wztwzt.ae2_qof.merged.slot.SlotPatternFake;
 import com.wztwzt.ae2_qof.util.RecipeMapDetector;
 
 import appeng.api.AEApi;
+import appeng.api.networking.IGrid;
+import appeng.api.networking.energy.IEnergySource;
+import appeng.api.networking.storage.IStorageGrid;
+import appeng.api.storage.data.IAEItemStack;
 import appeng.container.slot.IOptionalSlotHost;
 import appeng.container.slot.SlotFake;
 import appeng.container.slot.SlotFakeCraftingMatrix;
@@ -232,21 +236,38 @@ public class PatternContainer implements IOptionalSlotHost {
 
         if (in == null || out == null) return;
         if (output != null && notPattern(output)) return;
-        else if (output == null) {
-            output = patternSlotIN.getStack();
-            if (notPattern(output)) return;
-            output.stackSize--;
-            if (output.stackSize == 0) {
-                patternSlotIN.putStack(null);
+        if (output == null) {
+            ItemStack blank = patternSlotIN.getStack();
+            if (blank != null && isBlankPattern(blank)) {
+                blank.stackSize--;
+                if (blank.stackSize == 0) {
+                    patternSlotIN.putStack(null);
+                }
+            } else if (blank == null) {
+                if (!pullBlankFromNetwork()) return;
+            } else {
+                return;
             }
+        }
+
+        // 按模式产出对应样板物品（与 GTNH 原生 ContainerPatternTerm.encode 一致）：
+        // 合成 → 普通样板；处理 → 终极样板（GT 机器仅识别终极样板）。
+        if (craftingMode) {
             output = AEApi.instance()
                 .definitions()
                 .items()
                 .encodedPattern()
                 .maybeStack(1)
                 .orNull();
-            if (output == null) return;
+        } else {
+            output = AEApi.instance()
+                .definitions()
+                .items()
+                .encodedUltimatePattern()
+                .maybeStack(1)
+                .orNull();
         }
+        if (output == null) return;
 
         final NBTTagCompound encodedValue = new NBTTagCompound();
         final NBTTagList tagIn = new NBTTagList();
@@ -300,10 +321,52 @@ public class PatternContainer implements IOptionalSlotHost {
         boolean isPattern = definitions.items()
             .encodedPattern()
             .isSameAs(output);
+        isPattern |= definitions.items()
+            .encodedUltimatePattern()
+            .isSameAs(output);
         isPattern |= definitions.materials()
             .blankPattern()
             .isSameAs(output);
         return !isPattern;
+    }
+
+    private boolean isBlankPattern(final ItemStack stack) {
+        if (stack == null) return false;
+        return AEApi.instance()
+            .definitions()
+            .materials()
+            .blankPattern()
+            .isSameAs(stack);
+    }
+
+    /** 空白样板槽为空时，尝试从 AE 网络扣取 1 张空白样板放入槽中（原生 ContainerPatternTerm.encode 行为）。 */
+    private boolean pullBlankFromNetwork() {
+        try {
+            if (!(this.container instanceof ContainerMergedTerminal cmt)) return false;
+            IGrid grid = cmt.getGrid();
+            if (grid == null) return false;
+            IEnergySource energy = (appeng.api.networking.energy.IEnergyGrid) grid
+                .getCache(appeng.api.networking.energy.IEnergyGrid.class);
+            if (energy == null) return false;
+            IStorageGrid storageGrid = (IStorageGrid) grid.getCache(IStorageGrid.class);
+            appeng.api.storage.IMEMonitor<IAEItemStack> monitor = storageGrid.getItemInventory();
+            ItemStack blankStack = AEApi.instance()
+                .definitions()
+                .materials()
+                .blankPattern()
+                .maybeStack(1)
+                .orNull();
+            if (blankStack == null) return false;
+            IAEItemStack blank = AEApi.instance()
+                .storage()
+                .createItemStack(blankStack);
+            IAEItemStack extracted = Platform.poweredExtraction(energy, monitor, blank, cmt.getActionSource());
+            if (extracted == null || extracted.getStackSize() <= 0) return false;
+            patternSlotIN.putStack(extracted.getItemStack());
+            return true;
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
     private ItemStack[] getInputs() {

@@ -56,6 +56,7 @@ public class MergedTerminalPanelHandler {
     public static final int BUTTON_INVERT_ID = 951;
     public static final int BUTTON_TAB_CRAFT_ID = 952;
     public static final int BUTTON_TAB_PROCESS_ID = 953;
+    public static final int BUTTON_LOAD_ID = 954;
 
     /** 客户端面板模式/替代/反转/页码状态（服务端容器同步状态，编码包携带） */
     public static boolean mergedCraftingMode = true;
@@ -79,6 +80,7 @@ public class MergedTerminalPanelHandler {
     public static GuiButton btnRecall;
     public static GuiButton btnSwap;
     public static GuiButton btnOverlay;
+    public static GuiButton btnLoad;
 
     public static final GuiScrollbar processingScrollBar = new GuiScrollbar();
 
@@ -192,10 +194,12 @@ public class MergedTerminalPanelHandler {
         btnRecall = new GuiButton(BUTTON_RECALL_ID, 0, 0, 12, 12, "\u2190");
         btnSwap = new GuiButton(BUTTON_SWAP_ID, 0, 0, 12, 12, "\u21c4");
         btnOverlay = new GuiButton(BUTTON_OVERLAY_ID, 0, 0, 12, 12, "OV");
+        btnLoad = new GuiButton(BUTTON_LOAD_ID, 0, 0, 12, 12, "\u2193");
         event.buttonList.add(btnUpload);
         event.buttonList.add(btnRecall);
         event.buttonList.add(btnSwap);
         event.buttonList.add(btnOverlay);
+        event.buttonList.add(btnLoad);
 
         processingScrollBar.setHeight(70)
             .setWidth(7)
@@ -274,6 +278,8 @@ public class MergedTerminalPanelHandler {
         btnOverlay.xPosition = ebx;
         btnOverlay.yPosition = baseY + MergedPanelLayout.EXTRA_BTN_Y0 + MergedPanelLayout.EXTRA_BTN_STEP * 3;
         btnOverlay.displayString = OverlayConfig.isEnabled() ? "OV" : "--";
+        btnLoad.xPosition = ebx;
+        btnLoad.yPosition = baseY + MergedPanelLayout.EXTRA_BTN_Y0 + MergedPanelLayout.EXTRA_BTN_STEP * 4;
     }
 
     public static void drawScrollbar(AEBaseGui gui) {
@@ -381,9 +387,56 @@ public class MergedTerminalPanelHandler {
                 boolean now = !OverlayConfig.isEnabled();
                 OverlayConfig.setEnabled(now);
                 break;
+            case BUTTON_LOAD_ID:
+                if (gui != null) {
+                    handleLoadToMatrix(gui);
+                }
+                break;
             default:
                 break;
         }
+    }
+
+    /** 读取已编码样板（patternSlotOUT），把配方解码回面板网格。 */
+    private static void handleLoadToMatrix(GuiContainer gui) {
+        if (!(gui.inventorySlots instanceof IMergedPatternTerminal merged)) {
+            return;
+        }
+        ItemStack patternStack = merged.getMergedEncodedSlot()
+            .getStack();
+        if (patternStack == null) {
+            return;
+        }
+        ItemStack[] inputs = new ItemStack[0];
+        ItemStack[] outputs = new ItemStack[0];
+        boolean crafting = true;
+        try {
+            ICraftingPatternDetails details = ((ICraftingPatternItem) patternStack.getItem())
+                .getPatternForItem(patternStack, Minecraft.getMinecraft().theWorld);
+            if (details != null) {
+                crafting = details.isCraftable();
+                appeng.api.storage.data.IAEItemStack[] aeInputs = details.getInputs();
+                appeng.api.storage.data.IAEItemStack[] aeOutputs = details.getOutputs();
+                if (aeInputs != null) {
+                    inputs = new ItemStack[aeInputs.length];
+                    for (int i = 0; i < aeInputs.length; i++) {
+                        inputs[i] = aeInputs[i] != null ? aeInputs[i].getItemStack() : null;
+                    }
+                }
+                if (aeOutputs != null) {
+                    outputs = new ItemStack[aeOutputs.length];
+                    for (int i = 0; i < aeOutputs.length; i++) {
+                        outputs[i] = aeOutputs[i] != null ? aeOutputs[i].getItemStack() : null;
+                    }
+                }
+            }
+        } catch (Throwable ignored) {}
+        if (inputs.length == 0 && outputs.length == 0) {
+            return;
+        }
+        MergedTerminalPanelHandler.mergedCraftingMode = crafting;
+        merged.setMergedCraftingMode(crafting);
+        ModNetwork.CHANNEL.sendToServer(MergedTerminalActionPacket.fill(inputs, outputs, crafting));
     }
 
     private static void sendModeToggle() {

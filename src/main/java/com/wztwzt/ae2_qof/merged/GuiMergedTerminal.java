@@ -42,6 +42,14 @@ public class GuiMergedTerminal extends GuiInterfaceTerminal {
         return (ContainerMergedTerminal) this.inventorySlots;
     }
 
+    public int getGuiLeft() {
+        return this.guiLeft;
+    }
+
+    public int getGuiTop() {
+        return this.guiTop;
+    }
+
     @Override
     public void drawBG(int offsetX, int offsetY, int mouseX, int mouseY) {
         super.drawBG(offsetX, offsetY, mouseX, mouseY);
@@ -68,6 +76,12 @@ public class GuiMergedTerminal extends GuiInterfaceTerminal {
         this.xSize = 209;
         super.drawScreen(mouseX, mouseY, partialTicks);
         this.xSize = FULL_X_SIZE;
+    }
+
+    @Override
+    public void initGui() {
+        this.xSize = 209;
+        super.initGui();
     }
 
     @Override

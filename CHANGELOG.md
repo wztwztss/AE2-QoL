@@ -1,6 +1,6 @@
 # AE2 QoL - Changelog
 
-> 当前版本：3.5.0 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
+> 当前版本：3.5.1 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
 
 ---
 
@@ -27,7 +27,7 @@
 | 叠加层开关 `/apu-overlay` + GUI OV 按钮 | `client/CommandOverlay` + `client/OverlayConfig` | ✅ 可用 |
 | **智能倍增（Smart Doubling）**：ME 接口/样板输入机复选框 + CPU 一次性推送 N 轮（默认不限 0=不限，可配） | `api/ISmartDoublingMedium` + `mixin/ae/MixinDualityInterface` + `mixin/ae/MixinCraftingCPUCluster` + `mixin/ae/MixinGuiInterface`/`MixinContainerInterface` + `mixin/gt/MixinMTEHatchInputBus` | ✅ 可用（3.2.0；3.3.2 兼容 GTNotLeisure 超级接口；3.3.3 支持 GT/SNL/PH 样板输入机；3.3.5 修复实测失效；3.3.6 默认 0=不限；3.3.7 批量记账/功率 O(1) 修复大订单卡死） |
 | 统一配置文件 `settings.json` + 热加载 + OP 命令 `/ae2qof reload` + 游戏内配置 GUI（含范围显示 + 名字映射热编辑） | `Config` + `CommandAe2QoL` + `client/gui/ConfigGuiFactory`/`GuiConfigScreen` + `network/ConfigSetPacket`/`ConfigUpdatePacket` | ✅ 可用（3.3.0；3.3.6 新增 GUI 页面；3.3.7 范围显示 + 映射编辑） |
-| **F：样板 + 接口二合一终端**（独立有线方块） | `merged/GuiMergedTerminal` + `ContainerMergedTerminal` + `PatternContainer` + `BlockMergedTerminal`/`TileMergedTerminal` + `client/event/MergedTerminalPanelHandler` + `client/gui/MergedPanelLayout` + `network/MergedTerminalActionPacket`/`MergedTerminalResultPacket` + `api/IMergedPatternTerminal` | ✅ 可用（3.4.0 起；3.5.0 改为独立有线方块 + 原生 AE2Things 风格面板，移除两个 mixin） |
+| **F：样板 + 接口二合一终端**（独立有线方块） | `merged/GuiMergedTerminal` + `ContainerMergedTerminal` + `PatternContainer` + `BlockMergedTerminal`/`TileMergedTerminal` + `client/event/MergedTerminalPanelHandler` + `client/gui/MergedPanelLayout` + `network/MergedTerminalActionPacket`/`MergedTerminalResultPacket` + `api/IMergedPatternTerminal` | ✅ 可用（3.4.0 起；3.5.0 改为独立有线方块 + 原生 AE2Things 风格面板，移除两个 mixin；3.5.1 修复 openContext NPE 崩溃/NEI 返回错位/处理样板改终极样板/网络拉空白样板/NEI「+」与 `↓` 读回/隐藏 NEI 面板） |
 
 # 已知风险登记表
 
@@ -85,7 +85,8 @@
 
 | 目标版本 | 使用 jar | 说明 |
 |---|---|---|
-| 3.5.0（当前） | `build/libs/AE2-QoL-3.5.0.jar` | F 模块改为独立有线方块「样板与接口终端」+ 原生 AE2Things 风格面板（4×4×2 页 + 滚动条 + 反转），移除两个 mixin |
+| 3.5.1（当前） | `build/libs/AE2-QoL-3.5.1.jar` | 二合一终端修复：openContext NPE 崩溃 / NEI 返回错位 / 处理样板改终极样板 / 网络拉空白样板 / NEI「+」填充与 `↓` 读回 / 隐藏 NEI 面板 |
+| 3.5.0 | `build/libs/AE2-QoL-3.5.0.jar` | F 模块改为独立有线方块「样板与接口终端」+ 原生 AE2Things 风格面板（4×4×2 页 + 滚动条 + 反转），移除两个 mixin |
 | 3.4.0 | `build/libs/AE2-QoL-3.4.0.jar` | 样板 + 接口二合一终端（F 模块）+ 配置页「配方参考」子页 |
 | 3.3.5 | `build/libs/AE2-QoL-3.3.5.jar` | 修复智能倍增实测失效：功率/原料不足按轮数钳制 N、PH 走 pushPatternMulti、异常回退原版 |
 | 3.3.4 | `build/libs/AE2-QoL-3.3.4.jar` | 修复自动上传把样板误投进 GT/PH 样板输入机原料缓存槽 |
@@ -103,6 +104,39 @@
 
 回退步骤：删除测试包 `mods/AE2-QoL-<旧版本>.jar`，复制目标 jar 为 `mods/AE2-QoL-<目标版本>.jar`，重启客户端。
 依赖固定：AE2 `rv3-beta-977-GTNH`、ae2fc `1.5.88-gtnh`、NEI `2.8.19-GTNH`。
+
+---
+
+## 3.5.1 - 二合一终端修复批次
+
+> 作者：wztwzt | 更新时间：2026-08-19
+
+### 修复：openContext 空指针崩溃（`PacketInventoryAction`/`PacketSwitchGuis` 等）
+
+- 根因：`PacketInventoryAction.serverPacketData` 对任何 `instanceof AEBaseContainer` 的 openContainer 无条件调用 `createPrimaryGui()`（`appeng/container/AEBaseContainer.java:1116` 的 `context.getTile()`），而合并终端从未调用 `setOpenContext(...)`（原生终端经 `GuiBridge.updateGui` 设置，我们走 IGuiHandler 打开故未设）→ `getOpenContext()` 为 null → NPE，网络握手致命错误导致退出
+- 修复：`ContainerMergedTerminal` 构造函数补 `setOpenContext(new ContainerOpenContext(anchor))` + world/x/y/z/side（`ForgeDirection.UNKNOWN`）；`PrimaryGui.gui` 为 null 无害（`open()` 已空判）。中键对 NEI 面板可合成物品下单现会正常打开「合成数量」子界面
+
+### 修复：查看 NEI 返回后界面整体偏左/主题丢失/空白样板「消失」
+
+- 根因：`GuiMergedTerminal.drawScreen` 末尾临时放大 `xSize=1000`（让面板悬垂区参与 `GuiContainer` 行 361/507 的「点击出界」判定），从 NEI（`GuiRecipe`）返回触发 `displayGuiScreen`→`initGui()` 重新计算 `guiLeft=(width-1000)/2` → 巨负偏左
+- 修复：覆写 `initGui()` 在 `super.initGui()` 前复位 `xSize=209`，保证任何重初始化使用正确尺寸；drawScreen 的放大技巧仅在绘制后到下一帧输入阶段生效，不再污染重新初始化
+
+### 修复：处理模式样板编码产出终极样板 + 网络自动扣空白
+
+- 根因：GTNH 原生 `ContainerPatternTerm.encode()`（`ContainerPatternTerm.java:305-311`）处理模式产出 `encodedUltimatePattern`，GT 机器仅识别终极样板；我们始终产出普通 `encodedPattern` → GT 机器不识别
+- 修复：`PatternContainer.encodeItemPattern()` 按模式产出 `encodedPattern`（合成）/`encodedUltimatePattern`（处理）；`notPattern()` 增加终极样板判定（二次编码不拦截）；`patternSlotOUT` 类型 `ENCODED_PATTERN` 经继承天然接受终极样板
+- 修复：空白样板槽为空时（网络有空白）`Platform.poweredExtraction` 自动扣取 1 张（能量用 `grid.getCache(IEnergyGrid.class)`，`getPowerSource()` 为 null 故直接用网格能量缓存）；`ContainerMergedTerminal.slotClick` 覆写镜像原生 `ContainerPatternTerm.slotClick`——空手左/右键点空空白槽拉取 1 张（`pickupStoredItems/splitStoredItems` 为 `ContainerMEMonitorable` 私有，改为内联 `poweredExtraction`）
+
+### 新增：NEI 配方界面「+」覆盖层对合并终端生效 + 面板 `↓` 读回按钮
+
+- `ClientProxy` 注册 `API.registerGuiOverlay(GuiMergedTerminal.class, "crafting", TerminalCraftingSlotFinder)` + `registerGuiOverlayHandler(..., DefaultOverlayHandler, "crafting")`（与 AE2 原生终端一致），使 NEI 配方页「+」对合并终端可见
+- `MixinDefaultOverlayHandler.transferRecipe` HEAD 拦截：`gui instanceof GuiMergedTerminal` 时取消原逻辑（原逻辑对假槽 `FastTransferManager.clickSlot` 不适配本终端），改从 handler 提取配方（`NeiRecipeCapture.extractFrom`）→ 判定合成/处理 → 本地切模式 + 发 `MergedTerminalActionPacket.FILL`
+- 面板顶部新增第 5 个 `↓` 按钮（`BUTTON_LOAD_ID=954`，y=57）：把 `patternSlotOUT` 已编码样板经 `ICraftingPatternDetails` 解码读回面板网格（`isCraftable()` 判模式 + FILL）
+
+### 修复：NEI 物品面板不再覆盖终端右侧样板面板
+
+- 根因：NEI 2.8 `ItemsGrid` 逐格调用已注册 `INEIGuiHandler.hideItemPanelSlot(gui,x,y,w,h)`（屏幕坐标）；AE2 自带 `NEIGuiHandler` 只转发 `GuiMEMonitorable` 系，我们的 GUI 继承 `GuiInterfaceTerminal→AEBaseGui` 不在转发范围
+- 修复：新增 `client/nei/MergedNeiHandler`（extends `INEIGuiAdapter`），面板矩形 `[guiLeft+209, guiTop, 133, 202]` 与格子相交即隐藏；`ClientProxy` 注册 `API.registerNEIGuiHandler`
 
 ---
 
