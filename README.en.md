@@ -68,7 +68,7 @@ A **Replan** button in the AE2 **craft confirm GUI**: re-allocates the current s
 
 ### 7. Enhanced IO Port (`ex_io_port`)
 
-Same appearance as the native AE2 IO port, but **transfers 1024× more items per operation** (adjustable via `io_port_rate` in `config/ae2_qof/settings.json`, hot-reloaded automatically). Recipe: `[Iron][Glass][Iron] / [Redstone][Diamond][Redstone] / [Iron][Glass][Iron]`.
+Same appearance as the native AE2 IO port, but **transfers 1024× more items per operation** (adjustable via `io_port_rate` in `config/ae2_qof/settings.json`, hot-reloaded automatically). 
 
 ### 8. Infinite Water & Lava Cell
 
