@@ -103,10 +103,6 @@ A new **Smart Doubling** checkbox (cycle-arrow icon) on the left of the **ME Int
 - **Default cap**: 0 = unlimited (dispatch all remaining rounds at once; `smart_doubling_max_rounds` in `config/ae2_qof/settings.json`, range 0–2147483647, hot-reloaded automatically or editable via the in-game Config page)
 - **Safety boundaries** (falls back to one-round behavior, identical to vanilla): fake crafting, fluid interfaces, blocking/conditional blocking mode, interface with pending un-pushed items, GT machines that accept plans directly (`acceptsPlans`); when materials/power are short, N is **clamped to the extractable rounds** instead of abandoning the push
 - **Energy**: charged once for the actually-pushed rounds; outputs and remaining rounds are accounted for the actual count — no overproduction or item loss
-- **3.3.5**: fixed GT/PH pattern input machines being "completely ineffective + unable to dispatch items" after enabling Smart Doubling — the power gate wrongly used N× total power with no fallback (skipped the medium), and the material probe required a strict full match, silently degrading N to 1
-- **3.3.6**: `smart_doubling_max_rounds` now defaults to 0 = unlimited (GT hatches have unbounded buffer, so all remaining rounds are dispatched at once; PH hatches self-limit by buffer space, ME interfaces cap at the adjacent machine's capacity); added an in-game config page (Mods → AE2 QoL → Config) where OP changes apply instantly and sync to all clients
-- **3.3.7**: performance fix — huge orders (e.g. 1T) no longer freeze the game (O(1) power clamp via a single query, batched waiting-output accounting, int-overflow clamp); fixed PH/GT hatch tooltip line breaks; the Config page now shows each setting's range and gained a "Mapping editing" page (recipe name mapping `recipe_names.json` and remembered providers `remembered_providers.json` are both editable client-side with hot disk-write)
-
 ---
 
 ### 14. Pattern + Interface all-in-one terminal (standalone block "Pattern & Interface Terminal")
@@ -128,7 +124,7 @@ A new wired block that merges the **pattern encoding panel** with the **interfac
 
 ## 📄 Other Docs
 
-| Doc | Description |
+| Doc |描述|
 |---|---|
 | [Changelog](docs/CHANGELOG.md) | User-facing changelog (by version) |
 | [CHANGELOG.md](CHANGELOG.md) | Developer changelog, known issues, rollback guide |
