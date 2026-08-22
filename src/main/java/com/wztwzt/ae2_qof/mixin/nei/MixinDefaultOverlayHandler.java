@@ -16,14 +16,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import com.wztwzt.ae2_qof.api.IMergedPatternTerminal;
 import com.wztwzt.ae2_qof.client.NeiRecipeCapture;
 import com.wztwzt.ae2_qof.client.ClientRecipeNameUtil;
 import com.wztwzt.ae2_qof.client.ClientState;
-import com.wztwzt.ae2_qof.client.event.MergedTerminalPanelHandler;
 import com.wztwzt.ae2_qof.merged.GuiMergedTerminal;
-import com.wztwzt.ae2_qof.network.MergedTerminalActionPacket;
-import com.wztwzt.ae2_qof.network.ModNetwork;
 
 import codechicken.lib.inventory.InventoryUtils;
 import codechicken.nei.ItemPanels;
@@ -54,14 +50,7 @@ public abstract class MixinDefaultOverlayHandler {
 
         // 合并终端：拦截 NEI「+」覆盖层直传，改为填入样板面板（原逻辑会对假槽点击，不适用于本终端）。
         if (gui instanceof GuiMergedTerminal) {
-            NeiRecipeCapture.RecipeData data = NeiRecipeCapture.extractFrom(handler, recipeIndex);
-            if (data.valid) {
-                MergedTerminalPanelHandler.mergedCraftingMode = data.crafting;
-                if (gui.inventorySlots instanceof IMergedPatternTerminal merged) {
-                    merged.setMergedCraftingMode(data.crafting);
-                }
-                ModNetwork.CHANNEL.sendToServer(
-                    MergedTerminalActionPacket.fill(data.inputs, data.outputs, data.crafting));
+            if (NeiRecipeCapture.fillMergedTerminal(gui, handler, recipeIndex)) {
                 cir.setReturnValue(1);
             }
         }

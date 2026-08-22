@@ -103,5 +103,47 @@ public final class ModNetwork {
             MergedTerminalResultPacket.class,
             discriminator++,
             Side.CLIENT);
+
+        CHANNEL.registerMessage(
+            MergedTerminalBlankCountPacket.Handler.class,
+            MergedTerminalBlankCountPacket.class,
+            discriminator++,
+            Side.CLIENT);
+
+        CHANNEL.registerMessage(
+            MergedTerminalSetStackPacket.Handler.class,
+            MergedTerminalSetStackPacket.class,
+            discriminator++,
+            Side.SERVER);
+
+        CHANNEL.registerMessage(
+            MergedTerminalRenamePacket.Handler.class,
+            MergedTerminalRenamePacket.class,
+            discriminator++,
+            Side.SERVER);
+
+        CHANNEL.registerMessage(
+            MergedTerminalScrollReplacePacket.Handler.class,
+            MergedTerminalScrollReplacePacket.class,
+            discriminator++,
+            Side.SERVER);
+
+        CHANNEL.registerMessage(
+            MergedTerminalMatrixUploadPacket.Handler.class,
+            MergedTerminalMatrixUploadPacket.class,
+            discriminator++,
+            Side.SERVER);
+
+        CHANNEL.registerMessage(
+            RequestReplaceCandidatesPacket.Handler.class,
+            RequestReplaceCandidatesPacket.class,
+            discriminator++,
+            Side.SERVER);
+
+        CHANNEL.registerMessage(
+            ReplaceCandidatesPacket.Handler.class,
+            ReplaceCandidatesPacket.class,
+            discriminator++,
+            Side.CLIENT);
     }
 }

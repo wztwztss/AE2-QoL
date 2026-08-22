@@ -52,6 +52,10 @@ public final class RecipeMapNameConfig {
 
         String trimmed = recipeMapName.trim();
 
+        if ("crafting".equalsIgnoreCase(trimmed)) {
+            return "合成";
+        }
+
         String result = localCache.get(trimmed.toLowerCase());
         if (result != null) {
             return result;

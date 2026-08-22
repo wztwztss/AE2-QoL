@@ -44,6 +44,15 @@ public class ClientState {
     /** 二合一终端编码成功后回传的机器中文名（服务端→客户端即时反馈） */
     public static volatile String mergedMachineName = null;
 
+    /** 二合一终端网络内空白样板总数量（服务端→客户端推送，用于空白槽数量角标） */
+    public static volatile long mergedBlankCount = 0;
+
+    /** 二合一终端 Shift+滚轮 替换候选列表（服务端→客户端回传，tooltip 预览用） */
+    public static volatile java.util.List<net.minecraft.item.ItemStack> replaceCandidates = null;
+
+    /** 候选列表中当前槽内物品的位置（-1 表示不在其中或未知） */
+    public static volatile int replaceCurrentIndex = -1;
+
     public static boolean highlightEnabled = false;
     public static java.util.List<int[]> highlightPositions = new java.util.ArrayList<int[]>();
 

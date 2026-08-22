@@ -66,12 +66,28 @@ public interface IMergedPatternTerminal {
      */
     String mergedEncode();
 
+    /** 最近一次编码写入的 apu:recipeMap（合成配方为 "crafting"，处理配方为 GT 配方池 id，可能为 null） */
+    String mergedEncodeRecipeMap();
+
+    /** 最近一次编码是否为处理配方且 recipeMap 无中文映射（需要弹出映射页） */
+    boolean mergedEncodeNeedsMapping();
+
+    /** 最近一次编码/填充解析出的机器中文搜索词（无映射时退化为配方池 id，可为 null） */
+    String mergedLastMachineName();
+
     void mergedClear();
 
-    void mergedDoubleStacks();
+    /**
+     * 倍增/倍除输入与输出格数量（仅处理模式）。位标志与原生 AE2 编码终端一致：
+     * 0=×2，1=×8，2=÷2，3=÷8。
+     */
+    void mergedDoubleStacks(int flags);
 
-    /** 服务端用 NEI 配方填充输入/输出格 */
-    void mergedFill(ItemStack[] inputs, ItemStack[] outputs, boolean crafting);
+    /** 服务端用 NEI 配方填充输入/输出格，recipeMap 为客户端已识别的配方池 id（处理配方，可传 null） */
+    void mergedFill(ItemStack[] inputs, ItemStack[] outputs, boolean crafting, int[] cells, String recipeMap);
+
+    /** 中键数量编辑：按槽号定位面板槽并设置数量（0 表示清空） */
+    void mergedSetStackSize(int slotNumber, int newSize);
 
     /** 服务端每 tick 依据当前合成模式重算合成结果槽（仅合成模式有效） */
     void mergedRecomputeResult();

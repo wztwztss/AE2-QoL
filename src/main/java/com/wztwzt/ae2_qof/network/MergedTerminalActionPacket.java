@@ -37,6 +37,9 @@ public class MergedTerminalActionPacket implements IMessage {
     private int value;
     private ItemStack[] inputs = new ItemStack[0];
     private ItemStack[] outputs = new ItemStack[0];
+    private int[] cells = null;
+    /** NEI 填充时客户端已识别的配方池 id（GT 处理配方），供服务端写入样板与映射判定 */
+    private String recipeMap = null;
 
     public MergedTerminalActionPacket() {
         this.action = Action.CLEAR;
@@ -65,12 +68,15 @@ public class MergedTerminalActionPacket implements IMessage {
         return p;
     }
 
-    public static MergedTerminalActionPacket fill(ItemStack[] inputs, ItemStack[] outputs, boolean crafting) {
+    public static MergedTerminalActionPacket fill(ItemStack[] inputs, ItemStack[] outputs, boolean crafting, int[] cells,
+        String recipeMap) {
         MergedTerminalActionPacket p = new MergedTerminalActionPacket();
         p.action = Action.FILL;
         p.crafting = crafting;
         p.inputs = inputs != null ? inputs : new ItemStack[0];
         p.outputs = outputs != null ? outputs : new ItemStack[0];
+        p.cells = cells;
+        p.recipeMap = recipeMap;
         return p;
     }
 
@@ -105,11 +111,39 @@ public class MergedTerminalActionPacket implements IMessage {
             for (int i = 0; i < outLen; i++) {
                 this.outputs[i] = ByteBufUtils.readItemStack(buf);
             }
+            this.cells = null;
+            if (buf.isReadable()) {
+                boolean hasCells = buf.readBoolean();
+                if (hasCells) {
+                    int cellLen = buf.readInt();
+                    if (cellLen < 0 || cellLen > 64) {
+                        cellLen = 0;
+                    }
+                    this.cells = new int[cellLen];
+                    for (int i = 0; i < cellLen; i++) {
+                        this.cells[i] = buf.readInt();
+                    }
+                }
+            }
+            this.recipeMap = null;
+            if (buf.isReadable()) {
+                boolean hasMap = buf.readBoolean();
+                if (hasMap) {
+                    int mapLen = buf.readShort();
+                    if (mapLen > 0 && mapLen <= 2048) {
+                        byte[] mapBytes = new byte[mapLen];
+                        buf.readBytes(mapBytes);
+                        this.recipeMap = new String(mapBytes, java.nio.charset.StandardCharsets.UTF_8);
+                    }
+                }
+            }
         } catch (Throwable t) {
             // 防御性解码：任何异常都不得导致玩家断连
             this.action = Action.CLEAR;
             this.inputs = new ItemStack[0];
             this.outputs = new ItemStack[0];
+            this.cells = null;
+            this.recipeMap = null;
         }
     }
 
@@ -127,6 +161,19 @@ public class MergedTerminalActionPacket implements IMessage {
         buf.writeInt(this.outputs.length);
         for (ItemStack s : this.outputs) {
             ByteBufUtils.writeItemStack(buf, s);
+        }
+        buf.writeBoolean(this.cells != null);
+        if (this.cells != null) {
+            buf.writeInt(this.cells.length);
+            for (int c : this.cells) {
+                buf.writeInt(c);
+            }
+        }
+        buf.writeBoolean(this.recipeMap != null);
+        if (this.recipeMap != null) {
+            byte[] mapBytes = this.recipeMap.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            buf.writeShort(mapBytes.length);
+            buf.writeBytes(mapBytes);
         }
     }
 
@@ -163,7 +210,12 @@ public class MergedTerminalActionPacket implements IMessage {
                     merged.setMergedBeSubstitute(message.beSubstitute);
                     String name = merged.mergedEncode();
                     if (name != null && !name.isEmpty()) {
-                        ModNetwork.CHANNEL.sendTo(new MergedTerminalResultPacket(name), player);
+                        ModNetwork.CHANNEL.sendTo(
+                            new MergedTerminalResultPacket(
+                                name,
+                                merged.mergedEncodeRecipeMap(),
+                                merged.mergedEncodeNeedsMapping()),
+                            player);
                     }
                     break;
                 }
@@ -171,7 +223,7 @@ public class MergedTerminalActionPacket implements IMessage {
                     merged.mergedClear();
                     break;
                 case DOUBLE:
-                    merged.mergedDoubleStacks();
+                    merged.mergedDoubleStacks(message.value);
                     break;
                 case SET_MODE:
                     merged.setMergedCraftingMode(message.crafting);
@@ -189,7 +241,8 @@ public class MergedTerminalActionPacket implements IMessage {
                     merged.setMergedActivePage(message.value);
                     break;
                 case FILL:
-                    merged.mergedFill(message.inputs, message.outputs, message.crafting);
+                    merged.mergedFill(message.inputs, message.outputs, message.crafting, message.cells,
+                        message.recipeMap);
                     break;
                 default:
                     break;

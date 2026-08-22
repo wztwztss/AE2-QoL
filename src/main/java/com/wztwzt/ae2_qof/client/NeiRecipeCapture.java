@@ -3,12 +3,15 @@ package com.wztwzt.ae2_qof.client;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.Container;
-import net.minecraft.inventory.InventoryCrafting;
+import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.CraftingManager;
-import net.minecraftforge.oredict.OreDictionary;
+
+import com.wztwzt.ae2_qof.api.IMergedPatternTerminal;
+import com.wztwzt.ae2_qof.client.event.MergedTerminalPanelHandler;
+import com.wztwzt.ae2_qof.common.RecipeMapNameConfig;
+import com.wztwzt.ae2_qof.merged.GuiMergedTerminal;
+import com.wztwzt.ae2_qof.network.MergedTerminalActionPacket;
+import com.wztwzt.ae2_qof.network.ModNetwork;
 
 import codechicken.nei.PositionedStack;
 import codechicken.nei.recipe.GuiRecipe;
@@ -56,6 +59,50 @@ public final class NeiRecipeCapture {
         return data;
     }
 
+    /**
+     * 把指定配方直接填入合并终端面板：提取输入/输出 → 设置合成/处理模式 → 发送 FILL 包。
+     * 供 NEI「+」覆盖层（含不按 Shift 的单击）直传使用。
+     *
+     * @return 是否成功填入
+     */
+    public static boolean fillMergedTerminal(GuiContainer gui, IRecipeHandler handler, int recipeIndex) {
+        if (gui == null || handler == null) {
+            return false;
+        }
+        return fillMergedTerminal(gui, extractFrom(handler, recipeIndex));
+    }
+
+    /** 使用最近浏览捕获的配方直填合并终端（供 GuiOverlayButton「+」单击直传使用）。 */
+    public static boolean fillMergedTerminalFromCapture(GuiContainer gui) {
+        if (gui == null || !hasCapturedRecipe()) {
+            return false;
+        }
+        return fillMergedTerminal(gui, extractCurrentRecipe());
+    }
+
+    private static boolean fillMergedTerminal(GuiContainer gui, RecipeData data) {
+        if (data == null || !data.valid) {
+            return false;
+        }
+        MergedTerminalPanelHandler.mergedCraftingMode = data.crafting;
+        if (gui.inventorySlots instanceof IMergedPatternTerminal merged) {
+            merged.setMergedCraftingMode(data.crafting);
+        }
+        // 处理配方：随 FILL 包携带客户端已识别的配方池 id，服务端写入样板并用于映射判定
+        String recipeMap = data.crafting ? null : ClientState.pendingRecipeMap;
+        ModNetwork.CHANNEL.sendToServer(
+            MergedTerminalActionPacket.fill(data.inputs, data.outputs, data.crafting, data.cells, recipeMap));
+        // 自动把机器名填入搜索框，过滤出刚填充的机器（仅处理配方且有中文映射时）
+        if (!data.crafting && recipeMap != null && !recipeMap.isEmpty()) {
+            ClientState.lastRecipeMap = recipeMap;
+            String resolved = RecipeMapNameConfig.resolveSearchKeyword(recipeMap);
+            if (resolved != null && !resolved.equals(recipeMap)) {
+                GuiMergedTerminal.setSearchFieldText(resolved);
+            }
+        }
+        return true;
+    }
+
     /** 从指定配方 handler 的指定配方页提取输入/输出（供 NEI 覆盖层「+」直传使用）。 */
     public static RecipeData extractFrom(IRecipeHandler handler, int recipeIndex) {
         RecipeData data = new RecipeData();
@@ -70,6 +117,7 @@ public final class NeiRecipeCapture {
         try {
             List<ItemStack> ins = new ArrayList<>();
             List<ItemStack> outs = new ArrayList<>();
+            List<Integer> cellList = new ArrayList<>();
 
             List<PositionedStack> ingredients = handler.getIngredientStacks(recipeIndex);
             if (ingredients != null) {
@@ -77,6 +125,7 @@ public final class NeiRecipeCapture {
                     ItemStack item = pickStack(ps);
                     if (item != null) {
                         ins.add(item.copy());
+                        cellList.add(cellFromPos(ps.relx, ps.rely));
                     }
                 }
             }
@@ -99,9 +148,16 @@ public final class NeiRecipeCapture {
                 }
             }
 
+            // PH 编程工具箱 MK.II：自动把不消耗催化剂替换为编程电路（含归零兜底）
+            applyProgrammingToolkit(ins);
+
             if (ins.size() > 27) {
                 ins.subList(27, ins.size())
                     .clear();
+                if (cellList.size() > 27) {
+                    cellList.subList(27, cellList.size())
+                        .clear();
+                }
             }
             if (outs.size() > 9) {
                 outs.subList(9, outs.size())
@@ -110,7 +166,27 @@ public final class NeiRecipeCapture {
 
             data.inputs = ins.toArray(new ItemStack[0]);
             data.outputs = outs.toArray(new ItemStack[0]);
-            data.crafting = isCraftingRecipe(data.inputs, data.outputs);
+            // 分类判定：以 NEI 配方类目为准——工作台配方（有序/无序）的 overlay identifier 均为 "crafting"。
+            // 不再用 CraftingManager.findMatchingRecipe 反查：同一组输入可能命中多个配方且返回第一个，
+            // 会导致工作台配方被随机误判成其他配方（如 6 石头→石楼梯 被识别成 GT 机器配方）。
+            data.crafting = "crafting".equals(handler.getOverlayIdentifier());
+            // 处理配方：GT 类配方的 overlay identifier 即配方池 id（如 gt.recipe.blastfurnace），
+            // 记录到 pendingRecipeMap 供 FILL 包携带与服务端写入样板/映射判定。
+            if (!data.crafting) {
+                String id = handler.getOverlayIdentifier();
+                if (id != null && !id.isEmpty()) {
+                    ClientState.pendingRecipeMap = id;
+                }
+            }
+            // 合成配方记录格子位置（3×3），供服务端按形状填入；无效位置退化为顺序填充
+            if (data.crafting && cellList.size() == data.inputs.length) {
+                data.cells = new int[cellList.size()];
+                for (int i = 0; i < cellList.size(); i++) {
+                    data.cells[i] = cellList.get(i);
+                }
+            } else {
+                data.cells = null;
+            }
             data.valid = data.inputs.length > 0 && data.outputs.length > 0;
         } catch (Throwable t) {
             data.valid = false;
@@ -130,36 +206,93 @@ public final class NeiRecipeCapture {
         return null;
     }
 
-    /** 3x3 可摆放且 CraftingManager 命中 → 合成模式；否则处理模式（GT 机器配方等） */
-    private static boolean isCraftingRecipe(ItemStack[] inputs, ItemStack[] outputs) {
-        if (outputs == null || outputs.length == 0 || outputs[0] == null) {
-            return false;
-        }
-        if (inputs == null || inputs.length > 9) {
-            return false;
-        }
-        try {
-            final InventoryCrafting ic = new InventoryCrafting(new Container() {
+    // ===== PH 编程工具箱 MK.II 适配 =====
 
-                @Override
-                public boolean canInteractWith(EntityPlayer p) {
-                    return false;
-                }
-            }, 3, 3);
-            for (int i = 0; i < inputs.length; i++) {
-                ic.setInventorySlotContents(i, inputs[i]);
-            }
-            ItemStack res = CraftingManager.getInstance()
-                .findMatchingRecipe(ic, null);
-            if (res == null) {
-                return false;
-            }
-            return res.getItem() == outputs[0].getItem()
-                && (res.getItemDamage() == outputs[0].getItemDamage()
-                    || outputs[0].getItemDamage() == OreDictionary.WILDCARD_VALUE);
+    /** PH 模组类可用性缓存（null=未初始化） */
+    private static Boolean phAvailable;
+    private static java.lang.reflect.Method phHolding;
+    private static java.lang.reflect.Method phAddEmpty;
+    private static java.lang.reflect.Method phWrap;
+
+    private static void initPhReflection() {
+        try {
+            Class<?> toolkit = Class.forName("reobf.proghatches.item.ItemProgrammingToolkit");
+            Class<?> circuit = Class.forName("reobf.proghatches.item.ItemProgrammingCircuit");
+            phHolding = toolkit.getMethod("holding");
+            phAddEmpty = toolkit.getMethod("addEmptyProgCiruit");
+            phWrap = circuit.getMethod("wrap", ItemStack.class);
+            phAvailable = true;
+        } catch (Throwable t) {
+            phAvailable = false;
+        }
+    }
+
+    private static boolean phHolding() {
+        if (phAvailable == null) initPhReflection();
+        if (!phAvailable) return false;
+        try {
+            return (Boolean) phHolding.invoke(null);
         } catch (Throwable t) {
             return false;
         }
+    }
+
+    private static boolean phAddEmpty() {
+        try {
+            return (Boolean) phAddEmpty.invoke(null);
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    private static ItemStack phWrap(ItemStack catalyst) {
+        try {
+            return (ItemStack) phWrap.invoke(null, catalyst);
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    /**
+     * PH 编程工具箱 MK.II 自动逻辑（与原生样板终端行为一致）：
+     * 输入中 stackSize==0 的项视为不消耗催化剂 → 替换为对应编程电路；
+     * 无催化剂且工具箱处于兜底模式时追加归零电路。电路置于输入列表最前。
+     */
+    private static void applyProgrammingToolkit(List<ItemStack> ins) {
+        if (!phHolding()) return;
+        List<ItemStack> circuits = new ArrayList<>();
+        boolean hasCatalyst = false;
+        java.util.Iterator<ItemStack> it = ins.iterator();
+        while (it.hasNext()) {
+            ItemStack s = it.next();
+            if (s != null && s.stackSize == 0) {
+                hasCatalyst = true;
+                it.remove();
+                ItemStack c = phWrap(s.copy());
+                if (c != null) circuits.add(c);
+            }
+        }
+        if (!hasCatalyst && phAddEmpty()) {
+            ItemStack zero = phWrap(null);
+            if (zero != null) circuits.add(zero);
+        }
+        for (int i = circuits.size() - 1; i >= 0; i--) {
+            ins.add(0, circuits.get(i));
+        }
+    }
+
+    /**
+     * 由 NEI 配方展示坐标换算 3×3 合成格索引（0-8）。
+     * NEI 合成格标准布局：格子中心 x=25/43/61，y=6/24/42，格距 18。
+     * 非合成格布局（如 GT 机器 4×4 网格）返回 -1，调用方退化为顺序填充。
+     */
+    private static int cellFromPos(int relx, int rely) {
+        int cx = (relx - 25) / 18;
+        int cy = (rely - 6) / 18;
+        if (cx < 0 || cx > 2 || cy < 0 || cy > 2) {
+            return -1;
+        }
+        return cy * 3 + cx;
     }
 
     private static void captureGTRecipeMap(IRecipeHandler handler) {
@@ -201,6 +334,8 @@ public final class NeiRecipeCapture {
 
         public ItemStack[] inputs = new ItemStack[0];
         public ItemStack[] outputs = new ItemStack[0];
+        /** 合成模式下每个输入对应的 3×3 格子索引（0-8），null 表示处理配方或未知布局 */
+        public int[] cells = null;
         public boolean crafting = false;
         public boolean valid = false;
     }

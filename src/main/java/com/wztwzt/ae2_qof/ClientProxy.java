@@ -49,7 +49,8 @@ public class ClientProxy extends CommonProxy {
                 com.wztwzt.ae2_qof.merged.GuiMergedTerminal.class,
                 new codechicken.nei.recipe.DefaultOverlayHandler(),
                 "crafting");
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
     }
 
     @Override

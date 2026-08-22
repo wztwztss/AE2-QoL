@@ -41,11 +41,16 @@ public final class MergedPanelLayout {
     public static final int TAB_BTN_X = 248;
     public static final int TAB_BTN_Y = 93;
 
-    // ===== 顶部额外按钮（上传/召回/轮换/OV） =====
+    // ===== 编码按钮旁的额外按钮布局 =====
+    // 上传(↑) 在编码左边 | 编码(Encode) | 召回(←) 在编码右边
+    // 交换产物(⇄) 在处理模式的AE按钮区域
 
-    public static final int EXTRA_BTN_X = 211;
-    public static final int EXTRA_BTN_Y0 = 1;
-    public static final int EXTRA_BTN_STEP = 14;
+    /** 编码按钮左边的上传按钮 */
+    public static final int UPLOAD_BTN_X = 206;
+    public static final int UPLOAD_BTN_Y = 118;
+    /** 编码按钮右边的召回按钮 */
+    public static final int RECALL_BTN_X = 234;
+    public static final int RECALL_BTN_Y = 118;
 
     /** 机器名绘制位置（面板右侧空白区） */
     public static final int MACHINE_NAME_X = 250;

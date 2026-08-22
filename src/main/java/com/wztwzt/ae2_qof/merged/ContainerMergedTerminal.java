@@ -22,6 +22,7 @@ import net.minecraftforge.common.util.ForgeDirection;
 
 import com.google.common.primitives.Ints;
 import com.wztwzt.ae2_qof.api.IMergedPatternTerminal;
+import com.wztwzt.ae2_qof.network.MergedTerminalBlankCountPacket;
 
 import appeng.api.AEApi;
 import appeng.api.config.Settings;
@@ -74,6 +75,9 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
     private final IInterfaceTerminal anchor;
     private boolean wasOff;
 
+    /** 上次发送给客户端的空白样板数量（避免每 tick 重复发包） */
+    private long lastSentBlankCount = -1;
+
     public IGrid getGrid() {
         return grid;
     }
@@ -107,7 +111,10 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
             }
         }
 
-        this.patternContainer = new PatternContainer(this, inv);
+        this.patternContainer = new PatternContainer(
+            this,
+            inv,
+            anchor instanceof TileMergedTerminal tmt ? tmt.getPatternInv() : new AppEngInternalInventory(null, 2));
         this.patternContainer.createSlots();
 
         this.mergedSlotBase = this.inventorySlots.size();
@@ -115,13 +122,38 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
             this.addSlotToContainer(s);
         }
 
+        // 初始化时按当前模式（默认合成）摆好槽位可见性，否则刚打开时 3×3 与 4×4 槽会同时显示
+        this.patternContainer.updateOrderOfOutputSlots();
+
+        // 服务端：从 tile 快照恢复上次编辑的面板格子与模式（跨 GUI 会话保留）
+        if (Platform.isServer() && anchor instanceof TileMergedTerminal tmt) {
+            this.patternContainer.restoreSnapshot(tmt.getSavedGrid(), tmt.getSavedCraftingMode());
+            this.syncCraftingMode = tmt.getSavedCraftingMode();
+        }
+
         this.bindPlayerInventory(inv, 14, 3);
+    }
+
+    /** 编码模式同步（打开时恢复上次模式），DataSynchronization 自动双端同步 */
+    @appeng.container.guisync.GuiSync(0)
+    public boolean syncCraftingMode = true;
+
+    @Override
+    public void onContainerClosed(net.minecraft.entity.player.EntityPlayer player) {
+        // 服务端：关闭 GUI 时把当前编辑内容写回 tile 快照
+        if (Platform.isServer() && this.anchor instanceof TileMergedTerminal tmt) {
+            this.patternContainer.saveSnapshot(tmt.getSavedGrid());
+            tmt.setSavedCraftingMode(this.patternContainer.isCraftingMode());
+        }
+        super.onContainerClosed(player);
     }
 
     @Override
     public void detectAndSendChanges() {
+        // 双端调用：服务端重算结果+样板回读检测；客户端本地同步回读显示
+        this.patternContainer.detectAndSendChanges();
         if (Platform.isServer()) {
-            this.patternContainer.detectAndSendChanges();
+            this.syncCraftingMode = this.patternContainer.isCraftingMode();
         }
         if (Platform.isClient()) return;
         super.detectAndSendChanges();
@@ -150,6 +182,40 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
                 p.encode();
                 NetworkHandler.instance.sendTo(p, (EntityPlayerMP) this.getPlayerInv().player);
             }
+        }
+        try {
+            long blankCount = getNetworkBlankCount();
+            if (blankCount != this.lastSentBlankCount) {
+                this.lastSentBlankCount = blankCount;
+                com.wztwzt.ae2_qof.network.ModNetwork.CHANNEL.sendTo(
+                    new MergedTerminalBlankCountPacket(blankCount),
+                    (EntityPlayerMP) this.getPlayerInv().player);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** 查询网络内空白样板总数量（与其它编码终端共享的同一份库存） */
+    private long getNetworkBlankCount() {
+        try {
+            if (this.grid == null) return 0;
+            IStorageGrid storageGrid = (IStorageGrid) this.grid.getCache(IStorageGrid.class);
+            if (storageGrid == null) return 0;
+            IMEMonitor<IAEItemStack> monitor = storageGrid.getItemInventory();
+            ItemStack blankStack = AEApi.instance()
+                .definitions()
+                .materials()
+                .blankPattern()
+                .maybeStack(1)
+                .orNull();
+            if (blankStack == null) return 0;
+            IAEItemStack blank = AEApi.instance()
+                .storage()
+                .createItemStack(blankStack);
+            IAEItemStack found = monitor.getAvailableItem(blank, appeng.util.IterationCounter.fetchNewId());
+            return found == null ? 0 : found.getStackSize();
+        } catch (Throwable t) {
+            return 0;
         }
     }
 
@@ -181,36 +247,6 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
     /** 空手点击空白样板槽时，从 AE 网络扣取 1 张空白样板（镜像原生 ContainerPatternTerm.slotClick）。 */
     @Override
     public ItemStack slotClick(int slotId, int clickedButton, int mode, EntityPlayer player) {
-        if (slotId >= 0 && slotId < this.inventorySlots.size()
-                && this.inventorySlots.get(slotId) instanceof SlotRestrictedInput slot
-                && slot.getItemType() == SlotRestrictedInput.PlacableItemType.BLANK_PATTERN
-                && player instanceof EntityPlayerMP) {
-            final boolean leftClick = mode == 0 && clickedButton == 0;
-            final boolean rightClick = mode == 0 && clickedButton == 1;
-            if (!slot.getHasStack() && player.inventory.getItemStack() == null && (leftClick || rightClick)) {
-                if (this.grid == null) return null;
-                IEnergySource energy = (IEnergyGrid) this.grid.getCache(IEnergyGrid.class);
-                if (energy == null) return null;
-                IStorageGrid storageGrid = (IStorageGrid) this.grid.getCache(IStorageGrid.class);
-                IMEMonitor<IAEItemStack> monitor = storageGrid.getItemInventory();
-                ItemStack blankStack = AEApi.instance()
-                    .definitions()
-                    .materials()
-                    .blankPattern()
-                    .maybeStack(1)
-                    .orNull();
-                if (blankStack == null) return null;
-                IAEItemStack blank = AEApi.instance()
-                    .storage()
-                    .createItemStack(blankStack);
-                IAEItemStack extracted = Platform.poweredExtraction(energy, monitor, blank, this.getActionSource());
-                if (extracted != null && extracted.getStackSize() > 0) {
-                    slot.putStack(extracted.getItemStack());
-                    this.detectAndSendChanges();
-                }
-                return null;
-            }
-        }
         return super.slotClick(slotId, clickedButton, mode, player);
     }
 
@@ -549,7 +585,22 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
     @Override
     public String mergedEncode() {
         patternContainer.encode();
-        return null;
+        return patternContainer.getLastMachineName();
+    }
+
+    @Override
+    public String mergedEncodeRecipeMap() {
+        return patternContainer.getLastRecipeMap();
+    }
+
+    @Override
+    public boolean mergedEncodeNeedsMapping() {
+        return patternContainer.isLastNeedsMapping();
+    }
+
+    @Override
+    public String mergedLastMachineName() {
+        return patternContainer.getLastMachineName();
     }
 
     @Override
@@ -558,13 +609,20 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
     }
 
     @Override
-    public void mergedDoubleStacks() {
-        patternContainer.doubleStacks();
+    public void mergedDoubleStacks(int flags) {
+        patternContainer.doubleStacks(flags);
     }
 
     @Override
-    public void mergedFill(ItemStack[] inputs, ItemStack[] outputs, boolean crafting) {
-        patternContainer.fill(inputs, outputs, crafting);
+    public void mergedFill(ItemStack[] inputs, ItemStack[] outputs, boolean crafting, int[] cells, String recipeMap) {
+        patternContainer.fill(inputs, outputs, crafting, cells, recipeMap);
+    }
+
+    @Override
+    public void mergedSetStackSize(int slotNumber, int newSize) {
+        if (!Platform.isServer()) return;
+        if (slotNumber < 0 || slotNumber >= this.inventorySlots.size()) return;
+        patternContainer.setStackSize(this.inventorySlots.get(slotNumber), newSize);
     }
 
     @Override

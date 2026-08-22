@@ -1,6 +1,60 @@
+## 3.6.0 - 二合一终端面板体验升级批次
+
+> 作者：wztwzt | 更新时间：2026-08-22
+
+### 新增：样板回读（二次编辑）
+
+- 把编码好的样板放回 OUT 槽，自动解码回填面板格子（输入/输出/模式/替代开关一并恢复），无需重新拖放配方
+- 数据链路：`ICraftingPatternDetails` 主路径 + GT 终极样板 NBT（`in`/`out` AE2 栈格式）兜底读取
+- 流体输入还原为 GT 展示物品（tooltip 带温度/状态），与 NEI 填充时的格子表示一致；`ItemFluidDrop` 包装同样识别
+- 样板内 `apu:recipeMap` 保留，回读后再编码/上传仍可识别供应器映射
+
+### 新增：编辑快照持久化
+
+- 关闭终端 GUI 时自动保存面板全部格子（合成 3×3 + 扩展输入 32 + 输出 32）与合成模式到方块 NBT；重新打开完整恢复
+- 合成模式经 `@GuiSync(0)` 同步客户端，GUI 背景与按钮布局即时正确
+- 存档兼容：纯新增 NBT 字段（`apuSavedGrid` / `apuSavedMode`），旧存档无字段按默认空面板处理
+
+### 新增：PH 编程工具箱 MK.II 适配
+
+- 二合一终端 NEI 转写时，自动把配方中 `stackSize==0` 的不消耗催化剂替换为对应编程电路；工具箱处于兜底模式且配方无催化剂时追加归零电路
+- 反射调用 PH API（`holding()` / `addEmptyProgCiruit()` / `ItemProgrammingCircuit.wrap`），PH 未安装时自动跳过、零影响
+- 补齐与原生样板终端的能力差异：原生 hook 位于 NEE `GregTech5RecipeProcessor`，二合一终端走自研直通链路绕过了该注入点
+
+### 新增：装配矩阵上传按钮（AM）
+
+- 面板新增 `AM` 按钮（仅合成模式且 GTNL 已安装时显示）：点击将编码好的样板上传至网络中 GTNL 装配矩阵样板库
+- 行为对齐 GTNL 原生样板终端按钮：OUT 槽为空先编码；仅接受普通合成样板；矩阵已有相同输出时提示并返还空白样板；否则插入第一个有空位的矩阵并清空 OUT 槽
+- 全程反射访问 GTNL，模组未安装时按钮隐藏
+
+### 修复：流体解析严格匹配（「气态氧变液态氧」根因）
+
+- 根因：`findFluidByName()` 旧模糊匹配用 `contains` 双向包含——`"liquidoxygen".contains("oxygen")` 为真，HashMap 无序遍历导致气态氧被随机解析成液态氧写入样板 NBT
+- 修复：改为精确匹配 → 完全相等 → 唯一前缀匹配 → 多候选放弃（宁可不解析也不写错流体）
+- 附带：识别 ae2fc `ItemFluidDrop` 物品（NBT `Fluid` 键）参与流体解析，重编码不再退化为普通物品序列化
+
+### 修复：数量编辑与物品消失
+
+- 移除数量编辑 999 硬上限；超大输入 clamp 到 `Integer.MAX_VALUE` 防溢出
+- **输出格禁止中键编辑**：编辑后 `getAndUpdateOutput()` 配方重算会覆盖/清空输出格（物品消失根因之一），客户端+服务端双重拦截
+- `setStackSize` 后补 `slot.onSlotChanged()`
+- 中键编辑覆盖层移至背包区域居中显示，交互改为模态弹窗（点击覆盖层以外关闭并吞掉点击，防止误触下方槽位）；标题「编辑数量:」/「重命名:」
+- Shift+点加号=乘法、Shift+点减号=除法（右键减号同为除法），独立 ÷ 按钮移除
+
+### 修复：Shift+滚轮 OreDict 替换循环推进
+
+- 原实现向上滚永远跳第 0 个候选、向下滚跳最后一个；改为基于当前物品在候选序列中的索引循环推进
+- 新增候选查询包（`RequestReplaceCandidatesPacket` / `ReplaceCandidatesPacket`）供预览扩展使用
+
+### 其他
+
+- `TileMergedTerminal` 实现 `IPowerChannelState`（对齐 TileExIOPort 模式），WAILA 等可正确读取供电/频道状态
+- 面板按钮布局调整：上传 `↑`/召回 `←` 贴紧编码按钮两侧，交换 `⇄` 移入处理模式右上 AE 按钮区（合成模式隐藏），`OV` 固定右下
+
+---
 # AE2 QoL - Changelog
 
-> 当前版本：3.5.1 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
+> 当前版本：3.6.0 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
 
 ---
 
@@ -27,7 +81,7 @@
 | 叠加层开关 `/apu-overlay` + GUI OV 按钮 | `client/CommandOverlay` + `client/OverlayConfig` | ✅ 可用 |
 | **智能倍增（Smart Doubling）**：ME 接口/样板输入机复选框 + CPU 一次性推送 N 轮（默认不限 0=不限，可配） | `api/ISmartDoublingMedium` + `mixin/ae/MixinDualityInterface` + `mixin/ae/MixinCraftingCPUCluster` + `mixin/ae/MixinGuiInterface`/`MixinContainerInterface` + `mixin/gt/MixinMTEHatchInputBus` | ✅ 可用（3.2.0；3.3.2 兼容 GTNotLeisure 超级接口；3.3.3 支持 GT/SNL/PH 样板输入机；3.3.5 修复实测失效；3.3.6 默认 0=不限；3.3.7 批量记账/功率 O(1) 修复大订单卡死） |
 | 统一配置文件 `settings.json` + 热加载 + OP 命令 `/ae2qof reload` + 游戏内配置 GUI（含范围显示 + 名字映射热编辑） | `Config` + `CommandAe2QoL` + `client/gui/ConfigGuiFactory`/`GuiConfigScreen` + `network/ConfigSetPacket`/`ConfigUpdatePacket` | ✅ 可用（3.3.0；3.3.6 新增 GUI 页面；3.3.7 范围显示 + 映射编辑） |
-| **F：样板 + 接口二合一终端**（独立有线方块） | `merged/GuiMergedTerminal` + `ContainerMergedTerminal` + `PatternContainer` + `BlockMergedTerminal`/`TileMergedTerminal` + `client/event/MergedTerminalPanelHandler` + `client/gui/MergedPanelLayout` + `network/MergedTerminalActionPacket`/`MergedTerminalResultPacket` + `api/IMergedPatternTerminal` | ✅ 可用（3.4.0 起；3.5.0 改为独立有线方块 + 原生 AE2Things 风格面板，移除两个 mixin；3.5.1 修复 openContext NPE 崩溃/NEI 返回错位/处理样板改终极样板/网络拉空白样板/NEI「+」与 `↓` 读回/隐藏 NEI 面板） |
+| **F：样板 + 接口二合一终端**（独立有线方块） | `merged/GuiMergedTerminal` + `ContainerMergedTerminal` + `PatternContainer` + `BlockMergedTerminal`/`TileMergedTerminal` + `client/event/MergedTerminalPanelHandler` + `client/gui/MergedPanelLayout` + `network/MergedTerminalActionPacket`/`MergedTerminalResultPacket` + `api/IMergedPatternTerminal` | ✅ 可用（3.4.0 起；3.5.0 改为独立有线方块 + 原生 AE2Things 风格面板，移除两个 mixin；3.5.1 修复 openContext NPE 崩溃/NEI 返回错位/处理样板改终极样板/网络拉空白样板/NEI「+」与 `↓` 读回/隐藏 NEI 面板）；**3.6.0 新增：样板回读二次编辑、编辑快照持久化、PH 编程工具箱适配、装配矩阵上传按钮（AM）、流体解析严格匹配修复、数量上限移除与输出格禁编、覆盖层模态化 |
 
 # 已知风险登记表
 
@@ -85,7 +139,8 @@
 
 | 目标版本 | 使用 jar | 说明 |
 |---|---|---|
-| 3.5.1（当前） | `build/libs/AE2-QoL-3.5.1.jar` | 二合一终端修复：openContext NPE 崩溃 / NEI 返回错位 / 处理样板改终极样板 / 网络拉空白样板 / NEI「+」填充与 `↓` 读回 / 隐藏 NEI 面板 |
+| 3.6.0（当前） | `build/libs/AE2-QoL-3.6.0.jar` | 面板体验升级：样板回读二次编辑 / 编辑快照持久化 / PH 编程工具箱适配 / 装配矩阵上传按钮 / 流体解析严格匹配修复 / 数量上限移除与输出格禁编 |
+| 3.5.1 | `build/libs/AE2-QoL-3.5.1.jar` | 二合一终端修复：openContext NPE 崩溃 / NEI 返回错位 / 处理样板改终极样板 / 网络拉空白样板 / NEI「+」填充与 `↓` 读回 / 隐藏 NEI 面板 |
 | 3.5.0 | `build/libs/AE2-QoL-3.5.0.jar` | F 模块改为独立有线方块「样板与接口终端」+ 原生 AE2Things 风格面板（4×4×2 页 + 滚动条 + 反转），移除两个 mixin |
 | 3.4.0 | `build/libs/AE2-QoL-3.4.0.jar` | 样板 + 接口二合一终端（F 模块）+ 配置页「配方参考」子页 |
 | 3.3.5 | `build/libs/AE2-QoL-3.3.5.jar` | 修复智能倍增实测失效：功率/原料不足按轮数钳制 N、PH 走 pushPatternMulti、异常回退原版 |

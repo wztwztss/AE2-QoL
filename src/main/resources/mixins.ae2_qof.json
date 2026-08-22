@@ -15,6 +15,7 @@
   "client": [
     "nei.MixinRecipeHandlerRef",
     "nei.MixinDefaultOverlayHandler",
+    "nei.MixinGuiOverlayButton",
     "nei.MixinGuiMEMonitorable",
     "nei.MixinPanelWidgetDraw",
     "nei.MixinNEIRecipeWidget",

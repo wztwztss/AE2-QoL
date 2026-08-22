@@ -13,6 +13,8 @@ import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.StatCollector;
 
 import com.wztwzt.ae2_qof.client.ClientState;
+import com.wztwzt.ae2_qof.common.RecipeMapNameConfig;
+import com.wztwzt.ae2_qof.merged.GuiMergedTerminal;
 import com.wztwzt.ae2_qof.network.ModNetwork;
 import com.wztwzt.ae2_qof.network.UploadPatternPacket;
 import com.wztwzt.ae2_qof.util.RecipeNameUtil;
@@ -457,6 +459,14 @@ public class GuiProviderSelect extends GuiScreen {
     private void restoreParentScreen() {
         if (this.mc != null) {
             this.mc.displayGuiScreen(this.parent);
+            // 映射完成后回到终端，把搜索框刷新为映射后的中文名（未映射则保持原样）
+            String rawId = RecipeNameUtil.getLastRawRecipeId();
+            if (rawId != null && !rawId.isEmpty()) {
+                String resolved = RecipeMapNameConfig.resolveSearchKeyword(rawId);
+                if (resolved != null && !resolved.equals(rawId)) {
+                    GuiMergedTerminal.setSearchFieldText(resolved);
+                }
+            }
         }
     }
 
