@@ -693,11 +693,15 @@ public abstract class MixinCraftingCPUCluster {
                         if (medium instanceof DualityInterface) sum *= Math
                             .pow(4.0, ((DualityInterface) medium).getInstalledUpgrades(Upgrades.PATTERN_CAPACITY));
 
-                        // 功率钳制（O(1)）：一次 SIMULATE 查询可用电总量，直接算出可负担的最大轮数。
-                        // 替代原版逐轮递减的 O(N) 次网格查询 —— 大订单（如 1T 量级）下会直接卡死。
+                        // 功率钳制：以 min(effectiveN, 4096) 轮电费为查询上界做 SIMULATE。
+                        // AE2 EnergyGridCache.simulateExtract 凑够即停，有限查询通常 O(1)；
+                        // Double.MAX_VALUE 会强制遍历全部储能设备（O(P)，#51）。
+                        // 电量 ≥ 上界时视为"电不是瓶颈"，effectiveN 维持原料/容量钳制结果；
+                        // 单次推送封顶 4096 轮，剩余轮数下一 tick 继续推送。
                         if (effectiveN > 1) {
+                            final double probeRounds = Math.min(effectiveN, 4096);
                             final double availablePower = eg
-                                .extractAEPower(Double.MAX_VALUE, Actionable.SIMULATE, PowerMultiplier.CONFIG);
+                                .extractAEPower(sum * probeRounds, Actionable.SIMULATE, PowerMultiplier.CONFIG);
                             if (availablePower < sum - 0.01) {
                                 // 连一轮电都付不起：与原版 while 循环收敛后一致，跳过本介质。
                                 continue;

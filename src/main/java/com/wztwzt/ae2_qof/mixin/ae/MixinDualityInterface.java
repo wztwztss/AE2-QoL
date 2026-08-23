@@ -96,7 +96,8 @@ public abstract class MixinDualityInterface implements ISmartDoublingMedium {
         int best = max;
         boolean foundAdaptor = false;
         for (final ForgeDirection s : directions) {
-            final TileEntity te = w.getTileEntity(tile.xCoord + s.offsetX, tile.yCoord + s.offsetY, tile.zCoord + s.offsetZ);
+            final TileEntity te = w
+                .getTileEntity(tile.xCoord + s.offsetX, tile.yCoord + s.offsetY, tile.zCoord + s.offsetZ);
             if (te == null) {
                 continue;
             }
@@ -118,12 +119,33 @@ public abstract class MixinDualityInterface implements ISmartDoublingMedium {
                 if (roundSize <= 0) {
                     continue;
                 }
-                // 二分查找：该面上当前能整份吞下多少轮。roundSize 为 long，roundSize*mid ≤ 2^62 不溢出。
-                int lo = 1;
-                int hi = max;
+                // 指数扩张 + 区间二分：先倍增找到第一个失败点，再在其前的小区间内二分，
+                // 替代固定 [1,max] 全程二分（max=不限时 31 次 probe/输入/面，#51）。
+                // 小容量场景（常见：只能吞几轮）仅需个位数次 simulateAddStack。
+                int lo = 0;
+                int step = 1;
+                while (lo + step <= max) {
+                    final IAEStack<?> probe = input.copy()
+                        .setStackSize(roundSize * (lo + step));
+                    final IAEStack<?> leftover = ad.simulateAddStack(probe, InsertionMode.DEFAULT);
+                    if (leftover != null && leftover.getStackSize() > 0) {
+                        break;
+                    }
+                    lo += step;
+                    if (lo >= max) {
+                        break;
+                    }
+                    step <<= 1;
+                    if ((long) lo + step > max) {
+                        step = max - lo;
+                    }
+                }
+                // 在 (lo, min(lo+step, max)] 内二分收敛（lo 已知可行）
+                int hi = Math.min(max, lo + step);
                 while (lo < hi) {
                     final int mid = (lo + hi + 1) >>> 1;
-                    final IAEStack<?> probe = input.copy().setStackSize(roundSize * mid);
+                    final IAEStack<?> probe = input.copy()
+                        .setStackSize(roundSize * mid);
                     final IAEStack<?> leftover = ad.simulateAddStack(probe, InsertionMode.DEFAULT);
                     if (leftover == null || leftover.getStackSize() == 0) {
                         lo = mid;
