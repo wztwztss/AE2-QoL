@@ -3,6 +3,7 @@ package com.wztwzt.ae2_qof.network;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.tileentity.TileEntity;
 
+import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.wireless.TileWirelessTransceiver;
 import com.wztwzt.ae2_qof.wireless.WirelessData;
 import com.wztwzt.ae2_qof.wireless.WirelessWorldData;
@@ -125,7 +126,7 @@ public class WirelessActionPacket implements IMessage {
                         handleSetFrequency(twt, msg);
                         break;
                     case ACTION_TOGGLE_HIGHLIGHT:
-                        handleToggleHighlight(twt, player);
+                        handleToggleHighlight(twt, msg, player);
                         break;
                     default:
                         return;
@@ -137,7 +138,7 @@ public class WirelessActionPacket implements IMessage {
                         .markBlockForUpdate(twt.xCoord, twt.yCoord, twt.zCoord);
                 }
             } catch (Throwable t) {
-                t.printStackTrace();
+                MyMod.LOG.error("Wireless action failed", t);
             }
         }
 
@@ -257,13 +258,16 @@ public class WirelessActionPacket implements IMessage {
                 player);
         }
 
-        private void handleToggleHighlight(TileWirelessTransceiver twt, EntityPlayerMP player) {
+        private void handleToggleHighlight(TileWirelessTransceiver twt, WirelessActionPacket msg,
+            EntityPlayerMP player) {
             String freq = twt.getFrequency();
             if (freq == null || freq.isEmpty()) {
                 ModNetwork.CHANNEL.sendTo(new WirelessHighlightPacket(new java.util.ArrayList<int[]>(), false), player);
                 return;
             }
-            boolean currentlyEnabled = com.wztwzt.ae2_qof.client.ClientState.highlightEnabled;
+            // 目标状态由包参数携带（客户端发送时取反本地状态）：
+            // 服务端 JVM 读不到客户端静态字段 ClientState.highlightEnabled，专用服上恒 false 导致只能开不能关（#47）
+            boolean currentlyEnabled = msg.modeValue;
             if (currentlyEnabled) {
                 ModNetwork.CHANNEL.sendTo(new WirelessHighlightPacket(new java.util.ArrayList<int[]>(), false), player);
             } else {

@@ -13,6 +13,7 @@ import net.minecraft.util.StatCollector;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
+import com.wztwzt.ae2_qof.client.ClientState;
 import com.wztwzt.ae2_qof.network.ModNetwork;
 import com.wztwzt.ae2_qof.network.WirelessActionPacket;
 import com.wztwzt.ae2_qof.wireless.TileWirelessTransceiver;
@@ -83,14 +84,8 @@ public class GuiWireless extends GuiContainer {
         int btnY1 = guiTop + BTN_AREA_Y;
         int btnY2 = guiTop + BTN_AREA_Y + BTN_H + BTN_GAP;
 
-        buttonList.add(
-            new GuiButton(
-                BTN_ADD,
-                btnX1,
-                btnY1,
-                BTN_W,
-                BTN_H,
-                StatCollector.translateToLocal("gui.ae2_qof.add")));
+        buttonList
+            .add(new GuiButton(BTN_ADD, btnX1, btnY1, BTN_W, BTN_H, StatCollector.translateToLocal("gui.ae2_qof.add")));
         buttonList.add(
             new GuiButton(
                 BTN_REMOVE,
@@ -223,9 +218,8 @@ public class GuiWireless extends GuiContainer {
 
         String modeLabel = StatCollector.translateToLocal("gui.ae2_qof.wireless.mode") + ": ";
         boolean isSender = tile.isMode();
-        String modeVal = StatCollector.translateToLocal(
-            isSender ? "gui.ae2_qof.wireless.mode.sender"
-                : "gui.ae2_qof.wireless.mode.receiver");
+        String modeVal = StatCollector
+            .translateToLocal(isSender ? "gui.ae2_qof.wireless.mode.sender" : "gui.ae2_qof.wireless.mode.receiver");
         fontRendererObj.drawString(modeLabel, sx, sy + 14, 0xFFAAAAAA);
         fontRendererObj.drawString(
             modeVal,
@@ -343,7 +337,8 @@ public class GuiWireless extends GuiContainer {
                 break;
             }
             case BTN_HIGHLIGHT: {
-                sendAction(WirelessActionPacket.ACTION_TOGGLE_HIGHLIGHT, null, false);
+                // 目标状态由包参数携带：服务端读不到客户端静态字段，专用服上开关会失效（#47）
+                sendAction(WirelessActionPacket.ACTION_TOGGLE_HIGHLIGHT, null, !ClientState.highlightEnabled);
                 break;
             }
         }
