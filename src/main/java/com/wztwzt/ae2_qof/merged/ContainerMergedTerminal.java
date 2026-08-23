@@ -30,7 +30,6 @@ import appeng.api.config.YesNo;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.storage.IStorageGrid;
-import appeng.api.parts.IInterfaceTerminal;
 import appeng.api.storage.IMEMonitor;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStackType;
@@ -69,7 +68,7 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
     private PacketInterfaceTerminalUpdate dirty;
     private boolean isDirty;
     private IGrid grid;
-    private final IInterfaceTerminal anchor;
+    private final com.wztwzt.ae2_qof.api.IMergedTerminalHost anchor;
     private boolean wasOff;
 
     /** 上次发送给客户端的空白样板数量（避免每 tick 重复发包） */
@@ -84,7 +83,7 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
     final PatternContainer patternContainer;
     private int mergedSlotBase = -1;
 
-    public ContainerMergedTerminal(InventoryPlayer inv, IInterfaceTerminal anchor) {
+    public ContainerMergedTerminal(InventoryPlayer inv, com.wztwzt.ae2_qof.api.IMergedTerminalHost anchor) {
         super(inv, anchor);
         if (anchor == null) throw new AssertionError();
         this.anchor = anchor;
@@ -100,6 +99,19 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
                 .setZ(te.zCoord);
             this.getOpenContext()
                 .setSide(ForgeDirection.UNKNOWN);
+        } else if (anchor instanceof appeng.parts.AEBasePart part && part.getTile() != null) {
+            // 部件形态：坐标取宿主线缆 Tile，side 取面板朝向（PacketInventoryAction 等回溯 GUI 依赖）
+            net.minecraft.tileentity.TileEntity hostTile = part.getTile();
+            this.getOpenContext()
+                .setWorld(hostTile.getWorldObj());
+            this.getOpenContext()
+                .setX(hostTile.xCoord);
+            this.getOpenContext()
+                .setY(hostTile.yCoord);
+            this.getOpenContext()
+                .setZ(hostTile.zCoord);
+            this.getOpenContext()
+                .setSide(part.getSide());
         }
         if (Platform.isServer()) {
             IGridNode node = anchor.getActionableNode();
@@ -113,10 +125,7 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
             }
         }
 
-        this.patternContainer = new PatternContainer(
-            this,
-            inv,
-            anchor instanceof TileMergedTerminal tmt ? tmt.getPatternInv() : new AppEngInternalInventory(null, 2));
+        this.patternContainer = new PatternContainer(this, inv, anchor.getPatternInv());
         this.patternContainer.createSlots();
 
         this.mergedSlotBase = this.inventorySlots.size();
@@ -127,10 +136,10 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
         // 初始化时按当前模式（默认合成）摆好槽位可见性，否则刚打开时 3×3 与 4×4 槽会同时显示
         this.patternContainer.updateOrderOfOutputSlots();
 
-        // 服务端：从 tile 快照恢复上次编辑的面板格子与模式（跨 GUI 会话保留）
-        if (Platform.isServer() && anchor instanceof TileMergedTerminal tmt) {
-            this.patternContainer.restoreSnapshot(tmt.getSavedGrid(), tmt.getSavedCraftingMode());
-            this.syncCraftingMode = tmt.getSavedCraftingMode();
+        // 服务端：从宿主快照恢复上次编辑的面板格子与模式（跨 GUI 会话保留）
+        if (Platform.isServer()) {
+            this.patternContainer.restoreSnapshot(anchor.getSavedGrid(), anchor.getSavedCraftingMode());
+            this.syncCraftingMode = anchor.getSavedCraftingMode();
         }
 
         this.bindPlayerInventory(inv, 14, 3);
@@ -142,10 +151,11 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
 
     @Override
     public void onContainerClosed(net.minecraft.entity.player.EntityPlayer player) {
-        // 服务端：关闭 GUI 时把当前编辑内容写回 tile 快照
-        if (Platform.isServer() && this.anchor instanceof TileMergedTerminal tmt) {
-            this.patternContainer.saveSnapshot(tmt.getSavedGrid());
-            tmt.setSavedCraftingMode(this.patternContainer.isCraftingMode());
+        // 服务端：关闭 GUI 时把当前编辑内容写回宿主快照
+        if (Platform.isServer()) {
+            this.patternContainer.saveSnapshot(this.anchor.getSavedGrid());
+            this.anchor.setSavedCraftingMode(this.patternContainer.isCraftingMode());
+            this.anchor.markPersistDirty();
         }
         super.onContainerClosed(player);
     }
@@ -161,7 +171,8 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
         super.detectAndSendChanges();
         if (this.grid == null) return;
         IGridNode node = this.anchor.getActionableNode();
-        if (!node.isActive()) {
+        // node == null：无线形态绑定站点被拆除（Locatable 失效）；方块/部件形态节点恒存在
+        if (node == null || !node.isActive()) {
             if (!this.wasOff) {
                 PacketInterfaceTerminalUpdate p = new PacketInterfaceTerminalUpdate();
                 p.setDisconnect();

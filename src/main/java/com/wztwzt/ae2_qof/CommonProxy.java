@@ -22,6 +22,8 @@ public class CommonProxy {
     public static BlockExIOPort blockExIOPort;
     public static ItemInfinityWaterLavaCell itemInfinityWaterLavaCell;
     public static BlockMergedTerminal blockMergedTerminal;
+    public static com.wztwzt.ae2_qof.merged.part.ItemPartMergedTerminal itemPartMergedTerminal;
+    public static com.wztwzt.ae2_qof.merged.wireless.ItemWirelessMergedTerminal itemWirelessMergedTerminal;
 
     public void preInit(FMLPreInitializationEvent event) {
         Config.synchronizeConfiguration(event.getSuggestedConfigurationFile());
@@ -54,6 +56,21 @@ public class CommonProxy {
             GameRegistry.registerTileEntity(TileMergedTerminal.class, "merged_terminalTile");
         } catch (Throwable t) {
             MyMod.LOG.error("[DIAG] BlockMergedTerminal registration FAILED", t);
+            t.printStackTrace(System.err);
+        }
+        try {
+            itemPartMergedTerminal = new com.wztwzt.ae2_qof.merged.part.ItemPartMergedTerminal();
+            GameRegistry.registerItem(itemPartMergedTerminal, "merged_terminal_part");
+        } catch (Throwable t) {
+            MyMod.LOG.error("[DIAG] ItemPartMergedTerminal registration FAILED", t);
+            t.printStackTrace(System.err);
+        }
+        try {
+            itemWirelessMergedTerminal = new com.wztwzt.ae2_qof.merged.wireless.ItemWirelessMergedTerminal();
+            GameRegistry.registerItem(itemWirelessMergedTerminal, "wireless_merged_terminal");
+            itemWirelessMergedTerminal.registerWirelessHandler();
+        } catch (Throwable t) {
+            MyMod.LOG.error("[DIAG] ItemWirelessMergedTerminal registration FAILED", t);
             t.printStackTrace(System.err);
         }
         if (itemInfinityWaterLavaCell != null) {
@@ -163,6 +180,34 @@ public class CommonProxy {
                     net.minecraft.init.Items.redstone,
                     'd',
                     net.minecraft.init.Items.diamond);
+            }
+            if (itemPartMergedTerminal != null && blockMergedTerminal != null) {
+                // 部件形态：方块形态 + 铁锭简单合成（对齐原版终端部件与方块的成本关系）
+                GameRegistry.addShapedRecipe(
+                    new net.minecraft.item.ItemStack(itemPartMergedTerminal),
+                    "i",
+                    "b",
+                    'i',
+                    net.minecraft.init.Items.iron_ingot,
+                    'b',
+                    new net.minecraft.item.ItemStack(blockMergedTerminal));
+            }
+            if (itemWirelessMergedTerminal != null) {
+                GameRegistry.addShapedRecipe(
+                    new net.minecraft.item.ItemStack(itemWirelessMergedTerminal),
+                    "dri",
+                    "iei",
+                    "iii",
+                    'i',
+                    net.minecraft.init.Items.iron_ingot,
+                    'g',
+                    net.minecraft.init.Items.gold_ingot,
+                    'r',
+                    net.minecraft.init.Items.redstone,
+                    'd',
+                    net.minecraft.init.Items.diamond,
+                    'e',
+                    net.minecraft.init.Blocks.diamond_block);
             }
         } catch (Throwable t) {
             MyMod.LOG.error("[APU] recipe registration FAILED", t);

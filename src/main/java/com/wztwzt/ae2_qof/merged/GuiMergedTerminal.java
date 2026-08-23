@@ -21,7 +21,6 @@ import com.wztwzt.ae2_qof.client.gui.MergedRenameOverlay;
 import com.wztwzt.ae2_qof.network.ModNetwork;
 
 import appeng.api.AEApi;
-import appeng.api.parts.IInterfaceTerminal;
 import appeng.client.gui.implementations.GuiInterfaceTerminal;
 import appeng.client.gui.widgets.MEGuiTextField;
 import appeng.container.slot.AppEngSlot;
@@ -55,7 +54,7 @@ public class GuiMergedTerminal extends GuiInterfaceTerminal {
     /** Shift+中键重命名覆盖层 */
     private final MergedRenameOverlay renameOverlay = new MergedRenameOverlay();
 
-    public GuiMergedTerminal(InventoryPlayer ip, IInterfaceTerminal anchor) {
+    public GuiMergedTerminal(InventoryPlayer ip, com.wztwzt.ae2_qof.api.IMergedTerminalHost anchor) {
         super(new ContainerMergedTerminal(ip, anchor));
     }
 

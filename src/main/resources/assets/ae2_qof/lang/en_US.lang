@@ -72,3 +72,5 @@ gui.ok=OK
 gui.cancel=Cancel
 gui.ae2_qof.set_quantity=Set item quantity
 gui.ae2_qof.rename_item=Rename item
+item.merged_terminal_part.name=Pattern & Interface Merged Terminal Part
+item.wireless_merged_terminal.name=Wireless Merged Terminal

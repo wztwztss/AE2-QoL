@@ -12,7 +12,6 @@ import appeng.api.networking.IGridNode;
 import appeng.api.networking.events.MENetworkBootingStatusChange;
 import appeng.api.networking.events.MENetworkEventSubscribe;
 import appeng.api.networking.events.MENetworkPowerStatusChange;
-import appeng.api.parts.IInterfaceTerminal;
 import appeng.core.localization.GuiText;
 import appeng.me.GridAccessException;
 import appeng.tile.TileEvent;
@@ -30,7 +29,7 @@ import io.netty.buffer.ByteBuf;
  * 空白/已编码样板槽随方块持久化（原版 AE 样板终端行为），避免关闭再打开终端后内容丢失。
  */
 public class TileMergedTerminal extends AENetworkTile
-    implements IInterfaceTerminal, IAEAppEngInventory, IPowerChannelState {
+    implements com.wztwzt.ae2_qof.api.IMergedTerminalHost, IAEAppEngInventory, IPowerChannelState {
 
     /** 样板面板的空白(0)/已编码(1)样板槽，随方块保存/读取 */
     private final AppEngInternalInventory patternInv = new AppEngInternalInventory(this, 2);
@@ -111,6 +110,11 @@ public class TileMergedTerminal extends AENetworkTile
 
     @Override
     public void saveChanges() {
+        this.markDirty();
+    }
+
+    @Override
+    public void markPersistDirty() {
         this.markDirty();
     }
 

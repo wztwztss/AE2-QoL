@@ -23,6 +23,12 @@ public class BlockMergedTerminal extends AEBaseTileBlock {
 
     public static final int GUI_ID = 100;
 
+    /** 部件形态 GUI ID 基址：实际 ID = 基址 + ForgeDirection.ordinal()（编码面板朝向） */
+    public static final int PART_GUI_BASE = 110;
+
+    /** 手持无线形态 GUI ID；x 参数携带终端所在背包槽位号 */
+    public static final int WIRELESS_GUI_ID = 120;
+
     public BlockMergedTerminal() {
         super(Material.iron);
         setBlockName("ae2qol.merged_terminal");

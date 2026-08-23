@@ -4,13 +4,13 @@
 
 An **AE2 quality-of-life enhancement mod** for GTNH: push NEI recipes into AE pattern terminals with one click, extract AE network items directly from the NEI panel, view each item's stock and craftability in the AE network, and wirelessly transmit AE networks.
 
-Compat: GTNH 2.9.0-beta-1 (Minecraft 1.7.10) | Current version: **3.6.1** | Author: wztwzt
+Compat: GTNH 2.9.0-beta-1 (Minecraft 1.7.10) | Current version: **3.7.0** | Author: wztwzt
 
 ---
 
 ## 📦 Installation
 
-1. Put `AE2-QoL-3.6.1.jar` into `.minecraft/mods/`
+1. Put `AE2-QoL-3.7.0.jar` into `.minecraft/mods/`
 2. Make sure dependencies are installed: AE2 (`rv3-beta-977-GTNH`), ae2fc (`1.5.88-gtnh`), NotEnoughItems (NEI)
 3. Launch the game. Config is generated under `config/`
 
@@ -119,6 +119,8 @@ A new wired block that merges the **pattern encoding panel** with the **interfac
 - **PH Programming Toolkit MK.II support** (3.6.0): with the toolkit in your inventory, NEI recipe transfers automatically replace non-consumed catalysts with programming circuits (zero-circuit fallback in fallback mode); zero impact when PH is not installed
 - **Middle-click amount editor**: middle-click a panel slot to open an amount editor (+1/+10/+100/+1000 and ×2/×8/×64/×512, toggled with Shift; no upper limit); Shift+middle-click renames items; output slots cannot be edited
 - **Interaction**: panel slot clicks and drag-place behave like the native AE2 terminal; the scrollbar supports click and wheel paging; clicks inside the panel take priority over the interface list
+- **Cable part form** (3.7.0): a new item, "Pattern & Interface Merged Terminal Part", can be mounted on any face of an AE2 cable (looks like the native ME terminal part; requires a channel and idle power); its GUI is identical to the block form. Craft: iron ingot + merged terminal block
+- **Wireless handheld form** (3.7.0): a new item, "Wireless Merged Terminal", opens the full all-in-one GUI anywhere, **across dimensions**; binding works like the vanilla wireless terminal — put it into the ME Security Station encode slot; if the station is removed the terminal stops working; power-free by design; network access permissions are still enforced by the security station's biometric cards; craft: diamond block + redstone + iron ingots etc.
 
 ---
 

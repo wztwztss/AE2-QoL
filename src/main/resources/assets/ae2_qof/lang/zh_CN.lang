@@ -72,3 +72,5 @@ gui.ok=确定
 gui.cancel=取消
 gui.ae2_qof.set_quantity=设置物品数量
 gui.ae2_qof.rename_item=重命名物品
+item.merged_terminal_part.name=样板与接口二合一终端面板
+item.wireless_merged_terminal.name=无线二合一终端
