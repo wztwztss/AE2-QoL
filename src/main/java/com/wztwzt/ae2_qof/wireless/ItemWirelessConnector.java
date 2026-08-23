@@ -116,6 +116,9 @@ public class ItemWirelessConnector extends Item {
         }
 
         if (te instanceof TileCableBus || te instanceof IGridHost) {
+            // 防御性检查，实际不可达：玩家只能右键自己所在维度的方块，
+            // te.getWorldObj() 与 player.worldObj 恒同维度；各维度分别绑定后由
+            // WirelessBlockLinkManager.processAll 按 link.dimension 跨维度建链（#53 复核）
             if (te.getWorldObj().provider.dimensionId != player.worldObj.provider.dimensionId) {
                 player.addChatMessage(
                     new ChatComponentTranslation("ae2_qof.wireless.bind.fail.cross_dimension")
