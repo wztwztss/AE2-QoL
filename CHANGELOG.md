@@ -1,3 +1,36 @@
+## 3.6.1 - 深度审查修复批次（智能倍增/网络/客户端）
+
+> 作者：wztwzt | 更新时间：2026-08-23 | 基于 3.6.0
+
+### 修复（P0/P1）
+
+- **#73** 智能倍增大订单（如 1T）客户端无响应：GT 样板输入机 `isBusy()` 恒 false 导致每 tick 重复推送巨量材料，现倍增推送成功后同 tick 冷却
+- **#46** 合成完成通知包未切客户端主线程 → 数据竞争，已归队
+- **#47** 无线高亮开关在专用服务器只能开不能关：状态改由包参数携带
+- **#45** 网络包数组长度无上界 OOM DoS：4 个包解码钳制（≤64/1024/1024/256）
+- **#48** NEI 叠加层开关改纯客户端本地设置，多人登录不再被服务端值覆盖；README 注明 `/apu-overlay` 仅单机/局域网可用
+
+### 修复（P2/P3）
+
+- **#51** 智能倍增探测优化：容量探测指数扩张+区间二分（31 次→个位数 probe）；功率探测有限上界查询（O(P)→通常 O(1)）
+- **#52** 渲染热路径：RenderItem 复用 / tooltip 流体识别 3 遍并 1 遍 / 数量格式化记忆化
+- **#57** 超大网络供应器列表发送前按 32KB 包预算截断，不再静默失效
+
+### 行为调整
+
+- **#49** NEI tooltip 网络存量缓存改时间窗过期：终端开启时实时刷新；进 NEI 配方界面依然显示；彻底退出终端 5 分钟后自动消失（原"关闭即清"方案经用户反馈回退）
+
+### 复核结论
+
+- **#53** 无线连接器跨维度实际已支持（审查误判），拒绝分支为不可达死代码仅加注释
+- **#55** 死代码按仓库规范仅标记不删除
+
+### 已知问题
+
+- #50 无线全局频道无归属权维持现状（用户决策不做）
+
+---
+
 ## 2026-08-23 - 全代码库深度审查报告（仅登记问题，无代码变更）
 
 > 作者：wztwzt | 审查时间：2026-08-23 | 版本基线：3.6.0
@@ -202,9 +235,9 @@
 | 52 | 客户端渲染热路径浪费（叠加层全开 + 大网络时有可感知 GC 抖动）。修复 ①②③：① 合成通知横幅 `new RenderItem()` 每帧分配 → 静态缓存复用（dev 字段名 itemRender 与 SRG 名 field_146296_j 都尝试——原 MergedTerminalPanelHandler 同类实现在生产环境因只试 dev 名实际仍每帧 new）；② tooltip 路径同一 ItemStack 流体识别/NBT 解析 3 遍 → `NetworkInventoryCache.query()` 单次合并返回 count/craftable/fluid；③ `CountFormatter.format` 加单槽记忆化（仅渲染线程调用，无并发）。④ 无线高亮 Tessellator 批次合并**暂缓**：高亮方块数量通常个位数、独立提交开销可忽略，方案收益不抵复杂度 | `client/render/CraftingNotificationOverlay.java:103` + `client/nei/NetworkTooltipHandler.java` + `util/CountFormatter.java` + `client/NetworkInventoryCache.java` | 🟢 | ✅ 已修复（④暂缓）（2026-08-23） |
 | 53 | README 功能 9 称无线连接器「支持跨维度」，审查判定实现拒绝跨维度绑定。**复核结论：审查误判，跨维度功能实际已完整支持，无需修改**——① L119 拒绝分支不可达（玩家只能右键自己所在维度的方块，te.getWorldObj() 与 player.worldObj 恒同维度）；② 各维度分别绑定后由 `WirelessBlockLinkManager.processAll` 按 `link.dimension` 用 `DimensionManager.getWorld` 跨维度取 World 建链；③ AE2 `GridConnection` 构造无维度校验（与收发器对同款机制）；④ 存档经主世界 `WirelessWorldData` 持久化 + `restoreFromWorldData` 启动恢复。已给死分支加注释标记 | `wireless/ItemWirelessConnector.java:119` + `README.md` 功能 9 | 🟢 | ✅ 已复核无问题（2026-08-23） |
 | 54 | 调试日志残留：8 个文件仍有 `System.out.println`（ClientState / PatternContainer / MixinDefaultOverlayHandler / MixinRecipeHandlerRef / ProvidersListS2CPacket / RecallPatternPacket / SwapPatternPacket / RecipeMapDetector）；3.0.2 曾称清理完毕实际未清净；另多处 handler 用 `t.printStackTrace()` 应换 logger | 8 个源文件 | 🟢 | ❌ 未修复（2026-08-23 审查发现） |
-| 55 | 死代码遗留（按仓库规范仅标记暂不删除）：`ClientState.lastProviderName` 字段及 `clear()`、`NetworkInventoryCache.getLastUpdateTick()` 与 put 冗余 count 参数、BUTTON_HALVE_ID 死分支、Replanner 吞异常路径等 | `client/ClientState.java` 等多处 | 🟢 | ❌ 未修复（2026-08-23 审查发现） |
+| 55 | 死代码遗留（按仓库规范仅标记暂不删除）：`ClientState.lastProviderName` 字段及 `clear()`、`NetworkInventoryCache.getLastUpdateTick()` 与 put 冗余 count 参数、BUTTON_HALVE_ID 死分支、Replanner 吞异常路径等 | `client/ClientState.java` 等多处 | 🟢 | 📌 已按规范标记，不删除（2026-08-23） |
 | 56 | `docs/MOD_MAP.md` 为空模板（功能↔源码映射缺失、Mixin 列表未登记），违反文档驱动开发规范 §5.1；新开发者无法按图索骥 | `docs/MOD_MAP.md` | 🟢 | ❌ 未修复（2026-08-23 审查发现） |
-| 57 | S2C 无应用层尺寸预算：超大网络供应器列表（ids+names+emptySlots 三列表）可超 1.7.10 自定义负载 ≈32KB 上限 → 发送侧失败、上传选择界面静默无响应 | `network/ProvidersListS2CPacket.java` | 🟢 | ❌ 未修复（2026-08-23 审查发现） |
+| 57 | S2C 无应用层尺寸预算：超大网络供应器列表（ids+names+emptySlots 三列表）可超 1.7.10 自定义负载 ≈32KB 上限 → 发送侧失败、上传选择界面静默无响应。修复：服务端发送前按预算（32000 字节，留 FML 头部余量）逐条估算序列化尺寸、截断尾部供应器并记录 warn 日志；recipeMap 占用一并计入预算 | `network/RequestProvidersListPacket.java` handleMessage | 🟢 | ✅ 已修复（2026-08-23） |
 | 58 | 智能倍增部分提前 return 分支疑似遗漏 `parallelismProvider.put(details, mediumListCheck)` 回写 → 并行度信息丢失致下 tick 重探测（轻微性能损耗；静态审查标记，修 #44 时一并复核） | `mixin/ae/MixinCraftingCPUCluster.java:790-793` 附近 | 🟢 | ❌ 待复核（2026-08-23 审查发现） |
 | 59 | 二合一终端编码产出坏样板：`encodeItemPattern` 对未填满的输出列把 null 槽写成**空 NBT compound** → `UltimatePatternHelper` 解码后 `getAEOutputs()` 含 null → `CraftingGridCache.setPatternsFromCraftingMethods:340 out.copy()` NPE。PH 仓（22179）每 tick `postMEPatternChange` 重扫即每 tick NPE 刷屏 + **AE2 合成缓存重建被中断** → CPU 永远收不到样板。原生终端 `getOutputs()` 跳过空槽故从不触发。修复：编码循环过滤 null/空槽（对齐原生语义） | `merged/PatternContainer.java` `encodeItemPattern`（3.4.0 引入） | 🔴 | ✅ 已修复（2026-08-23 实测 22179 每 tick NPE 后定位） |
 | 60 | 二合一终端上传静默失效：`UploadPatternPacket.resolveTerminal/resolveOutputSlot` 仅支持原生 `ContainerPatternTerm(Ex)`，无合并终端分支 → 服务端解析返回 null 直接 return，上传从未执行；撤回因依赖 lastProviderId 连带失效。修复：resolveTerminal 委托 `ContainerTerminalResolver`（已覆盖三种终端），resolveOutputSlot 增加 `IMergedPatternTerminal.getMergedEncodedSlot()` 分支 | `network/UploadPatternPacket.java:146-170`（3.4.0 引入） | 🔴 | ✅ 已修复（2026-08-23） |

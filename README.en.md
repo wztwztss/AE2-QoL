@@ -4,13 +4,13 @@
 
 An **AE2 quality-of-life enhancement mod** for GTNH: push NEI recipes into AE pattern terminals with one click, extract AE network items directly from the NEI panel, view each item's stock and craftability in the AE network, and wirelessly transmit AE networks.
 
-Compat: GTNH 2.9.0-beta-1 (Minecraft 1.7.10) | Current version: **3.6.0** | Author: wztwzt
+Compat: GTNH 2.9.0-beta-1 (Minecraft 1.7.10) | Current version: **3.6.1** | Author: wztwzt
 
 ---
 
 ## 📦 Installation
 
-1. Put `AE2-QoL-3.6.0.jar` into `.minecraft/mods/`
+1. Put `AE2-QoL-3.6.1.jar` into `.minecraft/mods/`
 2. Make sure dependencies are installed: AE2 (`rv3-beta-977-GTNH`), ae2fc (`1.5.88-gtnh`), NotEnoughItems (NEI)
 3. Launch the game. Config is generated under `config/`
 

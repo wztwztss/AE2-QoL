@@ -206,9 +206,36 @@ public class RequestProvidersListPacket implements IMessage {
                     }
                 }
 
-                ModNetwork.CHANNEL
-                    .sendTo(new ProvidersListS2CPacket(ids, names, emptySlots, recipeMap, message.forceGui), player);
-                MyMod.LOG.info("[Upload] providers list sent: count={}, recipeMap={}", ids.size(), recipeMap);
+                // 尺寸预算（#57）：1.7.10 S3F 自定义负载长度为 short（≤32767 字节），
+                // 超大网络的供应器名列表可能超限 → 编码/发送失败、客户端选择界面静默无响应。
+                // 序列化前按预算（32000，留 FML 头部余量）截断尾部供应器并记录日志。
+                final byte[] rmBytes = recipeMap != null ? recipeMap.getBytes(java.nio.charset.StandardCharsets.UTF_8)
+                    : null;
+                int used = 4 + 1 + 1 + (rmBytes != null ? 2 + rmBytes.length : 1);
+                int limit = ids.size();
+                for (int i = 0; i < ids.size(); i++) {
+                    used += 8 + 2
+                        + names.get(i)
+                            .getBytes(java.nio.charset.StandardCharsets.UTF_8).length
+                        + 4;
+                    if (used > 32000) {
+                        limit = i;
+                        break;
+                    }
+                }
+                if (limit < ids.size()) {
+                    MyMod.LOG
+                        .warn("[Upload] providers list truncated to fit packet budget: {} -> {}", ids.size(), limit);
+                }
+                ModNetwork.CHANNEL.sendTo(
+                    new ProvidersListS2CPacket(
+                        new ArrayList<Long>(ids.subList(0, limit)),
+                        new ArrayList<String>(names.subList(0, limit)),
+                        new ArrayList<Integer>(emptySlots.subList(0, limit)),
+                        recipeMap,
+                        message.forceGui),
+                    player);
+                MyMod.LOG.info("[Upload] providers list sent: count={}, recipeMap={}", limit, recipeMap);
             } catch (Throwable t) {
                 MyMod.LOG.error("Providers list request failed", t);
             }
