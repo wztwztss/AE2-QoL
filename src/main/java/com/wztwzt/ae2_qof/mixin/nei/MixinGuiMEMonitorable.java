@@ -54,16 +54,4 @@ public abstract class MixinGuiMEMonitorable {
             }
         } catch (Throwable ignored) {}
     }
-
-    /**
-     * 终端 GUI 关闭时清除网络库存缓存：postUpdate 仅在终端打开时推送，
-     * 不清理则 tooltip/书签角标长期显示陈旧存量（#49）。
-     * onGuiClosed 为 vanilla 覆写方法，需 remap=true 解析 SRG 名。
-     */
-    @Inject(method = "onGuiClosed", at = @At("TAIL"), remap = true)
-    private void ae2AutoPatternUpload$invalidateNetworkCache(CallbackInfo ci) {
-        try {
-            NetworkInventoryCache.invalidate();
-        } catch (Throwable ignored) {}
-    }
 }
