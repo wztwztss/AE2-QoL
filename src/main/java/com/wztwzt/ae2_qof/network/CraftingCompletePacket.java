@@ -53,14 +53,22 @@ public class CraftingCompletePacket implements IMessage {
     public static class Handler implements IMessageHandler<CraftingCompletePacket, IMessage> {
 
         @Override
-        public IMessage onMessage(CraftingCompletePacket message, MessageContext ctx) {
+        public IMessage onMessage(final CraftingCompletePacket message, MessageContext ctx) {
             Minecraft mc = Minecraft.getMinecraft();
             if (mc.thePlayer == null) {
                 return null;
             }
-            if (message.stack != null) {
-                CraftingNotificationOverlay.INSTANCE.add(message.stack, message.amount);
-            }
+            // Netty IO 线程不得直接写 CraftingNotificationOverlay 的非线程安全 ArrayDeque，
+            // 必须归队到客户端主线程（与其余 S2C 包一致）。
+            mc.func_152344_a(new Runnable() {
+
+                @Override
+                public void run() {
+                    if (message.stack != null) {
+                        CraftingNotificationOverlay.INSTANCE.add(message.stack, message.amount);
+                    }
+                }
+            });
             return null;
         }
     }
