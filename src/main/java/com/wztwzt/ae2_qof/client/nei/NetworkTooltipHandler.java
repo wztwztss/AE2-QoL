@@ -36,12 +36,16 @@ public class NetworkTooltipHandler implements IContainerTooltipHandler {
             if (!OverlayConfig.isEnabled() || itemstack == null || !NetworkInventoryCache.hasData()) {
                 return currentTip;
             }
-            long count = NetworkInventoryCache.getCount(itemstack);
-            boolean craftable = NetworkInventoryCache.isCraftable(itemstack);
+            // 单次合并查询（#52）：count/craftable/fluid 一并返回，避免 3 遍流体识别
+            NetworkInventoryCache.QueryResult r = NetworkInventoryCache.query(itemstack);
+            long count = r.count;
+            boolean craftable = r.craftable;
             if (count <= 0 && !craftable) {
                 return currentTip;
             }
-            FluidStack fluid = NetworkInventoryCache.getFluidStack(itemstack);
+            FluidStack fluid = r.fluid != null
+                ? new FluidStack(r.fluid, net.minecraftforge.fluids.FluidContainerRegistry.BUCKET_VOLUME)
+                : null;
             StringBuilder sb = new StringBuilder("\u00a77");
             if (count > 0) {
                 if (fluid != null) {

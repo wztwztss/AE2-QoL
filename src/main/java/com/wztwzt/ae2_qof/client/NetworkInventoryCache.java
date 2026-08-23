@@ -108,6 +108,35 @@ public final class NetworkInventoryCache {
         return entry != null && entry.craftable;
     }
 
+    /**
+     * 一次查询同时返回 count / craftable / fluid（#52）：
+     * tooltip 路径原先 getCount + isCraftable + getFluidStack 各自独立做一遍流体识别
+     * （类名字符串比较 + NBT 解析），同一 ItemStack 每帧最多重复 3 遍，现合并为单次。
+     * fluid 为 null 表示按普通物品处理；count 为 -1 表示网络中无数据。
+     */
+    public static QueryResult query(ItemStack stack) {
+        Fluid f = getFluid(stack);
+        if (f != null) {
+            CacheEntry entry = fluidCache.get(f.getName());
+            return new QueryResult(entry != null ? entry.count : -1, entry != null && entry.craftable, f);
+        }
+        CacheEntry entry = stack == null ? null : cache.get(key(stack));
+        return new QueryResult(entry != null ? entry.count : -1, entry != null && entry.craftable, null);
+    }
+
+    public static final class QueryResult {
+
+        public final long count;
+        public final boolean craftable;
+        public final Fluid fluid;
+
+        QueryResult(long count, boolean craftable, Fluid fluid) {
+            this.count = count;
+            this.craftable = craftable;
+            this.fluid = fluid;
+        }
+    }
+
     public static boolean hasData() {
         return !cache.isEmpty() || !fluidCache.isEmpty();
     }
@@ -120,8 +149,8 @@ public final class NetworkInventoryCache {
      * 判定某物品是否携带可识别的流体：
      * 1) ae2fc 纯流体 packet：按物品类名识别（不 import ae2fc，保持模组独立），流体从 NBT "FluidStack" 复合标签读取；
      * 2) GT Display_Fluid（ItemFluidDisplay）：按物品类名识别，damage 值即流体注册 ID——这是 GT 在 NEI 配方中
-     *    展示流体的唯一表示，只对该物品按 damage 查 FluidRegistry，绝不作用到任意物品上（3.1.2 误修导致 GT 流体
-     *    显示丢失，3.3.3 恢复）；
+     * 展示流体的唯一表示，只对该物品按 damage 查 FluidRegistry，绝不作用到任意物品上（3.1.2 误修导致 GT 流体
+     * 显示丢失，3.3.3 恢复）；
      * 3) 已注册的流体方块物品（fluidItemMap 反查）。
      * 其余一律返回 null，按普通物品处理。
      * 切勿对所有物品按 itemDamage 查 FluidRegistry——damage 是物品元数据，与流体注册 ID 无对应关系。

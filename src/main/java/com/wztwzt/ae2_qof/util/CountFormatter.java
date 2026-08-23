@@ -10,9 +10,23 @@ public final class CountFormatter {
 
     private static final char[] SUFFIXES = { 'K', 'M', 'G', 'T', 'P', 'E' };
 
+    /** 单槽记忆化（#52）：tooltip/角标每帧对同一数量重复格式化，缓存最近一次结果。仅渲染线程调用。 */
+    private static long lastCount = Long.MIN_VALUE;
+    private static String lastResult;
+
     private CountFormatter() {}
 
     public static String format(long count) {
+        if (count == lastCount && lastResult != null) {
+            return lastResult;
+        }
+        String result = doFormat(count);
+        lastCount = count;
+        lastResult = result;
+        return result;
+    }
+
+    private static String doFormat(long count) {
         for (int i = LIMITS.length - 1; i >= 0; i--) {
             long limit = LIMITS[i];
             if (count >= limit) {

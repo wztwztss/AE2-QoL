@@ -33,6 +33,28 @@ public class CraftingNotificationOverlay {
     private final Queue<NotificationEntry> events = new ArrayDeque<>();
     private final Minecraft mc = Minecraft.getMinecraft();
 
+    /** 复用的 RenderItem（#52）：优先取 GuiScreen.itemRender 静态实例，dev 名与 SRG 名都试；均失败才自建。 */
+    private static RenderItem renderItem;
+
+    private static RenderItem getRenderItem() {
+        if (renderItem != null) {
+            return renderItem;
+        }
+        for (String name : new String[] { "itemRender", "field_146296_j" }) {
+            try {
+                java.lang.reflect.Field f = net.minecraft.client.gui.GuiScreen.class.getDeclaredField(name);
+                f.setAccessible(true);
+                Object v = f.get(null);
+                if (v instanceof RenderItem) {
+                    renderItem = (RenderItem) v;
+                    return renderItem;
+                }
+            } catch (Throwable ignored) {}
+        }
+        renderItem = new RenderItem();
+        return renderItem;
+    }
+
     private static final class NotificationEntry {
 
         private final ItemStack stack;
@@ -100,7 +122,7 @@ public class CraftingNotificationOverlay {
         Gui.func_146110_a(x - 26, 0, 0, 0, 156, 35, 256, 256);
 
         GL11.glPushMatrix();
-        RenderItem itemRender = new RenderItem();
+        RenderItem itemRender = getRenderItem();
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
         net.minecraft.client.renderer.RenderHelper.enableGUIStandardItemLighting();
         itemRender.renderItemAndEffectIntoGUI(mc.fontRenderer, mc.getTextureManager(), event.stack, x - 18, TOP + 2);
