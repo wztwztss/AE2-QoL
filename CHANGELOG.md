@@ -144,7 +144,7 @@
 ---
 # AE2 QoL - Changelog
 
-> 当前版本：3.6.0 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
+> 当前版本：3.6.1 | 适配：GTNH 2.9.0-beta-1 | 依赖：AE2 `rv3-beta-977-GTNH`，ae2fc `1.5.88-gtnh`
 
 ---
 
@@ -224,7 +224,7 @@
 | 41 | 面板悬垂区绘制采用 `xSize=1000` 放大法：槽位命中依赖 `GuiContainer.getSlotAtPosition` 使用 `guiLeft/guiTop` 字段（不随 xSize 重算），已验证不破坏槽点击 | `merged/GuiMergedTerminal.java` `drawScreen`（3.5.0） | 🟢 | ✅ 已兜底（javap 核对 `func_146978_c`/`getSlotAtPosition` 用字段坐标；`initGui` 按 xSize=209 计算 guiLeft，命中逻辑不受影响） |
 | 42 | 面板按钮/滚动条/页码为客户端静态字段，仅随 GUI 打开重置；多容器/多窗口切换时由每帧 `reposition` 从客户端容器刷新覆盖 | `client/event/MergedTerminalPanelHandler.java`（3.5.0） | 🟢 | ✅ 已兜底（drawFG 每帧以 `pc.isCraftingMode()/isInverted()/getActivePage()` 重刷静态，状态不串窗口） |
 | 43 | `GuiTabButton` 图标渲染需 `RenderItem`：反射读 `GuiScreen.itemRender`（protected static），失败回退 `new RenderItem()` | `client/event/MergedTerminalPanelHandler.java` `getRenderItem`（3.5.0） | 🟢 | ✅ 已兜底（try/catch + 回退，反射失败仅 tab 图标缺失，不影响按钮功能） |
-| 44 | 智能倍增 PH 介质记账缺陷：`useMulti && effectiveN>1` 时按 **1 轮量**提取材料（target 不乘 N），若 `pushPatternMulti` 返回 `accepted==0`（介质忙/缓冲满）则落到下方 `pushPattern` 单发回退分支；该分支因 `effectiveN>1` 走 GT 倍增记账 → 实际只交付 1 轮材料却**扣 N 轮功率、executedTasks+=N、taskValue-=N** → 合成少产出 N-1 轮、白扣功率、任务提前假完成（材料未丢，留在网络存储，但订单数量错误） | `mixin/ae/MixinCraftingCPUCluster.java:764-839`（回退分支判定应为 `!useMulti && effectiveN>1`；useMulti 回退时须走原版逐轮记账） | 🔴 | ❌ 未修复（2026-08-23 审查发现） |
+| 44 | 智能倍增 PH 介质记账缺陷：`useMulti && effectiveN>1` 时按 **1 轮量**提取材料（target 不乘 N），若 `pushPatternMulti` 返回 `accepted==0`（介质忙/缓冲满）则落到下方 `pushPattern` 单发回退分支；该分支因 `effectiveN>1` 走 GT 倍增记账 → 实际只交付 1 轮材料却**扣 N 轮功率、executedTasks+=N、taskValue-=N** → 合成少产出 N-1 轮、白扣功率、任务提前假完成（材料未丢，留在网络存储，但订单数量错误） | `mixin/ae/MixinCraftingCPUCluster.java:764-839`（回退分支判定应为 `!useMulti && effectiveN>1`；useMulti 回退时须走原版逐轮记账） | 🔴 | ✅ 已修复（→ #71，2026-08-23） |
 | 45 | 网络包 OOM DoS：`readItemStackArray` 直接 `new ItemStack[buf.readInt()]` 无上界钳制——恶意 C2S 包 len=2^31-1 触发瞬时巨量分配（分配先于读取发生，外层 catch(Throwable) 接不住已打爆的堆压力）；同类 S2C 预分配 `ArrayList<>(readInt())` 见 `ProvidersListS2CPacket` / `WirelessHighlightPacket` / `WirelessChannelSyncPacket`（低危：服务端→自己客户端）。修复：四处解码长度钳制（镜像 `MergedTerminalActionPacket` 超界归零风格）——配方数组 ≤64、供应器/高亮列表 ≤1024、频道列表 ≤256，超界按空容器处理，合法包不受影响 | `network/RequestProvidersListPacket.java:107-114` 等 4 文件 | 🟡 | ✅ 已修复（2026-08-23） |
 | 46 | `CraftingCompletePacket`(S2C) Handler 未切客户端主线程：Netty IO 线程直接向非线程安全 `ArrayDeque`（CraftingNotificationOverlay.events）add，渲染线程并发 poll/draw → 数据竞争偶发崩溃/渲染异常；为全部 S2C 包中唯一漏归队者（其余均已 `func_152344_a`）。修复：Handler 业务逻辑包进 `mc.func_152344_a` 归队主线程，镜像项目内其余 S2C 包既有模式 | `network/CraftingCompletePacket.java:56-65` | 🔴 | ✅ 已修复（2026-08-23） |
 | 47 | 无线高亮开关失效于专用服务器：`handleToggleHighlight` 在**服务端**读客户端静态字段 `ClientState.highlightEnabled`（仅客户端 WirelessHighlightPacket.Handler 写入），专用 JVM 恒 false → 高亮只能开不能关（单机同 JVM 共享静态字段才碰巧正常）。修复：目标状态由包参数携带——客户端发送 `ACTION_TOGGLE_HIGHLIGHT` 时传 `!ClientState.highlightEnabled`（modeValue 字段在该动作中原本空闲），服务端改用 `msg.modeValue`，无状态、专用服/单机行为一致 | `network/WirelessActionPacket.java:266` + `wireless/gui/GuiWireless.java:339` | 🟡 | ✅ 已修复（2026-08-23） |
@@ -234,11 +234,11 @@
 | 51 | 智能倍增探测开销：ME 接口容量二分探测固定 ~31 轮 do-while 且每次推送重跑；全网电力探测 `extractAEPower(MAX_VALUE, SIMULATE)` 为 O(P) 网格遍历；大网络高频推送时有放大效应。修复：① 容量探测改"指数扩张 + 区间二分"——先倍增 probe 找失败点再在小区间二分，常见小容量场景从 31 次降到个位数次 `simulateAddStack`（顺带修正原实现未实测 1 轮的边界，机器满仓时准确回退逐轮）；② 功率探测查询上界改为 `sum × min(effectiveN, 4096)`——AE2 `simulateExtract` 凑够即停，有限查询通常 O(1)，电量充足时视为"电不是瓶颈"，单次推送封顶 4096 轮、剩余下一 tick 继续 | `mixin/ae/MixinDualityInterface.java:122-133` + `mixin/ae/MixinCraftingCPUCluster.java:690-706` | 🟢 | ✅ 已修复（2026-08-23） |
 | 52 | 客户端渲染热路径浪费（叠加层全开 + 大网络时有可感知 GC 抖动）。修复 ①②③：① 合成通知横幅 `new RenderItem()` 每帧分配 → 静态缓存复用（dev 字段名 itemRender 与 SRG 名 field_146296_j 都尝试——原 MergedTerminalPanelHandler 同类实现在生产环境因只试 dev 名实际仍每帧 new）；② tooltip 路径同一 ItemStack 流体识别/NBT 解析 3 遍 → `NetworkInventoryCache.query()` 单次合并返回 count/craftable/fluid；③ `CountFormatter.format` 加单槽记忆化（仅渲染线程调用，无并发）。④ 无线高亮 Tessellator 批次合并**暂缓**：高亮方块数量通常个位数、独立提交开销可忽略，方案收益不抵复杂度 | `client/render/CraftingNotificationOverlay.java:103` + `client/nei/NetworkTooltipHandler.java` + `util/CountFormatter.java` + `client/NetworkInventoryCache.java` | 🟢 | ✅ 已修复（④暂缓）（2026-08-23） |
 | 53 | README 功能 9 称无线连接器「支持跨维度」，审查判定实现拒绝跨维度绑定。**复核结论：审查误判，跨维度功能实际已完整支持，无需修改**——① L119 拒绝分支不可达（玩家只能右键自己所在维度的方块，te.getWorldObj() 与 player.worldObj 恒同维度）；② 各维度分别绑定后由 `WirelessBlockLinkManager.processAll` 按 `link.dimension` 用 `DimensionManager.getWorld` 跨维度取 World 建链；③ AE2 `GridConnection` 构造无维度校验（与收发器对同款机制）；④ 存档经主世界 `WirelessWorldData` 持久化 + `restoreFromWorldData` 启动恢复。已给死分支加注释标记 | `wireless/ItemWirelessConnector.java:119` + `README.md` 功能 9 | 🟢 | ✅ 已复核无问题（2026-08-23） |
-| 54 | 调试日志残留：8 个文件仍有 `System.out.println`（ClientState / PatternContainer / MixinDefaultOverlayHandler / MixinRecipeHandlerRef / ProvidersListS2CPacket / RecallPatternPacket / SwapPatternPacket / RecipeMapDetector）；3.0.2 曾称清理完毕实际未清净；另多处 handler 用 `t.printStackTrace()` 应换 logger | 8 个源文件 | 🟢 | ❌ 未修复（2026-08-23 审查发现） |
+| 54 | 调试日志残留：8 个文件仍有 `System.out.println`；另多处 handler 用 `t.printStackTrace()`。已清理：8 文件 println 全部删除（grep 归零）、17 处 printStackTrace 换 logger；仅 CommonProxy（6 处）/MyMod（1 处）入口保留——preInit 早期阶段 logger 可能未就绪，属既定保留 | 8 个源文件 + CommonProxy/MyMod | 🟢 | ✅ 已修复（2026-08-23，状态补记） |
 | 55 | 死代码遗留（按仓库规范仅标记暂不删除）：`ClientState.lastProviderName` 字段及 `clear()`、`NetworkInventoryCache.getLastUpdateTick()` 与 put 冗余 count 参数、BUTTON_HALVE_ID 死分支、Replanner 吞异常路径等 | `client/ClientState.java` 等多处 | 🟢 | 📌 已按规范标记，不删除（2026-08-23） |
-| 56 | `docs/MOD_MAP.md` 为空模板（功能↔源码映射缺失、Mixin 列表未登记），违反文档驱动开发规范 §5.1；新开发者无法按图索骥 | `docs/MOD_MAP.md` | 🟢 | ❌ 未修复（2026-08-23 审查发现） |
+| 56 | `docs/MOD_MAP.md` 为空模板（功能↔源码映射缺失、Mixin 列表未登记），违反文档驱动开发规范 §5.1；新开发者无法按图索骥 | `docs/MOD_MAP.md` | 🟢 | ✅ 已修复（2026-08-23，随 #73 commit 填充主逻辑映射表 + Mixin 列表） |
 | 57 | S2C 无应用层尺寸预算：超大网络供应器列表（ids+names+emptySlots 三列表）可超 1.7.10 自定义负载 ≈32KB 上限 → 发送侧失败、上传选择界面静默无响应。修复：服务端发送前按预算（32000 字节，留 FML 头部余量）逐条估算序列化尺寸、截断尾部供应器并记录 warn 日志；recipeMap 占用一并计入预算 | `network/RequestProvidersListPacket.java` handleMessage | 🟢 | ✅ 已修复（2026-08-23） |
-| 58 | 智能倍增部分提前 return 分支疑似遗漏 `parallelismProvider.put(details, mediumListCheck)` 回写 → 并行度信息丢失致下 tick 重探测（轻微性能损耗；静态审查标记，修 #44 时一并复核） | `mixin/ae/MixinCraftingCPUCluster.java:790-793` 附近 | 🟢 | ❌ 待复核（2026-08-23 审查发现） |
+| 58 | 智能倍增部分提前 return 分支疑似遗漏 `parallelismProvider.put(details, mediumListCheck)` 回写 → 并行度信息丢失致下 tick 重探测（轻微性能损耗；静态审查标记，修 #44 时一并复核） | `mixin/ae/MixinCraftingCPUCluster.java:790-793` 附近 | 🟢 | ✅ 已复核无问题（→ #72，2026-08-23） |
 | 59 | 二合一终端编码产出坏样板：`encodeItemPattern` 对未填满的输出列把 null 槽写成**空 NBT compound** → `UltimatePatternHelper` 解码后 `getAEOutputs()` 含 null → `CraftingGridCache.setPatternsFromCraftingMethods:340 out.copy()` NPE。PH 仓（22179）每 tick `postMEPatternChange` 重扫即每 tick NPE 刷屏 + **AE2 合成缓存重建被中断** → CPU 永远收不到样板。原生终端 `getOutputs()` 跳过空槽故从不触发。修复：编码循环过滤 null/空槽（对齐原生语义） | `merged/PatternContainer.java` `encodeItemPattern`（3.4.0 引入） | 🔴 | ✅ 已修复（2026-08-23 实测 22179 每 tick NPE 后定位） |
 | 60 | 二合一终端上传静默失效：`UploadPatternPacket.resolveTerminal/resolveOutputSlot` 仅支持原生 `ContainerPatternTerm(Ex)`，无合并终端分支 → 服务端解析返回 null 直接 return，上传从未执行；撤回因依赖 lastProviderId 连带失效。修复：resolveTerminal 委托 `ContainerTerminalResolver`（已覆盖三种终端），resolveOutputSlot 增加 `IMergedPatternTerminal.getMergedEncodedSlot()` 分支 | `network/UploadPatternPacket.java:146-170`（3.4.0 引入） | 🔴 | ✅ 已修复（2026-08-23） |
 
@@ -261,7 +261,8 @@
 
 | 目标版本 | 使用 jar | 说明 |
 |---|---|---|
-| 3.6.0（当前） | `build/libs/AE2-QoL-3.6.0.jar` | 面板体验升级：样板回读二次编辑 / 编辑快照持久化 / PH 编程工具箱适配 / 装配矩阵上传按钮 / 流体解析严格匹配修复 / 数量上限移除与输出格禁编 |
+| 3.6.1（当前） | `build/libs/AE2-QoL-3.6.1.jar` | 深度审查修复批次：智能倍增冷却/探测优化、网络包安全钳制、S2C 归队、高亮开关专用服修复、渲染热路径优化、缓存时间窗过期 |
+| 3.6.0 | `build/libs/AE2-QoL-3.6.0.jar` | 面板体验升级：样板回读二次编辑 / 编辑快照持久化 / PH 编程工具箱适配 / 装配矩阵上传按钮 / 流体解析严格匹配修复 / 数量上限移除与输出格禁编 |
 | 3.5.1 | `build/libs/AE2-QoL-3.5.1.jar` | 二合一终端修复：openContext NPE 崩溃 / NEI 返回错位 / 处理样板改终极样板 / 网络拉空白样板 / NEI「+」填充与 `↓` 读回 / 隐藏 NEI 面板 |
 | 3.5.0 | `build/libs/AE2-QoL-3.5.0.jar` | F 模块改为独立有线方块「样板与接口终端」+ 原生 AE2Things 风格面板（4×4×2 页 + 滚动条 + 反转），移除两个 mixin |
 | 3.4.0 | `build/libs/AE2-QoL-3.4.0.jar` | 样板 + 接口二合一终端（F 模块）+ 配置页「配方参考」子页 |
