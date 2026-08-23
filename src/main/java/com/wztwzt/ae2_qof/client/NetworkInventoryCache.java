@@ -26,6 +26,14 @@ public final class NetworkInventoryCache {
     private static final Map<Long, String> fluidItemMap = new HashMap<Long, String>();
     private static long lastUpdateTick = 0;
 
+    /**
+     * 数据有效期（#49 最终方案）：关闭终端后保留 5 分钟供 NEI 配方查询，
+     * 超时自动失效。终端 GUI 开启期间 postUpdate 持续刷新 lastUpdateTick，
+     * 永不过期。注意进 NEI 配方界面（GuiRecipe）底层也会关闭终端容器，
+     * 因此不能用"GUI 关闭即清"，只能靠时间窗区分"查配方"与"彻底离开"。
+     */
+    private static final long STALE_MS = 5 * 60 * 1000L;
+
     private NetworkInventoryCache() {}
 
     public static void clear() {
@@ -138,7 +146,12 @@ public final class NetworkInventoryCache {
     }
 
     public static boolean hasData() {
-        return !cache.isEmpty() || !fluidCache.isEmpty();
+        // 时间窗过期（#49）：关闭终端超过 STALE_MS 后视为无数据，
+        // tooltip/书签角标统一走本闸门，一处生效。
+        if (cache.isEmpty() && fluidCache.isEmpty()) {
+            return false;
+        }
+        return System.currentTimeMillis() - lastUpdateTick <= STALE_MS;
     }
 
     public static long getLastUpdateTick() {
