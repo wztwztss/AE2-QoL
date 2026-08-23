@@ -84,48 +84,60 @@ public class GuiWireless extends GuiContainer {
         int btnY1 = guiTop + BTN_AREA_Y;
         int btnY2 = guiTop + BTN_AREA_Y + BTN_H + BTN_GAP;
 
-        buttonList
-            .add(new GuiButton(BTN_ADD, btnX1, btnY1, BTN_W, BTN_H, StatCollector.translateToLocal("gui.ae2_qof.add")));
         buttonList.add(
-            new GuiButton(
+            new com.wztwzt.ae2_qof.client.gui.TooltipTextButton(
+                BTN_ADD,
+                btnX1,
+                btnY1,
+                BTN_W,
+                BTN_H,
+                StatCollector.translateToLocal("gui.ae2_qof.add"),
+                "gui.ae2_qof.btn.wireless.add"));
+        buttonList.add(
+            new com.wztwzt.ae2_qof.client.gui.TooltipTextButton(
                 BTN_REMOVE,
                 btnX2,
                 btnY1,
                 BTN_W,
                 BTN_H,
-                StatCollector.translateToLocal("gui.ae2_qof.wireless.remove")));
+                StatCollector.translateToLocal("gui.ae2_qof.wireless.remove"),
+                "gui.ae2_qof.btn.wireless.remove"));
         buttonList.add(
-            new GuiButton(
+            new com.wztwzt.ae2_qof.client.gui.TooltipTextButton(
                 BTN_HIGHLIGHT,
                 btnX3,
                 btnY1,
                 BTN_W,
                 BTN_H,
-                StatCollector.translateToLocal("gui.ae2_qof.wireless.highlight")));
+                StatCollector.translateToLocal("gui.ae2_qof.wireless.highlight"),
+                "gui.ae2_qof.btn.wireless.highlight"));
         buttonList.add(
-            new GuiButton(
+            new com.wztwzt.ae2_qof.client.gui.TooltipTextButton(
                 BTN_SENDER,
                 btnX1,
                 btnY2,
                 BTN_W,
                 BTN_H,
-                StatCollector.translateToLocal("gui.ae2_qof.wireless.mode.sender")));
+                StatCollector.translateToLocal("gui.ae2_qof.wireless.mode.sender"),
+                "gui.ae2_qof.btn.wireless.sender"));
         buttonList.add(
-            new GuiButton(
+            new com.wztwzt.ae2_qof.client.gui.TooltipTextButton(
                 BTN_RECEIVER,
                 btnX2,
                 btnY2,
                 BTN_W,
                 BTN_H,
-                StatCollector.translateToLocal("gui.ae2_qof.wireless.mode.receiver")));
+                StatCollector.translateToLocal("gui.ae2_qof.wireless.mode.receiver"),
+                "gui.ae2_qof.btn.wireless.receiver"));
         buttonList.add(
-            new GuiButton(
+            new com.wztwzt.ae2_qof.client.gui.TooltipTextButton(
                 BTN_DISCONN,
                 btnX3,
                 btnY2,
                 BTN_W,
                 BTN_H,
-                StatCollector.translateToLocal("gui.ae2_qof.wireless.disconnect")));
+                StatCollector.translateToLocal("gui.ae2_qof.wireless.disconnect"),
+                "gui.ae2_qof.btn.wireless.disconn"));
 
         refreshChannels();
     }
@@ -481,6 +493,15 @@ public class GuiWireless extends GuiContainer {
         super.drawScreen(mouseX, mouseY, partialTicks);
         if (channelField != null && !showDeleteConfirm) {
             channelField.drawTextBox();
+        }
+        // 按钮悬停说明（原版 GuiContainer 无自动机制，手动绘制）
+        com.wztwzt.ae2_qof.client.gui.TooltipTextButton hovered = com.wztwzt.ae2_qof.client.gui.TooltipTextButton
+            .findHovered(this.buttonList, mouseX, mouseY);
+        if (hovered != null) {
+            String msg = hovered.getMessage();
+            if (msg != null && !msg.isEmpty()) {
+                drawHoveringText(java.util.Arrays.asList(msg.split("\n")), mouseX, mouseY, this.fontRendererObj);
+            }
         }
     }
 

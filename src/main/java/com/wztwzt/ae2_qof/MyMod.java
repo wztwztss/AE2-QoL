@@ -24,7 +24,7 @@ import cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
     name = "AE2 QoL",
     acceptedMinecraftVersions = "[1.7.10]",
     guiFactory = "com.wztwzt.ae2_qof.client.gui.ConfigGuiFactory",
-    dependencies = "required-after:appliedenergistics2")
+    dependencies = "required-after:appliedenergistics2;after:guidenh")
 public class MyMod {
 
     @Mod.Instance(MyMod.MODID)

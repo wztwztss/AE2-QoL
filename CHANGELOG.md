@@ -1,3 +1,23 @@
+## 3.8.0 - 全量 Tooltip + GuideNH 游戏内指南集成
+
+> 作者：wztwzt | 更新时间：2026-08-23 | 基于 3.7.0
+
+### 新增：全量物品与按钮 Tooltip
+
+- 物品：二合一终端面板部件、无线终端（含绑定状态显示）、二合一方块、强化 IO 端口补齐悬停说明；无限磁盘硬编码英文改为双语 lang
+- GUI 按钮：二合一终端 `↑/←/⇄/AM/OV` 六个按钮、无线收发器 GUI 全部六个按钮新增悬停说明
+  （新 `TooltipTextButton` 实现 AE2 ITooltip——AE2 基类自动渲染；原版 GuiContainer 路径手动绘制）
+- 智能倍增开关三处按钮此前已带 tooltip，本次无改动
+
+### 新增：GuideNH 游戏内指南（可选依赖）
+
+- 集成 [GuideNH](https://github.com/ABKQPO/GuideNH) 框架：安装该 mod 后悬停本 mod 物品**按住 G** 即可打开对应详细指南页
+- 内置中英双语指南 9 页：总览（14 功能一览表）、NEI 集成全家桶、合成通知与重规划、切割刀复制名称、强化 IO 端口、无限磁盘、无线组网、智能倍增、二合一终端三形态
+- 零代码集成：资源目录 `assets/ae2_qof/guidenh/_zh_cn|_en_us` 由 GuideNH 自动发现注册；物品绑定经页面 frontmatter `item_ids`
+- GuideNH 未安装时零影响；`@Mod dependencies` 声明软依赖 `after:guidenh`
+
+---
+
 ## 3.7.0 - 二合一终端多形态（线缆面板部件 + 手持无线）
 
 > 作者：wztwzt | 更新时间：2026-08-23 | 基于 3.6.1

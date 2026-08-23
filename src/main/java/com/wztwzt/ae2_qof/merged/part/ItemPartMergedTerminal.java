@@ -35,6 +35,17 @@ public class ItemPartMergedTerminal extends Item implements IPartItem {
     }
 
     @Override
+    public void addInformation(ItemStack stack, EntityPlayer player, java.util.List list, boolean advanced) {
+        for (int i = 1; i <= 4; i++) {
+            String key = "item.merged_terminal_part.tooltip." + i;
+            String line = net.minecraft.util.StatCollector.translateToLocal(key);
+            if (line != null && !line.isEmpty() && !line.equals(key)) {
+                list.add(net.minecraft.util.EnumChatFormatting.GRAY + line);
+            }
+        }
+    }
+
+    @Override
     public boolean onItemUse(ItemStack is, EntityPlayer player, World world, int x, int y, int z, int side, float hitX,
         float hitY, float hitZ) {
         return AEApi.instance()

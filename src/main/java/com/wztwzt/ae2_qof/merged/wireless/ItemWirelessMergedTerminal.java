@@ -96,6 +96,27 @@ public class ItemWirelessMergedTerminal extends Item implements IWirelessTermHan
     // ===== 交互 =====
 
     @Override
+    public void addInformation(ItemStack stack, EntityPlayer player, java.util.List list, boolean advanced) {
+        for (int i = 1; i <= 5; i++) {
+            String key = "item.wireless_merged_terminal.tooltip." + i;
+            String line = net.minecraft.util.StatCollector.translateToLocal(key);
+            if (line != null && !line.isEmpty() && !line.equals(key)) {
+                list.add(net.minecraft.util.EnumChatFormatting.GRAY + line);
+            }
+        }
+        String key = getEncryptionKey(stack);
+        if (key == null || key.isEmpty()) {
+            list.add(
+                net.minecraft.util.EnumChatFormatting.RED
+                    + net.minecraft.util.StatCollector.translateToLocal("item.wireless_merged_terminal.unbound"));
+        } else {
+            list.add(
+                net.minecraft.util.EnumChatFormatting.GREEN
+                    + net.minecraft.util.StatCollector.translateToLocal("item.wireless_merged_terminal.bound"));
+        }
+    }
+
+    @Override
     public ItemStack onItemRightClick(ItemStack is, World world, EntityPlayer player) {
         if (!world.isRemote) {
             // 完整校验链免费复用 AE2 注册表（含本地化错误消息）：

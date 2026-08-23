@@ -200,14 +200,56 @@ public class MergedTerminalPanelHandler {
         btnInvert.id = BUTTON_INVERT_ID;
         event.buttonList.add(btnInvert);
 
-        btnOverlay = new GuiButton(BUTTON_OVERLAY_ID, 0, 0, 12, 12, "OV");
-        btnHalve = new GuiButton(BUTTON_HALVE_ID, 0, 0, 12, 12, "\u00f7");
-        btnUpload = new GuiButton(BUTTON_UPLOAD_ID, 0, 0, 12, 12, "\u2191");
-        btnRecall = new GuiButton(BUTTON_RECALL_ID, 0, 0, 12, 12, "\u2190");
-        btnSwap = new GuiButton(BUTTON_SWAP_ID, 0, 0, 12, 12, "\u21c4");
+        btnOverlay = new com.wztwzt.ae2_qof.client.gui.TooltipTextButton(
+            BUTTON_OVERLAY_ID,
+            0,
+            0,
+            12,
+            12,
+            "OV",
+            "gui.ae2_qof.btn.overlay");
+        btnHalve = new com.wztwzt.ae2_qof.client.gui.TooltipTextButton(
+            BUTTON_HALVE_ID,
+            0,
+            0,
+            12,
+            12,
+            "\u00f7",
+            "gui.ae2_qof.btn.halve");
+        btnUpload = new com.wztwzt.ae2_qof.client.gui.TooltipTextButton(
+            BUTTON_UPLOAD_ID,
+            0,
+            0,
+            12,
+            12,
+            "\u2191",
+            "gui.ae2_qof.btn.upload");
+        btnRecall = new com.wztwzt.ae2_qof.client.gui.TooltipTextButton(
+            BUTTON_RECALL_ID,
+            0,
+            0,
+            12,
+            12,
+            "\u2190",
+            "gui.ae2_qof.btn.recall");
+        btnSwap = new com.wztwzt.ae2_qof.client.gui.TooltipTextButton(
+            BUTTON_SWAP_ID,
+            0,
+            0,
+            12,
+            12,
+            "\u21c4",
+            "gui.ae2_qof.btn.swap");
         // GTNL 装配矩阵上传按钮（仅 GTNL 已安装时创建）
         if (isMatrixAvailable()) {
-            btnMatrixUpload = new GuiButton(BUTTON_MATRIX_UPLOAD_ID, 0, 0, 12, 12, "AM");
+            btnMatrixUpload = new com.wztwzt.ae2_qof.client.gui.TooltipTextButton(
+                BUTTON_MATRIX_UPLOAD_ID,
+                0,
+                0,
+                12,
+                12,
+                "AM",
+                "gui.ae2_qof.btn.matrix_upload");
             event.buttonList.add(btnMatrixUpload);
         }
         event.buttonList.add(btnOverlay);

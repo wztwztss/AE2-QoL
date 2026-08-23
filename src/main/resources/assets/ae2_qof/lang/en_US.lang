@@ -74,3 +74,36 @@ gui.ae2_qof.set_quantity=Set item quantity
 gui.ae2_qof.rename_item=Rename item
 item.merged_terminal_part.name=Pattern & Interface Merged Terminal Part
 item.wireless_merged_terminal.name=Wireless Merged Terminal
+
+# ===== Item tooltips =====
+item.merged_terminal_part.tooltip.1=Pattern & Interface all-in-one terminal for any ME cable face.
+item.merged_terminal_part.tooltip.2=Right-click the mounted panel to open the terminal.
+item.merged_terminal_part.tooltip.3=Requires an ME channel and power; wrench to remove with data kept.
+item.merged_terminal_part.tooltip.4=Hover and hold G for the full guide.
+item.wireless_merged_terminal.tooltip.1=Handheld wireless terminal: opens the full terminal GUI anywhere.
+item.wireless_merged_terminal.tooltip.2=Cross-dimensional access; no charging needed.
+item.wireless_merged_terminal.tooltip.3=Binding: put it into a ME Security Station encode slot.
+item.wireless_merged_terminal.tooltip.4=If the station is removed, rebind before further use.
+item.wireless_merged_terminal.tooltip.5=Hover and hold G for the full guide.
+item.wireless_merged_terminal.unbound=Unbound - put into a Security Station encode slot
+item.wireless_merged_terminal.bound=Network linked
+tile.ae2qof.merged_terminal.tooltip.1=All-in-one pattern encoding panel + interface management list.
+tile.ae2qof.merged_terminal.tooltip.2=Right-click to open; also available as cable part and wireless handheld.
+tile.ae2qof.merged_terminal.tooltip.3=Hover and hold G for the full guide.
+tile.ae2qol.ex_io_port.tooltip.1=Enhanced IO Port: batch item/fluid transfer at a configurable rate.
+tile.ae2qol.ex_io_port.tooltip.2=Rate is configurable in config/ae2_qof/settings.json (default 1024).
+tile.ae2qol.ex_io_port.tooltip.3=Hover and hold G for the full guide.
+
+# ===== GUI button tooltips =====
+gui.ae2_qof.btn.upload=Upload Pattern\nAuto-upload the current encoded pattern to an interface/assembler on the network.\nShift+click forces the provider selection screen.
+gui.ae2_qof.btn.recall=Recall Pattern\nTake back the last matching encoded pattern from the network.
+gui.ae2_qof.btn.swap=Swap Outputs\nRotate primary/secondary output slot positions (Processing mode).
+gui.ae2_qof.btn.matrix_upload=Upload to Matrix\nSend the encoded pattern to the GTNL Assembler Matrix library\n(Crafting mode + GTNL installed only).
+gui.ae2_qof.btn.overlay=Overlay Toggle\nSwitch AE network count badges on NEI recipe pages/bookmarks.\nPure client-side setting, per player.
+gui.ae2_qof.btn.halve=Halve Outputs\nDivide output amounts by 2 (spare key, currently hidden).
+gui.ae2_qof.btn.wireless.add=Add Channel\nType a name then click to create a new global channel.
+gui.ae2_qof.btn.wireless.remove=Remove Channel\nDelete the selected channel and tear down its connections.
+gui.ae2_qof.btn.wireless.highlight=Highlight Links\nHighlight bound block positions of this channel in the world.\nToggle state is stored on this transceiver.
+gui.ae2_qof.btn.wireless.sender=Set as Sender\nAct as the channel sender: register this transceiver on the channel.
+gui.ae2_qof.btn.wireless.receiver=Set as Receiver\nAct as the channel receiver: connect to the sender of the channel.
+gui.ae2_qof.btn.wireless.disconn=Disconnect\nTemporarily pause the current connection while keeping channel settings.

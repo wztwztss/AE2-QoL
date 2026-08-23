@@ -94,7 +94,8 @@ public class ItemInfinityWaterLavaCell extends AEBaseInfiniteCell {
     @Override
     protected void addCheckedInformation(ItemStack stack, EntityPlayer player, List<String> lines,
         boolean displayMoreInfo) {
-        lines.add("\u00a76" + "Infinite Water & Lava Cell \u00a77\u00a7o(Long.MAX_VALUE each type)");
+        lines.add(net.minecraft.util.StatCollector.translateToLocal("item.infinity_water_lava_cell.tooltip"));
+        lines.add(net.minecraft.util.StatCollector.translateToLocal("item.infinity_water_lava_cell.tooltip.usage"));
         super.addCheckedInformation(stack, player, lines, displayMoreInfo);
     }
 

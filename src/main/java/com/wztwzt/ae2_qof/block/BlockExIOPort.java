@@ -47,4 +47,17 @@ public class BlockExIOPort extends BlockIOPort {
     public ItemStack stack() {
         return new ItemStack(this, 1);
     }
+
+    @Override
+    public void addInformation(final net.minecraft.item.ItemStack is,
+        final net.minecraft.entity.player.EntityPlayer player, final java.util.List<String> lines,
+        final boolean advancedItemTooltips) {
+        for (int i = 1; i <= 3; i++) {
+            String key = "tile.ae2qol.ex_io_port.tooltip." + i;
+            String line = net.minecraft.util.StatCollector.translateToLocal(key);
+            if (line != null && !line.isEmpty() && !line.equals(key)) {
+                lines.add(net.minecraft.util.EnumChatFormatting.GRAY + line);
+            }
+        }
+    }
 }

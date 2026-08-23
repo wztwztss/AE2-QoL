@@ -74,3 +74,36 @@ gui.ae2_qof.set_quantity=设置物品数量
 gui.ae2_qof.rename_item=重命名物品
 item.merged_terminal_part.name=样板与接口二合一终端面板
 item.wireless_merged_terminal.name=无线二合一终端
+
+# ===== 物品 tooltip =====
+item.merged_terminal_part.tooltip.1=安装到 ME 线缆任意面的样板+接口二合一终端。
+item.merged_terminal_part.tooltip.2=右键已安装的面板打开终端界面。
+item.merged_terminal_part.tooltip.3=需要 ME 通道与供电；扳手可拆下并保留数据。
+item.merged_terminal_part.tooltip.4=悬停按住 G 查看完整指南。
+item.wireless_merged_terminal.tooltip.1=手持无线二合一终端：随时随地打开完整终端界面。
+item.wireless_merged_terminal.tooltip.2=支持跨维度访问，无需充电。
+item.wireless_merged_terminal.tooltip.3=绑定：放入 ME 安全终端的编码槽完成配对。
+item.wireless_merged_terminal.tooltip.4=安全站被拆除后需重新绑定方可使用。
+item.wireless_merged_terminal.tooltip.5=悬停按住 G 查看完整指南。
+item.wireless_merged_terminal.unbound=未绑定 - 请放入安全终端编码槽
+item.wireless_merged_terminal.bound=已绑定网络
+tile.ae2qof.merged_terminal.tooltip.1=样板编码面板 + 接口管理列表二合一终端。
+tile.ae2qof.merged_terminal.tooltip.2=右键打开界面；也提供线缆面板部件与无线手持形态。
+tile.ae2qof.merged_terminal.tooltip.3=悬停按住 G 查看完整指南。
+tile.ae2qol.ex_io_port.tooltip.1=强化 IO 端口：以可配置倍率批量传输物品/流体。
+tile.ae2qol.ex_io_port.tooltip.2=传输倍率可在 config/ae2_qof/settings.json 配置（默认 1024）。
+tile.ae2qol.ex_io_port.tooltip.3=悬停按住 G 查看完整指南。
+
+# ===== GUI 按钮 tooltip =====
+gui.ae2_qof.btn.upload=上传样板\n将当前编码好的样板自动上传到网络中的接口/总成。\nShift+点击 强制打开供应器选择界面。
+gui.ae2_qof.btn.recall=召回样板\n从网络中取回最后一个匹配供应器上的编码样板。
+gui.ae2_qof.btn.swap=交换产物\n轮换主产物与副产物的槽位位置（处理模式）。
+gui.ae2_qof.btn.matrix_upload=上传到装配矩阵\n把编码好的样板上传至 GTNL 装配矩阵样板库\n（仅合成模式且安装 GTNL 时可用）。
+gui.ae2_qof.btn.overlay=叠加层开关\n切换 NEI 配方页/书签上的 AE 网络数量角标显示。\n纯客户端设置，不影响其他玩家。
+gui.ae2_qof.btn.halve=输出减半\n输出格物品数量除以 2（快捷键位，当前隐藏）。
+gui.ae2_qof.btn.wireless.add=添加频道\n输入名称后点击，创建一个新的全局频道。
+gui.ae2_qof.btn.wireless.remove=移除频道\n删除当前选中的频道并断开其所有连接。
+gui.ae2_qof.btn.wireless.highlight=高亮连接\n在世界中高亮显示本频道已绑定的方块位置。\n开关状态保存在本收发器上。
+gui.ae2_qof.btn.wireless.sender=设为发送端\n本收发器作为频道发送端：向频道注册自己。
+gui.ae2_qof.btn.wireless.receiver=设为接收端\n本收发器作为频道接收端：连接到频道的发送端。
+gui.ae2_qof.btn.wireless.disconn=断开连接\n临时断开当前连接（进入暂停态），保留频道设置。
