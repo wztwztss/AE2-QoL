@@ -28,6 +28,10 @@ public class WirelessChannelSyncPacket implements IMessage {
     public void fromBytes(ByteBuf buf) {
         try {
             int size = buf.readInt();
+            // 恶意包防护：预分配容量钳制，防止 new ArrayList<>(巨量) OOM（#45），超界按空列表处理
+            if (size < 0 || size > 256) {
+                size = 0;
+            }
             channels = new ArrayList<String>(size);
             for (int i = 0; i < size; i++) {
                 int len = buf.readShort();

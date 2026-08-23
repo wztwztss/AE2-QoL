@@ -43,6 +43,10 @@ public class ProvidersListS2CPacket implements IMessage {
     public void fromBytes(ByteBuf buf) {
         try {
             int size = buf.readInt();
+            // 恶意包防护：预分配容量钳制，防止 new ArrayList<>(巨量) OOM（#45），超界按空列表处理
+            if (size < 0 || size > 1024) {
+                size = 0;
+            }
             ids = new ArrayList<Long>(size);
             names = new ArrayList<String>(size);
             emptySlots = new ArrayList<Integer>(size);
@@ -118,8 +122,9 @@ public class ProvidersListS2CPacket implements IMessage {
                         }
                     }
                     if (validIds.size() == 1) {
+                        com.wztwzt.ae2_qof.MyMod.LOG
+                            .info("[Upload] strategy1: single provider, id={}", validIds.get(0));
                         ClientState.set(null, validIds.get(0));
-                        System.out.println("[APU] Auto-upload: lastProviderId=" + ClientState.lastProviderId);
                         ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(validIds.get(0)));
                         return;
                     }
@@ -140,6 +145,10 @@ public class ProvidersListS2CPacket implements IMessage {
                                 }
                             }
                             if (matchCount == 1) {
+                                com.wztwzt.ae2_qof.MyMod.LOG.info(
+                                    "[Upload] strategy2: remembered provider '{}', id={}",
+                                    rememberedName,
+                                    matchId);
                                 ClientState.set(rememberedName, matchId);
                                 ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(matchId));
                                 return;

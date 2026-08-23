@@ -32,6 +32,10 @@ public class WirelessHighlightPacket implements IMessage {
         try {
             enable = buf.readBoolean();
             int size = buf.readInt();
+            // 恶意包防护：预分配容量钳制，防止 new ArrayList<>(巨量) OOM（#45），超界按空列表处理
+            if (size < 0 || size > 1024) {
+                size = 0;
+            }
             positions = new ArrayList<int[]>(size);
             for (int i = 0; i < size; i++) {
                 int dim = buf.readInt();

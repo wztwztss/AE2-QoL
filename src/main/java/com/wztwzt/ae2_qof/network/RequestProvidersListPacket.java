@@ -9,6 +9,10 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 
+import com.wztwzt.ae2_qof.MyMod;
+import com.wztwzt.ae2_qof.util.ContainerTerminalResolver;
+import com.wztwzt.ae2_qof.util.RecipeMapDetector;
+
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridHost;
 import appeng.api.networking.IGridNode;
@@ -18,8 +22,6 @@ import appeng.api.networking.security.IActionHost;
 import appeng.api.util.IInterfaceViewable;
 import appeng.helpers.ICustomNameObject;
 import appeng.parts.AEBasePart;
-import com.wztwzt.ae2_qof.util.ContainerTerminalResolver;
-import com.wztwzt.ae2_qof.util.RecipeMapDetector;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
@@ -106,6 +108,10 @@ public class RequestProvidersListPacket implements IMessage {
 
     private ItemStack[] readItemStackArray(ByteBuf buf) {
         int len = buf.readInt();
+        // 恶意包防护：分配先于读取，长度无上界会被恶意 C2S 包打爆堆（#45），超界按空数组处理
+        if (len < 0 || len > 64) {
+            return new ItemStack[0];
+        }
         ItemStack[] stacks = new ItemStack[len];
         for (int i = 0; i < len; i++) {
             stacks[i] = cpw.mods.fml.common.network.ByteBufUtils.readItemStack(buf);
@@ -131,21 +137,28 @@ public class RequestProvidersListPacket implements IMessage {
             try {
                 Container container = player.openContainer;
                 if (container == null) {
+                    MyMod.LOG.info("[Upload] server: no open container");
                     return;
                 }
 
                 IActionHost terminal = ContainerTerminalResolver.resolveTerminal(container);
                 if (terminal == null) {
+                    MyMod.LOG.info(
+                        "[Upload] server: terminal resolve failed for {}",
+                        container.getClass()
+                            .getSimpleName());
                     return;
                 }
 
                 IGridNode node = terminal.getActionableNode();
                 if (node == null) {
+                    MyMod.LOG.info("[Upload] server: terminal node is null");
                     return;
                 }
 
                 IGrid grid = node.getGrid();
                 if (grid == null) {
+                    MyMod.LOG.info("[Upload] server: grid is null");
                     return;
                 }
 
@@ -195,8 +208,9 @@ public class RequestProvidersListPacket implements IMessage {
 
                 ModNetwork.CHANNEL
                     .sendTo(new ProvidersListS2CPacket(ids, names, emptySlots, recipeMap, message.forceGui), player);
+                MyMod.LOG.info("[Upload] providers list sent: count={}, recipeMap={}", ids.size(), recipeMap);
             } catch (Throwable t) {
-                t.printStackTrace();
+                MyMod.LOG.error("Providers list request failed", t);
             }
         }
 
