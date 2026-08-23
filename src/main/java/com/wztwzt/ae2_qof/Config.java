@@ -7,12 +7,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import net.minecraftforge.common.config.Configuration;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-
-import net.minecraftforge.common.config.Configuration;
 
 /**
  * 统一玩家配置文件 {@code config/ae2_qof/settings.json}：
@@ -36,8 +36,7 @@ public class Config {
 
     public static final String greeting = "Hello World";
 
-    private static final Gson GSON = new GsonBuilder()
-        .setPrettyPrinting()
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting()
         .disableHtmlEscaping()
         .create();
 
@@ -68,12 +67,7 @@ public class Config {
                     exIOPortTransferContentsRate,
                     1,
                     Integer.MAX_VALUE);
-                int oldRounds = readLegacyCfgInt(
-                    configFile,
-                    "smartDoublingMaxRounds",
-                    smartDoublingMaxRounds,
-                    1,
-                    4096);
+                int oldRounds = readLegacyCfgInt(configFile, "smartDoublingMaxRounds", smartDoublingMaxRounds, 1, 4096);
                 writeFile(oldRate, oldRounds, true);
                 configFile.delete();
             }
@@ -164,7 +158,7 @@ public class Config {
      * 按 key/value 应用配置（供游戏内配置 GUI / 服务端 C2S 处理复用）：
      * 校验 key 与取值范围，成功则更新字段、写回 settings.json 并刷新加载时间戳。
      *
-     * @param key 配置键（io_port_rate / smart_doubling_max_rounds / nei_overlay_enabled）
+     * @param key   配置键（io_port_rate / smart_doubling_max_rounds / nei_overlay_enabled）
      * @param value 新值
      * @return 是否成功应用
      */
@@ -175,11 +169,17 @@ public class Config {
         try {
             switch (key) {
                 case "io_port_rate":
-                    exIOPortTransferContentsRate = clamp(Integer.parseInt(value.trim()), 1, Integer.MAX_VALUE,
+                    exIOPortTransferContentsRate = clamp(
+                        Integer.parseInt(value.trim()),
+                        1,
+                        Integer.MAX_VALUE,
                         exIOPortTransferContentsRate);
                     break;
                 case "smart_doubling_max_rounds":
-                    smartDoublingMaxRounds = clamp(Integer.parseInt(value.trim()), 0, Integer.MAX_VALUE,
+                    smartDoublingMaxRounds = clamp(
+                        Integer.parseInt(value.trim()),
+                        0,
+                        Integer.MAX_VALUE,
                         smartDoublingMaxRounds);
                     break;
                 case "nei_overlay_enabled":
@@ -199,16 +199,15 @@ public class Config {
     }
 
     /**
-     * 全量应用配置（供 S2C 同步 / 登录同步复用）：校验后更新字段、写回 settings.json 并刷新加载时间戳。
+     * 全量应用服务端同步的配置（供 S2C 登录同步复用）：校验后更新字段、写回 settings.json 并刷新加载时间戳。
+     * nei_overlay_enabled 为纯客户端渲染开关，不随服务端同步覆盖，保留客户端本地值（#48）。
      *
-     * @param io io_port_rate
+     * @param io     io_port_rate
      * @param rounds smart_doubling_max_rounds
-     * @param overlay nei_overlay_enabled
      */
-    public static synchronized void applyAll(int io, int rounds, boolean overlay) {
+    public static synchronized void applyAll(int io, int rounds) {
         exIOPortTransferContentsRate = clamp(io, 1, Integer.MAX_VALUE, exIOPortTransferContentsRate);
         smartDoublingMaxRounds = clamp(rounds, 0, Integer.MAX_VALUE, smartDoublingMaxRounds);
-        neiOverlayEnabled = overlay;
         if (SETTINGS_FILE != null) {
             writeFile(exIOPortTransferContentsRate, smartDoublingMaxRounds, neiOverlayEnabled);
             lastLoadedMtime = currentMtime();

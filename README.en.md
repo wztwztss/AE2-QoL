@@ -28,6 +28,8 @@ Compat: GTNH 2.9.0-beta-1 (Minecraft 1.7.10) | Current version: **3.6.0** | Auth
 - `/ae2qof status` — shows the currently active config values
 - On a dedicated server these require **OP** (permission level 2); in single-player / LAN the host is OP by default and can use them directly
 - `/apu-overlay` still toggles the NEI overlay (no OP required)
+- ⚠️ `/apu-overlay` is registered client-side and only exists in single-player / LAN; **on a dedicated server use the OV button inside the terminal GUI instead**
+- The NEI overlay toggle is a **purely local client setting** (independent per player on multiplayer, never overwritten by server config sync)
 
 **In-game config GUI**: pause menu → Mods → AE2 QoL → **Config**. Edit `io_port_rate` / `smart_doubling_max_rounds` (0 = unlimited) / `nei_overlay_enabled` and apply immediately (requires OP on multiplayer; changes sync to all clients and are written to the server's `settings.json`).
 
@@ -91,9 +93,9 @@ In AE2 / ae2fc terminal GUIs, hover over an item and press **F** → automatical
 
 ### 12. NEI Overlay Toggle
 
-- Command: `/apu-overlay` (toggle the AE overlay on NEI recipe pages/bookmarks)
+- Command: `/apu-overlay` (toggle the AE overlay on NEI recipe pages/bookmarks; single-player / LAN only — on dedicated servers use the OV button)
 - Or the **OV** button in pattern terminal GUIs
-- Persisted to `config/ae2_qof/settings.json` (`nei_overlay_enabled`)
+- Persisted to `config/ae2_qof/settings.json` (`nei_overlay_enabled`, purely local client setting, independent per player)
 
 ### 13. Smart Doubling
 

@@ -28,6 +28,8 @@
 - `/ae2qof status` —— 查看当前生效的配置值
 - 服务端需 **OP 权限**（等级 2）；单机 / 局域网主机默认即 OP，可直接使用
 - `/apu-overlay` 仍用于快速切换 NEI 叠加层显示（无需 OP）
+- ⚠️ `/apu-overlay` 注册于客户端，仅单机 / 局域网主机可用；**专用服务器上请使用终端 GUI 内的 OV 按钮**
+- NEI 叠加层开关为**纯客户端本地设置**（多人下各玩家独立，不随服务端配置同步覆盖）
 
 **游戏内配置页面**：暂停菜单 → Mods → AE2 QoL → **Config**，可直接修改 `io_port_rate` / `smart_doubling_max_rounds`（0=不限）/ `nei_overlay_enabled` 并即时应用（多人服务器需 OP 权限，修改会同步给所有客户端并写入服务端 `settings.json`）。
 
@@ -91,9 +93,9 @@ AE 合成 CPU 完成一次合成任务时，屏幕右上角弹出**合成完成�
 
 ### 12. NEI 叠加层开关
 
-- 命令：`/apu-overlay`（切换 NEI 配方页/书签叠加层显示）
+- 命令：`/apu-overlay`（切换 NEI 配方页/书签叠加层显示，仅单机 / 局域网主机可用，专用服请用 OV 按钮）
 - 或样板终端 GUI 中的 **OV** 按钮
-- 持久化到 `config/ae2_qof/settings.json`（`nei_overlay_enabled`）
+- 持久化到 `config/ae2_qof/settings.json`（`nei_overlay_enabled`，纯客户端本地设置，多人下各玩家独立）
 
 ### 13. 智能倍增（Smart Doubling）
 

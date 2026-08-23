@@ -3,6 +3,7 @@ package com.wztwzt.ae2_qof.network;
 import net.minecraft.client.Minecraft;
 
 import com.wztwzt.ae2_qof.Config;
+import com.wztwzt.ae2_qof.MyMod;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -57,9 +58,11 @@ public class ConfigUpdatePacket implements IMessage {
                 @Override
                 public void run() {
                     try {
-                        Config.applyAll(message.io, message.rounds, message.overlay);
+                        // overlay 字段仅作协议兼容保留：NEI 叠加层为纯客户端渲染开关，
+                        // 不随服务端同步覆盖客户端本地值（#48）
+                        Config.applyAll(message.io, message.rounds);
                     } catch (Throwable t) {
-                        t.printStackTrace();
+                        MyMod.LOG.error("Config update apply failed", t);
                     }
                 }
             });
