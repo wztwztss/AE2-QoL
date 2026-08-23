@@ -11,7 +11,10 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraftforge.fluids.FluidContainerRegistry;
+import net.minecraftforge.fluids.FluidStack;
 
+import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.common.RecipeMapNameConfig;
 import com.wztwzt.ae2_qof.merged.slot.SlotPatternFake;
 import com.wztwzt.ae2_qof.util.RecipeMapDetector;
@@ -27,8 +30,6 @@ import appeng.container.slot.SlotFakeCraftingMatrix;
 import appeng.container.slot.SlotRestrictedInput;
 import appeng.tile.inventory.AppEngInternalInventory;
 import appeng.util.Platform;
-import net.minecraftforge.fluids.FluidContainerRegistry;
-import net.minecraftforge.fluids.FluidStack;
 
 /**
  * 样板编码小组件，移植自 AE2Things PatternContainer（原生 4×4 网格布局）。
@@ -249,8 +250,14 @@ public class PatternContainer implements IOptionalSlotHost {
         final ItemStack[] in = getInputs();
         final ItemStack[] out = getOutputs();
 
-        if (in == null || out == null) return;
-        if (output != null && notPattern(output)) return;
+        if (in == null || out == null) {
+            MyMod.LOG.info("[Encode] panel empty (in={}, out={}), abort", in != null, out != null);
+            return;
+        }
+        if (output != null && notPattern(output)) {
+            MyMod.LOG.info("[Encode] OUT slot holds non-pattern item, abort");
+            return;
+        }
         if (output == null) {
             ItemStack blank = patternSlotIN.getStack();
             if (blank != null && isBlankPattern(blank)) {
@@ -260,8 +267,12 @@ public class PatternContainer implements IOptionalSlotHost {
                 }
             } else if (blank == null) {
                 // 空白槽为空：直接从网络扣 1 张空白样板（共享数量，编码后所有终端显示同步减一）
-                if (!consumeBlankFromNetwork()) return;
+                if (!consumeBlankFromNetwork()) {
+                    MyMod.LOG.info("[Encode] no blank pattern in slot and network, abort");
+                    return;
+                }
             } else {
+                MyMod.LOG.info("[Encode] blank slot holds non-blank item, abort");
                 return;
             }
         }
@@ -288,8 +299,15 @@ public class PatternContainer implements IOptionalSlotHost {
         final NBTTagCompound encodedValue = new NBTTagCompound();
         final NBTTagList tagIn = new NBTTagList();
         final NBTTagList tagOut = new NBTTagList();
-        for (final ItemStack i : in) tagIn.appendTag(createItemTag(i));
-        for (final ItemStack i : out) tagOut.appendTag(createItemTag(i));
+        // 对齐原生 ContainerPatternTerm.getOutputs：空槽不得写入 NBT。
+        // 空槽若写成空 NBT compound，UltimatePatternHelper 解码后 getAEOutputs() 会含 null，
+        // 导致 CraftingGridCache.setPatternsFromCraftingMethods 每 tick NPE、合成缓存永久损坏。
+        for (final ItemStack i : in) {
+            if (i != null && i.stackSize > 0) tagIn.appendTag(createItemTag(i));
+        }
+        for (final ItemStack i : out) {
+            if (i != null && i.stackSize > 0) tagOut.appendTag(createItemTag(i));
+        }
         encodedValue.setTag("in", tagIn);
         encodedValue.setTag("out", tagOut);
         encodedValue.setBoolean("crafting", craftingMode);
@@ -310,18 +328,26 @@ public class PatternContainer implements IOptionalSlotHost {
             try {
                 String playerKey = playerInv.player.getUniqueID()
                     .toString();
-                String recipeMap = RecipeMapDetector.detectRecipeMap(in, out, playerKey);
+                // NEI 转写时客户端已捕获精确配方池 id，必须优先——同一输入物品常存在于多个
+                // GT 配方池（如钢锭同时是高炉/电解机输入），服务端按输入反查无法区分，
+                // HashMap 无序遍历会随机命中错误池（钢锭高炉配方被识别成电解机的根因）。
+                String recipeMap = pendingRecipeMap;
                 if (recipeMap == null || recipeMap.isEmpty()) {
-                    // 兜底：使用 NEI 填充时客户端直接提供的配方池 id（GT 处理配方）
-                    recipeMap = pendingRecipeMap;
+                    recipeMap = RecipeMapDetector.detectRecipeMap(in, out, playerKey);
                 }
                 if (recipeMap != null && !recipeMap.isEmpty()) {
                     output.getTagCompound()
                         .setString("apu:recipeMap", recipeMap);
                     applyRecipeMapMeta(recipeMap);
+                    MyMod.LOG.info(
+                        "[Encode] done, mode={}, recipeMap={}",
+                        craftingMode ? "crafting" : "processing",
+                        recipeMap);
+                } else {
+                    MyMod.LOG.info("[Encode] done, mode={}, recipeMap=none", craftingMode ? "crafting" : "processing");
                 }
             } catch (Throwable t) {
-                System.out.println("[APU] encode machine name error: " + t.getMessage());
+                MyMod.LOG.warn("encode machine name error", t);
             }
         }
 
@@ -354,7 +380,8 @@ public class PatternContainer implements IOptionalSlotHost {
             }
         }
         // 普通物品：用 AEItemStack.toNBTGeneric() 写入，与 AE2 原生编码终端一致
-        return appeng.util.item.AEItemStack.create(i).toNBTGeneric();
+        return appeng.util.item.AEItemStack.create(i)
+            .toNBTGeneric();
     }
 
     private boolean notPattern(final ItemStack output) {
@@ -656,9 +683,10 @@ public class PatternContainer implements IOptionalSlotHost {
         try {
             ItemStack[] ins = null;
             ItemStack[] outs = null;
-            if (playerInv.player.worldObj != null && stack.getItem() instanceof appeng.api.implementations.ICraftingPatternItem cpi) {
-                appeng.api.networking.crafting.ICraftingPatternDetails details =
-                    cpi.getPatternForItem(stack, playerInv.player.worldObj);
+            if (playerInv.player.worldObj != null
+                && stack.getItem() instanceof appeng.api.implementations.ICraftingPatternItem cpi) {
+                appeng.api.networking.crafting.ICraftingPatternDetails details = cpi
+                    .getPatternForItem(stack, playerInv.player.worldObj);
                 if (details != null) {
                     ins = toDisplayArray(details.getInputs());
                     outs = toDisplayArray(details.getOutputs());
@@ -680,8 +708,7 @@ public class PatternContainer implements IOptionalSlotHost {
             // 保留样板内的配方池标识，二次编辑后再编码/上传仍可识别
             String recipeMap = tag.hasKey("apu:recipeMap") ? tag.getString("apu:recipeMap") : null;
             fill(ins, outs, isCrafting, null, recipeMap);
-        } catch (Throwable ignored) {
-        }
+        } catch (Throwable ignored) {}
     }
 
     /**
@@ -707,8 +734,9 @@ public class PatternContainer implements IOptionalSlotHost {
                 if (display != null) return display;
             }
             // 降级：ae2fc ItemFluidDrop 包装
-            appeng.api.storage.data.IAEItemStack ais =
-                Platform.stackConvert(fs.copy().setStackSize(Math.max(1, fs.getStackSize())));
+            appeng.api.storage.data.IAEItemStack ais = Platform.stackConvert(
+                fs.copy()
+                    .setStackSize(Math.max(1, fs.getStackSize())));
             return ais != null ? ais.getItemStack() : null;
         }
         if (s instanceof IAEItemStack is) {
@@ -924,7 +952,9 @@ public class PatternContainer implements IOptionalSlotHost {
     /** 判断是否为 GT ItemFluidDisplay（gregtech.common.items.ItemFluidDisplay） */
     private static boolean isGTFluidDisplayItem(ItemStack stack) {
         if (stack.stackTagCompound == null) return false;
-        String className = stack.getItem().getClass().getName();
+        String className = stack.getItem()
+            .getClass()
+            .getName();
         return className.contains("ItemFluidDisplay");
     }
 
@@ -957,7 +987,8 @@ public class PatternContainer implements IOptionalSlotHost {
         String lower = matName.toLowerCase();
         for (net.minecraftforge.fluids.Fluid registered : net.minecraftforge.fluids.FluidRegistry.getRegisteredFluids()
             .values()) {
-            if (registered.getName() != null && registered.getName().toLowerCase()
+            if (registered.getName() != null && registered.getName()
+                .toLowerCase()
                 .equals(lower)) {
                 return registered;
             }

@@ -32,13 +32,13 @@ public abstract class MixinDualInputHatchUI {
 
     @Inject(method = "populateUI", at = @At("RETURN"), remap = false)
     private void ae2qol$addSmartDoublingButton(ModularPanel builder, PosGuiData data, PanelSyncManager syncManager,
-            UISettings uiSettings, CallbackInfo ci) {
+        UISettings uiSettings, CallbackInfo ci) {
         if (!(this instanceof ICraftingProvider)) {
             return;
         }
         BooleanSyncValue smartDoublingSync = new BooleanSyncValue(
-                () -> ((ISmartDoublingMedium) (Object) this).isSmartDoublingEnabled(),
-                val -> ((ISmartDoublingMedium) (Object) this).setSmartDoubling(val)).allowC2S();
+            () -> ((ISmartDoublingMedium) (Object) this).isSmartDoublingEnabled(),
+            val -> ((ISmartDoublingMedium) (Object) this).setSmartDoubling(val)).allowC2S();
 
         builder.child(ae2qol$createSmartDoublingToggle(smartDoublingSync));
     }
@@ -50,7 +50,8 @@ public abstract class MixinDualInputHatchUI {
             .pos(7, 62);
         btn.addTooltipLine(StatCollector.translateToLocal("gui.ae2_qof.smart_doubling"));
         // lang 中的 \n 不会被 ModularUI 自动拆行，手动按 \n 拆成多行。
-        for (String line : StatCollector.translateToLocal("gui.ae2_qof.smart_doubling.hint").split("\\n")) {
+        for (String line : StatCollector.translateToLocal("gui.ae2_qof.smart_doubling.hint")
+            .split("\\n")) {
             btn.addTooltipLine(line);
         }
         return btn;

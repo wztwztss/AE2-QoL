@@ -46,17 +46,21 @@ public class CommandAe2QoL extends CommandBase {
             Config.reload();
             RecipeNameUtil.reloadMappings();
             RecipeMapNameConfig.reload();
-            sender.addChatMessage(new ChatComponentText(
-                EnumChatFormatting.GREEN + "[AE2QoL] 已热重载 settings.json + recipe_names.json"));
+            sender.addChatMessage(
+                new ChatComponentText(EnumChatFormatting.GREEN + "[AE2QoL] 已热重载 settings.json + recipe_names.json"));
             return;
         }
         Config.ensureFresh();
-        sender.addChatMessage(new ChatComponentText(
-            "[AE2QoL] io_port_rate=" + Config.exIOPortTransferContentsRate
-                + ", smart_doubling_max_rounds=" + Config.smartDoublingMaxRounds
-                + ", nei_overlay_enabled=" + Config.neiOverlayEnabled
-                + ", recipe_mappings=" + RecipeNameUtil.getMappingsView()
-                    .size()));
+        sender.addChatMessage(
+            new ChatComponentText(
+                "[AE2QoL] io_port_rate=" + Config.exIOPortTransferContentsRate
+                    + ", smart_doubling_max_rounds="
+                    + Config.smartDoublingMaxRounds
+                    + ", nei_overlay_enabled="
+                    + Config.neiOverlayEnabled
+                    + ", recipe_mappings="
+                    + RecipeNameUtil.getMappingsView()
+                        .size()));
     }
 
     @Override

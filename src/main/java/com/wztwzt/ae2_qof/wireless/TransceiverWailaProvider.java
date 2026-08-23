@@ -41,43 +41,36 @@ public class TransceiverWailaProvider implements IWailaDataProvider {
         TileEntity te = accessor.getTileEntity();
         if (te instanceof TileWirelessTransceiver) {
             TileWirelessTransceiver tile = (TileWirelessTransceiver) te;
-            String modeStr = tile.isMode()
-                ? StatCollector.translateToLocal("gui.ae2_qof.wireless.mode.sender")
+            String modeStr = tile.isMode() ? StatCollector.translateToLocal("gui.ae2_qof.wireless.mode.sender")
                 : StatCollector.translateToLocal("gui.ae2_qof.wireless.mode.receiver");
-            currenttip
-                .add(StatCollector.translateToLocal("gui.ae2_qof.wireless.mode") + ": " + modeStr);
+            currenttip.add(StatCollector.translateToLocal("gui.ae2_qof.wireless.mode") + ": " + modeStr);
             String freq = tile.getFrequency();
             currenttip.add(
                 StatCollector.translateToLocal("gui.ae2_qof.wireless.freq") + ": "
-                    + (freq.isEmpty() ? StatCollector.translateToLocal("gui.ae2_qof.wireless.none")
-                        : freq));
+                    + (freq.isEmpty() ? StatCollector.translateToLocal("gui.ae2_qof.wireless.none") : freq));
             if (tile.isConnected()) {
                 int used = tile.getUsedChannels();
                 int max = tile.getMaxChannels();
                 currenttip.add(
-                    EnumChatFormatting.AQUA + StatCollector.translateToLocal(
-                        "gui.ae2_qof.wireless.channels_used") + ": " + used + "/" + max);
+                    EnumChatFormatting.AQUA + StatCollector
+                        .translateToLocal("gui.ae2_qof.wireless.channels_used") + ": " + used + "/" + max);
             } else {
                 int totalFreqs = accessor.getNBTData()
                     .getInteger("totalFreqs");
                 currenttip.add(
-                    EnumChatFormatting.AQUA
-                        + StatCollector.translateToLocal("gui.ae2_qof.wireless.channels_used")
+                    EnumChatFormatting.AQUA + StatCollector.translateToLocal("gui.ae2_qof.wireless.channels_used")
                         + ": "
                         + totalFreqs);
             }
             if (tile.isPaused()) {
                 currenttip.add(
-                    EnumChatFormatting.GOLD
-                        + StatCollector.translateToLocal("gui.ae2_qof.wireless.status.paused"));
+                    EnumChatFormatting.GOLD + StatCollector.translateToLocal("gui.ae2_qof.wireless.status.paused"));
             } else {
                 String statusStr = tile.isConnected()
-                    ? EnumChatFormatting.GREEN
-                        + StatCollector.translateToLocal("gui.ae2_qof.wireless.status.connected")
+                    ? EnumChatFormatting.GREEN + StatCollector.translateToLocal("gui.ae2_qof.wireless.status.connected")
                     : EnumChatFormatting.RED
                         + StatCollector.translateToLocal("gui.ae2_qof.wireless.status.disconnected");
-                currenttip.add(
-                    StatCollector.translateToLocal("gui.ae2_qof.wireless.status") + ": " + statusStr);
+                currenttip.add(StatCollector.translateToLocal("gui.ae2_qof.wireless.status") + ": " + statusStr);
             }
         }
         return currenttip;

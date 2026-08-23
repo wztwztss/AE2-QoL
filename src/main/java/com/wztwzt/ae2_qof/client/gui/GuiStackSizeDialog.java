@@ -69,8 +69,9 @@ public class GuiStackSizeDialog extends GuiScreen {
     private void apply() {
         int size = 1;
         try {
-            size = Integer.parseInt(this.textField.getText()
-                .trim());
+            size = Integer.parseInt(
+                this.textField.getText()
+                    .trim());
         } catch (Throwable ignored) {}
         if (size < 0) size = 0;
         if (size > 999) size = 999;

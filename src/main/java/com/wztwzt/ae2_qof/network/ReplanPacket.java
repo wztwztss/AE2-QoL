@@ -3,6 +3,7 @@ package com.wztwzt.ae2_qof.network;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 
+import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.util.Replanner;
 
 import appeng.container.implementations.ContainerCraftConfirm;
@@ -41,7 +42,7 @@ public class ReplanPacket implements IMessage {
                         Replanner.replan(player, ccc);
                     }
                 } catch (Throwable t) {
-                    t.printStackTrace();
+                    MyMod.LOG.error("Replan failed", t);
                 }
             });
             return null;

@@ -35,8 +35,8 @@ public class GuiMergedAmount extends GuiScreen {
         this.amountTextField.setCursorPositionEnd();
         this.amountTextField.setFocused(true);
         this.buttonList.add(new GuiButton(BUTTON_SET, cx - 38, cy + 4, 76, 20, "Set"));
-        this.buttonList.add(new GuiButton(BUTTON_CANCEL, cx - 38, cy + 28, 76, 20,
-            StatCollector.translateToLocal("gui.cancel")));
+        this.buttonList
+            .add(new GuiButton(BUTTON_CANCEL, cx - 38, cy + 28, 76, 20, StatCollector.translateToLocal("gui.cancel")));
     }
 
     @Override

@@ -50,12 +50,12 @@ public abstract class MixinGuiSuperDualInterface extends GuiUpgradeable {
             // 方块形态多一个 sidelessMode 按钮，整列下移 18：方块 134、线缆面板 116（fuzzyMode 与翻页之间）。
             final int btnY = this.host instanceof TileEntitySuperDualInterface ? this.guiTop + 134 : this.guiTop + 116;
             this.smartDoublingBtn = new GuiToggleButton(
-                    this.guiLeft - 18,
-                    btnY,
-                    178,
-                    194,
-                    "gui.ae2_qof.smart_doubling",
-                    "gui.ae2_qof.smart_doubling.hint");
+                this.guiLeft - 18,
+                btnY,
+                178,
+                194,
+                "gui.ae2_qof.smart_doubling",
+                "gui.ae2_qof.smart_doubling.hint");
             this.buttonList.add(this.smartDoublingBtn);
         }
     }
@@ -63,7 +63,7 @@ public abstract class MixinGuiSuperDualInterface extends GuiUpgradeable {
     @Inject(method = "func_146284_a", at = @At("TAIL"), remap = false)
     private void ae2qol$onSmartDoublingButton(GuiButton btn, CallbackInfo ci) {
         if (this.smartDoublingBtn != null && btn == this.smartDoublingBtn
-                && this.cvb instanceof ISmartDoublingContainer sdc) {
+            && this.cvb instanceof ISmartDoublingContainer sdc) {
             final boolean next = !sdc.getSmartDoubling();
             ModNetwork.CHANNEL.sendToServer(new SmartDoublingTogglePacket(next));
         }

@@ -9,6 +9,9 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 
 import com.glodblock.github.common.item.ItemFluidEncodedPattern;
+import com.wztwzt.ae2_qof.MyMod;
+import com.wztwzt.ae2_qof.api.IMergedPatternTerminal;
+import com.wztwzt.ae2_qof.util.ContainerTerminalResolver;
 
 import appeng.api.AEApi;
 import appeng.api.config.SecurityPermissions;
@@ -21,8 +24,6 @@ import appeng.api.networking.security.IActionHost;
 import appeng.api.networking.security.ISecurityGrid;
 import appeng.api.util.IInterfaceViewable;
 import appeng.container.slot.SlotRestrictedInput;
-import com.wztwzt.ae2_qof.api.IMergedPatternTerminal;
-import com.wztwzt.ae2_qof.util.ContainerTerminalResolver;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
@@ -71,56 +72,60 @@ public class RecallPatternPacket implements IMessage {
                 Container container = player.openContainer;
                 Slot outputSlot = resolveOutputSlot(container);
                 if (outputSlot == null) {
-                    System.out.println("[APU] Recall: outputSlot is null");
+                    MyMod.LOG.info(
+                        "[Recall] no output slot for {}",
+                        container != null ? container.getClass()
+                            .getSimpleName() : "null container");
                     return;
                 }
 
                 // 只能在输出槽为空时撤回
                 if (outputSlot.getStack() != null && outputSlot.getStack().stackSize > 0) {
-                    System.out.println("[APU] Recall: outputSlot not empty, stack=" + outputSlot.getStack());
+                    MyMod.LOG.info("[Recall] output slot occupied, abort");
                     return;
                 }
 
                 IActionHost terminal = ContainerTerminalResolver.resolveTerminal(container);
                 if (terminal == null) {
-                    System.out.println("[APU] Recall: terminal is null");
+                    MyMod.LOG.info(
+                        "[Recall] terminal resolve failed for {}",
+                        container != null ? container.getClass()
+                            .getSimpleName() : "null container");
                     return;
                 }
 
                 IGridNode node = terminal.getActionableNode();
                 if (node == null) {
-                    System.out.println("[APU] Recall: node is null");
+                    MyMod.LOG.info("[Recall] terminal node is null");
                     return;
                 }
 
                 IGrid grid = node.getGrid();
                 if (grid == null) {
-                    System.out.println("[APU] Recall: grid is null");
+                    MyMod.LOG.info("[Recall] grid is null");
                     return;
                 }
 
                 // 所有权校验：无安全站的网络默认放行，有安全站的共享网络仅允许有对应权限的玩家操作
                 ISecurityGrid security = grid.getCache(ISecurityGrid.class);
                 if (security != null && !security.hasPermission(player, SecurityPermissions.EXTRACT)) {
-                    System.out.println("[APU] Recall: no security permission, denied");
+                    MyMod.LOG.info("[Recall] no EXTRACT permission, denied");
                     return;
                 }
 
-                System.out.println("[APU] Recall: searching providerId=" + message.providerId);
                 ICraftingProvider machine = findProvider(grid, message.providerId);
                 if (machine == null) {
-                    System.out.println("[APU] Recall: provider not found for id=" + message.providerId);
+                    MyMod.LOG.info("[Recall] provider id={} not found in grid", message.providerId);
                     return;
                 }
                 IInventory provider = resolvePatternInventory(machine);
                 if (provider == null) {
-                    System.out.println("[APU] Recall: provider has no inventory");
+                    MyMod.LOG.info("[Recall] provider has no pattern inventory");
                     return;
                 }
                 // 只扫描专属样板槽区域（IInterfaceViewable 提供 rows*rowSize 上界），
                 // 避免把 GT/PH 机器原料缓存误当作样板库存
                 int scanLimit = resolvePatternLimit(machine, provider);
-                System.out.println("[APU] Recall: provider found, size=" + provider.getSizeInventory() + ", scanLimit=" + scanLimit);
 
                 // 从后往前搜索，找到最后一个编码样板
                 ItemStack recalled = null;
@@ -130,7 +135,6 @@ public class RecallPatternPacket implements IMessage {
                         recalled = slot.copy();
                         provider.setInventorySlotContents(i, null);
                         provider.markDirty();
-                        System.out.println("[APU] Recall: found pattern at slot " + i + ": " + slot.getDisplayName());
                         break;
                     }
                 }
@@ -142,12 +146,16 @@ public class RecallPatternPacket implements IMessage {
                             .removeTag("apu:recipeMap");
                     }
                     outputSlot.putStack(recalled);
-                    System.out.println("[APU] Recall: success, placed in output slot");
+                    // 外部取走样板不会触发接口终端增量推送，调度打开中的合并终端容器全量刷新
+                    if (container instanceof com.wztwzt.ae2_qof.merged.ContainerMergedTerminal cmt) {
+                        cmt.scheduleFullUpdate();
+                    }
+                    MyMod.LOG.info("[Recall] success from provider id={}", message.providerId);
                 } else {
-                    System.out.println("[APU] Recall: no encoded pattern found in provider");
+                    MyMod.LOG.info("[Recall] no encoded pattern in provider id={}", message.providerId);
                 }
             } catch (Throwable t) {
-                t.printStackTrace();
+                MyMod.LOG.error("Recall pattern failed", t);
             }
         }
 
@@ -218,12 +226,14 @@ public class RecallPatternPacket implements IMessage {
         private SlotRestrictedInput resolvePatternTermOutputSlot(Container container) {
             try {
                 if (container instanceof appeng.container.implementations.ContainerPatternTerm term) {
-                    Field field = appeng.container.implementations.ContainerPatternTerm.class.getDeclaredField("patternSlotOUT");
+                    Field field = appeng.container.implementations.ContainerPatternTerm.class
+                        .getDeclaredField("patternSlotOUT");
                     field.setAccessible(true);
                     return (SlotRestrictedInput) field.get(term);
                 }
                 if (container instanceof appeng.container.implementations.ContainerPatternTermEx termEx) {
-                    Field field = appeng.container.implementations.ContainerPatternTermEx.class.getDeclaredField("patternSlotOUT");
+                    Field field = appeng.container.implementations.ContainerPatternTermEx.class
+                        .getDeclaredField("patternSlotOUT");
                     field.setAccessible(true);
                     return (SlotRestrictedInput) field.get(termEx);
                 }

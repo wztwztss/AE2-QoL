@@ -41,24 +41,26 @@ public abstract class MixinMTEHatchCraftingInputMEGui {
 
     @Inject(method = "createBottomLeftCornerFlow", at = @At("RETURN"), remap = false)
     private void ae2qol$addSmartDoublingButton(ModularPanel panel, PanelSyncManager syncManager,
-            CallbackInfoReturnable<Flow> cir) {
+        CallbackInfoReturnable<Flow> cir) {
         if (!(this.ae2qol$machine instanceof ICraftingProvider)) {
             return;
         }
-        cir.getReturnValue().child(ae2qol$createSmartDoublingToggle(syncManager));
+        cir.getReturnValue()
+            .child(ae2qol$createSmartDoublingToggle(syncManager));
     }
 
     @Unique
     private ToggleButton ae2qol$createSmartDoublingToggle(PanelSyncManager syncManager) {
         BooleanSyncValue smartDoublingSync = new BooleanSyncValue(
-                () -> ((ISmartDoublingMedium) (Object) this.ae2qol$machine).isSmartDoublingEnabled(),
-                val -> ((ISmartDoublingMedium) (Object) this.ae2qol$machine).setSmartDoubling(val)).allowC2S();
+            () -> ((ISmartDoublingMedium) (Object) this.ae2qol$machine).isSmartDoublingEnabled(),
+            val -> ((ISmartDoublingMedium) (Object) this.ae2qol$machine).setSmartDoubling(val)).allowC2S();
 
         ToggleButton btn = new ToggleButton().value(smartDoublingSync)
             .overlay(GTGuiTextures.OVERLAY_BUTTON_PATTERN_OPTIMIZE);
         btn.addTooltipLine(StatCollector.translateToLocal("gui.ae2_qof.smart_doubling"));
         // lang 中的 \n 不会被 ModularUI 自动拆行，手动按 \n 拆成多行。
-        for (String line : StatCollector.translateToLocal("gui.ae2_qof.smart_doubling.hint").split("\\n")) {
+        for (String line : StatCollector.translateToLocal("gui.ae2_qof.smart_doubling.hint")
+            .split("\\n")) {
             btn.addTooltipLine(line);
         }
         return btn;

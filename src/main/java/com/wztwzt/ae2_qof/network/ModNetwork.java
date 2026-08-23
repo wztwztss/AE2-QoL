@@ -90,7 +90,8 @@ public final class ModNetwork {
 
         CHANNEL.registerMessage(ConfigSetPacket.Handler.class, ConfigSetPacket.class, discriminator++, Side.SERVER);
 
-        CHANNEL.registerMessage(ConfigUpdatePacket.Handler.class, ConfigUpdatePacket.class, discriminator++, Side.CLIENT);
+        CHANNEL
+            .registerMessage(ConfigUpdatePacket.Handler.class, ConfigUpdatePacket.class, discriminator++, Side.CLIENT);
 
         CHANNEL.registerMessage(
             MergedTerminalActionPacket.Handler.class,

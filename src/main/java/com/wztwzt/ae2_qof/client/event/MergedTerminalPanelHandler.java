@@ -59,6 +59,11 @@ public class MergedTerminalPanelHandler {
     public static final int BUTTON_HALVE_ID = 954;
     public static final int BUTTON_MATRIX_UPLOAD_ID = 955;
 
+    /** 是否本处理器管理的面板按钮（白名单，避免误抢 AE 原生按钮点击） */
+    public static boolean isPanelButton(int id) {
+        return (id >= BUTTON_ENCODE_ID && id <= BUTTON_MATRIX_UPLOAD_ID);
+    }
+
     /** GTNL 装配矩阵类是否可用（null=未探测） */
     private static Boolean matrixAvailable;
 
@@ -370,15 +375,15 @@ public class MergedTerminalPanelHandler {
                 int flags = 0;
                 if (ctrl) flags |= 1;
                 if (mouseButton == 1) flags |= 2;
-                ModNetwork.CHANNEL.sendToServer(MergedTerminalActionPacket.value(MergedTerminalActionPacket.Action.DOUBLE,
-                    flags));
+                ModNetwork.CHANNEL
+                    .sendToServer(MergedTerminalActionPacket.value(MergedTerminalActionPacket.Action.DOUBLE, flags));
                 break;
             }
             case BUTTON_HALVE_ID: {
                 // 倍除按钮：左键 ÷2，Ctrl+左键 ÷8
                 int flags = 2 | (ctrl ? 1 : 0);
-                ModNetwork.CHANNEL.sendToServer(MergedTerminalActionPacket.value(MergedTerminalActionPacket.Action.DOUBLE,
-                    flags));
+                ModNetwork.CHANNEL
+                    .sendToServer(MergedTerminalActionPacket.value(MergedTerminalActionPacket.Action.DOUBLE, flags));
                 break;
             }
             case BUTTON_TAB_CRAFT_ID:
@@ -430,8 +435,7 @@ public class MergedTerminalPanelHandler {
                 break;
             case BUTTON_MATRIX_UPLOAD_ID:
                 if (isMatrixAvailable()) {
-                    ModNetwork.CHANNEL
-                        .sendToServer(new com.wztwzt.ae2_qof.network.MergedTerminalMatrixUploadPacket());
+                    ModNetwork.CHANNEL.sendToServer(new com.wztwzt.ae2_qof.network.MergedTerminalMatrixUploadPacket());
                 }
                 break;
             default:
@@ -451,11 +455,14 @@ public class MergedTerminalPanelHandler {
     private static void handleUpload(GuiContainer gui) {
         boolean forceGui = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT);
         if (!(gui.inventorySlots instanceof IMergedPatternTerminal merged)) {
+            com.wztwzt.ae2_qof.MyMod.LOG.warn("[Upload] container is not IMergedPatternTerminal");
             return;
         }
         ItemStack patternStack = merged.getMergedEncodedSlot()
             .getStack();
         if (patternStack == null) {
+            // OUT 槽为空（未编码/编码失败/样板被回读逻辑消费），无法上传
+            com.wztwzt.ae2_qof.MyMod.LOG.info("[Upload] OUT slot empty, nothing to upload");
             return;
         }
 
@@ -478,6 +485,8 @@ public class MergedTerminalPanelHandler {
         if (recipeMap != null && !recipeMap.isEmpty()) {
             ClientState.lastRecipeMap = recipeMap;
             ClientState.pendingRecipeMap = null;
+            com.wztwzt.ae2_qof.MyMod.LOG
+                .info("[Upload] requesting providers, recipeMap={}, forceGui={}", recipeMap, forceGui);
             ModNetwork.CHANNEL.sendToServer(new RequestProvidersListPacket(recipeMap, forceGui));
             return;
         }
@@ -505,8 +514,10 @@ public class MergedTerminalPanelHandler {
             }
         } catch (Throwable ignored) {}
         if (inputs.length == 0 && outputs.length == 0) {
+            com.wztwzt.ae2_qof.MyMod.LOG.info("[Upload] no recipeMap and pattern unreadable, abort");
             return;
         }
+        com.wztwzt.ae2_qof.MyMod.LOG.info("[Upload] requesting providers by inputs/outputs, forceGui={}", forceGui);
         ModNetwork.CHANNEL.sendToServer(new RequestProvidersListPacket(inputs, outputs, forceGui));
     }
 
@@ -523,7 +534,8 @@ public class MergedTerminalPanelHandler {
         return matrixAvailable;
     }
 
-    private static RenderItem getRenderItem() {        try {
+    private static RenderItem getRenderItem() {
+        try {
             if (ITEM_RENDER != null) {
                 Object v = ITEM_RENDER.get(null);
                 if (v instanceof RenderItem) {

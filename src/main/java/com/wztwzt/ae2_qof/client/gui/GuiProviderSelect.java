@@ -183,13 +183,7 @@ public class GuiProviderSelect extends GuiScreen {
         this.buttonList.add(prevBtn);
         this.buttonList.add(nextBtn);
 
-        GuiButton addBtn = new GuiButton(
-            BUTTON_ADD,
-            centerX - 50,
-            navY + 30,
-            50,
-            20,
-            translate("gui.ae2_qof.add"));
+        GuiButton addBtn = new GuiButton(BUTTON_ADD, centerX - 50, navY + 30, 50, 20, translate("gui.ae2_qof.add"));
         GuiButton reloadBtn = new GuiButton(
             BUTTON_RELOAD,
             centerX + 10,

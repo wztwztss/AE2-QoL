@@ -16,9 +16,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import com.wztwzt.ae2_qof.client.NeiRecipeCapture;
 import com.wztwzt.ae2_qof.client.ClientRecipeNameUtil;
 import com.wztwzt.ae2_qof.client.ClientState;
+import com.wztwzt.ae2_qof.client.NeiRecipeCapture;
 import com.wztwzt.ae2_qof.merged.GuiMergedTerminal;
 
 import codechicken.lib.inventory.InventoryUtils;
@@ -195,7 +195,6 @@ public abstract class MixinDefaultOverlayHandler {
                     String mapName = (String) nameField.get(recipeMap);
                     if (mapName != null && !mapName.isEmpty()) {
                         ClientState.pendingRecipeMap = mapName;
-                        System.out.println("[APU] Captured GT recipe map from NEI overlay: " + mapName);
                         return;
                     }
                 }
@@ -210,7 +209,6 @@ public abstract class MixinDefaultOverlayHandler {
                     String mapName = (String) nameField.get(recipeMap);
                     if (mapName != null && !mapName.isEmpty()) {
                         ClientState.pendingRecipeMap = mapName;
-                        System.out.println("[APU] Captured GT recipe map from NEI overlay field: " + mapName);
                         return;
                     }
                 }

@@ -29,8 +29,6 @@ import appeng.api.config.Settings;
 import appeng.api.config.YesNo;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
-import appeng.api.networking.energy.IEnergyGrid;
-import appeng.api.networking.energy.IEnergySource;
 import appeng.api.networking.storage.IStorageGrid;
 import appeng.api.parts.IInterfaceTerminal;
 import appeng.api.storage.IMEMonitor;
@@ -42,7 +40,6 @@ import appeng.client.gui.IGuiSub;
 import appeng.container.AEBaseContainer;
 import appeng.container.ContainerOpenContext;
 import appeng.container.interfaces.IContainerSubGui;
-import appeng.container.slot.SlotRestrictedInput;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.PacketInterfaceTerminalUpdate;
 import appeng.helpers.IInterfaceHost;
@@ -93,17 +90,22 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
         this.anchor = anchor;
         this.setOpenContext(new ContainerOpenContext(anchor));
         if (anchor instanceof TileEntity te) {
-            this.getOpenContext().setWorld(te.getWorldObj());
-            this.getOpenContext().setX(te.xCoord);
-            this.getOpenContext().setY(te.yCoord);
-            this.getOpenContext().setZ(te.zCoord);
-            this.getOpenContext().setSide(ForgeDirection.UNKNOWN);
+            this.getOpenContext()
+                .setWorld(te.getWorldObj());
+            this.getOpenContext()
+                .setX(te.xCoord);
+            this.getOpenContext()
+                .setY(te.yCoord);
+            this.getOpenContext()
+                .setZ(te.zCoord);
+            this.getOpenContext()
+                .setSide(ForgeDirection.UNKNOWN);
         }
         if (Platform.isServer()) {
             IGridNode node = anchor.getActionableNode();
             if (node != null) this.grid = node.getGrid();
             if (this.grid != null) {
-                this.dirty = this.updateList();
+                this.dirty = this.updateList(false);
                 if (this.dirty != null) this.isDirty = true;
                 else this.dirty = new PacketInterfaceTerminalUpdate();
             } else {
@@ -177,7 +179,7 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
             this.isDirty = false;
         } else if (this.anchor.needsUpdate() || this.forceNextUpdate) {
             this.forceNextUpdate = false;
-            PacketInterfaceTerminalUpdate p = this.updateList();
+            PacketInterfaceTerminalUpdate p = this.updateList(true);
             if (p != null) {
                 p.encode();
                 NetworkHandler.instance.sendTo(p, (EntityPlayerMP) this.getPlayerInv().player);
@@ -191,8 +193,7 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
                     new MergedTerminalBlankCountPacket(blankCount),
                     (EntityPlayerMP) this.getPlayerInv().player);
             }
-        } catch (Throwable ignored) {
-        }
+        } catch (Throwable ignored) {}
     }
 
     /** 查询网络内空白样板总数量（与其它编码终端共享的同一份库存） */
@@ -364,7 +365,7 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
         return set;
     }
 
-    private PacketInterfaceTerminalUpdate updateList() {
+    private PacketInterfaceTerminalUpdate updateList(boolean checkContents) {
         PacketInterfaceTerminalUpdate p = null;
         Set<Class<? extends IInterfaceViewable>> supported = AEApi.instance()
             .registries()
@@ -423,6 +424,16 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
                             if (p == null) p = new PacketInterfaceTerminalUpdate();
                             p.addOverwriteEntry(tracker.id)
                                 .setPriority(priority);
+                        }
+                        // 样板内容变化检测：原生 updateList 不对比内容（仅 GUI 内操作走增量推送），
+                        // 外部写入（上传包/GT 自动填料/其他玩家）后列表永不更新。仅在调度刷新
+                        // （checkContents=true，上传后 scheduleFullUpdate 触发）时对比，避免每 tick
+                        // 对全部接口做逐槽比较的开销。
+                        if (checkContents && tracker.hasContentChanged()) {
+                            tracker.markDirty();
+                            if (p == null) p = new PacketInterfaceTerminalUpdate();
+                            p.addOverwriteEntry(tracker.id)
+                                .setItems(new int[0], tracker.invNbt);
                         }
                         seen.add(viewable);
                     } else {
@@ -588,6 +599,11 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
         return patternContainer.getLastMachineName();
     }
 
+    /** 外部代码写入 provider 样板后调度一次全量列表刷新（forceNextUpdate 机制与原生 ContainerInterfaceTerminal 一致） */
+    public void scheduleFullUpdate() {
+        this.forceNextUpdate = true;
+    }
+
     @Override
     public String mergedEncodeRecipeMap() {
         return patternContainer.getLastRecipeMap();
@@ -669,6 +685,7 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
         private boolean online;
         private final IAEStackType<?>[] supportedStackTypes;
         private NBTTagList invNbt;
+        private final ItemStack[] slotCache;
 
         InvTracker(long id, IInterfaceViewable viewable, boolean online) {
             this.id = id;
@@ -689,6 +706,7 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
             this.supportedStackTypes = viewable.getSupportedStackTypes();
             this.priority = viewable.getPriority();
             this.invNbt = new NBTTagList();
+            this.slotCache = new ItemStack[Math.max(1, viewable.numSlots())];
             this.markDirty();
         }
 
@@ -696,8 +714,23 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
             this.invNbt = new NBTTagList();
             for (int i = 0; i < this.numSlots; i++) {
                 ItemStack stack = this.patterns.getStackInSlot(i);
+                if (i < this.slotCache.length) {
+                    this.slotCache[i] = stack == null ? null : stack.copy();
+                }
                 this.invNbt.appendTag(stack != null ? stack.writeToNBT(new NBTTagCompound()) : new NBTTagCompound());
             }
+        }
+
+        /** 对比当前样板槽与上次快照，检测外部写入导致的内容变化 */
+        boolean hasContentChanged() {
+            for (int i = 0; i < this.numSlots && i < this.slotCache.length; i++) {
+                ItemStack cur = this.patterns.getStackInSlot(i);
+                ItemStack old = this.slotCache[i];
+                boolean same = cur == old
+                    || (cur != null && old != null && net.minecraft.item.ItemStack.areItemStacksEqual(cur, old));
+                if (!same) return true;
+            }
+            return false;
         }
     }
 }

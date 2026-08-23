@@ -38,12 +38,12 @@ public abstract class MixinGuiSuperInterface extends GuiUpgradeable {
     private void ae2qol$addSmartDoublingButton(CallbackInfo ci) {
         if (this.cvb instanceof ISmartDoublingContainer) {
             this.smartDoublingBtn = new GuiToggleButton(
-                    this.guiLeft - 18,
-                    this.guiTop + 152,
-                    178,
-                    194,
-                    "gui.ae2_qof.smart_doubling",
-                    "gui.ae2_qof.smart_doubling.hint");
+                this.guiLeft - 18,
+                this.guiTop + 152,
+                178,
+                194,
+                "gui.ae2_qof.smart_doubling",
+                "gui.ae2_qof.smart_doubling.hint");
             this.buttonList.add(this.smartDoublingBtn);
         }
     }
@@ -51,7 +51,7 @@ public abstract class MixinGuiSuperInterface extends GuiUpgradeable {
     @Inject(method = "func_146284_a", at = @At("TAIL"), remap = false)
     private void ae2qol$onSmartDoublingButton(GuiButton btn, CallbackInfo ci) {
         if (this.smartDoublingBtn != null && btn == this.smartDoublingBtn
-                && this.cvb instanceof ISmartDoublingContainer sdc) {
+            && this.cvb instanceof ISmartDoublingContainer sdc) {
             final boolean next = !sdc.getSmartDoubling();
             ModNetwork.CHANNEL.sendToServer(new SmartDoublingTogglePacket(next));
         }

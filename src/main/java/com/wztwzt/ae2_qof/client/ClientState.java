@@ -14,6 +14,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.wztwzt.ae2_qof.MyMod;
 
 import cpw.mods.fml.common.Loader;
 
@@ -138,7 +139,7 @@ public class ClientState {
                 GSON.toJson(root, writer);
             }
         } catch (Exception e) {
-            System.out.println("[APU] Failed to save remembered providers: " + e.getMessage());
+            MyMod.LOG.warn("Failed to save remembered providers", e);
         }
     }
 
@@ -164,9 +165,8 @@ public class ClientState {
                     }
                 }
             }
-            System.out.println("[APU] Loaded " + rememberedProviders.size() + " remembered providers");
         } catch (Exception e) {
-            System.out.println("[APU] Failed to load remembered providers: " + e.getMessage());
+            MyMod.LOG.warn("Failed to load remembered providers", e);
         }
     }
 }

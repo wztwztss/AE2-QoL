@@ -18,11 +18,11 @@ import java.util.regex.Pattern;
 
 import net.minecraft.util.StatCollector;
 
-import com.wztwzt.ae2_qof.MyMod;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.wztwzt.ae2_qof.MyMod;
 
 import cpw.mods.fml.common.Loader;
 
@@ -209,8 +209,7 @@ public final class RecipeNameUtil {
                 }
             }
         } catch (IOException e) {
-            MyMod.LOG.warn(
-                StatCollector.translateToLocalFormatted("ae2_qof.error.read_mappings", e.getMessage()));
+            MyMod.LOG.warn(StatCollector.translateToLocalFormatted("ae2_qof.error.read_mappings", e.getMessage()));
         }
         MyMod.LOG.info("[APU] Loaded " + RAW_MAPPINGS.size() + " recipe mappings from " + CONFIG_FILE);
     }
@@ -271,9 +270,7 @@ public final class RecipeNameUtil {
                 writer.write(GSON.toJson(template));
             }
         } catch (IOException e) {
-            MyMod.LOG.warn(
-                StatCollector
-                    .translateToLocalFormatted("ae2_qof.error.create_template", e.getMessage()));
+            MyMod.LOG.warn(StatCollector.translateToLocalFormatted("ae2_qof.error.create_template", e.getMessage()));
         }
     }
 
@@ -296,9 +293,7 @@ public final class RecipeNameUtil {
                 writer.write(GSON.toJson(obj));
             }
         } catch (IOException e) {
-            MyMod.LOG.warn(
-                StatCollector
-                    .translateToLocalFormatted("ae2_qof.error.write_mappings", e.getMessage()));
+            MyMod.LOG.warn(StatCollector.translateToLocalFormatted("ae2_qof.error.write_mappings", e.getMessage()));
         }
     }
 

@@ -13,7 +13,8 @@ import appeng.client.gui.widgets.MEGuiTextField;
 public class MergedRenameOverlay {
 
     private static final ResourceLocation BG_TEXTURE = new ResourceLocation(
-        "appliedenergistics2", "textures/guis/renamer.png");
+        "appliedenergistics2",
+        "textures/guis/renamer.png");
 
     private boolean active;
     private int slotNumber;
@@ -24,10 +25,21 @@ public class MergedRenameOverlay {
     private MEGuiTextField nameField;
     private boolean renameRequested;
 
-    public boolean isActive() { return active; }
-    public boolean isRenameRequested() { return renameRequested; }
-    public int getSlotNumber() { return slotNumber; }
-    public String getNewName() { return nameField != null ? nameField.getText() : ""; }
+    public boolean isActive() {
+        return active;
+    }
+
+    public boolean isRenameRequested() {
+        return renameRequested;
+    }
+
+    public int getSlotNumber() {
+        return slotNumber;
+    }
+
+    public String getNewName() {
+        return nameField != null ? nameField.getText() : "";
+    }
 
     public void open(int slotNumber, String currentName, int guiLeft, int guiTop, int ySize) {
         this.active = true;
@@ -72,7 +84,8 @@ public class MergedRenameOverlay {
         GL11.glDisable(GL11.GL_LIGHTING);
         GL11.glDisable(GL11.GL_DEPTH_TEST);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        mc.getTextureManager().bindTexture(BG_TEXTURE);
+        mc.getTextureManager()
+            .bindTexture(BG_TEXTURE);
         drawTexturedModalRect(ox, oy, 0, 0, 176, 100);
 
         String title = "\u91cd\u547d\u540d:";
@@ -93,7 +106,10 @@ public class MergedRenameOverlay {
 
     public boolean keyTyped(char typedChar, int keyCode) {
         if (!active) return false;
-        if (keyCode == Keyboard.KEY_ESCAPE) { close(); return true; }
+        if (keyCode == Keyboard.KEY_ESCAPE) {
+            close();
+            return true;
+        }
         if (keyCode == Keyboard.KEY_RETURN || keyCode == Keyboard.KEY_NUMPADENTER) {
             renameRequested = true;
             return true;
@@ -102,8 +118,7 @@ public class MergedRenameOverlay {
         return true;
     }
 
-    public void updateScreen() {
-    }
+    public void updateScreen() {}
 
     private static void drawTexturedModalRect(int x, int y, int u, int v, int w, int h) {
         float f = 1.0F / 256.0F;

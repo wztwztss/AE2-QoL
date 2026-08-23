@@ -3,6 +3,7 @@ package com.wztwzt.ae2_qof.network;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
 
+import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.api.IMergedPatternTerminal;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
@@ -62,7 +63,7 @@ public class MergedTerminalSetStackPacket implements IMessage {
                         merged.mergedSetStackSize(message.slotNumber, message.newSize);
                     }
                 } catch (Throwable t) {
-                    t.printStackTrace();
+                    MyMod.LOG.error("Merged terminal set stack size failed", t);
                 }
             });
             return null;

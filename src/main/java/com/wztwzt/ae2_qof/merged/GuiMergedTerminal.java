@@ -3,13 +3,11 @@ package com.wztwzt.ae2_qof.merged;
 import java.lang.reflect.Field;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.ResourceLocation;
 
 import org.lwjgl.input.Keyboard;
@@ -24,7 +22,6 @@ import com.wztwzt.ae2_qof.network.ModNetwork;
 
 import appeng.api.AEApi;
 import appeng.api.parts.IInterfaceTerminal;
-import appeng.api.storage.data.IAEItemStack;
 import appeng.client.gui.implementations.GuiInterfaceTerminal;
 import appeng.client.gui.widgets.MEGuiTextField;
 import appeng.container.slot.AppEngSlot;
@@ -48,9 +45,6 @@ public class GuiMergedTerminal extends GuiInterfaceTerminal {
 
     /** 绘制时临时放大的 GUI 宽度，使面板悬垂区域参与槽位/鼠标交互 */
     private static final int FULL_X_SIZE = 1000;
-
-    /** 面板槽按下取物后，把随后的那次"松开"吞掉，防止 vanilla 把物品放回槽里（等价于原生 ignoreMouseUp 行为） */
-    private boolean suppressNextMouseUp;
 
     /** 当前打开的合并终端实例：NEI 覆盖层/数量弹窗打开期间 currentScreen 不是本 GUI，搜索框写入需用实例 */
     public static GuiMergedTerminal activeInstance;
@@ -206,7 +200,8 @@ public class GuiMergedTerminal extends GuiInterfaceTerminal {
         try {
             if (isPanelSlot(s) && s instanceof SlotRestrictedInput sri
                 && sri.getItemType() == SlotRestrictedInput.PlacableItemType.BLANK_PATTERN
-                && !s.getHasStack() && ClientState.mergedBlankCount > 0) {
+                && !s.getHasStack()
+                && ClientState.mergedBlankCount > 0) {
                 AEItemStack view = (AEItemStack) AEApi.instance()
                     .storage()
                     .createItemStack(
@@ -294,28 +289,32 @@ public class GuiMergedTerminal extends GuiInterfaceTerminal {
                 return;
             }
 
+            // 面板按钮命中检测不受面板边界限制：上传↑按钮横跨面板左边界（容器坐标 206 vs 面板起点 209），
+            // 放在 isInPanel 判定外否则按钮左侧 3px 点击静默失效。白名单避免误抢 AE 原生按钮。
+            if (pc != null && (mouseButton == 0 || mouseButton == 1)) {
+                boolean ctrl = Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL);
+                for (Object o : this.buttonList) {
+                    GuiButton b = (GuiButton) o;
+                    if (b != null && MergedTerminalPanelHandler.isPanelButton(b.id)
+                        && b.mousePressed(this.mc, mouseX, mouseY)) {
+                        this.mc.thePlayer.playSound("random.click", 1.0F, 1.0F);
+                        MergedTerminalPanelHandler.onButtonClicked(this, b.id, mouseButton, ctrl);
+                        return;
+                    }
+                }
+            }
+
             if (pc != null && isInPanel(mouseX, mouseY)) {
                 if (mouseButton == 0 || mouseButton == 1) {
                     if (mouseButton == 0 && MergedTerminalPanelHandler.handleScrollbarClick(this, mouseX, mouseY)) {
                         return;
-                    }
-                    boolean ctrl = Keyboard.isKeyDown(Keyboard.KEY_LCONTROL)
-                        || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL);
-                    for (Object o : this.buttonList) {
-                        GuiButton b = (GuiButton) o;
-                        if (b != null && b.mousePressed(this.mc, mouseX, mouseY)) {
-                            this.mc.thePlayer.playSound("random.click", 1.0F, 1.0F);
-                            MergedTerminalPanelHandler.onButtonClicked(this, b.id, mouseButton, ctrl);
-                            return;
-                        }
                     }
                 }
 
                 Slot slot = this.findSlotAt(mouseX, mouseY);
                 boolean panelSlot = slot != null && isPanelSlot(slot);
                 if (slot != null && isPanelSlot(slot)) {
-                    boolean shift = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)
-                        || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT);
+                    boolean shift = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT);
 
                     if (mouseButton == 2) {
                         if (slot.getHasStack()) {
@@ -342,29 +341,43 @@ public class GuiMergedTerminal extends GuiInterfaceTerminal {
                         }
                         return;
                     }
-                    if (this.mc.thePlayer.inventory.getItemStack() == null) {
-                        this.mc.playerController.windowClick(
-                            this.inventorySlots.windowId,
-                            slot.slotNumber,
-                            mouseButton,
-                            shift ? 1 : 0,
-                            this.mc.thePlayer);
-                        this.suppressNextMouseUp = true;
-                        return;
+                    // 面板槽均为 SlotFake 系：必须走原生 PacketClickOrDragFakeSlot（镜像
+                    // AEBaseGui.handleClickOrDragFakeSlot 的发包 + 本地预测）。不能用 vanilla
+                    // windowClick——服务端 Container.slotClick 对 fake 槽行为不完整（点击取物
+                    // 时而无效）；也不能落 super——GuiInterfaceTerminal.mouseClicked 的
+                    // masterList 判定会吞掉面板悬垂区的点击。
+                    ItemStack hand = getStackFromHand();
+                    if (mouseButton == 1 && hand != null) {
+                        // 右键手持时只放 1 个（与原生 handleClickOrDragFakeSlot 一致）
+                        ItemStack single = hand.copy();
+                        single.stackSize = 1;
+                        hand = single;
                     }
+                    appeng.core.sync.network.NetworkHandler.instance.sendToServer(
+                        new appeng.core.sync.packets.PacketClickOrDragFakeSlot(
+                            hand,
+                            slot.slotNumber,
+                            mouseButton != 1));
+                    // 客户端本地预测，与服务端行为一致
+                    ItemStack inSlot = slot.getStack();
+                    if (mouseButton == 1 && inSlot != null) {
+                        if (hand != null && inSlot.isItemEqual(hand) && ItemStack.areItemStackTagsEqual(inSlot, hand)) {
+                            hand.stackSize = Math.min(inSlot.stackSize + hand.stackSize, hand.getMaxStackSize());
+                        } else if (hand == null) {
+                            inSlot.stackSize -= 1;
+                            slot.putStack(inSlot.stackSize <= 0 ? null : inSlot);
+                            return;
+                        }
+                    }
+                    slot.putStack(hand);
                 }
             }
-        } catch (Throwable ignored) {
-        }
+        } catch (Throwable ignored) {}
         super.mouseClicked(mouseX, mouseY, mouseButton);
     }
 
     @Override
     protected void mouseMovedOrUp(int mouseX, int mouseY, int which) {
-        if (which >= 0 && suppressNextMouseUp) {
-            suppressNextMouseUp = false;
-            return;
-        }
         super.mouseMovedOrUp(mouseX, mouseY, which);
     }
 
@@ -386,8 +399,8 @@ public class GuiMergedTerminal extends GuiInterfaceTerminal {
         if (this.lastCandidateRequest != cur) {
             this.lastCandidateRequest = cur;
             ClientState.replaceCandidates = null;
-            ModNetwork.CHANNEL.sendToServer(
-                new com.wztwzt.ae2_qof.network.RequestReplaceCandidatesPacket(slot.slotNumber));
+            ModNetwork.CHANNEL
+                .sendToServer(new com.wztwzt.ae2_qof.network.RequestReplaceCandidatesPacket(slot.slotNumber));
         }
 
         java.util.List<ItemStack> cands = ClientState.replaceCandidates;
@@ -424,12 +437,7 @@ public class GuiMergedTerminal extends GuiInterfaceTerminal {
             } else if (i == idx) {
                 this.drawRect(cx - 1, cy - 1, cx + 17, cy + 17, 0xFF7070D0);
             }
-            ri.renderItemAndEffectIntoGUI(
-                this.fontRendererObj,
-                this.mc.getTextureManager(),
-                cands.get(i),
-                cx,
-                cy);
+            ri.renderItemAndEffectIntoGUI(this.fontRendererObj, this.mc.getTextureManager(), cands.get(i), cx, cy);
         }
         ri.zLevel = 0;
     }
@@ -445,8 +453,8 @@ public class GuiMergedTerminal extends GuiInterfaceTerminal {
                     int slotNum = amountOverlay.getSlotNumber();
                     amountOverlay.close();
                     if (amount > 0 && slotNum >= 0) {
-                        ModNetwork.CHANNEL.sendToServer(
-                            new com.wztwzt.ae2_qof.network.MergedTerminalSetStackPacket(slotNum, amount));
+                        ModNetwork.CHANNEL
+                            .sendToServer(new com.wztwzt.ae2_qof.network.MergedTerminalSetStackPacket(slotNum, amount));
                     }
                 }
                 return;
@@ -461,8 +469,8 @@ public class GuiMergedTerminal extends GuiInterfaceTerminal {
                     int slotNum = renameOverlay.getSlotNumber();
                     renameOverlay.close();
                     if (slotNum >= 0) {
-                        ModNetwork.CHANNEL.sendToServer(
-                            new com.wztwzt.ae2_qof.network.MergedTerminalRenamePacket(slotNum, newName));
+                        ModNetwork.CHANNEL
+                            .sendToServer(new com.wztwzt.ae2_qof.network.MergedTerminalRenamePacket(slotNum, newName));
                     }
                 }
                 return;
@@ -477,6 +485,21 @@ public class GuiMergedTerminal extends GuiInterfaceTerminal {
         try {
             PatternContainer pc = getMergedContainer().patternContainer;
 
+            // 鼠标滚轮调整面板槽位数量：上滚 +1、下滚 -1、最小保持 1（清空请用左键取出或中键设 0；
+            // 对齐 GT 样板输入仓操作习惯）。Shift+滚轮保留给 OreDict 替换循环，输出格数量由配方决定禁止修改。
+            if (pc != null && !Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)
+                && !Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)
+                && isInPanel(x, y)) {
+                Slot slot = this.findSlotAt(x, y);
+                if (slot != null && isPanelSlot(slot) && slot.getHasStack() && !pc.isOutputSlot(slot)) {
+                    int cur = slot.getStack().stackSize;
+                    int next = wheel > 0 ? cur + 1 : Math.max(1, cur - 1);
+                    ModNetwork.CHANNEL.sendToServer(
+                        new com.wztwzt.ae2_qof.network.MergedTerminalSetStackPacket(slot.slotNumber, next));
+                    return true;
+                }
+            }
+
             // Shift+滚轮：替换同类型物品
             if (pc != null && (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT))
                 && isInPanel(x, y)) {
@@ -484,8 +507,7 @@ public class GuiMergedTerminal extends GuiInterfaceTerminal {
                 if (slot != null && isPanelSlot(slot) && slot.getHasStack()) {
                     int direction = wheel > 0 ? 1 : -1;
                     ModNetwork.CHANNEL.sendToServer(
-                        new com.wztwzt.ae2_qof.network.MergedTerminalScrollReplacePacket(
-                            slot.slotNumber, direction));
+                        new com.wztwzt.ae2_qof.network.MergedTerminalScrollReplacePacket(slot.slotNumber, direction));
                     return true;
                 }
             }

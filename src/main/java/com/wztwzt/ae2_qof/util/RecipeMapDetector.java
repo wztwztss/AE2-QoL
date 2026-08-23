@@ -7,6 +7,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import net.minecraft.item.ItemStack;
 
+import com.wztwzt.ae2_qof.MyMod;
+
 /**
  * 通过反射扫描 GT 全量配方池（RecipeMap.ALL_RECIPE_MAPS），从输入/输出反查匹配的配方池 unlocalizedName。
  * 带每玩家冷却缓存，避免全量反射扫描被恶意连发卡服。供 auto-upload 与二合一终端编码共用。
@@ -44,29 +46,17 @@ public final class RecipeMapDetector {
 
     public static String scanRecipeMaps(ItemStack[] inputs, ItemStack[] outputs) {
         if (inputs == null || inputs.length == 0) {
-            System.out.println("[APU] detectRecipeMap: no inputs");
             return null;
         }
-
-        System.out.println(
-            "[APU] detectRecipeMap: inputs=" + inputs.length
-                + ", outputs="
-                + (outputs != null ? outputs.length : 0));
-        for (int i = 0; i < inputs.length; i++) {
-            if (inputs[i] != null) {
-                System.out
-                    .println("[APU]   input[" + i + "]=" + inputs[i].getDisplayName() + " x" + inputs[i].stackSize);
-            }
-        }
+        boolean hasUserOutputs = outputs != null;
+        String firstInputMatch = null;
 
         try {
             // 通过反射获取 RecipeMap.ALL_RECIPE_MAPS
             Class<?> recipeMapClass = Class.forName("gregtech.api.recipe.RecipeMap");
-            System.out.println("[APU] RecipeMap class found: " + recipeMapClass.getName());
 
             Field allMapsField = recipeMapClass.getField("ALL_RECIPE_MAPS");
             Map<?, ?> allMaps = (Map<?, ?>) allMapsField.get(null);
-            System.out.println("[APU] ALL_RECIPE_MAPS size: " + allMaps.size());
 
             // 获取 findRecipeQuery() 方法
             Method findRecipeQueryMethod = recipeMapClass.getMethod("findRecipeQuery");
@@ -74,6 +64,11 @@ public final class RecipeMapDetector {
             Class<?> queryClass = Class.forName("gregtech.api.recipe.FindRecipeQuery");
             Method itemsMethod = queryClass.getMethod("items", ItemStack[].class);
             Method findMethod = queryClass.getMethod("find");
+            Field recipeOutputsField = null;
+            try {
+                Class<?> gtRecipeClass = Class.forName("gregtech.api.objects.GT_Recipe");
+                recipeOutputsField = gtRecipeClass.getField("mOutputs");
+            } catch (Throwable ignored) {}
 
             for (Object map : allMaps.values()) {
                 try {
@@ -86,18 +81,45 @@ public final class RecipeMapDetector {
                     Object recipe = findMethod.invoke(query);
 
                     if (recipe != null) {
-                        System.out.println("[APU] Detected recipe map: " + mapName);
-                        return mapName;
+                        // 同一输入物品常存在于多个配方池（如钢锭同时是高炉/电解机的输入），
+                        // 仅凭输入反查会随 HashMap 遍历顺序随机命中。用用户提供的输出物校验：
+                        // 输入+输出都匹配 → 确定命中；仅输入匹配 → 记为候选，全部扫完后兜底返回。
+                        if (!hasUserOutputs || recipeOutputsField == null
+                            || recipeMatchesOutputs(recipe, recipeOutputsField, outputs)) {
+                            return mapName;
+                        }
+                        if (firstInputMatch == null) {
+                            firstInputMatch = mapName;
+                        }
                     }
                 } catch (Throwable t) {
                     // 单个配方池查找失败，继续下一个
                 }
             }
-            System.out.println("[APU] No recipe found in any map");
         } catch (Throwable t) {
-            System.out.println("[APU] detectRecipeMap error: " + t.getMessage());
-            t.printStackTrace();
+            MyMod.LOG.warn("detectRecipeMap error: {}", t.getMessage());
         }
-        return null;
+        return firstInputMatch;
+    }
+
+    /** 校验 GT 配方（GT_Recipe.mOutputs）的输出是否包含用户面板上填写的任一输出物品 */
+    private static boolean recipeMatchesOutputs(Object recipe, Field recipeOutputsField, ItemStack[] userOutputs) {
+        try {
+            ItemStack[] recipeOutputs = (ItemStack[]) recipeOutputsField.get(recipe);
+            if (recipeOutputs == null) return false;
+            for (ItemStack uo : userOutputs) {
+                if (uo == null || uo.stackSize <= 0) continue;
+                for (ItemStack ro : recipeOutputs) {
+                    if (ro != null && ro.getItem() == uo.getItem()
+                        && (!uo.getHasSubtypes() || ro.getItemDamage() == uo.getItemDamage())) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        } catch (Throwable t) {
+            // 反射失败时放行，保持仅按输入匹配的旧行为
+            return true;
+        }
     }
 }

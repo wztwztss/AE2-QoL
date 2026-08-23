@@ -8,6 +8,8 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 
+import com.gtnewhorizon.gtnhlib.util.ServerThreadUtil;
+
 import appeng.api.AEApi;
 import appeng.api.config.Actionable;
 import appeng.api.features.IWirelessTermHandler;
@@ -16,8 +18,6 @@ import appeng.api.networking.security.IActionHost;
 import appeng.api.networking.security.PlayerSource;
 import appeng.api.storage.IMEMonitor;
 import appeng.api.storage.data.IAEItemStack;
-import com.gtnewhorizon.gtnhlib.util.ServerThreadUtil;
-
 import appeng.helpers.WirelessTerminalGuiObject;
 import appeng.util.Platform;
 
@@ -126,8 +126,8 @@ public final class ServerTerminalHelper {
     /**
      * 从 AE2 网络中提取物品（可指定 SIMULATE 模拟 / MODULATE 真实扣减）。
      */
-    public static IAEItemStack extractItem(
-        WirelessTerminalGuiObject terminal, IAEItemStack target, long count, Actionable mode) {
+    public static IAEItemStack extractItem(WirelessTerminalGuiObject terminal, IAEItemStack target, long count,
+        Actionable mode) {
         if (terminal == null || target == null) return null;
 
         IMEMonitor<IAEItemStack> itemInv = terminal.getItemInventory();

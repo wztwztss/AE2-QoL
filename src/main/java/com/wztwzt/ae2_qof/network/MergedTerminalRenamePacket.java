@@ -6,6 +6,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 
+import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.api.IMergedPatternTerminal;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
@@ -88,7 +89,7 @@ public class MergedTerminalRenamePacket implements IMessage {
                         }
                     }
                 } catch (Throwable t) {
-                    t.printStackTrace();
+                    MyMod.LOG.error("Merged terminal rename failed", t);
                 }
             });
             return null;

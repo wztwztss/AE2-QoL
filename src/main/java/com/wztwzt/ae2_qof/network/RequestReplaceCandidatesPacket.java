@@ -49,8 +49,8 @@ public class RequestReplaceCandidatesPacket implements IMessage {
             ServerTerminalHelper.scheduleServerTask(() -> {
                 try {
                     if (!(player.openContainer instanceof ContainerMergedTerminal cmt)) return;
-                    java.util.List<net.minecraft.item.ItemStack> candidates =
-                        MergedTerminalScrollReplacePacket.findAlternatives(cmt, message.slotNumber);
+                    java.util.List<net.minecraft.item.ItemStack> candidates = MergedTerminalScrollReplacePacket
+                        .findAlternatives(cmt, message.slotNumber);
                     // 计算当前物品在候选序列中的位置（预览"下一个"需要）
                     int idx = -1;
                     if (message.slotNumber >= 0 && message.slotNumber < cmt.inventorySlots.size()) {

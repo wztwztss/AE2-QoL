@@ -15,7 +15,8 @@ import appeng.util.calculators.Calculator;
 public class MergedAmountOverlay {
 
     private static final ResourceLocation BG_TEXTURE = new ResourceLocation(
-        "appliedenergistics2", "textures/guis/patternMulti.png");
+        "appliedenergistics2",
+        "textures/guis/patternMulti.png");
 
     private boolean active;
     private int slotNumber;
@@ -29,9 +30,17 @@ public class MergedAmountOverlay {
     private GuiButton[] plusBtns = new GuiButton[4];
     private GuiButton[] minusBtns = new GuiButton[4];
 
-    public boolean isSetRequested() { return setRequested; }
-    public boolean isActive() { return active; }
-    public int getSlotNumber() { return slotNumber; }
+    public boolean isSetRequested() {
+        return setRequested;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public int getSlotNumber() {
+        return slotNumber;
+    }
 
     public void open(int slotNumber, int currentSize, int guiLeft, int guiTop, int ySize) {
         this.active = true;
@@ -72,9 +81,9 @@ public class MergedAmountOverlay {
 
     private void rebuildWidgets() {
         FontRenderer fr = Minecraft.getMinecraft().fontRenderer;
-        int[] plusX = {20, 48, 82, 120};
-        int[] widths = {22, 28, 32, 38};
-        int[] vals = {1, 10, 100, 1000};
+        int[] plusX = { 20, 48, 82, 120 };
+        int[] widths = { 22, 28, 32, 38 };
+        int[] vals = { 1, 10, 100, 1000 };
 
         for (int i = 0; i < 4; i++) {
             plusBtns[i] = new GuiButton(100 + i, ox + plusX[i], oy + 26, widths[i], 20, "+" + vals[i]);
@@ -105,18 +114,17 @@ public class MergedAmountOverlay {
         GL11.glDisable(GL11.GL_LIGHTING);
         GL11.glDisable(GL11.GL_DEPTH_TEST);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        mc.getTextureManager().bindTexture(BG_TEXTURE);
+        mc.getTextureManager()
+            .bindTexture(BG_TEXTURE);
         drawTexturedModalRect(ox, oy, 0, 0, 176, 100);
 
         fr.drawStringWithShadow("\u7f16\u8f91\u6570\u91cf:", ox + 12, oy + 8, 0xFFE0E0E0);
 
         boolean shift = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT);
-        String[] plusLabels = shift
-            ? new String[]{"x2", "x8", "x64", "x512"}
-            : new String[]{"+1", "+10", "+100", "+1000"};
-        String[] minusLabels = shift
-            ? new String[]{"/2", "/8", "/64", "/512"}
-            : new String[]{"-1", "-10", "-100", "-1000"};
+        String[] plusLabels = shift ? new String[] { "x2", "x8", "x64", "x512" }
+            : new String[] { "+1", "+10", "+100", "+1000" };
+        String[] minusLabels = shift ? new String[] { "/2", "/8", "/64", "/512" }
+            : new String[] { "-1", "-10", "-100", "-1000" };
 
         for (int i = 0; i < 4; i++) {
             plusBtns[i].displayString = plusLabels[i];
@@ -154,10 +162,10 @@ public class MergedAmountOverlay {
             if (plusBtns[i].mousePressed(Minecraft.getMinecraft(), gx, gy)) {
                 Minecraft.getMinecraft().thePlayer.playSound("random.click", 1.0F, 1.0F);
                 if (shift) {
-                    int[] mulVals = {2, 8, 64, 512};
+                    int[] mulVals = { 2, 8, 64, 512 };
                     multiplyAmount(mulVals[i]);
                 } else {
-                    int[] addVals = {1, 10, 100, 1000};
+                    int[] addVals = { 1, 10, 100, 1000 };
                     addAmount(addVals[i]);
                 }
                 return true;
@@ -168,10 +176,10 @@ public class MergedAmountOverlay {
             if (minusBtns[i].mousePressed(Minecraft.getMinecraft(), gx, gy)) {
                 Minecraft.getMinecraft().thePlayer.playSound("random.click", 1.0F, 1.0F);
                 if (shift) {
-                    int[] divVals = {2, 8, 64, 512};
+                    int[] divVals = { 2, 8, 64, 512 };
                     divideAmount(divVals[i]);
                 } else {
-                    int[] subVals = {1, 10, 100, 1000};
+                    int[] subVals = { 1, 10, 100, 1000 };
                     addAmount(-subVals[i]);
                 }
                 return true;
@@ -192,7 +200,10 @@ public class MergedAmountOverlay {
 
     public boolean keyTyped(char typedChar, int keyCode) {
         if (!active) return false;
-        if (keyCode == Keyboard.KEY_ESCAPE) { close(); return true; }
+        if (keyCode == Keyboard.KEY_ESCAPE) {
+            close();
+            return true;
+        }
         if (keyCode == Keyboard.KEY_RETURN || keyCode == Keyboard.KEY_NUMPADENTER) {
             return true;
         }
@@ -200,8 +211,7 @@ public class MergedAmountOverlay {
         return true;
     }
 
-    public void updateScreen() {
-    }
+    public void updateScreen() {}
 
     private void addAmount(int delta) {
         long current = getCurrentAmount();
@@ -233,7 +243,9 @@ public class MergedAmountOverlay {
             double value = Calculator.conversion(amountTextField.getText());
             if (Double.isNaN(value) || value <= 0) return 0;
             return (long) Math.round(value);
-        } catch (Throwable t) { return 0; }
+        } catch (Throwable t) {
+            return 0;
+        }
     }
 
     private static void drawTexturedModalRect(int x, int y, int u, int v, int w, int h) {

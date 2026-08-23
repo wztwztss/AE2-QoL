@@ -97,7 +97,8 @@ public class TileMergedTerminal extends AENetworkTile
     private void updatePowerState() {
         boolean newState = false;
         try {
-            newState = this.getProxy().isActive()
+            newState = this.getProxy()
+                .isActive()
                 && this.getProxy()
                     .getEnergy()
                     .extractAEPower(1, Actionable.SIMULATE, PowerMultiplier.CONFIG) > 0.0001;
@@ -114,7 +115,8 @@ public class TileMergedTerminal extends AENetworkTile
     }
 
     @Override
-    public void onChangeInventory(IInventory inv, int slot, InvOperation op, ItemStack removedStack, ItemStack newStack) {
+    public void onChangeInventory(IInventory inv, int slot, InvOperation op, ItemStack removedStack,
+        ItemStack newStack) {
         this.markDirty();
     }
 

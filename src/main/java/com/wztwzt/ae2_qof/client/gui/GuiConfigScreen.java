@@ -3,12 +3,15 @@ package com.wztwzt.ae2_qof.client.gui;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
+
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
+import org.lwjgl.opengl.GL11;
 
 import com.wztwzt.ae2_qof.Config;
 import com.wztwzt.ae2_qof.client.ClientState;
@@ -19,16 +22,13 @@ import com.wztwzt.ae2_qof.util.RecipeNameUtil;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
-import org.lwjgl.opengl.GL11;
 
 /**
  * 游戏内配置页面（Mods → AE2 QoL → Config）：
  * - 配置页：编辑 io_port_rate / smart_doubling_max_rounds / nei_overlay_enabled，
- *   点击「应用」对改动项发送 C2S 包，由服务端校验 OP 权限并广播回所有客户端。
+ * 点击「应用」对改动项发送 C2S 包，由服务端校验 OP 权限并广播回所有客户端。
  * - 映射页（三个子页）：展示并编辑配方名映射（recipe_names.json）、记住的供应器
- *   （remembered_providers.json），以及全部 GT 配方池 UID 参考（配方参考）。
+ * （remembered_providers.json），以及全部 GT 配方池 UID 参考（配方参考）。
  */
 @SideOnly(Side.CLIENT)
 public class GuiConfigScreen extends GuiScreen {
@@ -99,8 +99,12 @@ public class GuiConfigScreen extends GuiScreen {
         this.mapValueField = new GuiTextField(this.fontRendererObj, editX, 106, fieldW, 18);
         this.provKeyField = new GuiTextField(this.fontRendererObj, editX, 68, fieldW, 18);
         this.provValueField = new GuiTextField(this.fontRendererObj, editX, 106, fieldW, 18);
-        this.refFilterField = new GuiTextField(this.fontRendererObj, this.width / 2 - LIST_X + 28, 58,
-            this.width - 40 - 28, 16);
+        this.refFilterField = new GuiTextField(
+            this.fontRendererObj,
+            this.width / 2 - LIST_X + 28,
+            58,
+            this.width - 40 - 28,
+            16);
         this.refFilterField.setMaxStringLength(64);
 
         this.focusField = null;
@@ -140,12 +144,24 @@ public class GuiConfigScreen extends GuiScreen {
         if (this.page == 0) {
             this.drawCenteredString(this.fontRendererObj, "AE2 QoL 配置", centerX, 20, 0xFFFFFF);
             int left = this.ioField.xPosition;
-            this.drawString(this.fontRendererObj, "强化 IO 端口传输倍率 (io_port_rate)  范围 1~2147483647",
-                left - 10, this.ioField.yPosition - 11, 0xA0A0A0);
-            this.drawString(this.fontRendererObj, "智能倍增最大轮数 (smart_doubling_max_rounds, 0=不限)  范围 0~2147483647",
-                left - 10, this.roundsField.yPosition - 11, 0xA0A0A0);
-            this.drawString(this.fontRendererObj, "NEI 叠加层 (nei_overlay_enabled, true/false)",
-                left - 10, this.overlayField.yPosition - 11, 0xA0A0A0);
+            this.drawString(
+                this.fontRendererObj,
+                "强化 IO 端口传输倍率 (io_port_rate)  范围 1~2147483647",
+                left - 10,
+                this.ioField.yPosition - 11,
+                0xA0A0A0);
+            this.drawString(
+                this.fontRendererObj,
+                "智能倍增最大轮数 (smart_doubling_max_rounds, 0=不限)  范围 0~2147483647",
+                left - 10,
+                this.roundsField.yPosition - 11,
+                0xA0A0A0);
+            this.drawString(
+                this.fontRendererObj,
+                "NEI 叠加层 (nei_overlay_enabled, true/false)",
+                left - 10,
+                this.overlayField.yPosition - 11,
+                0xA0A0A0);
             this.ioField.drawTextBox();
             this.roundsField.drawTextBox();
             this.overlayField.drawTextBox();
@@ -186,10 +202,12 @@ public class GuiConfigScreen extends GuiScreen {
         int selected = activeMap ? this.mapSelected : this.provSelected;
 
         // 列表头（分类说明）
-        this.drawCenteredString(this.fontRendererObj,
-            activeMap ? "配方名映射 (recipe_names.json，NEI 搜索词)"
-                : "记住的供应器 (remembered_providers.json，自动上传)",
-            listX + EDIT_LIST_W / 2, 38, 0xFFFFFF);
+        this.drawCenteredString(
+            this.fontRendererObj,
+            activeMap ? "配方名映射 (recipe_names.json，NEI 搜索词)" : "记住的供应器 (remembered_providers.json，自动上传)",
+            listX + EDIT_LIST_W / 2,
+            38,
+            0xFFFFFF);
 
         // 副标题（0.8 倍缩小灰色小字，居中于列表框上方，不与其它元素重叠）
         String hint = "点击列表行选中并回填编辑框，改动即时写盘";
@@ -211,23 +229,32 @@ public class GuiConfigScreen extends GuiScreen {
             if (idx == selected) {
                 this.drawRect(listX, rowY, listX + EDIT_LIST_W, rowY + ROW_HEIGHT, 0xA0FFFFFF);
             }
-            String label = this.fontRendererObj.trimStringToWidth(
-                e.getKey() + " \u2192 " + e.getValue(), EDIT_LIST_W - 8);
+            String label = this.fontRendererObj
+                .trimStringToWidth(e.getKey() + " \u2192 " + e.getValue(), EDIT_LIST_W - 8);
             this.drawString(this.fontRendererObj, label, listX + 4, rowY + 2, idx == selected ? 0x000000 : 0xFFFFFF);
         }
-        this.drawCenteredString(this.fontRendererObj,
+        this.drawCenteredString(
+            this.fontRendererObj,
             "共 " + entries.size() + " 条   " + (scroll > 0 ? "↑" : "  ") + (scroll < maxScroll ? "↓" : "  "),
-            listX + EDIT_LIST_W / 2, listY + listH + 2, 0x808080);
+            listX + EDIT_LIST_W / 2,
+            listY + listH + 2,
+            0x808080);
 
         // 编辑区
         GuiTextField keyField = activeMap ? this.mapKeyField : this.provKeyField;
         GuiTextField valueField = activeMap ? this.mapValueField : this.provValueField;
-        this.drawString(this.fontRendererObj,
+        this.drawString(
+            this.fontRendererObj,
             activeMap ? "配方 key（如 compressor）" : "配方名",
-            keyField.xPosition, keyField.yPosition - 11, 0xA0A0A0);
-        this.drawString(this.fontRendererObj,
+            keyField.xPosition,
+            keyField.yPosition - 11,
+            0xA0A0A0);
+        this.drawString(
+            this.fontRendererObj,
             activeMap ? "中文搜索词（如 压缩机）" : "供应器名",
-            valueField.xPosition, valueField.yPosition - 11, 0xA0A0A0);
+            valueField.xPosition,
+            valueField.yPosition - 11,
+            0xA0A0A0);
         keyField.drawTextBox();
         valueField.drawTextBox();
     }
@@ -239,8 +266,7 @@ public class GuiConfigScreen extends GuiScreen {
         int listY = 82;
         int listH = Math.min(240, this.height - 90 - listY);
 
-        this.drawCenteredString(this.fontRendererObj, "全部 GT 配方池参考（供「记住的供应器」配方名对照）",
-            centerX, 38, 0xFFFFFF);
+        this.drawCenteredString(this.fontRendererObj, "全部 GT 配方池参考（供「记住的供应器」配方名对照）", centerX, 38, 0xFFFFFF);
         this.drawString(this.fontRendererObj, "筛选:", listX, 62, 0xA0A0A0);
         this.refFilterField.drawTextBox();
 
@@ -253,10 +279,17 @@ public class GuiConfigScreen extends GuiScreen {
             String label = this.fontRendererObj.trimStringToWidth(this.refFiltered.get(idx), listW - 8);
             this.drawString(this.fontRendererObj, label, listX + 4, rowY + 2, 0xFFFFFF);
         }
-        this.drawCenteredString(this.fontRendererObj,
-            "共 " + this.refUids.size() + " 条  显示 " + this.refFiltered.size()
-                + "   " + (this.refScroll > 0 ? "↑" : "  ") + (this.refScroll < maxScroll ? "↓" : "  "),
-            centerX, listY + listH + 2, 0x808080);
+        this.drawCenteredString(
+            this.fontRendererObj,
+            "共 " + this.refUids.size()
+                + " 条  显示 "
+                + this.refFiltered.size()
+                + "   "
+                + (this.refScroll > 0 ? "↑" : "  ")
+                + (this.refScroll < maxScroll ? "↓" : "  "),
+            centerX,
+            listY + listH + 2,
+            0x808080);
     }
 
     @Override
@@ -276,12 +309,20 @@ public class GuiConfigScreen extends GuiScreen {
             if (hit >= 0) {
                 if (this.subTab == 0) {
                     this.mapSelected = hit;
-                    this.mapKeyField.setText(this.mapEntries.get(hit).getKey());
-                    this.mapValueField.setText(this.mapEntries.get(hit).getValue());
+                    this.mapKeyField.setText(
+                        this.mapEntries.get(hit)
+                            .getKey());
+                    this.mapValueField.setText(
+                        this.mapEntries.get(hit)
+                            .getValue());
                 } else {
                     this.provSelected = hit;
-                    this.provKeyField.setText(this.provEntries.get(hit).getKey());
-                    this.provValueField.setText(this.provEntries.get(hit).getValue());
+                    this.provKeyField.setText(
+                        this.provEntries.get(hit)
+                            .getKey());
+                    this.provValueField.setText(
+                        this.provEntries.get(hit)
+                            .getValue());
                 }
                 return;
             }
@@ -289,8 +330,7 @@ public class GuiConfigScreen extends GuiScreen {
             this.mapValueField.mouseClicked(mouseX, mouseY, mouseButton);
             this.provKeyField.mouseClicked(mouseX, mouseY, mouseButton);
             this.provValueField.mouseClicked(mouseX, mouseY, mouseButton);
-            this.focusField = this.subTab == 0
-                ? (this.mapKeyField.isFocused() ? this.mapKeyField : this.mapValueField)
+            this.focusField = this.subTab == 0 ? (this.mapKeyField.isFocused() ? this.mapKeyField : this.mapValueField)
                 : (this.provKeyField.isFocused() ? this.provKeyField : this.provValueField);
         }
     }
@@ -456,8 +496,10 @@ public class GuiConfigScreen extends GuiScreen {
     }
 
     private void refreshRefFilter() {
-        String q = this.refFilterField.getText() == null ? "" : this.refFilterField.getText().trim()
-            .toLowerCase(Locale.ROOT);
+        String q = this.refFilterField.getText() == null ? ""
+            : this.refFilterField.getText()
+                .trim()
+                .toLowerCase(Locale.ROOT);
         this.refFiltered.clear();
         for (String uid : this.refUids) {
             if (q.isEmpty() || uid.toLowerCase(Locale.ROOT)
@@ -465,8 +507,9 @@ public class GuiConfigScreen extends GuiScreen {
                 this.refFiltered.add(refRow(uid));
             } else {
                 String zh = RecipeMapNameConfig.resolveSearchKeyword(uid);
-                if (zh != null && !zh.equals(uid) && zh.toLowerCase(Locale.ROOT)
-                    .contains(q)) {
+                if (zh != null && !zh.equals(uid)
+                    && zh.toLowerCase(Locale.ROOT)
+                        .contains(q)) {
                     this.refFiltered.add(refRow(uid));
                 }
             }
@@ -554,11 +597,15 @@ public class GuiConfigScreen extends GuiScreen {
 
     private String currentKey() {
         GuiTextField f = this.subTab == 0 ? this.mapKeyField : this.provKeyField;
-        return f.getText() == null ? "" : f.getText().trim();
+        return f.getText() == null ? ""
+            : f.getText()
+                .trim();
     }
 
     private String currentValue() {
         GuiTextField f = this.subTab == 0 ? this.mapValueField : this.provValueField;
-        return f.getText() == null ? "" : f.getText().trim();
+        return f.getText() == null ? ""
+            : f.getText()
+                .trim();
     }
 }

@@ -3,6 +3,8 @@ package com.wztwzt.ae2_qof.network;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 
+import com.wztwzt.ae2_qof.MyMod;
+
 import appeng.api.storage.data.IAEItemStack;
 import appeng.helpers.WirelessTerminalGuiObject;
 import appeng.util.item.AEItemStack;
@@ -58,7 +60,7 @@ public class ExtractItemPacket implements IMessage {
                 try {
                     handleMessage(player, message);
                 } catch (Throwable t) {
-                    t.printStackTrace();
+                    MyMod.LOG.error("Extract item failed", t);
                     sendResponse(player, CraftingResponsePacket.RESULT_NO_ITEMS, itemName(message.targetStack));
                 }
             });

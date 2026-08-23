@@ -4,6 +4,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
 
+import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.api.IMergedPatternTerminal;
 
 import cpw.mods.fml.common.network.ByteBufUtils;
@@ -68,8 +69,8 @@ public class MergedTerminalActionPacket implements IMessage {
         return p;
     }
 
-    public static MergedTerminalActionPacket fill(ItemStack[] inputs, ItemStack[] outputs, boolean crafting, int[] cells,
-        String recipeMap) {
+    public static MergedTerminalActionPacket fill(ItemStack[] inputs, ItemStack[] outputs, boolean crafting,
+        int[] cells, String recipeMap) {
         MergedTerminalActionPacket p = new MergedTerminalActionPacket();
         p.action = Action.FILL;
         p.crafting = crafting;
@@ -191,7 +192,7 @@ public class MergedTerminalActionPacket implements IMessage {
                 try {
                     handleMessage(player, message);
                 } catch (Throwable t) {
-                    t.printStackTrace();
+                    MyMod.LOG.error("Merged terminal action failed", t);
                 }
             });
             return null;
@@ -241,7 +242,11 @@ public class MergedTerminalActionPacket implements IMessage {
                     merged.setMergedActivePage(message.value);
                     break;
                 case FILL:
-                    merged.mergedFill(message.inputs, message.outputs, message.crafting, message.cells,
+                    merged.mergedFill(
+                        message.inputs,
+                        message.outputs,
+                        message.crafting,
+                        message.cells,
                         message.recipeMap);
                     break;
                 default:

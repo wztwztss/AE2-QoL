@@ -34,12 +34,12 @@ public abstract class MixinGuiInterface extends GuiUpgradeable {
     @Inject(method = "addButtons", at = @At("TAIL"), remap = false)
     private void ae2qol$addSmartDoublingButton(CallbackInfo ci) {
         this.smartDoublingBtn = new GuiToggleButton(
-                this.guiLeft - 18,
-                this.guiTop + 170,
-                178,
-                194,
-                "gui.ae2_qof.smart_doubling",
-                "gui.ae2_qof.smart_doubling.hint");
+            this.guiLeft - 18,
+            this.guiTop + 170,
+            178,
+            194,
+            "gui.ae2_qof.smart_doubling",
+            "gui.ae2_qof.smart_doubling.hint");
         this.buttonList.add(this.smartDoublingBtn);
     }
 

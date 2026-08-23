@@ -8,6 +8,7 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 
 import com.glodblock.github.common.item.ItemFluidEncodedPattern;
+import com.wztwzt.ae2_qof.MyMod;
 
 import appeng.api.AEApi;
 import appeng.api.config.SecurityPermissions;
@@ -75,7 +76,7 @@ public class UploadPatternPacket implements IMessage {
                     return;
                 }
 
-                SlotRestrictedInput outputSlot = resolveOutputSlot(container);
+                net.minecraft.inventory.Slot outputSlot = resolveOutputSlot(container);
                 if (outputSlot == null) {
                     return;
                 }
@@ -106,18 +107,28 @@ public class UploadPatternPacket implements IMessage {
 
                 ICraftingProvider target = findProvider(grid, message.providerId);
                 if (target == null) {
+                    MyMod.LOG.info("[Upload] server: provider id={} not found in grid", message.providerId);
                     return;
                 }
 
                 boolean placedInProvider = insertPatternIntoProvider(target, encodedPattern.copy());
                 if (placedInProvider) {
+                    MyMod.LOG.info(
+                        "[Upload] pattern inserted into provider {}",
+                        target.getClass()
+                            .getSimpleName());
                     outputSlot.putStack(null);
+                    // 外部写入样板不会触发接口终端的增量推送，调度打开中的合并终端容器全量刷新，
+                    // 否则列表要重开 GUI 才能看到新样板
+                    if (container instanceof com.wztwzt.ae2_qof.merged.ContainerMergedTerminal cmt) {
+                        cmt.scheduleFullUpdate();
+                    }
                     if (terminal instanceof AEBasePart part) {
                         part.saveChanges();
                     }
                 }
             } catch (Throwable t) {
-                t.printStackTrace();
+                MyMod.LOG.error("Upload pattern failed", t);
             }
         }
 
@@ -143,16 +154,14 @@ public class UploadPatternPacket implements IMessage {
         }
 
         private IActionHost resolveTerminal(Container container) {
-            if (container instanceof ContainerPatternTerm term) {
-                return (IActionHost) term.getPatternTerminal();
-            }
-            if (container instanceof ContainerPatternTermEx termEx) {
-                return (IActionHost) termEx.getPatternTerminal();
-            }
-            return null;
+            // 统一解析：原生样板终端 / 扩展样板终端 / 二合一接口终端（反射 anchor）
+            return com.wztwzt.ae2_qof.util.ContainerTerminalResolver.resolveTerminal(container);
         }
 
-        private SlotRestrictedInput resolveOutputSlot(Container container) {
+        private net.minecraft.inventory.Slot resolveOutputSlot(Container container) {
+            if (container instanceof com.wztwzt.ae2_qof.api.IMergedPatternTerminal merged) {
+                return merged.getMergedEncodedSlot();
+            }
             try {
                 if (container instanceof ContainerPatternTerm term) {
                     Field field = ContainerPatternTerm.class.getDeclaredField("patternSlotOUT");

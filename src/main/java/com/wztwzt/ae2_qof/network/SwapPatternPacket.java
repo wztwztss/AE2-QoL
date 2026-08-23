@@ -10,6 +10,9 @@ import net.minecraft.inventory.Container;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.fluids.FluidStack;
 
+import com.wztwzt.ae2_qof.MyMod;
+import com.wztwzt.ae2_qof.api.IMergedPatternTerminal;
+
 import appeng.api.AEApi;
 import appeng.api.networking.security.IActionHost;
 import appeng.api.storage.data.IAEFluidStack;
@@ -19,7 +22,6 @@ import appeng.container.implementations.ContainerPatternTerm;
 import appeng.container.implementations.ContainerPatternTermEx;
 import appeng.parts.AEBasePart;
 import appeng.tile.inventory.IAEStackInventory;
-import com.wztwzt.ae2_qof.api.IMergedPatternTerminal;
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -132,7 +134,7 @@ public class SwapPatternPacket implements IMessage {
                         ModNetwork.CHANNEL.sendTo(result, player);
                     }
                 } catch (Throwable t) {
-                    t.printStackTrace();
+                    MyMod.LOG.error("Swap pattern failed on server", t);
                 }
             });
             return null;
@@ -149,7 +151,10 @@ public class SwapPatternPacket implements IMessage {
 
             IAEStackInventory outputs = resolveOutputs(container);
             if (outputs == null) {
-                System.out.println("[APU] Swap: outputs is null on server");
+                MyMod.LOG.info(
+                    "[Swap] outputs inventory not found for {}",
+                    container.getClass()
+                        .getSimpleName());
                 return null;
             }
 
@@ -166,7 +171,10 @@ public class SwapPatternPacket implements IMessage {
                 }
             }
 
-            if (nonEmptyStacks.size() < 2) return null;
+            if (nonEmptyStacks.size() < 2) {
+                MyMod.LOG.info("[Swap] fewer than 2 filled output slots, abort");
+                return null;
+            }
 
             IAEStack<?> first = nonEmptyStacks.get(0);
             for (int i = 0; i < nonEmptyStacks.size() - 1; i++) {
@@ -191,14 +199,12 @@ public class SwapPatternPacket implements IMessage {
             for (int i = 0; i < size; i++) {
                 result.add(outputs.getAEStackInSlot(i));
             }
-            System.out.println("[APU] Swap: sending " + size + " slots back, nonEmpty=" + nonEmptyIndices.size());
             return new SwapPatternPacket(result);
         }
 
         private IMessage handleClient(SwapPatternPacket message) {
             Minecraft mc = Minecraft.getMinecraft();
             if (mc == null) {
-                System.out.println("[APU] Swap C: minecraft is null");
                 return null;
             }
             // 归队到客户端主线程执行，避免 Netty IO 线程操作容器
@@ -206,10 +212,7 @@ public class SwapPatternPacket implements IMessage {
                 try {
                     applyClientSwap(message);
                 } catch (Throwable e) {
-                    System.out.println(
-                        "[APU] Swap C: ERROR " + e.getClass()
-                            .getSimpleName() + ": " + e.getMessage());
-                    e.printStackTrace();
+                    MyMod.LOG.error("Swap pattern apply failed on client", e);
                 }
             });
             return null;
@@ -217,25 +220,16 @@ public class SwapPatternPacket implements IMessage {
 
         private void applyClientSwap(SwapPatternPacket message) {
             if (message.slotStacks == null) {
-                System.out.println("[APU] Swap C: slotStacks is null");
                 return;
             }
             Minecraft mc = Minecraft.getMinecraft();
             if (mc == null || mc.thePlayer == null) {
-                System.out.println("[APU] Swap C: thePlayer is null");
                 return;
             }
             Container container = mc.thePlayer.openContainer;
             if (container == null) {
-                System.out.println("[APU] Swap C: container is null");
                 return;
             }
-
-            System.out.println(
-                "[APU] Swap C: received " + message.slotStacks.size()
-                    + " slots, container="
-                    + container.getClass()
-                        .getSimpleName());
 
             IAEStack<?>[] outputSlots = null;
             IAEStackInventory clientOutputs = null;
@@ -257,7 +251,6 @@ public class SwapPatternPacket implements IMessage {
             }
 
             if (outputSlots == null) {
-                System.out.println("[APU] Swap C: outputSlotsClient is null");
                 return;
             }
 
@@ -268,11 +261,6 @@ public class SwapPatternPacket implements IMessage {
                     clientOutputs.putAEStackInSlot(i, aeStack);
                 }
             }
-
-            System.out.println(
-                "[APU] Swap C: updated " + message.slotStacks.size()
-                    + " slots, clientOutputs="
-                    + (clientOutputs != null));
         }
 
         private IActionHost resolveTerminal(Container container) {
@@ -284,7 +272,7 @@ public class SwapPatternPacket implements IMessage {
                     return (IActionHost) pte.getPatternTerminal();
                 }
             } catch (Exception e) {
-                System.out.println("[APU] Swap resolveTerminal FAILED: " + e.getMessage());
+                MyMod.LOG.warn("Swap resolveTerminal failed", e);
             }
             return null;
         }
@@ -302,7 +290,7 @@ public class SwapPatternPacket implements IMessage {
                     return (IAEStackInventory) field.get(pte);
                 }
             } catch (Exception e) {
-                System.out.println("[APU] Swap resolveOutputs FAILED: " + e.getMessage());
+                MyMod.LOG.warn("Swap resolveOutputs failed", e);
             }
             return null;
         }

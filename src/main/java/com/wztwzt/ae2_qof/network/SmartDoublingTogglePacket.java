@@ -3,6 +3,7 @@ package com.wztwzt.ae2_qof.network;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 
+import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.api.ISmartDoublingContainer;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
@@ -49,7 +50,7 @@ public class SmartDoublingTogglePacket implements IMessage {
                         sdc.setSmartDoubling(enabled);
                     }
                 } catch (Throwable t) {
-                    t.printStackTrace();
+                    MyMod.LOG.error("Smart doubling toggle failed", t);
                 }
             });
             return null;

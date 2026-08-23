@@ -72,19 +72,20 @@ public class ConfigSetPacket implements IMessage {
                 ServerTerminalHelper.scheduleServerTask(() -> {
                     try {
                         if (Config.applySetting(key, value)) {
-                            ModNetwork.CHANNEL.sendToAll(new ConfigUpdatePacket(
-                                Config.exIOPortTransferContentsRate,
-                                Config.smartDoublingMaxRounds,
-                                Config.neiOverlayEnabled));
+                            ModNetwork.CHANNEL.sendToAll(
+                                new ConfigUpdatePacket(
+                                    Config.exIOPortTransferContentsRate,
+                                    Config.smartDoublingMaxRounds,
+                                    Config.neiOverlayEnabled));
                         } else {
                             MyMod.LOG.warn("[AE2QoL] Rejected config change " + key + "=" + value);
                         }
                     } catch (Throwable t) {
-                        t.printStackTrace();
+                        MyMod.LOG.error("Config set failed", t);
                     }
                 });
             } catch (Throwable t) {
-                t.printStackTrace();
+                MyMod.LOG.error("Config set failed", t);
             }
             return null;
         }

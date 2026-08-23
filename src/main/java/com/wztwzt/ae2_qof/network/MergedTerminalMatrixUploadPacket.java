@@ -5,7 +5,6 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentTranslation;
 
-import com.wztwzt.ae2_qof.api.IMergedPatternTerminal;
 import com.wztwzt.ae2_qof.merged.ContainerMergedTerminal;
 
 import appeng.api.AEApi;
@@ -73,7 +72,7 @@ public class MergedTerminalMatrixUploadPacket implements IMessage {
             IGrid grid = cmt.getGrid();
             if (grid == null) return;
 
-            @SuppressWarnings({"unchecked", "rawtypes"})
+            @SuppressWarnings({ "unchecked", "rawtypes" })
             appeng.api.networking.IMachineSet nodes = grid.getMachines((Class) matrixClass);
             if (nodes == null || nodes.isEmpty()) return;
 

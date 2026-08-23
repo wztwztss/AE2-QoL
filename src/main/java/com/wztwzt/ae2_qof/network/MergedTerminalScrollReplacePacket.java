@@ -7,16 +7,15 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.CraftingManager;
 import net.minecraftforge.oredict.OreDictionary;
 
+import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.merged.ContainerMergedTerminal;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.storage.IStorageGrid;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
-
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
@@ -96,11 +95,12 @@ public class MergedTerminalScrollReplacePacket implements IMessage {
                         nextIdx = message.direction > 0 ? (cur + 1) % size : (cur - 1 + size) % size;
                     }
 
-                    ItemStack replacement = alternatives.get(nextIdx).copy();
+                    ItemStack replacement = alternatives.get(nextIdx)
+                        .copy();
                     replacement.stackSize = current.stackSize;
                     slot.putStack(replacement);
                 } catch (Throwable t) {
-                    t.printStackTrace();
+                    MyMod.LOG.error("Merged terminal scroll replace failed", t);
                 }
             });
             return null;
@@ -125,7 +125,8 @@ public class MergedTerminalScrollReplacePacket implements IMessage {
             IStorageGrid storageGrid = grid.getCache(IStorageGrid.class);
             if (storageGrid == null) return result;
 
-            IItemList<IAEItemStack> items = storageGrid.getItemInventory().getStorageList();
+            IItemList<IAEItemStack> items = storageGrid.getItemInventory()
+                .getStorageList();
             if (items == null) return result;
 
             int[] currentOreIds = OreDictionary.getOreIDs(current);

@@ -78,7 +78,6 @@ public abstract class MixinRecipeHandlerRef {
                     String mapName = (String) nameField.get(recipeMap);
                     if (mapName != null && !mapName.isEmpty()) {
                         ClientState.pendingRecipeMap = mapName;
-                        System.out.println("[APU] Captured GT recipe map from NEI: " + mapName);
                         return;
                     }
                 }
@@ -94,7 +93,6 @@ public abstract class MixinRecipeHandlerRef {
                     String mapName = (String) nameField.get(recipeMap);
                     if (mapName != null && !mapName.isEmpty()) {
                         ClientState.pendingRecipeMap = mapName;
-                        System.out.println("[APU] Captured GT recipe map from NEI field: " + mapName);
                         return;
                     }
                 }
