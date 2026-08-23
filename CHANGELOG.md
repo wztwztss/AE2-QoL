@@ -1,3 +1,60 @@
+## 2026-08-23 - 全代码库深度审查报告（仅登记问题，无代码变更）
+
+> 作者：wztwzt | 审查时间：2026-08-23 | 版本基线：3.6.0
+> 范围：`src/main/java` 全部约 120 个 Java 源文件 + `mixins.ae2_qof.json`；重点为**前十三个功能的实现完整性**、服务端 tick 与 Mixin 注入正确性、客户端渲染热路径性能、网络包安全。
+> 方法：三路并行静态审查（① 客户端渲染/NEI 叠加层；② 服务端 Mixin/智能倍增/强化 IO 端口；③ 网络包安全 + 十三功能逐项核对），关键结论均经人工二次复核源码确认。
+
+### 一、十三功能核对结论
+
+**13 项功能全部存在完整代码路径（GUI 按钮 / Mixin / 网络包 / 服务端处理器四环齐备），无缺失项：**
+
+| # | 功能 | 结论 | 关键证据链 |
+|---|---|---|---|
+| 1 | NEI 样板上传/撤回/交换 | ✅ 完整 | `GuiUploadButtonHandler` 四按钮 + `UploadPatternPacket`/`RecallPatternPacket`/`SwapPatternPacket` + 三策略选择 `ProvidersListS2CPacket` |
+| 2 | NEI 取物品/合成下单 | ✅ 完整 | `MixinPanelWidgetClick` + `ExtractItemPacket`（SIMULATE 预检+归还防丢物）/`RequestCraftingPacket` 双路径 |
+| 3 | NEI tooltip 存量/可合成 | ✅ 完整 | `NetworkTooltipHandler` + `NetworkInventoryCache`（按 item+damage 键，忽略普通 NBT 差异） |
+| 4 | NEI 书签数量叠加 | ✅ 完整 | `MixinPanelWidgetDraw`（PanelWidget.draw TAIL）+ `NetworkInventoryDrawHandler` |
+| 5 | 合成完成通知 | ✅ 完整（含缺陷 #46） | `submitJob` 捕获发起者 + `completeJob` 校验密钥后发包 + `CraftingNotificationOverlay` 绘制 |
+| 6 | 合成重新规划 Replan | ✅ 完整 | `MixinGuiCraftConfirm` + `ReplanPacket` + `Replanner`（对已完成模拟的 job 重提 beginCraftingJob） |
+| 7 | 强化 IO 端口 | ✅ 完整 | `TileExIOPort` + `MixinTileIOPort` @ModifyVariable（long 溢出钳制 + 热加载） |
+| 8 | 无限水岩浆磁盘 | ✅ 完整 | `ItemInfinityWaterLavaCell`（AEBaseInfiniteCell + 配方 `"wbw"," "," "` 与 README 一致） |
+| 9 | 无线收发器+连接器 | ✅ 完整（含缺陷 #53） | wireless/ 整包；「跨维度」仅收发器链路成立，连接器绑定实际拒绝跨维度 |
+| 10 | 石英切割刀复制名称 | ✅ 完整 | `KnifeNameCopyHandler`（HIGHEST 右键事件 + GT 单方块/多方块名解析 + 剪贴板） |
+| 11 | F 键搜索填充 | ✅ 完整 | `KeyInputHandler`（NEI IContainerInputHandler，appeng./ae2fc GUI 判定 + 反射定位搜索框） |
+| 12 | NEI 叠加层开关 | ⚠️ 含缺陷 #48 | `CommandOverlay` 注册位置导致专用服务器无命令；OV 多人权威归属混乱 |
+| 13 | 智能倍增 | ✅ 完整（含缺陷 #44/#51/#58） | 安全边界全对齐 README；注入接管/批量记账/溢出钳制均在 |
+
+**Mixin 注入正确性评估（对照 rv3-beta-977 dev jar 逐一实证）**：@Shadow 字段与方法、@Inject 目标（`executeCrafting` HEAD+cancellable、`submitJob` RETURN、`handleCraftBranchFailure`/`completeJob` TAIL、`DualityInterface.writeToNBT/readFromNBT` TAIL、`ContainerInterface.<init>` RETURN）、反射目标（`TaskProgress.value`/`consumeCraftSession()`/`finalOutput` 私有内部类/`CraftingCpuDiagnostics`/静态 `getServerTick()` 等）**全部命中，零 @Overwrite/@Redirect**；智能路径反射失败与执行异常均有安全降级回原版。HEAD 注入 + cancel 替代 @Overwrite 保留了原方法字节码骨架，PH `MixinInstantComplete` 等其它 mod 注入不受破坏。
+
+### 二、新增风险登记摘要（#44-#58，详见下方登记表）
+
+| 编号 | 摘要 | 等级 |
+|---|---|---|
+| #44 | 智能倍增 PH 介质 `pushPatternMulti` 返回 0 回退单发时按 N 轮记账（实际仅交 1 轮材料）→ 少产出 + 白扣功率 + 任务假完成 | 🔴 |
+| #46 | `CraftingCompletePacket`(S2C) 未切客户端主线程，Netty IO 线程写非线程安全队列 | 🔴 |
+| #45 | `RequestProvidersListPacket` 数组长度无上界 → 恶意包 OOM DoS（另有 3 个 S2C 同类） | 🟡 |
+| #47 | 无线高亮开关服务端读客户端静态字段 → 专用服务器只能开不能关 | 🟡 |
+| #48 | `/apu-overlay` 专用服务器不可用 + OV 开关多人权威归属混乱 | 🟡 |
+| #49 | `NetworkInventoryCache.invalidate()` 从未被调用 → 缓存永不过期显示陈旧数据 | 🟡 |
+| #50 | 无线全局频道无归属权，任何玩家可删他人频道 | 🟡 |
+| #51 | 智能倍增容量二分固定 31 轮 do-while 每次推送重跑 + 全网电力探测 O(P) | 🟢 |
+| #52 | 渲染热路径浪费：每帧 new RenderItem / tooltip 流体识别×3 遍×每槽位 / 格式化无 memo | 🟢 |
+| #53 | README 功能 9「跨维度」与实现不符（连接器拒绝跨维度死分支） | 🟢 |
+| #54 | 8 个文件残留 `System.out.println` 调试日志 | 🟢 |
+| #55 | 死代码遗留（lastProviderName/getLastUpdateTick/BUTTON_HALVE_ID/Replanner 等） | 🟢 |
+| #56 | `docs/MOD_MAP.md` 为空模板，违反文档驱动规范 | 🟢 |
+| #57 | `ProvidersListS2CPacket` 无应用层尺寸预算，超大网络静默失效 | 🟢 |
+| #58 | 智能倍增部分提前 return 分支疑似遗漏 `parallelismProvider` 回写（静态审查发现，待复核） | 🟢 |
+
+### 三、修复优先级建议
+
+- **P0（发布前必修）**：#44 记账缺陷、#46 线程归队
+- **P1**：#45/#47/#48/#49/#50（安全与专用服正确性）
+- **P2**：#51/#52（大网络性能）
+- **P3（卫生整改）**：#53/#54/#55/#56/#57/#58
+
+---
+
 ## 3.6.0 - 二合一终端面板体验升级批次
 
 > 作者：wztwzt | 更新时间：2026-08-22
@@ -134,6 +191,38 @@
 | 41 | 面板悬垂区绘制采用 `xSize=1000` 放大法：槽位命中依赖 `GuiContainer.getSlotAtPosition` 使用 `guiLeft/guiTop` 字段（不随 xSize 重算），已验证不破坏槽点击 | `merged/GuiMergedTerminal.java` `drawScreen`（3.5.0） | 🟢 | ✅ 已兜底（javap 核对 `func_146978_c`/`getSlotAtPosition` 用字段坐标；`initGui` 按 xSize=209 计算 guiLeft，命中逻辑不受影响） |
 | 42 | 面板按钮/滚动条/页码为客户端静态字段，仅随 GUI 打开重置；多容器/多窗口切换时由每帧 `reposition` 从客户端容器刷新覆盖 | `client/event/MergedTerminalPanelHandler.java`（3.5.0） | 🟢 | ✅ 已兜底（drawFG 每帧以 `pc.isCraftingMode()/isInverted()/getActivePage()` 重刷静态，状态不串窗口） |
 | 43 | `GuiTabButton` 图标渲染需 `RenderItem`：反射读 `GuiScreen.itemRender`（protected static），失败回退 `new RenderItem()` | `client/event/MergedTerminalPanelHandler.java` `getRenderItem`（3.5.0） | 🟢 | ✅ 已兜底（try/catch + 回退，反射失败仅 tab 图标缺失，不影响按钮功能） |
+| 44 | 智能倍增 PH 介质记账缺陷：`useMulti && effectiveN>1` 时按 **1 轮量**提取材料（target 不乘 N），若 `pushPatternMulti` 返回 `accepted==0`（介质忙/缓冲满）则落到下方 `pushPattern` 单发回退分支；该分支因 `effectiveN>1` 走 GT 倍增记账 → 实际只交付 1 轮材料却**扣 N 轮功率、executedTasks+=N、taskValue-=N** → 合成少产出 N-1 轮、白扣功率、任务提前假完成（材料未丢，留在网络存储，但订单数量错误） | `mixin/ae/MixinCraftingCPUCluster.java:764-839`（回退分支判定应为 `!useMulti && effectiveN>1`；useMulti 回退时须走原版逐轮记账） | 🔴 | ❌ 未修复（2026-08-23 审查发现） |
+| 45 | 网络包 OOM DoS：`readItemStackArray` 直接 `new ItemStack[buf.readInt()]` 无上界钳制——恶意 C2S 包 len=2^31-1 触发瞬时巨量分配（分配先于读取发生，外层 catch(Throwable) 接不住已打爆的堆压力）；同类 S2C 预分配 `ArrayList<>(readInt())` 见 `ProvidersListS2CPacket` / `WirelessHighlightPacket` / `WirelessChannelSyncPacket`（低危：服务端→自己客户端）；正确示范已在 `MergedTerminalActionPacket`（数组 ≤64），此四处漏改 | `network/RequestProvidersListPacket.java:107-114` 等 4 文件 | 🟡 | ❌ 未修复（2026-08-23 审查发现） |
+| 46 | `CraftingCompletePacket`(S2C) Handler 未切客户端主线程：Netty IO 线程直接向非线程安全 `ArrayDeque`（CraftingNotificationOverlay.events）add，渲染线程并发 poll/draw → 数据竞争偶发崩溃/渲染异常；为全部 S2C 包中唯一漏归队者（其余均已 `func_152344_a`） | `network/CraftingCompletePacket.java:56-65` | 🔴 | ❌ 未修复（2026-08-23 审查发现） |
+| 47 | 无线高亮开关失效于专用服务器：`handleToggleHighlight` 在**服务端**读客户端静态字段 `ClientState.highlightEnabled`（仅客户端 WirelessHighlightPacket.Handler 写入），专用 JVM 恒 false → 高亮只能开不能关（单机同 JVM 共享静态字段才碰巧正常）；开关状态应由包参数携带或服务端会话态维护 | `network/WirelessActionPacket.java:266` | 🟡 | ❌ 未修复（2026-08-23 审查发现） |
+| 48 | NEI 叠加层开关双问题：① `/apu-overlay` 注册于 `ClientProxy.serverStarting` → 仅单人/局域网主机存在命令，**专用服务器不可用**（只能用 OV 按钮）；② 多人时 GUI OV 按钮写本地 settings.json，会被登录时 `ConfigUpdatePacket` 的服务端值覆盖 → 开关权威归属混乱（本地 vs 服务端二义性） | `client/CommandOverlay.java` + `client/event/GuiUploadButtonHandler.java` + `client/OverlayConfig.java` | 🟡 | ❌ 未修复（2026-08-23 审查发现） |
+| 49 | 库存缓存永不过期：`NetworkInventoryCache.invalidate()` 定义后**从未被任何代码调用**，终端关闭后缓存不失效 → tooltip/书签角标可能长期显示陈旧的存量与可合成状态（应接线 GUI 关闭点，如 MixinGuiMEMonitorable 注入处） | `client/NetworkInventoryCache.java:68` | 🟡 | ❌ 未修复（2026-08-23 审查发现） |
+| 50 | 无线全局频道无归属权：任何玩家打开任意收发器 GUI 即可 `ACTION_REMOVE_CHANNEL` 删除他人全局频道并强制拆除发送端连接（共享服务器干扰向量）；频道应有创建者归属或 OP 保护 | `network/WirelessActionPacket.java` `handleRemoveChannel` | 🟡 | ❌ 未修复（2026-08-23 审查发现） |
+| 51 | 智能倍增探测开销：ME 接口容量二分探测固定 ~31 轮 do-while 且每次推送重跑（无逐 tick 缓存、未先用配置上限预裁剪）；全网电力探测 `extractAEPower(MAX_VALUE, SIMULATE)` 为 O(P) 网格遍历（可用有限大值替代）；大网络高频推送时有放大效应 | `mixin/ae/MixinDualityInterface.java:122-133` + `mixin/ae/MixinCraftingCPUCluster.java:690-706` | 🟢 | ❌ 未修复（2026-08-23 审查发现） |
+| 52 | 客户端渲染热路径浪费（叠加层全开 + 大网络时有可感知 GC 抖动）：① 合成通知横幅每帧 `new RenderItem()`（应复用静态实例，参照 MergedTerminalPanelHandler.getRenderItem 反射缓存模式）；② tooltip 一条查询路径同一 ItemStack 流体识别/NBT 解析最多执行 3 遍 ×每帧×每槽位（三接口各自独立走 getFluid 判定，应合并单次查询返回 count/craftable/fluid 三元组）；③ `CountFormatter.format` 帧间重复格式化无记忆化；④ 无线高亮全部方框独立 Tessellator 提交未合并批次、闪烁相位驱动方式待统一 | `client/render/CraftingNotificationOverlay.java:103` + `client/nei/NetworkTooltipHandler.java` + `util/CountFormatter.java` + `client/render/WirelessHighlightRenderer.java` | 🟢 | ❌ 未修复（2026-08-23 审查发现） |
+| 53 | README 功能 9 称无线连接器「支持跨维度」，实现显式拒绝跨维度绑定（目标方块与玩家不同维度直接拒绝，构成死分支）→ 文档与行为不符；跨维度仅收发器对链路成立。需决策：改代码支持或改 README 对齐现状 | `wireless/ItemWirelessConnector.java:119` + `README.md` 功能 9 | 🟢 | ❌ 未修复（2026-08-23 审查发现） |
+| 54 | 调试日志残留：8 个文件仍有 `System.out.println`（ClientState / PatternContainer / MixinDefaultOverlayHandler / MixinRecipeHandlerRef / ProvidersListS2CPacket / RecallPatternPacket / SwapPatternPacket / RecipeMapDetector）；3.0.2 曾称清理完毕实际未清净；另多处 handler 用 `t.printStackTrace()` 应换 logger | 8 个源文件 | 🟢 | ❌ 未修复（2026-08-23 审查发现） |
+| 55 | 死代码遗留（按仓库规范仅标记暂不删除）：`ClientState.lastProviderName` 字段及 `clear()`、`NetworkInventoryCache.getLastUpdateTick()` 与 put 冗余 count 参数、BUTTON_HALVE_ID 死分支、Replanner 吞异常路径等 | `client/ClientState.java` 等多处 | 🟢 | ❌ 未修复（2026-08-23 审查发现） |
+| 56 | `docs/MOD_MAP.md` 为空模板（功能↔源码映射缺失、Mixin 列表未登记），违反文档驱动开发规范 §5.1；新开发者无法按图索骥 | `docs/MOD_MAP.md` | 🟢 | ❌ 未修复（2026-08-23 审查发现） |
+| 57 | S2C 无应用层尺寸预算：超大网络供应器列表（ids+names+emptySlots 三列表）可超 1.7.10 自定义负载 ≈32KB 上限 → 发送侧失败、上传选择界面静默无响应 | `network/ProvidersListS2CPacket.java` | 🟢 | ❌ 未修复（2026-08-23 审查发现） |
+| 58 | 智能倍增部分提前 return 分支疑似遗漏 `parallelismProvider.put(details, mediumListCheck)` 回写 → 并行度信息丢失致下 tick 重探测（轻微性能损耗；静态审查标记，修 #44 时一并复核） | `mixin/ae/MixinCraftingCPUCluster.java:790-793` 附近 | 🟢 | ❌ 待复核（2026-08-23 审查发现） |
+| 59 | 二合一终端编码产出坏样板：`encodeItemPattern` 对未填满的输出列把 null 槽写成**空 NBT compound** → `UltimatePatternHelper` 解码后 `getAEOutputs()` 含 null → `CraftingGridCache.setPatternsFromCraftingMethods:340 out.copy()` NPE。PH 仓（22179）每 tick `postMEPatternChange` 重扫即每 tick NPE 刷屏 + **AE2 合成缓存重建被中断** → CPU 永远收不到样板。原生终端 `getOutputs()` 跳过空槽故从不触发。修复：编码循环过滤 null/空槽（对齐原生语义） | `merged/PatternContainer.java` `encodeItemPattern`（3.4.0 引入） | 🔴 | ✅ 已修复（2026-08-23 实测 22179 每 tick NPE 后定位） |
+| 60 | 二合一终端上传静默失效：`UploadPatternPacket.resolveTerminal/resolveOutputSlot` 仅支持原生 `ContainerPatternTerm(Ex)`，无合并终端分支 → 服务端解析返回 null 直接 return，上传从未执行；撤回因依赖 lastProviderId 连带失效。修复：resolveTerminal 委托 `ContainerTerminalResolver`（已覆盖三种终端），resolveOutputSlot 增加 `IMergedPatternTerminal.getMergedEncodedSlot()` 分支 | `network/UploadPatternPacket.java:146-170`（3.4.0 引入） | 🔴 | ✅ 已修复（2026-08-23） |
+
+> **#59 存量坏样板清理指引**：编码修复仅防新增。若网络中已插入坏样板（症状：22179 每 tick NPE），需打开该 PH 编程样板输入总成 GUI，手动取出坏样板销毁后重新编码上传。
+| 61 | 处理配方池反查不准：「钢锭高炉配方被识别成电解机」。同一输入物品常存在于多个 GT 配方池，服务端 `RecipeMapDetector` 按 HashMap 无序遍历仅凭输入反查会随机命中；且编码时服务端反查结果**优先于** NEI 转写捕获的精确 `pendingRecipeMap`（顺序颠倒）。修复：① 编码时 pendingRecipeMap 优先、反查兜底；② 反查命中后用用户填写的输出物与 `GT_Recipe.mOutputs` 校验，输入+输出双匹配才确定，仅输入匹配降为候选 | `merged/PatternContainer.java` `encodeItemPattern` + `util/RecipeMapDetector.java` | 🟡 | ✅ 已修复（2026-08-23 用户实测反馈） |
+| 62 | 二合一终端上传↑按钮左侧 3px 点击盲区：按钮容器坐标 [206,218] 横跨面板判定区左边界（x≥209），越界部分点击走原生逻辑静默失效。修复：面板按钮命中检测移出 isInPanel 判定，按 id 白名单（940-955）独立分发，不误抢 AE 原生按钮 | `merged/GuiMergedTerminal.java` `mouseClicked` + `client/event/MergedTerminalPanelHandler.java` `isPanelButton` | 🟢 | ✅ 已修复（2026-08-23） |
+| 63 | 上传链路零日志：#54 清理时把上传/撤回全链路的调试输出一并删除且未留 logger 记录，故障排查无迹可循（本次"点击没反应"即无法定位）。修复：关键分支补 `MyMod.LOG.info("[Upload] ...")`——客户端 handleUpload 各 return 分支/策略选择、服务端容器解析失败/供应器查找失败/写入成功各一条，单次点击最多数条不刷屏 | `client/event/MergedTerminalPanelHandler.java` + `network/RequestProvidersListPacket.java` + `network/UploadPatternPacket.java` + `network/ProvidersListS2CPacket.java` | 🟢 | ✅ 已修复（2026-08-23） |
+| 64 | **二合一终端服务端终端解析永久失败（#60 的真正根因）**：`ContainerTerminalResolver.resolveTerminal` 对合并终端分支反射读取 AE2 `ContainerInterfaceTerminal.anchor` 字段——但 3.5.0 重构后 `ContainerMergedTerminal` 是独立 `AEBaseContainer` 子类（自有 `anchor` 字段，类型 `IInterfaceTerminal extends IActionHost`），不再继承原生容器 → NoSuchFieldException 被吞 → 返回 null。诊断日志实测：`[Upload] server: terminal resolve failed for ContainerMergedTerminal`。**上传/撤回/供应器列表请求三条链路的服务端环节全部因此静默失败**。修复：反射改为沿容器类层级查找自有 `anchor` 字段（findDeclaredField 逐级向上），命中后强转 IActionHost | `util/ContainerTerminalResolver.java`（3.4.0 引入错误目标，3.5.0 重构后必然失败） | 🔴 | ✅ 已修复（2026-08-23 日志定位） |
+| 65 | 操作链路诊断日志大检查：撤回（[Recall] 服务端 8 个分支+结果）、编码（[Encode] 面板空/非样板拦截/空白样板不足/成功含 recipeMap）、交换（[Swap] 输出槽缺失/少于2格）全部补齐 logger 日志，与 [Upload] 统一前缀便于 grep 排查 | `network/RecallPatternPacket.java` + `merged/PatternContainer.java` + `network/SwapPatternPacket.java` | 🟢 | ✅ 已补齐（2026-08-23） |
+| 66 | 面板槽点击取物时而无效：自发 `windowClick`（vanilla C07 包）在服务端 `Container.slotClick` 对 SlotFake 系假槽行为不完整，且无客户端本地预测——服务端拒绝时 GUI 永不变化，表现为"点不掉、拖动才消失"。修复：镜像原生 `AEBaseGui.handleClickOrDragFakeSlot`——改发 `PacketClickOrDragFakeSlot`（含 NEI 幽灵物品支持，复用父类 getStackFromHand）+ 客户端本地 putStack 预测。不能落 super 是因为 GuiInterfaceTerminal.mouseClicked 的 masterList 判定会吞掉面板悬垂区点击 | `merged/GuiMergedTerminal.java` `mouseClicked`（3.5.0 引入 windowClick 方案） | 🔴 | ✅ 已修复（2026-08-23 用户实测反馈） |
+| 67 | 上传成功后接口列表不实时更新：外部代码写入 provider 样板不会触发接口终端增量推送（原生仅 GUI 内操作走 syncIfaceSlot），需重开 GUI 才能看到。修复：UploadPatternPacket 写入成功后对打开中的合并终端容器调 `scheduleFullUpdate()`（forceNextUpdate 机制与原生一致，下 tick 全量 updateList 推送） | `merged/ContainerMergedTerminal.java` + `network/UploadPatternPacket.java` | 🟡 | ❌ 升级为 #68 |
+| 68 | #67 的 scheduleFullUpdate 无效根因：`updateList()` 移植自原生但**缺失样板内容对比**——tracked 分支仅对比名字/在线/可见性/尺寸/优先级，从不比较样板槽内容 → forceNextUpdate 跑完判定"无变化"返回 null 不发包。原生同款限制（外部写入本就不实时）。修复：InvTracker 增加 slotCache 快照 + hasContentChanged() 逐槽对比；updateList 加 checkContents 参数，仅在调度刷新时对比内容并生成 overwrite 条目（常规 tick 不做对比避免逐槽开销） | `merged/ContainerMergedTerminal.java` updateList + InvTracker | 🔴 | ✅ 已修复（2026-08-23） |
+| 69 | 新增：面板槽位滚轮调数量。悬停面板输入格滚动滚轮：上滚 +1、下滚 -1、**最小保持 1**（清空用左键取出或中键设 0；输出格禁改）；Shift+滚轮保留 OreDict 替换循环 | `merged/GuiMergedTerminal.java` `mouseWheelEvent` | 🟢 | ✅ 已实现（2026-08-23 用户需求，下限按反馈调整） |
+| 70 | 撤回后接口列表不实时更新（#68 的撤回侧遗漏）：RecallPatternPacket 取走样板后未调度刷新。修复：撤回成功且玩家打开合并终端时同样调用 scheduleFullUpdate() | `network/RecallPatternPacket.java` | 🟡 | ✅ 已修复（2026-08-23 用户实测反馈） |
+| 71 | 智能倍增 PH 介质记账缺陷（审查登记 #44）：`useMulti` 时按 **1 轮量**提取材料，若 `pushPatternMulti` 返回 `accepted==0`（介质忙/缓冲满）回退 `pushPattern` 单发成功后，因 `effectiveN>1` 走 GT 倍增分支 → 实际只交付 1 轮材料却**扣 N 轮功率、executedTasks+=N、taskValue-=N** → 合成少产出 N-1 轮、白扣 (N-1)×sum 功率、任务提前假完成。修复：倍增记账判定改为 `!useMulti && effectiveN>1`，useMulti 回退走原版逐轮路径（按实际交付的 1 轮记账） | `mixin/ae/MixinCraftingCPUCluster.java` executeCrafting 倍增回退分支 | 🔴 | ✅ 已修复（2026-08-23） |
+| 72 | 审查登记 #58 复核结论：智能倍增所有退出路径（3 处提前 return、break 跳出后方法尾部 L941）均已有 `parallelismProvider.put` 回写，静态审查疑虑不成立，无需修改 | `mixin/ae/MixinCraftingCPUCluster.java` | 🟢 | ✅ 已复核无问题（2026-08-23） |
+| 73 | 智能倍增大订单（如 1T）客户端无响应：GT `MTEHatchCraftingInputME.isBusy()` 始终返回 false → `knownBusyMediums` 永远不被填充 → do-while 循环每 tick 重复推送 `effectiveN` 轮（可达 Integer.MAX_VALUE），ME 网络每 tick 大额 extractItems + postChange → 客户端被海量物品更新淹没。修复：① `ae2qol$executeCraftingSmart` 开头 `knownBusyMediums.clear()` 重置跨 tick 残留；② GT/PH 路径倍增推送成功后 `knownBusyMediums.add(medium)` 冷却，防止同 tick 重复推送 | `mixin/ae/MixinCraftingCPUCluster.java` executeCraftingSmart + GT/PH 推送分支 | 🔴 | ✅ 已修复（2026-08-23） |
 
 # 回滚指南
 

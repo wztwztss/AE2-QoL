@@ -113,14 +113,14 @@ public abstract class MixinCraftingCPUCluster {
 
     @Shadow
     protected abstract List<IAEStack<?>> getExpandedCondensedInputs(ICraftingPatternDetails details,
-            CraftingGridCache cache);
+        CraftingGridCache cache);
 
     @Shadow
     protected abstract List<IAEStack<?>> getExpandedInputs(ICraftingPatternDetails details, CraftingGridCache cache);
 
     @Shadow
     protected abstract ArrayList<IAEStack<?>> getExtractItems(IAEStack<?> ingredient,
-            ICraftingPatternDetails patternDetails);
+        ICraftingPatternDetails patternDetails);
 
     @Shadow
     protected abstract void postChange(IAEStack<?> diff, BaseActionSource src);
@@ -282,13 +282,16 @@ public abstract class MixinCraftingCPUCluster {
                 FINAL_OUTPUT_IS_FINAL_PATTERN.setAccessible(true);
                 FINAL_OUTPUT_SET_FAKE_CRAFTING = fo.getDeclaredMethod("setFakeCrafting");
                 FINAL_OUTPUT_SET_FAKE_CRAFTING.setAccessible(true);
-                FINAL_OUTPUT_PERFORM_FAKE_CRAFTING = fo.getDeclaredMethod("performFakeCrafting",
-                        ICraftingPatternDetails.class);
+                FINAL_OUTPUT_PERFORM_FAKE_CRAFTING = fo
+                    .getDeclaredMethod("performFakeCrafting", ICraftingPatternDetails.class);
                 FINAL_OUTPUT_PERFORM_FAKE_CRAFTING.setAccessible(true);
 
                 final Class<?> dc = Class.forName("appeng.me.cluster.implementations.CraftingCpuDiagnostics");
-                DIAGNOSTICS_RECORD_EXPECTED_OUTPUT = dc.getDeclaredMethod("recordExpectedOutput", IAEStack.class,
-                        long.class, CraftingDiagnosticSessionId.class);
+                DIAGNOSTICS_RECORD_EXPECTED_OUTPUT = dc.getDeclaredMethod(
+                    "recordExpectedOutput",
+                    IAEStack.class,
+                    long.class,
+                    CraftingDiagnosticSessionId.class);
                 DIAGNOSTICS_RECORD_EXPECTED_OUTPUT.setAccessible(true);
             }
         } catch (Throwable t) {
@@ -349,8 +352,8 @@ public abstract class MixinCraftingCPUCluster {
         ae2qol$initReflection();
         try {
             return TASK_PROGRESS_CONSUME_SESSION != null
-                    ? (CraftingDiagnosticSessionId) TASK_PROGRESS_CONSUME_SESSION.invoke(task)
-                    : null;
+                ? (CraftingDiagnosticSessionId) TASK_PROGRESS_CONSUME_SESSION.invoke(task)
+                : null;
         } catch (Throwable t) {
             return null;
         }
@@ -391,8 +394,7 @@ public abstract class MixinCraftingCPUCluster {
                 return false;
             }
             final Object fo = FINAL_OUTPUT_FIELD.get(this);
-            return FINAL_OUTPUT_IS_FINAL_PATTERN != null
-                    && (Boolean) FINAL_OUTPUT_IS_FINAL_PATTERN.invoke(fo, details);
+            return FINAL_OUTPUT_IS_FINAL_PATTERN != null && (Boolean) FINAL_OUTPUT_IS_FINAL_PATTERN.invoke(fo, details);
         } catch (Throwable t) {
             return false;
         }
@@ -448,8 +450,9 @@ public abstract class MixinCraftingCPUCluster {
 
     @Unique
     private int ae2qol$smartMultiplier(ICraftingMedium medium, ICraftingPatternDetails details, long remaining) {
-        if (medium instanceof ISmartDoublingMedium sdm && sdm.isSmartDoublingEnabled() && !details.isCraftable()
-                && remaining > 1L) {
+        if (medium instanceof ISmartDoublingMedium sdm && sdm.isSmartDoublingEnabled()
+            && !details.isCraftable()
+            && remaining > 1L) {
             int cap = sdm.getMaxMultiplier(details);
             // 0 = 不限：跳过配置上限，一次发配剩余全部轮数（仍受介质容量与功率钳制）。
             if (Config.smartDoublingMaxRounds > 0) {
@@ -465,7 +468,7 @@ public abstract class MixinCraftingCPUCluster {
         return 1;
     }
 
-/**
+    /**
      * executeCrafting 入口：仅当存在智能倍增任务时才接管整个 tick。
      * 采用 HEAD 注入 + cancel，保留原方法字节码结构（INVOKE 指令不变），
      * 其它模组对同一方法的 @Inject/@At("INVOKE") 注入点仍可正常定位，避免冲突崩溃。
@@ -546,6 +549,9 @@ public abstract class MixinCraftingCPUCluster {
 
         Config.ensureFresh();
 
+        // 每 tick 开始时重置 busy 集合，避免跨 tick 残留导致介质永远被跳过。
+        knownBusyMediums.clear();
+
         final Map<ICraftingPatternDetails, Object> workableTasks = ae2qol$getWorkableTasks();
         final Map<ICraftingPatternDetails, Object> tasks = ae2qol$getTasks();
         if (workableTasks == null || tasks == null) {
@@ -553,8 +559,8 @@ public abstract class MixinCraftingCPUCluster {
             return;
         }
 
-        final Iterator<Entry<ICraftingPatternDetails, Object>> craftingTaskIterator = workableTasks
-                .entrySet().iterator();
+        final Iterator<Entry<ICraftingPatternDetails, Object>> craftingTaskIterator = workableTasks.entrySet()
+            .iterator();
 
         int executedTasks = 0;
         while (craftingTaskIterator.hasNext()) {
@@ -625,16 +631,19 @@ public abstract class MixinCraftingCPUCluster {
                     if (craftingInventory == null) {
                         final boolean craftable = details.isCraftable();
                         final List<IAEStack<?>> expandedInputs = craftable ? Arrays.asList(details.getAEInputs())
-                                : getExpandedInputs(details, cc);
+                            : getExpandedInputs(details, cc);
                         if (expandedInputs == null) {
                             throw new IllegalStateException("Input-only pattern expansion failed");
                         }
 
                         // 智能倍增：确定本次推送的有效轮数 N（仅非 craftable 样板）。
-                        effectiveN = ae2qol$smartMultiplier(medium, details,
-                                ae2qol$taskValue(craftingEntry.getValue()));
-                        if (effectiveN > 1 && medium instanceof DualityInterface di && di.isFakeCraftingMode()
-                                && ae2qol$finalOutputIsFinalPattern(details)) {
+                        effectiveN = ae2qol$smartMultiplier(
+                            medium,
+                            details,
+                            ae2qol$taskValue(craftingEntry.getValue()));
+                        if (effectiveN > 1 && medium instanceof DualityInterface di
+                            && di.isFakeCraftingMode()
+                            && ae2qol$finalOutputIsFinalPattern(details)) {
                             // 假合成模式的最终样板走原版语义，不倍增。
                             effectiveN = 1;
                         }
@@ -662,11 +671,10 @@ public abstract class MixinCraftingCPUCluster {
                                 }
                                 @SuppressWarnings("rawtypes")
                                 final IAEStack probe = slotInput.copy()
-                                        .setStackSize(perRound * effectiveN);
+                                    .setStackSize(perRound * effectiveN);
                                 @SuppressWarnings("rawtypes")
                                 final IAEStack avail = this.inventory.extractItems(probe, Actionable.SIMULATE);
-                                final long rounds = avail == null ? 1L
-                                        : Math.max(1L, avail.getStackSize() / perRound);
+                                final long rounds = avail == null ? 1L : Math.max(1L, avail.getStackSize() / perRound);
                                 if (rounds < effectiveN) {
                                     effectiveN = (int) rounds;
                                 }
@@ -683,13 +691,13 @@ public abstract class MixinCraftingCPUCluster {
                         }
                         // upgraded interface uses more power
                         if (medium instanceof DualityInterface) sum *= Math
-                                .pow(4.0, ((DualityInterface) medium).getInstalledUpgrades(Upgrades.PATTERN_CAPACITY));
+                            .pow(4.0, ((DualityInterface) medium).getInstalledUpgrades(Upgrades.PATTERN_CAPACITY));
 
                         // 功率钳制（O(1)）：一次 SIMULATE 查询可用电总量，直接算出可负担的最大轮数。
                         // 替代原版逐轮递减的 O(N) 次网格查询 —— 大订单（如 1T 量级）下会直接卡死。
                         if (effectiveN > 1) {
-                            final double availablePower = eg.extractAEPower(Double.MAX_VALUE,
-                                    Actionable.SIMULATE, PowerMultiplier.CONFIG);
+                            final double availablePower = eg
+                                .extractAEPower(Double.MAX_VALUE, Actionable.SIMULATE, PowerMultiplier.CONFIG);
                             if (availablePower < sum - 0.01) {
                                 // 连一轮电都付不起：与原版 while 循环收敛后一致，跳过本介质。
                                 continue;
@@ -707,11 +715,11 @@ public abstract class MixinCraftingCPUCluster {
 
                         // check if there is enough power
                         double requiredPower = sum * effectiveN;
-                        if (eg.extractAEPower(requiredPower, Actionable.SIMULATE, PowerMultiplier.CONFIG) < requiredPower
-                                - 0.01) continue;
+                        if (eg.extractAEPower(requiredPower, Actionable.SIMULATE, PowerMultiplier.CONFIG)
+                            < requiredPower - 0.01) continue;
 
                         craftingInventory = craftable ? new MEInventoryCrafting(new ContainerNull(), 3, 3)
-                                : new MEInventoryCrafting(new ContainerNull(), expandedInputs.size(), 1);
+                            : new MEInventoryCrafting(new ContainerNull(), expandedInputs.size(), 1);
 
                         // Check if all items can be used for crafting.
                         boolean found = false;
@@ -720,9 +728,8 @@ public abstract class MixinCraftingCPUCluster {
                             if (slotInput != null) {
                                 found = false;
                                 final IAEStack<?> target = useMulti ? slotInput
-                                        : (effectiveN > 1
-                                                ? slotInput.copy().setStackSize(slotInput.getStackSize() * effectiveN)
-                                                : slotInput);
+                                    : (effectiveN > 1 ? slotInput.copy()
+                                        .setStackSize(slotInput.getStackSize() * effectiveN) : slotInput);
                                 for (IAEStack ias : getExtractItems(target, details)) {
                                     IAEStack tempStack = ias.copy();
                                     if (craftable && !details.isValidItemForSlot(x, tempStack, this.getWorld()))
@@ -738,8 +745,7 @@ public abstract class MixinCraftingCPUCluster {
                                             found = false;
                                             break;
                                         }
-                                        if (!details.canBeSubstitute()
-                                                && aes.getStackSize() == target.getStackSize()) {
+                                        if (!details.canBeSubstitute() && aes.getStackSize() == target.getStackSize()) {
                                             this.postChange(target, this.machineSrc);
                                             break;
                                         } else {
@@ -764,8 +770,8 @@ public abstract class MixinCraftingCPUCluster {
                     boolean smartPushed = false;
                     if (useMulti && effectiveN > 1) {
                         // ---- 智能倍增（PH）：pushPatternMulti 一次接受 N 轮 ----
-                        final int[] result = ((IMultiplePatternPushable) medium).pushPatternMulti(details,
-                                craftingInventory, effectiveN);
+                        final int[] result = ((IMultiplePatternPushable) medium)
+                            .pushPatternMulti(details, craftingInventory, effectiveN);
                         final int accepted = result == null || result.length == 0 ? 0 : Math.max(0, result[0]);
                         if (accepted > 0) {
                             this.somethingChanged = true;
@@ -779,6 +785,9 @@ public abstract class MixinCraftingCPUCluster {
                             craftingInventory = null; // hand off complete!
                             didPatternCraft = true;
                             this.markDirty();
+
+                            // PH 仓的 isBusy() 可能同样不可靠，添加冷却防止每 tick 重复推送。
+                            knownBusyMediums.add(medium);
 
                             executedTasks += accepted;
                             ae2qol$taskValueAdd(craftingEntry.getValue(), -accepted);
@@ -808,7 +817,11 @@ public abstract class MixinCraftingCPUCluster {
                         this.remainingOperations--;
                         pushedPattern = true;
 
-                        if (effectiveN > 1) {
+                        // 注意：useMulti 回退时（pushPatternMulti 拒绝接收）craftingInventory 只含
+                        // 1 轮材料（见上方 target 构造），必须走原版逐轮记账；仅 GT/其它
+                        // （!useMulti）单次收满 N× 缓冲才允许按 N 轮记账，
+                        // 否则会少产出 N-1 轮且白扣 (N-1)×sum 功率。
+                        if (!useMulti && effectiveN > 1) {
                             // ---- 智能倍增（GT/其它）：pushPattern 一次收 N 轮 ----
                             eg.extractAEPower(sum * effectiveN, Actionable.MODULATE, PowerMultiplier.CONFIG);
                             ae2qol$accountSmartPush(effectiveN, details, craftingEntry.getValue());
@@ -816,6 +829,9 @@ public abstract class MixinCraftingCPUCluster {
                             craftingInventory = null; // hand off complete!
                             didPatternCraft = true;
                             this.markDirty();
+
+                            // GT 的 isBusy() 始终返回 false，需手动冷却防止每 tick 重复推送。
+                            knownBusyMediums.add(medium);
 
                             executedTasks += effectiveN;
                             ae2qol$taskValueAdd(craftingEntry.getValue(), -effectiveN);
@@ -841,15 +857,13 @@ public abstract class MixinCraftingCPUCluster {
                             // ---- 原版逐轮路径 ----
                             eg.extractAEPower(sum, Actionable.MODULATE, PowerMultiplier.CONFIG);
 
-                            if (!ae2qol$finalOutputIsFakeCrafting()
-                                    && ae2qol$finalOutputIsFinalPattern(details)) {
+                            if (!ae2qol$finalOutputIsFakeCrafting() && ae2qol$finalOutputIsFinalPattern(details)) {
                                 if (medium instanceof DualityInterface di && di.isFakeCraftingMode()) {
                                     ae2qol$finalOutputSetFakeCrafting();
                                 }
                             }
 
-                            if (ae2qol$finalOutputIsFakeCrafting()
-                                    && ae2qol$finalOutputIsFinalPattern(details)) {
+                            if (ae2qol$finalOutputIsFakeCrafting() && ae2qol$finalOutputIsFinalPattern(details)) {
                                 ae2qol$taskValueAdd(craftingEntry.getValue(), -1);
 
                                 if (ae2qol$taskValue(craftingEntry.getValue()) <= 0) {
@@ -869,14 +883,16 @@ public abstract class MixinCraftingCPUCluster {
                             }
 
                             final CraftingDiagnosticSessionId diagnosticSessionId = ae2qol$consumeCraftSession(
-                                    craftingEntry.getValue());
+                                craftingEntry.getValue());
                             final long outputObservedAtTick = diagnosticSessionId == null
-                                    || !this.isCraftingDiagnosticsEnabled() ? 0L : ae2qol$getServerTick();
+                                || !this.isCraftingDiagnosticsEnabled() ? 0L : ae2qol$getServerTick();
                             // Process output items.
                             for (final IAEStack<?> outputItemStack : details.getCondensedAEOutputs()) {
                                 if (outputObservedAtTick > 0L) {
-                                    ae2qol$recordExpectedOutput(outputItemStack, outputObservedAtTick,
-                                            diagnosticSessionId);
+                                    ae2qol$recordExpectedOutput(
+                                        outputItemStack,
+                                        outputObservedAtTick,
+                                        diagnosticSessionId);
                                 }
                                 this.postChange(outputItemStack, this.machineSrc);
                                 this.waitingFor.add(outputItemStack.copy());
@@ -884,13 +900,14 @@ public abstract class MixinCraftingCPUCluster {
                             }
 
                             if (details.isCraftable()) {
-                                FMLCommonHandler.instance().firePlayerCraftingEvent(
+                                FMLCommonHandler.instance()
+                                    .firePlayerCraftingEvent(
                                         Platform.getPlayer((WorldServer) this.getWorld()),
                                         details.getOutput(craftingInventory, this.getWorld()),
                                         craftingInventory);
                                 for (int x = 0; x < craftingInventory.getSizeInventory(); x++) {
-                                    final ItemStack output = Platform.getContainerItem(
-                                            craftingInventory.getStackInSlot(x));
+                                    final ItemStack output = Platform
+                                        .getContainerItem(craftingInventory.getStackInSlot(x));
                                     if (output != null) {
                                         final IAEItemStack cItem = AEItemStack.create(output);
                                         this.postChange(cItem, this.machineSrc);
@@ -949,7 +966,7 @@ public abstract class MixinCraftingCPUCluster {
             }
 
         }
-for (CraftUpdateListener craftingStatusListener : craftUpdateListeners) {
+        for (CraftUpdateListener craftingStatusListener : craftUpdateListeners) {
             // if executed tasks is 0 for too much long time, we may need to send an alert in callback registered by
             // addon mods, like an email.
             craftingStatusListener.accept(executedTasks);
@@ -962,9 +979,9 @@ for (CraftUpdateListener craftingStatusListener : craftUpdateListeners) {
      * waitingFor 是 IItemList（同物品自动合并），按缩放后的总量各记账一次即可。
      * 诊断会话按本次 push 消耗 1 个（与原版 pushPattern 消耗一致，而非逐轮消耗）。
      *
-     * @param rounds 本轮实际完成的轮数
+     * @param rounds  本轮实际完成的轮数
      * @param details 合成样板
-     * @param task 任务对象（TaskProgress）
+     * @param task    任务对象（TaskProgress）
      */
     @Unique
     private void ae2qol$accountSmartPush(int rounds, ICraftingPatternDetails details, Object task) {
@@ -972,11 +989,11 @@ for (CraftUpdateListener craftingStatusListener : craftUpdateListeners) {
             return;
         }
         final CraftingDiagnosticSessionId diagnosticSessionId = ae2qol$consumeCraftSession(task);
-        final long outputObservedAtTick = diagnosticSessionId == null
-                || !this.isCraftingDiagnosticsEnabled() ? 0L : ae2qol$getServerTick();
+        final long outputObservedAtTick = diagnosticSessionId == null || !this.isCraftingDiagnosticsEnabled() ? 0L
+            : ae2qol$getServerTick();
         for (final IAEStack<?> outputItemStack : details.getCondensedAEOutputs()) {
             final IAEStack<?> total = outputItemStack.copy()
-                    .setStackSize(outputItemStack.getStackSize() * (long) rounds);
+                .setStackSize(outputItemStack.getStackSize() * (long) rounds);
             if (outputObservedAtTick > 0L) {
                 ae2qol$recordExpectedOutput(outputItemStack, outputObservedAtTick, diagnosticSessionId);
             }
@@ -986,4 +1003,3 @@ for (CraftUpdateListener craftingStatusListener : craftUpdateListeners) {
         }
     }
 }
-
