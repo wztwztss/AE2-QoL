@@ -62,6 +62,9 @@ public final class RecentCraftedOverlay {
 
     public void add(ItemStack stack, long amount) {
         if (stack == null) return;
+        // 诊断日志：每次合成完成一条，低频，便于定位"展示条不出现"类反馈
+        com.wztwzt.ae2_qof.MyMod.LOG
+            .info("[RecentCrafted] add: {} x{}", stack.getDisplayName(), amount);
         long now = System.currentTimeMillis();
         expire(now);
         // 同物品合并：数量累加并刷新保留时间

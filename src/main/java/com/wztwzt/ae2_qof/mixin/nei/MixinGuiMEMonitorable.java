@@ -59,14 +59,20 @@ public abstract class MixinGuiMEMonitorable {
     }
 
     /**
-     * 合成完成产物展示条（3.10.0）：仅标准 ME 终端显示——子类（合成/样板/接口/无线/
-     * 二合一终端等）按 getClass 精确排除。drawScreen 是 MC override 方法，运行时 SRG 名，
-     * 必须 remap=true 走 refmap；guiLeft/guiTop 经 GuiContainerAccessor 读取。
+     * 合成完成产物展示条（3.10.0）：显示于全部 GuiMEMonitorable 系终端（标准/合成/样板/
+     * 接口/无线终端），仅排除二合一终端（GuiMergedTerminal，右侧面板区域冲突）。
+     * 实测修正：原 getClass 精确匹配把合成终端等常用子类全部排除导致功能"不出现"。
+     * drawScreen 是 MC override 方法，运行时 SRG 名，必须 remap=true 走 refmap；
+     * guiLeft/guiTop 经 GuiContainerAccessor 读取。
      */
     @Inject(method = "drawScreen", at = @At("TAIL"), remap = true)
     private void ae2qol$drawRecentCrafted(int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
-        if (((Object) this).getClass() != GuiMEMonitorable.class) return;
+        if (((Object) this) instanceof com.wztwzt.ae2_qof.merged.GuiMergedTerminal) return;
         try {
+            if (!ae2qol$loggedDrawHook) {
+                ae2qol$loggedDrawHook = true;
+                com.wztwzt.ae2_qof.MyMod.LOG.info("[RecentCrafted] drawScreen hook active on {}", ((Object) this).getClass().getSimpleName());
+            }
             net.minecraft.client.gui.inventory.GuiContainer host = (net.minecraft.client.gui.inventory.GuiContainer) (Object) this;
             com.wztwzt.ae2_qof.mixin.GuiContainerAccessor acc = (com.wztwzt.ae2_qof.mixin.GuiContainerAccessor) host;
             RecentCraftedOverlay.INSTANCE.draw(host, acc.getGuiLeft(), acc.getGuiTop(), mouseX, mouseY);
@@ -80,10 +86,13 @@ public abstract class MixinGuiMEMonitorable {
         } catch (Throwable ignored) {}
     }
 
+    /** 一次性诊断标志：确认注入存活。 */
+    private static boolean ae2qol$loggedDrawHook = false;
+
     /** 产物格子点击提取：命中时吞掉点击，阻止穿透到被覆盖的第一行槽位。 */
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true, remap = true)
     private void ae2qol$clickRecentCrafted(int xCoord, int yCoord, int btn, CallbackInfo ci) {
-        if (((Object) this).getClass() != GuiMEMonitorable.class) return;
+        if (((Object) this) instanceof com.wztwzt.ae2_qof.merged.GuiMergedTerminal) return;
         try {
             net.minecraft.client.gui.inventory.GuiContainer host = (net.minecraft.client.gui.inventory.GuiContainer) (Object) this;
             com.wztwzt.ae2_qof.mixin.GuiContainerAccessor acc = (com.wztwzt.ae2_qof.mixin.GuiContainerAccessor) host;
