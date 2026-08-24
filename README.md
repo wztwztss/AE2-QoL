@@ -4,13 +4,13 @@
 
 **为 GTNH 打造的 AE2 效率增强模组**：把 NEI 配方一键推送进 AE 样板终端、从 NEI 面板直接提取 AE 网络物品、查看每个物品在 AE 网络中的存量与可合成状态、无线传输 AE 网络等。
 
-适配：GTNH 2.9.0-beta-1（Minecraft 1.7.10）| 当前版本：**3.8.1** | 作者：wztwzt
+适配：GTNH 2.9.0-beta-1（Minecraft 1.7.10）| 当前版本：**3.9.0** | 作者：wztwzt
 
 ---
 
 ## 📦 安装
 
-1. 将 `AE2-QoL-3.8.1.jar` 放入 `.minecraft/mods/`
+1. 将 `AE2-QoL-3.9.0.jar` 放入 `.minecraft/mods/`
 2. 确认已安装依赖：AE2（`rv3-beta-977-GTNH`）、ae2fc（`1.5.88-gtnh`）、NotEnoughItems（NEI）
 3. 启动游戏。配置会生成在 `config/` 下
 
@@ -104,6 +104,7 @@ AE 合成 CPU 完成一次合成任务时，屏幕右上角弹出**合成完成�
 **ME 接口**的 GUI 左侧新增**智能倍增**复选框（循环箭头按钮）。勾选后，合成 CPU 会把挂在接口上的样板**一次性推送 N 轮**材料，机器连做 N 轮再回来补料，补料不再逐轮等待，大幅加快 GT 流水线。
 
 - **N 的确定**：`N = min(剩余合成轮数, smart_doubling_max_rounds, 各输入槽可提取量/单轮量, 功率可支付轮数, 机器可吞轮数)`；GT/PH 仓由 CPU 侧模拟探测，ProgrammableHatches 双口输入仓内部按缓冲空间自取（`pushPatternMulti`）
+- **适用介质**：ME 接口、GT 样板输入总成/输入总线 (ME)（2714/2715）、GTNL 超级样板输入总成 (ME)（21504/21505，3.9.0 起）、ProgrammableHatches 双口输入仓、GTNL 超级二合一 ME 接口
 - **默认上限**：0 = 不限（一次发配剩余全部轮数；`config/ae2_qof/settings.json` 的 `smart_doubling_max_rounds`，范围 0~2147483647，改完自动热加载，也可在「Mods → AE2 QoL → Config」页面修改）
 - **安全边界**（自动退回逐轮推送，与原版行为完全一致）：假合成、流体接口、阻塞/智能阻塞模式、接口有滞留未推送物品、GT 直接吃样板的机器（`acceptsPlans`）；材料不足/功率不足时**按可提取轮数钳制 N**（而非整体放弃推送）
 - **能耗**：按实际推送轮数一次扣取；产出与剩余轮数按实际轮数记账，不会超产或丢物
@@ -127,7 +128,7 @@ AE 合成 CPU 完成一次合成任务时，屏幕右上角弹出**合成完成�
 
 ## 🕐 规划中
 
-- **21504 SuperDualInputHatchME 接入 CPU 合成介质研究**——ProgrammableHatches 超级二合一输入仓接入合成 CPU 作为合成介质的研究。
+- ~~**21504 SuperDualInputHatchME 接入 CPU 合成介质研究**~~ → 已于 3.9.0 完成（正确名称：GTNL `SuperCraftingInputHatchME` 超级样板输入总成 ME，21504/21505；原规划名 SuperDualInputHatchME 实为 22620 补货型机器，不可作合成介质）
 
 ---
 

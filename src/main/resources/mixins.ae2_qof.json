@@ -26,6 +26,7 @@
     "ae.MixinGuiSuperInterface",
     "ae.MixinGuiSuperDualInterface",
     "gt.MixinMTEHatchCraftingInputMEGui",
+    "gt.MixinSuperCraftingInputHatchMEGui",
     "gt.MixinDualInputHatchUI",
     "GuiContainerAccessor"
   ],

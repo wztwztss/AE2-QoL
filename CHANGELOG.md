@@ -1,3 +1,22 @@
+## 3.9.0 - GTNL 超级样板输入总成(ME) 接入智能倍增
+
+> 作者：wztwzt | 更新时间：2026-08-24 | 基于 3.8.1
+
+### 新增：21504/21505 超级样板输入总成 (ME) 智能倍增
+
+- GTNotLeisure「超级样板输入总成 (ME)」（meta 21504 流体版 / 21505 纯物品版，`SuperCraftingInputHatchME`）GUI 左下角新增「智能倍增」循环箭头开关，勾选后合成 CPU 对其一次性推送 N 轮材料
+- **勘误**：原规划中写作"21504 SuperDualInputHatchME"有误——SuperDualInputHatchME 是 GTNL 的补货型机器（22620），不可作合成介质；正确目标为 SuperCraftingInputHatchME
+- **实现说明（Why）**：能力层零改动即已支持——该机器 `extends MTEHatchInputBus`，既有 `MixinMTEHatchInputBus` 挂基类注入 `ISmartDoublingMedium` + NBT 持久化（saveNBTData/loadNBTData TAIL 经 super 链生效）；CPU 经能力接口自动走 GT pushPattern N× 分支（其缓冲单堆叠 Integer.MAX_VALUE 无上限、pushPattern 恒成功、isBusy() 恒 false 由 knownBusyMediums 冷却兜底）。唯一缺口是 GUI 开关：新增 `mixin/gt/MixinSuperCraftingInputHatchMEGui` 注入其 ModularUI `createBottomLeftCornerFlow` RETURN 追加同款 ToggleButton（BooleanSyncValue.allowC2S 直写 NBT 字段）
+- 兼容：GTNL 为可选依赖，mixin 目标类缺失时静默跳过；未安装零影响；lang 复用现有 `gui.ae2_qof.smart_doubling*`
+
+### 变更文件
+
+- 新增 `src/main/java/com/wztwzt/ae2_qof/mixin/gt/MixinSuperCraftingInputHatchMEGui.java`
+- `mixins.ae2_qof.json` client 列表注册
+- 版本号：`gradle.properties` + `mcmod.info`
+
+---
+
 ## 3.8.1 - 专用服务器网络包半注册崩溃修复（P0）
 
 > 作者：wztwzt | 更新时间：2026-08-24 | 基于 3.8.0

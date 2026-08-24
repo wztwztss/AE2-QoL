@@ -9,6 +9,7 @@
 | 智能倍增（核心逻辑） | `src/main/java/com/wztwzt/ae2_qof/mixin/ae/MixinCraftingCPUCluster.java` |
 | 智能倍增（GT 仓最大轮数） | `src/main/java/com/wztwzt/ae2_qof/mixin/gt/MixinMTEHatchInputBus.java` |
 | 智能倍增（UI 开关） | `src/main/java/com/wztwzt/ae2_qof/mixin/gt/MixinMTEHatchCraftingInputMEGui.java` |
+| 智能倍增（GTNL 超级样板输入总成 GUI 开关，21504/21505） | `src/main/java/com/wztwzt/ae2_qof/mixin/gt/MixinSuperCraftingInputHatchMEGui.java` |
 | 智能倍增（配置） | `src/main/java/com/wztwzt/ae2_qof/Config.java` → `smartDoublingMaxRounds` |
 | 智能倍增（C2S 开关包） | `src/main/java/com/wztwzt/ae2_qof/network/SmartDoublingTogglePacket.java` |
 | 强化 IO 端口 | `src/main/java/com/wztwzt/ae2_qof/tile/TileExIOPort.java` |
@@ -40,6 +41,7 @@
 | 智能倍增（CPU 主循环接管） | `mixins.ae2_qof.json` | `mixin/ae/MixinCraftingCPUCluster.java` | `appeng.crafting.CraftingCPUCluster` | HEAD+cancellable；`knownBusyMediums` 冷却防止重复推送 |
 | 智能倍增（GT 仓 `getMaxMultiplier`） | `mixins.ae2_qof.json` | `mixin/gt/MixinMTEHatchInputBus.java` | `gregtech.common.tileentities.hatches.crafting.MTEHatchInputBus` | 返回 `Integer.MAX_VALUE`（不限） |
 | 智能倍增（GT 仓 GUI 开关） | `mixins.ae2_qof.json` | `mixin/gt/MixinMTEHatchCraftingInputMEGui.java` | — | GT 样板输入机 GUI 添加倍增开关按钮 |
+| 智能倍增（GTNL 超级样板输入总成 GUI 开关） | `mixins.ae2_qof.json` | `mixin/gt/MixinSuperCraftingInputHatchMEGui.java` | `com.science.gtnl.common.gui.modularui.SuperCraftingInputHatchMEGui` | 3.9.0；createBottomLeftCornerFlow RETURN 追加 ToggleButton；GTNL 缺失静默跳过 |
 | 智能倍增（PH 仓开关） | `mixins.ae2_qof.json` | `mixin/gt/MixinDualInputHatchUI.java` | — | PH 仓 GUI 添加倍增开关按钮 |
 | 强化 IO 端口 | `mixins.ae2_qof.json` | `mixin/ae/MixinTileIOPort.java` | `appeng.tile.misc.TileIOPort` | @ModifyVariable 倍率 |
 | 合成提交/完成 | `mixins.ae2_qof.json` | `mixin/ae/MixinGuiCraftConfirm.java` | `appeng.client.gui.crafting.GuiCraftConfirm` | submitJob/completeJob |

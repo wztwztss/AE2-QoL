@@ -8,7 +8,11 @@
 > 3. 参考其他模组Mixin实现：`E:\wzt\MC\modcreater\reference_src`
 
 ## Mixin清单
-- [ ] 待填充
+> 历史存量 Mixin 待补登记（见 `docs/MOD_MAP.md` Mixin 列表先行索引）；以下为登记起点。
+
+| Mixin 类路径 | 目标类 | 注入点 | 风险/说明 |
+|---|---|---|---|
+| `src/main/java/com/wztwzt/ae2_qof/mixin/gt/MixinSuperCraftingInputHatchMEGui.java` | GTNL `com.science.gtnl.common.gui.modularui.SuperCraftingInputHatchMEGui`（21504/21505 超级样板输入总成 ME） | `<init>` TAIL 捕获机器引用；`createBottomLeftCornerFlow` RETURN 追加智能倍增 ToggleButton | 3.9.0 新增。GTNL 可选依赖（compileOnly），目标类缺失时静默跳过；开关经 `BooleanSyncValue.allowC2S()` 双向同步直写 `MixinMTEHatchInputBus` 注入的 NBT 字段；注入点签名已在参考源码 `reference_src/GT-Not-Leisure-dev-290/.../SuperCraftingInputHatchMEGui.java:137` 核实 |
 
 ## 已知风险
 > 记录容易踩坑、会和其他模组冲突的注入点

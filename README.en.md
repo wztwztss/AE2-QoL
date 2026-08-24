@@ -4,13 +4,13 @@
 
 An **AE2 quality-of-life enhancement mod** for GTNH: push NEI recipes into AE pattern terminals with one click, extract AE network items directly from the NEI panel, view each item's stock and craftability in the AE network, and wirelessly transmit AE networks.
 
-Compat: GTNH 2.9.0-beta-1 (Minecraft 1.7.10) | Current version: **3.8.1** | Author: wztwzt
+Compat: GTNH 2.9.0-beta-1 (Minecraft 1.7.10) | Current version: **3.9.0** | Author: wztwzt
 
 ---
 
 ## 📦 Installation
 
-1. Put `AE2-QoL-3.8.1.jar` into `.minecraft/mods/`
+1. Put `AE2-QoL-3.9.0.jar` into `.minecraft/mods/`
 2. Make sure dependencies are installed: AE2 (`rv3-beta-977-GTNH`), ae2fc (`1.5.88-gtnh`), NotEnoughItems (NEI)
 3. Launch the game. Config is generated under `config/`
 
@@ -104,6 +104,7 @@ In AE2 / ae2fc terminal GUIs, hover over an item and press **F** → automatical
 A new **Smart Doubling** checkbox (cycle-arrow icon) on the left of the **ME Interface** GUI. When enabled, the crafting CPU pushes **N rounds** of a pattern's inputs to the interface at once, so the machine processes N rounds before refilling — no more one-round-at-a-time refills, greatly speeding up GT pipelines.
 
 - **N is determined by**: `N = min(remaining craft rounds, smart_doubling_max_rounds, extractable per input slot / per round, power-payable rounds, max rounds the machine can accept)`; GT/PH hatches are probed CPU-side, ProgrammableHatches dual-input hatches self-limit by internal buffer space (`pushPatternMulti`)
+- **Applicable media**: ME Interface, GT Crafting Input Hatch/Bus (ME) (2714/2715), GTNL Super Crafting Input Hatch (ME) (21504/21505, since 3.9.0), ProgrammableHatches dual-input hatch, GTNL Super Dual ME Interface
 - **Default cap**: 0 = unlimited (dispatch all remaining rounds at once; `smart_doubling_max_rounds` in `config/ae2_qof/settings.json`, range 0–2147483647, hot-reloaded automatically or editable via the in-game Config page)
 - **Safety boundaries** (falls back to one-round behavior, identical to vanilla): fake crafting, fluid interfaces, blocking/conditional blocking mode, interface with pending un-pushed items, GT machines that accept plans directly (`acceptsPlans`); when materials/power are short, N is **clamped to the extractable rounds** instead of abandoning the push
 - **Energy**: charged once for the actually-pushed rounds; outputs and remaining rounds are accounted for the actual count — no overproduction or item loss
@@ -128,7 +129,7 @@ A new wired block that merges the **pattern encoding panel** with the **interfac
 
 ## 🕐 Planned
 
-- **21504 SuperDualInputHatchME as a CPU crafting medium research** — research on hooking ProgrammableHatches' SuperDualInputHatch into the crafting CPU as a crafting medium.
+- ~~**21504 SuperDualInputHatchME as a CPU crafting medium research**~~ → Done in 3.9.0 (correct name: GTNL `SuperCraftingInputHatchME`, Super Crafting Input Hatch ME, meta 21504/21505; the originally named SuperDualInputHatchME is actually a restock-type machine at 22620 and cannot be a crafting medium).
 
 ---
 
