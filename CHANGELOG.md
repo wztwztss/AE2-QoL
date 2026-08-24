@@ -1,3 +1,36 @@
+## 3.10.0 - 合成完成产物终端第一行展示 + 中键下单放宽 + ModularUI tooltip 换行真修复
+
+> 作者：wztwzt | 更新时间：2026-08-24 | 基于 3.9.0
+
+### 新增：合成完成产物展示条（终端第一行，保留 60 秒）
+
+- 合成 CPU 完成订单后，产物自动显示在**标准 ME 终端第一行**（搜索框下方，模仿标记区视觉：半透明底 + 物品图标 + 数量），每条保留 **60 秒**后消失（最后 5 秒渐隐）
+- 与右上角横幅并存：横幅即时提醒，第一行持续展示；数据同源（CraftingCompletePacket）
+- **点击格子提取一组到背包**（复用提取链路，失败走既有聊天提示）；悬停显示物品名 ×数量
+- 同物品新完成时合并数量并刷新保留时间；满 9 格顶掉最旧；仅标准 `GuiMEMonitorable` 显示（合成/样板/接口/无线/二合一终端等子类不显示，`getClass` 精确排除）
+- 纯客户端实现（`client/render/RecentCraftedOverlay` + `MixinGuiMEMonitorable` drawScreen/mouseClicked 注入），覆盖期间原第一行物品不可点（过期即恢复）
+- 已知取舍：展示条占据第一行的 60 秒内无法点击该行的网络物品
+
+### 修复：NEI 中键下单对「仅有样板」物品无效
+
+- **根因**：`NetworkInventoryCache.put()` 把 `stackSize<=0` 一律当"已移除"删除条目——而 AE2 同步列表中「仅有样板、网络无存量」的物品正是 `stackSize=0 + craftable=true` 形式，永不进缓存 → 客户端 `isCraftable()` 恒 false → 中键在 `MixinPanelWidgetClick.handleCraftRequest` 被拦截不发包。只有网络实际存有物品（count>0）时才工作
+- **修复**：`put()`/`putFluid()` 对 `stackSize<=0 且 craftable` 保留条目（count=0）——中键对有样板的物品即可下单；tooltip/书签角标渲染端本就按 `count>0` 才显示数量、craftable 独立显示绿色 +Craft，无需改动；服务端 `RequestCraftingPacket` 早已用 `getCraftingFor` 支持样板下单，未改
+
+### 修复：PH/GTNL/GT 智能倍增按钮 tooltip 换行（真根因）
+
+- **根因（勘误 3.9.0 的判断）**：Java `split("\\n")` 的参数是正则——`\n` 在正则中转义为**真实换行符 LF**，并非字面反斜杠+n！lang 文件里的字面 `\n` 从未被拆开，**3.3.7 的换行"修复"实际从未生效**（`String.replace("\\n","\n")` 非正则才是正确写法）
+- **修复**：GT 样板输入机 / PH 双口输入仓 / GTNL 超级样板输入总成三个 ModularUI mixin 统一改用 `TooltipTextButton.langLines(key).split("\n")`（先字面替换再按 LF 拆行）
+
+### 变更文件
+
+- 新增 `client/render/RecentCraftedOverlay.java`
+- `mixin/nei/MixinGuiMEMonitorable.java`（+drawScreen/mouseClicked 注入）、`network/CraftingCompletePacket` 客户端处理（ClientProxy.handleCraftingComplete 接入展示条）
+- `client/NetworkInventoryCache.java`（craftable-only 保留）、三个 `mixin/gt/*Gui` 换行修复
+- `client/render/CraftingNotificationOverlay.getRenderItem` 改 public 共享
+- 版本号：`gradle.properties` + `mcmod.info`
+
+---
+
 ## 3.9.0 - GTNL 超级样板输入总成(ME) 接入智能倍增
 
 > 作者：wztwzt | 更新时间：2026-08-24 | 基于 3.8.1

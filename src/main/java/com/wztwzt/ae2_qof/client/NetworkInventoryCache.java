@@ -45,27 +45,30 @@ public final class NetworkInventoryCache {
 
     /**
      * 写入一条 AE 物品数据（从 postUpdate 调用）。
-     * stackSize == 0 表示该物品已从网络移除。
+     * stackSize == 0 表示该物品已从网络移除——但 AE2 同步列表中
+     * 「仅有样板、网络无存量」的物品正是 stackSize=0 + craftable=true 的形式，
+     * 必须保留（count=0），否则 NEI 面板中键下单（isCraftable）永远拦截（3.10.0 修复）。
+     * 仅 stackSize<=0 且不可合成才真正移除。
      */
     public static void put(int itemId, int damage, int count, boolean craftable, long stackSize) {
         long key = key(itemId, damage);
-        if (stackSize <= 0) {
+        if (stackSize <= 0 && !craftable) {
             cache.remove(key);
         } else {
-            cache.put(key, new CacheEntry(stackSize, craftable));
+            cache.put(key, new CacheEntry(Math.max(0, stackSize), craftable));
         }
         lastUpdateTick = System.currentTimeMillis();
     }
 
     /**
      * 写入一条 AE 流体数据（从 postUpdate 调用）。
-     * stackSize == 0 表示该流体已从网络移除。
+     * stackSize == 0 表示该流体已从网络移除——craftable 流体同理保留（见 {@link #put}）。
      */
     public static void putFluid(String fluidName, long stackSize, boolean craftable) {
-        if (stackSize <= 0) {
+        if (stackSize <= 0 && !craftable) {
             fluidCache.remove(fluidName);
         } else {
-            fluidCache.put(fluidName, new CacheEntry(stackSize, craftable));
+            fluidCache.put(fluidName, new CacheEntry(Math.max(0, stackSize), craftable));
         }
         lastUpdateTick = System.currentTimeMillis();
     }

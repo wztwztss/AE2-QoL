@@ -36,7 +36,8 @@ public class CraftingNotificationOverlay {
     /** 复用的 RenderItem（#52）：优先取 GuiScreen.itemRender 静态实例，dev 名与 SRG 名都试；均失败才自建。 */
     private static RenderItem renderItem;
 
-    private static RenderItem getRenderItem() {
+    /** 供本项目其他 overlay 复用（3.10.0 RecentCraftedOverlay），单例缓存避免热路径反复反射。 */
+    public static RenderItem getRenderItem() {
         if (renderItem != null) {
             return renderItem;
         }

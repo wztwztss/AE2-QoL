@@ -1,7 +1,5 @@
 package com.wztwzt.ae2_qof.mixin.gt;
 
-import net.minecraft.util.StatCollector;
-
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -48,10 +46,11 @@ public abstract class MixinDualInputHatchUI {
         ToggleButton btn = new ToggleButton().value(smartDoublingSync)
             .overlay(GTGuiTextures.OVERLAY_BUTTON_PATTERN_OPTIMIZE)
             .pos(7, 62);
-        btn.addTooltipLine(StatCollector.translateToLocal("gui.ae2_qof.smart_doubling"));
-        // lang 中的 \n 不会被 ModularUI 自动拆行，手动按 \n 拆成多行。
-        for (String line : StatCollector.translateToLocal("gui.ae2_qof.smart_doubling.hint")
-            .split("\\n")) {
+        // langLines 先把字面 \n 替换为真实换行再按行拆分——split("\\n") 正则语义匹配真实 LF，
+        // 拆不开 lang 里的字面 \n（历史 bug，与 GT 样板输入机 mixin 同款修复）。
+        btn.addTooltipLine(com.wztwzt.ae2_qof.client.gui.TooltipTextButton.langLines("gui.ae2_qof.smart_doubling"));
+        for (String line : com.wztwzt.ae2_qof.client.gui.TooltipTextButton.langLines("gui.ae2_qof.smart_doubling.hint")
+            .split("\n")) {
             btn.addTooltipLine(line);
         }
         return btn;
