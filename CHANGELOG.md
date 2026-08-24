@@ -1,3 +1,26 @@
+## 3.8.1 - 专用服务器网络包半注册崩溃修复（P0）
+
+> 作者：wztwzt | 更新时间：2026-08-24 | 基于 3.8.0
+
+### 修复（🔴 P0，仅专用服务器必现）
+
+- **#74** 二合一终端在专用服务器上「转移合成表 / 切换处理模式 / 上传装配矩阵」全部踢人：`Undefined message for discriminator 17 in channel ae2apu`
+- **根因**：S2C 包 Handler 类内直接引用 client 专属类型——`Minecraft.thePlayer` 的字段声明类型为 `net.minecraft.client.entity.EntityClientPlayerMP`。注册 Handler 时 `SimpleNetworkWrapper.instantiate()` → `Class.newInstance()` 触发类链接验证，验证器解析方法体中该字段引用 → 专用服 JVM 无此类 → `NoClassDefFoundError`
+- **半注册**：异常被 `MyMod.preInit` 的 try/catch 吞掉，注册在 discriminator 11（CraftingResponsePacket）处中断，11~25 共 15 个包未注册；已存活的 C2S 仅 0/2/3/4/7/9/10（故 NEI 上传/提取/下单正常，极具迷惑性）；客户端发送 id=17（MergedTerminalActionPacket）即 Undefined 踢人
+- **单机为何不复现**：单人/局域网同 JVM 含 client 类，全量注册成功。此 bug 对一切专用服必现
+- **修复模式**：10 个 S2C Handler 全部改为「壳 + proxy 分发」——`onMessage` 仅剩 `if (ctx.side == Side.CLIENT) MyMod.proxy.handleXxx(message)`，经 `CommonProxy` 声明类型虚分派到 `ClientProxy` override 实现（归队 `func_152344_a` + 原 client 逻辑整体搬迁）。network 包内零 client 类型引用，编译期保证
+- **顺带修复**：CraftingResponsePacket / ReplaceCandidatesPacket 此前未归队客户端主线程（审查遗留 ⚠️），本次随搬迁统一归队
+- **fail-fast 加固**：`MyMod.preInit` 网络注册失败从"吞异常继续运行"改为直接抛出——半注册比启动失败危害大得多
+- 消息类字段 private → public（Handler 逻辑迁至 ClientProxy 后需跨包访问）
+
+### 变更文件
+
+- `network/`：ProvidersListS2C、WirelessChannelSync、WirelessHighlight、SwapPattern、CraftingResponse、CraftingComplete、ConfigUpdate、MergedTerminalResult、MergedTerminalBlankCount、ReplaceCandidates 共 10 个包
+- `CommonProxy.java`（+10 分发空方法）、`ClientProxy.java`（+10 override 实现）、`MyMod.java`（fail-fast）
+- 版本号：`gradle.properties` + `mcmod.info`
+
+---
+
 ## 3.8.0 - 全量 Tooltip + GuideNH 游戏内指南集成
 
 > 作者：wztwzt | 更新时间：2026-08-23 | 基于 3.7.0
@@ -303,11 +326,14 @@
 | 71 | 智能倍增 PH 介质记账缺陷（审查登记 #44）：`useMulti` 时按 **1 轮量**提取材料，若 `pushPatternMulti` 返回 `accepted==0`（介质忙/缓冲满）回退 `pushPattern` 单发成功后，因 `effectiveN>1` 走 GT 倍增分支 → 实际只交付 1 轮材料却**扣 N 轮功率、executedTasks+=N、taskValue-=N** → 合成少产出 N-1 轮、白扣 (N-1)×sum 功率、任务提前假完成。修复：倍增记账判定改为 `!useMulti && effectiveN>1`，useMulti 回退走原版逐轮路径（按实际交付的 1 轮记账） | `mixin/ae/MixinCraftingCPUCluster.java` executeCrafting 倍增回退分支 | 🔴 | ✅ 已修复（2026-08-23） |
 | 72 | 审查登记 #58 复核结论：智能倍增所有退出路径（3 处提前 return、break 跳出后方法尾部 L941）均已有 `parallelismProvider.put` 回写，静态审查疑虑不成立，无需修改 | `mixin/ae/MixinCraftingCPUCluster.java` | 🟢 | ✅ 已复核无问题（2026-08-23） |
 | 73 | 智能倍增大订单（如 1T）客户端无响应：GT `MTEHatchCraftingInputME.isBusy()` 始终返回 false → `knownBusyMediums` 永远不被填充 → do-while 循环每 tick 重复推送 `effectiveN` 轮（可达 Integer.MAX_VALUE），ME 网络每 tick 大额 extractItems + postChange → 客户端被海量物品更新淹没。修复：① `ae2qol$executeCraftingSmart` 开头 `knownBusyMediums.clear()` 重置跨 tick 残留；② GT/PH 路径倍增推送成功后 `knownBusyMediums.add(medium)` 冷却，防止同 tick 重复推送 | `mixin/ae/MixinCraftingCPUCluster.java` executeCraftingSmart + GT/PH 推送分支 | 🔴 | ✅ 已修复（2026-08-23） |
+| 74 | **专用服务器网络包半注册**：10 个 S2C Handler 类内直引 client 类型（致命点为 `mc.thePlayer`——其字段声明类型 `EntityClientPlayerMP` 仅客户端存在）。注册时 `SimpleNetworkWrapper.instantiate()` 触发类链接验证 → 解析该字段引用失败 → `NoClassDefFoundError`，被 `MyMod.preInit` try/catch 吞掉后**注册在 id=11 处中断，id≥11 共 15 个包未注册**。症状：专用服上 NEI 上传/提取正常（id<11），但二合一终端「转移合成表/切模式/AM 上传」（id=17 MergedTerminalActionPacket）全部 `Undefined message for discriminator 17` 踢人；单机永不复现（JVM 含 client 类）。修复：① 10 个 Handler 全部壳化——onMessage 仅经 `MyMod.proxy`（声明类型 CommonProxy）分发到 ClientProxy override 实现，network 包零 client 引用（编译期保证）；② 顺带统一 CraftingResponse/ReplaceCandidates 的主线程归队（审查遗留 ⚠️）；③ MyMod 注册 fail-fast（半注册宁可启动失败） | `network/` 全部 10 个 S2C 包 + `CommonProxy.java` + `ClientProxy.java` + `MyMod.java:42-53` | 🔴 | ✅ 已修复（2026-08-24 云面板服实测崩溃定位） |
 
 # 回滚指南
 
 | 目标版本 | 使用 jar | 说明 |
 |---|---|---|
+| 3.8.1（当前） | `build/libs/AE2-QoL-3.8.1.jar` | 专用服务器 P0 修复：S2C Handler 壳化 + proxy 分发（#74），修复半注册踢人 |
+| 3.8.0 | `build/libs/AE2-QoL-3.8.0.jar` | 全量 Tooltip + GuideNH 游戏内指南（**专用服务器存在 #74 踢人 bug，勿用于专用服**） |
 | 3.6.1（当前） | `build/libs/AE2-QoL-3.6.1.jar` | 深度审查修复批次：智能倍增冷却/探测优化、网络包安全钳制、S2C 归队、高亮开关专用服修复、渲染热路径优化、缓存时间窗过期 |
 | 3.6.0 | `build/libs/AE2-QoL-3.6.0.jar` | 面板体验升级：样板回读二次编辑 / 编辑快照持久化 / PH 编程工具箱适配 / 装配矩阵上传按钮 / 流体解析严格匹配修复 / 数量上限移除与输出格禁编 |
 | 3.5.1 | `build/libs/AE2-QoL-3.5.1.jar` | 二合一终端修复：openContext NPE 崩溃 / NEI 返回错位 / 处理样板改终极样板 / 网络拉空白样板 / NEI「+」填充与 `↓` 读回 / 隐藏 NEI 面板 |

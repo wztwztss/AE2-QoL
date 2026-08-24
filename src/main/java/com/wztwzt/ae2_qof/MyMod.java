@@ -41,12 +41,10 @@ public class MyMod {
     // GameRegistry." (Remove if not needed)
     public void preInit(FMLPreInitializationEvent event) {
         proxy.preInit(event);
-        try {
-            ModNetwork.registerPackets();
-        } catch (Throwable t) {
-            LOG.error("[DIAG] ModNetwork.registerPackets() FAILED", t);
-            t.printStackTrace(System.err);
-        }
+        // 网络包注册必须完整：半注册（部分 discriminator 缺失）会导致玩家操作时被
+        // "Undefined message for discriminator N" 踢出服务器，且极难排查（#74）。
+        // 因此这里 fail-fast——注册失败直接抛出，宁可启动失败也不带病运行。
+        ModNetwork.registerPackets();
         // 玩家登录时推送当前配置，供配置页面显示服务端真实值（该事件走 FML 总线，仅服务端触发）。
         FMLCommonHandler.instance()
             .bus()

@@ -1,12 +1,11 @@
 package com.wztwzt.ae2_qof.network;
 
-import net.minecraft.client.Minecraft;
-
-import com.wztwzt.ae2_qof.client.ClientState;
+import com.wztwzt.ae2_qof.MyMod;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import cpw.mods.fml.relauncher.Side;
 import io.netty.buffer.ByteBuf;
 
 /**
@@ -14,10 +13,11 @@ import io.netty.buffer.ByteBuf;
  * <p>
  * 空白样板槽显示网络内空白样板的总数量（与其它编码终端共享、动态变化），
  * 数量变化时由服务端 detectAndSendChanges 推送一次。
+ * Handler 仅作分发：客户端真逻辑在 ClientProxy.handleMergedTerminalBlankCount（#74）。
  */
 public class MergedTerminalBlankCountPacket implements IMessage {
 
-    private long count;
+    public long count;
 
     public MergedTerminalBlankCountPacket() {
         this.count = 0;
@@ -41,12 +41,9 @@ public class MergedTerminalBlankCountPacket implements IMessage {
 
         @Override
         public IMessage onMessage(MergedTerminalBlankCountPacket message, MessageContext ctx) {
-            Minecraft mc = Minecraft.getMinecraft();
-            if (mc == null) {
-                return null;
+            if (ctx.side == Side.CLIENT) {
+                MyMod.proxy.handleMergedTerminalBlankCount(message);
             }
-            final long count = message.count;
-            mc.func_152344_a(() -> ClientState.mergedBlankCount = count);
             return null;
         }
     }

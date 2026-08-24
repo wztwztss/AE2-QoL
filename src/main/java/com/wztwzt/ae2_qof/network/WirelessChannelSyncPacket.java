@@ -3,18 +3,17 @@ package com.wztwzt.ae2_qof.network;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.client.Minecraft;
-
-import com.wztwzt.ae2_qof.wireless.gui.GuiWireless;
+import com.wztwzt.ae2_qof.MyMod;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import cpw.mods.fml.relauncher.Side;
 import io.netty.buffer.ByteBuf;
 
 public class WirelessChannelSyncPacket implements IMessage {
 
-    private List<String> channels;
+    public List<String> channels;
 
     public WirelessChannelSyncPacket() {
         this.channels = new ArrayList<String>();
@@ -58,18 +57,10 @@ public class WirelessChannelSyncPacket implements IMessage {
     public static class Handler implements IMessageHandler<WirelessChannelSyncPacket, IMessage> {
 
         @Override
-        public IMessage onMessage(final WirelessChannelSyncPacket message, MessageContext ctx) {
-            Minecraft.getMinecraft()
-                .func_152344_a(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        net.minecraft.client.gui.GuiScreen screen = Minecraft.getMinecraft().currentScreen;
-                        if (screen instanceof GuiWireless) {
-                            ((GuiWireless) screen).syncChannelList(message.channels);
-                        }
-                    }
-                });
+        public IMessage onMessage(WirelessChannelSyncPacket message, MessageContext ctx) {
+            if (ctx.side == Side.CLIENT) {
+                MyMod.proxy.handleWirelessChannelSync(message);
+            }
             return null;
         }
     }

@@ -4,7 +4,6 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
 import net.minecraft.nbt.NBTTagCompound;
@@ -30,7 +29,7 @@ import io.netty.buffer.ByteBuf;
 
 public class SwapPatternPacket implements IMessage {
 
-    private List<IAEStack<?>> slotStacks;
+    public List<IAEStack<?>> slotStacks;
 
     public SwapPatternPacket() {}
 
@@ -119,7 +118,9 @@ public class SwapPatternPacket implements IMessage {
             if (ctx.side == cpw.mods.fml.relauncher.Side.SERVER) {
                 return handleServer(message, ctx);
             }
-            return handleClient(message);
+            // 客户端分支经 proxy 分发（#74）：Handler 内不得出现 client 类引用
+            MyMod.proxy.handleSwapPattern(message);
+            return null;
         }
 
         private IMessage handleServer(SwapPatternPacket message, MessageContext ctx) {
@@ -200,67 +201,6 @@ public class SwapPatternPacket implements IMessage {
                 result.add(outputs.getAEStackInSlot(i));
             }
             return new SwapPatternPacket(result);
-        }
-
-        private IMessage handleClient(SwapPatternPacket message) {
-            Minecraft mc = Minecraft.getMinecraft();
-            if (mc == null) {
-                return null;
-            }
-            // 归队到客户端主线程执行，避免 Netty IO 线程操作容器
-            mc.func_152344_a(() -> {
-                try {
-                    applyClientSwap(message);
-                } catch (Throwable e) {
-                    MyMod.LOG.error("Swap pattern apply failed on client", e);
-                }
-            });
-            return null;
-        }
-
-        private void applyClientSwap(SwapPatternPacket message) {
-            if (message.slotStacks == null) {
-                return;
-            }
-            Minecraft mc = Minecraft.getMinecraft();
-            if (mc == null || mc.thePlayer == null) {
-                return;
-            }
-            Container container = mc.thePlayer.openContainer;
-            if (container == null) {
-                return;
-            }
-
-            IAEStack<?>[] outputSlots = null;
-            IAEStackInventory clientOutputs = null;
-
-            if (container instanceof ContainerPatternTerm pt) {
-                outputSlots = pt.outputSlotsClient;
-                try {
-                    Field outputsField = ContainerPatternTerm.class.getDeclaredField("outputs");
-                    outputsField.setAccessible(true);
-                    clientOutputs = (IAEStackInventory) outputsField.get(pt);
-                } catch (Throwable ignored) {}
-            } else if (container instanceof ContainerPatternTermEx pte) {
-                outputSlots = pte.outputSlotsClient;
-                try {
-                    Field outputsField = ContainerPatternTermEx.class.getDeclaredField("outputs");
-                    outputsField.setAccessible(true);
-                    clientOutputs = (IAEStackInventory) outputsField.get(pte);
-                } catch (Throwable ignored) {}
-            }
-
-            if (outputSlots == null) {
-                return;
-            }
-
-            for (int i = 0; i < Math.min(message.slotStacks.size(), outputSlots.length); i++) {
-                IAEStack<?> aeStack = message.slotStacks.get(i);
-                outputSlots[i] = aeStack;
-                if (clientOutputs != null) {
-                    clientOutputs.putAEStackInSlot(i, aeStack);
-                }
-            }
         }
 
         private IActionHost resolveTerminal(Container container) {

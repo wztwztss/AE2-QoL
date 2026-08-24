@@ -5,6 +5,16 @@ import com.wztwzt.ae2_qof.item.ItemInfinityWaterLavaCell;
 import com.wztwzt.ae2_qof.merged.BlockMergedTerminal;
 import com.wztwzt.ae2_qof.merged.MergedGuiHandler;
 import com.wztwzt.ae2_qof.merged.TileMergedTerminal;
+import com.wztwzt.ae2_qof.network.ConfigUpdatePacket;
+import com.wztwzt.ae2_qof.network.CraftingCompletePacket;
+import com.wztwzt.ae2_qof.network.CraftingResponsePacket;
+import com.wztwzt.ae2_qof.network.MergedTerminalBlankCountPacket;
+import com.wztwzt.ae2_qof.network.MergedTerminalResultPacket;
+import com.wztwzt.ae2_qof.network.ProvidersListS2CPacket;
+import com.wztwzt.ae2_qof.network.ReplaceCandidatesPacket;
+import com.wztwzt.ae2_qof.network.SwapPatternPacket;
+import com.wztwzt.ae2_qof.network.WirelessChannelSyncPacket;
+import com.wztwzt.ae2_qof.network.WirelessHighlightPacket;
 import com.wztwzt.ae2_qof.tile.TileExIOPort;
 import com.wztwzt.ae2_qof.wireless.WirelessBlockEventListener;
 import com.wztwzt.ae2_qof.wireless.WirelessBlocks;
@@ -118,6 +128,32 @@ public class CommonProxy {
     public void serverStarting(FMLServerStartingEvent event) {
         event.registerServerCommand(new CommandAe2QoL());
     }
+
+    // ===== S2C 包客户端处理分发（#74）=====
+    // 专用服务器 JVM 没有 client 类：S2C Handler 若直接引用 Minecraft/thePlayer，
+    // 注册时 Class.newInstance 触发类验证即抛 NoClassDefFoundError，导致网络包半注册。
+    // Handler 只经 MyMod.proxy（声明类型 CommonProxy）分发；真逻辑在 ClientProxy override。
+    // 消息类本体仅含 ItemStack/NBT 等 common 类型，此处 import 安全。
+
+    public void handleProvidersList(ProvidersListS2CPacket message) {}
+
+    public void handleWirelessChannelSync(WirelessChannelSyncPacket message) {}
+
+    public void handleWirelessHighlight(WirelessHighlightPacket message) {}
+
+    public void handleSwapPattern(SwapPatternPacket message) {}
+
+    public void handleCraftingResponse(CraftingResponsePacket message) {}
+
+    public void handleCraftingComplete(CraftingCompletePacket message) {}
+
+    public void handleConfigUpdate(ConfigUpdatePacket message) {}
+
+    public void handleMergedTerminalResult(MergedTerminalResultPacket message) {}
+
+    public void handleMergedTerminalBlankCount(MergedTerminalBlankCountPacket message) {}
+
+    public void handleReplaceCandidates(ReplaceCandidatesPacket message) {}
 
     private void registerRecipes() {
         try {

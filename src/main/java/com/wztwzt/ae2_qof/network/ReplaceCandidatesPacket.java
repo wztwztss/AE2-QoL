@@ -7,22 +7,24 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 
-import com.wztwzt.ae2_qof.client.ClientState;
+import com.wztwzt.ae2_qof.MyMod;
 
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import cpw.mods.fml.relauncher.Side;
 import io.netty.buffer.ByteBuf;
 
 /**
  * 二合一终端面板：替换候选列表回传（S2C），客户端缓存供 tooltip 预览。
  * currentIndex 为当前槽内物品在候选序列中的位置（-1 表示不在其中）。
+ * Handler 仅作分发：客户端真逻辑在 ClientProxy.handleReplaceCandidates（#74）。
  */
 public class ReplaceCandidatesPacket implements IMessage {
 
-    private List<ItemStack> candidates;
-    private int currentIndex;
+    public List<ItemStack> candidates;
+    public int currentIndex;
 
     public ReplaceCandidatesPacket() {
         this.candidates = new ArrayList<ItemStack>();
@@ -74,8 +76,9 @@ public class ReplaceCandidatesPacket implements IMessage {
 
         @Override
         public IMessage onMessage(ReplaceCandidatesPacket message, MessageContext ctx) {
-            ClientState.replaceCandidates = message.candidates;
-            ClientState.replaceCurrentIndex = message.currentIndex;
+            if (ctx.side == Side.CLIENT) {
+                MyMod.proxy.handleReplaceCandidates(message);
+            }
             return null;
         }
     }

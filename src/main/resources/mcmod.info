@@ -1,10 +1,10 @@
-{
+﻿{
 	"modListVersion": 2,
 	"modList": [{
 		"modid": "ae2_qof",
 		"name": "AE2 QoL",
 		"description": "AE2 quality-of-life enhancements: auto pattern upload, wireless access, pattern terminal improvements, and NEI inventory overlay.",
-		"version": "3.8.0",
+		"version": "3.8.1",
 		"mcversion": "1.7.10",
 		"url": "",
 		"updateUrl": "",

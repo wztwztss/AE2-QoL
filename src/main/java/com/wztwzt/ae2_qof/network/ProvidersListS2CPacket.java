@@ -3,24 +3,21 @@ package com.wztwzt.ae2_qof.network;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
-
-import com.wztwzt.ae2_qof.client.ClientState;
-import com.wztwzt.ae2_qof.client.gui.GuiProviderSelect;
+import com.wztwzt.ae2_qof.MyMod;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import cpw.mods.fml.relauncher.Side;
 import io.netty.buffer.ByteBuf;
 
 public class ProvidersListS2CPacket implements IMessage {
 
-    private List<Long> ids;
-    private List<String> names;
-    private List<Integer> emptySlots;
-    private String recipeMap;
-    private boolean forceGui;
+    public List<Long> ids;
+    public List<String> names;
+    public List<Integer> emptySlots;
+    public String recipeMap;
+    public boolean forceGui;
 
     public ProvidersListS2CPacket() {
         this.ids = new ArrayList<Long>();
@@ -102,82 +99,10 @@ public class ProvidersListS2CPacket implements IMessage {
     public static class Handler implements IMessageHandler<ProvidersListS2CPacket, IMessage> {
 
         @Override
-        public IMessage onMessage(final ProvidersListS2CPacket message, MessageContext ctx) {
-            Minecraft minecraft = Minecraft.getMinecraft();
-            minecraft.func_152344_a(new Runnable() {
-
-                @Override
-                public void run() {
-                    // Shift+点击：强制打开选择页面
-                    if (message.forceGui) {
-                        openGuiWithSearch(message);
-                        return;
-                    }
-
-                    // 策略1: 只有一个有效供应器时直接上传
-                    List<Long> validIds = new ArrayList<Long>();
-                    for (int i = 0; i < message.ids.size(); i++) {
-                        if (message.emptySlots.get(i) > 0) {
-                            validIds.add(message.ids.get(i));
-                        }
-                    }
-                    if (validIds.size() == 1) {
-                        com.wztwzt.ae2_qof.MyMod.LOG
-                            .info("[Upload] strategy1: single provider, id={}", validIds.get(0));
-                        ClientState.set(null, validIds.get(0));
-                        ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(validIds.get(0)));
-                        return;
-                    }
-
-                    // 策略2: 查已记住的 Provider 名字
-                    if (message.recipeMap != null && !message.recipeMap.isEmpty()) {
-                        ClientState.lastRecipeMap = message.recipeMap;
-
-                        String rememberedName = ClientState.getRememberedProviderName(message.recipeMap);
-                        if (rememberedName != null) {
-                            long matchId = 0;
-                            int matchCount = 0;
-                            for (int i = 0; i < message.ids.size(); i++) {
-                                if (message.emptySlots.get(i) > 0 && message.names.get(i)
-                                    .equals(rememberedName)) {
-                                    matchId = message.ids.get(i);
-                                    matchCount++;
-                                }
-                            }
-                            if (matchCount == 1) {
-                                com.wztwzt.ae2_qof.MyMod.LOG.info(
-                                    "[Upload] strategy2: remembered provider '{}', id={}",
-                                    rememberedName,
-                                    matchId);
-                                ClientState.set(rememberedName, matchId);
-                                ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(matchId));
-                                return;
-                            }
-                        }
-                    }
-
-                    // 策略3: 打开搜索界面
-                    openGuiWithSearch(message);
-                }
-
-                private void openGuiWithSearch(final ProvidersListS2CPacket message) {
-                    GuiScreen current = Minecraft.getMinecraft().currentScreen;
-                    String searchKey = null;
-                    if (message.recipeMap != null && !message.recipeMap.isEmpty()) {
-                        searchKey = message.recipeMap;
-                    }
-                    GuiProviderSelect gui = new GuiProviderSelect(
-                        current,
-                        message.ids,
-                        message.names,
-                        message.emptySlots);
-                    if (searchKey != null) {
-                        gui.setPresetSearchKey(searchKey);
-                    }
-                    Minecraft.getMinecraft()
-                        .displayGuiScreen(gui);
-                }
-            });
+        public IMessage onMessage(ProvidersListS2CPacket message, MessageContext ctx) {
+            if (ctx.side == Side.CLIENT) {
+                MyMod.proxy.handleProvidersList(message);
+            }
             return null;
         }
     }

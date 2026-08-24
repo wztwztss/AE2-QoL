@@ -1,23 +1,24 @@
 package com.wztwzt.ae2_qof.network;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.item.ItemStack;
 
-import com.wztwzt.ae2_qof.client.render.CraftingNotificationOverlay;
+import com.wztwzt.ae2_qof.MyMod;
 
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import cpw.mods.fml.relauncher.Side;
 import io.netty.buffer.ByteBuf;
 
 /**
  * S2C: 合成完成通知。服务端在 CPU 完成订单时向发起玩家发送。
+ * Handler 仅作分发：客户端真逻辑在 ClientProxy.handleCraftingComplete（#74）。
  */
 public class CraftingCompletePacket implements IMessage {
 
-    private ItemStack stack;
-    private long amount;
+    public ItemStack stack;
+    public long amount;
 
     public CraftingCompletePacket() {}
 
@@ -53,22 +54,10 @@ public class CraftingCompletePacket implements IMessage {
     public static class Handler implements IMessageHandler<CraftingCompletePacket, IMessage> {
 
         @Override
-        public IMessage onMessage(final CraftingCompletePacket message, MessageContext ctx) {
-            Minecraft mc = Minecraft.getMinecraft();
-            if (mc.thePlayer == null) {
-                return null;
+        public IMessage onMessage(CraftingCompletePacket message, MessageContext ctx) {
+            if (ctx.side == Side.CLIENT) {
+                MyMod.proxy.handleCraftingComplete(message);
             }
-            // Netty IO 线程不得直接写 CraftingNotificationOverlay 的非线程安全 ArrayDeque，
-            // 必须归队到客户端主线程（与其余 S2C 包一致）。
-            mc.func_152344_a(new Runnable() {
-
-                @Override
-                public void run() {
-                    if (message.stack != null) {
-                        CraftingNotificationOverlay.INSTANCE.add(message.stack, message.amount);
-                    }
-                }
-            });
             return null;
         }
     }
