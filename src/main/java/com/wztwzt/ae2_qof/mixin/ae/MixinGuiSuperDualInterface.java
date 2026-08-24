@@ -55,7 +55,8 @@ public abstract class MixinGuiSuperDualInterface extends GuiUpgradeable {
                 178,
                 194,
                 "gui.ae2_qof.smart_doubling",
-                "gui.ae2_qof.smart_doubling.hint");
+                // 预翻译并把字面 \n 转真换行，保证多行显示行为一致
+                com.wztwzt.ae2_qof.client.gui.TooltipTextButton.langLines("gui.ae2_qof.smart_doubling.hint"));
             this.buttonList.add(this.smartDoublingBtn);
         }
     }

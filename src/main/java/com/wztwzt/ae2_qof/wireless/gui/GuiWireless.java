@@ -494,10 +494,10 @@ public class GuiWireless extends GuiContainer {
         if (channelField != null && !showDeleteConfirm) {
             channelField.drawTextBox();
         }
-        // 按钮悬停说明（原版 GuiContainer 无自动机制，手动绘制）
+        // 按钮悬停说明（原版 GuiContainer 无自动机制，手动绘制）；悬停满 1s 才显示
         com.wztwzt.ae2_qof.client.gui.TooltipTextButton hovered = com.wztwzt.ae2_qof.client.gui.TooltipTextButton
             .findHovered(this.buttonList, mouseX, mouseY);
-        if (hovered != null) {
+        if (hovered != null && hovered.shouldRenderTooltip(mouseX, mouseY)) {
             String msg = hovered.getMessage();
             if (msg != null && !msg.isEmpty()) {
                 drawHoveringText(java.util.Arrays.asList(msg.split("\n")), mouseX, mouseY, this.fontRendererObj);

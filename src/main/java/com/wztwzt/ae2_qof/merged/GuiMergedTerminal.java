@@ -136,6 +136,20 @@ public class GuiMergedTerminal extends GuiInterfaceTerminal {
         renameOverlay.updateScreen();
     }
 
+    /**
+     * 面板 TooltipTextButton 悬停满 1s 才显示（#3.9.0 tooltip 延迟）。
+     * AEBaseGui.drawScreen 对 buttonList 中每个 ITooltip 调用本方法，此处对
+     * 自研按钮先过计时闸门；其余（AE2 原生按钮/槽位）不受影响。
+     */
+    @Override
+    protected void handleTooltip(int mouseX, int mouseY, appeng.client.gui.widgets.ITooltip tooltip) {
+        if (tooltip instanceof com.wztwzt.ae2_qof.client.gui.TooltipTextButton btn
+            && !btn.shouldRenderTooltip(mouseX, mouseY)) {
+            return;
+        }
+        super.handleTooltip(mouseX, mouseY, tooltip);
+    }
+
     @Override
     public void initGui() {
         activeInstance = this;

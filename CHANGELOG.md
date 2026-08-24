@@ -9,10 +9,18 @@
 - **实现说明（Why）**：能力层零改动即已支持——该机器 `extends MTEHatchInputBus`，既有 `MixinMTEHatchInputBus` 挂基类注入 `ISmartDoublingMedium` + NBT 持久化（saveNBTData/loadNBTData TAIL 经 super 链生效）；CPU 经能力接口自动走 GT pushPattern N× 分支（其缓冲单堆叠 Integer.MAX_VALUE 无上限、pushPattern 恒成功、isBusy() 恒 false 由 knownBusyMediums 冷却兜底）。唯一缺口是 GUI 开关：新增 `mixin/gt/MixinSuperCraftingInputHatchMEGui` 注入其 ModularUI `createBottomLeftCornerFlow` RETURN 追加同款 ToggleButton（BooleanSyncValue.allowC2S 直写 NBT 字段）
 - 兼容：GTNL 为可选依赖，mixin 目标类缺失时静默跳过；未安装零影响；lang 复用现有 `gui.ae2_qof.smart_doubling*`
 
+### 修复：按钮 tooltip 多行失效 + 悬停延迟显示
+
+- **多行失效根因**：MC 的 lang 文件不转义 `\n`（读出来是字面反斜杠+n 两个字符），而各渲染路径拆行方式不一——AE2 `drawTooltip`/手动绘制按真实换行符 `split("\n")` 拆不开字面 `\n` → 全部挤成一行
+- **修复**：`TooltipTextButton.getMessage()` 统一把字面 `\n` 替换为真实换行；二合一终端 6 按钮（↑/←/⇄/AM/OV 等）与无线收发器 GUI 6 按钮全部恢复多行
+- **智能倍增按钮**：三个 AE2 接口 GUI mixin（ME 接口/GTNL 超级接口/超级二合一接口）的 hint 实参改为预翻译+显式换行替换，不再依赖各版本渲染器内部行为
+- **悬停延迟**：自研按钮 tooltip 现在悬停满 **1 秒**才显示（`shouldRenderTooltip` 计时闸门，接入 AE2 自动路径 `handleTooltip` override 与 GuiWireless 手动路径）；移开鼠标即重置计时
+
 ### 变更文件
 
 - 新增 `src/main/java/com/wztwzt/ae2_qof/mixin/gt/MixinSuperCraftingInputHatchMEGui.java`
 - `mixins.ae2_qof.json` client 列表注册
+- `client/gui/TooltipTextButton.java`（langLines + 1s 延迟闸门）、`merged/GuiMergedTerminal.java`（handleTooltip override）、`wireless/gui/GuiWireless.java`、`mixin/ae/MixinGuiInterface.java` / `MixinGuiSuperInterface.java` / `MixinGuiSuperDualInterface.java`
 - 版本号：`gradle.properties` + `mcmod.info`
 
 ---
