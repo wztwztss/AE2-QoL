@@ -41,7 +41,8 @@ public class SwapPatternPacket implements IMessage {
     public void fromBytes(ByteBuf buf) {
         try {
             int count = buf.readInt();
-            if (count < 0) {
+            // 恶意包防护：预分配容量钳制，防止 new ArrayList<>(巨量) OOM（#45 同类），超界按空包处理
+            if (count < 0 || count > 64) {
                 slotStacks = null;
                 return;
             }

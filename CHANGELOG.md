@@ -9,7 +9,7 @@
 - **半注册**：异常被 `MyMod.preInit` 的 try/catch 吞掉，注册在 discriminator 11（CraftingResponsePacket）处中断，11~25 共 15 个包未注册；已存活的 C2S 仅 0/2/3/4/7/9/10（故 NEI 上传/提取/下单正常，极具迷惑性）；客户端发送 id=17（MergedTerminalActionPacket）即 Undefined 踢人
 - **单机为何不复现**：单人/局域网同 JVM 含 client 类，全量注册成功。此 bug 对一切专用服必现
 - **修复模式**：10 个 S2C Handler 全部改为「壳 + proxy 分发」——`onMessage` 仅剩 `if (ctx.side == Side.CLIENT) MyMod.proxy.handleXxx(message)`，经 `CommonProxy` 声明类型虚分派到 `ClientProxy` override 实现（归队 `func_152344_a` + 原 client 逻辑整体搬迁）。network 包内零 client 类型引用，编译期保证
-- **顺带修复**：CraftingResponsePacket / ReplaceCandidatesPacket 此前未归队客户端主线程（审查遗留 ⚠️），本次随搬迁统一归队
+- **顺带修复**：CraftingResponsePacket / ReplaceCandidatesPacket 此前未归队客户端主线程（审查遗留 ⚠️），本次随搬迁统一归队；SwapPatternPacket 解码 count 补上界钳制 ≤64（审查 #45 同类遗留，堵 OOM 攻击面）
 - **fail-fast 加固**：`MyMod.preInit` 网络注册失败从"吞异常继续运行"改为直接抛出——半注册比启动失败危害大得多
 - 消息类字段 private → public（Handler 逻辑迁至 ClientProxy 后需跨包访问）
 
