@@ -31,6 +31,10 @@ public abstract class MixinPinsHolder {
             target = "Ljava/util/HashMap;computeIfAbsent(Ljava/lang/Object;Ljava/util/function/Function;)Ljava/lang/Object;"),
         remap = false)
     private Object ae2qol$defaultOneRow(HashMap<UUID, PinsRows> map, Object key, Function<?, ?> mapping) {
+        // settings.json 总开关关闭时不自动开启（玩家仍可在终端设置手动选行数）
+        if (!com.wztwzt.ae2_qof.Config.pinRowEnabled) {
+            return map.computeIfAbsent((UUID) key, k -> PinsRows.DISABLED);
+        }
         return map.computeIfAbsent((UUID) key, k -> PinsRows.ONE);
     }
 }

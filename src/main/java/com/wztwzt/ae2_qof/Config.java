@@ -34,6 +34,12 @@ public class Config {
     /** NEI 叠加层开关（热加载字段）。 */
     public static volatile boolean neiOverlayEnabled = true;
 
+    /**
+     * 合成产物 pin 置顶行总开关（热加载字段，3.15.0）。
+     * false 时终端 pin 行默认回退为关闭（玩家仍可在终端设置中手动开启）。
+     */
+    public static volatile boolean pinRowEnabled = true;
+
     public static final String greeting = "Hello World";
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting()
@@ -68,7 +74,7 @@ public class Config {
                     1,
                     Integer.MAX_VALUE);
                 int oldRounds = readLegacyCfgInt(configFile, "smartDoublingMaxRounds", smartDoublingMaxRounds, 1, 4096);
-                writeFile(oldRate, oldRounds, true);
+                writeFile(oldRate, oldRounds, true, pinRowEnabled);
                 configFile.delete();
             }
             reload();
@@ -87,9 +93,10 @@ public class Config {
         int io = exIOPortTransferContentsRate;
         int rounds = smartDoublingMaxRounds;
         boolean overlay = neiOverlayEnabled;
+        boolean pinRow = pinRowEnabled;
         try {
             if (!Files.exists(SETTINGS_FILE)) {
-                writeFile(io, rounds, overlay);
+                writeFile(io, rounds, overlay, pinRow);
                 return;
             }
             try (InputStreamReader reader = new InputStreamReader(
@@ -111,6 +118,10 @@ public class Config {
                     if (value != null && value.isJsonPrimitive()) {
                         overlay = value.getAsBoolean();
                     }
+                    value = obj.get("pin_row_enabled");
+                    if (value != null && value.isJsonPrimitive()) {
+                        pinRow = value.getAsBoolean();
+                    }
                 }
             }
         } catch (Throwable t) {
@@ -119,6 +130,7 @@ public class Config {
         exIOPortTransferContentsRate = io;
         smartDoublingMaxRounds = rounds;
         neiOverlayEnabled = overlay;
+        pinRowEnabled = pinRow;
         lastLoadedMtime = currentMtime();
     }
 
@@ -150,7 +162,7 @@ public class Config {
         if (SETTINGS_FILE == null) {
             return;
         }
-        writeFile(exIOPortTransferContentsRate, smartDoublingMaxRounds, enabled);
+        writeFile(exIOPortTransferContentsRate, smartDoublingMaxRounds, enabled, pinRowEnabled);
         lastLoadedMtime = currentMtime();
     }
 
@@ -185,6 +197,9 @@ public class Config {
                 case "nei_overlay_enabled":
                     neiOverlayEnabled = Boolean.parseBoolean(value.trim());
                     break;
+                case "pin_row_enabled":
+                    pinRowEnabled = Boolean.parseBoolean(value.trim());
+                    break;
                 default:
                     return false;
             }
@@ -192,7 +207,7 @@ public class Config {
             return false;
         }
         if (SETTINGS_FILE != null) {
-            writeFile(exIOPortTransferContentsRate, smartDoublingMaxRounds, neiOverlayEnabled);
+            writeFile(exIOPortTransferContentsRate, smartDoublingMaxRounds, neiOverlayEnabled, pinRowEnabled);
             lastLoadedMtime = currentMtime();
         }
         return true;
@@ -209,7 +224,7 @@ public class Config {
         exIOPortTransferContentsRate = clamp(io, 1, Integer.MAX_VALUE, exIOPortTransferContentsRate);
         smartDoublingMaxRounds = clamp(rounds, 0, Integer.MAX_VALUE, smartDoublingMaxRounds);
         if (SETTINGS_FILE != null) {
-            writeFile(exIOPortTransferContentsRate, smartDoublingMaxRounds, neiOverlayEnabled);
+            writeFile(exIOPortTransferContentsRate, smartDoublingMaxRounds, neiOverlayEnabled, pinRowEnabled);
             lastLoadedMtime = currentMtime();
         }
     }
@@ -236,7 +251,7 @@ public class Config {
         }
     }
 
-    private static void writeFile(int ioRate, int rounds, boolean overlay) {
+    private static void writeFile(int ioRate, int rounds, boolean overlay, boolean pinRow) {
         try {
             Path parent = SETTINGS_FILE.getParent();
             if (parent != null && !Files.exists(parent)) {
@@ -246,6 +261,7 @@ public class Config {
             root.addProperty("io_port_rate", ioRate);
             root.addProperty("smart_doubling_max_rounds", rounds);
             root.addProperty("nei_overlay_enabled", overlay);
+            root.addProperty("pin_row_enabled", pinRow);
             try (OutputStreamWriter writer = new OutputStreamWriter(
                 Files.newOutputStream(SETTINGS_FILE),
                 StandardCharsets.UTF_8)) {

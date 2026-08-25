@@ -58,7 +58,7 @@ After ordering, the job's outputs are automatically **pinned to a dedicated top 
 
 - Pinned entries show the item's **full network storage** (not just the crafted amount)
 - Rows **auto-extend** when outputs exceed one row (up to 3; e.g. 18 kinds = 2 rows) and shrink back automatically
-- Standard ME Terminal / native Wireless Terminal / terminal parts have 1 row enabled by default; adjust via terminal settings (Pins Rows)
+- Standard ME Terminal / native Wireless Terminal / terminal parts have 1 row enabled by default; terminal settings (gear → Pins Rows) adjust row count or **disable entirely** (switch fixed in 3.15.0); plus a global `pin_row_enabled` switch in settings.json
 - The top-right crafting-completion banner is unchanged
 
 ### 3. NEI Item Tooltip
@@ -71,9 +71,13 @@ After ordering, the job's outputs are automatically **pinned to a dedicated top 
 
 Items in the NEI bookmark panel on the left show a network stock / craftable marker at their bottom-right.
 
-### 5. Crafting Completion Notification
+### 5. Crafting Completion Notification (native style since 3.15.0)
 
-When an AE crafting CPU finishes a task, a **completion banner** (item icon + count) fades out at the top-right of the screen. Requires holding the corresponding network key (wireless/terminal) in your inventory.
+When an AE crafting CPU finishes an order, a banner in the **native AE2 style** (vanilla achievement texture + slide animation) slides in at the top-right:
+
+- Shows the result icon + localized title + `N item, elapsed HH:mm:ss` (actual job duration)
+- Plays a level-up sound; queued orders display one by one
+- **Pushed automatically to the ordering player** — no need to follow the CPU like the vanilla notification requires
 
 ### 6. Crafting Replan
 

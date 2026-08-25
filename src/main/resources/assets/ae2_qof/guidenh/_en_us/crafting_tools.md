@@ -17,7 +17,9 @@ After submitting a job to a CPU, a banner slides in at the top-right of the scre
 - Plays a level-up sound
 - Queued jobs display one by one, then fade after a few seconds
 
-Only the job submitter gets notified; jobs completed while offline are not re-sent.
+The banner uses the **native AE2 style** (vanilla achievement texture + slide animation) with a localized title and **job duration**; only the ordering player is notified (automatic push, no manual CPU following needed); offline completions are not re-sent.
+
+> Pin row switch: terminal settings (gear → Pins Rows) select rows or disable; plus a global pin_row_enabled in settings.json.
 
 ## Crafted Output Pin Row
 

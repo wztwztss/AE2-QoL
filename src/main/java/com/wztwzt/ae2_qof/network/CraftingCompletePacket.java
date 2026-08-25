@@ -19,18 +19,22 @@ public class CraftingCompletePacket implements IMessage {
 
     public ItemStack stack;
     public long amount;
+    /** 任务耗时（毫秒，3.15.0）：用于通知横幅显示「耗时 HH:mm:ss」。 */
+    public long elapsedTimeMillis;
 
     public CraftingCompletePacket() {}
 
-    public CraftingCompletePacket(ItemStack stack, long amount) {
+    public CraftingCompletePacket(ItemStack stack, long amount, long elapsedTimeMillis) {
         this.stack = stack;
         this.amount = amount;
+        this.elapsedTimeMillis = elapsedTimeMillis;
     }
 
     @Override
     public void fromBytes(ByteBuf buf) {
         try {
             this.amount = buf.readLong();
+            this.elapsedTimeMillis = buf.readLong();
             boolean hasStack = buf.readBoolean();
             if (hasStack) {
                 this.stack = ByteBufUtils.readItemStack(buf);
@@ -38,6 +42,7 @@ public class CraftingCompletePacket implements IMessage {
         } catch (Throwable t) {
             // 防御性解码：任何异常都不得导致玩家断连
             this.amount = 0;
+            this.elapsedTimeMillis = 0;
             this.stack = null;
         }
     }
@@ -45,6 +50,7 @@ public class CraftingCompletePacket implements IMessage {
     @Override
     public void toBytes(ByteBuf buf) {
         buf.writeLong(amount);
+        buf.writeLong(elapsedTimeMillis);
         buf.writeBoolean(stack != null);
         if (stack != null) {
             ByteBufUtils.writeItemStack(buf, stack);

@@ -140,6 +140,9 @@ public abstract class MixinCraftingCPUCluster {
     @Shadow
     protected abstract boolean isCraftingDiagnosticsEnabled();
 
+    @Shadow
+    private long elapsedTime;
+
     @Unique
     private EntityPlayer player;
 
@@ -197,8 +200,9 @@ public abstract class MixinCraftingCPUCluster {
         if (item != null && item.getItem() instanceof INetworkEncodable encodable) {
             String key = encodable.getEncryptionKey(item);
             if (key != null && key.equals(Long.toString(this.networkKey)) && this.player instanceof EntityPlayerMP) {
+                long elapsedMillis = java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(this.elapsedTime);
                 ModNetwork.CHANNEL.sendTo(
-                    new CraftingCompletePacket(this.output, this.output.stackSize),
+                    new CraftingCompletePacket(this.output, this.output.stackSize, elapsedMillis),
                     (EntityPlayerMP) this.player);
                 setAsNull();
                 return true;

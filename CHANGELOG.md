@@ -1,3 +1,38 @@
+## 3.15.0 - 通知横幅对齐 AE2 原生样式（含耗时）+ pin 行开关修复与总开关
+
+> 作者：wztwzt | 更新时间：2026-08-25 | 基于 3.14.0
+
+### 重做：合成完成通知横幅（对齐 AE2 原生外观）
+
+- 自绘横幅退役，改用 **AE2 原生 GuiNotification** 渲染——原版成就横幅贴图、滑入/滑出动画、
+  队列展示，与原生「自动合成完成」通知外观完全一致
+- 标题/描述复用 AE2 lang key，自动显示**中文**：「自动合成完成 / N 物品名, 耗时 HH:mm:ss」
+- **新增耗时显示**：`CraftingCompletePacket` 携带任务耗时（取自 CPU `elapsedTime`），
+  客户端按 `ETAFormat`（HH:mm:ss）格式化
+- 触发保持**下单者自动接收**（无需像原生那样每次去 CPU 界面点关注）
+- 删除 `client/render/CraftingNotificationOverlay.java`
+
+### 修复：pin 置顶行开关失效（3.14.0 引入）
+
+- 根因：自动扩展逻辑把行数下限钳到 1 行，用户在终端设置中选择 DISABLED 后仍被强制拉回 ONE
+- 修复：`DISABLED` 状态下不再做任何自动提升——原生终端设置（齿轮 → Pins Rows）现在
+  **真正可控**：选 DISABLED 完全关闭，选 N 则至少 N 行（自动扩展只在 >DISABLED 时生效）
+
+### 新增：pin 置顶行总开关（settings.json）
+
+- `pin_row_enabled`（默认 true，热加载，配置页/`/ae2qof` 可改）：关闭时 pin 行默认回退为关闭，
+  玩家仍可在终端设置手动开启；`Config`/`MixinPinsHolder` 全链路接入
+
+### 变更文件
+
+- `mixin/nei/MixinGuiMEMonitorable.java`（DISABLED 短路）、`mixin/ae/MixinPinsHolder.java`（总开关）、
+  `mixin/ae/MixinCraftingCPUCluster.java`（发包携带耗时）、`network/CraftingCompletePacket.java`（+elapsedTimeMillis）
+- `ClientProxy.java`（handleCraftingComplete 改调原生 NotificationManager；移除旧横幅渲染订阅）、
+  `Config.java`（pin_row_enabled）、删除 `client/render/CraftingNotificationOverlay.java`
+- 版本号 `gradle.properties` + `mcmod.info`
+
+---
+
 ## 3.14.0 - 展示条重做为原生 pin 置顶行 + 科学计数法修复 + GuideNH 指南修复
 
 > 作者：wztwzt | 更新时间：2026-08-24 | 基于 3.13.0

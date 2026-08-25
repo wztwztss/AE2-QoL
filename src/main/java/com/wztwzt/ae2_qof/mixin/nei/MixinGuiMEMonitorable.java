@@ -107,6 +107,10 @@ public abstract class MixinGuiMEMonitorable {
 
     /** 按当前 crafting pin 区非空格数计算所需行数（上限 3 行，至少保持原值）。 */
     private PinsRows ae2qol$neededRows(PinsRows current) {
+        // 用户在终端设置中选择 DISABLED 时必须尊重，不得自动提升（3.14.0 曾强制拉回 ONE 导致开关失效）
+        if (current == PinsRows.DISABLED) {
+            return current;
+        }
         int count = 0;
         for (int i = 0; i < 27; i++) {
             try {

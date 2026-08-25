@@ -27,7 +27,6 @@ import com.wztwzt.ae2_qof.client.event.KnifeNameCopyHandler;
 import com.wztwzt.ae2_qof.client.GuideNHIntegration;
 import com.wztwzt.ae2_qof.client.event.MergedTerminalPanelHandler;
 import com.wztwzt.ae2_qof.client.gui.GuiProviderSelect;
-import com.wztwzt.ae2_qof.client.render.CraftingNotificationOverlay;
 import com.wztwzt.ae2_qof.client.render.RenderBlockTransceiver;
 import com.wztwzt.ae2_qof.client.render.WirelessHighlightRenderer;
 import com.wztwzt.ae2_qof.merged.GuiMergedTerminal;
@@ -287,8 +286,40 @@ public class ClientProxy extends CommonProxy {
     public void handleCraftingComplete(final CraftingCompletePacket message) {
         Minecraft.getMinecraft()
             .func_152344_a(() -> {
-                if (message.stack != null) {
-                    CraftingNotificationOverlay.INSTANCE.add(message.stack, message.amount);
+                if (message.stack == null) return;
+                // 3.15.0：改用 AE2 原生通知渲染（GuiNotification，原版成就横幅样式）——
+                // 标题/描述/耗时格式全部复用 AE2 lang key，自动显示中文「自动合成完成 / N 物品, 耗时 HH:mm:ss」
+                try {
+                    String elapsedText = org.apache.commons.lang3.time.DurationFormatUtils.formatDuration(
+                        Math.max(0L, message.elapsedTimeMillis),
+                        net.minecraft.util.StatCollector.translateToLocal("gui.appliedenergistics2.ETAFormat"));
+                    String description = net.minecraft.util.StatCollector.translateToLocalFormatted(
+                        "chat.appliedenergistics2.CraftComplete.tip",
+                        message.amount,
+                        message.stack.getDisplayName(),
+                        elapsedText);
+                    appeng.api.storage.data.IAEItemStack icon = appeng.util.item.AEItemStack.create(message.stack);
+                    if (icon == null) return;
+                    appeng.client.render.notification.NotificationManager.getGuiNotification()
+                        .queueNotification(
+                            new appeng.client.render.notification.Notification(
+                                icon,
+                                net.minecraft.util.StatCollector
+                                    .translateToLocal("chat.appliedenergistics2.CraftComplete"),
+                                description));
+                    if (Minecraft.getMinecraft().theWorld != null && Minecraft.getMinecraft().thePlayer != null) {
+                        Minecraft.getMinecraft().theWorld
+                            .playSound(
+                                Minecraft.getMinecraft().thePlayer.posX,
+                                Minecraft.getMinecraft().thePlayer.posY,
+                                Minecraft.getMinecraft().thePlayer.posZ,
+                                "random.levelup",
+                                0.25f,
+                                1,
+                                false);
+                    }
+                } catch (Throwable t) {
+                    com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] crafting notification failed: " + t);
                 }
             });
     }
@@ -344,11 +375,7 @@ public class ClientProxy extends CommonProxy {
     @SideOnly(Side.CLIENT)
     public static class ClientRenderEventHandler {
 
-        @SubscribeEvent
-        public void onRenderGameOverlay(RenderGameOverlayEvent.Post event) {
-            if (event.type == RenderGameOverlayEvent.ElementType.ALL) {
-                CraftingNotificationOverlay.INSTANCE.draw();
-            }
-        }
+        // 3.15.0：旧自绘横幅（CraftingNotificationOverlay）已由 AE2 原生 GuiNotification 取代，
+        // 其渲染由 AE2 自己的 NotificationManager（RenderTickEvent）驱动，此处不再订阅。
     }
 }
