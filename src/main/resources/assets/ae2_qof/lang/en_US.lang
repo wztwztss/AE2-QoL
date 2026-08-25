@@ -107,3 +107,12 @@ gui.ae2_qof.btn.wireless.highlight=Highlight Links\nHighlight bound block positi
 gui.ae2_qof.btn.wireless.sender=Set as Sender\nAct as the channel sender: register this transceiver on the channel.
 gui.ae2_qof.btn.wireless.receiver=Set as Receiver\nAct as the channel receiver: connect to the sender of the channel.
 gui.ae2_qof.btn.wireless.disconn=Disconnect\nTemporarily pause the current connection while keeping channel settings.
+
+tile.ae2qol.quest_detector.name=ME Quest Detector
+tile.ae2qol.quest_detector.tooltip.1=Binds to the placing player's BetterQuesting progress (party-shared progress supported).
+tile.ae2qol.quest_detector.tooltip.2=Checks ME network storage against retrieval-type quests every second and completes them automatically WITHOUT consuming any items.
+tile.ae2qol.quest_detector.tooltip.3=Requires network power and a channel; the bound player must be online. Break and re-place to rebind.
+waila.ae2qol.quest_detector.owner=Bound Player
+waila.ae2qol.quest_detector.powered=Network
+waila.ae2qol.quest_detector.on=Online
+waila.ae2qol.quest_detector.off=Offline

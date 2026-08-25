@@ -1,6 +1,7 @@
 package com.wztwzt.ae2_qof;
 
 import com.wztwzt.ae2_qof.block.BlockExIOPort;
+import com.wztwzt.ae2_qof.block.BlockQuestDetector;
 import com.wztwzt.ae2_qof.item.ItemInfinityWaterLavaCell;
 import com.wztwzt.ae2_qof.merged.BlockMergedTerminal;
 import com.wztwzt.ae2_qof.merged.MergedGuiHandler;
@@ -16,6 +17,7 @@ import com.wztwzt.ae2_qof.network.SwapPatternPacket;
 import com.wztwzt.ae2_qof.network.WirelessChannelSyncPacket;
 import com.wztwzt.ae2_qof.network.WirelessHighlightPacket;
 import com.wztwzt.ae2_qof.tile.TileExIOPort;
+import com.wztwzt.ae2_qof.tile.TileQuestDetector;
 import com.wztwzt.ae2_qof.wireless.WirelessBlockEventListener;
 import com.wztwzt.ae2_qof.wireless.WirelessBlocks;
 
@@ -30,6 +32,7 @@ import cpw.mods.fml.common.registry.GameRegistry;
 public class CommonProxy {
 
     public static BlockExIOPort blockExIOPort;
+    public static BlockQuestDetector blockQuestDetector;
     public static ItemInfinityWaterLavaCell itemInfinityWaterLavaCell;
     public static BlockMergedTerminal blockMergedTerminal;
     public static com.wztwzt.ae2_qof.merged.part.ItemPartMergedTerminal itemPartMergedTerminal;
@@ -52,6 +55,14 @@ public class CommonProxy {
             GameRegistry.registerTileEntity(TileExIOPort.class, "ex_io_portTile");
         } catch (Throwable t) {
             MyMod.LOG.error("[DIAG] BlockExIOPort registration FAILED", t);
+            t.printStackTrace(System.err);
+        }
+        try {
+            blockQuestDetector = new BlockQuestDetector();
+            GameRegistry.registerBlock(blockQuestDetector, appeng.block.AEBaseItemBlock.class, "quest_detector");
+            GameRegistry.registerTileEntity(TileQuestDetector.class, "quest_detectorTile");
+        } catch (Throwable t) {
+            MyMod.LOG.error("[DIAG] BlockQuestDetector registration FAILED", t);
             t.printStackTrace(System.err);
         }
         try {
@@ -110,6 +121,17 @@ public class CommonProxy {
                     .sendMessage("waila", "register", "com.wztwzt.ae2_qof.wireless.TransceiverWailaProvider.register");
             } catch (Throwable t2) {
                 MyMod.LOG.error("[APU] Waila registration also failed with 'waila'", t2);
+            }
+        }
+        try {
+            FMLInterModComms
+                .sendMessage("Waila", "register", "com.wztwzt.ae2_qof.quest.QuestDetectorWailaProvider.register");
+        } catch (Throwable t) {
+            try {
+                FMLInterModComms
+                    .sendMessage("waila", "register", "com.wztwzt.ae2_qof.quest.QuestDetectorWailaProvider.register");
+            } catch (Throwable t2) {
+                MyMod.LOG.error("[APU] QuestDetector Waila registration failed on both channels", t2);
             }
         }
     }
@@ -188,6 +210,21 @@ public class CommonProxy {
                     net.minecraft.init.Items.diamond,
                     'a',
                     net.minecraft.init.Items.paper);
+            }
+            if (blockQuestDetector != null) {
+                GameRegistry.addShapedRecipe(
+                    new net.minecraft.item.ItemStack(blockQuestDetector),
+                    "igi",
+                    "rbr",
+                    "igi",
+                    'i',
+                    net.minecraft.init.Items.iron_ingot,
+                    'g',
+                    net.minecraft.init.Blocks.glass,
+                    'r',
+                    net.minecraft.init.Items.redstone,
+                    'b',
+                    net.minecraft.init.Items.book);
             }
             if (WirelessBlocks.blockWirelessTransceiver != null) {
                 GameRegistry.addShapedRecipe(

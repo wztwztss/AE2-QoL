@@ -107,3 +107,12 @@ gui.ae2_qof.btn.wireless.highlight=高亮连接\n在世界中高亮显示本频�
 gui.ae2_qof.btn.wireless.sender=设为发送端\n本收发器作为频道发送端：向频道注册自己。
 gui.ae2_qof.btn.wireless.receiver=设为接收端\n本收发器作为频道接收端：连接到频道的发送端。
 gui.ae2_qof.btn.wireless.disconn=断开连接\n临时断开当前连接（进入暂停态），保留频道设置。
+
+tile.ae2qol.quest_detector.name=ME 任务检测器
+tile.ae2qol.quest_detector.tooltip.1=绑定放置者的 BetterQuesting 进度（自动兼容组队共享进度）。
+tile.ae2qol.quest_detector.tooltip.2=每秒将 ME 网络中的物品与检索型任务比对，库存达标即自动完成任务，全程不消耗任何物品。
+tile.ae2qol.quest_detector.tooltip.3=需要网络供电与频道；绑定玩家需在线。拆下重放可重新绑定。
+waila.ae2qol.quest_detector.owner=绑定玩家
+waila.ae2qol.quest_detector.powered=网络
+waila.ae2qol.quest_detector.on=在线
+waila.ae2qol.quest_detector.off=离线
