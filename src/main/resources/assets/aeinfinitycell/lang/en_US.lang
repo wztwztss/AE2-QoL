@@ -1,0 +1,16 @@
+item.aeinfinitycell.infinity_storage_cell.name=Infinity Storage Cell
+tooltip.aeinfinitycell.infinity_storage_cell=Stores unlimited item and fluid types in this world save.
+nei.aeinfinitycell.infinity_cell_view=Infinity Cell View
+nei.aeinfinitycell.channel.items=Items
+nei.aeinfinitycell.channel.fluids=Fluids
+nei.aeinfinitycell.channel.essentia=Essentia
+nei.aeinfinitycell.channel.eu=EU
+
+tooltip.aeinfinitycell.stats.waiting=Syncing storage stats...
+tooltip.aeinfinitycell.stats.empty=Empty cell (no data in this world's save)
+tooltip.aeinfinitycell.stats.total=Total
+tooltip.aeinfinitycell.stats.items=Items
+tooltip.aeinfinitycell.stats.fluids=Fluids
+tooltip.aeinfinitycell.stats.essentia=Essentia
+tooltip.aeinfinitycell.stats.eu=EU
+tooltip.aeinfinitycell.stats.hint=Hold Ctrl for scientific notation | Press U in NEI to browse

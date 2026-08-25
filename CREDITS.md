@@ -29,7 +29,14 @@
 ### 6. Waila（`mcp.mobius.waila`）— 高亮显示集成
 - **用途**：无线收发器等方块的高亮显示支持。
 
-### 7. 其他参考模组
+### 7. AE2InfinityCell（`cn.dancingsnow.aeinfinitycell`）— 无限存储元件（3.12.0 起整体并入）
+- **用途**：无限磁盘（Infinity Storage Cell）全部功能并入本 jar——物品/流体/源质三通道无限存储、
+  世界存档后端（per-cell 文件）、drive 多通道挂载 mixin、NEI 分页查看器。
+- **作者**：dancing snow（DancingSnow0517）。**许可证：MIT**（已核实仓库 LICENSE-template 与 resources/LICENSE）。
+- **合规动作**：保留原 modid `aeinfinitycell` / 包名 / 存储路径（数据无缝兼容）；本文件署名；
+  `assets/aeinfinitycell/LICENSE` 随 jar 附原 MIT 文本副本；AppEU 可选集成未随迁（反射点静默跳过）。
+
+### 8. 其他参考模组
 - `GT-Not-Leisure`、`GT5-Unofficial`、`GTLCore`、`Programmable-Hatches`、`ExtendedAE_Plus`、`ExampleMod1.7.10` 等——开发时参考 GT 版本兼容与通用模组写法。
 
 ---

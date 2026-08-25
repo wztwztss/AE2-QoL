@@ -10,7 +10,9 @@
     "ae.MixinTileIOPort",
     "ae.MixinDualityInterface",
     "ae.MixinContainerInterface",
-    "gt.MixinMTEHatchInputBus"
+    "ae.MixinPinsHolder",
+    "gt.MixinMTEHatchInputBus",
+    "TileDriveMixin"
   ],
   "client": [
     "nei.MixinRecipeHandlerRef",
