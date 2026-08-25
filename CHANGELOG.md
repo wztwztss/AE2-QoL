@@ -1,3 +1,159 @@
+## 3.14.0 - 展示条重做为原生 pin 置顶行 + 科学计数法修复 + GuideNH 指南修复
+
+> 作者：wztwzt | 更新时间：2026-08-24 | 基于 3.13.0
+
+### 重做：合成产物置顶行（替换 3.10.0 覆盖式展示条）
+
+- **移除**覆盖式展示条（黑色遮罩、遮挡第一行、点击拦截全部成为历史）；
+  改用 GTNH rv3 AE2 **原生 pin 系统**（`PinsHandler` + `PacketPinsUpdate` + `VirtualMEPinSlot` 独立行渲染）
+- **mixin `PinsHolder`**：crafting pin 行数对「从未设置的玩家」默认 `DISABLED → ONE`——
+  标准 ME 终端 / 原生无线终端 / 终端部件**开箱即得 1 行置顶区**；
+  玩家手动在终端设置选 DISABLED 仍可关闭（显式 put 不走缺省值）
+- **自动扩展行数**（mixin `GuiMEMonitorable`）：pin 产物种类超过当前行容量时本地提升可见行数
+  （上限 3 行，如 18 种占两行），减少时自动回落；不回写玩家持久化设置
+- 置顶条目显示的是**网络全部存量**（原生 repo 条目），独立行渲染、原网格下移、无任何遮罩
+- 右上角「合成完成」横幅保留不变
+- 范围说明：二合一终端（自定义布局）本轮未接入 pin，计划下版本
+
+### 修复：科学计数法指数/尾数错乱（3.13.0 引入）
+
+- `BigNumFormatter.formatSci` 误用 `bitLength()`（二进制位数）当十进制指数，
+  且 double 精度不足导致尾数恒 `0.00`（如 `0.00×10^25`）——
+  改用十进制位数（`toString().length()-1`），现正确显示 `1.85×10^25`
+
+### 修复：GuideNH 指南从未生效（3.8.0 遗留）
+
+- 根因：只放了 md 资源文件，**从未注册 Guide 实例**（`Guide.builder(...).build()`），
+  物品索引（frontmatter `item_ids`）不生效 → 悬停本 mod 物品无「长按 G」提示
+- 新增 `client/GuideNHIntegration`（init 注册，GuideNH 缺失静默跳过）
+- `quest_detector.md` 补 `item_ids`；新增「无限存储元件」指南页（中英，绑定
+  `aeinfinitycell:infinity_storage_cell`）；`crafting_tools.md` 补「合成产物置顶行」说明（中英）
+
+### 变更文件
+
+- `mixin/ae/MixinPinsHolder.java`（新增）、`mixin/nei/MixinGuiMEMonitorable.java`（重写：
+  移除展示条注入，新增 pin 自适应）、`mixins.ae2_qof.json`（+MixinPinsHolder）
+- 删除 `client/render/RecentCraftedOverlay.java`、`client/render/TerminalLayoutAccessor.java`；
+  `ClientProxy` 清理展示条接入
+- `client/GuideNHIntegration.java`（新增）、`util/BigNumFormatter.java`（formatSci 修复）
+- assets：guidenh 新页/更新（中英）；版本号 `gradle.properties` + `mcmod.info`
+
+---
+
+## 3.13.0 - 无限磁盘悬停统计（总计/物品/流体/源质 + 大数格式化）
+
+> 作者：wztwzt | 更新时间：2026-08-24 | 基于 3.12.0
+
+### 新增：无限存储元件 tooltip 实时统计
+
+- 悬停无限磁盘即显示：**总计行**（`∞ Bytes | 共 N 类 / M 件 ≈N B`）→ **物品** → **流体** → **源质** →
+  （EU 有数据时）逐行明细，每行末尾附 AE2 公式字节估算（每类型 8B + 存量折算）
+- 大数格式化：默认字母单位链 `K→M→B→T→Qa→Qi…`（如 `12.34M`）；**按住 Ctrl** 切换科学计数法
+  （如 `1.23×10^7`）；内部 BigInteger，网络序列化防溢出
+- 数据链路：内容存服务端世界存档（客户端无法直读），tooltip 未命中缓存（TTL 2s）时节流发送 C2S
+  请求 → 服务端主线程汇总 → S2C 回包渲染；空元件显示提示而非空白
+- 新增 `util/BigNumFormatter`、`network/InfinityCellStatsPacket`（C2S/S2C）、
+  `client/InfinityCellTooltipCache`；`ItemInfinityStorageCell.addInformation` 接入渲染
+
+---
+
+## 3.12.0 - 吞并 AE2InfinityCell：无限存储元件整体并入本 jar
+
+> 作者：wztwzt | 更新时间：2026-08-24 | 基于 3.11.0
+
+### 合并说明（原 aeinfinitycell-1.0.4，作者 dancing snow，MIT）
+
+- **双 @Mod 同 jar**：本 jar 现同时注册 `ae2_qof` 与 `aeinfinitycell` 两个 mod 身份；
+  与独立版 AEInfinityCell **严格互斥**（同 modid 共存必触发 DuplicateModsFoundException）——
+  安装本版本前必须移除原 aeinfinitycell jar
+- **零迁移无缝接管**：保留原 modid / 物品注册名（`aeinfinitycell:infinity_storage_cell`）/
+  包名 `cn.dancingsnow.aeinfinitycell` / 世界存档数据路径——背包与硬盘中的磁盘、
+  存档内 per-cell 数据文件全部原样可读
+- **并入功能**：物品/流体/源质三通道无限存储；UUID 引用 NBT + 复制共享同一后端库存；
+  TileDriveMixin（drive 多通道挂载，改入本项目标准 mixin 体系）；NEI 四通道分页查看器
+  （Infinity Cell View）；旧单文件格式自动迁移逻辑；中英 lang 与贴图
+- **裁剪**：AppEU（EU 通道）可选集成未随迁（环境无该 mod）——检测到 appeu 时静默跳过并打日志
+- **依赖新增**：`ThaumicEnergistics:1.7.53-GTNH`、`Avaritia:1.97`（compileOnly），
+  本地 libs 引入 Thaumcraft/eternalsingularity 发布 jar 仅作编译期符号（运行时由整合包提供）
+- **合规（MIT）**：CREDITS.md 新增署名条目；`assets/aeinfinitycell/LICENSE` 随 jar 附原 MIT 文本
+- 版本标识：aeinfinitycell 显示 `1.0.4-ae2qol`
+
+### 变更文件
+
+- 新增 `cn/dancingsnow/aeinfinitycell/**`（29 类）、`mixin/TileDriveMixin.java`（自原 mod 移包）、
+  `assets/aeinfinitycell/**`（贴图/lang/LICENSE）
+- `mcmod.info` 双条目；`mixins.ae2_qof.json` +TileDriveMixin；`dependencies.gradle` +TE/Avaritia/libs×2
+- `CREDITS.md` 署名；版本号 `gradle.properties` → 3.12.0
+
+---
+
+## 3.11.0 - 新增「ME 任务检测器」：ME 网络物品自动完成 BQ 检索型任务
+
+> 作者：wztwzt | 更新时间：2026-08-24 | 基于 3.10.1
+
+### 新增：ME 任务检测器方块（BetterQuesting 联动）
+
+- 接入 ME 网络的新方块**ME 任务检测器**（`quest_detector`）：网络中存储的物品每秒与
+  BetterQuesting **检索型任务**（consume=false）比对，库存达标即由 BQ 官方逻辑自动完成任务——
+  任务物品存进网络即算提交，无需手动取出或使用提交站
+- **零消耗保证**：仅调用 GTNH BQ fork 特供的只读检测钩子 `IItemTask.retrieveItems()` /
+  `IFluidTask.retrieveFluids()`（对齐官方观察站 TileObservationStation 机制）；
+  消耗型（consume=true）任务在官方实现入口直接 return，绝不从网络扣走任何物品
+- **绑定放置者 UUID**（放置时记录、NBT 持久化）；进度经 `ParticipantInfo.getSharedQuests()`
+  自动兼容 BQ 组队共享进度；绑定玩家离线跳过；拆下重放可重新绑定
+- 门控与性能：20tick 周期 + 供电/频道激活检查（`IPowerChannelState`，复用 TileIOPort 网格代理）；
+  任务需求键按玩家缓存 10 秒重建（矿辞 OreDictionary 展开），网络侧按键 findFuzzy 收集，
+  需求/命中双上限保护（4096/2048）
+- WAILA/JADE 显示绑定玩家与网络状态（IMC 注册，未装 WAILA 零影响）；
+  GuideNH 游戏内指南新增第 15 页（中英双语）
+- 配方：铁锭 ×4 + 玻璃 ×2 + 红石 ×2 + 书（3×3 标准合成）
+
+### 安全设计
+
+- BQ 未安装环境零影响：`Loader.isModLoaded("betterquesting")` 守卫置于 tick 首行；
+  全部 betterquesting/bq_standard 类型引用隔离在 `quest/QuestDetectLogic` 单文件内
+  （BQ 缺失时该类永不执行到 BQ 符号解析，规避 #74 式专用服 NoClassDefFoundError）
+- 编译期依赖 `com.github.GTNewHorizons:BetterQuesting:3.8.70-GTNH:dev`（implementation）
+
+### 变更文件
+
+- 新增 `quest/QuestDetectLogic.java`（核心检测逻辑）、`tile/TileQuestDetector.java`、
+  `block/BlockQuestDetector.java`、`client/render/RenderBlockQuestDetector.java`、
+  `quest/QuestDetectorWailaProvider.java`
+- `CommonProxy.java`：方块/TE 注册 + WAILA IMC + 配方；`dependencies.gradle` +BQ dev 依赖
+- assets：贴图、lang 中英、GuideNH 中英指南页与索引
+- 版本号：`gradle.properties` + `mcmod.info`
+
+---
+
+## 3.10.1 - 修复合成完成展示条渲染位置错误
+
+> 作者：wztwzt | 更新时间：2026-08-24 | 基于 3.10.0
+
+### 修复：展示条画到网格中间而非第一行（用户实测反馈）
+
+- **根因**：GTNH rv3 ME 终端的网络物品网格是 `VirtualMEMonitorableSlot` **虚拟槽**，不在 `inventorySlots`
+  中——原 `locateRow()` 遍历 Slot 取最小 `yDisplayPosition` 行，实际定位到 view cell/升级槽等错误行，
+  展示条被画在物品网格中间并遮挡真实物品
+- **修复**：新增 duck 接口 `mixin/TerminalLayoutAccessor`（由 `MixinGuiMEMonitorable` 实现，
+  @Shadow 布局字段），按官方布局公式取第一行：
+  - 第一行 x = `offsetRepoX`（容器相对）
+  - 第一行 y = `offsetRepoY + pinsRows*18`，其中 `pinsRows = rows - monitorableSlots.length/perRow`
+- 覆盖全部 GuiMEMonitorable 系终端子类（标准/合成/样板/接口/无线）；非标准宿主保留旧兜底逻辑；
+  展示条格数随终端样式自适应（min(9, perRow)）
+
+### 变更文件
+
+- 新增 `mixin/TerminalLayoutAccessor.java`（duck 接口）
+- `mixin/nei/MixinGuiMEMonitorable.java`：@Shadow 五个布局字段 + 实现接口
+- `client/render/RecentCraftedOverlay.java`：locateRow 重写（duck 优先 + 兜底保留）
+- 版本号：`gradle.properties` + `mcmod.info`
+- **勘误（3.13.0 起）**：duck 接口移至 `client/render/` 包——SpongePowered Mixin 禁止直接引用
+  mixin 专属包（`com.wztwzt.ae2_qof.mixin.*`）内未注册类，原位置导致启动即崩
+  （`IllegalClassLoadError ... cannot be referenced directly`）
+
+---
+
 ## 3.10.0 - 合成完成产物终端第一行展示 + 中键下单放宽 + ModularUI tooltip 换行真修复
 
 > 作者：wztwzt | 更新时间：2026-08-24 | 基于 3.9.0

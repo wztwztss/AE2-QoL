@@ -19,6 +19,15 @@ After submitting a job to a CPU, a banner slides in at the top-right of the scre
 
 Only the job submitter gets notified; jobs completed while offline are not re-sent.
 
+## Crafted Output Pin Row
+
+After submitting an order, its outputs are automatically **pinned to a dedicated top row** of the terminal:
+
+- Pinned entries show the item's **full network storage** (not just the crafted amount)
+- Rendered as its own row; the item grid shifts down — nothing is covered
+- Rows auto-extend as more distinct outputs pile up (up to 3); row count can also be fixed in terminal settings
+- Supported on **Wireless Terminal / Merged Terminal / standard ME Terminal** (the standard one needs Pins Rows enabled in its settings)
+
 ## Replan (Feature 6)
 
 Scenario: materials in the network changed after ordering (restocked / partially consumed) and the vanilla job is stuck waiting.

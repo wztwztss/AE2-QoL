@@ -9,7 +9,7 @@ author: wztwzt
 
 AE2 QoL 为 Applied Energistics 2（GTNH 版）提供一系列效率增强功能。
 
-## 全部功能一览（14 项）
+## 全部功能一览（15 项）
 
 | # | 功能 | 一句话说明 | 详情页 |
 |---|---|---|---|
@@ -27,6 +27,8 @@ AE2 QoL 为 Applied Energistics 2（GTNH 版）提供一系列效率增强功能
 | 12 | NEI 叠加层开关 | OV 按钮 / `/apu-overlay` 命令切换所有角标与提示 | [NEI 集成](nei_features.md) |
 | 13 | 智能倍增 | CPU 一次性推送 N 轮材料，消除逐轮补料等待 | [智能倍增](smart_doubling.md) |
 | 14 | 二合一终端 | 样板编码+接口管理同屏，三种形态（方块/部件/无线） | [二合一终端](merged_terminal.md) |
+| 15 | ME 任务检测器 | ME 网络物品自动完成 BQ 检索型任务（不消耗） | [ME 任务检测器](quest_detector.md) |
+| 16 | 无限存储元件 | 物品/流体/源质无限存储，悬停统计 + NEI 查看 | [无限存储元件](infinity_storage.md) |
 
 ## 快速上手
 

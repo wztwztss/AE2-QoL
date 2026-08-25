@@ -24,10 +24,10 @@ import com.wztwzt.ae2_qof.client.CommandOverlay;
 import com.wztwzt.ae2_qof.client.event.GuiUploadButtonHandler;
 import com.wztwzt.ae2_qof.client.event.KeyInputHandler;
 import com.wztwzt.ae2_qof.client.event.KnifeNameCopyHandler;
+import com.wztwzt.ae2_qof.client.GuideNHIntegration;
 import com.wztwzt.ae2_qof.client.event.MergedTerminalPanelHandler;
 import com.wztwzt.ae2_qof.client.gui.GuiProviderSelect;
 import com.wztwzt.ae2_qof.client.render.CraftingNotificationOverlay;
-import com.wztwzt.ae2_qof.client.render.RecentCraftedOverlay;
 import com.wztwzt.ae2_qof.client.render.RenderBlockTransceiver;
 import com.wztwzt.ae2_qof.client.render.WirelessHighlightRenderer;
 import com.wztwzt.ae2_qof.merged.GuiMergedTerminal;
@@ -64,6 +64,7 @@ public class ClientProxy extends CommonProxy {
         MergedTerminalPanelHandler.register();
         KeyInputHandler.register();
         KnifeNameCopyHandler.register();
+        GuideNHIntegration.register();
         MinecraftForge.EVENT_BUS.register(WirelessHighlightRenderer.INSTANCE);
         MinecraftForge.EVENT_BUS.register(new ClientRenderEventHandler());
         try {
@@ -288,8 +289,6 @@ public class ClientProxy extends CommonProxy {
             .func_152344_a(() -> {
                 if (message.stack != null) {
                     CraftingNotificationOverlay.INSTANCE.add(message.stack, message.amount);
-                    // 3.10.0：标准 ME 终端第一行展示条（60s），与横幅同源并存
-                    RecentCraftedOverlay.INSTANCE.add(message.stack, message.amount);
                 }
             });
     }

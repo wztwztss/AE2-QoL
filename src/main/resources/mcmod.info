@@ -4,7 +4,7 @@
 		"modid": "ae2_qof",
 		"name": "AE2 QoL",
 		"description": "AE2 quality-of-life enhancements: auto pattern upload, wireless access, pattern terminal improvements, and NEI inventory overlay.",
-		"version": "3.10.0",
+		"version": "3.14.0",
 		"mcversion": "1.7.10",
 		"url": "",
 		"updateUrl": "",
@@ -15,6 +15,23 @@
 		"parent": "",
 		"requiredMods": [],
 		"dependencies": [],
+		"dependants": [],
+		"useDependencyInformation": false
+	}, {
+		"modid": "aeinfinitycell",
+		"name": "AE2 Infinity Cell (merged into AE2 QoL)",
+		"description": "Infinity storage cell for AE2: items/fluids/essentia stored in world save data. Merged build of AE2InfinityCell by dancing snow (MIT).",
+		"version": "1.0.4-ae2qol",
+		"mcversion": "1.7.10",
+		"url": "",
+		"updateUrl": "",
+		"authorList": ["dancing snow", "wztwzt"],
+		"credits": "Original AE2InfinityCell by dancing snow (MIT License). Merged into the AE2 QoL jar by wztwzt.",
+		"logoFile": "",
+		"screenshots": [],
+		"parent": "",
+		"requiredMods": [],
+		"dependencies": ["appliedenergistics2"],
 		"dependants": [],
 		"useDependencyInformation": false
 	}]

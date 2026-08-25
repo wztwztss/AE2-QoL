@@ -9,7 +9,7 @@ author: wztwzt
 
 AE2 QoL brings a set of quality-of-life enhancements to Applied Energistics 2 (GTNH edition).
 
-## All Features (14)
+## All Features (16)
 
 | # | Feature | Summary | Page |
 |---|---|---|---|
@@ -27,6 +27,8 @@ AE2 QoL brings a set of quality-of-life enhancements to Applied Energistics 2 (G
 | 12 | Overlay toggle | OV button / `/apu-overlay` switches all badges and tooltips | [NEI Integration](nei_features.md) |
 | 13 | Smart Doubling | CPU pushes N rounds at once — no more round-by-round refills | [Smart Doubling](smart_doubling.md) |
 | 14 | Merged Terminal | Encoding + interface management in one GUI, three forms (block/part/wireless) | [Merged Terminal](merged_terminal.md) |
+| 15 | ME Quest Detector | ME network storage auto-completes BQ retrieval quests (non-consuming) | [ME Quest Detector](quest_detector.md) |
+| 16 | Infinity Storage Cell | Limitless item/fluid/essentia storage with hover stats & NEI view | [Infinity Storage Cell](infinity_storage.md) |
 
 ## Quick Start
 

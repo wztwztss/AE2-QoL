@@ -52,6 +52,15 @@ Uploads automatically match providers by recipe (three strategies: unique provid
 
 Results are announced in chat: success / not found / not craftable / inventory full.
 
+### 2.5 Crafted Output Pin Row (redone in 3.14.0)
+
+After ordering, the job's outputs are automatically **pinned to a dedicated top row** of the terminal — the item grid shifts down and nothing is covered:
+
+- Pinned entries show the item's **full network storage** (not just the crafted amount)
+- Rows **auto-extend** when outputs exceed one row (up to 3; e.g. 18 kinds = 2 rows) and shrink back automatically
+- Standard ME Terminal / native Wireless Terminal / terminal parts have 1 row enabled by default; adjust via terminal settings (Pins Rows)
+- The top-right crafting-completion banner is unchanged
+
 ### 3. NEI Item Tooltip
 
 - **Cyan count**: the item's stock in the AE network (supports K/M/G/T/P/E scientific notation)
@@ -124,6 +133,24 @@ A new wired block that merges the **pattern encoding panel** with the **interfac
 - **Interaction**: panel slot clicks and drag-place behave like the native AE2 terminal; the scrollbar supports click and wheel paging; clicks inside the panel take priority over the interface list
 - **Cable part form** (3.7.0): a new item, "Pattern & Interface Merged Terminal Part", can be mounted on any face of an AE2 cable (looks like the native ME terminal part; requires a channel and idle power); its GUI is identical to the block form. Craft: iron ingot + merged terminal block
 - **Wireless handheld form** (3.7.0): a new item, "Wireless Merged Terminal", opens the full all-in-one GUI anywhere, **across dimensions**; binding works like the vanilla wireless terminal — put it into the ME Security Station encode slot; if the station is removed the terminal stops working; power-free by design; network access permissions are still enforced by the security station's biometric cards; craft: diamond block + redstone + iron ingots etc.
+
+### 15. ME Quest Detector (BetterQuesting integration, 3.11.0)
+
+A new block, the **ME Quest Detector**: once attached to an ME network, items stored in the network automatically complete BetterQuesting **retrieval-type tasks** (non-consuming) — quest items stored in the network count as submitted; no manual pulling or submit stations needed.
+
+- **Binds to the placer**: progress is tracked for the placing player and automatically supports BQ party-shared progress; break and re-place to rebind
+- **Zero-consumption guarantee**: only BQ's official read-only detection hook is used; nothing is ever extracted from the network; consuming tasks are completely unaffected
+- Checks once per second; pauses without power/channel; skipped when the bound player is offline
+- WAILA/JADE shows the bound player and network status; no effect when BetterQuesting is absent
+
+### 16. Infinity Storage Cell (merged AE2InfinityCell, 3.12.0)
+
+The standalone mod **AE2 Infinity Cell** (by dancing snow, MIT) is now fully merged into this jar: a new item, the **Infinity Storage Cell** — near-limitless storage for items, fluids and essentia; contents live in the world save (the cell only holds a UUID reference), and copies of a cell share one backend inventory.
+
+- Drop it into an ME Drive/ME Chest and use; in NEI press `U` on the cell to browse everything via "Infinity Cell View" pages
+- ⚠️ This jar is **mutually exclusive** with the standalone aeinfinitycell mod: remove the original jar before installing; existing cells and save data migrate seamlessly with zero action
+- **Hover stats** (3.13.0): hovering the cell shows total/items/fluids/essentia breakdown with byte estimates; letter units by default (12.34M), hold Ctrl for scientific notation
+- AppEU energy channel is not included
 
 ---
 
