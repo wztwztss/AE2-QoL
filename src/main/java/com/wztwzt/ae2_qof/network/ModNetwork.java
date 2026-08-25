@@ -146,5 +146,17 @@ public final class ModNetwork {
             ReplaceCandidatesPacket.class,
             discriminator++,
             Side.CLIENT);
+
+        CHANNEL.registerMessage(
+            InfinityCellStatsPacket.Handler.class,
+            InfinityCellStatsPacket.class,
+            discriminator++,
+            Side.SERVER);
+
+        CHANNEL.registerMessage(
+            InfinityCellStatsResponsePacket.Handler.class,
+            InfinityCellStatsResponsePacket.class,
+            discriminator++,
+            Side.CLIENT);
     }
 }
