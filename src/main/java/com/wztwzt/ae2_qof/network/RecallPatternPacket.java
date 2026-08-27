@@ -185,12 +185,10 @@ public class RecallPatternPacket implements IMessage {
         }
 
         private IInventory resolvePatternInventory(ICraftingProvider provider) {
-            // 与 UploadPatternPacket 一致：优先取专属样板槽库存（IInterfaceViewable.getPatterns()）
+            // 与 UploadPatternPacket 一致：仅取专属样板槽库存（IInterfaceViewable.getPatterns()）；
+            // 未实现 IInterfaceViewable 的提供器拒绝撤回，避免扫描原料缓存误当样板（#27 回归）
             if (provider instanceof IInterfaceViewable viewable) {
                 return viewable.getPatterns();
-            }
-            if (provider instanceof IInventory inv) {
-                return inv;
             }
             return null;
         }

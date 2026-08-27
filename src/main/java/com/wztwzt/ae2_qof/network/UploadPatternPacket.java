@@ -219,10 +219,8 @@ public class UploadPatternPacket implements IMessage {
                 return false;
             }
 
-            if (provider instanceof IInventory inventory) {
-                return insertIntoInventory(inventory, pattern);
-            }
-
+            // 未实现 IInterfaceViewable 的提供器（未适配的非常规/未来机器）一律拒绝写入原始
+            // IInventory，否则样板会被误投进原料缓存槽（#27 回归）。确需支持时再显式白名单。
             return false;
         }
 
@@ -251,25 +249,6 @@ public class UploadPatternPacket implements IMessage {
                         patterns.markDirty();
                         return true;
                     }
-                }
-            }
-
-            return false;
-        }
-
-        private boolean insertIntoInventory(IInventory inventory, ItemStack pattern) {
-            if (inventory == null) {
-                return false;
-            }
-
-            for (int i = 0; i < inventory.getSizeInventory(); i++) {
-                ItemStack slot = inventory.getStackInSlot(i);
-                if (slot == null || slot.stackSize <= 0) {
-                    ItemStack copy = pattern.copy();
-                    copy.stackSize = 1;
-                    inventory.setInventorySlotContents(i, copy);
-                    inventory.markDirty();
-                    return true;
                 }
             }
 
