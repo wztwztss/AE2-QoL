@@ -4,13 +4,13 @@
 
 **为 GTNH 打造的 AE2 效率增强模组**：把 NEI 配方一键推送进 AE 样板终端、从 NEI 面板直接提取 AE 网络物品、查看每个物品在 AE 网络中的存量与可合成状态、无线传输 AE 网络等。
 
-适配：GTNH 2.9.0-beta-1（Minecraft 1.7.10）| 当前版本：**3.10.0** | 作者：wztwzt
+适配：GTNH 2.9.0-beta-1（Minecraft 1.7.10）| 当前版本：**3.15.0** | 作者：wztwzt
 
 ---
 
 ## 📦 安装
 
-1. 将 `AE2-QoL-3.10.0.jar` 放入 `.minecraft/mods/`
+1. 将 `AE2-QoL-3.15.0.jar` 放入 `.minecraft/mods/`
 2. 确认已安装依赖：AE2（`rv3-beta-977-GTNH`）、ae2fc（`1.5.88-gtnh`）、NotEnoughItems（NEI）
 3. 启动游戏。配置会生成在 `config/` 下
 
