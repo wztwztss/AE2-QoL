@@ -3,6 +3,7 @@ package com.wztwzt.ae2_qof.network;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
@@ -29,6 +30,29 @@ import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
 
 public class RequestProvidersListPacket implements IMessage {
+
+    // 供应器列表缓存（#5）：按网格缓存收集结果，短时间窗口内复用，降低巨网络重复扫描开销
+    private static final ConcurrentHashMap<IGrid, CachedProviders> PROVIDER_CACHE = new ConcurrentHashMap<>();
+    private static final long PROVIDER_CACHE_TTL_MS = 1000L;
+
+    private static final class CachedProviders {
+
+        final List<Long> ids;
+        final List<String> names;
+        final List<Integer> emptySlots;
+        final long timestamp;
+
+        CachedProviders(List<Long> ids, List<String> names, List<Integer> emptySlots) {
+            this.ids = ids;
+            this.names = names;
+            this.emptySlots = emptySlots;
+            this.timestamp = System.currentTimeMillis();
+        }
+
+        boolean isFresh() {
+            return System.currentTimeMillis() - timestamp < PROVIDER_CACHE_TTL_MS;
+        }
+    }
 
     private ItemStack[] recipeInputs;
     private ItemStack[] recipeOutputs;
@@ -173,38 +197,24 @@ public class RequestProvidersListPacket implements IMessage {
                             .toString());
                 }
 
-                List<Long> ids = new ArrayList<Long>();
-                List<String> names = new ArrayList<String>();
-                List<Integer> emptySlots = new ArrayList<Integer>();
-
-                for (Class<? extends IGridHost> hostClass : grid.getMachinesClasses()) {
-                    if (!ICraftingProvider.class.isAssignableFrom(hostClass)) {
-                        continue;
+                // #5：按网格缓存供应器收集结果，1 秒内复用，降低巨网络重复扫描开销
+                List<Long> ids;
+                List<String> names;
+                List<Integer> emptySlots;
+                CachedProviders cached = PROVIDER_CACHE.get(grid);
+                if (cached != null && cached.isFresh()) {
+                    ids = cached.ids;
+                    names = cached.names;
+                    emptySlots = cached.emptySlots;
+                } else {
+                    ids = new ArrayList<Long>();
+                    names = new ArrayList<String>();
+                    emptySlots = new ArrayList<Integer>();
+                    collectProviders(grid, ids, names, emptySlots);
+                    if (PROVIDER_CACHE.size() > 64) {
+                        PROVIDER_CACHE.clear();
                     }
-
-                    IMachineSet machines = grid.getMachines(hostClass);
-                    if (machines == null) {
-                        continue;
-                    }
-
-                    for (IGridNode machineNode : machines) {
-                        if (machineNode == null) {
-                            continue;
-                        }
-
-                        Object machine = machineNode.getMachine();
-                        if (!(machine instanceof ICraftingProvider)) {
-                            continue;
-                        }
-
-                        ICraftingProvider provider = (ICraftingProvider) machine;
-                        long id = System.identityHashCode(provider);
-                        String name = resolveProviderName(machine);
-
-                        ids.add(id);
-                        names.add(name);
-                        emptySlots.add(estimateEmptySlots(provider));
-                    }
+                    PROVIDER_CACHE.put(grid, new CachedProviders(ids, names, emptySlots));
                 }
 
                 // 尺寸预算（#57）：1.7.10 S3F 自定义负载长度为 short（≤32767 字节），
@@ -276,7 +286,35 @@ public class RequestProvidersListPacket implements IMessage {
             }
         }
 
-        private int estimateEmptySlots(ICraftingProvider provider) {
+        private static void collectProviders(IGrid grid, List<Long> ids, List<String> names,
+            List<Integer> emptySlots) {
+            for (Class<? extends IGridHost> hostClass : grid.getMachinesClasses()) {
+                if (!ICraftingProvider.class.isAssignableFrom(hostClass)) {
+                    continue;
+                }
+                IMachineSet machines = grid.getMachines(hostClass);
+                if (machines == null) {
+                    continue;
+                }
+                for (IGridNode machineNode : machines) {
+                    if (machineNode == null) {
+                        continue;
+                    }
+                    Object machine = machineNode.getMachine();
+                    if (!(machine instanceof ICraftingProvider)) {
+                        continue;
+                    }
+                    ICraftingProvider provider = (ICraftingProvider) machine;
+                    long id = System.identityHashCode(provider);
+                    String name = resolveProviderName(machine);
+                    ids.add(id);
+                    names.add(name);
+                    emptySlots.add(estimateEmptySlots(provider));
+                }
+            }
+        }
+
+        private static int estimateEmptySlots(ICraftingProvider provider) {
             // 与 UploadPatternPacket 一致：优先统计专属样板槽（IInterfaceViewable.getPatterns()），
             // 避免把 GT/PH 机器 IInventory 原料缓存槽误计为样板空位
             if (provider instanceof IInterfaceViewable viewable) {
@@ -307,7 +345,7 @@ public class RequestProvidersListPacket implements IMessage {
             return 0;
         }
 
-        private String resolveProviderName(Object machine) {
+        private static String resolveProviderName(Object machine) {
             String name = "Crafting Provider";
 
             // GregTech总成等实现了ICustomNameObject（AE2接口），优先检查
