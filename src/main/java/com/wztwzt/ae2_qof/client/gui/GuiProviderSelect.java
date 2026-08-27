@@ -278,7 +278,14 @@ public class GuiProviderSelect extends GuiScreen {
     }
 
     private void reloadMappings() {
-        RecipeNameUtil.reloadMappings();
+        try {
+            RecipeNameUtil.reloadMappings();
+        } catch (Throwable t) {
+            // 兜底：即使映射加载异常也只提示，绝不抛出到 GUI 线程导致客户端崩溃（A1）
+            sendClientMessage(
+                StatCollector.translateToLocalFormatted("ae2_qof.error.read_mappings", t.getMessage()));
+            return;
+        }
         if (lastAddedMappingName != null && !lastAddedMappingName.isEmpty()) {
             query = lastAddedMappingName;
             page = 0;

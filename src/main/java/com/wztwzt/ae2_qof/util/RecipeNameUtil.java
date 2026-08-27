@@ -172,52 +172,60 @@ public final class RecipeNameUtil {
     }
 
     private static synchronized void loadMappings() {
-        RAW_MAPPINGS.clear();
-        LOOKUP_MAPPINGS.clear();
-
         if (CONFIG_FILE == null) {
             return;
         }
 
-        loadBuiltinDefaults();
+        // 先解析到临时结构，成功后再原子替换全局映射：
+        // 坏 JSON（JsonSyntaxException 等 RuntimeException）或读取失败时不会损坏已有映射，
+        // 也不会让异常上冒到客户端 GUI 线程导致崩溃（A1）。
+        Map<String, String> rawTemp = new HashMap<String, String>();
+        Map<String, String> lookupTemp = new HashMap<String, String>();
+        loadBuiltinDefaults(rawTemp, lookupTemp);
 
         if (!Files.exists(CONFIG_FILE)) {
             writeTemplate();
-        }
-
-        try (InputStreamReader reader = new InputStreamReader(
-            Files.newInputStream(CONFIG_FILE),
-            StandardCharsets.UTF_8)) {
-            JsonObject obj = GSON.fromJson(reader, JsonObject.class);
-            if (obj == null) {
-                return;
-            }
-            for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
-                String key = entry.getKey();
-                if (key == null || key.trim()
-                    .isEmpty()) {
-                    continue;
-                }
-                JsonElement value = entry.getValue();
-                if (value != null && value.isJsonPrimitive()) {
-                    String mapped = value.getAsString();
-                    if (mapped != null && !mapped.trim()
-                        .isEmpty()) {
-                        RAW_MAPPINGS.put(key.trim(), mapped.trim());
-                        LOOKUP_MAPPINGS.put(normalizeKey(key), mapped.trim());
+        } else {
+            try (InputStreamReader reader = new InputStreamReader(
+                Files.newInputStream(CONFIG_FILE),
+                StandardCharsets.UTF_8)) {
+                JsonObject obj = GSON.fromJson(reader, JsonObject.class);
+                if (obj != null) {
+                    for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+                        String key = entry.getKey();
+                        if (key == null || key.trim()
+                            .isEmpty()) {
+                            continue;
+                        }
+                        JsonElement value = entry.getValue();
+                        if (value != null && value.isJsonPrimitive()) {
+                            String mapped = value.getAsString();
+                            if (mapped != null && !mapped.trim()
+                                .isEmpty()) {
+                                rawTemp.put(key.trim(), mapped.trim());
+                                lookupTemp.put(normalizeKey(key), mapped.trim());
+                            }
+                        }
                     }
                 }
+            } catch (Exception e) {
+                // IOException 与 JsonSyntaxException（坏 JSON）等均在此兜底
+                MyMod.LOG.warn(
+                    StatCollector.translateToLocalFormatted("ae2_qof.error.read_mappings", e.getMessage()));
             }
-        } catch (IOException e) {
-            MyMod.LOG.warn(StatCollector.translateToLocalFormatted("ae2_qof.error.read_mappings", e.getMessage()));
         }
+
+        RAW_MAPPINGS.clear();
+        LOOKUP_MAPPINGS.clear();
+        RAW_MAPPINGS.putAll(rawTemp);
+        LOOKUP_MAPPINGS.putAll(lookupTemp);
         MyMod.LOG.info("[APU] Loaded " + RAW_MAPPINGS.size() + " recipe mappings from " + CONFIG_FILE);
     }
 
     /**
-     * Load built-in default mappings from the jar resource.
+     * Load built-in default mappings from the jar resource into the given maps.
      */
-    private static void loadBuiltinDefaults() {
+    private static void loadBuiltinDefaults(Map<String, String> rawOut, Map<String, String> lookupOut) {
         try {
             java.io.InputStream is = RecipeNameUtil.class.getResourceAsStream("/apu/recipe_type_names.json");
             if (is == null) {
@@ -239,8 +247,8 @@ public final class RecipeNameUtil {
                             String mapped = value.getAsString();
                             if (mapped != null && !mapped.trim()
                                 .isEmpty()) {
-                                RAW_MAPPINGS.put(key.trim(), mapped.trim());
-                                LOOKUP_MAPPINGS.put(normalizeKey(key), mapped.trim());
+                                rawOut.put(key.trim(), mapped.trim());
+                                lookupOut.put(normalizeKey(key), mapped.trim());
                             }
                         }
                     }
