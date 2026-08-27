@@ -12,13 +12,48 @@ import com.wztwzt.ae2_qof.MyMod;
 /**
  * 通过反射扫描 GT 全量配方池（RecipeMap.ALL_RECIPE_MAPS），从输入/输出反查匹配的配方池 unlocalizedName。
  * 带每玩家冷却缓存，避免全量反射扫描被恶意连发卡服。供 auto-upload 与二合一终端编码共用。
+ *
+ * 性能与正确性加固（B1/B2/B3）：
+ * - 反射得到的 Class/Method/Field 与 ALL_RECIPE_MAPS 引用在类加载时静态缓存一次，扫描不再重复反射；
+ * - 冷却缓存键包含输入/输出签名，同一玩家 3 秒内跨机器编码不再复用上次配方池结果（避免映射错）。
  */
 public final class RecipeMapDetector {
 
-    /** 每个玩家全量反射扫描 GT 配方池的冷却时间（毫秒），防恶意连发卡服 */
+    /** 每个玩家+输入/输出组合全量反射扫描 GT 配方池的冷却时间（毫秒），防恶意连发卡服 */
     private static final long SCAN_COOLDOWN_MS = 3000L;
     private static final ConcurrentHashMap<String, Long> LAST_SCAN_TIMES = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, String> LAST_RECIPE_MAPS = new ConcurrentHashMap<>();
+
+    // 反射结果静态缓存：仅反射一次，避免每次扫描重复 Class.forName/getMethod/getField（B3）
+    private static Class<?> RECIPE_MAP_CLASS;
+    private static Map<?, ?> ALL_MAPS;
+    private static Method FIND_QUERY_METHOD;
+    private static Class<?> QUERY_CLASS;
+    private static Method ITEMS_METHOD;
+    private static Method FIND_METHOD;
+    private static Field OUTPUTS_FIELD;
+    private static Field NAME_FIELD;
+    private static boolean REFLECTION_READY = false;
+
+    static {
+        try {
+            RECIPE_MAP_CLASS = Class.forName("gregtech.api.recipe.RecipeMap");
+            Field allMapsField = RECIPE_MAP_CLASS.getField("ALL_RECIPE_MAPS");
+            ALL_MAPS = (Map<?, ?>) allMapsField.get(null);
+            FIND_QUERY_METHOD = RECIPE_MAP_CLASS.getMethod("findRecipeQuery");
+            QUERY_CLASS = Class.forName("gregtech.api.recipe.FindRecipeQuery");
+            ITEMS_METHOD = QUERY_CLASS.getMethod("items", ItemStack[].class);
+            FIND_METHOD = QUERY_CLASS.getMethod("find");
+            try {
+                Class<?> gtRecipeClass = Class.forName("gregtech.api.objects.GT_Recipe");
+                OUTPUTS_FIELD = gtRecipeClass.getField("mOutputs");
+            } catch (Throwable ignored) {}
+            NAME_FIELD = RECIPE_MAP_CLASS.getField("unlocalizedName");
+            REFLECTION_READY = true;
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[APU] RecipeMapDetector reflection init failed: " + t.getMessage());
+        }
+    }
 
     private RecipeMapDetector() {}
 
@@ -28,76 +63,89 @@ public final class RecipeMapDetector {
      * @param playerKey 玩家唯一键用于冷却缓存，可传 null 禁用缓存
      */
     public static String detectRecipeMap(ItemStack[] inputs, ItemStack[] outputs, String playerKey) {
+        String cacheKey = null;
         if (playerKey != null) {
+            // 缓存键包含输入/输出签名，避免同一玩家 3 秒内跨机器编码复用上次配方池（B2）
+            cacheKey = playerKey + "|" + buildSignature(inputs, outputs);
             long now = System.currentTimeMillis();
-            Long last = LAST_SCAN_TIMES.get(playerKey);
+            Long last = LAST_SCAN_TIMES.get(cacheKey);
             if (last != null && now - last < SCAN_COOLDOWN_MS) {
-                // 冷却期内复用上次结果，避免全量反射扫描
-                return LAST_RECIPE_MAPS.get(playerKey);
+                return LAST_RECIPE_MAPS.get(cacheKey);
             }
-            LAST_SCAN_TIMES.put(playerKey, now);
+            LAST_SCAN_TIMES.put(cacheKey, now);
         }
         String detected = scanRecipeMaps(inputs, outputs);
-        if (playerKey != null) {
-            LAST_RECIPE_MAPS.put(playerKey, detected);
+        if (cacheKey != null) {
+            LAST_RECIPE_MAPS.put(cacheKey, detected);
         }
         return detected;
+    }
+
+    /** 由输入/输出物品构造稳定签名，用于区分不同配方池检测请求 */
+    private static String buildSignature(ItemStack[] inputs, ItemStack[] outputs) {
+        StringBuilder sb = new StringBuilder();
+        if (inputs != null) {
+            for (ItemStack in : inputs) {
+                if (in == null) {
+                    continue;
+                }
+                sb.append(in.getItem() == null ? "?" : in.getItem().getClass()
+                    .getName())
+                    .append(':')
+                    .append(in.getItemDamage())
+                    .append(';');
+            }
+        }
+        sb.append('#');
+        if (outputs != null) {
+            for (ItemStack out : outputs) {
+                if (out == null) {
+                    continue;
+                }
+                sb.append(out.getItem() == null ? "?" : out.getItem().getClass()
+                    .getName())
+                    .append(':')
+                    .append(out.getItemDamage())
+                    .append(';');
+            }
+        }
+        return sb.toString();
     }
 
     public static String scanRecipeMaps(ItemStack[] inputs, ItemStack[] outputs) {
         if (inputs == null || inputs.length == 0) {
             return null;
         }
+        if (!REFLECTION_READY || ALL_MAPS == null) {
+            return null;
+        }
         boolean hasUserOutputs = outputs != null;
         String firstInputMatch = null;
 
-        try {
-            // 通过反射获取 RecipeMap.ALL_RECIPE_MAPS
-            Class<?> recipeMapClass = Class.forName("gregtech.api.recipe.RecipeMap");
-
-            Field allMapsField = recipeMapClass.getField("ALL_RECIPE_MAPS");
-            Map<?, ?> allMaps = (Map<?, ?>) allMapsField.get(null);
-
-            // 获取 findRecipeQuery() 方法
-            Method findRecipeQueryMethod = recipeMapClass.getMethod("findRecipeQuery");
-            // 获取 FindRecipeQuery 的 items() 和 find() 方法
-            Class<?> queryClass = Class.forName("gregtech.api.recipe.FindRecipeQuery");
-            Method itemsMethod = queryClass.getMethod("items", ItemStack[].class);
-            Method findMethod = queryClass.getMethod("find");
-            Field recipeOutputsField = null;
+        for (Object map : ALL_MAPS.values()) {
             try {
-                Class<?> gtRecipeClass = Class.forName("gregtech.api.objects.GT_Recipe");
-                recipeOutputsField = gtRecipeClass.getField("mOutputs");
-            } catch (Throwable ignored) {}
+                // 获取配方池名字用于日志
+                String mapName = (String) NAME_FIELD.get(map);
 
-            for (Object map : allMaps.values()) {
-                try {
-                    // 获取配方池名字用于日志
-                    Field nameField = recipeMapClass.getField("unlocalizedName");
-                    String mapName = (String) nameField.get(map);
+                Object query = FIND_QUERY_METHOD.invoke(map);
+                query = ITEMS_METHOD.invoke(query, (Object) inputs);
+                Object recipe = FIND_METHOD.invoke(query);
 
-                    Object query = findRecipeQueryMethod.invoke(map);
-                    query = itemsMethod.invoke(query, (Object) inputs);
-                    Object recipe = findMethod.invoke(query);
-
-                    if (recipe != null) {
-                        // 同一输入物品常存在于多个配方池（如钢锭同时是高炉/电解机的输入），
-                        // 仅凭输入反查会随 HashMap 遍历顺序随机命中。用用户提供的输出物校验：
-                        // 输入+输出都匹配 → 确定命中；仅输入匹配 → 记为候选，全部扫完后兜底返回。
-                        if (!hasUserOutputs || recipeOutputsField == null
-                            || recipeMatchesOutputs(recipe, recipeOutputsField, outputs)) {
-                            return mapName;
-                        }
-                        if (firstInputMatch == null) {
-                            firstInputMatch = mapName;
-                        }
+                if (recipe != null) {
+                    // 同一输入物品常存在于多个配方池（如钢锭同时是高炉/电解机的输入），
+                    // 仅凭输入反查会随 HashMap 遍历顺序随机命中。用用户提供的输出物校验：
+                    // 输入+输出都匹配 → 确定命中；仅输入匹配 → 记为候选，全部扫完后兜底返回。
+                    if (!hasUserOutputs || OUTPUTS_FIELD == null
+                        || recipeMatchesOutputs(recipe, OUTPUTS_FIELD, outputs)) {
+                        return mapName;
                     }
-                } catch (Throwable t) {
-                    // 单个配方池查找失败，继续下一个
+                    if (firstInputMatch == null) {
+                        firstInputMatch = mapName;
+                    }
                 }
+            } catch (Throwable t) {
+                // 单个配方池查找失败，继续下一个
             }
-        } catch (Throwable t) {
-            MyMod.LOG.warn("detectRecipeMap error: {}", t.getMessage());
         }
         return firstInputMatch;
     }
