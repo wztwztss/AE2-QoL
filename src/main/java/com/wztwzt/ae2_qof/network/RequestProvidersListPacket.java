@@ -1,6 +1,7 @@
 package com.wztwzt.ae2_qof.network;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -208,32 +209,66 @@ public class RequestProvidersListPacket implements IMessage {
 
                 // 尺寸预算（#57）：1.7.10 S3F 自定义负载长度为 short（≤32767 字节），
                 // 超大网络的供应器名列表可能超限 → 编码/发送失败、客户端选择界面静默无响应。
-                // 序列化前按预算（32000，留 FML 头部余量）截断尾部供应器并记录日志。
+                // 超限时优先保留「有空槽」的提供器（自动上传才能真正落目标），无空槽的靠后丢弃；
+                // 最终列表维持原顺序便于对照。
                 final byte[] rmBytes = recipeMap != null ? recipeMap.getBytes(java.nio.charset.StandardCharsets.UTF_8)
                     : null;
-                int used = 4 + 1 + 1 + (rmBytes != null ? 2 + rmBytes.length : 1);
-                int limit = ids.size();
+                final int baseUsed = 4 + 1 + 1 + (rmBytes != null ? 2 + rmBytes.length : 1);
+
+                int totalUsed = baseUsed;
+                boolean overflow = false;
                 for (int i = 0; i < ids.size(); i++) {
-                    used += 8 + 2
+                    totalUsed += 8 + 2
                         + names.get(i)
                             .getBytes(java.nio.charset.StandardCharsets.UTF_8).length
                         + 4;
-                    if (used > 32000) {
-                        limit = i;
+                    if (totalUsed > 32000) {
+                        overflow = true;
                         break;
                     }
                 }
-                if (limit < ids.size()) {
-                    MyMod.LOG
-                        .warn("[Upload] providers list truncated to fit packet budget: {} -> {}", ids.size(), limit);
+
+                List<Integer> keep = new ArrayList<Integer>();
+                if (!overflow) {
+                    for (int i = 0; i < ids.size(); i++) {
+                        keep.add(i);
+                    }
+                } else {
+                    // 优先保留有空槽的提供器：按 emptySlots 降序稳定排序后贪心选取，最后还原原顺序
+                    Integer[] idxArr = new Integer[ids.size()];
+                    for (int i = 0; i < ids.size(); i++) {
+                        idxArr[i] = i;
+                    }
+                    Arrays.sort(idxArr, (a, b) -> Integer.compare(emptySlots.get(b), emptySlots.get(a)));
+                    int budget = baseUsed;
+                    for (Integer i : idxArr) {
+                        int add = 8 + 2
+                            + names.get(i)
+                                .getBytes(java.nio.charset.StandardCharsets.UTF_8).length
+                            + 4;
+                        if (budget + add > 32000) {
+                            continue;
+                        }
+                        budget += add;
+                        keep.add(i);
+                    }
+                    keep.sort(Integer::compare);
+                    MyMod.LOG.warn(
+                        "[Upload] providers list truncated to fit packet budget (kept {} with empty-slot priority): {} -> {}",
+                        keep.size(), ids.size(), keep.size());
                 }
+
+                List<Long> outIds = new ArrayList<Long>(keep.size());
+                List<String> outNames = new ArrayList<String>(keep.size());
+                List<Integer> outEmpty = new ArrayList<Integer>(keep.size());
+                for (Integer i : keep) {
+                    outIds.add(ids.get(i));
+                    outNames.add(names.get(i));
+                    outEmpty.add(emptySlots.get(i));
+                }
+
                 ModNetwork.CHANNEL.sendTo(
-                    new ProvidersListS2CPacket(
-                        new ArrayList<Long>(ids.subList(0, limit)),
-                        new ArrayList<String>(names.subList(0, limit)),
-                        new ArrayList<Integer>(emptySlots.subList(0, limit)),
-                        recipeMap,
-                        message.forceGui),
+                    new ProvidersListS2CPacket(outIds, outNames, outEmpty, recipeMap, message.forceGui),
                     player);
                 MyMod.LOG.info("[Upload] providers list sent: count={}, recipeMap={}", limit, recipeMap);
             } catch (Throwable t) {
