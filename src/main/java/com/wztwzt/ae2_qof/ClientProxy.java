@@ -100,6 +100,7 @@ public class ClientProxy extends CommonProxy {
     public void handleProvidersList(final ProvidersListS2CPacket message) {
         Minecraft.getMinecraft()
             .func_152344_a(() -> {
+                try {
                 // Shift+点击：强制打开选择页面
                 if (message.forceGui) {
                     openGuiWithSearch(message);
@@ -146,6 +147,9 @@ public class ClientProxy extends CommonProxy {
 
                 // 策略3: 打开搜索界面
                 openGuiWithSearch(message);
+                } catch (Throwable t) {
+                    MyMod.LOG.error("[Upload] handleProvidersList failed", t);
+                }
             });
     }
 
