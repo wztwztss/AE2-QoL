@@ -280,7 +280,7 @@ public class RequestProvidersListPacket implements IMessage {
                 ModNetwork.CHANNEL.sendTo(
                     new ProvidersListS2CPacket(outIds, outNames, outEmpty, recipeMap, message.forceGui),
                     player);
-                MyMod.LOG.info("[Upload] providers list sent: count={}, recipeMap={}", limit, recipeMap);
+                MyMod.LOG.info("[Upload] providers list sent: count={}, recipeMap={}", outIds.size(), recipeMap);
             } catch (Throwable t) {
                 MyMod.LOG.error("Providers list request failed", t);
             }
