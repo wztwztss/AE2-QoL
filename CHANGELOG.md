@@ -22,7 +22,12 @@
 
 ### Mixin 变更
 
-- 从 `mixins.ae2_qof.json` 移除 `gt.MixinMTEMultiBlockBase`（维护绕过改由 init 阶段注册实现，不再需要 Mixin 注入 `shouldCheckMaintenance`）
+- 从 `mixins.ae2_qof.json` 移除 `gt.MixinMTEMultiBlockBase`（`after:gregtech` 导致 TST 崩溃，Mixin 已移除）
+- **维护绕过暂未生效**：需要找到不改变加载顺序的实现方式
+
+### 已知问题
+
+- **自动上传记忆功能**：配方名映射/记忆供应器/工作台配方映射可能失效，调试日志已加（已注释），待游戏内验证
 
 ### 变更文件
 

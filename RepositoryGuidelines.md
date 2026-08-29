@@ -6,7 +6,7 @@ CRITICAL: 思考过程(reasoning/thinking)全程使用中文。仅最终输出�
 ## 环境路径参考
 - 项目根目录：`E:\wzt\MC\modcreater\AE2‑QoL‑1.7.10‑GTNH`
 - 外部参考源码库：`E:\wzt\MC\modcreater\reference_src`
-- 游戏测试mods目录：`E:\wzt\MC\PL genmulu\测试_2.9.0‑beta‑1_Java_17‑25\.minecraft\mods`
+- 游戏测试mods目录：`E:\wzt\MC\PL genmulu\GT_New_Horizons_2.9.0‑beta‑1_Java_17‑25(1)\.minecraft\mods`
 
 ## 开发参考文档
 > 编码前必读，规范详见：
@@ -16,19 +16,16 @@ CRITICAL: 思考过程(reasoning/thinking)全程使用中文。仅最终输出�
 - GTNH开发指南速查：`docs/GTNH-开发指南.md`
 
 ### 迁移/移植指南
-- GTNH迁移指南（现有模组迁移到GTNH构建系统）：`docs/GTNH-迁移指南.md`
-- GTNH移植指南（高版本模组移植到1.7.10）：`docs/GTNH-移植指南.md`
+- GTNH迁移与移植指南：`docs/GTNH-迁移移植指南.md`
 
 ### 构建/配置参考
-- GTNH构建配置参考（gradle.properties详解）：`docs/GTNH-构建配置参考.md`
-- GTNH模板代码参考（主类/代理/配置模板）：`docs/GTNH-模板代码参考.md`
-- GTNH Spotless配置参考（代码格式化）：`docs/GTNH-Spotless配置参考.md`
+- GTNH构建与代码参考（gradle.properties/模板代码/Spotless）：`docs/GTNH-构建与代码参考.md`
 
 ### 问题排查
 - GTNH常见问题：`docs/GTNH-FAQ.md`
 
 ### 项目文档
-- 项目已有文档：`docs/CHANGELOG.md`、`docs/migration.md`、`docs/porting.md`
+- 项目已有文档：`docs/CHANGELOG.md`
 
 ## 语言要求
 AI助手全部回复使用中文；代码内部注释优先中文，原有遗留代码注释风格保持原样，不强行改写旧注释。
@@ -87,7 +84,7 @@ AI助手全部回复使用中文；代码内部注释优先中文，原有遗留
 [步骤描述] → 验证：[编译 / 游戏 /log/ 崩溃日志的检查项]
 
 ## 5. 文档驱动开发
-> 复用项目已有的`docs/`目录，不新建文件夹。已有文件：`CHANGELOG.md`、`migration.md`、`porting.md`
+> 复用项目已有的`docs/`目录，不新建文件夹。已有文件：`CHANGELOG.md`
 
 ### 5.1 修改代码前：阅读文档
 1. 查阅 `docs/MOD_MAP.md`：定位功能对应的Java、Mixin类路径。
@@ -103,7 +100,7 @@ AI助手全部回复使用中文；代码内部注释优先中文，原有遗留
 | 新增/删除/重写Java、Mixin类 | `docs/MOD_MAP.md` |
 | 修改Mixin注入点、注入目标 | `docs/mixin_notes.md` |
 | 修改模组行为、AE2逻辑、配方 | 对应功能文档；重大变更同步更新根目录`CHANGELOG.md` |
-| 移植、版本迁移相关改动 | `docs/migration.md` / `docs/porting.md` |
+| 移植、版本迁移相关改动 | `docs/GTNH-迁移移植指南.md` |
 
 > 根目录`CHANGELOG.md`面向使用者，记录对外可见变更。内部重构、注释微调不写入。
 
@@ -145,14 +142,14 @@ AI助手全部回复使用中文；代码内部注释优先中文，原有遗留
 
 ### 6.4 编译与验证固定流程
 1. 修改完成执行Gradle构建，编译无报错，产出jar包。常用命令详见 `docs/GTNH-开发指南.md`。
-2. 将`build/libs`输出jar复制替换：`E:\wzt\MC\PL genmulu\测试_2.9.0‑beta‑1_Java_17‑25\.minecraft\mods`，**删除旧版本jar，禁止新旧jar共存**。
+2. 将`build/libs`输出jar复制替换：`E:\wzt\MC\PL genmulu\GT_New_Horizons_2.9.0‑beta‑1_Java_17‑25(1)\.minecraft\mods`，**删除旧版本jar，禁止新旧jar共存**。
 3. 两层测试：新建空存档测试基础功能；旧存档测试存档兼容性。
 4. IDE run仅用于快速调试，**最终验证必须使用build/libs下jar在真实mods环境测试**。
 5. 出现崩溃优先保存：`fml‑client‑latest.log`、`mixin.log`、crash报告，不要重启覆盖日志。
 
 ### 6.5 存档兼容性硬性规则
 1. 修改方块实体NBT存储逻辑，必须评估存档兼容性，必要时编写NBT迁移逻辑。
-2. 破坏性存档改动，必须在CHANGELOG、README醒目提示，写入migration.md。
+2. 破坏性存档改动，必须在CHANGELOG、README醒目提示，写入`docs/GTNH-迁移移植指南.md`。
 3. 优先新增NBT字段，尽量避免修改、删除已有NBT字段。
 
 ### 6.6 版本迭代、日志与README维护（模组发布更新强制）
@@ -177,7 +174,7 @@ AI助手全部回复使用中文；代码内部注释优先中文，原有遗留
 时间戳：yyyy‑MM‑dd
 修改文件：[src/xxx.java, src/main/resources/mixins.xxx.json, gradle.properties, CHANGELOG.md, README.md]
 Git 回退方案：git revert <commitHash> 或者 git checkout <commitHash> -- 文件路径
-测试操作：构建 jar，替换至 E:\wzt\MC\PL genmulu\ 测试_2.9.0‑beta‑1_Java_17‑25.minecraft\mods
+测试操作：构建 jar，替换至 E:\wzt\MC\PL genmulu\GT_New_Horizons_2.9.0‑beta‑1_Java_17‑25(1)\.minecraft\mods
 验证结果：编译通过，游戏运行，mixins 日志无报错
 版本迭代：旧版本 → 新版本
 问题出现的原因：XXX
@@ -200,7 +197,7 @@ Git 回退方案：git revert <commitHash> 或者 git checkout <commitHash> -- �
 ### 7.1 编码前
 - [ ] 阅读 `docs/GTNH-代码风格.md`（命名、注释、switch语法、括号规则）
 - [ ] 阅读 `docs/GTNH-开发指南.md`（构建命令、调试方法）
-- [ ] 如需迁移/移植，阅读 `docs/GTNH-迁移指南.md` 或 `docs/GTNH-移植指南.md`
+- [ ] 如需迁移/移植，阅读 `docs/GTNH-迁移移植指南.md`
 - [ ] 确认目标版本：GTNH 2.9.0‑beta‑1 / MC1.7.10
 - [ ] 查阅 `docs/MOD_MAP.md` 定位目标类路径
 - [ ] 输出修改方案，等待确认
