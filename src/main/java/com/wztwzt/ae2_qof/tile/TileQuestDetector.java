@@ -7,6 +7,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 
+import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.quest.QuestDetectLogic;
 
 import appeng.api.config.Actionable;
@@ -19,7 +20,7 @@ import appeng.api.networking.events.MENetworkPowerStatusChange;
 import appeng.me.GridAccessException;
 import appeng.tile.TileEvent;
 import appeng.tile.events.TileEventType;
-import appeng.tile.storage.TileIOPort;
+import appeng.tile.grid.AENetworkTile;
 import io.netty.buffer.ByteBuf;
 
 /**
@@ -30,7 +31,7 @@ import io.netty.buffer.ByteBuf;
  * 供电/通道状态经 {@link IPowerChannelState} 供渲染与 WAILA 展示；BQ 未安装时
  * tick 内首行守卫直接返回（详见 {@link QuestDetectLogic} 隔离约定）。
  */
-public class TileQuestDetector extends TileIOPort implements IPowerChannelState {
+public class TileQuestDetector extends AENetworkTile implements IPowerChannelState {
 
     private static final int SCAN_INTERVAL = 20;
 
@@ -111,8 +112,10 @@ public class TileQuestDetector extends TileIOPort implements IPowerChannelState 
 
     @TileEvent(TileEventType.TICK)
     public void onQuestDetectTick() {
-        if (!QuestDetectLogic.bqAvailable()) return; // 必须最先执行：BQ 缺失时不触碰 Logic 其余符号
-        if (worldObj.isRemote || !powered || owner == null) return;
+        if (!QuestDetectLogic.bqAvailable()) return;
+        if (worldObj.isRemote) return;
+        if (!powered) return;
+        if (owner == null) return;
         if (worldObj.getTotalWorldTime() % SCAN_INTERVAL != 0L) return;
         EntityPlayerMP player = findOnlinePlayer(owner);
         if (player == null) return;
@@ -121,7 +124,9 @@ public class TileQuestDetector extends TileIOPort implements IPowerChannelState 
                 .getGrid();
             if (grid == null) return;
             QuestDetectLogic.runDetection(grid, player);
-        } catch (Throwable ignored) {}
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[QuestDetector] tick failed", t);
+        }
     }
 
     private static EntityPlayerMP findOnlinePlayer(UUID uuid) {

@@ -156,6 +156,16 @@ The standalone mod **AE2 Infinity Cell** (by dancing snow, MIT) is now fully mer
 - **Hover stats** (3.13.0): hovering the cell shows total/items/fluids/essentia breakdown with byte estimates; letter units by default (12.34M), hold Ctrl for scientific notation
 - AppEU energy channel is not included
 
+### 17. Universal Maintenance Hatch (3.16.0)
+
+A new GT hatch item, the **Universal Maintenance Hatch**: place it in a multiblock's maintenance slot for three capabilities:
+
+- **Maintenance bypass**: all multiblocks never have maintenance issues (Mixin globally injects `shouldCheckMaintenance()` to return false)
+- **Wireless energy**: binds to the placer's UUID on placement, periodically pulls EU from the global wireless energy network to local storage (EU must be injected into the wireless network first via other means)
+- **Circuit board parallel mapping**: insert a GT circuit board to set parallel count, formula is 4^level (LV=4, MV=16, HV=64, EV=256, ...)
+
+Recipe: Iron Ingot ×4 + Glass ×2 + Redstone ×2 + LV Circuit Board (3×3)
+
 ---
 
 ## 🕐 Planned

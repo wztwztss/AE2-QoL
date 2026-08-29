@@ -1,3 +1,66 @@
+## 3.16.1 - TST 兼容修复 + Quest Detector 稳定性
+
+> 作者：wztwzt | 更新时间：2026-08-29 | 基于 3.16.0
+
+### 修复：TST 极限合成配方崩溃（Critical）
+
+- **现象**：加入 AE2-QoL 后 TST `ExtremeCraftRecipeHandler.initECRecipe` 崩溃（`IllegalArgumentException: null in argument`）
+- **根因**：`@Mod dependencies` 中添加 `after:gregtech` 改变了 Forge mod 加载顺序，导致 TST 处理 Avaritia 极限合成配方时某些 GT 物品注册顺序异常
+- **修复**：移除 `after:gregtech` 依赖声明（恢复为原始 `required-after:appliedenergistics2;after:guidenh`），MTE 注册维持在 `init()` 阶段（不依赖加载顺序）
+
+### 修复：右键 Quest Detector 崩溃
+
+- **现象**：右键 Quest Detector 方块触发 `ClassCastException: TileQuestDetector cannot be cast to TileIOPort`
+- **根因**：`BlockQuestDetector extends BlockIOPort`，父类 `onActivated` 将 TileEntity 强转为 `TileIOPort`，但 `TileQuestDetector extends AENetworkTile` 不是 `TileIOPort` 子类
+- **修复**：`BlockQuestDetector` 中 override `onBlockActivated`，`instanceof TileQuestDetector` 时直接处理，跳过父类逻辑
+
+### 修复：Quest Detector 任务检测无效
+
+- **现象**：检测器运行但无法匹配任何任务物品，日志显示 `rebuild keys failed: NoSuchMethodError`
+- **根因**：`OreDictionary.getOres()` 展开某些矿辞时触发 `func_150895_a` 的 `NoSuchMethodError`，整个 key 缓存构建失败返回空列表
+- **修复**：`collectRequiredKeys` 中将每个 `BigItemStack` 的处理包在 try-catch 内，单个物品矿辞展开失败不影响其余物品的 key 收集
+
+### Mixin 变更
+
+- 从 `mixins.ae2_qof.json` 移除 `gt.MixinMTEMultiBlockBase`（维护绕过改由 init 阶段注册实现，不再需要 Mixin 注入 `shouldCheckMaintenance`）
+
+### 变更文件
+
+- `MyMod.java`（移除 `after:gregtech` 依赖）
+- `CommonProxy.java`（MTE 注册保持 init 阶段）
+- `BlockQuestDetector.java`（+override `onBlockActivated`）
+- `TileQuestDetector.java`（+详细诊断日志）
+- `QuestDetectLogic.java`（矿辞展开 try-catch 容错）
+- `mixins.ae2_qof.json`（-MixinMTEMultiBlockBase）
+
+---
+
+## 3.16.0 - 万能维护仓（维护绕过 + 无线能源 + 电路板并行映射）
+
+> 作者：wztwzt | 更新时间：2026-08-29 | 基于 3.15.1
+
+### 新增：万能维护仓
+
+- 新物品「万能维护仓」：GT 仓室形态，放置于多方块结构维护槽位
+- **维护绕过**：Mixin 注入 `MTEMultiBlockBase.shouldCheckMaintenance()` 返回 false，所有多方块机器永远无维护问题（注：Mixin 方案已移除，维护绕过暂未生效）
+- **无线能源**：放置时绑定放置者 UUID，定期从全球无线电网拉取 EU 到本地存储（需提前注入 EU）
+- **电路板并行映射**：插入 GT 电路板设置并行数，公式为 4^level（LV=4, MV=16, HV=64, ...）
+- 配方：铁锭 ×4 + 玻璃 ×2 + 红石 ×2 + LV 电路板（3×3）
+
+### 修复：万能维护仓注册失败（IllegalAccessError）
+
+- **根因**：GT `CommonMetaTileEntity` 要求 MTE 注册必须在 init 阶段（Load Phase），preInit 时 `GregTechAPI.sPreloadStarted` 为 false 导致 `IllegalAccessError`
+- **修复**：MTE 构造和合成表注册从 `preInit()` 移至 `init()`
+
+### 变更文件
+
+- 新增 `hatch/AE2MaintenanceHatchUniversal.java`（主仓室类）
+- `CommonProxy.java`（注册仓室 + 配方，init 阶段注册）
+- `assets/ae2_qof/lang/zh_CN.lang` + `en_US.lang`（翻译）
+- 版本号 `gradle.properties` → 3.16.0
+
+---
+
 ## 3.15.0 - 通知横幅对齐 AE2 原生样式（含耗时）+ pin 行开关修复与总开关
 
 > 作者：wztwzt | 更新时间：2026-08-25 | 基于 3.14.0

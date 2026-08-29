@@ -122,10 +122,14 @@ public class ClientProxy extends CommonProxy {
                 }
 
                 // 策略2: 查已记住的 Provider 名字
+                MyMod.LOG.info("[Upload] strategy2 check: recipeMap={}, rememberedProviders size={}",
+                    message.recipeMap, ClientState.rememberedProviders.size());
                 if (message.recipeMap != null && !message.recipeMap.isEmpty()) {
                     ClientState.lastRecipeMap = message.recipeMap;
 
                     String rememberedName = ClientState.getRememberedProviderName(message.recipeMap);
+                    MyMod.LOG.info("[Upload] strategy2: recipeMap='{}', rememberedName='{}'",
+                        message.recipeMap, rememberedName);
                     if (rememberedName != null) {
                         long matchId = 0;
                         int matchCount = 0;
@@ -136,6 +140,7 @@ public class ClientProxy extends CommonProxy {
                                 matchCount++;
                             }
                         }
+                        MyMod.LOG.info("[Upload] strategy2: matchCount={}, matchId={}", matchCount, matchId);
                         if (matchCount == 1) {
                             MyMod.LOG.info("[Upload] strategy2: remembered provider '{}', id={}", rememberedName, matchId);
                             ClientState.set(rememberedName, matchId);
@@ -143,6 +148,8 @@ public class ClientProxy extends CommonProxy {
                             return;
                         }
                     }
+                } else {
+                    MyMod.LOG.info("[Upload] strategy2: recipeMap is null or empty, skip remembered check");
                 }
 
                 // 策略3: 打开搜索界面

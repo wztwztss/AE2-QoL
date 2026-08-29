@@ -93,7 +93,8 @@ public class KeyInputHandler implements IContainerInputHandler {
         }
         String className = gui.getClass()
             .getName();
-        return className.startsWith("appeng.") || className.startsWith("com.glodblock.");
+        return className.startsWith("appeng.") || className.startsWith("com.glodblock.")
+            || className.startsWith("com.wztwzt.ae2_qof.");
     }
 
     private Object findSearchField(GuiContainer gui) {

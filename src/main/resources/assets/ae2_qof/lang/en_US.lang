@@ -116,3 +116,9 @@ waila.ae2qol.quest_detector.owner=Bound Player
 waila.ae2qol.quest_detector.powered=Network
 waila.ae2qol.quest_detector.on=Online
 waila.ae2qol.quest_detector.off=Offline
+
+gt.blockmachines.hatch.maintenance.universal.name=Universal Maintenance Hatch
+gt.blockmachines.hatch.maintenance.universal.desc=Bypasses all maintenance, provides wireless energy
+gt.blockmachines.hatch.maintenance.universal.desc.0=Binds to the placer's wireless energy network on placement.
+gt.blockmachines.hatch.maintenance.universal.desc.1=Insert a circuit board to set parallel count (4^level).
+gt.blockmachines.hatch.maintenance.universal.desc.2=Energy is pulled from the global wireless network; inject EU first.

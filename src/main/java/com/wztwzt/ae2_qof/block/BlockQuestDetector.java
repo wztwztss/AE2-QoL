@@ -65,6 +65,20 @@ public class BlockQuestDetector extends BlockIOPort {
     }
 
     @Override
+    public boolean onBlockActivated(final World world, final int x, final int y, final int z,
+        final EntityPlayer player, final int side, final float hitX, final float hitY, final float hitZ) {
+        if (world.isRemote) return true;
+        final TileEntity te = world.getTileEntity(x, y, z);
+        if (te instanceof TileQuestDetector) {
+            final TileQuestDetector qd = (TileQuestDetector) te;
+            player.addChatMessage(new net.minecraft.util.ChatComponentText(
+                "§7[QuestDetector] §fOwner: " + qd.getOwner()));
+            return true;
+        }
+        return super.onBlockActivated(world, x, y, z, player, side, hitX, hitY, hitZ);
+    }
+
+    @Override
     public void addInformation(final ItemStack is, final EntityPlayer player, final java.util.List<String> lines,
         final boolean advancedItemTooltips) {
         for (int i = 1; i <= 3; i++) {

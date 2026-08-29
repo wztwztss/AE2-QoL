@@ -155,13 +155,15 @@ public final class QuestDetectLogic {
                 TaskRetrieval retrieval = (TaskRetrieval) task;
                 if (retrieval.consume || retrieval.isComplete(playerId)) continue;
                 for (BigItemStack req : retrieval.requiredItems) {
-                    appendKey(keys, seen, req == null ? null : req.getBaseStack());
-                    if (req != null && req.hasOreDict()) {
-                        for (ItemStack ore : OreDictionary.getOres(req.getOreDict())) {
-                            if (ore == null || ore.getItem() == null) continue;
-                            appendKey(keys, seen, ore);
+                    try {
+                        appendKey(keys, seen, req == null ? null : req.getBaseStack());
+                        if (req != null && req.hasOreDict()) {
+                            for (ItemStack ore : OreDictionary.getOres(req.getOreDict())) {
+                                if (ore == null || ore.getItem() == null) continue;
+                                appendKey(keys, seen, ore);
+                            }
                         }
-                    }
+                    } catch (Throwable ignored) {}
                     if (keys.size() >= MAX_KEYS) return keys;
                 }
             }

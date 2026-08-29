@@ -116,3 +116,9 @@ waila.ae2qol.quest_detector.owner=绑定玩家
 waila.ae2qol.quest_detector.powered=网络
 waila.ae2qol.quest_detector.on=在线
 waila.ae2qol.quest_detector.off=离线
+
+gt.blockmachines.hatch.maintenance.universal.name=万能维护仓
+gt.blockmachines.hatch.maintenance.universal.desc=绕过所有维护问题，从无线电网获取能源
+gt.blockmachines.hatch.maintenance.universal.desc.0=放置后自动绑定放置者的无线电网。
+gt.blockmachines.hatch.maintenance.universal.desc.1=插入电路板设置并行数（4^等级）。
+gt.blockmachines.hatch.maintenance.universal.desc.2=能源从全球无线电网拉取，需提前注入EU。

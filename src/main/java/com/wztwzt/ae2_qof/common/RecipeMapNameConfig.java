@@ -3,6 +3,7 @@ package com.wztwzt.ae2_qof.common;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.util.RecipeNameUtil;
 
 /**
@@ -46,6 +47,7 @@ public final class RecipeMapNameConfig {
 
         Map<String, String> localCache = CACHE;
         if (localCache.isEmpty()) {
+            // MyMod.LOG.info("[APU] resolveSearchKeyword: cache empty, reloading");
             reload();
             localCache = CACHE;
         }
@@ -53,11 +55,13 @@ public final class RecipeMapNameConfig {
         String trimmed = recipeMapName.trim();
 
         if ("crafting".equalsIgnoreCase(trimmed)) {
+            // MyMod.LOG.info("[APU] resolveSearchKeyword: 'crafting' -> '合成'");
             return "合成";
         }
 
         String result = localCache.get(trimmed.toLowerCase());
         if (result != null) {
+            // MyMod.LOG.info("[APU] resolveSearchKeyword: '{}' -> '{}' (exact match)", trimmed, result);
             return result;
         }
 
@@ -65,6 +69,7 @@ public final class RecipeMapNameConfig {
         if (stripped != null) {
             result = localCache.get(stripped.toLowerCase());
             if (result != null) {
+                // MyMod.LOG.info("[APU] resolveSearchKeyword: '{}' -> '{}' (stripped prefix)", trimmed, result);
                 return result;
             }
         }
@@ -74,10 +79,12 @@ public final class RecipeMapNameConfig {
             String lastPart = trimmed.substring(dotIdx + 1);
             result = localCache.get(lastPart.toLowerCase());
             if (result != null) {
+                // MyMod.LOG.info("[APU] resolveSearchKeyword: '{}' -> '{}' (last part)", trimmed, result);
                 return result;
             }
         }
 
+        // MyMod.LOG.warn("[APU] resolveSearchKeyword: '{}' not found in cache, returning original", trimmed);
         return trimmed;
     }
 

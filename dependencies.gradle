@@ -52,4 +52,6 @@ dependencies {
     compileOnly(project.files("libs/gregtech-5.09.52.594.jar"))
     compileOnly(project.files("libs/modularui2-2.3.73-1.7.10.jar"))
     compileOnly(project.files("libs/programmablehatches-0.2.0p8.jar"))
+    // StructureLib（GT 依赖，万能维护仓需要 IAlignment 接口）
+    compileOnly("com.github.GTNewHorizons:StructureLib:1.4.42:dev")
 }

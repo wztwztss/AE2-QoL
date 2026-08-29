@@ -173,8 +173,11 @@ public final class RecipeNameUtil {
 
     private static synchronized void loadMappings() {
         if (CONFIG_FILE == null) {
+            // MyMod.LOG.warn("[APU] loadMappings: CONFIG_FILE is null, skip");
             return;
         }
+
+        // MyMod.LOG.info("[APU] loadMappings: start, CONFIG_FILE={}", CONFIG_FILE);
 
         // 先解析到临时结构，成功后再原子替换全局映射：
         // 坏 JSON（JsonSyntaxException 等 RuntimeException）或读取失败时不会损坏已有映射，
@@ -182,8 +185,10 @@ public final class RecipeNameUtil {
         Map<String, String> rawTemp = new HashMap<String, String>();
         Map<String, String> lookupTemp = new HashMap<String, String>();
         loadBuiltinDefaults(rawTemp, lookupTemp);
+        // MyMod.LOG.info("[APU] loadMappings: after loadBuiltinDefaults, rawTemp size={}", rawTemp.size());
 
         if (!Files.exists(CONFIG_FILE)) {
+            // MyMod.LOG.info("[APU] loadMappings: config file not exists, writing template");
             writeTemplate();
         } else {
             try (InputStreamReader reader = new InputStreamReader(
@@ -191,6 +196,7 @@ public final class RecipeNameUtil {
                 StandardCharsets.UTF_8)) {
                 JsonObject obj = GSON.fromJson(reader, JsonObject.class);
                 if (obj != null) {
+                    int userCount = 0;
                     for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
                         String key = entry.getKey();
                         if (key == null || key.trim()
@@ -204,9 +210,11 @@ public final class RecipeNameUtil {
                                 .isEmpty()) {
                                 rawTemp.put(key.trim(), mapped.trim());
                                 lookupTemp.put(normalizeKey(key), mapped.trim());
+                                userCount++;
                             }
                         }
                     }
+                    // MyMod.LOG.info("[APU] loadMappings: loaded {} user mappings from config", userCount);
                 }
             } catch (Exception e) {
                 // IOException 与 JsonSyntaxException（坏 JSON）等均在此兜底
@@ -219,7 +227,7 @@ public final class RecipeNameUtil {
         LOOKUP_MAPPINGS.clear();
         RAW_MAPPINGS.putAll(rawTemp);
         LOOKUP_MAPPINGS.putAll(lookupTemp);
-        MyMod.LOG.info("[APU] Loaded " + RAW_MAPPINGS.size() + " recipe mappings from " + CONFIG_FILE);
+        // MyMod.LOG.info("[APU] loadMappings: done, total={} mappings from {}", RAW_MAPPINGS.size(), CONFIG_FILE);
     }
 
     /**

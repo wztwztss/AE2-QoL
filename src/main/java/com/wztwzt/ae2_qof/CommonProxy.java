@@ -2,6 +2,7 @@ package com.wztwzt.ae2_qof;
 
 import com.wztwzt.ae2_qof.block.BlockExIOPort;
 import com.wztwzt.ae2_qof.block.BlockQuestDetector;
+import com.wztwzt.ae2_qof.hatch.AE2MaintenanceHatchUniversal;
 import com.wztwzt.ae2_qof.item.ItemInfinityWaterLavaCell;
 import com.wztwzt.ae2_qof.merged.BlockMergedTerminal;
 import com.wztwzt.ae2_qof.merged.MergedGuiHandler;
@@ -37,6 +38,7 @@ public class CommonProxy {
     public static BlockMergedTerminal blockMergedTerminal;
     public static com.wztwzt.ae2_qof.merged.part.ItemPartMergedTerminal itemPartMergedTerminal;
     public static com.wztwzt.ae2_qof.merged.wireless.ItemWirelessMergedTerminal itemWirelessMergedTerminal;
+    public static AE2MaintenanceHatchUniversal maintenanceHatchUniversal;
 
     public void preInit(FMLPreInitializationEvent event) {
         Config.synchronizeConfiguration(event.getSuggestedConfigurationFile());
@@ -141,12 +143,35 @@ public class CommonProxy {
         cpw.mods.fml.common.FMLCommonHandler.instance()
             .bus()
             .register(new WirelessBlockEventListener());
+
+        try {
+            maintenanceHatchUniversal = new AE2MaintenanceHatchUniversal(
+                32000,
+                "hatch.maintenance.universal",
+                "Universal Maintenance Hatch",
+                1);
+            // MyMod.LOG.info("[DIAG] AE2MaintenanceHatchUniversal registered OK, id=32000");
+            GameRegistry.addShapedRecipe(
+                maintenanceHatchUniversal.getStackForm(1L),
+                "ici",
+                "rgr",
+                "ici",
+                'i',
+                net.minecraft.init.Items.iron_ingot,
+                'g',
+                net.minecraft.init.Blocks.glass,
+                'r',
+                net.minecraft.init.Items.redstone,
+                'c',
+                gregtech.api.enums.ItemList.Circuit_Basic.get(1));
+        } catch (Throwable t) {
+            MyMod.LOG.error("[DIAG] AE2MaintenanceHatchUniversal registration FAILED", t);
+            t.printStackTrace(System.err);
+        }
     }
 
-    // postInit "Handle interaction with other mods, complete your setup based on this." (Remove if not needed)
     public void postInit(FMLPostInitializationEvent event) {}
 
-    // register server commands in this event handler (Remove if not needed)
     public void serverStarting(FMLServerStartingEvent event) {
         event.registerServerCommand(new CommandAe2QoL());
     }

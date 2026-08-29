@@ -35,6 +35,9 @@
 | 配方池检测工具 | `src/main/java/com/wztwzt/ae2_qof/util/RecipeMapDetector.java` |
 | 终端容器解析工具 | `src/main/java/com/wztwzt/ae2_qof/util/ContainerTerminalResolver.java` |
 | 重规划 | `src/main/java/com/wztwzt/ae2_qof/util/Replanner.java` |
+| 万能维护仓（主类） | `src/main/java/com/wztwzt/ae2_qof/hatch/AE2MaintenanceHatchUniversal.java` |
+| 万能维护仓（Mixin） | `src/main/java/com/wztwzt/ae2_qof/mixin/gt/MixinMTEMultiBlockBase.java` |
+| 万能维护仓（注册） | `src/main/java/com/wztwzt/ae2_qof/CommonProxy.java` → `init()` — **必须在init阶段注册**，preInit时GT的sPreloadStarted为false会抛IllegalAccessError |
 
 ## Mixin列表
 | 功能 | Mixin配置 | Mixin类路径 | 目标类 | 备注 |
@@ -52,3 +55,4 @@
 | NEI 样板点击上传 | `mixins.ae2_qof.json` | `mixin/nei/MixinPanelWidgetClick.java` | — | PanelWidget 点击拦截 |
 | NEI 叠加层渲染 | `mixins.ae2_qof.json` | `mixin/nei/MixinPanelWidgetDraw.java` | — | 书签数量叠加 |
 | NEI tooltip 存量 | `mixins.ae2_qof.json` | `mixin/nei/MixinNEIRecipeWidget.java` | — | tooltip 显示网络存量 |
+| 万能维护仓（维护绕过） | `mixins.ae2_qof.json` | `mixin/gt/MixinMTEMultiBlockBase.java` | `gregtech.api.metatileentity.implementations.MTEMultiBlockBase` | @Overwrite shouldCheckMaintenance 返回 false |
