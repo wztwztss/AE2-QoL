@@ -2,15 +2,15 @@
 
 > **English** | [简体中文](README.md)
 
-An **AE2 quality-of-life enhancement mod** for GTNH: push NEI recipes into AE pattern terminals with one click, extract AE network items directly from the NEI panel, view each item's stock and craftability in the AE network, and wirelessly transmit AE networks.
+An **AE2 quality-of-life enhancement mod** for GTNH: push NEI recipes into AE pattern terminals with one click, extract AE network items directly from the NEI panel, view each item's stock and craftability in the AE network, wirelessly transmit AE networks, and adaptive GT energy grid system.
 
-Compat: GTNH 2.9.0-beta-1 (Minecraft 1.7.10) | Current version: **3.15.1** | Author: wztwzt
+Compat: GTNH 2.9.0-beta-1 (Minecraft 1.7.10) | Current version: **3.18.0** | Author: wztwzt
 
 ---
 
 ## 📦 Installation
 
-1. Put `AE2-QoL-3.15.1.jar` into `.minecraft/mods/`
+1. Put `AE2-QoL-3.18.0.jar` into `.minecraft/mods/`
 2. Make sure dependencies are installed: AE2 (`rv3-beta-977-GTNH`), ae2fc (`1.5.88-gtnh`), NotEnoughItems (NEI)
 3. Launch the game. Config is generated under `config/`
 
@@ -166,6 +166,26 @@ A new GT hatch item, the **Universal Maintenance Hatch**: place it in a multiblo
 
 Recipe: Iron Ingot ×4 + Glass ×2 + Redstone ×2 + LV Circuit Board (3×3)
 
+### 18. GT Wireless EU Grid (3.17.0)
+
+GT hatch-based EU wireless energy transmission, unrelated to AE networks — purely for GT machine power:
+
+- **Wireless Input Hatch** (ID 32111): binds to placer UUID on placement, periodically pulls EU from the wireless energy network
+- **Wireless Output Hatch** (ID 32110): injects local EU into the wireless energy network
+
+### 19. Adaptive GT Energy Grid System (3.18.0)
+
+New GT hatch-based adaptive energy grid system. Multiple hatches share a configuration via **Data Stick**:
+
+- **Adaptive Terminal** (ID 32100): right-click to open GUI with 3 tabs (Status / Adaptive Settings / Frequency Settings)
+- **Adaptive Input Hatch** (ID 32102): auto-matches voltage tier and amperage from terminal
+- **Adaptive Laser Source Hatch** (ID 32103): laser output, auto-matches tier
+- **Adaptive Dynamo Hatch** (ID 32104): power output, auto-matches tier
+- **Adaptive Laser Target Hatch** (ID 32105): laser receiver, auto-matches tier
+- **Network Data Stick**: Shift+right-click terminal to write config, right-click hatch to bind, right-click terminal to read
+
+**Usage**: Place Adaptive Terminal → Shift+right-click Data Stick to write → right-click hatches to bind → right-click terminal to read → hatches auto-adapt tier
+
 ---
 
 ## 🕐 Planned
@@ -213,5 +233,5 @@ This repository is **for personal archival only, not for public distribution**. 
 
 ## 🛠 Developer Info
 
-- Build: `./gradlew build -x spotlessJava -x spotlessCheck`
+- Build: `./gradlew build -x spotlessJavaCheck -x spotlessCheck`
 - Developer changelog, known issues, and rollback guide: see **`CHANGELOG.md`**
