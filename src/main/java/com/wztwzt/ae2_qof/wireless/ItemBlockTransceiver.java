@@ -22,5 +22,6 @@ public class ItemBlockTransceiver extends ItemBlock {
         list.add(EnumChatFormatting.GRAY + StatCollector.translateToLocal("tile.wireless_transceiver.tooltip.3"));
         list.add(EnumChatFormatting.GRAY + StatCollector.translateToLocal("tile.wireless_transceiver.tooltip.4"));
         list.add(EnumChatFormatting.GRAY + StatCollector.translateToLocal("tile.wireless_transceiver.tooltip.5"));
+        list.add(EnumChatFormatting.DARK_GRAY + "ae2qof");
     }
 }

@@ -32,7 +32,7 @@ public class ItemWirelessMergedTerminal extends Item implements IWirelessTermHan
     public ItemWirelessMergedTerminal() {
         setUnlocalizedName("wireless_merged_terminal");
         setTextureName("appliedenergistics2:ToolWirelessTerminal");
-        setCreativeTab(net.minecraft.creativetab.CreativeTabs.tabTools);
+        setCreativeTab(com.wztwzt.ae2_qof.AE2QoLCreativeTab.INSTANCE);
         setMaxStackSize(1);
     }
 
@@ -114,6 +114,7 @@ public class ItemWirelessMergedTerminal extends Item implements IWirelessTermHan
                 net.minecraft.util.EnumChatFormatting.GREEN
                     + net.minecraft.util.StatCollector.translateToLocal("item.wireless_merged_terminal.bound"));
         }
+        list.add(net.minecraft.util.EnumChatFormatting.DARK_GRAY + "ae2qof");
     }
 
     @Override

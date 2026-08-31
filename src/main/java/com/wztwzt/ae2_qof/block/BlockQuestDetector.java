@@ -88,5 +88,6 @@ public class BlockQuestDetector extends BlockIOPort {
                 lines.add(net.minecraft.util.EnumChatFormatting.GRAY + line);
             }
         }
+        lines.add(net.minecraft.util.EnumChatFormatting.DARK_GRAY + "ae2qof");
     }
 }

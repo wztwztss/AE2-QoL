@@ -1,3 +1,190 @@
+## 3.18.0 - 自适应电网系统大重构（4仓类型 + 4-tab UI + 权限指纹 + 自动迁移）
+
+> 作者：wztwzt | 更新时间：2026-08-31 | 基于 3.17.1
+
+### 修复：自适应终端 UI 三重Bug
+
+- **Tab切换**：emoji `TextWidget` → `PageButton` + `GuiTextures.TAB_LEFT` + `PagedWidget.Controller`，只有当前tab内容可见
+- **仓室等级检测**：`detectTierFromItemName(registryName)` → `GregTechAPI.METATILEENTITIES[damage].getInputTier()`，从GT MTE元数据读取等级
+- **电流检测**：`HatchType.defaultAmps` → `mte.maxAmperesIn()`/`mte.maxAmperesOut()`，从GT MTE原型读取实际电流
+- **客户端同步**：`hatchTiers[]`/`hatchAmps[]` 通过 `IntSyncValue` 同步到客户端，UI实时更新
+- **空槽显示**：空槽显示"ULV 0V 0A"而非默认值
+- **数据棒绑定**：普通右键终端+数据棒→读取数据棒频率并设置到终端
+- **面板尺寸**：350×340→350×240，消除底部空白
+- **Shift右键自动初始化**：终端未绑定时shift+右键数据棒，自动用玩家UUID初始化终端再写入
+- **Tab tooltip中文**：主状态/自适配设置/频率设置
+- **Tab偏移修复**：CONTENT_X从29改为32，tab和内容不再重叠
+- **空槽文字颜色**：GRAY→YELLOW，在浅蓝面板上更清晰
+
+### 修复：无线输入终端 UI
+
+- 面板高度 280→340，参考表不再与背包重叠
+- 所有文字统一白色，提高可读性
+- 默认电压档位从LV(1)改为ULV(0)
+
+### 数据棒tooltip完善
+
+- 新增三条使用说明：Shift+右键终端写入、右键仓室绑定、右键终端读取
+
+### 重构：自适应电网终端 4-tab UI
+
+- 终端 GUI 重写为 **4 标签页** 布局，左栏 4 个图标按钮切换：
+  - **主状态**（⚙）：显示频率、所有者、4 种仓的加载数量/安培/电压
+  - **自适配设置**（⚡）：4 个仓插槽（动力仓/能源仓/激光源仓/激光靶仓），各放 64 个自动配置
+  - **权限控制**（🔒）：指纹槽位，玩家 UUID 指纹权限
+  - **频率设置**（📡）：宽幅文本输入框，范围 `[-2147483648, 2147483647]`
+- 频率改变时自动触发**仓室迁移**：原同频段适配仓自动跟随新频率
+- 5 个物品槽位（4 仓 + 1 指纹）
+
+### 新增：自适应电网动力仓（ID 32104）
+
+- 能量输出仓，继承 `MTEHatchDynamo`，1A 输出
+- 每 4 tick 将存储 EU 推入无线电网（`WirelessNetworkManager.addEUToGlobalEnergyMap`）
+- 使用 GT 内置无线 overlay 贴图
+
+### 新增：自适应电网激光靶仓（ID 32105）
+
+- 高功率能量输出仓，继承 `MTEHatchDynamo`，256A 输出，双倍电压
+- 最大存储 `V[tier] × 16`
+
+### 架构重构：组合模式（Composition）
+
+- **删除** `AdaptiveNetHatchBase.java`（原继承 `MTEHatchEnergy`，无法同时支持动力仓/激光靶仓的 `MTEHatchDynamo` 父类）
+- **新增** `AdaptiveHatchHelper.java`：提取通用绑定/NBT/电压同步/数据棒逻辑
+- **新增** `HatchType.java`：4 种仓类型枚举 + 物品注册名关键字识别
+- 各子仓持有 `AdaptiveHatchHelper` 实例，委托调用绑定方法
+- `AdaptiveNetwork` 支持 4 种仓分别计数 + 迁移支持
+
+### 修复
+
+- 仓室安培数从物品注册名读取（不再硬编码默认值）
+- 终端 `getSizeInventory` 改为 5（适配 5 槽位）
+- `isUseableByPlayer` 支持指纹权限控制
+
+### 材质
+
+- 动力仓/激光靶仓使用 `OVERLAYS_ENERGY_OFF_WIRELESS`（静态无线 overlay）
+- 能源仓/激光源仓使用 `OVERLAYS_ENERGY_ON_WIRELESS`（动画无线 overlay）
+
+### 变更文件
+
+- 新增 `hatch/adaptive/HatchType.java`、`AdaptiveHatchHelper.java`、`AdaptiveNetDynamoHatch.java`、`AdaptiveNetLaserTargetHatch.java`
+- 删除 `hatch/adaptive/AdaptiveNetHatchBase.java`
+- 重写 `AdaptiveNetTerminal.java`（4-tab UI + 权限 + 迁移）
+- 重写 `AdaptiveNetHatch.java`、`AdaptiveNetLaserHatch.java`（适配 Helper）
+- 重写 `AdaptiveNetwork.java`、`AdaptiveNetworkManager.java`（4 类型支持）
+- 更新 `CommonProxy.java`（注册 2 个新仓 + 配方）
+- 更新 `en_US.lang`、`zh_CN.lang`
+
+---
+
+## 3.17.1 - 修复与优化
+
+> 作者：wztwzt | 更新时间：2026-08-31 | 基于 3.17.0
+
+### 修复
+
+- 修复自适应电网仓/激光仓无法绑定（子类覆盖 onRightclick 绕过了父类绑定逻辑）
+- 修复自适应电网仓基类副手检测（MC 1.7.10 无副手系统）
+- 无线电网输入终端 UI 字体颜色优化，增强可读性
+- 无线电网输入终端 UI 布局对齐
+
+### 优化
+
+- 无线电网输入终端添加每档电压/电流对应的 EU/t 数值注释
+- 万能维护仓删除电压调节功能（由能量仓决定）
+- 万能维护仓删除线程调节功能（未实现）
+- 万能维护仓速度调节上限统一：MAX 电路板 = 100%，其他按比例递减
+
+### 材质
+
+- 网络配置闪存使用 GTMAdvancedHatch 材质（带 10 帧闪烁动画）
+- 无线电网输入/输出终端使用 GT 内置无线 overlay（带开机动画）
+- 自适应电网仓/激光仓使用 GT 内置无线 overlay（带开机动画）
+- 电网能源仓/动力仓使用 GT 内置无线 overlay
+- 万能维护仓使用 GT 自动维护仓 overlay（带动画）
+
+---
+
+## 3.17.0 - GT 电网仓室系统（自适应电网 + 无线电网终端 + 电网仓）
+
+> 作者：wztwzt | 更新时间：2026-08-30 | 基于 3.16.1
+
+### 新增：自适应电网系统
+
+- **自适应电网终端**（ID 32100）：主控方块，管理整套自适应电网网络
+  - GUI 两个物品槽位：放入 64 个能源仓/激光仓自动设置电压/安培参数
+  - Shift+右键闪存写入配置，右键打开 GUI
+  - 一键切换全基地仓室电压等级
+- **自适应电网仓**（ID 32102）：跟随终端自动同步电压等级的能源仓
+- **自适应电网激光仓**（ID 32103）：激光版本，更大功率和容量
+- **网络配置闪存**：复制/迁移网络配置，支持副手绑定
+
+### 新增：无线电网终端
+
+- **无线电网输入终端**（ID 32111）：超级能源仓，按钮式电压/电流选择
+  - 电压：ULV ~ MAX（15档），点击即选
+  - 电流：1A ~ 1GA（6档，64倍递增），点击即选
+  - 自动安培计算，功率墙保护
+- **无线电网输出终端**（ID 32110）：超级动力仓，无功率限制，全量注入电网
+
+### 新增：普通电网仓
+
+- **电网能源仓**（ID 32104）：无线仓升级版，直接共享电网电量
+- **电网动力仓**（ID 32105）：无线仓升级版，输出电力注入电网
+
+### 修复
+
+- 修复 MetaTileEntity ID 冲突（32001/32003 与 GoodGenerator 冲突 → 改为 32100+）
+- 修复自适应电网终端 GUI 崩溃（null UUID 检查）
+- 修复无线终端 GUI 显示"未绑定"（UUID 同步问题）
+- 修复 GUI 翻译 key 缺失（补全所有 ae2_qof.gui.* key）
+- 修复 getDescription() key 与 lang 文件不匹配
+- 修复 GUI 布局拥挤（增大面板、增加行间距）
+
+### 后续计划
+
+#### 中期（优先完成）
+
+- 电网激光仓/大安培电网仓实现
+- 自适应电网终端 GUI 按钮式电压/电流选择（当前为物品槽自动设置）
+- 自定义材质（网络配置闪存、各仓室）
+- WAILA 信息完善
+- 万能维护仓维护绕过（MixinMTEMultiBlockBase 已移除，需找到不改变加载顺序的实现方式）
+
+#### 代码质量改进
+
+- P1 清理模板注释残留（MyMod.java、CommonProxy.java 等）
+- P2 补全 mixin_notes.md（当前仅登记 2/23 个 Mixin）
+- P4 switch 语法迁移（10 处旧式语法，需确认 Jabel 支持）
+
+#### 待验证
+
+- 自动上传记忆功能（v3.16.1 调试日志已加，待游戏内验证）
+
+#### 远期
+
+- **智能配方仓**（v3.19.0）：仿 GT-Shanhai 的"星律样板供料系统"
+  - 配方类型过滤 + 虚拟电路 + 非消耗输入 + 卡死检测
+  - 物品名 `AE2PatternBufferHatchSmart`，GT 仓室形态
+  - 4 个样板槽 + 4 个配方类型过滤槽 + 4 个虚拟电路槽 + 4 个非消耗输入槽
+- **产线聚合器**（v3.20.0）：仿 GTL 的一步产线系统
+  - 将复杂多步骤产线合并为单一方块处理
+  - JSON 配方数据包 + 机器消耗系统 + 电压等级限制
+  - 物品名 `MTEProductionLineAggregator`，GT 多方块机器
+
+### 变更文件
+
+- 新增 `hatch/adaptive/` 包（AdaptiveNetworkManager, AdaptiveNetwork, AdaptiveNetTerminal, AdaptiveNetHatch, AdaptiveNetLaserHatch, AdaptiveNetHatchBase）
+- 新增 `hatch/net/` 包（NetEnergyHatch, NetPowerHatch）
+- 新增 `hatch/wireless/` 包（WirelessEnergyInputTerminal, WirelessEnergyOutputTerminal）
+- 新增 `item/ItemNetworkDataStick.java`
+- `CommonProxy.java`（注册所有新方块）
+- `assets/ae2_qof/lang/zh_CN.lang` + `en_US.lang`（翻译）
+- 版本号 `gradle.properties` → 3.17.0
+
+---
+
 ## 3.16.1 - TST 兼容修复 + Quest Detector 稳定性
 
 > 作者：wztwzt | 更新时间：2026-08-29 | 基于 3.16.0

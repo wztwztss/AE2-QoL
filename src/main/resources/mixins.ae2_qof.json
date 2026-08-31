@@ -12,6 +12,8 @@
     "ae.MixinContainerInterface",
     "ae.MixinPinsHolder",
     "gt.MixinMTEHatchInputBus",
+    "gt.MixinMTEMultiBlockBase",
+    "gt.MixinMultiblockParallel",
     "TileDriveMixin"
   ],
   "client": [

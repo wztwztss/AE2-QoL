@@ -75,5 +75,6 @@ public class BlockMergedTerminal extends AEBaseTileBlock {
                 lines.add(net.minecraft.util.EnumChatFormatting.GRAY + line);
             }
         }
+        lines.add(net.minecraft.util.EnumChatFormatting.DARK_GRAY + "ae2qof");
     }
 }

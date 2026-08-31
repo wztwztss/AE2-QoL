@@ -118,7 +118,133 @@ waila.ae2qol.quest_detector.on=在线
 waila.ae2qol.quest_detector.off=离线
 
 gt.blockmachines.hatch.maintenance.universal.name=万能维护仓
-gt.blockmachines.hatch.maintenance.universal.desc=绕过所有维护问题，从无线电网获取能源
-gt.blockmachines.hatch.maintenance.universal.desc.0=放置后自动绑定放置者的无线电网。
-gt.blockmachines.hatch.maintenance.universal.desc.1=插入电路板设置并行数（4^等级）。
-gt.blockmachines.hatch.maintenance.universal.desc.2=能源从全球无线电网拉取，需提前注入EU。
+gt.blockmachines.hatch.maintenance.universal.tooltip=§6万能维护仓\n§7绕过所有维护问题\n§7插入任意电路板设置并行/速度\n§8[AE2 QoL]
+gt.blockmachines.hatch.maintenance.universal.desc=绕过所有维护问题
+gt.blockmachines.hatch.maintenance.universal.desc.0=插入任意电路板设置并行数/速度。
+gt.blockmachines.hatch.maintenance.universal.desc.1=放置后自动绕过所有维护问题。
+ae2_qof.gui.hatch.title=§6万能维护仓
+ae2_qof.gui.hatch.parallel=并行数:
+ae2_qof.gui.hatch.speed=速度:
+ae2_qof.gui.hatch.circuit_slot=插入任意电路板设置上限:
+ae2_qof.modname=AE2 QoL
+
+# ===== 自适应电网系统 =====
+gt.blockmachines.adaptive_net_terminal.name=自适应电网终端
+gt.blockmachines.adaptive_net_terminal.tooltip=§6自适应电网终端\n§74标签页控制面板\n§7动力仓/能源仓/激光源仓/激光靶仓\n§8[AE2 QoL]
+gt.blockmachines.adaptive_net_terminal.desc=自适应电网系统的核心主控方块
+gt.blockmachines.adaptive_net_terminal.desc.0=管理整套自适应电网网络。
+gt.blockmachines.adaptive_net_terminal.desc.1=一键切换全基地仓室电压等级。
+gt.blockmachines.adaptive_net_terminal.desc.2=终端被破坏，整套网络解散。
+ae2_qof.gui.adaptive_terminal.title=§6自适应电网终端
+ae2_qof.gui.adaptive_terminal.owner=所有者
+ae2_qof.gui.adaptive_terminal.no_owner=未绑定
+ae2_qof.gui.adaptive_terminal.frequency=频率
+ae2_qof.gui.adaptive_terminal.voltage=电压等级:
+ae2_qof.gui.adaptive_terminal.hatch_count=已连接仓室
+ae2_qof.gui.adaptive_terminal.loaded=已加载
+ae2_qof.gui.adaptive_terminal.dynamo_hatch=动力仓
+ae2_qof.gui.adaptive_terminal.energy_hatch=能源仓
+ae2_qof.gui.adaptive_terminal.laser_source=激光源仓
+ae2_qof.gui.adaptive_terminal.laser_target=激光靶仓
+ae2_qof.gui.adaptive_terminal.settings.title=自适配设置
+ae2_qof.gui.adaptive_terminal.settings.slots=网络仓室槽位
+ae2_qof.gui.adaptive_terminal.settings.hint=放入64个同类型仓室自动配置。
+ae2_qof.gui.adaptive_terminal.settings.all_slots_required=所有槽位必须放满64个物品。
+ae2_qof.gui.adaptive_terminal.permission.title=权限控制
+ae2_qof.gui.adaptive_terminal.permission.fingerprint=录入指纹
+ae2_qof.gui.adaptive_terminal.permission.hint=空手点击所有者可清除指纹。
+ae2_qof.gui.adaptive_terminal.no_fingerprint=无指纹
+ae2_qof.gui.adaptive_terminal.dynamo_slot=动力仓:
+ae2_qof.gui.adaptive_terminal.energy_slot=能源仓:
+ae2_qof.gui.adaptive_terminal.laser_source_slot=激光源仓:
+ae2_qof.gui.adaptive_terminal.laser_target_slot=激光靶仓:
+ae2_qof.gui.adaptive_terminal.frequency.title=频率设置
+ae2_qof.gui.adaptive_terminal.frequency.input=输入频率
+ae2_qof.gui.adaptive_terminal.frequency.hint=范围: [-2147483648, 2147483647]，0视为关闭。
+ae2_qof.gui.adaptive_terminal.frequency.hint2=只有同一频率的适配终端和适配仓视为同一网络。
+ae2_qof.gui.adaptive_terminal.fingerprint_cleared=指纹已清除
+ae2_qof.gui.adaptive_terminal.tab.status=主状态
+ae2_qof.gui.adaptive_terminal.tab.settings=自适配设置
+ae2_qof.gui.adaptive_terminal.tab.frequency=频率设置
+
+gt.blockmachines.adaptive_net_hatch.name=自适应电网仓
+gt.blockmachines.adaptive_net_hatch.tooltip=§6自适应电网仓\n§7跟随终端自动同步电压等级\n§7使用网络配置闪存绑定\n§8[AE2 QoL]
+gt.blockmachines.adaptive_net_hatch.desc=跟随终端自动同步电压等级的能源仓
+gt.blockmachines.adaptive_net_hatch.desc.0=使用网络配置闪存绑定到自适应电网终端。
+gt.blockmachines.adaptive_net_hatch.desc.1=终端修改电压等级时自动同步更新。
+ae2_qof.gui.adaptive_hatch.title=§6自适应电网仓
+ae2_qof.gui.adaptive_hatch.bound=已绑定网络
+ae2_qof.gui.adaptive_hatch.unbound=未绑定 - 请使用网络配置闪存绑定
+ae2_qof.gui.adaptive_hatch.voltage=当前电压:
+ae2_qof.gui.adaptive_hatch.amperage=电流:
+
+gt.blockmachines.adaptive_net_laser_hatch.name=自适应电网激光仓
+gt.blockmachines.adaptive_net_laser_hatch.tooltip=§6自适应电网激光仓\n§7激光版本，更大功率和容量\n§7跟随终端自动同步电压等级\n§8[AE2 QoL]
+gt.blockmachines.adaptive_net_laser_hatch.desc=自适应电网激光版本
+gt.blockmachines.adaptive_net_laser_hatch.desc.0=更大功率和容量。
+gt.blockmachines.adaptive_net_laser_hatch.desc.1=跟随终端自动同步电压等级。
+ae2_qof.gui.adaptive_laser_hatch.title=§6自适应电网激光仓
+
+gt.blockmachines.adaptive_net_dynamo_hatch.name=自适应电网动力仓
+gt.blockmachines.adaptive_net_dynamo_hatch.tooltip=§6自适应电网动力仓\n§7能量输出仓室\n§7跟随终端自动同步电压等级\n§8[AE2 QoL]
+gt.blockmachines.adaptive_net_dynamo_hatch.desc=自适应电网能量输出仓
+gt.blockmachines.adaptive_net_dynamo_hatch.desc.0=向无线电网输出能量。
+gt.blockmachines.adaptive_net_dynamo_hatch.desc.1=跟随终端自动同步电压等级。
+ae2_qof.gui.adaptive_dynamo_hatch.title=§6自适应电网动力仓
+
+gt.blockmachines.adaptive_net_laser_target_hatch.name=自适应电网激光靶仓
+gt.blockmachines.adaptive_net_laser_target_hatch.tooltip=§6自适应电网激光靶仓\n§7高功率能量输出仓室\n§7跟随终端自动同步电压等级\n§8[AE2 QoL]
+gt.blockmachines.adaptive_net_laser_target_hatch.desc=自适应电网高功率能量输出仓
+gt.blockmachines.adaptive_net_laser_target_hatch.desc.0=256A输出，双倍电压。
+gt.blockmachines.adaptive_net_laser_target_hatch.desc.1=跟随终端自动同步电压等级。
+ae2_qof.gui.adaptive_laser_target_hatch.title=§6自适应电网激光靶仓
+
+# ===== 网络配置闪存 =====
+item.ae2_qof.network_data_stick.name=网络配置闪存
+ae2_qof.item.data_stick.bound=已存储网络配置
+ae2_qof.item.data_stick.owner=所有者
+ae2_qof.item.data_stick.frequency=频率
+ae2_qof.item.data_stick.empty=空白闪存 - 左键终端写入配置
+ae2_qof.item.data_stick.use.write=Shift + 右键终端：写入网络配置到闪存
+ae2_qof.item.data_stick.use.bind=右键自适应仓室：绑定仓室到此网络
+ae2_qof.item.data_stick.use.read=右键终端：从闪存读取配置到终端
+
+# ===== 无线电网终端 =====
+gt.blockmachines.wireless_energy_input_terminal.name=无线电网输入终端
+gt.blockmachines.wireless_energy_input_terminal.tooltip=§6无线电网输入终端\n§7超级能源仓，功率上限 Long.MAX_VALUE\n§7使用网络配置闪存绑定\n§8[AE2 QoL]
+gt.blockmachines.wireless_energy_input_terminal.desc=超级能源仓，功率上限 Long.MAX_VALUE
+gt.blockmachines.wireless_energy_input_terminal.desc.0=使用网络配置闪存绑定所有者。
+gt.blockmachines.wireless_energy_input_terminal.desc.1=直接共享电网电量，机器使用时扣除。
+gt.blockmachines.wireless_energy_input_terminal.desc.2=多方块共享模式禁止。
+ae2_qof.gui.wireless_input_terminal.title=§6无线电网输入终端
+ae2_qof.gui.wireless_input_terminal.bound=已绑定
+ae2_qof.gui.wireless_input_terminal.unbound=未绑定 - 请使用网络配置闪存绑定
+ae2_qof.gui.wireless_input_terminal.stored=本地缓存
+ae2_qof.gui.wireless_input_terminal.grid=电网余额
+
+gt.blockmachines.wireless_energy_output_terminal.name=无线电网输出终端
+gt.blockmachines.wireless_energy_output_terminal.tooltip=§6无线电网输出终端\n§7超级动力仓，功率上限 Long.MAX_VALUE\n§7使用网络配置闪存绑定\n§8[AE2 QoL]
+gt.blockmachines.wireless_energy_output_terminal.desc=超级动力仓，功率上限 Long.MAX_VALUE
+gt.blockmachines.wireless_energy_output_terminal.desc.0=使用网络配置闪存绑定所有者。
+gt.blockmachines.wireless_energy_output_terminal.desc.1=发电机产出的电力直接注入电网。
+gt.blockmachines.wireless_energy_output_terminal.desc.2=多方块共享模式禁止。
+ae2_qof.gui.wireless_output_terminal.title=§6无线电网输出终端
+ae2_qof.gui.wireless_output_terminal.bound=已绑定
+ae2_qof.gui.wireless_output_terminal.unbound=未绑定 - 请使用网络配置闪存绑定
+ae2_qof.gui.wireless_output_terminal.stored=本地缓存
+ae2_qof.gui.wireless_output_terminal.grid=电网余额
+ae2_qof.gui.wireless_output_terminal.unlimited=无功率限制 - 全量注入电网
+ae2_qof.gui.wireless_input_terminal.power=输出功率
+ae2_qof.gui.wireless_input_terminal.voltage_select=电压选择:
+ae2_qof.gui.wireless_input_terminal.current_select=电流选择:
+ae2_qof.gui.wireless_input_terminal.voltage_ref=电压档位
+ae2_qof.gui.wireless_input_terminal.current_ref=电流档位
+
+ae2_qof.wireless.bind.success=§a已绑定到无线电网
+ae2_qof.wireless.unbind.success=§e已解除绑定
+ae2_qof.data_stick.write.success=§a已写入网络配置到闪存
+ae2_qof.data_stick.write.no_owner=§e终端未初始化，无法写入配置
+ae2_qof.data_stick.read.success=§a已从闪存读取网络配置
+ae2_qof.adaptive.bind.success=§a已绑定到自适应电网
+ae2_qof.adaptive.bind.fail=§c绑定失败 - 所有者数据无效
+ae2_qof.adaptive.bind.empty_stick=§e空数据棒 - 请先在终端写入配置

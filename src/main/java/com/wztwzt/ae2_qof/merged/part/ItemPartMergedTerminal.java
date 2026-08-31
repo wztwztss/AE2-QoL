@@ -21,7 +21,7 @@ public class ItemPartMergedTerminal extends Item implements IPartItem {
     public ItemPartMergedTerminal() {
         setUnlocalizedName("merged_terminal_part");
         setTextureName("appliedenergistics2:ItemPart.Terminal");
-        setCreativeTab(net.minecraft.creativetab.CreativeTabs.tabTools);
+        setCreativeTab(com.wztwzt.ae2_qof.AE2QoLCreativeTab.INSTANCE);
         setMaxStackSize(64);
         // 注册 AE2 总线渲染器（物品在手中的 part 形态渲染）；AE2 自身 ItemMultiPart 同样在构造器调用
         AEApi.instance()
@@ -43,6 +43,7 @@ public class ItemPartMergedTerminal extends Item implements IPartItem {
                 list.add(net.minecraft.util.EnumChatFormatting.GRAY + line);
             }
         }
+        list.add(net.minecraft.util.EnumChatFormatting.DARK_GRAY + "ae2qof");
     }
 
     @Override

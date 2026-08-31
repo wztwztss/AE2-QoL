@@ -29,7 +29,7 @@ public class ItemWirelessConnector extends Item {
     public ItemWirelessConnector() {
         setUnlocalizedName("wireless_connect");
         setTextureName("ae2_qof:wireless_connect");
-        setCreativeTab(CreativeTabs.tabTools);
+        setCreativeTab(com.wztwzt.ae2_qof.AE2QoLCreativeTab.INSTANCE);
         setMaxStackSize(1);
     }
 
@@ -46,6 +46,7 @@ public class ItemWirelessConnector extends Item {
                 EnumChatFormatting.GREEN
                     + StatCollector.translateToLocalFormatted("item.wireless_connect.tooltip.bound", bound));
         }
+        list.add(EnumChatFormatting.DARK_GRAY + "ae2qof");
     }
 
     private boolean isBindingTarget(TileEntity te) {

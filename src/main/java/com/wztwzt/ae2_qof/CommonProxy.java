@@ -3,7 +3,16 @@ package com.wztwzt.ae2_qof;
 import com.wztwzt.ae2_qof.block.BlockExIOPort;
 import com.wztwzt.ae2_qof.block.BlockQuestDetector;
 import com.wztwzt.ae2_qof.hatch.AE2MaintenanceHatchUniversal;
+import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveNetDynamoHatch;
+import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveNetHatch;
+import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveNetLaserHatch;
+import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveNetLaserTargetHatch;
+import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveNetTerminal;
+
+import com.wztwzt.ae2_qof.hatch.wireless.WirelessEnergyInputTerminal;
+import com.wztwzt.ae2_qof.hatch.wireless.WirelessEnergyOutputTerminal;
 import com.wztwzt.ae2_qof.item.ItemInfinityWaterLavaCell;
+import com.wztwzt.ae2_qof.item.ItemNetworkDataStick;
 import com.wztwzt.ae2_qof.merged.BlockMergedTerminal;
 import com.wztwzt.ae2_qof.merged.MergedGuiHandler;
 import com.wztwzt.ae2_qof.merged.TileMergedTerminal;
@@ -39,6 +48,15 @@ public class CommonProxy {
     public static com.wztwzt.ae2_qof.merged.part.ItemPartMergedTerminal itemPartMergedTerminal;
     public static com.wztwzt.ae2_qof.merged.wireless.ItemWirelessMergedTerminal itemWirelessMergedTerminal;
     public static AE2MaintenanceHatchUniversal maintenanceHatchUniversal;
+    public static AdaptiveNetTerminal adaptiveNetTerminal;
+    public static AdaptiveNetHatch adaptiveNetHatch;
+    public static AdaptiveNetLaserHatch adaptiveNetLaserHatch;
+    public static AdaptiveNetDynamoHatch adaptiveNetDynamoHatch;
+    public static AdaptiveNetLaserTargetHatch adaptiveNetLaserTargetHatch;
+
+    public static WirelessEnergyInputTerminal wirelessEnergyInputTerminal;
+    public static WirelessEnergyOutputTerminal wirelessEnergyOutputTerminal;
+    public static ItemNetworkDataStick networkDataStick;
 
     public void preInit(FMLPreInitializationEvent event) {
         Config.synchronizeConfiguration(event.getSuggestedConfigurationFile());
@@ -53,6 +71,7 @@ public class CommonProxy {
         }
         try {
             blockExIOPort = new BlockExIOPort();
+            blockExIOPort.setCreativeTab(AE2QoLCreativeTab.INSTANCE);
             GameRegistry.registerBlock(blockExIOPort, appeng.block.AEBaseItemBlock.class, "ex_io_port");
             GameRegistry.registerTileEntity(TileExIOPort.class, "ex_io_portTile");
         } catch (Throwable t) {
@@ -61,6 +80,7 @@ public class CommonProxy {
         }
         try {
             blockQuestDetector = new BlockQuestDetector();
+            blockQuestDetector.setCreativeTab(AE2QoLCreativeTab.INSTANCE);
             GameRegistry.registerBlock(blockQuestDetector, appeng.block.AEBaseItemBlock.class, "quest_detector");
             GameRegistry.registerTileEntity(TileQuestDetector.class, "quest_detectorTile");
         } catch (Throwable t) {
@@ -75,6 +95,7 @@ public class CommonProxy {
         }
         try {
             blockMergedTerminal = new BlockMergedTerminal();
+            blockMergedTerminal.setCreativeTab(AE2QoLCreativeTab.INSTANCE);
             GameRegistry.registerBlock(blockMergedTerminal, appeng.block.AEBaseItemBlock.class, "merged_terminal");
             GameRegistry.registerTileEntity(TileMergedTerminal.class, "merged_terminalTile");
         } catch (Throwable t) {
@@ -94,6 +115,13 @@ public class CommonProxy {
             itemWirelessMergedTerminal.registerWirelessHandler();
         } catch (Throwable t) {
             MyMod.LOG.error("[DIAG] ItemWirelessMergedTerminal registration FAILED", t);
+            t.printStackTrace(System.err);
+        }
+        try {
+            networkDataStick = new ItemNetworkDataStick();
+            networkDataStick.register();
+        } catch (Throwable t) {
+            MyMod.LOG.error("[DIAG] ItemNetworkDataStick registration FAILED", t);
             t.printStackTrace(System.err);
         }
         if (itemInfinityWaterLavaCell != null) {
@@ -150,7 +178,6 @@ public class CommonProxy {
                 "hatch.maintenance.universal",
                 "Universal Maintenance Hatch",
                 1);
-            // MyMod.LOG.info("[DIAG] AE2MaintenanceHatchUniversal registered OK, id=32000");
             GameRegistry.addShapedRecipe(
                 maintenanceHatchUniversal.getStackForm(1L),
                 "ici",
@@ -166,6 +193,176 @@ public class CommonProxy {
                 gregtech.api.enums.ItemList.Circuit_Basic.get(1));
         } catch (Throwable t) {
             MyMod.LOG.error("[DIAG] AE2MaintenanceHatchUniversal registration FAILED", t);
+            t.printStackTrace(System.err);
+        }
+
+        try {
+            adaptiveNetTerminal = new AdaptiveNetTerminal(
+                32100,
+                "adaptive_net_terminal",
+                "Adaptive Net Terminal",
+                5);
+            GameRegistry.addShapedRecipe(
+                adaptiveNetTerminal.getStackForm(1L),
+                "ece",
+                "rgr",
+                "ece",
+                'e',
+                gregtech.api.enums.ItemList.Hull_EV.get(1),
+                'g',
+                net.minecraft.init.Blocks.glass,
+                'r',
+                net.minecraft.init.Items.redstone,
+                'c',
+                gregtech.api.enums.ItemList.Circuit_Advanced.get(1));
+        } catch (Throwable t) {
+            MyMod.LOG.error("[DIAG] AdaptiveNetTerminal registration FAILED", t);
+            t.printStackTrace(System.err);
+        }
+
+        try {
+            adaptiveNetHatch = new AdaptiveNetHatch(
+                32102,
+                "adaptive_net_hatch",
+                "Adaptive Net Hatch",
+                5);
+            GameRegistry.addShapedRecipe(
+                adaptiveNetHatch.getStackForm(1L),
+                "ehe",
+                "rcr",
+                "ehe",
+                'e',
+                gregtech.api.enums.ItemList.Hull_EV.get(1),
+                'h',
+                gregtech.api.enums.ItemList.Hatch_Energy_EV.get(1),
+                'r',
+                net.minecraft.init.Items.redstone,
+                'c',
+                gregtech.api.enums.ItemList.Circuit_Advanced.get(1));
+        } catch (Throwable t) {
+            MyMod.LOG.error("[DIAG] AdaptiveNetHatch registration FAILED", t);
+            t.printStackTrace(System.err);
+        }
+
+        try {
+            adaptiveNetLaserHatch = new AdaptiveNetLaserHatch(
+                32103,
+                "adaptive_net_laser_hatch",
+                "Adaptive Net Laser Hatch",
+                6);
+            GameRegistry.addShapedRecipe(
+                adaptiveNetLaserHatch.getStackForm(1L),
+                "ehe",
+                "rcr",
+                "ehe",
+                'e',
+                gregtech.api.enums.ItemList.Hull_LuV.get(1),
+                'h',
+                gregtech.api.enums.ItemList.Hatch_Energy_LuV.get(1),
+                'r',
+                net.minecraft.init.Items.redstone,
+                'c',
+                gregtech.api.enums.ItemList.Circuit_Master.get(1));
+        } catch (Throwable t) {
+            MyMod.LOG.error("[DIAG] AdaptiveNetLaserHatch registration FAILED", t);
+            t.printStackTrace(System.err);
+        }
+
+        try {
+            adaptiveNetDynamoHatch = new AdaptiveNetDynamoHatch(
+                32104,
+                "adaptive_net_dynamo_hatch",
+                "Adaptive Net Dynamo Hatch",
+                5);
+            GameRegistry.addShapedRecipe(
+                adaptiveNetDynamoHatch.getStackForm(1L),
+                "ehe",
+                "rcr",
+                "ehe",
+                'e',
+                gregtech.api.enums.ItemList.Hull_EV.get(1),
+                'h',
+                gregtech.api.enums.ItemList.Hatch_Dynamo_EV.get(1),
+                'r',
+                net.minecraft.init.Items.redstone,
+                'c',
+                gregtech.api.enums.ItemList.Circuit_Advanced.get(1));
+        } catch (Throwable t) {
+            MyMod.LOG.error("[DIAG] AdaptiveNetDynamoHatch registration FAILED", t);
+            t.printStackTrace(System.err);
+        }
+
+        try {
+            adaptiveNetLaserTargetHatch = new AdaptiveNetLaserTargetHatch(
+                32105,
+                "adaptive_net_laser_target_hatch",
+                "Adaptive Net Laser Target Hatch",
+                6);
+            GameRegistry.addShapedRecipe(
+                adaptiveNetLaserTargetHatch.getStackForm(1L),
+                "ehe",
+                "rcr",
+                "ehe",
+                'e',
+                gregtech.api.enums.ItemList.Hull_LuV.get(1),
+                'h',
+                gregtech.api.enums.ItemList.Hatch_Dynamo_LuV.get(1),
+                'r',
+                net.minecraft.init.Items.redstone,
+                'c',
+                gregtech.api.enums.ItemList.Circuit_Master.get(1));
+        } catch (Throwable t) {
+            MyMod.LOG.error("[DIAG] AdaptiveNetLaserTargetHatch registration FAILED", t);
+            t.printStackTrace(System.err);
+        }
+
+
+
+        try {
+            wirelessEnergyInputTerminal = new WirelessEnergyInputTerminal(
+                32111,
+                "wireless_energy_input_terminal",
+                "Wireless Energy Input Terminal",
+                5);
+            GameRegistry.addShapedRecipe(
+                wirelessEnergyInputTerminal.getStackForm(1L),
+                "wrw",
+                "ege",
+                "wrw",
+                'w',
+                net.minecraft.init.Items.gold_ingot,
+                'r',
+                net.minecraft.init.Items.redstone,
+                'e',
+                gregtech.api.enums.ItemList.Hull_EV.get(1),
+                'g',
+                net.minecraft.init.Blocks.glass);
+        } catch (Throwable t) {
+            MyMod.LOG.error("[DIAG] WirelessEnergyInputTerminal registration FAILED", t);
+            t.printStackTrace(System.err);
+        }
+
+        try {
+            wirelessEnergyOutputTerminal = new WirelessEnergyOutputTerminal(
+                32110,
+                "wireless_energy_output_terminal",
+                "Wireless Energy Output Terminal",
+                5);
+            GameRegistry.addShapedRecipe(
+                wirelessEnergyOutputTerminal.getStackForm(1L),
+                "wrw",
+                "ege",
+                "wrw",
+                'w',
+                net.minecraft.init.Items.gold_ingot,
+                'r',
+                net.minecraft.init.Items.redstone,
+                'e',
+                gregtech.api.enums.ItemList.Hull_EV.get(1),
+                'g',
+                net.minecraft.init.Blocks.glass);
+        } catch (Throwable t) {
+            MyMod.LOG.error("[DIAG] WirelessEnergyOutputTerminal registration FAILED", t);
             t.printStackTrace(System.err);
         }
     }

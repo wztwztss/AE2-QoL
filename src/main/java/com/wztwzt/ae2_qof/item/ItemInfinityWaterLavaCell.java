@@ -32,6 +32,7 @@ public class ItemInfinityWaterLavaCell extends AEBaseInfiniteCell {
         this.setUnlocalizedName("infinity_water_lava_cell");
         this.setTextureName("ae2_qof:infinity_water_lava_cell");
         this.setFeature(java.util.EnumSet.of(AEFeature.StorageCells));
+        this.setCreativeTab(com.wztwzt.ae2_qof.AE2QoLCreativeTab.INSTANCE);
     }
 
     public ItemInfinityWaterLavaCell register() {
@@ -96,6 +97,7 @@ public class ItemInfinityWaterLavaCell extends AEBaseInfiniteCell {
         boolean displayMoreInfo) {
         lines.add(net.minecraft.util.StatCollector.translateToLocal("item.infinity_water_lava_cell.tooltip"));
         lines.add(net.minecraft.util.StatCollector.translateToLocal("item.infinity_water_lava_cell.tooltip.usage"));
+        lines.add(net.minecraft.util.EnumChatFormatting.DARK_GRAY + "ae2qof");
         super.addCheckedInformation(stack, player, lines, displayMoreInfo);
     }
 

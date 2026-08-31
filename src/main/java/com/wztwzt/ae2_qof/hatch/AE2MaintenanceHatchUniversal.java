@@ -1,242 +1,205 @@
 package com.wztwzt.ae2_qof.hatch;
 
-import static gregtech.api.enums.GTValues.V;
-
-import java.math.BigInteger;
-import java.util.UUID;
-
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.StatCollector;
 import net.minecraftforge.common.util.ForgeDirection;
+import cpw.mods.fml.common.registry.GameRegistry;
 
-import gregtech.api.enums.GTValues;
-import gregtech.api.enums.ItemList;
-import gregtech.api.enums.Materials;
-import gregtech.api.enums.OrePrefixes;
-import gregtech.api.enums.SoundResource;
+import com.cleanroommc.modularui.api.drawable.IKey;
+import com.cleanroommc.modularui.factory.PosGuiData;
+import com.cleanroommc.modularui.screen.ModularPanel;
+import com.cleanroommc.modularui.screen.UISettings;
+import com.cleanroommc.modularui.value.sync.IntSyncValue;
+import com.cleanroommc.modularui.value.sync.PanelSyncManager;
+import com.cleanroommc.modularui.widgets.TextWidget;
+import com.cleanroommc.modularui.widgets.layout.Flow;
+import com.cleanroommc.modularui.widgets.slot.ItemSlot;
+import com.cleanroommc.modularui.widgets.slot.ModularSlot;
+import com.cleanroommc.modularui.widgets.textfield.TextFieldWidget;
+
+import gregtech.api.enums.Textures;
 import gregtech.api.interfaces.ITexture;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.metatileentity.implementations.MTEHatch;
 import gregtech.api.metatileentity.implementations.MTEHatchMaintenance;
-import gregtech.api.metatileentity.implementations.MTEMultiBlockBase;
 import gregtech.api.render.TextureFactory;
-import gregtech.api.util.GTOreDictUnificator;
-import gregtech.common.misc.WirelessNetworkManager;
 
-import com.wztwzt.ae2_qof.MyMod;
-
-/**
- * 万能维护仓：维护绕过 + 无线能源 + 电路板并行映射。
- * <p>
- * 维护绕过由 {@code MixinMTEMultiBlockBase.shouldCheckMaintenance()} 全局实现，
- * 本仓室仅作为占位符放置于多方块结构中。
- * <p>
- * 无线能源：放置时绑定放置者 UUID，定期从全球无线电网拉取 EU 到本地存储。
- * 电路板并行映射：电路板槽读取 GT 电路板等级，并行数 = 4^level。
- */
 public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
 
     private static final int CIRCUIT_SLOT = 0;
-    private static final long TICKS_BETWEEN_FETCH = 20L;
 
-    private UUID ownerUuid;
-    private long euPerTick;
+    // 速度上限: MAX(14)=100, 其他按比例递减
+    private static final int[] SPEED_MAX = { 0, 0, 2, 5, 8, 13, 18, 25, 33, 41, 51, 62, 73, 86, 100, 100 };
+    private static final int[] PARALLEL_MAX = { 1, 4, 16, 64, 256, 1024, 4096, 16384, 65536, 262144, 1048576,
+        4194304, 16777216, 67108864, 268435456, 1073741824 };
+
+    private static final String[] CIRCUIT_KEYS = { "CircuitULV", "CircuitLV", "CircuitMV", "CircuitHV", "CircuitEV",
+        "CircuitIV", "CircuitLuV", "CircuitZPM", "CircuitUV", "CircuitUHV", "CircuitUEV", "CircuitUIV",
+        "CircuitUMV", "CircuitUXV", "CircuitMAX" };
+    private static Item[] CIRCUIT_ITEMS;
+
+    private int userParallel;
+    private int userSpeed;
 
     public AE2MaintenanceHatchUniversal(int aID, String aName, String aNameRegional, int aTier) {
         super(aID, aName, aNameRegional, aTier);
-        this.mWrench = this.mScrewdriver = this.mSoftMallet = this.mHardHammer = this.mCrowbar = this.mSolderingTool = true;
     }
 
-    public AE2MaintenanceHatchUniversal(String aName, int aTier, String[] aDescription, ITexture[][][] aTextures) {
-        super(aName, aTier, aDescription, aTextures, false);
-        this.mWrench = this.mScrewdriver = this.mSoftMallet = this.mHardHammer = this.mCrowbar = this.mSolderingTool = true;
+    public AE2MaintenanceHatchUniversal(String aName, int aTier, String[] aDesc, ITexture[][][] aTextures) {
+        super(aName, aTier, aDesc, aTextures, false);
     }
 
     @Override
     public String[] getDescription() {
         return new String[] {
-            "Universal Maintenance Hatch",
-            "Bypasses all maintenance issues",
-            "Provides wireless energy from your global network",
-            "Insert a circuit board to set parallel count (4^level)"
+            StatCollector.translateToLocal("gt.blockmachines.hatch.maintenance.universal.desc"),
+            StatCollector.translateToLocal("gt.blockmachines.hatch.maintenance.universal.desc.0"),
+            StatCollector.translateToLocal("gt.blockmachines.hatch.maintenance.universal.desc.1"),
+            EnumChatFormatting.GRAY + "[" + StatCollector.translateToLocal("ae2_qof.modname") + "]",
+            EnumChatFormatting.DARK_GRAY + "ae2qof"
         };
     }
 
     @Override
     public ITexture[] getTexturesActive(ITexture aBaseTexture) {
-        return new ITexture[] {
-            aBaseTexture,
-            TextureFactory.builder().addIcon(gregtech.api.enums.Textures.BlockIcons.OVERLAY_AUTOMAINTENANCE_IDLE).extFacing().build(),
-            TextureFactory.builder().addIcon(gregtech.api.enums.Textures.BlockIcons.OVERLAY_AUTOMAINTENANCE_IDLE_GLOW).extFacing().glow().build()
-        };
+        return new ITexture[] { aBaseTexture,
+            TextureFactory.of(Textures.BlockIcons.OVERLAY_AUTOMAINTENANCE) };
     }
 
     @Override
     public ITexture[] getTexturesInactive(ITexture aBaseTexture) {
-        return new ITexture[] {
-            aBaseTexture,
-            TextureFactory.builder().addIcon(gregtech.api.enums.Textures.BlockIcons.OVERLAY_AUTOMAINTENANCE).extFacing().build(),
-            TextureFactory.builder().addIcon(gregtech.api.enums.Textures.BlockIcons.OVERLAY_AUTOMAINTENANCE_GLOW).extFacing().glow().build()
-        };
+        return new ITexture[] { aBaseTexture,
+            TextureFactory.of(Textures.BlockIcons.OVERLAY_AUTOMAINTENANCE) };
     }
 
-    @Override
-    public MetaTileEntity newMetaEntity(IGregTechTileEntity aTileEntity) {
-        return new AE2MaintenanceHatchUniversal(mName, mTier, mDescriptionArray, mTextures);
-    }
-
-    @Override
-    public void onFirstTick(IGregTechTileEntity aBaseMetaTileEntity) {
-        super.onFirstTick(aBaseMetaTileEntity);
-        if (aBaseMetaTileEntity.isServerSide()) {
-            ownerUuid = aBaseMetaTileEntity.getOwnerUuid();
-            if (ownerUuid != null) {
-                WirelessNetworkManager.strongCheckOrAddUser(ownerUuid);
+    private static Item[] getCircuitItems() {
+        if (CIRCUIT_ITEMS == null) {
+            CIRCUIT_ITEMS = new Item[CIRCUIT_KEYS.length];
+            for (int i = 0; i < CIRCUIT_KEYS.length; i++) {
+                CIRCUIT_ITEMS[i] = GameRegistry.findItem("dreamcraft", CIRCUIT_KEYS[i]);
             }
-            updateEuPerTick();
         }
-    }
-
-    @Override
-    public void onPreTick(IGregTechTileEntity aBaseMetaTileEntity, long aTick) {
-        super.onPreTick(aBaseMetaTileEntity, aTick);
-        if (aBaseMetaTileEntity.isServerSide() && aTick % TICKS_BETWEEN_FETCH == 0) {
-            tryFetchingEnergy();
-        }
-    }
-
-    private void tryFetchingEnergy() {
-        if (ownerUuid == null) return;
-        IGregTechTileEntity base = getBaseMetaTileEntity();
-        if (base == null) return;
-
-        long currentEU = base.getStoredEU();
-        long maxEU = maxEUStore();
-        long euToTransfer = Math.min(maxEU - currentEU, euPerTick * TICKS_BETWEEN_FETCH);
-        if (euToTransfer <= 0) return;
-
-        if (WirelessNetworkManager.addEUToGlobalEnergyMap(ownerUuid, -euToTransfer)) {
-            setEUVar(currentEU + euToTransfer);
-        }
-    }
-
-    private void updateEuPerTick() {
-        int circuitLevel = getCircuitLevel();
-        if (circuitLevel >= 0 && circuitLevel < V.length) {
-            euPerTick = V[circuitLevel];
-        } else {
-            euPerTick = V[1];
-        }
+        return CIRCUIT_ITEMS;
     }
 
     private int getCircuitLevel() {
-        ItemStack circuitStack = mInventory[CIRCUIT_SLOT];
-        if (circuitStack == null) return -1;
-
-        int damage = circuitStack.getItemDamage();
-        if (damage >= 0 && damage <= 15) {
-            return damage;
+        ItemStack stack = mInventory[CIRCUIT_SLOT];
+        if (stack == null) return -1;
+        Item item = stack.getItem();
+        Item[] items = getCircuitItems();
+        for (int i = 0; i < items.length; i++) {
+            if (items[i] != null && item == items[i]) return i;
         }
         return -1;
     }
 
-    public int getParallelCount() {
-        int level = getCircuitLevel();
-        if (level < 0) return 1;
-        if (level >= 15) return Integer.MAX_VALUE;
-        return 1 << (2 * level);
+    public int getCircuitLevelPublic() { return getCircuitLevel(); }
+    public int getUserParallel() { return userParallel; }
+    public int getUserSpeed() { return userSpeed; }
+
+    public int getMaxParallelForLevel() {
+        int lvl = getCircuitLevel();
+        return (lvl >= 0 && lvl < PARALLEL_MAX.length) ? PARALLEL_MAX[lvl] : 1;
+    }
+
+    public int getMaxSpeedForLevel() {
+        int lvl = getCircuitLevel();
+        return (lvl >= 0 && lvl < SPEED_MAX.length) ? SPEED_MAX[lvl] : 0;
+    }
+
+    public int getEffectiveParallel() {
+        return Math.max(1, Math.min(userParallel, getMaxParallelForLevel()));
+    }
+
+    public double getEffectiveSpeedBoost() {
+        int max = getMaxSpeedForLevel();
+        int clamped = Math.max(-max, Math.min(userSpeed, max));
+        return 1.0 - clamped / 100.0;
     }
 
     @Override
-    public boolean isEnetInput() {
-        return true;
+    public MetaTileEntity newMetaEntity(IGregTechTileEntity aTile) {
+        return new AE2MaintenanceHatchUniversal(mName, mTier, mDescriptionArray, mTextures);
     }
 
-    @Override
-    public long maxEUInput() {
-        return euPerTick;
-    }
+    @Override protected boolean useMui2() { return true; }
 
     @Override
-    public long maxEUStore() {
-        return euPerTick * 8L * TICKS_BETWEEN_FETCH;
+    public ModularPanel buildUI(PosGuiData guiData, PanelSyncManager syncManager, UISettings uiSettings) {
+        IntSyncValue parallelSync = new IntSyncValue(
+            this::getUserParallel,
+            v -> this.userParallel = Math.max(1, Math.min(v, getMaxParallelForLevel()))
+        ).allowC2S();
+        IntSyncValue speedSync = new IntSyncValue(
+            this::getUserSpeed,
+            v -> { int m = getMaxSpeedForLevel(); this.userSpeed = Math.max(-m, Math.min(v, m)); }
+        ).allowC2S();
+
+        ModularPanel panel = ModularPanel.defaultPanel("universal_maintenance_hatch", 260, 180);
+
+        Flow column = Flow.column().coverChildren().childPadding(3).top(7).left(7);
+
+        column.child(new TextWidget<>(IKey.lang("ae2_qof.gui.hatch.title"))
+            .size(246, 12));
+
+        column.child(new TextWidget<>(IKey.lang("ae2_qof.gui.hatch.circuit_slot"))
+            .size(246, 12));
+        column.child(new ItemSlot()
+            .slot(new ModularSlot(inventoryHandler, CIRCUIT_SLOT))
+            .size(18));
+
+        column.child(paramRow("ae2_qof.gui.hatch.parallel",
+            new TextFieldWidget().value(parallelSync).formatAsInteger(true)
+                .numbersInt(() -> 1L, () -> (long) getMaxParallelForLevel())
+                .setMaxLength(10).size(80, 14),
+            IKey.dynamic(() -> "max " + getMaxParallelForLevel())));
+
+        column.child(paramRow("ae2_qof.gui.hatch.speed",
+            new TextFieldWidget().value(speedSync).formatAsInteger(true)
+                .numbersInt(() -> (long) -getMaxSpeedForLevel(), () -> (long) getMaxSpeedForLevel())
+                .setMaxLength(5).size(80, 14),
+            IKey.dynamic(() -> "max " + getMaxSpeedForLevel() + "%")));
+
+        panel.bindPlayerInventory();
+        panel.child(column);
+        return panel;
     }
 
-    @Override
-    public long getMinimumStoredEU() {
-        return euPerTick * 2L;
-    }
-
-    @Override
-    public MTEHatch.ConnectionType getConnectionType() {
-        return MTEHatch.ConnectionType.WIRELESS;
-    }
-
-    @Override
-    public void onMaintenancePerformed(MTEMultiBlockBase aMaintenanceTarget) {
-        setMaintenanceSound(SoundResource.GT_MAINTENANCE_CREATIVE_HATCH, 1.0F, 1.0F);
-        this.mWrench = this.mScrewdriver = this.mSoftMallet = this.mHardHammer = this.mCrowbar = this.mSolderingTool = true;
-        super.onMaintenancePerformed(aMaintenanceTarget);
-    }
-
-    @Override
-    public boolean onRightclick(IGregTechTileEntity aBaseMetaTileEntity, EntityPlayer aPlayer, ForgeDirection side,
-        float aX, float aY, float aZ) {
-        if (side == aBaseMetaTileEntity.getFrontFacing()) {
-            if (aBaseMetaTileEntity.isClientSide()) return true;
-            openGui(aPlayer);
-            return true;
-        }
-        return false;
+    private Flow paramRow(String labelKey, TextFieldWidget field, IKey suffix) {
+        return Flow.row().coverChildren().childPadding(3)
+            .child(new TextWidget<>(IKey.lang(labelKey)).size(55, 14))
+            .child(field)
+            .child(new TextWidget<>(suffix).size(120, 14));
     }
 
     @Override
     public void saveNBTData(NBTTagCompound aNBT) {
         super.saveNBTData(aNBT);
-        if (ownerUuid != null) {
-            aNBT.setString("ae2qolOwnerUuid", ownerUuid.toString());
-        }
-        aNBT.setLong("ae2qolEuPerTick", euPerTick);
+        aNBT.setInteger("ae2qolPar", userParallel);
+        aNBT.setInteger("ae2qolSpd", userSpeed);
     }
 
     @Override
     public void loadNBTData(NBTTagCompound aNBT) {
         super.loadNBTData(aNBT);
-        String uuidStr = aNBT.getString("ae2qolOwnerUuid");
-        if (uuidStr != null && !uuidStr.isEmpty()) {
-            try {
-                ownerUuid = UUID.fromString(uuidStr);
-            } catch (IllegalArgumentException e) {
-                MyMod.LOG.warn("Invalid UUID in universal maintenance hatch: {}", uuidStr);
-            }
-        }
-        euPerTick = aNBT.getLong("ae2qolEuPerTick");
-        if (euPerTick <= 0) {
-            euPerTick = V[1];
-        }
+        userParallel = aNBT.getInteger("ae2qolPar");
+        if (userParallel <= 0) userParallel = 1;
+        userSpeed = aNBT.getInteger("ae2qolSpd");
     }
 
-    @Override
-    public boolean allowPullStack(IGregTechTileEntity aBaseMetaTileEntity, int aIndex, ForgeDirection side,
-        ItemStack aStack) {
-        return false;
-    }
+    @Override public boolean allowPullStack(IGregTechTileEntity a, int i, ForgeDirection s, ItemStack stack) { return false; }
+    @Override public boolean allowPutStack(IGregTechTileEntity a, int i, ForgeDirection s, ItemStack stack) { return false; }
 
     @Override
-    public boolean allowPutStack(IGregTechTileEntity aBaseMetaTileEntity, int aIndex, ForgeDirection side,
-        ItemStack aStack) {
-        return false;
-    }
-
-    @Override
-    public boolean isValidSlot(int aIndex) {
-        return aIndex == CIRCUIT_SLOT;
-    }
-
-    @Override
-    public int getSizeInventory() {
-        return 1;
+    public void getWailaBody(ItemStack itemStack, java.util.List<String> currenttip,
+        mcp.mobius.waila.api.IWailaDataAccessor accessor, mcp.mobius.waila.api.IWailaConfigHandler config) {
+        super.getWailaBody(itemStack, currenttip, accessor, config);
+        try {
+            currenttip.add(EnumChatFormatting.AQUA + "P:" + getEffectiveParallel()
+                + " | S:" + (getUserSpeed() >= 0 ? "+" : "") + getUserSpeed() + "%");
+        } catch (Exception ignored) {}
     }
 }

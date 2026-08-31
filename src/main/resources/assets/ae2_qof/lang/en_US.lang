@@ -118,7 +118,133 @@ waila.ae2qol.quest_detector.on=Online
 waila.ae2qol.quest_detector.off=Offline
 
 gt.blockmachines.hatch.maintenance.universal.name=Universal Maintenance Hatch
-gt.blockmachines.hatch.maintenance.universal.desc=Bypasses all maintenance, provides wireless energy
-gt.blockmachines.hatch.maintenance.universal.desc.0=Binds to the placer's wireless energy network on placement.
-gt.blockmachines.hatch.maintenance.universal.desc.1=Insert a circuit board to set parallel count (4^level).
-gt.blockmachines.hatch.maintenance.universal.desc.2=Energy is pulled from the global wireless network; inject EU first.
+gt.blockmachines.hatch.maintenance.universal.tooltip=§6Universal Maintenance Hatch\n§7Bypasses all maintenance\n§7Insert Any Circuit to set parallel/speed\n§8[AE2 QoL]
+gt.blockmachines.hatch.maintenance.universal.desc=Bypasses all maintenance
+gt.blockmachines.hatch.maintenance.universal.desc.0=Insert Any Circuit to set parallel/speed.
+gt.blockmachines.hatch.maintenance.universal.desc.1=Bypasses all maintenance issues on placement.
+ae2_qof.gui.hatch.title=§6Universal Maintenance Hatch
+ae2_qof.gui.hatch.parallel=Parallel:
+ae2_qof.gui.hatch.speed=Speed:
+ae2_qof.gui.hatch.circuit_slot=Insert Any Circuit to set limits:
+ae2_qof.modname=AE2 QoL
+
+# ===== Adaptive Network System =====
+gt.blockmachines.adaptive_net_terminal.name=Adaptive Net Terminal
+gt.blockmachines.adaptive_net_terminal.tooltip=§6Adaptive Net Terminal\n§74-tab control panel\n§7Dynamo/Energy/Laser/LaserTarget hatches\n§8[AE2 QoL]
+gt.blockmachines.adaptive_net_terminal.desc=Core controller for the adaptive network system
+gt.blockmachines.adaptive_net_terminal.desc.0=Manages the adaptive network.
+gt.blockmachines.adaptive_net_terminal.desc.1=One-click voltage tier sync for all hatches.
+gt.blockmachines.adaptive_net_terminal.desc.2=Terminal destroyed = network dissolved.
+ae2_qof.gui.adaptive_terminal.title=§6Adaptive Net Terminal
+ae2_qof.gui.adaptive_terminal.owner=Owner
+ae2_qof.gui.adaptive_terminal.no_owner=Unbound
+ae2_qof.gui.adaptive_terminal.frequency=Frequency
+ae2_qof.gui.adaptive_terminal.voltage=Voltage Tier:
+ae2_qof.gui.adaptive_terminal.hatch_count=Connected Hatches
+ae2_qof.gui.adaptive_terminal.loaded=loaded
+ae2_qof.gui.adaptive_terminal.dynamo_hatch=Dynamo Hatch
+ae2_qof.gui.adaptive_terminal.energy_hatch=Energy Hatch
+ae2_qof.gui.adaptive_terminal.laser_source=Laser Source
+ae2_qof.gui.adaptive_terminal.laser_target=Laser Target
+ae2_qof.gui.adaptive_terminal.settings.title=Adaptive Settings
+ae2_qof.gui.adaptive_terminal.settings.slots=Network Hatch Slots
+ae2_qof.gui.adaptive_terminal.settings.hint=Place 64 hatches of each type to auto-configure.
+ae2_qof.gui.adaptive_terminal.settings.all_slots_required=All slots must have 64 items.
+ae2_qof.gui.adaptive_terminal.permission.title=Permission Control
+ae2_qof.gui.adaptive_terminal.permission.fingerprint=Register Fingerprint
+ae2_qof.gui.adaptive_terminal.permission.hint=Click empty hand on owner to clear fingerprint.
+ae2_qof.gui.adaptive_terminal.no_fingerprint=No fingerprint
+ae2_qof.gui.adaptive_terminal.dynamo_slot=Dynamo:
+ae2_qof.gui.adaptive_terminal.energy_slot=Energy:
+ae2_qof.gui.adaptive_terminal.laser_source_slot=Laser Source:
+ae2_qof.gui.adaptive_terminal.laser_target_slot=Laser Target:
+ae2_qof.gui.adaptive_terminal.frequency.title=Frequency Settings
+ae2_qof.gui.adaptive_terminal.frequency.input=Input Frequency
+ae2_qof.gui.adaptive_terminal.frequency.hint=Range: [-2147483648, 2147483647]. 0 = disabled.
+ae2_qof.gui.adaptive_terminal.frequency.hint2=Only same frequency terminal and hatches form a network.
+ae2_qof.gui.adaptive_terminal.fingerprint_cleared=Fingerprint cleared
+ae2_qof.gui.adaptive_terminal.tab.status=Main Status
+ae2_qof.gui.adaptive_terminal.tab.settings=Adaptive Settings
+ae2_qof.gui.adaptive_terminal.tab.frequency=Frequency
+
+gt.blockmachines.adaptive_net_hatch.name=Adaptive Net Hatch
+gt.blockmachines.adaptive_net_hatch.tooltip=§6Adaptive Net Hatch\n§7Auto-syncs voltage tier with terminal\n§7Use Network Data Stick to bind\n§8[AE2 QoL]
+gt.blockmachines.adaptive_net_hatch.desc=Auto-syncs voltage tier with terminal
+gt.blockmachines.adaptive_net_hatch.desc.0=Use Network Data Stick to bind to adaptive terminal.
+gt.blockmachines.adaptive_net_hatch.desc.1=Auto-updates when terminal changes voltage tier.
+ae2_qof.gui.adaptive_hatch.title=§6Adaptive Net Hatch
+ae2_qof.gui.adaptive_hatch.bound=Bound to Network
+ae2_qof.gui.adaptive_hatch.unbound=Unbound - Use Network Data Stick to bind
+ae2_qof.gui.adaptive_hatch.voltage=Current Voltage:
+ae2_qof.gui.adaptive_hatch.amperage=Amperage:
+
+gt.blockmachines.adaptive_net_laser_hatch.name=Adaptive Net Laser Hatch
+gt.blockmachines.adaptive_net_laser_hatch.tooltip=§6Adaptive Net Laser Hatch\n§7Laser version, higher power & capacity\n§7Auto-syncs voltage tier with terminal\n§8[AE2 QoL]
+gt.blockmachines.adaptive_net_laser_hatch.desc=Adaptive network laser version
+gt.blockmachines.adaptive_net_laser_hatch.desc.0=Higher power and capacity.
+gt.blockmachines.adaptive_net_laser_hatch.desc.1=Auto-syncs voltage tier with terminal.
+ae2_qof.gui.adaptive_laser_hatch.title=§6Adaptive Net Laser Hatch
+
+gt.blockmachines.adaptive_net_dynamo_hatch.name=Adaptive Net Dynamo Hatch
+gt.blockmachines.adaptive_net_dynamo_hatch.tooltip=§6Adaptive Net Dynamo Hatch\n§7Energy output hatch\n§7Auto-syncs voltage tier with terminal\n§8[AE2 QoL]
+gt.blockmachines.adaptive_net_dynamo_hatch.desc=Energy output hatch for adaptive network
+gt.blockmachines.adaptive_net_dynamo_hatch.desc.0=Outputs energy to wireless network.
+gt.blockmachines.adaptive_net_dynamo_hatch.desc.1=Auto-syncs voltage tier with terminal.
+ae2_qof.gui.adaptive_dynamo_hatch.title=§6Adaptive Net Dynamo Hatch
+
+gt.blockmachines.adaptive_net_laser_target_hatch.name=Adaptive Net Laser Target Hatch
+gt.blockmachines.adaptive_net_laser_target_hatch.tooltip=§6Adaptive Net Laser Target Hatch\n§7High-power energy output hatch\n§7Auto-syncs voltage tier with terminal\n§8[AE2 QoL]
+gt.blockmachines.adaptive_net_laser_target_hatch.desc=High-power energy output hatch for adaptive network
+gt.blockmachines.adaptive_net_laser_target_hatch.desc.0=256A output, double voltage.
+gt.blockmachines.adaptive_net_laser_target_hatch.desc.1=Auto-syncs voltage tier with terminal.
+ae2_qof.gui.adaptive_laser_target_hatch.title=§6Adaptive Net Laser Target Hatch
+
+# ===== Network Data Stick =====
+item.ae2_qof.network_data_stick.name=Network Data Stick
+ae2_qof.item.data_stick.bound=Network Config Stored
+ae2_qof.item.data_stick.owner=Owner
+ae2_qof.item.data_stick.frequency=Frequency
+ae2_qof.item.data_stick.empty=Empty - Left-click terminal to write config
+ae2_qof.item.data_stick.use.write=Shift + Right-click terminal: Write network config to stick
+ae2_qof.item.data_stick.use.bind=Right-click adaptive hatch: Bind hatch to this network
+ae2_qof.item.data_stick.use.read=Right-click terminal: Load config from stick into terminal
+
+# ===== Wireless Terminals =====
+gt.blockmachines.wireless_energy_input_terminal.name=Wireless Energy Input Terminal
+gt.blockmachines.wireless_energy_input_terminal.tooltip=§6Wireless Energy Input Terminal\n§7Super energy hatch, Long.MAX_VALUE throughput\n§7Use Network Data Stick to bind\n§8[AE2 QoL]
+gt.blockmachines.wireless_energy_input_terminal.desc=Super energy hatch, Long.MAX_VALUE throughput
+gt.blockmachines.wireless_energy_input_terminal.desc.0=Use Network Data Stick to bind owner.
+gt.blockmachines.wireless_energy_input_terminal.desc.1=Shares grid energy directly, deducts on use.
+gt.blockmachines.wireless_energy_input_terminal.desc.2=Multiblock sharing disabled.
+ae2_qof.gui.wireless_input_terminal.title=§6Wireless Energy Input Terminal
+ae2_qof.gui.wireless_input_terminal.bound=Bound
+ae2_qof.gui.wireless_input_terminal.unbound=Unbound - Use Network Data Stick to bind
+ae2_qof.gui.wireless_input_terminal.stored=Local Buffer
+ae2_qof.gui.wireless_input_terminal.grid=Grid Energy
+
+gt.blockmachines.wireless_energy_output_terminal.name=Wireless Energy Output Terminal
+gt.blockmachines.wireless_energy_output_terminal.tooltip=§6Wireless Energy Output Terminal\n§7Super power hatch, Long.MAX_VALUE throughput\n§7Use Network Data Stick to bind\n§8[AE2 QoL]
+gt.blockmachines.wireless_energy_output_terminal.desc=Super power hatch, Long.MAX_VALUE throughput
+gt.blockmachines.wireless_energy_output_terminal.desc.0=Use Network Data Stick to bind owner.
+gt.blockmachines.wireless_energy_output_terminal.desc.1=Generator output goes directly to grid.
+gt.blockmachines.wireless_energy_output_terminal.desc.2=Multiblock sharing disabled.
+ae2_qof.gui.wireless_output_terminal.title=§6Wireless Energy Output Terminal
+ae2_qof.gui.wireless_output_terminal.bound=Bound
+ae2_qof.gui.wireless_output_terminal.unbound=Unbound - Use Network Data Stick to bind
+ae2_qof.gui.wireless_output_terminal.stored=Local Buffer
+ae2_qof.gui.wireless_output_terminal.grid=Grid Energy
+ae2_qof.gui.wireless_output_terminal.unlimited=No power limit - Full injection to grid
+ae2_qof.gui.wireless_input_terminal.power=Output Power
+ae2_qof.gui.wireless_input_terminal.voltage_select=Voltage:
+ae2_qof.gui.wireless_input_terminal.current_select=Current:
+ae2_qof.gui.wireless_input_terminal.voltage_ref=Voltage Tiers
+ae2_qof.gui.wireless_input_terminal.current_ref=Current Tiers
+
+ae2_qof.wireless.bind.success=§aBound to wireless network
+ae2_qof.wireless.unbind.success=§eUnbound
+ae2_qof.data_stick.write.success=§aNetwork config written to data stick
+ae2_qof.data_stick.write.no_owner=§eTerminal not initialized, cannot write config
+ae2_qof.data_stick.read.success=§aNetwork config loaded from data stick
+ae2_qof.adaptive.bind.success=§aBound to adaptive network
+ae2_qof.adaptive.bind.fail=§cBind failed - owner data invalid
+ae2_qof.adaptive.bind.empty_stick=§eEmpty data stick - write config at terminal first

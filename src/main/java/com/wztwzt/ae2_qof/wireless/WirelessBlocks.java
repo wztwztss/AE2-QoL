@@ -11,6 +11,7 @@ public class WirelessBlocks {
 
     public static void preInit() {
         blockWirelessTransceiver = new BlockWirelessTransceiver();
+        blockWirelessTransceiver.setCreativeTab(com.wztwzt.ae2_qof.AE2QoLCreativeTab.INSTANCE);
         GameRegistry.registerBlock(blockWirelessTransceiver, ItemBlockTransceiver.class, "wireless_transceiver");
         GameRegistry.registerTileEntity(TileWirelessTransceiver.class, "wireless_transceiverTile");
 

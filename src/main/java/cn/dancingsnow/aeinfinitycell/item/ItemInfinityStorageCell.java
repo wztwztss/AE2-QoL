@@ -52,6 +52,8 @@ public final class ItemInfinityStorageCell extends Item implements IHaloRenderIt
         if (id != null && player != null && player.worldObj != null && player.worldObj.isRemote) {
             appendLiveStats(tooltip, id);
         }
+        tooltip.add(net.minecraft.util.EnumChatFormatting.GRAY
+            + "[" + StatCollector.translateToLocal("ae2_qof.modname") + "]");
     }
 
     /**
