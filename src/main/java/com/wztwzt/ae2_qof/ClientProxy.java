@@ -43,6 +43,7 @@ import com.wztwzt.ae2_qof.network.SwapPatternPacket;
 import com.wztwzt.ae2_qof.network.UploadPatternPacket;
 import com.wztwzt.ae2_qof.network.WirelessChannelSyncPacket;
 import com.wztwzt.ae2_qof.network.WirelessHighlightPacket;
+import com.wztwzt.ae2_qof.network.HatchListSyncPacket;
 import com.wztwzt.ae2_qof.util.RecipeNameUtil;
 import com.wztwzt.ae2_qof.wireless.gui.GuiWireless;
 
@@ -191,6 +192,14 @@ public class ClientProxy extends CommonProxy {
             .func_152344_a(() -> {
                 ClientState.highlightPositions = message.positions;
                 ClientState.highlightEnabled = message.enable;
+            });
+    }
+
+    @Override
+    public void handleHatchListSync(final HatchListSyncPacket message) {
+        Minecraft.getMinecraft()
+            .func_152344_a(() -> {
+                ClientState.hatchListCache = message.buildCache();
             });
     }
 

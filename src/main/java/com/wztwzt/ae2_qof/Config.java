@@ -40,8 +40,6 @@ public class Config {
      */
     public static volatile boolean pinRowEnabled = true;
 
-    public static final String greeting = "Hello World";
-
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting()
         .disableHtmlEscaping()
         .create();

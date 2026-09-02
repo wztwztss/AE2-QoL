@@ -12,10 +12,15 @@ import net.minecraft.util.StatCollector;
 
 import cpw.mods.fml.common.registry.GameRegistry;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.wztwzt.ae2_qof.AE2QoLCreativeTab;
 import com.wztwzt.ae2_qof.MyMod;
 
 public class ItemNetworkDataStick extends Item {
+
+    private static final Logger LOG = LogManager.getLogger("AE2QoL");
 
     public static final String NBT_OWNER = "ae2qolOwner";
     public static final String NBT_FREQUENCY = "ae2qolFreq";
@@ -42,7 +47,11 @@ public class ItemNetworkDataStick extends Item {
     }
 
     public static void writeData(ItemStack stack, UUID owner, int frequency) {
-        if (stack == null || !(stack.getItem() instanceof ItemNetworkDataStick)) return;
+        if (stack == null || !(stack.getItem() instanceof ItemNetworkDataStick)) {
+            LOG.warn("[AE2QoL] writeData: invalid stack, item={}",
+                stack != null ? stack.getItem() : "null");
+            return;
+        }
         NBTTagCompound nbt = stack.getTagCompound();
         if (nbt == null) {
             nbt = new NBTTagCompound();
@@ -50,12 +59,15 @@ public class ItemNetworkDataStick extends Item {
         }
         nbt.setString(NBT_OWNER, owner.toString());
         nbt.setInteger(NBT_FREQUENCY, frequency);
+        LOG.info("[AE2QoL] writeData: owner={}, freq={}", owner, frequency);
     }
 
     public static boolean hasData(ItemStack stack) {
         if (stack == null || !(stack.getItem() instanceof ItemNetworkDataStick)) return false;
         NBTTagCompound nbt = stack.getTagCompound();
-        return nbt != null && nbt.hasKey(NBT_OWNER) && nbt.hasKey(NBT_FREQUENCY);
+        boolean result = nbt != null && nbt.hasKey(NBT_OWNER) && nbt.hasKey(NBT_FREQUENCY);
+        LOG.info("[AE2QoL] hasData: result={}, nbt={}", result, nbt);
+        return result;
     }
 
     public static UUID getOwner(ItemStack stack) {

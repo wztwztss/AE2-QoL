@@ -10,20 +10,28 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.StatCollector;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.cleanroommc.modularui.api.drawable.IKey;
 import com.cleanroommc.modularui.drawable.GuiTextures;
 import com.cleanroommc.modularui.factory.PosGuiData;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.screen.UISettings;
 import com.cleanroommc.modularui.value.sync.IntSyncValue;
+import com.cleanroommc.modularui.value.sync.LongSyncValue;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
 import com.cleanroommc.modularui.widgets.PageButton;
 import com.cleanroommc.modularui.widgets.PagedWidget;
 import com.cleanroommc.modularui.widgets.TextWidget;
+import com.cleanroommc.modularui.widgets.ButtonWidget;
+import com.cleanroommc.modularui.widgets.ListWidget;
 import com.cleanroommc.modularui.widgets.layout.Flow;
 import com.cleanroommc.modularui.widgets.slot.ItemSlot;
 import com.cleanroommc.modularui.widgets.slot.ModularSlot;
 import com.cleanroommc.modularui.widgets.textfield.TextFieldWidget;
+import com.cleanroommc.modularui.widget.scroll.VerticalScrollData;
+import com.cleanroommc.modularui.api.widget.IWidget;
 
 import gregtech.api.GregTechAPI;
 import gregtech.api.enums.Textures;
@@ -35,18 +43,25 @@ import gregtech.api.metatileentity.implementations.MTEHatch;
 import gregtech.api.render.TextureFactory;
 
 import com.wztwzt.ae2_qof.item.ItemNetworkDataStick;
+import com.wztwzt.ae2_qof.network.HatchActionPacket;
+import com.wztwzt.ae2_qof.network.HatchListSyncPacket;
+import com.wztwzt.ae2_qof.network.ModNetwork;
 
 public class AdaptiveNetTerminal extends MTEHatch {
 
+    private static final Logger LOG = LogManager.getLogger("AE2QoL");
     private static final int SLOT_DYNAMO = 0;
     private static final int SLOT_ENERGY = 1;
     private static final int SLOT_LASER_SOURCE = 2;
     private static final int SLOT_LASER_TARGET = 3;
     private static final int REQUIRED_STACK_SIZE = 64;
+    private static final int MAX_HATCH_COORD_DISPLAY = 50;
+    private static final int TERMINAL_TIER = 4;
 
     private UUID networkOwner;
     private int networkFrequency = 0;
     private boolean autoReconnect = true;
+    private int displayMode = 0; // 0=regular, 1=scientific, 2=KMG
 
     private int currentVoltageTier = 0;
     private int[] hatchTiers = new int[HatchType.COUNT];
@@ -58,6 +73,11 @@ public class AdaptiveNetTerminal extends MTEHatch {
 
     public AdaptiveNetTerminal(String aName, int aTier, int aInvSlotCount, String[] aDesc, ITexture[][][] aTextures) {
         super(aName, aTier, aInvSlotCount, aDesc, aTextures);
+    }
+
+    @Override
+    public boolean isFacingValid(net.minecraftforge.common.util.ForgeDirection facing) {
+        return true;
     }
 
     @Override
@@ -88,30 +108,78 @@ public class AdaptiveNetTerminal extends MTEHatch {
         return autoReconnect;
     }
 
+    private AdaptiveNetwork getCurrentNetwork() {
+        if (networkOwner == null) return null;
+        return AdaptiveNetworkManager.getNetwork(networkOwner, networkFrequency);
+    }
+
+    private void sendHatchListSync(IGregTechTileEntity aBase, AdaptiveNetwork network) {
+        java.util.List<AdaptiveHatchHelper> helpers = network.getAllHelpers();
+        java.util.List<HatchListCache.HatchEntry> entries = new java.util.ArrayList<>(helpers.size());
+        int globalIndex = 0;
+        int totalIn = 0, totalOut = 0;
+
+        for (AdaptiveHatchHelper h : helpers) {
+            int tier = h.getCurrentVoltageTier();
+            int amps = h.getCurrentAmps();
+            HatchType ht = h.getHatchType();
+            int eut = 0;
+
+            if (ht == HatchType.ENERGY) {
+                eut = (int) (V[tier] * (long) amps);
+                totalIn++;
+            } else if (ht == HatchType.LASER_SOURCE) {
+                eut = (int) (V[tier] * 2L * amps);
+                totalIn++;
+            } else {
+                totalOut++;
+            }
+
+            entries.add(new HatchListCache.HatchEntry(
+                h.getCachedName(), h.getCachedMetaId(), eut, tier, amps,
+                ht.ordinal(), globalIndex,
+                h.getX(), h.getY(), h.getZ(), h.getDim()));
+            globalIndex++;
+        }
+
+        HatchListSyncPacket packet = new HatchListSyncPacket(
+            networkOwner, networkFrequency, helpers.size(), entries, totalIn, totalOut);
+        net.minecraft.entity.player.EntityPlayerMP player = aBase.getWorld().playerEntities.stream()
+            .filter(p -> p instanceof net.minecraft.entity.player.EntityPlayerMP
+                && ((net.minecraft.entity.player.EntityPlayerMP) p).getGameProfile().getId().equals(networkOwner))
+            .map(p -> (net.minecraft.entity.player.EntityPlayerMP) p)
+            .findFirst().orElse(null);
+        if (player != null) {
+            com.wztwzt.ae2_qof.network.ModNetwork.CHANNEL.sendTo(packet, player);
+        }
+    }
+
     private void updateParamsFromSlots() {
         boolean anyValid = false;
         int bestTier = 0;
 
         for (int i = 0; i < 4; i++) {
             ItemStack stack = mInventory[i];
-            if (stack != null && stack.stackSize >= REQUIRED_STACK_SIZE) {
+            HatchType ht = HatchType.fromSlotIndex(i);
+            if (stack != null && stack.stackSize >= REQUIRED_STACK_SIZE && ht != null) {
                 int damage = stack.getItemDamage();
                 IMetaTileEntity imte = GregTechAPI.METATILEENTITIES[damage];
                 if (imte instanceof MetaTileEntity) {
                     MetaTileEntity mte = (MetaTileEntity) imte;
-                    int tier = (int) mte.getInputTier();
-                    hatchTiers[i] = (tier >= 0) ? tier : HatchType.values()[i].defaultTier;
-                    if (tier > bestTier) bestTier = (int) tier;
-                    anyValid = true;
-                    HatchType ht = HatchType.fromSlotIndex(i);
-                    if (ht == HatchType.DYNAMO || ht == HatchType.LASER_SOURCE) {
-                        hatchAmps[i] = (int) mte.maxAmperesOut();
-                    } else {
-                        hatchAmps[i] = (int) mte.maxAmperesIn();
+                    if (!ht.isValidMTEType(mte)) {
+                        hatchTiers[i] = 0;
+                        hatchAmps[i] = 0;
+                        continue;
                     }
+                    boolean isOutput = (ht == HatchType.DYNAMO || ht == HatchType.LASER_TARGET);
+                    int tier = (int) (isOutput ? mte.getOutputTier() : mte.getInputTier());
+                    hatchTiers[i] = (tier >= 0) ? tier : ht.defaultTier;
+                    if (tier > bestTier) bestTier = tier;
+                    anyValid = true;
+                    hatchAmps[i] = (int) (isOutput ? mte.maxAmperesOut() : mte.maxAmperesIn());
                 } else {
-                    hatchTiers[i] = HatchType.values()[i].defaultTier;
-                    hatchAmps[i] = HatchType.values()[i].defaultAmps;
+                    hatchTiers[i] = ht.defaultTier;
+                    hatchAmps[i] = ht.defaultAmps;
                 }
             } else {
                 hatchTiers[i] = 0;
@@ -119,10 +187,8 @@ public class AdaptiveNetTerminal extends MTEHatch {
             }
         }
 
-        if (anyValid && bestTier != currentVoltageTier) {
-            currentVoltageTier = bestTier;
-            applySettings();
-        }
+        currentVoltageTier = bestTier;
+        applySettings();
     }
 
     public void applySettings() {
@@ -145,6 +211,20 @@ public class AdaptiveNetTerminal extends MTEHatch {
         super.onPreTick(aBase, aTick);
         if (aBase.isServerSide() && aTick % 20 == 0) {
             updateParamsFromSlots();
+        }
+        if (aBase.isServerSide() && networkOwner != null) {
+            AdaptiveNetwork network = AdaptiveNetworkManager.getNetwork(networkOwner, networkFrequency);
+            if (network != null) {
+                java.math.BigInteger gridEU = gregtech.common.misc.WirelessNetworkManager.getUserEU(networkOwner);
+                network.tickStats(gridEU.min(java.math.BigInteger.valueOf(Long.MAX_VALUE)).longValue());
+                if (network.isHatchListDirty()) {
+                    network.clearHatchListDirty();
+                    sendHatchListSync(aBase, network);
+                }
+            }
+        }
+        if (aBase.isServerSide()) {
+            com.wztwzt.ae2_qof.network.HatchActionPacket.tickPendingClears();
         }
     }
 
@@ -172,47 +252,53 @@ public class AdaptiveNetTerminal extends MTEHatch {
         ItemStack heldItem = aPlayer.getHeldItem();
 
         if (heldItem != null && heldItem.getItem() instanceof ItemNetworkDataStick) {
-            // Shift+right-click with data stick → Write config
-            if (aPlayer.isSneaking()) {
-                if (networkOwner == null) {
-                    networkOwner = aPlayer.getUniqueID();
-                    AdaptiveNetworkManager.registerTerminal(this);
-                }
-                if (networkOwner != null) {
-                    ItemNetworkDataStick.writeData(heldItem, networkOwner, networkFrequency);
-                    if (!aPlayer.worldObj.isRemote) {
+            boolean hasData = ItemNetworkDataStick.hasData(heldItem);
+            if (!aPlayer.worldObj.isRemote) {
+                LOG.info("[AE2QoL] Terminal rightclick: player={}, hasData={}", aPlayer.getCommandSenderName(), hasData);
+            }
+
+            if (hasData) {
+                // 有数据的闪存 → 读取配置到终端
+                UUID stickOwner = ItemNetworkDataStick.getOwner(heldItem);
+                int stickFreq = ItemNetworkDataStick.getFrequency(heldItem);
+                if (!aPlayer.worldObj.isRemote) {
+                    LOG.info("[AE2QoL] Reading flash drive: owner={}, freq={}", stickOwner, stickFreq);
+                    if (stickOwner == null) {
+                        LOG.warn("[AE2QoL] Flash drive owner is null!");
                         aPlayer.addChatMessage(new net.minecraft.util.ChatComponentText(
-                            EnumChatFormatting.GREEN
-                                + StatCollector.translateToLocal("ae2_qof.data_stick.write.success")));
+                            EnumChatFormatting.RED + "Flash drive owner data invalid"));
+                        return true;
                     }
+                    int oldFreq = networkFrequency;
+                    networkOwner = stickOwner;
+                    networkFrequency = stickFreq;
+                    LOG.info("[AE2QoL] Terminal updated: oldFreq={} -> newFreq={}, owner={}", oldFreq, stickFreq, stickOwner);
+                    AdaptiveNetworkManager.migrateHatches(stickOwner, oldFreq, stickOwner, stickFreq);
+                    AdaptiveNetworkManager.unregisterTerminal(this);
+                    AdaptiveNetworkManager.registerTerminal(this);
+                    applySettings();
+                    aPlayer.addChatMessage(new net.minecraft.util.ChatComponentText(
+                        EnumChatFormatting.GREEN
+                            + StatCollector.translateToLocal("ae2_qof.data_stick.read.success")
+                            + " F:" + stickFreq));
+                }
+                return true;
+            } else {
+                // 空闪存 → 写入终端配置到闪存
+                if (!aPlayer.worldObj.isRemote) {
+                    if (networkOwner == null) {
+                        networkOwner = aPlayer.getUniqueID();
+                        AdaptiveNetworkManager.registerTerminal(this);
+                        LOG.info("[AE2QoL] Auto-initialized owner from player: {}", networkOwner);
+                    }
+                    LOG.info("[AE2QoL] Writing to flash drive: owner={}, freq={}", networkOwner, networkFrequency);
+                    ItemNetworkDataStick.writeData(heldItem, networkOwner, networkFrequency);
+                    aPlayer.addChatMessage(new net.minecraft.util.ChatComponentText(
+                        EnumChatFormatting.GREEN
+                            + StatCollector.translateToLocal("ae2_qof.data_stick.write.success")));
                 }
                 return true;
             }
-
-            // Normal right-click with data stick → Read frequency from stick
-            if (ItemNetworkDataStick.hasData(heldItem)) {
-                UUID stickOwner = ItemNetworkDataStick.getOwner(heldItem);
-                int stickFreq = ItemNetworkDataStick.getFrequency(heldItem);
-                if (stickOwner != null) {
-                    if (!aPlayer.worldObj.isRemote) {
-                        int oldFreq = networkFrequency;
-                        networkOwner = stickOwner;
-                        networkFrequency = stickFreq;
-                        AdaptiveNetworkManager.migrateHatches(stickOwner, oldFreq, stickOwner, stickFreq);
-                        AdaptiveNetworkManager.unregisterTerminal(this);
-                        AdaptiveNetworkManager.registerTerminal(this);
-                        applySettings();
-                        aPlayer.addChatMessage(new net.minecraft.util.ChatComponentText(
-                            EnumChatFormatting.GREEN
-                                + StatCollector.translateToLocal("ae2_qof.data_stick.read.success")
-                                + " F:" + stickFreq));
-                    }
-                    return true;
-                }
-            }
-            // Empty data stick or no data → open GUI
-            openGui(aPlayer);
-            return true;
         }
 
         openGui(aPlayer);
@@ -229,6 +315,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
         IntSyncValue frequencySync = new IntSyncValue(
             () -> networkFrequency,
             v -> {
+                v = Math.max(0, v);
                 if (v != networkFrequency) {
                     int oldFreq = networkFrequency;
                     networkFrequency = v;
@@ -259,21 +346,90 @@ public class AdaptiveNetTerminal extends MTEHatch {
         IntSyncValue[] hatchTierSyncs = { hatchTier0Sync, hatchTier1Sync, hatchTier2Sync, hatchTier3Sync };
         IntSyncValue[] hatchAmpSyncs = { hatchAmp0Sync, hatchAmp1Sync, hatchAmp2Sync, hatchAmp3Sync };
 
+        IntSyncValue[] hatchCountSyncs = new IntSyncValue[HatchType.COUNT];
+        for (int i = 0; i < HatchType.COUNT; i++) {
+            final HatchType ht = HatchType.values()[i];
+            hatchCountSyncs[i] = new IntSyncValue(() -> {
+                if (networkOwner == null) return 0;
+                AdaptiveNetwork n = AdaptiveNetworkManager.getNetwork(networkOwner, networkFrequency);
+                return n != null ? n.getHatchCount(ht) : 0;
+            }, v -> {});
+        }
+
+        LongSyncValue totalInputSync = new LongSyncValue(() -> {
+            AdaptiveNetwork n = getCurrentNetwork();
+            if (n == null) return 0L;
+            return n.getStats().getTotalInput();
+        }, v -> {});
+        LongSyncValue totalOutputSync = new LongSyncValue(() -> {
+            AdaptiveNetwork n = getCurrentNetwork();
+            if (n == null) return 0L;
+            return n.getStats().getTotalOutput();
+        }, v -> {});
+        IntSyncValue instantInputSync = new IntSyncValue(() -> {
+            if (networkOwner == null) return 0;
+            AdaptiveNetwork n = AdaptiveNetworkManager.getNetwork(networkOwner, networkFrequency);
+            if (n == null) return 0;
+            return (int) n.getStats().getInstantInputRate();
+        }, v -> {});
+        IntSyncValue instantOutputSync = new IntSyncValue(() -> {
+            if (networkOwner == null) return 0;
+            AdaptiveNetwork n = AdaptiveNetworkManager.getNetwork(networkOwner, networkFrequency);
+            if (n == null) return 0;
+            return (int) n.getStats().getInstantOutputRate();
+        }, v -> {});
+
         syncManager.syncValue("wFr", frequencySync);
         syncManager.syncValue("wVT", voltageTierSync);
+        syncManager.syncValue("wTI", totalInputSync);
+        syncManager.syncValue("wTO", totalOutputSync);
+        syncManager.syncValue("wII", instantInputSync);
+        syncManager.syncValue("wIO", instantOutputSync);
         for (int i = 0; i < 4; i++) {
             syncManager.syncValue("wHT" + i, hatchTierSyncs[i]);
             syncManager.syncValue("wHA" + i, hatchAmpSyncs[i]);
+            syncManager.syncValue("wHC" + i, hatchCountSyncs[i]);
         }
+
+        final LongSyncValue gridEUSync = new LongSyncValue(() -> {
+            if (networkOwner == null) return 0;
+            java.math.BigInteger eu = gregtech.common.misc.WirelessNetworkManager.getUserEU(networkOwner);
+            return eu.min(java.math.BigInteger.valueOf(Long.MAX_VALUE)).longValue();
+        }, v -> {});
+        syncManager.syncValue("wGE", gridEUSync);
+
+        final LongSyncValue change1hSync = new LongSyncValue(() -> {
+            AdaptiveNetwork n = getCurrentNetwork();
+            if (n == null) return 0;
+            long gridEU = gridEUSync.getLongValue();
+            return n.getStats().getChange1h(gridEU);
+        }, v -> {});
+        syncManager.syncValue("wC1", change1hSync);
+
+        final LongSyncValue change10mSync = new LongSyncValue(() -> {
+            AdaptiveNetwork n = getCurrentNetwork();
+            if (n == null) return 0;
+            long gridEU = gridEUSync.getLongValue();
+            return n.getStats().getChange10min(gridEU);
+        }, v -> {});
+        syncManager.syncValue("wCM", change10mSync);
+
+        final LongSyncValue avgOut10mSync = new LongSyncValue(() -> {
+            AdaptiveNetwork n = getCurrentNetwork();
+            if (n == null) return 0;
+            long gridEU = gridEUSync.getLongValue();
+            return n.getStats().getAvgOutputRate10min(gridEU);
+        }, v -> {});
+        syncManager.syncValue("wAO", avgOut10mSync);
 
         PagedWidget.Controller tabController = new PagedWidget.Controller();
 
-        ModularPanel panel = ModularPanel.defaultPanel("adaptive_net_terminal", 350, 240);
+        ModularPanel panel = ModularPanel.defaultPanel("adaptive_net_terminal", 370, 280);
 
-        int TAB_W = 32;
+        int TAB_W = 36;
         int TAB_H = 28;
         int CONTENT_X = TAB_W;
-        int CONTENT_W = 350 - CONTENT_X - 4;
+        int CONTENT_W = 370 - CONTENT_X - 4;
 
         Flow tabStrip = Flow.column().pos(0, 4).width(TAB_W).childPadding(0);
         tabStrip.child(new PageButton(0, tabController).tab(GuiTextures.TAB_LEFT, -1)
@@ -282,15 +438,22 @@ public class AdaptiveNetTerminal extends MTEHatch {
             .tooltip(t -> t.addLine(IKey.lang("ae2_qof.gui.adaptive_terminal.tab.settings"))).size(TAB_W, TAB_H));
         tabStrip.child(new PageButton(2, tabController).tab(GuiTextures.TAB_LEFT, 1)
             .tooltip(t -> t.addLine(IKey.lang("ae2_qof.gui.adaptive_terminal.tab.frequency"))).size(TAB_W, TAB_H));
+        tabStrip.child(new PageButton(3, tabController).tab(GuiTextures.TAB_LEFT, 2)
+            .tooltip(t -> t.addLine(IKey.lang("ae2_qof.gui.adaptive_terminal.tab.monitor"))).size(TAB_W, TAB_H));
+        tabStrip.child(new PageButton(4, tabController).tab(GuiTextures.TAB_LEFT, 3)
+            .tooltip(t -> t.addLine(IKey.lang("ae2_qof.gui.adaptive_terminal.tab.hatch_list"))).size(TAB_W, TAB_H));
         panel.child(tabStrip);
 
         PagedWidget<?> pages = new PagedWidget<>()
             .controller(tabController)
             .pos(CONTENT_X, 4)
-            .size(CONTENT_W, 230)
-            .addPage(buildStatusTab(frequencySync, voltageTierSync, hatchTierSyncs, hatchAmpSyncs))
+            .size(CONTENT_W, 260)
+            .addPage(buildStatusTab(frequencySync, voltageTierSync, hatchTierSyncs, hatchAmpSyncs, hatchCountSyncs))
             .addPage(buildSettingsTab(hatchTierSyncs, hatchAmpSyncs))
-            .addPage(buildFrequencyTab(frequencySync));
+            .addPage(buildFrequencyTab(frequencySync))
+            .addPage(buildMonitorTab(gridEUSync, change1hSync, change10mSync, avgOut10mSync,
+                instantInputSync, instantOutputSync))
+            .addPage(buildHatchListTab());
         panel.child(pages);
 
         panel.bindPlayerInventory();
@@ -298,7 +461,8 @@ public class AdaptiveNetTerminal extends MTEHatch {
     }
 
     private Flow buildStatusTab(IntSyncValue frequencySync, IntSyncValue voltageTierSync,
-                                IntSyncValue[] hatchTierSyncs, IntSyncValue[] hatchAmpSyncs) {
+                                IntSyncValue[] hatchTierSyncs, IntSyncValue[] hatchAmpSyncs,
+                                IntSyncValue[] hatchCountSyncs) {
         Flow tab = Flow.column().coverChildren().childPadding(4);
 
         tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.title")).size(300, 16));
@@ -306,17 +470,18 @@ public class AdaptiveNetTerminal extends MTEHatch {
         tab.child(new TextWidget<>(IKey.dynamic(() -> {
             return EnumChatFormatting.AQUA
                 + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.frequency")
-                + ": " + EnumChatFormatting.WHITE + networkFrequency;
+                + ": " + EnumChatFormatting.WHITE + frequencySync.getIntValue();
         })).size(300, 14));
 
         tab.child(new TextWidget<>(IKey.dynamic(() -> {
-            if (networkOwner == null) {
+            boolean bound = frequencySync.getIntValue() >= 0;
+            if (!bound) {
                 return EnumChatFormatting.RED + "● "
                     + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.no_owner");
             }
             return EnumChatFormatting.GREEN + "● "
                 + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.owner")
-                + ": " + EnumChatFormatting.WHITE + networkOwner.toString().substring(0, 8);
+                + ": " + EnumChatFormatting.WHITE + networkOwner;
         })).size(300, 14));
 
         tab.child(new TextWidget<>(IKey.str("")).size(300, 4));
@@ -328,23 +493,22 @@ public class AdaptiveNetTerminal extends MTEHatch {
             "ae2_qof.gui.adaptive_terminal.laser_target"
         };
 
-        AdaptiveNetwork network = (networkOwner != null)
-            ? AdaptiveNetworkManager.getNetwork(networkOwner, networkFrequency) : null;
-
         for (HatchType type : HatchType.values()) {
             final HatchType ft = type;
             final int idx = ft.slotIndex;
             tab.child(new TextWidget<>(IKey.dynamic(() -> {
-                int loaded = (network != null) ? network.getHatchCount(ft) : 0;
+                int loaded = hatchCountSyncs[idx].getIntValue();
                 int tier = hatchTierSyncs[idx].getIntValue();
                 int amps = hatchAmpSyncs[idx].getIntValue();
                 String loadedStr = (loaded > 0) ? EnumChatFormatting.GREEN + String.valueOf(loaded)
                     : EnumChatFormatting.YELLOW + "0";
-                if (amps > 0 && tier >= 0 && tier < V.length) {
+                if (amps > 0 && tier >= 0) {
+                    String tierName = HatchType.getTierName(tier);
                     return EnumChatFormatting.WHITE
                         + StatCollector.translateToLocal(labels[idx])
-                        + ": " + EnumChatFormatting.GREEN + amps + "A " + V[tier] + "V"
+                        + ": " + EnumChatFormatting.GREEN + tierName
                         + " (" + EnumChatFormatting.GOLD + V[tier] + EnumChatFormatting.WHITE + ")"
+                        + " " + EnumChatFormatting.GREEN + amps + "A"
                         + " -" + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.loaded") + ": "
                         + loadedStr;
                 }
@@ -382,8 +546,8 @@ public class AdaptiveNetTerminal extends MTEHatch {
                 .child(new TextWidget<>(IKey.dynamic(() -> {
                     int tier = hatchTierSyncs[idx].getIntValue();
                     int amps = hatchAmpSyncs[idx].getIntValue();
-                    if (tier >= 0 && tier < V.length && amps > 0) {
-                        return EnumChatFormatting.GREEN + "" + V[tier] + "V A:" + amps;
+                    if (tier >= 0 && amps > 0) {
+                        return EnumChatFormatting.GREEN + HatchType.getTierName(tier) + " " + amps + "A";
                     }
                     return EnumChatFormatting.YELLOW + "ULV 0V 0A";
                 })).size(120, 14)));
@@ -412,9 +576,255 @@ public class AdaptiveNetTerminal extends MTEHatch {
         return tab;
     }
 
+    private static String formatEU(long eu, int mode) {
+        switch (mode) {
+            case 1: return formatScientific(eu);
+            case 2: return formatKMG(eu);
+            default: return formatRegular(eu);
+        }
+    }
+
+    private static String formatRegular(long eu) {
+        if (eu == 0) return "0";
+        boolean neg = eu < 0;
+        String digits = String.valueOf(Math.abs(eu));
+        StringBuilder sb = new StringBuilder(digits.length() + digits.length() / 3 + 1);
+        for (int i = 0; i < digits.length(); i++) {
+            if (i > 0 && (digits.length() - i) % 3 == 0) {
+                sb.append(',');
+            }
+            sb.append(digits.charAt(i));
+        }
+        return neg ? "-" + sb : sb.toString();
+    }
+
+    private static String formatScientific(long eu) {
+        if (eu == 0) return "0";
+        if (eu < 0) return "-" + formatScientific(-eu);
+        int exp = (int) Math.floor(Math.log10(eu));
+        double mantissa = eu / Math.pow(10, exp);
+        return String.format("%.2fe%d", mantissa, exp);
+    }
+
+    private static String formatKMG(long eu) {
+        if (eu == 0) return "0";
+        if (eu < 0) return "-" + formatKMG(-eu);
+        String[] suffixes = {"", "K", "M", "G", "T", "P", "E"};
+        int tier = 0;
+        double val = eu;
+        while (val >= 1000 && tier < suffixes.length - 1) {
+            val /= 1000;
+            tier++;
+        }
+        if (tier > 0) return String.format("%.2f%s", val, suffixes[tier]);
+        return String.valueOf(eu);
+    }
+
+    private static String formatAmpTier(long euPerTick) {
+        if (euPerTick <= 0) return "";
+        for (int tier = 14; tier >= 0; tier--) {
+            if (euPerTick >= V[tier]) {
+                double amps = (double) euPerTick / V[tier];
+                return String.format("(%.1fA %s)", amps, HatchType.getTierName(tier));
+            }
+        }
+        return "";
+    }
+
+    private static String formatDuration(long ticks) {
+        if (ticks <= 0) return "Infinite";
+        long seconds = ticks / 20;
+        if (seconds <= 0) return "1s";
+        long years = seconds / 31536000L;
+        seconds %= 31536000L;
+        long months = seconds / 2592000L;
+        seconds %= 2592000L;
+        long days = seconds / 86400L;
+        seconds %= 86400L;
+        long hours = seconds / 3600L;
+        seconds %= 3600L;
+        long minutes = seconds / 60L;
+        seconds %= 60L;
+        StringBuilder sb = new StringBuilder();
+        if (years > 0) sb.append(years).append("y ");
+        if (months > 0) sb.append(months).append("mo ");
+        if (days > 0) sb.append(days).append("d ");
+        if (hours > 0) sb.append(hours).append("h ");
+        if (minutes > 0) sb.append(minutes).append("m ");
+        if (seconds > 0 || sb.length() == 0) sb.append(seconds).append("s");
+        return sb.toString().trim();
+    }
+
+    private static final String[] MODE_KEYS = {
+        "ae2_qof.gui.adaptive_terminal.monitor.mode_regular",
+        "ae2_qof.gui.adaptive_terminal.monitor.mode_scientific",
+        "ae2_qof.gui.adaptive_terminal.monitor.mode_kmg"
+    };
+
+    private Flow buildMonitorTab(LongSyncValue gridEUSync, LongSyncValue change1hSync, LongSyncValue change10mSync,
+                                  LongSyncValue avgOut10mSync, IntSyncValue instantInputSync,
+                                  IntSyncValue instantOutputSync) {
+        Flow tab = Flow.column().coverChildren().childPadding(4);
+
+        Flow titleRow = Flow.row().coverChildren().childPadding(4);
+        titleRow.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.monitor.title")).size(200, 16));
+        titleRow.child(new ButtonWidget<>()
+            .child(new TextWidget<>(IKey.dynamic(() ->
+                StatCollector.translateToLocal(MODE_KEYS[displayMode])
+            )).size(80, 12))
+            .onMousePressed((event) -> {
+                displayMode = (displayMode + 1) % 3;
+                return true;
+            }));
+        tab.child(titleRow);
+
+        tab.child(new TextWidget<>(IKey.str("")).size(300, 4));
+
+        tab.child(new TextWidget<>(IKey.dynamic(() -> {
+            long gridEU = gridEUSync.getLongValue();
+            String value = formatEU(gridEU, displayMode) + " EU";
+            return EnumChatFormatting.AQUA + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.monitor.grid_energy")
+                + ": " + EnumChatFormatting.WHITE + value;
+        })).size(300, 14));
+
+        tab.child(new TextWidget<>(IKey.dynamic(() -> {
+            long change = change1hSync.getLongValue();
+            long avgRate = Math.abs(change) / 3600L;
+            String changeStr = formatEU(change, displayMode) + " EU";
+            String rateStr = avgRate > 0 ? " (" + formatEU(avgRate, displayMode) + " EU/t " + formatAmpTier(avgRate) + ")" : "";
+            EnumChatFormatting color = change >= 0 ? EnumChatFormatting.GREEN : EnumChatFormatting.RED;
+            return color + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.monitor.change_1h")
+                + ": " + EnumChatFormatting.WHITE + changeStr + EnumChatFormatting.YELLOW + rateStr;
+        })).size(350, 14));
+
+        tab.child(new TextWidget<>(IKey.dynamic(() -> {
+            long change = change10mSync.getLongValue();
+            long avgRate = Math.abs(change) / 600L;
+            String changeStr = formatEU(change, displayMode) + " EU";
+            String rateStr = avgRate > 0 ? " (" + formatEU(avgRate, displayMode) + " EU/t " + formatAmpTier(avgRate) + ")" : "";
+            EnumChatFormatting color = change >= 0 ? EnumChatFormatting.GREEN : EnumChatFormatting.RED;
+            return color + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.monitor.change_10m")
+                + ": " + EnumChatFormatting.WHITE + changeStr + EnumChatFormatting.YELLOW + rateStr;
+        })).size(350, 14));
+
+        tab.child(new TextWidget<>(IKey.dynamic(() -> {
+            long avgOut = avgOut10mSync.getLongValue();
+            long gridEU = gridEUSync.getLongValue();
+            String timeStr;
+            if (avgOut <= 0 || gridEU <= 0) {
+                timeStr = "Infinite";
+            } else {
+                long ticks = gridEU / avgOut * 20L;
+                timeStr = formatDuration(ticks);
+            }
+            return EnumChatFormatting.YELLOW + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.monitor.estimated_empty")
+                + ": " + EnumChatFormatting.WHITE + timeStr;
+        })).size(300, 14));
+
+        tab.child(new TextWidget<>(IKey.str("")).size(300, 4));
+
+        tab.child(new TextWidget<>(IKey.dynamic(() -> {
+            int inRate = instantInputSync.getIntValue();
+            String value = formatEU(inRate, displayMode) + " EU/t" + formatAmpTier(inRate);
+            return EnumChatFormatting.GREEN + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.monitor.instant_input")
+                + ": " + EnumChatFormatting.WHITE + value;
+        })).size(300, 14));
+
+        tab.child(new TextWidget<>(IKey.dynamic(() -> {
+            int outRate = instantOutputSync.getIntValue();
+            String value = formatEU(outRate, displayMode) + " EU/t" + formatAmpTier(outRate);
+            return EnumChatFormatting.RED + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.monitor.instant_output")
+                + ": " + EnumChatFormatting.WHITE + value;
+        })).size(300, 14));
+
+        tab.child(new TextWidget<>(IKey.str("")).size(300, 4));
+
+        tab.child(new TextWidget<>(IKey.dynamic(() -> {
+            int inRate = instantInputSync.getIntValue();
+            int outRate = instantOutputSync.getIntValue();
+            if (inRate == 0 && outRate == 0) {
+                return EnumChatFormatting.GRAY + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.monitor.no_activity");
+            }
+            String inStr = formatEU(inRate, displayMode) + " EU/t" + formatAmpTier(inRate);
+            String outStr = formatEU(outRate, displayMode) + " EU/t" + formatAmpTier(outRate);
+            return EnumChatFormatting.AQUA + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.monitor.activity")
+                + ": " + EnumChatFormatting.GREEN + "+" + inStr
+                + EnumChatFormatting.WHITE + " / "
+                + EnumChatFormatting.RED + "-" + outStr;
+        })).size(350, 14));
+
+        return tab;
+    }
+
+    private Flow buildHatchListTab() {
+        Flow tab = Flow.column().coverChildren().childPadding(2);
+
+        tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.hatch_list.title")).size(300, 16));
+
+        tab.child(new TextWidget<>(IKey.dynamic(() -> {
+            com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache cache = com.wztwzt.ae2_qof.client.ClientState.hatchListCache;
+            if (cache == null) return EnumChatFormatting.YELLOW + "---";
+            return EnumChatFormatting.AQUA + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.total")
+                + ": " + EnumChatFormatting.WHITE + cache.totalCount;
+        })).size(300, 14));
+
+        ListWidget list = new ListWidget();
+        list.scrollDirection(com.cleanroommc.modularui.api.GuiAxis.Y);
+        list.size(330, 185);
+
+        com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache cache = com.wztwzt.ae2_qof.client.ClientState.hatchListCache;
+        if (cache != null) {
+            int limit = Math.min(cache.entries.size(), MAX_HATCH_COORD_DISPLAY);
+            for (int i = 0; i < limit; i++) {
+                final com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache.HatchEntry entry = cache.entries.get(i);
+                final int fi = i;
+                list.child(new ButtonWidget<>()
+                    .child(new TextWidget<>(IKey.dynamic(() -> {
+                        String tierName = HatchType.getTierName(entry.tier);
+                        String ampStr = String.format("(%.1fA %s)", (double) entry.amps, tierName);
+                        String eutStr = entry.eut > 0
+                            ? formatEU(entry.eut, displayMode) + " EU/t"
+                            : "0 EU/t";
+                        String typeTag = entry.hatchType == 0 ? "[D]" : entry.hatchType == 1 ? "[E]"
+                            : entry.hatchType == 2 ? "[LS]" : "[LT]";
+                        return EnumChatFormatting.WHITE + typeTag + " "
+                            + entry.name + " "
+                            + EnumChatFormatting.AQUA + ampStr + " "
+                            + EnumChatFormatting.GREEN + eutStr;
+                    })).size(310, 12))
+                    .tooltipBuilder(t -> t.addLine(IKey.str(
+                        EnumChatFormatting.GRAY + "[" + entry.x + ", " + entry.y + ", " + entry.z + "] 维度: " + entry.dim)))
+                    .onMousePressed((event) -> {
+                        if (networkOwner != null) {
+                            ModNetwork.CHANNEL.sendToServer(new HatchActionPacket(
+                                HatchActionPacket.ACTION_HIGHLIGHT,
+                                networkOwner.toString(), networkFrequency, entry.index));
+                        }
+                        return true;
+                    }));
+            }
+            if (cache.entries.size() > MAX_HATCH_COORD_DISPLAY) {
+                list.child(new TextWidget<>(IKey.str(
+                    EnumChatFormatting.GRAY + "...(" + (cache.entries.size() - MAX_HATCH_COORD_DISPLAY) + " more)"))
+                    .size(260, 12));
+            }
+        }
+
+        tab.child(list);
+
+        tab.child(new TextWidget<>(IKey.dynamic(() -> {
+            com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache c = com.wztwzt.ae2_qof.client.ClientState.hatchListCache;
+            if (c == null) return EnumChatFormatting.GRAY + "---";
+            return EnumChatFormatting.WHITE + c.inputCountText
+                + EnumChatFormatting.WHITE + "  " + c.outputCountText;
+        })).size(300, 14));
+
+        return tab;
+    }
+
     @Override
     public MetaTileEntity newMetaEntity(IGregTechTileEntity aTile) {
-        return new AdaptiveNetTerminal(mName, mTier, 4, mDescriptionArray, mTextures);
+        return new AdaptiveNetTerminal(mName, mTier, TERMINAL_TIER, mDescriptionArray, mTextures);
     }
 
     @Override
@@ -469,7 +879,12 @@ public class AdaptiveNetTerminal extends MTEHatch {
 
     @Override
     public boolean isItemValidForSlot(int aIndex, ItemStack aStack) {
-        return true;
+        HatchType ht = HatchType.fromSlotIndex(aIndex);
+        if (ht == null) return false;
+        int damage = aStack.getItemDamage();
+        IMetaTileEntity imte = GregTechAPI.METATILEENTITIES[damage];
+        if (!(imte instanceof MetaTileEntity)) return false;
+        return ht.isValidMTEType((MetaTileEntity) imte);
     }
 
     @Override

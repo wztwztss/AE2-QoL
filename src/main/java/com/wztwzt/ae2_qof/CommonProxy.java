@@ -26,6 +26,7 @@ import com.wztwzt.ae2_qof.network.ReplaceCandidatesPacket;
 import com.wztwzt.ae2_qof.network.SwapPatternPacket;
 import com.wztwzt.ae2_qof.network.WirelessChannelSyncPacket;
 import com.wztwzt.ae2_qof.network.WirelessHighlightPacket;
+import com.wztwzt.ae2_qof.network.HatchListSyncPacket;
 import com.wztwzt.ae2_qof.tile.TileExIOPort;
 import com.wztwzt.ae2_qof.tile.TileQuestDetector;
 import com.wztwzt.ae2_qof.wireless.WirelessBlockEventListener;
@@ -60,7 +61,6 @@ public class CommonProxy {
 
     public void preInit(FMLPreInitializationEvent event) {
         Config.synchronizeConfiguration(event.getSuggestedConfigurationFile());
-        MyMod.LOG.info(Config.greeting);
         MyMod.LOG.info("I am MyMod at version " + Tags.VERSION);
 
         try {
@@ -384,6 +384,8 @@ public class CommonProxy {
     public void handleWirelessChannelSync(WirelessChannelSyncPacket message) {}
 
     public void handleWirelessHighlight(WirelessHighlightPacket message) {}
+
+    public void handleHatchListSync(HatchListSyncPacket message) {}
 
     public void handleSwapPattern(SwapPatternPacket message) {}
 

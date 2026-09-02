@@ -158,6 +158,14 @@ public class GuiMergedTerminal extends GuiInterfaceTerminal {
     }
 
     @Override
+    public void onGuiClosed() {
+        super.onGuiClosed();
+        if (activeInstance == this) {
+            activeInstance = null;
+        }
+    }
+
+    @Override
     protected void repositionSlots() {
         PatternContainer pc = getMergedContainer().patternContainer;
         for (Object obj : this.inventorySlots.inventorySlots) {

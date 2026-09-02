@@ -1,7 +1,7 @@
 package com.wztwzt.ae2_qof.hatch.adaptive;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -11,12 +11,14 @@ public class AdaptiveNetwork {
     private final UUID owner;
     private final int frequency;
     private AdaptiveNetTerminal terminal;
-    private final Set<AdaptiveHatchHelper> helpers = new HashSet<>();
+    private final Set<AdaptiveHatchHelper> helpers = new LinkedHashSet<>();
     private int voltageTier = 0;
     private boolean autoReconnect = true;
 
     private final int[] hatchTiers = new int[HatchType.COUNT];
     private final int[] hatchAmps = new int[HatchType.COUNT];
+    private final GridEnergyStats stats = new GridEnergyStats();
+    private boolean hatchListDirty = true;
 
     public AdaptiveNetwork(UUID owner, int frequency) {
         this.owner = owner;
@@ -76,7 +78,7 @@ public class AdaptiveNetwork {
     }
 
     public void setHatchAmps(HatchType type, int amps) {
-        hatchAmps[type.slotIndex] = Math.max(1, amps);
+        hatchAmps[type.slotIndex] = Math.max(0, amps);
     }
 
     public int getHatchCount(HatchType type) {
@@ -94,15 +96,33 @@ public class AdaptiveNetwork {
 
     public void addHelper(AdaptiveHatchHelper helper) {
         helpers.add(helper);
-        helper.setVoltageTier(voltageTier);
+        HatchType ht = helper.getHatchType();
+        if (ht != null) {
+            helper.setVoltageTier(hatchTiers[ht.slotIndex]);
+            helper.setAmps(hatchAmps[ht.slotIndex]);
+        }
+        hatchListDirty = true;
     }
 
     public void removeHelper(AdaptiveHatchHelper helper) {
         helpers.remove(helper);
+        hatchListDirty = true;
     }
 
     public List<AdaptiveHatchHelper> getAllHelpers() {
         return new ArrayList<>(helpers);
+    }
+
+    public boolean isHatchListDirty() {
+        return hatchListDirty;
+    }
+
+    public void clearHatchListDirty() {
+        hatchListDirty = false;
+    }
+
+    public void markHatchListDirty() {
+        hatchListDirty = true;
     }
 
     public boolean isEmpty() {
@@ -112,9 +132,21 @@ public class AdaptiveNetwork {
     public void updateAllHelpers() {
         for (AdaptiveHatchHelper helper : helpers) {
             if (helper.isBound()) {
-                helper.setVoltageTier(voltageTier);
+                HatchType ht = helper.getHatchType();
+                if (ht != null) {
+                    helper.setVoltageTier(hatchTiers[ht.slotIndex]);
+                    helper.setAmps(hatchAmps[ht.slotIndex]);
+                }
             }
         }
+    }
+
+    public GridEnergyStats getStats() {
+        return stats;
+    }
+
+    public void tickStats(long currentEU) {
+        stats.tick(currentEU);
     }
 
     public void destroy() {

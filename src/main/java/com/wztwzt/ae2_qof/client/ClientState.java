@@ -57,6 +57,11 @@ public class ClientState {
     public static boolean highlightEnabled = false;
     public static java.util.List<int[]> highlightPositions = new java.util.ArrayList<int[]>();
 
+    public static java.util.List<int[]> adaptiveHighlightPositions = new java.util.ArrayList<int[]>();
+    public static long adaptiveHighlightExpiryTick = 0;
+
+    public static volatile com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache hatchListCache = null;
+
     public static void clear() {
         lastProviderName = null;
         lastProviderId = 0;

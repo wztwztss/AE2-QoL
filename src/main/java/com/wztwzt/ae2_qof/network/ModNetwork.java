@@ -158,5 +158,17 @@ public final class ModNetwork {
             InfinityCellStatsResponsePacket.class,
             discriminator++,
             Side.CLIENT);
+
+        CHANNEL.registerMessage(
+            HatchActionPacket.Handler.class,
+            HatchActionPacket.class,
+            discriminator++,
+            Side.SERVER);
+
+        CHANNEL.registerMessage(
+            HatchListSyncPacket.Handler.class,
+            HatchListSyncPacket.class,
+            discriminator++,
+            Side.CLIENT);
     }
 }

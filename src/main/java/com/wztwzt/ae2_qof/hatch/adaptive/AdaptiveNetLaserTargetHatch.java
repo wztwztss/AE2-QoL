@@ -31,6 +31,7 @@ import gregtech.common.misc.WirelessNetworkManager;
 public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
 
     protected final AdaptiveHatchHelper helper = new AdaptiveHatchHelper();
+    private long lastStoredEU = 0;
 
     public AdaptiveNetLaserTargetHatch(int aID, String aName, String aNameRegional, int aTier) {
         super(aID, aName, aNameRegional, aTier);
@@ -71,26 +72,33 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
 
     @Override
     public long maxEUOutput() {
-        return V[helper.getCurrentVoltageTier()] * 2;
+        return Long.MAX_VALUE / 2;
     }
 
     @Override
     public long maxEUStore() {
-        return V[helper.getCurrentVoltageTier()] * 16L;
+        return Long.MAX_VALUE / 2;
     }
 
     @Override
     public long maxAmperesOut() {
-        return 256;
+        return helper.getCurrentAmps();
     }
 
     @Override
     public void onFirstTick(IGregTechTileEntity aBase) {
         super.onFirstTick(aBase);
-        if (aBase.isServerSide() && helper.isBound()) {
-            AdaptiveNetworkManager.registerHatch(helper);
-        }
+        lastStoredEU = aBase.getUniversalEnergyStored();
         if (aBase.isServerSide()) {
+            helper.setPosition(aBase.getXCoord(), aBase.getYCoord(), aBase.getZCoord(), aBase.getWorld().provider.dimensionId);
+            gregtech.api.metatileentity.MetaTileEntity mte = (gregtech.api.metatileentity.MetaTileEntity) aBase.getMetaTileEntity();
+            if (mte != null) {
+                net.minecraft.item.ItemStack stack = mte.getStackForm(1L);
+                helper.setCachedInfo((short) stack.getItemDamage(), stack.getDisplayName());
+            }
+            if (helper.isBound()) {
+                AdaptiveNetworkManager.registerHatch(helper);
+            }
             transferEU(aBase);
         }
     }
@@ -100,6 +108,7 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
         super.onPostTick(aBase, aTick);
         if (aBase.isServerSide() && aTick % 4 == 0) {
             transferEU(aBase);
+            lastStoredEU = aBase.getUniversalEnergyStored();
         }
     }
 
@@ -110,12 +119,8 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
         UUID owner = helper.getNetworkOwner();
         if (owner == null) return;
 
-        long eU = stored;
-        if (eU > 32768L) eU = 32768L;
-
-        aBase.decreaseStoredEnergyUnits(eU, false);
-        BigInteger newTotal = BigInteger.valueOf(eU).add(WirelessNetworkManager.getUserEU(owner));
-        WirelessNetworkManager.addEUToGlobalEnergyMap(owner, newTotal);
+        aBase.decreaseStoredEnergyUnits(stored, false);
+        WirelessNetworkManager.addEUToGlobalEnergyMap(owner, BigInteger.valueOf(stored));
     }
 
     @Override
@@ -152,10 +157,10 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
 
         column.child(new TextWidget<>(IKey.dynamic(() -> {
             int v = helper.getCurrentVoltageTier();
-            String tier = (v >= 0 && v < V.length) ? String.valueOf(V[v]) : "?";
+            String tierName = HatchType.getTierName(v);
             return EnumChatFormatting.AQUA
                 + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.voltage")
-                + " " + EnumChatFormatting.WHITE + tier + " EU/t";
+                + " " + EnumChatFormatting.WHITE + tierName + " (" + V[v] + " EU/t)";
         })).size(260, 14));
 
         column.child(new TextWidget<>(IKey.dynamic(() -> {
@@ -164,9 +169,27 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
                 + " " + EnumChatFormatting.WHITE + maxAmperesOut() + " A";
         })).size(260, 14));
 
+        column.child(new TextWidget<>(IKey.dynamic(() -> {
+            java.math.BigInteger gridEU = helper.isBound() && helper.getNetworkOwner() != null
+                ? WirelessNetworkManager.getUserEU(helper.getNetworkOwner()) : java.math.BigInteger.ZERO;
+            return EnumChatFormatting.AQUA
+                + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.grid_energy")
+                + " " + EnumChatFormatting.WHITE + formatEU(gridEU.min(java.math.BigInteger.valueOf(Long.MAX_VALUE)).longValue());
+        })).size(260, 14));
+
         panel.bindPlayerInventory();
         panel.child(column);
         return panel;
+    }
+
+    private static String formatEU(long eu) {
+        if (eu >= 1_000_000_000_000_000_000L) return String.format("%.2fE", eu / 1_000_000_000_000_000_000.0);
+        if (eu >= 1_000_000_000_000_000L) return String.format("%.2fP", eu / 1_000_000_000_000_000.0);
+        if (eu >= 1_000_000_000_000L) return String.format("%.2fT", eu / 1_000_000_000_000.0);
+        if (eu >= 1_000_000_000L) return String.format("%.2fG", eu / 1_000_000_000.0);
+        if (eu >= 1_000_000L) return String.format("%.2fM", eu / 1_000_000.0);
+        if (eu >= 1_000L) return String.format("%.1fK", eu / 1_000.0);
+        return String.valueOf(eu);
     }
 
     @Override
@@ -204,8 +227,11 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
         super.getWailaBody(itemStack, currenttip, accessor, config);
         try {
             int v = helper.getCurrentVoltageTier();
-            String tier = (v >= 0 && v < V.length) ? (V[v] + " EU/t") : "?";
-            currenttip.add(EnumChatFormatting.AQUA + "V:" + tier + " | A:" + maxAmperesOut());
+            String tierName = HatchType.getTierName(v);
+            currenttip.add(EnumChatFormatting.AQUA + "V:" + tierName + " (" + V[v] + ") | A:" + helper.getCurrentAmps());
+            java.math.BigInteger gridEU = helper.isBound() && helper.getNetworkOwner() != null
+                ? WirelessNetworkManager.getUserEU(helper.getNetworkOwner()) : java.math.BigInteger.ZERO;
+            currenttip.add(EnumChatFormatting.AQUA + "Grid: " + formatEU(gridEU.min(java.math.BigInteger.valueOf(Long.MAX_VALUE)).longValue()));
             if (helper.isBound()) {
                 currenttip.add(EnumChatFormatting.GREEN
                     + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.bound"));
