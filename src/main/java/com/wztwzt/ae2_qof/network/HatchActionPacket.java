@@ -159,7 +159,7 @@ public class HatchActionPacket implements IMessage {
                         break;
                     case ACTION_TELEPORT:
                         if (com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveTeamHelper.isMemberOf(player.getUniqueID(), uuid)) {
-                            handleTeleport(player, x, y, z);
+                            handleTeleport(player, x, y, z, dim);
                         }
                         break;
                     default:
@@ -176,7 +176,16 @@ public class HatchActionPacket implements IMessage {
             scheduleClear(player, MinecraftServer.getServer().getTickCounter() + 100);
         }
 
-        private void handleTeleport(EntityPlayerMP player, int x, int y, int z) {
+        private void handleTeleport(EntityPlayerMP player, int x, int y, int z, int dim) {
+            if (player.dimension == dim) {
+                player.setPositionAndUpdate(x + 0.5, y + 1, z + 0.5);
+                return;
+            }
+            MinecraftServer server = MinecraftServer.getServer();
+            net.minecraft.world.WorldServer targetWorld = server.worldServerForDimension(dim);
+            if (targetWorld == null) return;
+            int oldDim = player.dimension;
+            server.getConfigurationManager().transferPlayerToDimension(player, dim, new net.minecraft.world.Teleporter(targetWorld));
             player.setPositionAndUpdate(x + 0.5, y + 1, z + 0.5);
         }
     }

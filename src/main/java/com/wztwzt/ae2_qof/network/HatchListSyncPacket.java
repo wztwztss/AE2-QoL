@@ -59,8 +59,9 @@ public class HatchListSyncPacket implements IMessage {
                 int y = buf.readInt();
                 int z = buf.readInt();
                 int dim = buf.readShort();
+                String ownerName = cpw.mods.fml.common.network.ByteBufUtils.readUTF8String(buf);
                 this.entries.add(new HatchListCache.HatchEntry(
-                    name, metaId, eut, realFlowEUt, tier, amps, hatchType, index, x, y, z, dim));
+                    name, metaId, eut, realFlowEUt, tier, amps, hatchType, index, x, y, z, dim, ownerName));
             }
         } catch (Throwable t) {
             this.owner = null;
@@ -97,6 +98,7 @@ public class HatchListSyncPacket implements IMessage {
                 buf.writeInt(e.y);
                 buf.writeInt(e.z);
                 buf.writeShort(e.dim);
+                cpw.mods.fml.common.network.ByteBufUtils.writeUTF8String(buf, e.ownerName != null ? e.ownerName : "");
             }
         }
     }

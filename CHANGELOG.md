@@ -1,3 +1,40 @@
+## 3.18.1-fix7 - owner同步 + 跨维度传送 + ownerName + 列表布局修复
+
+> 作者：wztwzt | 更新时间：2026-09-03 | 基于 3.18.1-fix6
+
+### 修复：客户端 owner/frequency 同步（高亮+传送前提）
+
+- `buildUI` 新增 `StringSyncValue ownerSync` 显式同步 owner UUID 到客户端
+- `buildHatchListTab` 签名加 `ownerSync` + `frequencySync` 参数
+- 行点击回调改用 `ownerSync.getValue()` 而非 `networkOwner`（解决客户端 MTE 字段为 null 导致 packet 发不出去的问题）
+
+### 新增：跨维度传送
+
+- `HatchActionPacket.handleTeleport` 加 `dim` 参数
+- 同维度：`setPositionAndUpdate`（原有逻辑）
+- 跨维度：`transferPlayerToDimension` + `setPositionAndUpdate`
+
+### 新增：仓室归属玩家名（ownerName）
+
+- `HatchListCache.HatchEntry` 新增 `ownerName` 字段
+- `HatchListSyncPacket` 协议新增 `ownerName` 序列化（UTF8String）
+- 服务端 `sendHatchListSync` 解析 ownerName（在线用玩家名，离线用 UUID 前8位）
+- 仓室列表 tooltip 新增归属行：`归属: PlayerName`
+
+### 优化：子仓列表 Tab 布局修复
+
+- 标题高度 16→14，列表高度 185→200，footer 不再被遮挡
+- 整体布局：标题14 + 总数12 + 列表200 + footer12 = 238px（< 260px，留有余量）
+
+### 变更文件
+
+- `hatch/adaptive/AdaptiveNetTerminal.java`：ownerSync + ownerName + 布局修复
+- `hatch/adaptive/HatchListCache.java`：HatchEntry.ownerName
+- `network/HatchListSyncPacket.java`：ownerName 序列化
+- `network/HatchActionPacket.java`：跨维度传送
+
+---
+
 ## 3.18.1-fix6 - 团队归一 + 仓室图标 + UI 全面优化
 
 > 作者：wztwzt | 更新时间：2026-09-03 | 基于 3.18.1-fix5

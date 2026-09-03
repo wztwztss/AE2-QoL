@@ -25,6 +25,7 @@ import com.cleanroommc.modularui.screen.UISettings;
 import com.cleanroommc.modularui.value.sync.IntSyncValue;
 import com.cleanroommc.modularui.value.sync.LongSyncValue;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
+import com.cleanroommc.modularui.value.sync.StringSyncValue;
 import com.cleanroommc.modularui.widgets.PageButton;
 import com.cleanroommc.modularui.widgets.PagedWidget;
 import com.cleanroommc.modularui.widgets.TextWidget;
@@ -146,6 +147,16 @@ public class AdaptiveNetTerminal extends MTEHatch {
         int globalIndex = 0;
         int totalIn = 0, totalOut = 0;
 
+        String ownerName = "";
+        if (networkOwner != null) {
+            net.minecraft.entity.player.EntityPlayerMP ownerPlayer = findPlayerByUUID(aBase.getWorld(), networkOwner);
+            if (ownerPlayer != null) {
+                ownerName = ownerPlayer.getCommandSenderName();
+            } else {
+                ownerName = networkOwner.toString().substring(0, 8);
+            }
+        }
+
         for (AdaptiveHatchHelper h : helpers) {
             int tier = h.getCurrentVoltageTier();
             int amps = h.getCurrentAmps();
@@ -171,7 +182,8 @@ public class AdaptiveNetTerminal extends MTEHatch {
             entries.add(new HatchListCache.HatchEntry(
                 h.getCachedName(), h.getCachedMetaId(), eut, h.getRealFlowEUt(), tier, amps,
                 ht.ordinal(), globalIndex,
-                h.getX(), h.getY(), h.getZ(), h.getDim()));
+                h.getX(), h.getY(), h.getZ(), h.getDim(),
+                ownerName));
             globalIndex++;
         }
 
@@ -440,6 +452,11 @@ public class AdaptiveNetTerminal extends MTEHatch {
         }, v -> {});
         syncManager.syncValue("wGE", gridEUSync);
 
+        final StringSyncValue ownerSync = new StringSyncValue(
+            () -> networkOwner != null ? networkOwner.toString() : "",
+            v -> {});
+        syncManager.syncValue("wNO", ownerSync);
+
         final LongSyncValue change1hSync = new LongSyncValue(() -> {
             AdaptiveNetwork n = getCurrentNetwork();
             if (n == null) return 0;
@@ -495,7 +512,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
             .addPage(buildFrequencyTab(frequencySync))
             .addPage(buildMonitorTab(gridEUSync, change1hSync, change10mSync, avgOut10mSync,
                 instantInputSync, instantOutputSync))
-            .addPage(buildHatchListTab());
+            .addPage(buildHatchListTab(ownerSync, frequencySync));
         panel.child(pages);
 
         panel.bindPlayerInventory();
@@ -816,10 +833,10 @@ public class AdaptiveNetTerminal extends MTEHatch {
         return tab;
     }
 
-    private Flow buildHatchListTab() {
+    private Flow buildHatchListTab(StringSyncValue ownerSync, IntSyncValue frequencySync) {
         Flow tab = Flow.column().childPadding(2).size(CONTENT_W, 260);
 
-        tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.hatch_list.title")).size(CONTENT_W, 16));
+        tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.hatch_list.title")).size(CONTENT_W, 14));
 
         tab.child(new TextWidget<>(IKey.dynamic(() -> {
             com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache cache = com.wztwzt.ae2_qof.client.ClientState.hatchListCache;
@@ -830,13 +847,12 @@ public class AdaptiveNetTerminal extends MTEHatch {
 
         ListWidget list = new ListWidget();
         list.scrollDirection(com.cleanroommc.modularui.api.GuiAxis.Y);
-        list.size(CONTENT_W, 185);
+        list.size(CONTENT_W, 200);
 
         com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache cache = com.wztwzt.ae2_qof.client.ClientState.hatchListCache;
         if (cache != null) {
             for (int i = 0; i < cache.entries.size(); i++) {
                 final com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache.HatchEntry entry = cache.entries.get(i);
-                final int fi = i;
 
                 net.minecraft.item.ItemStack iconStack = null;
                 if (entry.metaId >= 0 && entry.metaId < GregTechAPI.METATILEENTITIES.length
@@ -865,6 +881,11 @@ public class AdaptiveNetTerminal extends MTEHatch {
                     .tooltipBuilder(t -> {
                         t.addLine(IKey.str(
                             EnumChatFormatting.WHITE + entry.name));
+                        if (entry.ownerName != null && !entry.ownerName.isEmpty()) {
+                            t.addLine(IKey.str(
+                                EnumChatFormatting.AQUA + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.owner")
+                                + ": " + entry.ownerName));
+                        }
                         t.addLine(IKey.str(
                             EnumChatFormatting.GRAY + "[" + entry.x + ", " + entry.y + ", " + entry.z + "] dim:" + entry.dim));
                         t.addLine(IKey.str(
@@ -874,12 +895,12 @@ public class AdaptiveNetTerminal extends MTEHatch {
                             EnumChatFormatting.YELLOW + "Left Click: Highlight | Shift+Click: Teleport"));
                     })
                     .onMousePressed((event) -> {
-                        if (networkOwner != null) {
-                            boolean shift = net.minecraft.client.Minecraft.getMinecraft().gameSettings.keyBindSneak.getIsKeyPressed();
-                            int action = shift ? HatchActionPacket.ACTION_TELEPORT : HatchActionPacket.ACTION_HIGHLIGHT;
-                            ModNetwork.CHANNEL.sendToServer(new HatchActionPacket(
-                                action, networkOwner.toString(), networkFrequency, entry.index));
-                        }
+                        String ownerStr = ownerSync.getValue();
+                        if (ownerStr == null || ownerStr.isEmpty()) return true;
+                        boolean shift = net.minecraft.client.Minecraft.getMinecraft().gameSettings.keyBindSneak.getIsKeyPressed();
+                        int action = shift ? HatchActionPacket.ACTION_TELEPORT : HatchActionPacket.ACTION_HIGHLIGHT;
+                        ModNetwork.CHANNEL.sendToServer(new HatchActionPacket(
+                            action, ownerStr, frequencySync.getIntValue(), entry.index));
                         return true;
                     }));
             }

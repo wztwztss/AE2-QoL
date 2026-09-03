@@ -1,0 +1,40 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.wztwzt.ae2_qof.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "mixins.ae2_qof.refmap.json",
+  "target": "@env(DEFAULT)",
+  "mixins": [
+    "ae.MixinCraftingCPUCluster",
+    "ae.MixinTileIOPort",
+    "ae.MixinDualityInterface",
+    "ae.MixinContainerInterface",
+    "ae.MixinPinsHolder",
+    "gt.MixinMTEHatchInputBus",
+    "gt.MixinMTEMultiBlockBase",
+    "gt.MixinMultiblockParallel",
+    "TileDriveMixin"
+  ],
+  "client": [
+    "nei.MixinRecipeHandlerRef",
+    "nei.MixinDefaultOverlayHandler",
+    "nei.MixinGuiOverlayButton",
+    "nei.MixinGuiMEMonitorable",
+    "nei.MixinPanelWidgetDraw",
+    "nei.MixinNEIRecipeWidget",
+    "nei.MixinPanelWidgetClick",
+    "nei.MixinGuiRecipe",
+    "ae.MixinGuiCraftConfirm",
+    "ae.MixinGuiInterface",
+    "ae.MixinGuiSuperInterface",
+    "ae.MixinGuiSuperDualInterface",
+    "gt.MixinMTEHatchCraftingInputMEGui",
+    "gt.MixinSuperCraftingInputHatchMEGui",
+    "gt.MixinDualInputHatchUI",
+    "GuiContainerAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
