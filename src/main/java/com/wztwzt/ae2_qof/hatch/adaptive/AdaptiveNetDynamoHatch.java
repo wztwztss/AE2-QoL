@@ -33,6 +33,7 @@ public class AdaptiveNetDynamoHatch extends MTEHatchDynamo {
 
     protected final AdaptiveHatchHelper helper = new AdaptiveHatchHelper();
     private long lastStoredEU = 0;
+    private net.minecraft.world.World world;
 
     public AdaptiveNetDynamoHatch(int aID, String aName, String aNameRegional, int aTier) {
         super(aID, aName, aNameRegional, aTier);
@@ -91,6 +92,7 @@ public class AdaptiveNetDynamoHatch extends MTEHatchDynamo {
         super.onFirstTick(aBase);
         lastStoredEU = aBase.getUniversalEnergyStored();
         if (aBase.isServerSide()) {
+            this.world = aBase.getWorld();
             helper.setPosition(aBase.getXCoord(), aBase.getYCoord(), aBase.getZCoord(), aBase.getWorld().provider.dimensionId);
             gregtech.api.metatileentity.MetaTileEntity mte = (gregtech.api.metatileentity.MetaTileEntity) aBase.getMetaTileEntity();
             if (mte != null) {
@@ -103,7 +105,7 @@ public class AdaptiveNetDynamoHatch extends MTEHatchDynamo {
                 }
             }
             if (helper.isBound()) {
-                AdaptiveNetworkManager.registerHatch(helper);
+                AdaptiveNetworkManager.registerHatch(helper, world);
             }
             transferEU(aBase);
         }
@@ -128,13 +130,20 @@ public class AdaptiveNetDynamoHatch extends MTEHatchDynamo {
 
     private void transferEU(IGregTechTileEntity aBase) {
         long stored = aBase.getUniversalEnergyStored();
-        if (stored <= 0 || !helper.isBound()) return;
+        if (stored <= 0 || !helper.isBound()) {
+            helper.setRealFlowEUt(0);
+            return;
+        }
 
         UUID owner = helper.getNetworkOwner();
-        if (owner == null) return;
+        if (owner == null) {
+            helper.setRealFlowEUt(0);
+            return;
+        }
 
         aBase.decreaseStoredEnergyUnits(stored, false);
         WirelessNetworkManager.addEUToGlobalEnergyMap(owner, BigInteger.valueOf(stored));
+        helper.setRealFlowEUt((int) stored);
     }
 
     @Override

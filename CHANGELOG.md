@@ -1,3 +1,54 @@
+## 3.18.1-fix2 - WorldData 持久化 + 真实负载 EU/t + 耗尽时间汉化 + 彩色 Tier
+
+> 作者：wztwzt | 更新时间：2026-09-03 | 基于 3.18.1-fix1
+
+### 新增：电网监控数据 WorldData 持久化（修复重启丢数据）
+
+- `GridEnergyStats` 在 `AdaptiveNetwork` 中从 `final` 改为可替换，新增 `replaceStats()` 方法
+- `GridEnergyWorldData` 新增 `setStats()` 方法，支持写入
+- `AdaptiveNetworkManager` 新增 `serverWorld` 字段，`registerTerminal/registerHatch` 新增 `World` 参数重载
+- 终端/仓室在 `onFirstTick` 中存储 `World` 引用，注册时传入 Manager
+- 网络创建时自动从 `GridEnergyWorldData` 加载历史 stats
+- `AdaptiveNetwork.tickStats()` 每 6000 tick（5分钟）自动保存到 WorldData
+- `removeNetwork()` 和 `serverStopping()` 触发即时保存
+- 服务端关闭时 `CommonProxy.serverStopping()` 调用 `saveAllStats()`
+
+### 新增：仓室真实负载 EU/t 显示
+
+- `AdaptiveHatchHelper` 新增 `realFlowEUt` 字段 + getter/setter
+- 4 种仓室在 `onPostTick` 中计算实际 EU/t 流量：
+  - 能量输入仓：`lastStoredEU - currentStored`（消耗量）
+  - 激光源仓：同上
+  - 动力仓：`stored`（发送量）
+  - 激光目标仓：同上
+- `HatchEntry` 新增 `realFlowEUt` 字段
+- `HatchListSyncPacket` 协议新增 `realFlowEUt` 字段（readInt/writeInt）
+- 仓室列表 Tab 主显示改为真实流量，tooltip 显示 Capacity + Flow 双行
+- 排序改为按真实流量降序
+
+### 优化：耗尽时间全中文显示
+
+- `formatDuration()` 英文单位改为中文：`y→年`、`d→天`、`h→时`、`m→分`、`s→秒`
+- `月` 保持不变（原本就是中文）
+- 无限时间显示 `Infinite` → `∞`
+
+### 变更文件
+
+- `hatch/adaptive/AdaptiveNetworkManager.java`：World 持久化 + `saveStatsForKey` + `saveAllStats`
+- `hatch/adaptive/AdaptiveNetwork.java`：`replaceStats` + `saveCounter` 定期保存
+- `hatch/adaptive/GridEnergyWorldData.java`：`setStats()` 方法
+- `hatch/adaptive/AdaptiveHatchHelper.java`：`realFlowEUt` 字段
+- `hatch/adaptive/HatchListCache.java`：`HatchEntry.realFlowEUt` + 排序改为按真实流量
+- `hatch/adaptive/AdaptiveNetTerminal.java`：`world` 字段 + `formatDuration` 汉化 + 真实流量显示
+- `hatch/adaptive/AdaptiveNetHatch.java`：`world` 字段 + 真实流量计算
+- `hatch/adaptive/AdaptiveNetLaserHatch.java`：同上
+- `hatch/adaptive/AdaptiveNetDynamoHatch.java`：同上
+- `hatch/adaptive/AdaptiveNetLaserTargetHatch.java`：同上
+- `network/HatchListSyncPacket.java`：`realFlowEUt` 协议字段
+- `CommonProxy.java`：`serverStopping` 中调用 `saveAllStats()`
+
+---
+
 ## 3.18.1-fix1 - 自适应电网监控数据正确性修复 + 子仓列表优化
 
 > 作者：wztwzt | 更新时间：2026-09-03 | 基于 3.18.0

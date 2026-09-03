@@ -25,6 +25,7 @@ public class AdaptiveHatchHelper {
     private int posX, posY, posZ, posDim;
     private short cachedMetaId = -1;
     private String cachedName = "";
+    private int realFlowEUt = 0;
 
     public HatchType getHatchType() {
         return hatchType;
@@ -77,6 +78,9 @@ public class AdaptiveHatchHelper {
         this.cachedMetaId = metaId;
         this.cachedName = name != null ? name : "";
     }
+
+    public int getRealFlowEUt() { return realFlowEUt; }
+    public void setRealFlowEUt(int realFlowEUt) { this.realFlowEUt = realFlowEUt; }
 
     public boolean isBound() {
         return networkOwner != null && networkFrequency >= 0;

@@ -1,0 +1,4489 @@
+id,stackName,className
+1,青铜外壳,MTEBasicHullBronze
+2,砖砌青铜外壳,MTEBasicHullBronzeBricks
+3,钢外壳,MTEBasicHullSteel
+4,砖砌铸铁外壳,MTEBasicHullSteelBricks
+10,ULV机器外壳,MTEBasicHull
+11,LV机器外壳,MTEBasicHull
+12,MV机器外壳,MTEBasicHull
+13,HV机器外壳,MTEBasicHull
+14,EV机器外壳,MTEBasicHull
+15,IV机器外壳,MTEBasicHull
+16,LuV机器外壳,MTEBasicHull
+17,ZPM机器外壳,MTEBasicHull
+18,UV机器外壳,MTEBasicHull
+19,UHV机器外壳,MTEBasicHull
+20,ULV变压器,MTETransformer
+21,LV变压器,MTETransformer
+22,MV变压器,MTETransformer
+23,HV变压器,MTETransformer
+24,EV变压器,MTETransformer
+25,IV变压器,MTETransformer
+26,LuV变压器,MTETransformer
+27,ZPM变压器,MTETransformer
+28,UV变压器,MTETransformer
+30,ULV动力仓,MTEHatchDynamo
+31,LV动力仓,MTEHatchDynamo
+32,MV动力仓,MTEHatchDynamo
+33,HV动力仓,MTEHatchDynamo
+34,EV动力仓,MTEHatchDynamo
+35,IV动力仓,MTEHatchDynamo
+36,LuV动力仓,MTEHatchDynamo
+37,ZPM动力仓,MTEHatchDynamo
+38,UV动力仓,MTEHatchDynamo
+39,UHV动力仓,MTEHatchDynamo
+40,ULV能源仓,MTEHatchEnergy
+41,LV能源仓,MTEHatchEnergy
+42,MV能源仓,MTEHatchEnergy
+43,HV能源仓,MTEHatchEnergy
+44,EV能源仓,MTEHatchEnergy
+45,IV能源仓,MTEHatchEnergy
+46,LuV能源仓,MTEHatchEnergy
+47,ZPM能源仓,MTEHatchEnergy
+48,UV能源仓,MTEHatchEnergy
+49,UHV能源仓,MTEHatchEnergy
+50,输入仓(ULV),MTEHatchInput
+51,输入仓(LV),MTEHatchInput
+52,输入仓(MV),MTEHatchInput
+53,输入仓(HV),MTEHatchInput
+54,输入仓(EV),MTEHatchInput
+55,输入仓(IV),MTEHatchInput
+56,输入仓(LuV),MTEHatchInput
+57,输入仓(ZPM),MTEHatchInput
+58,输入仓(UV),MTEHatchInput
+59,输入仓(UHV),MTEHatchInput
+60,输出仓(ULV),MTEHatchOutput
+61,输出仓(LV),MTEHatchOutput
+62,输出仓(MV),MTEHatchOutput
+63,输出仓(HV),MTEHatchOutput
+64,输出仓(EV),MTEHatchOutput
+65,输出仓(IV),MTEHatchOutput
+66,输出仓(LuV),MTEHatchOutput
+67,输出仓(ZPM),MTEHatchOutput
+68,输出仓(UV),MTEHatchOutput
+69,输出仓(UHV),MTEHatchOutput
+70,输入总线(ULV),MTEHatchInputBus
+71,输入总线(LV),MTEHatchInputBus
+72,输入总线(MV),MTEHatchInputBus
+73,输入总线(HV),MTEHatchInputBus
+74,输入总线(EV),MTEHatchInputBus
+75,输入总线(IV),MTEHatchInputBus
+76,输入总线(LuV),MTEHatchInputBus
+77,输入总线(ZPM),MTEHatchInputBus
+78,输入总线(UV),MTEHatchInputBus
+79,输入总线(UHV),MTEHatchInputBus
+80,输出总线(ULV),MTEHatchOutputBus
+81,输出总线(LV),MTEHatchOutputBus
+82,输出总线(MV),MTEHatchOutputBus
+83,输出总线(HV),MTEHatchOutputBus
+84,输出总线(EV),MTEHatchOutputBus
+85,输出总线(IV),MTEHatchOutputBus
+86,输出总线(LuV),MTEHatchOutputBus
+87,输出总线(ZPM),MTEHatchOutputBus
+88,输出总线(UV),MTEHatchOutputBus
+89,输出总线(UHV),MTEHatchOutputBus
+90,维护仓,MTEHatchMaintenance
+91,消声仓(LV),MTEHatchMuffler
+92,消声仓(MV),MTEHatchMuffler
+93,消声仓(HV),MTEHatchMuffler
+94,消声仓(EV),MTEHatchMuffler
+95,消声仓(IV),MTEHatchMuffler
+96,消声仓(LuV),MTEHatchMuffler
+97,消声仓(ZPM),MTEHatchMuffler
+98,消声仓(UV),MTEHatchMuffler
+99,消声仓(UHV),MTEHatchMuffler
+100,小型燃煤锅炉,MTEBoilerBronze
+101,高压燃煤锅炉,MTEBoilerSteel
+102,强化岩浆锅炉,MTEBoilerLava
+103,蒸汽熔炉,MTESteamFurnaceBronze
+104,高压蒸汽熔炉,MTESteamFurnaceSteel
+105,简易太阳能锅炉,MTEBoilerSolar
+106,蒸汽研磨机,MTESteamMaceratorBronze
+107,高压蒸汽研磨机,MTESteamMaceratorSteel
+109,蒸汽提取机,MTESteamExtractorBronze
+110,高压蒸汽提取机,MTESteamExtractorSteel
+111,自动维护仓,MTEHatchMaintenance
+112,蒸汽锻造锤,MTESteamForgeHammerBronze
+113,高压蒸汽锻造锤,MTESteamForgeHammerSteel
+114,高级太阳能锅炉,MTEBoilerSolarSteel
+115,蒸汽压缩机,MTESteamCompressorBronze
+116,高压蒸汽压缩机,MTESteamCompressorSteel
+118,蒸汽合金炉,MTESteamAlloySmelterBronze
+119,高压合金炉,MTESteamAlloySmelterSteel
+120,量子缸 I,MTEQuantumTank
+121,量子缸 II,MTEQuantumTank
+122,量子缸 III,MTEQuantumTank
+123,量子缸 IV,MTEQuantumTank
+124,量子缸 V,MTEQuantumTank
+125,量子箱 I,MTEQuantumChest
+126,量子箱 II,MTEQuantumChest
+127,量子箱 III,MTEQuantumChest
+128,量子箱 IV,MTEQuantumChest
+129,量子箱 V,MTEQuantumChest
+130,超级缸 I,MTESuperTank
+131,超级缸 II,MTESuperTank
+132,超级缸 III,MTESuperTank
+133,超级缸 IV,MTESuperTank
+134,超级缸 V,MTESuperTank
+135,超级箱 I,MTESuperChest
+136,超级箱 II,MTESuperChest
+137,超级箱 III,MTESuperChest
+138,超级箱 IV,MTESuperChest
+139,超级箱 V,MTESuperChest
+140,砖高炉,MTEBrickedBlastFurnace
+141,流体钻机 II,MTEOilDrill2
+142,流体钻机 III,MTEOilDrill3
+143,混凝土回填机,MTEConcreteBackfiller1
+144,进阶混凝土回填机,MTEConcreteBackfiller2
+145,数据访问仓,MTEHatchDataAccess
+146,进阶数据访问仓,MTEHatchDataAccess
+147,自动数据访问仓,MTEHatchDataAccess
+148,无尽流体钻机,MTEOilDrillInfiniteLegacy
+149,流体钻机 IV,MTEOilDrill4
+150,超低压充电箱,MTELocker
+151,低压充电箱,MTELocker
+152,中压充电箱,MTELocker
+153,高压充电箱,MTELocker
+154,超高压充电箱,MTELocker
+155,强导压充电箱,MTELocker
+156,剧差压充电箱,MTELocker
+157,零点压充电箱,MTELocker
+158,极限压充电箱,MTELocker
+159,极高压充电箱,MTELocker
+160,超低压电池箱,MTEBasicBatteryBuffer
+161,低压电池箱,MTEBasicBatteryBuffer
+162,中压电池箱,MTEBasicBatteryBuffer
+163,高压电池箱,MTEBasicBatteryBuffer
+164,超高压电池箱,MTEBasicBatteryBuffer
+165,强导压电池箱,MTEBasicBatteryBuffer
+166,剧差压电池箱,MTEBasicBatteryBuffer
+167,零点压电池箱,MTEBasicBatteryBuffer
+168,极限压电池箱,MTEBasicBatteryBuffer
+169,极高压电池箱,MTEBasicBatteryBuffer
+170,超低压电池箱,MTEBasicBatteryBuffer
+171,低压电池箱,MTEBasicBatteryBuffer
+172,中压电池箱,MTEBasicBatteryBuffer
+173,高压电池箱,MTEBasicBatteryBuffer
+174,超高压电池箱,MTEBasicBatteryBuffer
+175,强导压电池箱,MTEBasicBatteryBuffer
+176,剧差压电池箱,MTEBasicBatteryBuffer
+177,零点压电池箱,MTEBasicBatteryBuffer
+178,极限压电池箱,MTEBasicBatteryBuffer
+179,极高压电池箱,MTEBasicBatteryBuffer
+180,超低压电池箱,MTEBasicBatteryBuffer
+181,低压电池箱,MTEBasicBatteryBuffer
+182,中压电池箱,MTEBasicBatteryBuffer
+183,高压电池箱,MTEBasicBatteryBuffer
+184,超高压电池箱,MTEBasicBatteryBuffer
+185,强导压电池箱,MTEBasicBatteryBuffer
+186,剧差压电池箱,MTEBasicBatteryBuffer
+187,零点压电池箱,MTEBasicBatteryBuffer
+188,极限压电池箱,MTEBasicBatteryBuffer
+189,极高压电池箱,MTEBasicBatteryBuffer
+190,超低压电池箱,MTEBasicBatteryBuffer
+191,低压电池箱,MTEBasicBatteryBuffer
+192,中压电池箱,MTEBasicBatteryBuffer
+193,高压电池箱,MTEBasicBatteryBuffer
+194,超高压电池箱,MTEBasicBatteryBuffer
+195,强导压电池箱,MTEBasicBatteryBuffer
+196,剧差压电池箱,MTEBasicBatteryBuffer
+197,零点压电池箱,MTEBasicBatteryBuffer
+198,极限压电池箱,MTEBasicBatteryBuffer
+199,极高压电池箱,MTEBasicBatteryBuffer
+200,四重输入仓(EV),MTEHatchMultiInput
+201,基础合金炉,MTEBasicMachineWithRecipe
+202,进阶合金炉,MTEBasicMachineWithRecipe
+203,进阶合金炉 II,MTEBasicMachineWithRecipe
+204,进阶合金炉 II,MTEBasicMachineWithRecipe
+205,进阶合金炉 IV,MTEBasicMachineWithRecipe
+206,ULV无线能源仓,MTEWirelessEnergy
+207,LV无线能源仓,MTEWirelessEnergy
+208,MV无线能源仓,MTEWirelessEnergy
+209,HV无线能源仓,MTEWirelessEnergy
+211,基础组装机,MTEBasicMachineWithRecipe
+212,进阶组装机,MTEBasicMachineWithRecipe
+213,进阶组装机 II,MTEBasicMachineWithRecipe
+214,进阶组装机 III,MTEBasicMachineWithRecipe
+215,进阶组装机 IV,MTEBasicMachineWithRecipe
+216,EV无线能源仓,MTEWirelessEnergy
+217,IV无线能源仓,MTEWirelessEnergy
+218,LuV无线能源仓,MTEWirelessEnergy
+219,ZPM无线能源仓,MTEWirelessEnergy
+221,基础卷板机,MTEBasicMachineWithRecipe
+222,进阶卷板机,MTEBasicMachineWithRecipe
+223,进阶卷板机 II,MTEBasicMachineWithRecipe
+224,进阶卷板机 III,MTEBasicMachineWithRecipe
+225,进阶卷板机 IV,MTEBasicMachineWithRecipe
+227,UV无线能源仓,MTEWirelessEnergy
+229,UHV无线能源仓,MTEWirelessEnergy
+231,基础装罐机,MTEBasicMachineWithRecipe
+232,进阶装罐机,MTEBasicMachineWithRecipe
+233,进阶装罐机 II,MTEBasicMachineWithRecipe
+234,进阶装罐机 III,MTEBasicMachineWithRecipe
+235,进阶装罐机 IV,MTEBasicMachineWithRecipe
+236,焦炉,MTECokeOven
+237,焦炉仓,MTEHatchCokeOven
+238,Debug 流体储罐,MTEDebugTank
+241,基础压缩机,MTEBasicMachineWithRecipe
+242,进阶压缩机,MTEBasicMachineWithRecipe
+243,进阶压缩机 II,MTEBasicMachineWithRecipe
+244,进阶压缩机 III,MTEBasicMachineWithRecipe
+245,奇点压缩机,MTEBasicMachineWithRecipe
+251,基础板材切割机,MTEBasicMachineWithRecipe
+252,进阶板材切割机,MTEBasicMachineWithRecipe
+253,进阶板材切割机 II,MTEBasicMachineWithRecipe
+254,进阶板材切割机 III,MTEBasicMachineWithRecipe
+255,进阶板材切割机 IV,MTEBasicMachineWithRecipe
+261,基础电炉,MTEBasicMachineWithRecipe
+262,进阶电炉,MTEBasicMachineWithRecipe
+263,进阶电炉 II,MTEBasicMachineWithRecipe
+264,进阶电炉 III,MTEBasicMachineWithRecipe
+265,电子激发处理器,MTEBasicMachineWithRecipe
+266,UEV无线能源仓,MTEWirelessEnergy
+267,UIV无线能源仓,MTEWirelessEnergy
+268,UMV无线能源仓,MTEWirelessEnergy
+269,UXV无线能源仓,MTEWirelessEnergy
+271,基础提取机,MTEBasicMachineWithRecipe
+272,进阶提取机,MTEBasicMachineWithRecipe
+273,进阶提取机 II,MTEBasicMachineWithRecipe
+274,进阶提取机 III,MTEBasicMachineWithRecipe
+275,真空提取机,MTEBasicMachineWithRecipe
+281,基础压模机,MTEBasicMachineWithRecipe
+282,进阶压模机,MTEBasicMachineWithRecipe
+283,进阶压模机 II,MTEBasicMachineWithRecipe
+284,进阶压模机 III,MTEBasicMachineWithRecipe
+285,进阶压模机 IV,MTEBasicMachineWithRecipe
+286,MAX无线能源仓,MTEWirelessEnergy
+291,基础车床,MTEBasicMachineWithRecipe
+292,进阶车床,MTEBasicMachineWithRecipe
+293,进阶车床 II,MTEBasicMachineWithRecipe
+294,进阶车床 III,MTEBasicMachineWithRecipe
+295,进阶车床 IV,MTEBasicMachineWithRecipe
+301,基础研磨机,MTEBasicMachineWithRecipe
+302,进阶研磨机,MTEBasicMachineWithRecipe
+303,通用研磨机,MTEBasicMachineWithRecipe
+304,通用粉碎机,MTEBasicMachineWithRecipe
+305,矿石粉碎机 9001,MTEBasicMachineWithRecipe
+311,基础微波炉,MTEBasicMachineWithRecipe
+312,进阶微波炉,MTEBasicMachineWithRecipe
+313,进阶微波炉 II,MTEBasicMachineWithRecipe
+314,进阶微波炉 III,MTEBasicMachineWithRecipe
+315,进阶微波炉 IV,MTEBasicMachineWithRecipe
+321,基础打印机,MTEBasicMachineWithRecipe
+322,进阶打印机,MTEBasicMachineWithRecipe
+323,进阶打印机 II,MTEBasicMachineWithRecipe
+324,进阶打印机 III,MTEBasicMachineWithRecipe
+325,进阶打印机 IV,MTEBasicMachineWithRecipe
+326,进阶打印机 V,MTEBasicMachineWithRecipe
+327,进阶打印机 VI,MTEBasicMachineWithRecipe
+328,进阶打印机 VII,MTEBasicMachineWithRecipe
+331,基础回收机,MTEBasicMachineWithRecipe
+332,进阶回收机,MTEBasicMachineWithRecipe
+333,进阶回收机 II,MTEBasicMachineWithRecipe
+334,进阶回收机 III,MTEBasicMachineWithRecipe
+335,物品抹消器,MTEBasicMachineWithRecipe
+341,基础扫描仪,MTEScanner
+342,基础扫描仪,MTEScanner
+343,基础扫描仪 II,MTEScanner
+344,基础扫描仪 III,MTEScanner
+345,基础扫描仪 IV,MTEScanner
+349,Debug结构打印机,MTEDebugStructureWriter
+351,基础线材轧机,MTEBasicMachineWithRecipe
+352,进阶线材轧机,MTEBasicMachineWithRecipe
+353,进阶线材轧机 II,MTEBasicMachineWithRecipe
+354,进阶线材轧机 III,MTEBasicMachineWithRecipe
+355,进阶线材轧机 IV,MTEBasicMachineWithRecipe
+356,PCB工厂,MTEPCBFactory
+357,纳米锻炉,MTENanoForge
+358,磁通量效应监视器,MTEIndustrialElectromagneticSeparator
+359,电磁铁支架,MTEHatchMagnet
+360,涡轮装罐机Pro,MTEMultiCanner
+361,基础离心机,MTEBasicMachineWithRecipe
+362,进阶离心机,MTEBasicMachineWithRecipe
+363,涡轮离心机,MTEBasicMachineWithRecipe
+364,分子离心机,MTEBasicMachineWithRecipe
+365,旋风分子离心机,MTEBasicMachineWithRecipe
+366,流体塑形机,MTEFluidShaper
+367,太阳能板制造厂,MTESolarFactory
+368,大规模固化机,MTEMassSolidifier
+371,基础电解机,MTEBasicMachineWithRecipe
+372,进阶电解机,MTEBasicMachineWithRecipe
+373,进阶电解机 II,MTEBasicMachineWithRecipe
+374,进阶电解机 III,MTEBasicMachineWithRecipe
+375,分子分解者 E-4908,MTEBasicMachineWithRecipe
+381,基础热力离心机,MTEBasicMachineWithRecipe
+382,进阶热力离心机,MTEBasicMachineWithRecipe
+383,进阶热力离心机 II,MTEBasicMachineWithRecipe
+384,进阶热力离心机 III,MTEBasicMachineWithRecipe
+385,烈焰分离厂T-6350,MTEBasicMachineWithRecipe
+391,基础洗矿厂,MTEBasicMachineWithRecipe
+392,进阶洗矿厂,MTEBasicMachineWithRecipe
+393,进阶洗矿厂 II,MTEBasicMachineWithRecipe
+394,进阶洗矿厂 III,MTEBasicMachineWithRecipe
+395,波轮洗矿厂I-360,MTEBasicMachineWithRecipe
+401,基础打包机,MTEBoxinator
+402,进阶打包机,MTEBoxinator
+403,进阶打包机 II,MTEBoxinator
+404,进阶打包机 III,MTEBoxinator
+405,进阶打包机 IV,MTEBoxinator
+406,精英打包机,MTEBoxinator
+407,精英打包机 II,MTEBoxinator
+408,终极装箱者,MTEBoxinator
+411,基础解包器,MTEBasicMachineWithRecipe
+412,进阶解包器,MTEBasicMachineWithRecipe
+413,进阶解包器 II,MTEBasicMachineWithRecipe
+414,进阶解包器 III,MTEBasicMachineWithRecipe
+415,拆箱者,MTEBasicMachineWithRecipe
+416,拆箱者 II,MTEBasicMachineWithRecipe
+417,拆箱者 III,MTEBasicMachineWithRecipe
+418,拆箱者 IV,MTEBasicMachineWithRecipe
+421,基础化学反应釜,MTEBasicMachineWithRecipe
+422,进阶化学反应釜,MTEBasicMachineWithRecipe
+423,进阶化学反应釜 II,MTEBasicMachineWithRecipe
+424,进阶化学反应釜 III,MTEBasicMachineWithRecipe
+425,进阶化学反应釜 IV,MTEBasicMachineWithRecipe
+431,基础流体灌装机,MTEBasicMachineWithRecipe
+432,进阶流体灌装机,MTEBasicMachineWithRecipe
+433,快速流体灌装机,MTEBasicMachineWithRecipe
+434,涡轮流体灌装机,MTEBasicMachineWithRecipe
+435,音速流体灌装机,MTEBasicMachineWithRecipe
+441,基础碎石机,MTERockBreaker
+442,进阶碎石机,MTERockBreaker
+443,进阶碎石机 II,MTERockBreaker
+444,进阶碎石机 III,MTERockBreaker
+445,低温岩浆固化者R-8200,MTERockBreaker
+461,基础质量发生器,MTEMassfabricator
+462,进阶质量发生器,MTEMassfabricator
+463,进阶质量发生器 II,MTEMassfabricator
+464,进阶质量发生器 III,MTEMassfabricator
+465,进阶质量发生器 IV,MTEMassfabricator
+471,基础UU增幅液生产器,MTEBasicMachineWithRecipe
+472,进阶UU增幅液生产器,MTEBasicMachineWithRecipe
+473,进阶UU增幅液生产器 II,MTEBasicMachineWithRecipe
+474,进阶UU增幅液生产器 III,MTEBasicMachineWithRecipe
+475,进阶UU增幅液生产器 IV,MTEBasicMachineWithRecipe
+481,基础复制机,MTEReplicator
+482,进阶复制机,MTEReplicator
+483,进阶复制机 II,MTEReplicator
+484,进阶复制机 III,MTEReplicator
+485,进阶复制机 IV,MTEReplicator
+491,基础酿造室,MTEPotionBrewer
+492,进阶酿造室,MTEPotionBrewer
+493,进阶酿造室 II,MTEPotionBrewer
+494,进阶酿造室 III,MTEPotionBrewer
+495,进阶酿造室 IV,MTEPotionBrewer
+501,基础发酵槽,MTEBasicMachineWithRecipe
+502,进阶发酵槽,MTEBasicMachineWithRecipe
+503,进阶发酵槽 II,MTEBasicMachineWithRecipe
+504,进阶发酵槽 III,MTEBasicMachineWithRecipe
+505,进阶发酵槽 IV,MTEBasicMachineWithRecipe
+511,基础流体提取机,MTEBasicMachineWithRecipe
+512,进阶流体提取机,MTEBasicMachineWithRecipe
+513,进阶流体提取机 II,MTEBasicMachineWithRecipe
+514,进阶流体提取机 III,MTEBasicMachineWithRecipe
+515,进阶流体提取机 IV,MTEBasicMachineWithRecipe
+521,基础流体固化器,MTEBasicMachineWithRecipe
+522,进阶流体固化器,MTEBasicMachineWithRecipe
+523,进阶流体固化器 II,MTEBasicMachineWithRecipe
+524,进阶流体固化器 III,MTEBasicMachineWithRecipe
+525,进阶流体固化器 IV,MTEBasicMachineWithRecipe
+531,基础蒸馏室,MTEBasicMachineWithRecipe
+532,进阶蒸馏室,MTEBasicMachineWithRecipe
+533,进阶蒸馏室 II,MTEBasicMachineWithRecipe
+534,进阶蒸馏室 III,MTEBasicMachineWithRecipe
+535,进阶蒸馏室 IV,MTEBasicMachineWithRecipe
+541,基础化学浸洗机,MTEBasicMachineWithRecipe
+542,进阶化学浸洗机,MTEBasicMachineWithRecipe
+543,进阶化学浸洗机 II,MTEBasicMachineWithRecipe
+544,进阶化学浸洗机 III,MTEBasicMachineWithRecipe
+545,进阶化学浸洗机 IV,MTEBasicMachineWithRecipe
+551,基础两极磁化机,MTEBasicMachineWithRecipe
+552,进阶两极磁化机,MTEBasicMachineWithRecipe
+553,进阶两极磁化机 II,MTEBasicMachineWithRecipe
+554,进阶两极磁化机 III,MTEBasicMachineWithRecipe
+555,进阶两极磁化机 IV,MTEBasicMachineWithRecipe
+561,基础电磁离析机,MTEBasicMachineWithRecipe
+562,进阶电磁离析机,MTEBasicMachineWithRecipe
+563,进阶电磁离析机 II,MTEBasicMachineWithRecipe
+564,进阶电磁离析机 III,MTEBasicMachineWithRecipe
+565,进阶电磁离析机 IV,MTEBasicMachineWithRecipe
+571,基础高压釜,MTEBasicMachineWithRecipe
+572,进阶高压釜,MTEBasicMachineWithRecipe
+573,进阶高压釜 II,MTEBasicMachineWithRecipe
+574,进阶高压釜 III,MTEBasicMachineWithRecipe
+575,进阶高压釜 IV,MTEBasicMachineWithRecipe
+581,基础搅拌机,MTEBasicMachineWithRecipe
+582,进阶搅拌机,MTEBasicMachineWithRecipe
+583,进阶搅拌机 II,MTEBasicMachineWithRecipe
+584,进阶搅拌机 III,MTEBasicMachineWithRecipe
+585,进阶搅拌机 IV,MTEBasicMachineWithRecipe
+591,基础精密激光蚀刻机,MTEBasicMachineWithRecipe
+592,进阶精密激光蚀刻机,MTEBasicMachineWithRecipe
+593,进阶精密激光蚀刻机 II,MTEBasicMachineWithRecipe
+594,进阶精密激光蚀刻机 III,MTEBasicMachineWithRecipe
+595,进阶精密激光蚀刻机 IV,MTEBasicMachineWithRecipe
+601,基础冲压机床,MTEBasicMachineWithRecipe
+602,进阶冲压机床,MTEBasicMachineWithRecipe
+603,进阶冲压机床 II,MTEBasicMachineWithRecipe
+604,进阶冲压机床 III,MTEBasicMachineWithRecipe
+605,进阶冲压机床 IV,MTEBasicMachineWithRecipe
+611,基础锻造锤,MTEBasicMachineWithRecipe
+612,进阶锻造锤,MTEBasicMachineWithRecipe
+613,进阶锻造锤 II,MTEBasicMachineWithRecipe
+614,进阶锻造锤 III,MTEBasicMachineWithRecipe
+615,进阶锻造锤 IV,MTEBasicMachineWithRecipe
+621,基础流体加热器,MTEBasicMachineWithRecipe
+622,进阶流体加热器,MTEBasicMachineWithRecipe
+623,进阶流体加热器 II,MTEBasicMachineWithRecipe
+624,进阶流体加热器 III,MTEBasicMachineWithRecipe
+625,进阶流体加热器 IV,MTEBasicMachineWithRecipe
+641,基础筛选机,MTEBasicMachineWithRecipe
+642,进阶筛选机,MTEBasicMachineWithRecipe
+643,进阶筛选机 II,MTEBasicMachineWithRecipe
+644,进阶筛选机 III,MTEBasicMachineWithRecipe
+645,进阶筛选机 IV,MTEBasicMachineWithRecipe
+651,基础电弧炉,MTEBasicMachineWithRecipe
+652,进阶电弧炉,MTEBasicMachineWithRecipe
+653,进阶电弧炉 II,MTEBasicMachineWithRecipe
+654,进阶电弧炉 III,MTEBasicMachineWithRecipe
+655,进阶电弧炉 IV,MTEBasicMachineWithRecipe
+661,基础等离子电弧炉,MTEBasicMachineWithRecipe
+662,进阶等离子电弧炉,MTEBasicMachineWithRecipe
+663,进阶等离子电弧炉 II,MTEBasicMachineWithRecipe
+664,进阶等离子电弧炉 III,MTEBasicMachineWithRecipe
+665,进阶等离子电弧炉 IV,MTEBasicMachineWithRecipe
+671,基础电烤炉,MTEBasicMachineWithRecipe
+672,进阶电烤炉,MTEBasicMachineWithRecipe
+673,进阶电烤炉 II,MTEBasicMachineWithRecipe
+674,进阶电烤炉 III,MTEBasicMachineWithRecipe
+675,进阶电烤炉 IV,MTEBasicMachineWithRecipe
+679,基础采矿机,MTEMiner
+680,优良采矿机,MTEMiner
+681,进阶采矿机,MTEMiner
+686,工业精密车床,MTEMultiLathe
+687,工业高压釜,MTEMultiAutoclave
+690,超低压电池充电器,MTECharger
+691,低压电池充电器,MTECharger
+692,中压电池充电器,MTECharger
+693,高压电池充电器,MTECharger
+694,超高压电池充电器,MTECharger
+695,强导压电池充电器,MTECharger
+696,剧差压电池充电器,MTECharger
+697,零点压电池充电器,MTECharger
+698,极限压电池充电器,MTECharger
+699,极高压电池充电器,MTECharger
+710,四重输入仓(IV),MTEHatchMultiInput
+711,四重输入仓(LuV),MTEHatchMultiInput
+712,四重输入仓(ZPM),MTEHatchMultiInput
+713,四重输入仓(UV),MTEHatchMultiInput
+714,四重输入仓(UHV),MTEHatchMultiInput
+715,四重输入仓(UEV),MTEHatchMultiInput
+716,四重输入仓(UIV),MTEHatchMultiInput
+717,四重输入仓(UMV),MTEHatchMultiInput
+718,四重输入仓(UXV),MTEHatchMultiInput
+719,巨型四重输入仓,MTEHatchQuadrupleHumongous
+730,生物仓,MTEPCBBioChamber
+731,冷却塔,MTEPCBCoolingTower
+749,反应堆熔盐加工厂,MTENuclearSaltProcessingPlant
+751,液态氟钍反应堆,MTENuclearReactor
+753,进阶锅炉[LV],MTEAdvancedBoilerLV
+754,进阶锅炉[MV],MTEAdvancedBoilerMV
+755,进阶锅炉[HV],MTEAdvancedBoilerHV
+756,污染探测仪,MTEPollutionDetector
+758,中级污染清洗机,MTEAtmosphericReconditioner
+759,进阶污染清洗机,MTEAtmosphericReconditioner
+760,精准污染清洗机,MTEAtmosphericReconditioner
+761,空气回收器,MTEAtmosphericReconditioner
+762,中级空气回收器,MTEAtmosphericReconditioner
+763,进阶空气回收器,MTEAtmosphericReconditioner
+764,精准空气回收器,MTEAtmosphericReconditioner
+765,大气净化者,MTEAtmosphericReconditioner
+766,生物圈净化者,MTEAtmosphericReconditioner
+770,超低压能量缓冲器,MTEEnergyBuffer
+771,低压能量缓冲器,MTEEnergyBuffer
+772,中压能量缓冲器,MTEEnergyBuffer
+773,高压能量缓冲器,MTEEnergyBuffer
+774,超高压能量缓冲器,MTEEnergyBuffer
+775,强导压能量缓冲器,MTEEnergyBuffer
+776,剧差压能量缓冲器,MTEEnergyBuffer
+777,零点压能量缓冲器,MTEEnergyBuffer
+778,极限压能量缓冲器,MTEEnergyBuffer
+779,极高压能量缓冲器,MTEEnergyBuffer
+790,工业离心机,MTEIndustrialCentrifugeLegacy
+791,工业焦炉,MTEIndustrialCokeOvenLegacy
+792,工业辊压机,MTEIndustrialPlatePressLegacy
+793,基础火箭引擎,MTERocketFuelGenerator
+794,进阶火箭引擎,MTERocketFuelGenerator
+795,涡轮火箭引擎,MTERocketFuelGenerator
+796,工业电解机,MTEIndustrialElectrolyzerLegacy
+797,工业粉碎机,MTEIndustrialMaceratorLegacy
+798,工业线缆机,MTEIndustrialWireMillLegacy
+799,物质发生器CPU,MTEMassFabricator
+810,合金冶炼炉,MTEAlloyBlastSmelter
+811,工业搅拌机,MTEIndustrialMixerLegacy
+812,能源站控制节点,MTEPowerSubStation
+813,化学脱水机 I,MTEBasicMachineWithRecipe
+814,化学脱水机 II,MTEBasicMachineWithRecipe
+815,化学脱水机 III,MTEBasicMachineWithRecipe
+816,化学脱水机 IV,MTEBasicMachineWithRecipe
+817,超低压流体储罐,MTETieredTank
+818,低压流体储罐,MTETieredTank
+819,中压流体储罐,MTETieredTank
+820,高压流体储罐,MTETieredTank
+828,COMET-紧凑式回旋加速器,MTECyclotron
+829,珠海渔场,MTEIndustrialFishingPondLegacy
+830,基础地热引擎,MTEGeothermalGenerator
+831,涡轮地热引擎,MTEGeothermalGenerator
+832,火神地热引擎,MTEGeothermalGenerator
+833,超立方体发生器,MTETesseractGenerator
+834,超立方体终端,MTETesseractTerminal
+835,反应堆燃料加工厂,MTERefinery
+836,原木拟生场,MTETreeFarmLegacy
+837,基础半流质发电机,MTESemiFluidGenerator
+838,进阶半流质发电机,MTESemiFluidGenerator
+839,涡轮半流质发电机,MTESemiFluidGenerator
+840,工业筛选机,MTEIndustrialSifterLegacy
+849,工业热力精炼厂,MTEIndustrialThermalCentrifugeLegacy
+850,工业洗矿厂,MTEIndustrialWashPlantLegacy
+859,工业压模机,MTEIndustrialExtruderLegacy
+861,进气仓,MTEHatchAirIntake
+862,工业电弧炉,MTEIndustrialArcFurnaceLegacy
+863,太阳能塔,MTESolarTower
+864,太阳能反射器,MTESolarHeater
+865,特大蒸汽涡轮,MTELargerTurbineSteamLegacy
+866,特大高压蒸汽涡轮,MTELargerTurbineHPSteamLegacy
+869,放射性同位素温差发电机,MTERTGenerator
+875,地热锅炉,MTEThermalBoilerLegacy
+876,大规模自动装配机v1.01,MTEAutoCrafter
+877,ULV高电流变压器,MTETransformerHiAmp
+878,LV高电流变压器,MTETransformerHiAmp
+879,MV高电流变压器,MTETransformerHiAmp
+880,HV高电流变压器,MTETransformerHiAmp
+881,EV高电流变压器,MTETransformerHiAmp
+882,IV高电流变压器,MTETransformerHiAmp
+883,LuV高电流变压器,MTETransformerHiAmp
+884,ZPM高电流变压器,MTETransformerHiAmp
+885,UV高电流变压器,MTETransformerHiAmp
+886,电池输入总线(MV),MTEHatchInputBattery
+887,电池输入总线(EV),MTEHatchInputBattery
+888,电池输出总线(MV),MTEHatchOutputBattery
+889,电池输出总线(EV),MTEHatchOutputBattery
+890,无线充电器 MK I,MTEWirelessCharger
+891,无线充电器 MK II,MTEWirelessCharger
+892,无线充电器 MK III,MTEWirelessCharger
+893,无线充电器 MK IV,MTEWirelessCharger
+894,无线充电器 MK V,MTEWirelessCharger
+895,无线充电器 MK VI,MTEWirelessCharger
+896,无线充电器 MK VII,MTEWirelessCharger
+897,无线充电器 MK VIII,MTEWirelessCharger
+898,无线充电器 MK IX,MTEWirelessCharger
+899,ULV动力仓[缓冲],MTEHatchDynamoBuffer
+900,LV动力仓[缓冲],MTEHatchDynamoBuffer
+901,MV动力仓[缓冲],MTEHatchDynamoBuffer
+902,HV动力仓[缓冲],MTEHatchDynamoBuffer
+903,EV动力仓[缓冲],MTEHatchDynamoBuffer
+904,IV动力仓[缓冲],MTEHatchDynamoBuffer
+905,LuV动力仓[缓冲],MTEHatchDynamoBuffer
+906,ZPM动力仓[缓冲],MTEHatchDynamoBuffer
+907,UV动力仓[缓冲],MTEHatchDynamoBuffer
+908,UHV动力仓[缓冲],MTEHatchDynamoBuffer
+910,凛冰冷冻机,MTEIndustrialVacuumFreezerLegacy
+911,基础脱水机 I,MTEBasicMachineWithRecipe
+912,基础脱水机 II,MTEBasicMachineWithRecipe
+942,亚马逊仓库,MTEAmazonPackagerLegacy
+951,雾霾生成仪,MTEPollutionCreator
+956,Arcane Researcher,MTEPollutionCreator
+963,炽焱高炉,MTEAdvEBF
+964,进阶聚爆压缩机,MTEAdvImplosionCompressorLegacy
+965,核聚变反应堆控制电脑MK-IV,MTEAdvFusionMk4
+967,凛冰输入仓,MTEHatchCustomFluidBase
+968,炽焱输入仓,MTEHatchCustomFluidBase
+975,核聚变反应堆控制电脑MK V,MTEAdvFusionMk5
+992,工业切割机,MTEIndustrialCuttingMachineLegacy
+993,涡轮半流质发电机 II,MTESemiFluidGenerator
+994,涡轮半流质发电机 III,MTESemiFluidGenerator
+995,真空干燥炉,MTEIndustrialDehydrator
+996,火箭引擎 F-1A,MTELargeRocketEngine
+997,藻类农场,MTEAlgaePondBaseLegacy
+998,埃克森美孚化工厂,MTEChemicalPlant
+1000,工业高炉,MTEElectricBlastFurnace
+1001,聚爆压缩机,MTEImplosionCompressor
+1002,真空冷冻机,MTEVacuumFreezer
+1003,工业熔炉,MTEMultiFurnace
+1004,超维度等离子锻炉,MTEPlasmaForge
+1006,超维度等离子搅拌机,MTETranscendentPlasmaMixer
+1020,大型青铜锅炉,MTELargeBoilerBronzeLegacy
+1021,大型钢锅炉,MTELargeBoilerSteelLegacy
+1022,大型钛锅炉,MTELargeBoilerTitaniumLegacy
+1023,大型钨钢锅炉,MTELargeBoilerTungstenSteelLegacy
+1033,离心中枢-2737,MTESpinmatron
+1110,基础内燃发电机,MTEDieselGenerator
+1111,进阶内燃发电机,MTEDieselGenerator
+1112,涡轮内燃发电机,MTEDieselGenerator
+1113,涡轮增压内燃发电机,MTEDieselGenerator
+1114,终极化学能释放者,MTEDieselGenerator
+1115,基础燃气轮机,MTEGasTurbine
+1116,进阶燃气轮机,MTEGasTurbine
+1117,涡轮燃气轮机,MTEGasTurbine
+1118,涡轮燃气轮机II,MTEGasTurbine
+1119,涡轮燃气轮机III,MTEGasTurbine
+1120,基础蒸汽轮机,MTESteamTurbine
+1121,进阶蒸汽轮机,MTESteamTurbine
+1122,涡轮蒸汽轮机,MTESteamTurbine
+1123,新手魔法能源转换器,MTEMagicEnergyConverter
+1124,学徒魔法能源转换器,MTEMagicEnergyConverter
+1125,大师魔法能源转换器,MTEMagicEnergyConverter
+1126,蒸馏塔,MTEDistillationTower
+1127,新手魔法能源吸收器,MTEMagicalEnergyAbsorber
+1128,学徒魔法能源吸收器,MTEMagicalEnergyAbsorber
+1129,大师魔法能源吸收器,MTEMagicalEnergyAbsorber
+1130,宗师魔法能源吸收器,MTEMagicalEnergyAbsorber
+1131,大型蒸汽涡轮,MTELargeTurbineSteamLegacy
+1132,集成矿石处理厂,MTEIntegratedOreFactoryLegacy
+1135,进阶敌对生物驱逐器 V,MTEMonsterRepellent
+1136,进阶敌对生物驱逐器 VI,MTEMonsterRepellent
+1137,进阶敌对生物驱逐器 VII,MTEMonsterRepellent
+1140,基础泵,MTEPump
+1141,优质泵,MTEPump
+1142,进阶泵,MTEPump
+1145,传送机,MTETeleporter
+1146,基础敌对生物驱逐器,MTEMonsterRepellent
+1147,进阶敌对生物驱逐器,MTEMonsterRepellent
+1148,进阶敌对生物驱逐器 II,MTEMonsterRepellent
+1149,进阶敌对生物驱逐器 III,MTEMonsterRepellent
+1150,进阶敌对生物驱逐器 IV,MTEMonsterRepellent
+1151,大型燃气涡轮,MTELargeTurbineGasLegacy
+1152,大型高压蒸汽涡轮,MTELargeTurbineHPSteamLegacy
+1153,大型等离子涡轮,MTELargeTurbinePlasmaLegacy
+1154,大型热交换机,MTEHeatExchanger
+1155,木炭堆点火器,MTECharcoalPit
+1157,流体钻机,MTEOilDrill1
+1158,采矿场,MTEOreDrillingPlant1
+1159,热解炉,MTEPyrolyseOvenLegacy
+1160,石油裂化机,MTEOilCracker
+1161,HV微波能量发射机,MTEMicrowaveEnergyTransmitter
+1162,EV微波能量发射机,MTEMicrowaveEnergyTransmitter
+1163,IV微波能量发射机,MTEMicrowaveEnergyTransmitter
+1164,LuV微波能量发射机,MTEMicrowaveEnergyTransmitter
+1165,ZPM微波能量发射机,MTEMicrowaveEnergyTransmitter
+1166,UV微波能量发射机,MTEMicrowaveEnergyTransmitter
+1169,大型化学反应釜,MTELargeChemicalReactor
+1170,装配线,MTEAssemblyLine
+1171,大型内燃引擎,MTEDieselEngineLegacy
+1172,超净间控制器,MTECleanroom
+1173,进阶地震勘探者 EV,MTEAdvSeismicProspector
+1174,避雷针,MTELightningRod
+1175,避雷针 II,MTELightningRod
+1176,避雷针 III,MTELightningRod
+1177,采矿场 II,MTEOreDrillingPlant2
+1178,采矿场 III,MTEOreDrillingPlant3
+1179,采矿场 IV,MTEOreDrillingPlant4
+1180,基础电路组装机,MTEBasicMachineWithRecipe
+1181,进阶电路组装机,MTEBasicMachineWithRecipe
+1182,进阶电路组装机 II,MTEBasicMachineWithRecipe
+1183,进阶电路组装机 III,MTEBasicMachineWithRecipe
+1184,进阶电路组装机 IV,MTEBasicMachineWithRecipe
+1185,进阶电路组装机 V,MTEBasicMachineWithRecipe
+1186,进阶电路组装机 VI,MTEBasicMachineWithRecipe
+1187,进阶电路组装机 VII,MTEBasicMachineWithRecipe
+1188,硅岩反应堆Mk IV,MTENaquadahReactor
+1189,硅岩反应堆Mk V,MTENaquadahReactor
+1190,硅岩反应堆Mk I,MTENaquadahReactor
+1191,硅岩反应堆Mk II,MTENaquadahReactor
+1192,硅岩反应堆Mk III,MTENaquadahReactor
+1193,核聚变反应堆控制电脑MK-I,MTEFusionComputer1
+1194,核聚变反应堆控制电脑MK-II,MTEFusionComputer2
+1195,核聚变反应堆控制电脑MK-III,MTEFusionComputer3
+1196,等离子发电机Mk I,MTEPlasmaGenerator
+1197,等离子发电机Mk II,MTEPlasmaGenerator
+1198,等离子发电机Mk III,MTEPlasmaGenerator
+1200,1x钴导线,MTECable
+1201,2x钴导线,MTECable
+1202,4x钴导线,MTECable
+1203,8x钴导线,MTECable
+1204,12x钴导线,MTECable
+1205,16x钴导线,MTECable
+1206,1x钴线缆,MTECable
+1207,2x钴线缆,MTECable
+1208,4x钴线缆,MTECable
+1209,8x钴线缆,MTECable
+1210,12x钴线缆,MTECable
+1211,16x钴线缆,MTECable
+1220,1x铅导线,MTECable
+1221,2x铅导线,MTECable
+1222,4x铅导线,MTECable
+1223,8x铅导线,MTECable
+1224,12x铅导线,MTECable
+1225,16x铅导线,MTECable
+1226,1x铅线缆,MTECable
+1227,2x铅线缆,MTECable
+1228,4x铅线缆,MTECable
+1229,8x铅线缆,MTECable
+1230,12x铅线缆,MTECable
+1231,16x铅线缆,MTECable
+1240,1x锡导线,MTECable
+1241,2x锡导线,MTECable
+1242,4x锡导线,MTECable
+1243,8x锡导线,MTECable
+1244,12x锡导线,MTECable
+1245,16x锡导线,MTECable
+1246,1x锡线缆,MTECable
+1247,2x锡线缆,MTECable
+1248,4x锡线缆,MTECable
+1249,8x锡线缆,MTECable
+1250,12x锡线缆,MTECable
+1251,16x锡线缆,MTECable
+1260,1x锌导线,MTECable
+1261,2x锌导线,MTECable
+1262,4x锌导线,MTECable
+1263,8x锌导线,MTECable
+1264,12x锌导线,MTECable
+1265,16x锌导线,MTECable
+1266,1x锌线缆,MTECable
+1267,2x锌线缆,MTECable
+1268,4x锌线缆,MTECable
+1269,8x锌线缆,MTECable
+1270,12x锌线缆,MTECable
+1271,16x锌线缆,MTECable
+1280,1x焊锡导线,MTECable
+1281,2x焊锡导线,MTECable
+1282,4x焊锡导线,MTECable
+1283,8x焊锡导线,MTECable
+1284,12x焊锡导线,MTECable
+1285,16x焊锡导线,MTECable
+1286,1x焊锡线缆,MTECable
+1287,2x焊锡线缆,MTECable
+1288,4x焊锡线缆,MTECable
+1289,8x焊锡线缆,MTECable
+1290,12x焊锡线缆,MTECable
+1291,16x焊锡线缆,MTECable
+1300,1x铁导线,MTECable
+1301,2x铁导线,MTECable
+1302,4x铁导线,MTECable
+1303,8x铁导线,MTECable
+1304,12x铁导线,MTECable
+1305,16x铁导线,MTECable
+1306,1x铁线缆,MTECable
+1307,2x铁线缆,MTECable
+1308,4x铁线缆,MTECable
+1309,8x铁线缆,MTECable
+1310,12x铁线缆,MTECable
+1311,16x铁线缆,MTECable
+1320,1x镍导线,MTECable
+1321,2x镍导线,MTECable
+1322,4x镍导线,MTECable
+1323,8x镍导线,MTECable
+1324,12x镍导线,MTECable
+1325,16x镍导线,MTECable
+1326,1x镍线缆,MTECable
+1327,2x镍线缆,MTECable
+1328,4x镍线缆,MTECable
+1329,8x镍线缆,MTECable
+1330,12x镍线缆,MTECable
+1331,16x镍线缆,MTECable
+1340,1x白铜导线,MTECable
+1341,2x白铜导线,MTECable
+1342,4x白铜导线,MTECable
+1343,8x白铜导线,MTECable
+1344,12x白铜导线,MTECable
+1345,16x白铜导线,MTECable
+1346,1x白铜线缆,MTECable
+1347,2x白铜线缆,MTECable
+1348,4x白铜线缆,MTECable
+1349,8x白铜线缆,MTECable
+1350,12x白铜线缆,MTECable
+1351,16x白铜线缆,MTECable
+1360,1x铜导线,MTECable
+1361,2x铜导线,MTECable
+1362,4x铜导线,MTECable
+1363,8x铜导线,MTECable
+1364,12x铜导线,MTECable
+1365,16x铜导线,MTECable
+1366,1x铜线缆,MTECable
+1367,2x铜线缆,MTECable
+1368,4x铜线缆,MTECable
+1369,8x铜线缆,MTECable
+1370,12x铜线缆,MTECable
+1371,16x铜线缆,MTECable
+1380,1x退火铜导线,MTECable
+1381,2x退火铜导线,MTECable
+1382,4x退火铜导线,MTECable
+1383,8x退火铜导线,MTECable
+1384,12x退火铜导线,MTECable
+1385,16x退火铜导线,MTECable
+1386,1x退火铜线缆,MTECable
+1387,2x退火铜线缆,MTECable
+1388,4x退火铜线缆,MTECable
+1389,8x退火铜线缆,MTECable
+1390,12x退火铜线缆,MTECable
+1391,16x退火铜线缆,MTECable
+1400,1x坎塔尔导线,MTECable
+1401,2x坎塔尔导线,MTECable
+1402,4x坎塔尔导线,MTECable
+1403,8x坎塔尔导线,MTECable
+1404,12x坎塔尔导线,MTECable
+1405,16x坎塔尔导线,MTECable
+1406,1x坎塔尔线缆,MTECable
+1407,2x坎塔尔线缆,MTECable
+1408,4x坎塔尔线缆,MTECable
+1409,8x坎塔尔线缆,MTECable
+1410,12x坎塔尔线缆,MTECable
+1411,16x坎塔尔线缆,MTECable
+1420,1x金导线,MTECable
+1421,2x金导线,MTECable
+1422,4x金导线,MTECable
+1423,8x金导线,MTECable
+1424,12x金导线,MTECable
+1425,16x金导线,MTECable
+1426,1x金线缆,MTECable
+1427,2x金线缆,MTECable
+1428,4x金线缆,MTECable
+1429,8x金线缆,MTECable
+1430,12x金线缆,MTECable
+1431,16x金线缆,MTECable
+1440,1x琥珀金导线,MTECable
+1441,2x琥珀金导线,MTECable
+1442,4x琥珀金导线,MTECable
+1443,8x琥珀金导线,MTECable
+1444,12x琥珀金导线,MTECable
+1445,16x琥珀金导线,MTECable
+1446,1x琥珀金线缆,MTECable
+1447,2x琥珀金线缆,MTECable
+1448,4x琥珀金线缆,MTECable
+1449,8x琥珀金线缆,MTECable
+1450,12x琥珀金线缆,MTECable
+1451,16x琥珀金线缆,MTECable
+1460,1x银导线,MTECable
+1461,2x银导线,MTECable
+1462,4x银导线,MTECable
+1463,8x银导线,MTECable
+1464,12x银导线,MTECable
+1465,16x银导线,MTECable
+1466,1x银线缆,MTECable
+1467,2x银线缆,MTECable
+1468,4x银线缆,MTECable
+1469,8x银线缆,MTECable
+1470,12x银线缆,MTECable
+1471,16x银线缆,MTECable
+1480,1x蓝色合金导线,MTECable
+1481,2x蓝色合金导线,MTECable
+1482,4x蓝色合金导线,MTECable
+1483,8x蓝色合金导线,MTECable
+1484,12x蓝色合金导线,MTECable
+1485,16x蓝色合金导线,MTECable
+1486,1x蓝色合金线缆,MTECable
+1487,2x蓝色合金线缆,MTECable
+1488,4x蓝色合金线缆,MTECable
+1489,8x蓝色合金线缆,MTECable
+1490,12x蓝色合金线缆,MTECable
+1491,16x蓝色合金线缆,MTECable
+1500,1x镍铬合金导线,MTECable
+1501,2x镍铬合金导线,MTECable
+1502,4x镍铬合金导线,MTECable
+1503,8x镍铬合金导线,MTECable
+1504,12x镍铬合金导线,MTECable
+1505,16x镍铬合金导线,MTECable
+1506,1x镍铬合金线缆,MTECable
+1507,2x镍铬合金线缆,MTECable
+1508,4x镍铬合金线缆,MTECable
+1509,8x镍铬合金线缆,MTECable
+1510,12x镍铬合金线缆,MTECable
+1511,16x镍铬合金线缆,MTECable
+1520,1x钢导线,MTECable
+1521,2x钢导线,MTECable
+1522,4x钢导线,MTECable
+1523,8x钢导线,MTECable
+1524,12x钢导线,MTECable
+1525,16x钢导线,MTECable
+1526,1x钢线缆,MTECable
+1527,2x钢线缆,MTECable
+1528,4x钢线缆,MTECable
+1529,8x钢线缆,MTECable
+1530,12x钢线缆,MTECable
+1531,16x钢线缆,MTECable
+1540,1x黑钢导线,MTECable
+1541,2x黑钢导线,MTECable
+1542,4x黑钢导线,MTECable
+1543,8x黑钢导线,MTECable
+1544,12x黑钢导线,MTECable
+1545,16x黑钢导线,MTECable
+1546,1x黑钢线缆,MTECable
+1547,2x黑钢线缆,MTECable
+1548,4x黑钢线缆,MTECable
+1549,8x黑钢线缆,MTECable
+1550,12x黑钢线缆,MTECable
+1551,16x黑钢线缆,MTECable
+1560,1x钛导线,MTECable
+1561,2x钛导线,MTECable
+1562,4x钛导线,MTECable
+1563,8x钛导线,MTECable
+1564,12x钛导线,MTECable
+1565,16x钛导线,MTECable
+1566,1x钛线缆,MTECable
+1567,2x钛线缆,MTECable
+1568,4x钛线缆,MTECable
+1569,8x钛线缆,MTECable
+1570,12x钛线缆,MTECable
+1571,16x钛线缆,MTECable
+1580,1x铝导线,MTECable
+1581,2x铝导线,MTECable
+1582,4x铝导线,MTECable
+1583,8x铝导线,MTECable
+1584,12x铝导线,MTECable
+1585,16x铝导线,MTECable
+1586,1x铝线缆,MTECable
+1587,2x铝线缆,MTECable
+1588,4x铝线缆,MTECable
+1589,8x铝线缆,MTECable
+1590,12x铝线缆,MTECable
+1591,16x铝线缆,MTECable
+1600,1x石墨烯导线,MTECable
+1601,2x石墨烯导线,MTECable
+1602,4x石墨烯导线,MTECable
+1603,8x石墨烯导线,MTECable
+1604,12x石墨烯导线,MTECable
+1605,16x石墨烯导线,MTECable
+1620,1x锇导线,MTECable
+1621,2x锇导线,MTECable
+1622,4x锇导线,MTECable
+1623,8x锇导线,MTECable
+1624,12x锇导线,MTECable
+1625,16x锇导线,MTECable
+1626,1x锇线缆,MTECable
+1627,2x锇线缆,MTECable
+1628,4x锇线缆,MTECable
+1629,8x锇线缆,MTECable
+1630,12x锇线缆,MTECable
+1631,16x锇线缆,MTECable
+1640,1x铂导线,MTECable
+1641,2x铂导线,MTECable
+1642,4x铂导线,MTECable
+1643,8x铂导线,MTECable
+1644,12x铂导线,MTECable
+1645,16x铂导线,MTECable
+1646,1x铂线缆,MTECable
+1647,2x铂线缆,MTECable
+1648,4x铂线缆,MTECable
+1649,8x铂线缆,MTECable
+1650,12x铂线缆,MTECable
+1651,16x铂线缆,MTECable
+1660,1x钨钢导线,MTECable
+1661,2x钨钢导线,MTECable
+1662,4x钨钢导线,MTECable
+1663,8x钨钢导线,MTECable
+1664,12x钨钢导线,MTECable
+1665,16x钨钢导线,MTECable
+1666,1x钨钢线缆,MTECable
+1667,2x钨钢线缆,MTECable
+1668,4x钨钢线缆,MTECable
+1669,8x钨钢线缆,MTECable
+1670,12x钨钢线缆,MTECable
+1671,16x钨钢线缆,MTECable
+1680,1x钨导线,MTECable
+1681,2x钨导线,MTECable
+1682,4x钨导线,MTECable
+1683,8x钨导线,MTECable
+1684,12x钨导线,MTECable
+1685,16x钨导线,MTECable
+1686,1x钨线缆,MTECable
+1687,2x钨线缆,MTECable
+1688,4x钨线缆,MTECable
+1689,8x钨线缆,MTECable
+1690,12x钨线缆,MTECable
+1691,16x钨线缆,MTECable
+1700,1x高速钢-G导线,MTECable
+1701,2x高速钢-G导线,MTECable
+1702,4x高速钢-G导线,MTECable
+1703,8x高速钢-G导线,MTECable
+1704,12x高速钢-G导线,MTECable
+1705,16x高速钢-G导线,MTECable
+1706,1x高速钢-G线缆,MTECable
+1707,2x高速钢-G线缆,MTECable
+1708,4x高速钢-G线缆,MTECable
+1709,8x高速钢-G线缆,MTECable
+1710,12x高速钢-G线缆,MTECable
+1711,16x高速钢-G线缆,MTECable
+1720,1x铌钛合金导线,MTECable
+1721,2x铌钛合金导线,MTECable
+1722,4x铌钛合金导线,MTECable
+1723,8x铌钛合金导线,MTECable
+1724,12x铌钛合金导线,MTECable
+1725,16x铌钛合金导线,MTECable
+1726,1x铌钛合金线缆,MTECable
+1727,2x铌钛合金线缆,MTECable
+1728,4x铌钛合金线缆,MTECable
+1729,8x铌钛合金线缆,MTECable
+1730,12x铌钛合金线缆,MTECable
+1731,16x铌钛合金线缆,MTECable
+1740,1x钒镓合金导线,MTECable
+1741,2x钒镓合金导线,MTECable
+1742,4x钒镓合金导线,MTECable
+1743,8x钒镓合金导线,MTECable
+1744,12x钒镓合金导线,MTECable
+1745,16x钒镓合金导线,MTECable
+1746,1x钒镓合金线缆,MTECable
+1747,2x钒镓合金线缆,MTECable
+1748,4x钒镓合金线缆,MTECable
+1749,8x钒镓合金线缆,MTECable
+1750,12x钒镓合金线缆,MTECable
+1751,16x钒镓合金线缆,MTECable
+1760,1x钇钡铜氧合金导线,MTECable
+1761,2x钇钡铜氧合金导线,MTECable
+1762,4x钇钡铜氧合金导线,MTECable
+1763,8x钇钡铜氧合金导线,MTECable
+1764,12x钇钡铜氧合金导线,MTECable
+1765,16x钇钡铜氧合金导线,MTECable
+1766,1x钇钡铜氧合金线缆,MTECable
+1767,2x钇钡铜氧合金线缆,MTECable
+1768,4x钇钡铜氧合金线缆,MTECable
+1769,8x钇钡铜氧合金线缆,MTECable
+1770,12x钇钡铜氧合金线缆,MTECable
+1771,16x钇钡铜氧合金线缆,MTECable
+1780,1x硅岩导线,MTECable
+1781,2x硅岩导线,MTECable
+1782,4x硅岩导线,MTECable
+1783,8x硅岩导线,MTECable
+1784,12x硅岩导线,MTECable
+1785,16x硅岩导线,MTECable
+1786,1x硅岩线缆,MTECable
+1787,2x硅岩线缆,MTECable
+1788,4x硅岩线缆,MTECable
+1789,8x硅岩线缆,MTECable
+1790,12x硅岩线缆,MTECable
+1791,16x硅岩线缆,MTECable
+1800,1x硅岩合金导线,MTECable
+1801,2x硅岩合金导线,MTECable
+1802,4x硅岩合金导线,MTECable
+1803,8x硅岩合金导线,MTECable
+1804,12x硅岩合金导线,MTECable
+1805,16x硅岩合金导线,MTECable
+1806,1x硅岩合金线缆,MTECable
+1807,2x硅岩合金线缆,MTECable
+1808,4x硅岩合金线缆,MTECable
+1809,8x硅岩合金线缆,MTECable
+1810,12x硅岩合金线缆,MTECable
+1811,16x硅岩合金线缆,MTECable
+1820,1x铿铀导线,MTECable
+1821,2x铿铀导线,MTECable
+1822,4x铿铀导线,MTECable
+1823,8x铿铀导线,MTECable
+1824,12x铿铀导线,MTECable
+1825,16x铿铀导线,MTECable
+1826,1x铿铀线缆,MTECable
+1827,2x铿铀线缆,MTECable
+1828,4x铿铀线缆,MTECable
+1829,8x铿铀线缆,MTECable
+1830,12x铿铀线缆,MTECable
+1831,16x铿铀线缆,MTECable
+1840,1x钛铂钒合金导线,MTECable
+1841,2x钛铂钒合金导线,MTECable
+1842,4x钛铂钒合金导线,MTECable
+1843,8x钛铂钒合金导线,MTECable
+1844,12x钛铂钒合金导线,MTECable
+1845,16x钛铂钒合金导线,MTECable
+1846,1x钛铂钒合金线缆,MTECable
+1847,2x钛铂钒合金线缆,MTECable
+1848,4x钛铂钒合金线缆,MTECable
+1849,8x钛铂钒合金线缆,MTECable
+1850,12x钛铂钒合金线缆,MTECable
+1851,16x钛铂钒合金线缆,MTECable
+1860,1x末影钢导线,MTECable
+1861,2x末影钢导线,MTECable
+1862,4x末影钢导线,MTECable
+1863,8x末影钢导线,MTECable
+1864,12x末影钢导线,MTECable
+1865,16x末影钢导线,MTECable
+1866,1x末影钢线缆,MTECable
+1867,2x末影钢线缆,MTECable
+1868,4x末影钢线缆,MTECable
+1869,8x末影钢线缆,MTECable
+1870,12x末影钢线缆,MTECable
+1871,16x末影钢线缆,MTECable
+1900,1x通流琥珀金导线,MTECable
+1901,2x通流琥珀金导线,MTECable
+1902,4x通流琥珀金导线,MTECable
+1903,8x通流琥珀金导线,MTECable
+1904,12x通流琥珀金导线,MTECable
+1905,16x通流琥珀金导线,MTECable
+1906,1x通流琥珀金线缆,MTECable
+1907,2x通流琥珀金线缆,MTECable
+1908,4x通流琥珀金线缆,MTECable
+1909,8x通流琥珀金线缆,MTECable
+1910,12x通流琥珀金线缆,MTECable
+1911,16x通流琥珀金线缆,MTECable
+2000,1x红色合金导线,MTECable
+2001,2x红色合金导线,MTECable
+2002,4x红色合金导线,MTECable
+2003,8x红色合金导线,MTECable
+2004,12x红色合金导线,MTECable
+2005,16x红色合金导线,MTECable
+2006,1x红色合金线缆,MTECable
+2007,2x红色合金线缆,MTECable
+2008,4x红色合金线缆,MTECable
+2009,8x红色合金线缆,MTECable
+2010,12x红色合金线缆,MTECable
+2011,16x红色合金线缆,MTECable
+2020,1xUHV超导导线,MTECable
+2021,2xUHV超导导线,MTECable
+2022,4xUHV超导导线,MTECable
+2023,8xUHV超导导线,MTECable
+2024,12xUHV超导导线,MTECable
+2025,16xUHV超导导线,MTECable
+2026,1xUEV超导导线,MTECable
+2027,2xUEV超导导线,MTECable
+2028,4xUEV超导导线,MTECable
+2029,8xUEV超导导线,MTECable
+2030,12xUEV超导导线,MTECable
+2031,16xUEV超导导线,MTECable
+2032,1xUEV超导粗胚导线,MTECable
+2033,2xUEV超导粗胚导线,MTECable
+2034,4xUEV超导粗胚导线,MTECable
+2035,8xUEV超导粗胚导线,MTECable
+2036,12xUEV超导粗胚导线,MTECable
+2037,16xUEV超导粗胚导线,MTECable
+2052,1xUIV超导粗胚导线,MTECable
+2053,2xUIV超导粗胚导线,MTECable
+2054,4xUIV超导粗胚导线,MTECable
+2055,8xUIV超导粗胚导线,MTECable
+2056,12xUIV超导粗胚导线,MTECable
+2057,16xUIV超导粗胚导线,MTECable
+2072,1xUMV超导粗胚导线,MTECable
+2073,2xUMV超导粗胚导线,MTECable
+2074,4xUMV超导粗胚导线,MTECable
+2075,8xUMV超导粗胚导线,MTECable
+2076,12xUMV超导粗胚导线,MTECable
+2077,16xUMV超导粗胚导线,MTECable
+2081,1xUIV超导导线,MTECable
+2082,2xUIV超导导线,MTECable
+2083,4xUIV超导导线,MTECable
+2084,8xUIV超导导线,MTECable
+2085,12xUIV超导导线,MTECable
+2086,16xUIV超导导线,MTECable
+2089,1xUMV超导导线,MTECable
+2090,2xUMV超导导线,MTECable
+2091,4xUMV超导导线,MTECable
+2092,8xUMV超导导线,MTECable
+2093,12xUMV超导导线,MTECable
+2094,16xUMV超导导线,MTECable
+2102,进阶地震勘探者 LV,MTEAdvSeismicProspector
+2103,进阶地震勘探者 MV,MTEAdvSeismicProspector
+2104,进阶地震勘探者 HV,MTEAdvSeismicProspector
+2105,极限内燃引擎,MTEExtremeDieselEngineLegacy
+2200,1xMV超导粗胚导线,MTECable
+2201,2xMV超导粗胚导线,MTECable
+2202,4xMV超导粗胚导线,MTECable
+2203,8xMV超导粗胚导线,MTECable
+2204,12xMV超导粗胚导线,MTECable
+2205,16xMV超导粗胚导线,MTECable
+2220,1xHV超导粗胚导线,MTECable
+2221,2xHV超导粗胚导线,MTECable
+2222,4xHV超导粗胚导线,MTECable
+2223,8xHV超导粗胚导线,MTECable
+2224,12xHV超导粗胚导线,MTECable
+2225,16xHV超导粗胚导线,MTECable
+2240,1xEV超导粗胚导线,MTECable
+2241,2xEV超导粗胚导线,MTECable
+2242,4xEV超导粗胚导线,MTECable
+2243,8xEV超导粗胚导线,MTECable
+2244,12xEV超导粗胚导线,MTECable
+2245,16xEV超导粗胚导线,MTECable
+2260,1xIV超导粗胚导线,MTECable
+2261,2xIV超导粗胚导线,MTECable
+2262,4xIV超导粗胚导线,MTECable
+2263,8xIV超导粗胚导线,MTECable
+2264,12xIV超导粗胚导线,MTECable
+2265,16xIV超导粗胚导线,MTECable
+2280,1xLuV超导粗胚导线,MTECable
+2281,2xLuV超导粗胚导线,MTECable
+2282,4xLuV超导粗胚导线,MTECable
+2283,8xLuV超导粗胚导线,MTECable
+2284,12xLuV超导粗胚导线,MTECable
+2285,16xLuV超导粗胚导线,MTECable
+2300,1xZPM超导粗胚导线,MTECable
+2301,2xZPM超导粗胚导线,MTECable
+2302,4xZPM超导粗胚导线,MTECable
+2303,8xZPM超导粗胚导线,MTECable
+2304,12xZPM超导粗胚导线,MTECable
+2305,16xZPM超导粗胚导线,MTECable
+2320,1xMV超导导线,MTECable
+2321,2xMV超导导线,MTECable
+2322,4xMV超导导线,MTECable
+2323,8xMV超导导线,MTECable
+2324,12xMV超导导线,MTECable
+2325,16xMV超导导线,MTECable
+2340,1xHV超导导线,MTECable
+2341,2xHV超导导线,MTECable
+2342,4xHV超导导线,MTECable
+2343,8xHV超导导线,MTECable
+2344,12xHV超导导线,MTECable
+2345,16xHV超导导线,MTECable
+2360,1xEV超导导线,MTECable
+2361,2xEV超导导线,MTECable
+2362,4xEV超导导线,MTECable
+2363,8xEV超导导线,MTECable
+2364,12xEV超导导线,MTECable
+2365,16xEV超导导线,MTECable
+2380,1xIV超导导线,MTECable
+2381,2xIV超导导线,MTECable
+2382,4xIV超导导线,MTECable
+2383,8xIV超导导线,MTECable
+2384,12xIV超导导线,MTECable
+2385,16xIV超导导线,MTECable
+2400,1xLuV超导导线,MTECable
+2401,2xLuV超导导线,MTECable
+2402,4xLuV超导导线,MTECable
+2403,8xLuV超导导线,MTECable
+2404,12xLuV超导导线,MTECable
+2405,16xLuV超导导线,MTECable
+2420,1xZPM超导导线,MTECable
+2421,2xZPM超导导线,MTECable
+2422,4xZPM超导导线,MTECable
+2423,8xZPM超导导线,MTECable
+2424,12xZPM超导导线,MTECable
+2425,16xZPM超导导线,MTECable
+2440,1xUV超导导线,MTECable
+2441,2xUV超导导线,MTECable
+2442,4xUV超导导线,MTECable
+2443,8xUV超导导线,MTECable
+2444,12xUV超导导线,MTECable
+2445,16xUV超导导线,MTECable
+2500,1xUV超导粗胚导线,MTECable
+2501,2xUV超导粗胚导线,MTECable
+2502,4xUV超导粗胚导线,MTECable
+2503,8xUV超导粗胚导线,MTECable
+2504,12xUV超导粗胚导线,MTECable
+2505,16xUV超导粗胚导线,MTECable
+2520,1xUHV超导粗胚导线,MTECable
+2521,2xUHV超导粗胚导线,MTECable
+2522,4xUHV超导粗胚导线,MTECable
+2523,8xUHV超导粗胚导线,MTECable
+2524,12xUHV超导粗胚导线,MTECable
+2525,16xUHV超导粗胚导线,MTECable
+2600,1x灵宝导线,MTECable
+2601,2x灵宝导线,MTECable
+2602,4x灵宝导线,MTECable
+2603,8x灵宝导线,MTECable
+2604,12x灵宝导线,MTECable
+2605,16x灵宝导线,MTECable
+2606,1x时空导线,MTECable
+2607,2x时空导线,MTECable
+2608,4x时空导线,MTECable
+2609,8x时空导线,MTECable
+2610,12x时空导线,MTECable
+2611,16x时空导线,MTECable
+2700,长距离流体管道控制方块,MTELongDistancePipelineFluid
+2701,长距离物品管道控制方块,MTELongDistancePipelineItem
+2710,输出总线(ME),MTEHatchOutputBusME
+2711,进阶存储输入总线(ME),MTEHatchInputBusME
+2712,进阶存储输入仓(ME),MTEHatchInputME
+2713,输出仓(ME),MTEHatchOutputME
+2714,样板输入总成(ME),MTEHatchCraftingInputME
+2715,样板输入总线(ME),MTEHatchCraftingInputME
+2716,样板输入镜像,MTEHatchCraftingInputSlave
+2717,存储输入仓(ME),MTEHatchInputME
+2718,存储输入总线(ME),MTEHatchInputBusME
+2719,合成样板供应总线（IV）,MTEHatchPatternProvider
+2720,合成样板供应总线（LuV）,MTEHatchPatternProvider
+2721,合成样板供应总线（ZPM）,MTEHatchPatternProvider
+2722,合成样板供应总线（UV）,MTEHatchPatternProvider
+2723,合成样板供应总线（UHV）,MTEHatchPatternProvider
+2729,一伏特太阳能板,MTESolarGenerator
+2730,大型流体提取机,MTELargeFluidExtractor
+2731,物质操纵者量子上行链路,MTEMMUplink
+2732,量子上行链路ME连接仓,MTEMMUplinkMEHatch
+2733,基础太阳能板,MTESolarGenerator
+2734,进阶太阳能板,MTESolarGenerator
+2735,进阶太阳能板 II,MTESolarGenerator
+2736,进阶太阳能板 III,MTESolarGenerator
+2737,进阶太阳能板 IV,MTESolarGenerator
+2738,精英太阳能板,MTESolarGenerator
+2739,精英太阳能板 II,MTESolarGenerator
+2740,终极太阳能板,MTESolarGenerator
+2741,自动售货机,MTEVendingMachine
+2742,ME自动售货上行链路仓,MTEVendingUplinkHatch
+2743,压缩输出总线(LuV),MTEHatchOutputBusCompressed
+2744,压缩输出总线(ZPM),MTEHatchOutputBusCompressed
+2745,压缩输出总线(UV),MTEHatchOutputBusCompressed
+2746,压缩输出总线(UHV),MTEHatchOutputBusCompressed
+2747,量子输出总线(UEV),MTEHatchOutputBusCompressed
+2748,量子输出总线(UIV),MTEHatchOutputBusCompressed
+2749,量子输出总线(UMV),MTEHatchOutputBusCompressed
+2750,量子输出总线(UXV),MTEHatchOutputBusCompressed
+2751,压缩输入总线(LuV),MTEHatchInputBusCompressed
+2752,压缩输入总线(ZPM),MTEHatchInputBusCompressed
+2753,压缩输入总线(UV),MTEHatchInputBusCompressed
+2754,压缩输入总线(UHV),MTEHatchInputBusCompressed
+2755,量子输入总线(UEV),MTEHatchInputBusCompressed
+2756,量子输入总线(UIV),MTEHatchInputBusCompressed
+2757,量子输入总线(UMV),MTEHatchInputBusCompressed
+2758,量子输入总线(UXV),MTEHatchInputBusCompressed
+3004,高强度激光蚀刻机,MTEIndustrialLaserEngraver
+3005,大型电动压缩机,MTEIndustrialCompressor
+3006,热等静压装置,MTEHIPCompressor
+3007,中子态素压缩机,MTENeutroniumCompressor
+3008,亚稳态黑洞遏制场,MTEBlackHoleCompressor
+3009,热传感器仓,MTEHeatSensor
+3010,剖析提取装置,MTEIndustrialExtractor
+3011,大型啤酒酿造室,MTEIndustrialBrewery
+3012,黑洞多功能仓,MTEBlackHoleUtility
+3013,大型强子对撞机,MTELargeHadronCollider
+3014,过滤式束流输出仓,MTEHatchAdvancedOutputBeamline
+3015,高能粒子束对撞合成室,MTEBeamCrafter
+3016,高能粒子流反射镜,MTEBeamMirror
+3017,高能粒子分流器,MTEBeamSplitter
+3018,高能粒子稳定器,MTEBeamStabilizer
+3019,毒性残留物感应仓,MTEToxicResidueSensor
+4102,gt.oreprefix.锂框架,MTEFrame
+4104,gt.oreprefix.铍框架,MTEFrame
+4106,gt.oreprefix.碳框架,MTEFrame
+4114,gt.oreprefix.镁框架,MTEFrame
+4115,gt.oreprefix.铝框架,MTEFrame
+4116,gt.oreprefix.生硅框架,MTEFrame
+4121,gt.oreprefix.钾框架,MTEFrame
+4123,gt.oreprefix.钪框架,MTEFrame
+4124,gt.oreprefix.钛框架,MTEFrame
+4125,gt.oreprefix.钒框架,MTEFrame
+4126,gt.oreprefix.铬框架,MTEFrame
+4127,gt.oreprefix.锰框架,MTEFrame
+4128,gt.oreprefix.铁框架,MTEFrame
+4129,gt.oreprefix.钴框架,MTEFrame
+4130,gt.oreprefix.镍框架,MTEFrame
+4131,gt.oreprefix.铜框架,MTEFrame
+4132,gt.oreprefix.锌框架,MTEFrame
+4133,gt.oreprefix.镓框架,MTEFrame
+4135,gt.oreprefix.砷框架,MTEFrame
+4139,gt.oreprefix.铷框架,MTEFrame
+4140,gt.oreprefix.锶框架,MTEFrame
+4141,gt.oreprefix.钇框架,MTEFrame
+4143,gt.oreprefix.铌框架,MTEFrame
+4144,gt.oreprefix.钼框架,MTEFrame
+4148,gt.oreprefix.钯框架,MTEFrame
+4150,gt.oreprefix.银框架,MTEFrame
+4152,gt.oreprefix.铟框架,MTEFrame
+4153,gt.oreprefix.锡框架,MTEFrame
+4154,gt.oreprefix.锑框架,MTEFrame
+4155,gt.oreprefix.碲框架,MTEFrame
+4158,gt.oreprefix.铯框架,MTEFrame
+4159,gt.oreprefix.钡框架,MTEFrame
+4160,gt.oreprefix.镧框架,MTEFrame
+4161,gt.oreprefix.铈框架,MTEFrame
+4162,gt.oreprefix.镨框架,MTEFrame
+4163,gt.oreprefix.钕框架,MTEFrame
+4164,gt.oreprefix.钷框架,MTEFrame
+4165,gt.oreprefix.钐框架,MTEFrame
+4166,gt.oreprefix.铕框架,MTEFrame
+4167,gt.oreprefix.钆框架,MTEFrame
+4168,gt.oreprefix.铽框架,MTEFrame
+4169,gt.oreprefix.镝框架,MTEFrame
+4170,gt.oreprefix.钬框架,MTEFrame
+4171,gt.oreprefix.铒框架,MTEFrame
+4172,gt.oreprefix.铥框架,MTEFrame
+4173,gt.oreprefix.镱框架,MTEFrame
+4174,gt.oreprefix.镥框架,MTEFrame
+4176,gt.oreprefix.钽框架,MTEFrame
+4177,gt.oreprefix.钨框架,MTEFrame
+4179,gt.oreprefix.锇框架,MTEFrame
+4180,gt.oreprefix.铱框架,MTEFrame
+4181,gt.oreprefix.铂框架,MTEFrame
+4182,gt.oreprefix.金框架,MTEFrame
+4185,gt.oreprefix.铅框架,MTEFrame
+4186,gt.oreprefix.铋框架,MTEFrame
+4192,gt.oreprefix.钍框架,MTEFrame
+4193,gt.oreprefix.铀-235框架,MTEFrame
+4194,gt.oreprefix.铀-238框架,MTEFrame
+4196,gt.oreprefix.钚-239框架,MTEFrame
+4197,gt.oreprefix.钚-241框架,MTEFrame
+4199,gt.oreprefix.镅框架,MTEFrame
+4207,gt.oreprefix.纯镃框架,MTEFrame
+4208,gt.oreprefix.谐镃框架,MTEFrame
+4221,gt.oreprefix.地狱金属框架,MTEFrame
+4225,gt.oreprefix.中子框架,MTEFrame
+4227,gt.oreprefix.uiv超导粗胚框架,MTEFrame
+4228,gt.oreprefix.下界合金框架,MTEFrame
+4230,gt.oreprefix.umv超导粗胚框架,MTEFrame
+4235,gt.oreprefix.宇宙素框架,MTEFrame
+4237,gt.oreprefix.永恒框架,MTEFrame
+4239,gt.oreprefix.磁物质框架,MTEFrame
+4243,gt.oreprefix.六相铜框架,MTEFrame
+4244,gt.oreprefix.灿茶合金框架,MTEFrame
+4245,gt.oreprefix.创律合金框架,MTEFrame
+4249,gt.oreprefix.热原初恒坚钢框架,MTEFrame
+4250,gt.oreprefix.原初恒坚钢框架,MTEFrame
+4252,gt.oreprefix.热超然恒坚钢框架,MTEFrame
+4253,gt.oreprefix.超然恒坚钢框架,MTEFrame
+4259,gt.oreprefix.海晶硅岩框架,MTEFrame
+4270,gt.oreprefix.咒源玄晶框架,MTEFrame
+4285,gt.oreprefix.静寂框架,MTEFrame
+4286,gt.oreprefix.中立框架,MTEFrame
+4297,gt.oreprefix.魔力钢框架,MTEFrame
+4298,gt.oreprefix.泰拉钢框架,MTEFrame
+4299,gt.oreprefix.源质钢框架,MTEFrame
+4301,gt.oreprefix.盖亚之魂框架,MTEFrame
+4302,gt.oreprefix.活木框架,MTEFrame
+4303,gt.oreprefix.梦之木框架,MTEFrame
+4396,gt.oreprefix.青铜框架,MTEFrame
+4397,gt.oreprefix.黄铜框架,MTEFrame
+4398,gt.oreprefix.殷钢框架,MTEFrame
+4399,gt.oreprefix.琥珀金框架,MTEFrame
+4400,gt.oreprefix.铸铁框架,MTEFrame
+4401,gt.oreprefix.钢框架,MTEFrame
+4402,gt.oreprefix.不锈钢框架,MTEFrame
+4403,gt.oreprefix.生铁框架,MTEFrame
+4404,gt.oreprefix.红色合金框架,MTEFrame
+4405,gt.oreprefix.蓝色合金框架,MTEFrame
+4406,gt.oreprefix.白铜框架,MTEFrame
+4407,gt.oreprefix.镍铬合金框架,MTEFrame
+4408,gt.oreprefix.坎塔尔框架,MTEFrame
+4409,gt.oreprefix.镁铝合金框架,MTEFrame
+4410,gt.oreprefix.焊锡框架,MTEFrame
+4411,gt.oreprefix.电池合金框架,MTEFrame
+4412,gt.oreprefix.钨钢框架,MTEFrame
+4413,gt.oreprefix.铱锇合金框架,MTEFrame
+4414,gt.oreprefix.阳光化合物框架,MTEFrame
+4415,gt.oreprefix.精金框架,MTEFrame
+4416,gt.oreprefix.通流琥珀金框架,MTEFrame
+4417,gt.oreprefix.末影(te)框架,MTEFrame
+4419,gt.oreprefix.注魔金框架,MTEFrame
+4420,gt.oreprefix.硅岩框架,MTEFrame
+4421,gt.oreprefix.硅岩合金框架,MTEFrame
+4422,gt.oreprefix.富集硅岩框架,MTEFrame
+4423,gt.oreprefix.超能硅岩框架,MTEFrame
+4424,gt.oreprefix.铿铀框架,MTEFrame
+4425,gt.oreprefix.三钛框架,MTEFrame
+4426,gt.oreprefix.神秘框架,MTEFrame
+4427,gt.oreprefix.秘银框架,MTEFrame
+4429,gt.oreprefix.星辰银框架,MTEFrame
+4430,gt.oreprefix.黑钢框架,MTEFrame
+4431,gt.oreprefix.大马士革钢框架,MTEFrame
+4432,gt.oreprefix.暗影铁框架,MTEFrame
+4433,gt.oreprefix.暗影钢框架,MTEFrame
+4434,gt.oreprefix.铁木框架,MTEFrame
+4435,gt.oreprefix.钢叶框架,MTEFrame
+4436,gt.oreprefix.陨铁框架,MTEFrame
+4437,gt.oreprefix.陨钢框架,MTEFrame
+4438,gt.oreprefix.玄铁框架,MTEFrame
+4439,gt.oreprefix.钴黄铜框架,MTEFrame
+4440,gt.oreprefix.哈氏合金框架,MTEFrame
+4441,gt.oreprefix.退火铜框架,MTEFrame
+4442,gt.oreprefix.炽热的钢框架,MTEFrame
+4444,gt.oreprefix.红钢框架,MTEFrame
+4445,gt.oreprefix.蓝钢框架,MTEFrame
+4446,gt.oreprefix.标准纯银框架,MTEFrame
+4447,gt.oreprefix.玫瑰金框架,MTEFrame
+4448,gt.oreprefix.黑青铜框架,MTEFrame
+4449,gt.oreprefix.铋青铜框架,MTEFrame
+4450,gt.oreprefix.磁化铁框架,MTEFrame
+4451,gt.oreprefix.磁化钢框架,MTEFrame
+4452,gt.oreprefix.磁化钕框架,MTEFrame
+4453,gt.oreprefix.钒镓合金框架,MTEFrame
+4454,gt.oreprefix.钇钡铜氧合金框架,MTEFrame
+4455,gt.oreprefix.氮化铌框架,MTEFrame
+4456,gt.oreprefix.铌钛合金框架,MTEFrame
+4457,gt.oreprefix.二氧化铬框架,MTEFrame
+4458,gt.oreprefix.骑士金属框架,MTEFrame
+4459,gt.oreprefix.锡铁合金框架,MTEFrame
+4460,gt.oreprefix.玄钢框架,MTEFrame
+4461,gt.oreprefix.磁钢框架,MTEFrame
+4462,gt.oreprefix.充能合金框架,MTEFrame
+4463,gt.oreprefix.脉冲合金框架,MTEFrame
+4464,gt.oreprefix.暗影金属框架,MTEFrame
+4465,gt.oreprefix.导电铁框架,MTEFrame
+4466,gt.oreprefix.碳化钨框架,MTEFrame
+4467,gt.oreprefix.钒钢框架,MTEFrame
+4468,gt.oreprefix.高速钢-g框架,MTEFrame
+4469,gt.oreprefix.高速钢-e框架,MTEFrame
+4470,gt.oreprefix.高速钢-s框架,MTEFrame
+4474,gt.oreprefix.脉冲铁框架,MTEFrame
+4475,gt.oreprefix.魂金框架,MTEFrame
+4476,gt.oreprefix.末影粗胚框架,MTEFrame
+4477,gt.oreprefix.红石合金框架,MTEFrame
+4478,gt.oreprefix.阿迪特框架,MTEFrame
+4479,gt.oreprefix.强化框架,MTEFrame
+4480,gt.oreprefix.混合晶框架,MTEFrame
+4481,gt.oreprefix.强化混合晶框架,MTEFrame
+4482,gt.oreprefix.玛玉灵框架,MTEFrame
+4483,gt.oreprefix.深空秘银框架,MTEFrame
+4484,gt.oreprefix.黑钚框架,MTEFrame
+4485,gt.oreprefix.木卫四冰框架,MTEFrame
+4486,gt.oreprefix.深铅框架,MTEFrame
+4487,gt.oreprefix.量子框架,MTEFrame
+4488,gt.oreprefix.硬铝框架,MTEFrame
+4489,gt.oreprefix.奥利哈钢框架,MTEFrame
+4490,gt.oreprefix.无尽催化剂框架,MTEFrame
+4491,gt.oreprefix.基岩框架,MTEFrame
+4493,gt.oreprefix.无尽框架,MTEFrame
+4494,gt.oreprefix.神秘水晶框架,MTEFrame
+4495,gt.oreprefix.磁化钐框架,MTEFrame
+4496,gt.oreprefix.锌曜钢框架,MTEFrame
+4497,gt.oreprefix.末影钢框架,MTEFrame
+4498,gt.oreprefix.复合黏土框架,MTEFrame
+4499,gt.oreprefix.晶化合金框架,MTEFrame
+4500,gt.oreprefix.旋律合金框架,MTEFrame
+4501,gt.oreprefix.恒星合金框架,MTEFrame
+4502,gt.oreprefix.晶化粉红史莱姆框架,MTEFrame
+4503,gt.oreprefix.充能银框架,MTEFrame
+4504,gt.oreprefix.生动合金框架,MTEFrame
+4566,gt.oreprefix.环氧树脂框架,MTEFrame
+4567,gt.oreprefix.硅橡胶框架,MTEFrame
+4568,gt.oreprefix.聚己内酰胺（pcl）框架,MTEFrame
+4569,gt.oreprefix.聚四氟乙烯（ptfe）框架,MTEFrame
+4581,gt.oreprefix.神秘蓝金框架,MTEFrame
+4584,gt.oreprefix.褐铜框架,MTEFrame
+4585,gt.oreprefix.胶木框架,MTEFrame
+4617,gt.oreprefix.力量框架,MTEFrame
+4625,gt.oreprefix.温特姆框架,MTEFrame
+4672,gt.oreprefix.钛铂钒合金框架,MTEFrame
+4677,gt.oreprefix.超时空金属框架,MTEFrame
+4678,gt.oreprefix.富集钬框架,MTEFrame
+4679,gt.oreprefix.磁流体约束恒星物质框架,MTEFrame
+4681,gt.oreprefix.白矮星物质框架,MTEFrame
+4682,gt.oreprefix.黑矮星物质框架,MTEFrame
+4684,gt.oreprefix.时空框架,MTEFrame
+4695,gt.oreprefix.聚苯并咪唑（pbi）框架,MTEFrame
+4706,gt.oreprefix.纤维强化的环氧树脂框架,MTEFrame
+4707,gt.oreprefix.硼玻璃框架,MTEFrame
+4709,gt.oreprefix.镍锌铁氧体框架,MTEFrame
+4727,gt.oreprefix.聚苯硫醚（pps）框架,MTEFrame
+4731,gt.oreprefix.丁苯橡胶（sbr）框架,MTEFrame
+4732,gt.oreprefix.聚苯乙烯（ps）框架,MTEFrame
+4745,gt.oreprefix.聚氯乙烯（pvc）框架,MTEFrame
+4861,gt.oreprefix.凯芙拉框架,MTEFrame
+4866,gt.oreprefix.终末框架,MTEFrame
+4868,gt.oreprefix.铝化镍框架,MTEFrame
+4900,gt.oreprefix.黑曜石框架,MTEFrame
+4905,gt.oreprefix.木框架,MTEFrame
+4925,gt.oreprefix.深渊铁框架,MTEFrame
+4952,gt.oreprefix.太阳能级硅(多晶硅)框架,MTEFrame
+4964,gt.oreprefix.三元金属框架,MTEFrame
+4970,gt.oreprefix.聚乙烯（pe）框架,MTEFrame
+4976,gt.oreprefix.橡胶框架,MTEFrame
+4980,gt.oreprefix.戴斯框架,MTEFrame
+4985,gt.oreprefix.蜡封木框架,MTEFrame
+5001,Draconic Evolution Fusion Crafter,MTEDEFusionCrafter
+5008,gt.oreprefix.白石棉框架,MTEFrame
+5009,gt.oreprefix.雄黄框架,MTEFrame
+5047,gt.oreprefix.幽冥剧毒结晶框架,MTEFrame
+5048,gt.oreprefix.暗影秘银框架,MTEFrame
+5052,gt.oreprefix.熔火之石框架,MTEFrame
+5062,gt.oreprefix.山铜框架,MTEFrame
+5066,gt.oreprefix.虚空金属框架,MTEFrame
+5070,gt.oreprefix.uev超导粗胚框架,MTEFrame
+5071,gt.oreprefix.龙框架,MTEFrame
+5072,gt.oreprefix.觉醒龙框架,MTEFrame
+5073,gt.oreprefix.注血铁框架,MTEFrame
+5074,gt.oreprefix.灵宝框架,MTEFrame
+5075,gt.oreprefix.拉多x聚合物框架,MTEFrame
+5076,gt.oreprefix.砷化镓框架,MTEFrame
+5077,gt.oreprefix.磷化铟镓框架,MTEFrame
+5078,gt.oreprefix.宇宙中子态素框架,MTEFrame
+5080,gt.oreprefix.框架,MTEFrame
+5081,gt.oreprefix.uhv超导粗胚框架,MTEFrame
+5082,gt.oreprefix.uv超导粗胚框架,MTEFrame
+5083,gt.oreprefix.mv超导粗胚框架,MTEFrame
+5084,gt.oreprefix.hv超导粗胚框架,MTEFrame
+5085,gt.oreprefix.ev超导粗胚框架,MTEFrame
+5086,gt.oreprefix.iv超导粗胚框架,MTEFrame
+5087,gt.oreprefix.luv超导粗胚框架,MTEFrame
+5088,gt.oreprefix.zpm超导粗胚框架,MTEFrame
+5101,小型木流体管道,MTEFluidPipe
+5102,木流体管道,MTEFluidPipe
+5103,大型木流体管道,MTEFluidPipe
+5110,微型铜流体管道,MTEFluidPipe
+5111,小型铜流体管道,MTEFluidPipe
+5112,铜流体管道,MTEFluidPipe
+5113,大型铜流体管道,MTEFluidPipe
+5114,巨型铜流体管道,MTEFluidPipe
+5115,四联铜流体管道,MTEFluidPipe
+5116,九联铜流体管道,MTEFluidPipe
+5120,微型青铜流体管道,MTEFluidPipe
+5121,小型青铜流体管道,MTEFluidPipe
+5122,青铜流体管道,MTEFluidPipe
+5123,大型青铜流体管道,MTEFluidPipe
+5124,巨型青铜流体管道,MTEFluidPipe
+5125,四联青铜流体管道,MTEFluidPipe
+5126,九联青铜流体管道,MTEFluidPipe
+5130,微型钢流体管道,MTEFluidPipe
+5131,小型钢流体管道,MTEFluidPipe
+5132,钢流体管道,MTEFluidPipe
+5133,大型钢流体管道,MTEFluidPipe
+5134,巨型钢流体管道,MTEFluidPipe
+5135,四联钢流体管道,MTEFluidPipe
+5136,九联钢流体管道,MTEFluidPipe
+5140,微型不锈钢流体管道,MTEFluidPipe
+5141,小型不锈钢流体管道,MTEFluidPipe
+5142,不锈钢流体管道,MTEFluidPipe
+5143,大型不锈钢流体管道,MTEFluidPipe
+5144,巨型不锈钢流体管道,MTEFluidPipe
+5145,四联不锈钢流体管道,MTEFluidPipe
+5146,九联不锈钢流体管道,MTEFluidPipe
+5150,微型钛流体管道,MTEFluidPipe
+5151,小型钛流体管道,MTEFluidPipe
+5152,钛流体管道,MTEFluidPipe
+5153,大型钛流体管道,MTEFluidPipe
+5154,巨型钛流体管道,MTEFluidPipe
+5155,四联钛流体管道,MTEFluidPipe
+5156,九联钛流体管道,MTEFluidPipe
+5160,微型钨钢流体管道,MTEFluidPipe
+5161,小型钨钢流体管道,MTEFluidPipe
+5162,钨钢流体管道,MTEFluidPipe
+5163,大型钨钢流体管道,MTEFluidPipe
+5164,巨型钨钢流体管道,MTEFluidPipe
+5165,小型高压流体管道,MTEFluidPipe
+5166,高压流体管道,MTEFluidPipe
+5167,大型高压流体管道,MTEFluidPipe
+5170,微型塑料流体管道,MTEFluidPipe
+5171,小型塑料流体管道,MTEFluidPipe
+5172,塑料流体管道,MTEFluidPipe
+5173,大型塑料流体管道,MTEFluidPipe
+5174,巨型塑料流体管道,MTEFluidPipe
+5175,四联塑料流体管道,MTEFluidPipe
+5176,九联塑料流体管道,MTEFluidPipe
+5180,微型铌钛合金流体管道,MTEFluidPipe
+5181,小型铌钛合金流体管道,MTEFluidPipe
+5182,铌钛合金流体管道,MTEFluidPipe
+5183,大型铌钛合金流体管道,MTEFluidPipe
+5184,巨型铌钛合金流体管道,MTEFluidPipe
+5185,四联铌钛合金流体管道,MTEFluidPipe
+5186,九联铌钛合金流体管道,MTEFluidPipe
+5190,微型末影(te)流体管道,MTEFluidPipe
+5191,小型末影(te)流体管道,MTEFluidPipe
+5192,末影(te)流体管道,MTEFluidPipe
+5193,大型末影(te)流体管道,MTEFluidPipe
+5194,巨型末影(te)流体管道,MTEFluidPipe
+5195,四联末影(te)流体管道,MTEFluidPipe
+5196,九联末影(te)流体管道,MTEFluidPipe
+5200,微型硅岩流体管道,MTEFluidPipe
+5201,小型硅岩流体管道,MTEFluidPipe
+5202,硅岩流体管道,MTEFluidPipe
+5203,大型硅岩流体管道,MTEFluidPipe
+5204,巨型硅岩流体管道,MTEFluidPipe
+5205,四联硅岩流体管道,MTEFluidPipe
+5206,九联硅岩流体管道,MTEFluidPipe
+5210,微型中子流体管道,MTEFluidPipe
+5211,小型中子流体管道,MTEFluidPipe
+5212,中子流体管道,MTEFluidPipe
+5213,大型中子流体管道,MTEFluidPipe
+5214,巨型中子流体管道,MTEFluidPipe
+5215,四联中子流体管道,MTEFluidPipe
+5216,九联中子流体管道,MTEFluidPipe
+5220,微型下界之星流体管道,MTEFluidPipe
+5221,小型下界之星流体管道,MTEFluidPipe
+5222,下界之星流体管道,MTEFluidPipe
+5223,大型下界之星流体管道,MTEFluidPipe
+5224,巨型下界之星流体管道,MTEFluidPipe
+5225,四联下界之星流体管道,MTEFluidPipe
+5226,九联下界之星流体管道,MTEFluidPipe
+5230,微型神秘水晶流体管道,MTEFluidPipe
+5231,小型神秘水晶流体管道,MTEFluidPipe
+5232,神秘水晶流体管道,MTEFluidPipe
+5233,大型神秘水晶流体管道,MTEFluidPipe
+5234,巨型神秘水晶流体管道,MTEFluidPipe
+5235,四联神秘水晶流体管道,MTEFluidPipe
+5236,九联神秘水晶流体管道,MTEFluidPipe
+5240,微型觉醒龙流体管道,MTEFluidPipe
+5241,小型觉醒龙流体管道,MTEFluidPipe
+5242,觉醒龙流体管道,MTEFluidPipe
+5243,大型觉醒龙流体管道,MTEFluidPipe
+5244,巨型觉醒龙流体管道,MTEFluidPipe
+5245,四联觉醒龙流体管道,MTEFluidPipe
+5246,九联觉醒龙流体管道,MTEFluidPipe
+5250,微型无尽流体管道,MTEFluidPipe
+5251,小型无尽流体管道,MTEFluidPipe
+5252,无尽流体管道,MTEFluidPipe
+5253,大型无尽流体管道,MTEFluidPipe
+5254,巨型无尽流体管道,MTEFluidPipe
+5255,四联无尽流体管道,MTEFluidPipe
+5256,九联无尽流体管道,MTEFluidPipe
+5260,微型铸铁流体管道,MTEFluidPipe
+5261,小型铸铁流体管道,MTEFluidPipe
+5262,铸铁流体管道,MTEFluidPipe
+5263,大型铸铁流体管道,MTEFluidPipe
+5264,巨型铸铁流体管道,MTEFluidPipe
+5265,四联铸铁流体管道,MTEFluidPipe
+5266,九联铸铁流体管道,MTEFluidPipe
+5270,四联钨钢流体管道,MTEFluidPipe
+5271,九联钨钢流体管道,MTEFluidPipe
+5280,微型PBI流体管道,MTEFluidPipe
+5281,小型PBI流体管道,MTEFluidPipe
+5282,PBI流体管道,MTEFluidPipe
+5283,大型PBI流体管道,MTEFluidPipe
+5284,巨型PBI流体管道,MTEFluidPipe
+5290,四联PBI流体管道,MTEFluidPipe
+5291,九联PBI流体管道,MTEFluidPipe
+5300,微型时空流体管道,MTEFluidPipe
+5301,小型时空流体管道,MTEFluidPipe
+5302,时空流体管道,MTEFluidPipe
+5303,大型时空流体管道,MTEFluidPipe
+5304,巨型时空流体管道,MTEFluidPipe
+5305,四联时空流体管道,MTEFluidPipe
+5306,九联时空流体管道,MTEFluidPipe
+5310,微型超时空金属流体管道,MTEFluidPipe
+5311,小型超时空金属流体管道,MTEFluidPipe
+5312,超时空金属流体管道,MTEFluidPipe
+5313,大型超时空金属流体管道,MTEFluidPipe
+5314,巨型超时空金属流体管道,MTEFluidPipe
+5315,四联超时空金属流体管道,MTEFluidPipe
+5316,九联超时空金属流体管道,MTEFluidPipe
+5589,微型锡物品管道,MTEItemPipe
+5590,小型锡物品管道,MTEItemPipe
+5591,锡物品管道,MTEItemPipe
+5592,大型锡物品管道,MTEItemPipe
+5593,巨型锡物品管道,MTEItemPipe
+5594,微型低优先锡物品管道,MTEItemPipe
+5595,小型低优先锡物品管道,MTEItemPipe
+5596,低优先锡物品管道,MTEItemPipe
+5597,大型低优先锡物品管道,MTEItemPipe
+5598,巨型低优先锡物品管道,MTEItemPipe
+5600,微型黄铜物品管道,MTEItemPipe
+5601,小型黄铜物品管道,MTEItemPipe
+5602,黄铜物品管道,MTEItemPipe
+5603,大型黄铜物品管道,MTEItemPipe
+5604,巨型黄铜物品管道,MTEItemPipe
+5605,低优先黄铜物品管道,MTEItemPipe
+5606,大型低优先黄铜物品管道,MTEItemPipe
+5607,巨型低优先黄铜物品管道,MTEItemPipe
+5610,微型琥珀金物品管道,MTEItemPipe
+5611,小型琥珀金物品管道,MTEItemPipe
+5612,琥珀金物品管道,MTEItemPipe
+5613,大型琥珀金物品管道,MTEItemPipe
+5614,巨型琥珀金物品管道,MTEItemPipe
+5615,低优先琥珀金物品管道,MTEItemPipe
+5616,大型低优先琥珀金物品管道,MTEItemPipe
+5617,巨型低优先琥珀金物品管道,MTEItemPipe
+5620,微型铂物品管道,MTEItemPipe
+5621,小型铂物品管道,MTEItemPipe
+5622,铂物品管道,MTEItemPipe
+5623,大型铂物品管道,MTEItemPipe
+5624,巨型铂物品管道,MTEItemPipe
+5625,低优先铂物品管道,MTEItemPipe
+5626,大型低优先铂物品管道,MTEItemPipe
+5627,巨型低优先铂物品管道,MTEItemPipe
+5630,微型锇物品管道,MTEItemPipe
+5631,小型锇物品管道,MTEItemPipe
+5632,锇物品管道,MTEItemPipe
+5633,大型锇物品管道,MTEItemPipe
+5634,巨型锇物品管道,MTEItemPipe
+5635,低优先锇物品管道,MTEItemPipe
+5636,大型低优先锇物品管道,MTEItemPipe
+5637,巨型低优先锇物品管道,MTEItemPipe
+5640,微型低优先黄铜物品管道,MTEItemPipe
+5641,小型低优先黄铜物品管道,MTEItemPipe
+5642,微型低优先琥珀金物品管道,MTEItemPipe
+5643,小型低优先琥珀金物品管道,MTEItemPipe
+5644,微型低优先铂物品管道,MTEItemPipe
+5645,小型低优先铂物品管道,MTEItemPipe
+5646,微型低优先锇物品管道,MTEItemPipe
+5647,小型低优先锇物品管道,MTEItemPipe
+5650,微型通流琥珀金物品管道,MTEItemPipe
+5651,小型通流琥珀金物品管道,MTEItemPipe
+5652,通流琥珀金物品管道,MTEItemPipe
+5653,大型通流琥珀金物品管道,MTEItemPipe
+5654,巨型通流琥珀金物品管道,MTEItemPipe
+5655,微型低优先通流琥珀金物品管道,MTEItemPipe
+5656,小型低优先通流琥珀金物品管道,MTEItemPipe
+5657,低优先通流琥珀金物品管道,MTEItemPipe
+5658,大型低优先通流琥珀金物品管道,MTEItemPipe
+5659,巨型低优先通流琥珀金物品管道,MTEItemPipe
+5660,微型黑钚物品管道,MTEItemPipe
+5661,小型黑钚物品管道,MTEItemPipe
+5662,黑钚物品管道,MTEItemPipe
+5663,大型黑钚物品管道,MTEItemPipe
+5664,巨型黑钚物品管道,MTEItemPipe
+5665,微型低优先黑钚物品管道,MTEItemPipe
+5666,小型低优先黑钚物品管道,MTEItemPipe
+5667,低优先黑钚物品管道,MTEItemPipe
+5668,大型低优先黑钚物品管道,MTEItemPipe
+5669,巨型低优先黑钚物品管道,MTEItemPipe
+5670,微型基岩物品管道,MTEItemPipe
+5671,小型基岩物品管道,MTEItemPipe
+5672,基岩物品管道,MTEItemPipe
+5673,大型基岩物品管道,MTEItemPipe
+5674,巨型基岩物品管道,MTEItemPipe
+5675,微型低优先基岩物品管道,MTEItemPipe
+5676,小型低优先基岩物品管道,MTEItemPipe
+5677,低优先基岩物品管道,MTEItemPipe
+5678,大型低优先基岩物品管道,MTEItemPipe
+5679,巨型低优先基岩物品管道,MTEItemPipe
+5680,微型聚四氟乙烯流体管道,MTEFluidPipe
+5681,小型聚四氟乙烯流体管道,MTEFluidPipe
+5682,聚四氟乙烯流体管道,MTEFluidPipe
+5683,大型聚四氟乙烯流体管道,MTEFluidPipe
+5684,巨型聚四氟乙烯流体管道,MTEFluidPipe
+5685,四联聚四氟乙烯流体管道,MTEFluidPipe
+5686,九联聚四氟乙烯流体管道,MTEFluidPipe
+5690,PVC物品管道,MTEItemPipe
+5691,大型PVC物品管道,MTEItemPipe
+5692,巨型PVC物品管道,MTEItemPipe
+5693,低优先PVC物品管道,MTEItemPipe
+5694,大型低优先PVC物品管道,MTEItemPipe
+5695,巨型低优先PVC物品管道,MTEItemPipe
+5700,镍物品管道,MTEItemPipe
+5701,大型镍物品管道,MTEItemPipe
+5702,巨型镍物品管道,MTEItemPipe
+5703,低优先镍物品管道,MTEItemPipe
+5704,大型低优先镍物品管道,MTEItemPipe
+5705,巨型低优先镍物品管道,MTEItemPipe
+5710,钴物品管道,MTEItemPipe
+5711,大型钴物品管道,MTEItemPipe
+5712,巨型钴物品管道,MTEItemPipe
+5713,低优先钴物品管道,MTEItemPipe
+5714,大型低优先钴物品管道,MTEItemPipe
+5715,巨型低优先钴物品管道,MTEItemPipe
+5720,铝物品管道,MTEItemPipe
+5721,大型铝物品管道,MTEItemPipe
+5722,巨型铝物品管道,MTEItemPipe
+5723,低优先铝物品管道,MTEItemPipe
+5724,大型低优先铝物品管道,MTEItemPipe
+5725,巨型低优先铝物品管道,MTEItemPipe
+5730,微型量子物品管道,MTEItemPipe
+5731,小型量子物品管道,MTEItemPipe
+5732,量子物品管道,MTEItemPipe
+5733,大型量子物品管道,MTEItemPipe
+5734,巨型量子物品管道,MTEItemPipe
+5735,微型低优先量子物品管道,MTEItemPipe
+5736,小型低优先量子物品管道,MTEItemPipe
+5737,低优先量子物品管道,MTEItemPipe
+5738,大型低优先量子物品管道,MTEItemPipe
+5739,巨型低优先量子物品管道,MTEItemPipe
+5760,微型拉多X聚合物流体管道,MTEFluidPipe
+5761,小型拉多X聚合物流体管道,MTEFluidPipe
+5762,拉多X聚合物流体管道,MTEFluidPipe
+5763,大型拉多X聚合物流体管道,MTEFluidPipe
+5764,巨型拉多X聚合物流体管道,MTEFluidPipe
+5765,四联拉多X聚合物流体管道,MTEFluidPipe
+5766,九联拉多X聚合物流体管道,MTEFluidPipe
+9230,超低压缓存器,MTEChestBuffer
+9231,低压缓存器,MTEChestBuffer
+9232,中压缓存器,MTEChestBuffer
+9233,高压缓存器,MTEChestBuffer
+9234,超高压缓存器,MTEChestBuffer
+9235,强导压缓存器,MTEChestBuffer
+9236,剧差压缓存器,MTEChestBuffer
+9237,零点压缓存器,MTEChestBuffer
+9238,极限压缓存器,MTEChestBuffer
+9239,极高压缓存器,MTEChestBuffer
+9240,超低压物品过滤器,MTEFilter
+9241,低压物品过滤器,MTEFilter
+9242,中压物品过滤器,MTEFilter
+9243,高压物品过滤器,MTEFilter
+9244,超高压物品过滤器,MTEFilter
+9245,强导压物品过滤器,MTEFilter
+9246,剧差压物品过滤器,MTEFilter
+9247,零点压物品过滤器,MTEFilter
+9248,极限压物品过滤器,MTEFilter
+9249,极高压过滤器,MTEFilter
+9250,超低压类型过滤器,MTETypeFilter
+9251,低压类型过滤器,MTETypeFilter
+9252,中压类型过滤器,MTETypeFilter
+9253,高压类型过滤器,MTETypeFilter
+9254,超高压类型过滤器,MTETypeFilter
+9255,强导压类型过滤器,MTETypeFilter
+9256,剧差压类型过滤器,MTETypeFilter
+9257,零点压类型过滤器,MTETypeFilter
+9258,极限压类型过滤器,MTETypeFilter
+9259,极高压类型过滤器,MTETypeFilter
+9270,超低压校准器,MTERegulator
+9271,低压校准器,MTERegulator
+9272,中压校准器,MTERegulator
+9273,高压校准器,MTERegulator
+9274,超高压校准器,MTERegulator
+9275,强导压校准器,MTERegulator
+9276,剧差压校准器,MTERegulator
+9277,零点压校准器,MTERegulator
+9278,极限压校准器,MTERegulator
+9279,极高压校准器,MTERegulator
+9300,超低压超级缓存器,MTESuperBuffer
+9301,低压超级缓存器,MTESuperBuffer
+9302,中压超级缓存器,MTESuperBuffer
+9303,高压超级缓存器,MTESuperBuffer
+9304,超高压超级缓存器,MTESuperBuffer
+9305,强导压超级缓存器,MTESuperBuffer
+9306,剧差压超级缓存器,MTESuperBuffer
+9307,零点压超级缓存器,MTESuperBuffer
+9308,极限压超级缓存器,MTESuperBuffer
+9309,极高压超级缓存器,MTESuperBuffer
+9320,超低压物品分配器,MTEItemDistributor
+9321,低压物品分配器,MTEItemDistributor
+9322,中压物品分配器,MTEItemDistributor
+9323,高压物品分配器,MTEItemDistributor
+9324,超高压物品分配器,MTEItemDistributor
+9325,强导压物品分配器,MTEItemDistributor
+9326,剧差压物品分配器,MTEItemDistributor
+9327,零点压物品分配器,MTEItemDistributor
+9328,极限压物品分配器,MTEItemDistributor
+9329,极高压物品分配器,MTEItemDistributor
+9330,超低压合成表过滤器,MTERecipeFilter
+9331,低压合成表过滤器,MTERecipeFilter
+9332,中压合成表过滤器,MTERecipeFilter
+9333,高压合成表过滤器,MTERecipeFilter
+9334,超高压合成表过滤器,MTERecipeFilter
+9335,强导压合成表过滤器,MTERecipeFilter
+9336,剧差压合成表过滤器,MTERecipeFilter
+9337,零点压合成表过滤器,MTERecipeFilter
+9338,极限压合成表过滤器,MTERecipeFilter
+9339,极高压合成表过滤器,MTERecipeFilter
+9399,工业蜂箱,MTEIndustrialApiary
+9400,无人机控制中心,MTEDroneCentre
+9401,无人机下行模块,MTEHatchDroneDownLink
+9402,净水厂,MTEPurificationPlant
+9403,澄清净化单元,MTEPurificationUnitClarifier
+9404,臭氧净化单元,MTEPurificationUnitOzonation
+9405,絮凝净化单元,MTEPurificationUnitFlocculation
+9406,pH中和净化单元,MTEPurificationUnitPhAdjustment
+9407,pH传感器仓,MTEHatchPHSensor
+9408,极端温度波动净化单元,MTEPurificationUnitPlasmaHeater
+9409,高能激光净化单元,MTEPurificationUnitUVTreatment
+9410,透镜仓,MTEHatchLensHousing
+9411,透镜指示仓,MTEHatchLensIndicator
+9412,残留净化剂除气机净化单元,MTEPurificationUnitDegasser
+9413,除气机控制仓,MTEHatchDegasifierControl
+9414,绝对重子完美净化单元,MTEPurificationUnitBaryonicPerfection
+9415,纳米蜂群收容总线,MTEHatchNanite
+9416,大宗催化剂仓,MTEHatchBulkCatalystHousing
+9500,纳米芯片组装复合体,MTENanochipAssemblyComplex
+9501,真空传送输入仓,MTEHatchVacuumConveyorInput
+9502,真空传送输出仓,MTEHatchVacuumConveyorOutput
+9503,真空传送管道,MTEVacuumConveyorPipe
+9504,纳米芯片组装矩阵,MTEAssemblyMatrixModule
+9505,元件预处理装置,MTESMDProcessorModule
+9506,全板浸没设备,MTEBoardProcessorModule
+9507,超高能蚀刻阵列,MTEEtchingArrayModule
+9508,纳米精度切割仓,MTECuttingChamberModule
+9509,纳米精度导线追踪器,MTEWireTracerModule
+9510,纳米组件分流器,MTESplitterModule
+9511,超导线束分离器,MTESuperconductorSplitterModule
+9512,光学优化组织器,MTEOpticalOrganizerModule
+9513,纳米封装卷绕器,MTEEncasementWrapperModule
+9514,加速生物调谐器,MTEBiologicalCoordinationModule
+9515,分流器红石输入,MTEHatchSplitterRedstone
+10500,煮解池,MTEDigester
+10501,溶解罐,MTEDissolutionTank
+10502,束流管,MTEBeamlinePipe
+10503,束流输入仓,MTEHatchInputBeamline
+10504,束流输出仓,MTEHatchOutputBeamline
+10505,线性加速器,MTELINAC
+10506,高能粒子辐射激发源室,MTESourceChamber
+10507,同步加速器,MTESynchrotron
+10508,高能束流聚焦对撞靶室,MTETargetChamber
+10509,聚焦输入总线,MTEBusInputFocus
+10752,等离子发电机Mk IV,MTEPlasmaGenerator
+10753,终极便携式恒星,MTEPlasmaGenerator
+10760,精英合金炉,MTEBasicMachineWithRecipe
+10761,精英合金炉 II,MTEBasicMachineWithRecipe
+10762,终极金属熔合者,MTEBasicMachineWithRecipe
+10763,史诗金属熔合者,MTEBasicMachineWithRecipe
+10764,史诗金属熔合者 II,MTEBasicMachineWithRecipe
+10765,史诗金属熔合者 III,MTEBasicMachineWithRecipe
+10766,史诗金属熔合者 IV,MTEBasicMachineWithRecipe
+10770,精英UU增幅液生产器,MTEBasicMachineWithRecipe
+10771,精英UU增幅液生产器 II,MTEBasicMachineWithRecipe
+10772,终极增幅液制造者,MTEBasicMachineWithRecipe
+10773,史诗增幅液制造者,MTEBasicMachineWithRecipe
+10774,史诗增幅液制造者 II,MTEBasicMachineWithRecipe
+10775,史诗增幅液制造者 III,MTEBasicMachineWithRecipe
+10776,史诗增幅液制造者 IV,MTEBasicMachineWithRecipe
+10780,精英组装机,MTEBasicMachineWithRecipe
+10781,精英组装机 II,MTEBasicMachineWithRecipe
+10782,终极组装构建者,MTEBasicMachineWithRecipe
+10783,史诗组装构建者,MTEBasicMachineWithRecipe
+10784,史诗组装构建者 II,MTEBasicMachineWithRecipe
+10785,史诗组装构建者 III,MTEBasicMachineWithRecipe
+10786,史诗组装构建者 IV,MTEBasicMachineWithRecipe
+10790,精英高压釜,MTEBasicMachineWithRecipe
+10791,精英高压釜 II,MTEBasicMachineWithRecipe
+10792,终极强压结晶者,MTEBasicMachineWithRecipe
+10793,史诗强压结晶者,MTEBasicMachineWithRecipe
+10794,史诗强压结晶者 II,MTEBasicMachineWithRecipe
+10795,史诗强压结晶者 III,MTEBasicMachineWithRecipe
+10796,史诗强压结晶者 IV,MTEBasicMachineWithRecipe
+10800,精英卷板机,MTEBasicMachineWithRecipe
+10801,精英卷板机 II,MTEBasicMachineWithRecipe
+10802,终极应力施加者,MTEBasicMachineWithRecipe
+10803,史诗应力施加者,MTEBasicMachineWithRecipe
+10804,史诗应力施加者 II,MTEBasicMachineWithRecipe
+10805,史诗应力施加者 III,MTEBasicMachineWithRecipe
+10806,史诗应力施加者 IV,MTEBasicMachineWithRecipe
+10810,精英压缩机,MTEBasicMachineWithRecipe
+10811,精英压缩机 II,MTEBasicMachineWithRecipe
+10812,终极物质聚压者,MTEBasicMachineWithRecipe
+10813,史诗物质聚压者,MTEBasicMachineWithRecipe
+10814,史诗物质聚压者 II,MTEBasicMachineWithRecipe
+10815,史诗物质聚压者 III,MTEBasicMachineWithRecipe
+10816,史诗物质聚压者 IV,MTEBasicMachineWithRecipe
+10820,精英板材切割机,MTEBasicMachineWithRecipe
+10821,精英板材切割机 II,MTEBasicMachineWithRecipe
+10822,终极物品分割者,MTEBasicMachineWithRecipe
+10823,史诗物品分割者,MTEBasicMachineWithRecipe
+10824,史诗物品分割者 II,MTEBasicMachineWithRecipe
+10825,史诗物品分割者 III,MTEBasicMachineWithRecipe
+10826,史诗物品分割者 IV,MTEBasicMachineWithRecipe
+10830,精英蒸馏室,MTEBasicMachineWithRecipe
+10831,精英蒸馏室 II,MTEBasicMachineWithRecipe
+10832,终极分馏者,MTEBasicMachineWithRecipe
+10833,史诗分馏者,MTEBasicMachineWithRecipe
+10834,史诗分馏者 II,MTEBasicMachineWithRecipe
+10835,史诗分馏者 III,MTEBasicMachineWithRecipe
+10836,史诗分馏者 IV,MTEBasicMachineWithRecipe
+10840,精英电炉,MTEBasicMachineWithRecipe
+10841,精英电炉 II,MTEBasicMachineWithRecipe
+10842,终极原子激发器,MTEBasicMachineWithRecipe
+10843,史诗原子激发器,MTEBasicMachineWithRecipe
+10844,史诗原子激发器 II,MTEBasicMachineWithRecipe
+10845,史诗原子激发器 III,MTEBasicMachineWithRecipe
+10846,史诗原子激发器 IV,MTEBasicMachineWithRecipe
+10850,精英电解机,MTEBasicMachineWithRecipe
+10851,精英电解机 II,MTEBasicMachineWithRecipe
+10852,终极离子发生器,MTEBasicMachineWithRecipe
+10853,史诗离子发生器,MTEBasicMachineWithRecipe
+10854,史诗离子发生器 II,MTEBasicMachineWithRecipe
+10855,史诗离子发生器 III,MTEBasicMachineWithRecipe
+10856,史诗离子发生器 IV,MTEBasicMachineWithRecipe
+10860,精英电磁离析机,MTEBasicMachineWithRecipe
+10861,精英电磁离析机 II,MTEBasicMachineWithRecipe
+10862,终极磁星分离者,MTEBasicMachineWithRecipe
+10863,史诗磁星分离者,MTEBasicMachineWithRecipe
+10864,史诗磁星分离者 II,MTEBasicMachineWithRecipe
+10865,史诗磁星分离者 III,MTEBasicMachineWithRecipe
+10866,史诗磁星分离者 IV,MTEBasicMachineWithRecipe
+10870,精英提取机,MTEBasicMachineWithRecipe
+10871,精英提取机 II,MTEBasicMachineWithRecipe
+10872,终极提炼者,MTEBasicMachineWithRecipe
+10873,史诗提炼者,MTEBasicMachineWithRecipe
+10874,史诗提炼者 II,MTEBasicMachineWithRecipe
+10875,史诗提炼者 III,MTEBasicMachineWithRecipe
+10876,史诗提炼者 IV,MTEBasicMachineWithRecipe
+10880,精英压模机,MTEBasicMachineWithRecipe
+10881,精英压模机 II,MTEBasicMachineWithRecipe
+10882,终极形变驱动者,MTEBasicMachineWithRecipe
+10883,史诗形变驱动者,MTEBasicMachineWithRecipe
+10884,史诗形变驱动者 II,MTEBasicMachineWithRecipe
+10885,史诗形变驱动者 III,MTEBasicMachineWithRecipe
+10886,史诗形变驱动者 IV,MTEBasicMachineWithRecipe
+10890,精英流体固化器,MTEBasicMachineWithRecipe
+10891,精英流体固化器 II,MTEBasicMachineWithRecipe
+10892,终极流体石化者,MTEBasicMachineWithRecipe
+10893,史诗流体石化者,MTEBasicMachineWithRecipe
+10894,史诗流体石化者 II,MTEBasicMachineWithRecipe
+10895,史诗流体石化者 III,MTEBasicMachineWithRecipe
+10896,史诗流体石化者 IV,MTEBasicMachineWithRecipe
+10900,精英冲压机床,MTEBasicMachineWithRecipe
+10901,精英冲压机床 II,MTEBasicMachineWithRecipe
+10902,终极表面压覆者,MTEBasicMachineWithRecipe
+10903,史诗表面压覆者,MTEBasicMachineWithRecipe
+10904,史诗表面压覆者 II,MTEBasicMachineWithRecipe
+10905,史诗表面压覆者 III,MTEBasicMachineWithRecipe
+10906,史诗表面压覆者 IV,MTEBasicMachineWithRecipe
+10910,精英锻造锤,MTEBasicMachineWithRecipe
+10911,精英锻造锤 II,MTEBasicMachineWithRecipe
+10912,终极冲击调制者,MTEBasicMachineWithRecipe
+10913,史诗冲击调制者,MTEBasicMachineWithRecipe
+10914,史诗冲击调制者 II,MTEBasicMachineWithRecipe
+10915,史诗冲击调制者 III,MTEBasicMachineWithRecipe
+10916,史诗冲击调制者 IV,MTEBasicMachineWithRecipe
+10920,精英车床,MTEBasicMachineWithRecipe
+10921,精英车床 II,MTEBasicMachineWithRecipe
+10922,终极车工大师,MTEBasicMachineWithRecipe
+10923,史诗车工大师,MTEBasicMachineWithRecipe
+10924,史诗车工大师 II,MTEBasicMachineWithRecipe
+10925,史诗车工大师 III,MTEBasicMachineWithRecipe
+10926,史诗车工大师 IV,MTEBasicMachineWithRecipe
+10930,精英精密激光蚀刻机,MTEBasicMachineWithRecipe
+10931,精英精密激光蚀刻机 II,MTEBasicMachineWithRecipe
+10932,终极精准光子加农,MTEBasicMachineWithRecipe
+10933,史诗精准光子加农,MTEBasicMachineWithRecipe
+10934,史诗精准光子加农 II,MTEBasicMachineWithRecipe
+10935,史诗精准光子加农 III,MTEBasicMachineWithRecipe
+10936,史诗精准光子加农 IV,MTEBasicMachineWithRecipe
+10940,精英矿石粉碎机,MTEBasicMachineWithRecipe
+10941,精英矿石粉碎机 II,MTEBasicMachineWithRecipe
+10942,终极形态毁灭者,MTEBasicMachineWithRecipe
+10943,史诗形态毁灭者,MTEBasicMachineWithRecipe
+10944,史诗形态毁灭者 II,MTEBasicMachineWithRecipe
+10945,史诗形态毁灭者 III,MTEBasicMachineWithRecipe
+10946,史诗形态毁灭者 IV,MTEBasicMachineWithRecipe
+10950,精英质量发生器,MTEMassfabricator
+10951,精英质量发生器 II,MTEMassfabricator
+10952,终极存在创造者,MTEMassfabricator
+10953,史诗存在创造者,MTEMassfabricator
+10954,史诗存在创造者 II,MTEMassfabricator
+10955,史诗存在创造者 III,MTEMassfabricator
+10956,史诗存在创造者 IV,MTEMassfabricator
+10960,精英微波炉,MTEBasicMachineWithRecipe
+10961,精英微波炉 II,MTEBasicMachineWithRecipe
+10962,终极UFO引擎,MTEBasicMachineWithRecipe
+10963,史诗UFO引擎,MTEBasicMachineWithRecipe
+10964,史诗UFO引擎 II,MTEBasicMachineWithRecipe
+10965,史诗UFO引擎 III,MTEBasicMachineWithRecipe
+10966,史诗UFO引擎 IV,MTEBasicMachineWithRecipe
+10970,精英洗矿厂,MTEBasicMachineWithRecipe
+10971,精英洗矿厂 II,MTEBasicMachineWithRecipe
+10972,终极滚筒洗矿厂,MTEBasicMachineWithRecipe
+10973,史诗滚筒洗矿厂,MTEBasicMachineWithRecipe
+10974,史诗滚筒洗矿厂 II,MTEBasicMachineWithRecipe
+10975,史诗滚筒洗矿厂 III,MTEBasicMachineWithRecipe
+10976,史诗滚筒洗矿厂 IV,MTEBasicMachineWithRecipe
+10980,精英两极磁化机,MTEBasicMachineWithRecipe
+10981,精英两极磁化机 II,MTEBasicMachineWithRecipe
+10982,终极磁能导入者,MTEBasicMachineWithRecipe
+10983,史诗磁能导入者,MTEBasicMachineWithRecipe
+10984,史诗磁能导入者 II,MTEBasicMachineWithRecipe
+10985,史诗磁能导入者 III,MTEBasicMachineWithRecipe
+10986,史诗磁能导入者 IV,MTEBasicMachineWithRecipe
+10990,精英回收机,MTEBasicMachineWithRecipe
+10991,精英回收机 II,MTEBasicMachineWithRecipe
+10992,终极物品抹杀者,MTEBasicMachineWithRecipe
+10993,史诗物品抹杀者,MTEBasicMachineWithRecipe
+10994,史诗物品抹杀者 II,MTEBasicMachineWithRecipe
+10995,史诗物品抹杀者 III,MTEBasicMachineWithRecipe
+10996,史诗物品抹杀者 IV,MTEBasicMachineWithRecipe
+11000,精英复制机,MTEReplicator
+11001,精英复制机 II,MTEReplicator
+11002,终极元素聚合者,MTEReplicator
+11003,史诗元素聚合者,MTEReplicator
+11004,史诗元素聚合者 II,MTEReplicator
+11005,史诗元素聚合者 III,MTEReplicator
+11006,史诗元素聚合者 IV,MTEReplicator
+11010,精英扫描仪,MTEScanner
+11011,精英扫描仪 II,MTEScanner
+11012,终极电子显微镜,MTEScanner
+11013,史诗电子显微镜,MTEScanner
+11014,史诗电子显微镜 II,MTEScanner
+11015,史诗电子显微镜 III,MTEScanner
+11016,史诗电子显微镜 IV,MTEScanner
+11020,进阶筛选机,MTEBasicMachineWithRecipe
+11021,进阶筛选机 II,MTEBasicMachineWithRecipe
+11022,终极脉动筛选者,MTEBasicMachineWithRecipe
+11023,史诗脉动筛选者,MTEBasicMachineWithRecipe
+11024,史诗脉动筛选者 II,MTEBasicMachineWithRecipe
+11025,史诗脉动筛选者 III,MTEBasicMachineWithRecipe
+11026,史诗脉动筛选者 IV,MTEBasicMachineWithRecipe
+11040,精英热力离心机,MTEBasicMachineWithRecipe
+11041,精英热力离心机 II,MTEBasicMachineWithRecipe
+11042,终极火龙卷,MTEBasicMachineWithRecipe
+11043,史诗火龙卷,MTEBasicMachineWithRecipe
+11044,史诗火龙卷 II,MTEBasicMachineWithRecipe
+11045,史诗火龙卷 III,MTEBasicMachineWithRecipe
+11046,史诗火龙卷 IV,MTEBasicMachineWithRecipe
+11050,精英线材轧机,MTEBasicMachineWithRecipe
+11051,精英线材轧机 II,MTEBasicMachineWithRecipe
+11052,终极导线成形者,MTEBasicMachineWithRecipe
+11053,史诗导线成形者,MTEBasicMachineWithRecipe
+11054,史诗导线成形者 II,MTEBasicMachineWithRecipe
+11055,史诗导线成形者 III,MTEBasicMachineWithRecipe
+11056,史诗导线成形者 IV,MTEBasicMachineWithRecipe
+11070,精英电弧炉,MTEBasicMachineWithRecipe
+11071,精英电弧炉 II,MTEBasicMachineWithRecipe
+11072,终极短路加热者,MTEBasicMachineWithRecipe
+11073,史诗短路加热者,MTEBasicMachineWithRecipe
+11074,史诗短路加热者 II,MTEBasicMachineWithRecipe
+11075,史诗短路加热者 III,MTEBasicMachineWithRecipe
+11076,史诗短路加热者 IV,MTEBasicMachineWithRecipe
+11080,精英离心机,MTEBasicMachineWithRecipe
+11081,精英离心机 II,MTEBasicMachineWithRecipe
+11082,终极分子龙卷风,MTEBasicMachineWithRecipe
+11083,史诗分子龙卷风,MTEBasicMachineWithRecipe
+11084,史诗分子龙卷风 II,MTEBasicMachineWithRecipe
+11085,史诗分子龙卷风 III,MTEBasicMachineWithRecipe
+11086,史诗分子龙卷风 IV,MTEBasicMachineWithRecipe
+11090,精英等离子电弧炉,MTEBasicMachineWithRecipe
+11091,精英等离子电弧炉 II,MTEBasicMachineWithRecipe
+11092,终极等离子射流加热器,MTEBasicMachineWithRecipe
+11093,史诗等离子射流加热器,MTEBasicMachineWithRecipe
+11094,史诗等离子射流加热器 II,MTEBasicMachineWithRecipe
+11095,史诗等离子射流加热器 III,MTEBasicMachineWithRecipe
+11096,史诗等离子射流加热器 IV,MTEBasicMachineWithRecipe
+11100,基础世界加速器,MTEWorldAccelerator
+11101,进阶世界加速器,MTEWorldAccelerator
+11102,进阶世界加速器 II,MTEWorldAccelerator
+11103,进阶世界加速器 III,MTEWorldAccelerator
+11104,进阶世界加速器 IV,MTEWorldAccelerator
+11105,精英世界加速器,MTEWorldAccelerator
+11106,精英世界加速器 II,MTEWorldAccelerator
+11107,终极时间扭曲装置,MTEWorldAccelerator
+11120,精英酿造室,MTEPotionBrewer
+11121,精英酿造室 II,MTEPotionBrewer
+11122,终极秘方酿制者,MTEPotionBrewer
+11123,史诗秘方酿制者,MTEPotionBrewer
+11124,史诗秘方酿制者 II,MTEPotionBrewer
+11125,史诗秘方酿制者 III,MTEPotionBrewer
+11126,史诗秘方酿制者 IV,MTEPotionBrewer
+11130,精英装罐机,MTEBasicMachineWithRecipe
+11131,精英装罐机 II,MTEBasicMachineWithRecipe
+11132,终极罐头操纵者,MTEBasicMachineWithRecipe
+11133,史诗罐头操纵者,MTEBasicMachineWithRecipe
+11134,史诗罐头操纵者 II,MTEBasicMachineWithRecipe
+11135,史诗罐头操纵者 III,MTEBasicMachineWithRecipe
+11136,史诗罐头操纵者 IV,MTEBasicMachineWithRecipe
+11140,精英化学浸洗机,MTEBasicMachineWithRecipe
+11141,精英化学浸洗机 II,MTEBasicMachineWithRecipe
+11142,终极化学浸渍者,MTEBasicMachineWithRecipe
+11143,史诗化学浸渍者,MTEBasicMachineWithRecipe
+11144,史诗化学浸渍者 II,MTEBasicMachineWithRecipe
+11145,史诗化学浸渍者 III,MTEBasicMachineWithRecipe
+11146,史诗化学浸渍者 IV,MTEBasicMachineWithRecipe
+11150,精英化学反应釜,MTEBasicMachineWithRecipe
+11151,精英化学反应釜 II,MTEBasicMachineWithRecipe
+11152,终极化学反应执行者,MTEBasicMachineWithRecipe
+11153,史诗化学反应执行者,MTEBasicMachineWithRecipe
+11154,史诗化学反应执行者 II,MTEBasicMachineWithRecipe
+11155,史诗化学反应执行者 III,MTEBasicMachineWithRecipe
+11156,史诗化学反应执行者 IV,MTEBasicMachineWithRecipe
+11170,精英发酵槽,MTEBasicMachineWithRecipe
+11171,精英发酵槽 II,MTEBasicMachineWithRecipe
+11172,终极发酵激励者,MTEBasicMachineWithRecipe
+11173,史诗发酵激励者,MTEBasicMachineWithRecipe
+11174,史诗发酵激励者 II,MTEBasicMachineWithRecipe
+11175,史诗发酵激励者 III,MTEBasicMachineWithRecipe
+11176,史诗发酵激励者 IV,MTEBasicMachineWithRecipe
+11180,精英流体灌装机,MTEBasicMachineWithRecipe
+11181,精英流体灌装机 II,MTEBasicMachineWithRecipe
+11182,终极液罐执行者,MTEBasicMachineWithRecipe
+11183,史诗液罐执行者,MTEBasicMachineWithRecipe
+11184,史诗液罐执行者 II,MTEBasicMachineWithRecipe
+11185,史诗液罐执行者 III,MTEBasicMachineWithRecipe
+11186,史诗液罐执行者 IV,MTEBasicMachineWithRecipe
+11190,精英流体提取机,MTEBasicMachineWithRecipe
+11191,精英流体提取机 II,MTEBasicMachineWithRecipe
+11192,终极液化抽吸者,MTEBasicMachineWithRecipe
+11193,史诗液化抽吸者,MTEBasicMachineWithRecipe
+11194,史诗液化抽吸者 II,MTEBasicMachineWithRecipe
+11195,史诗液化抽吸者 III,MTEBasicMachineWithRecipe
+11196,史诗液化抽吸者 IV,MTEBasicMachineWithRecipe
+11200,精英流体加热器,MTEBasicMachineWithRecipe
+11201,精英流体加热器 II,MTEBasicMachineWithRecipe
+11202,终极热量注入者,MTEBasicMachineWithRecipe
+11203,史诗热量注入者,MTEBasicMachineWithRecipe
+11204,史诗热量注入者 II,MTEBasicMachineWithRecipe
+11205,史诗热量注入者 III,MTEBasicMachineWithRecipe
+11206,史诗热量注入者 IV,MTEBasicMachineWithRecipe
+11210,精英搅拌机,MTEBasicMachineWithRecipe
+11211,精英搅拌机 II,MTEBasicMachineWithRecipe
+11212,终极物质组织者,MTEBasicMachineWithRecipe
+11213,史诗物质组织者,MTEBasicMachineWithRecipe
+11214,史诗物质组织者 II,MTEBasicMachineWithRecipe
+11215,史诗物质组织者 III,MTEBasicMachineWithRecipe
+11216,史诗物质组织者 IV,MTEBasicMachineWithRecipe
+11220,UHV变压器,MTETransformer
+11221,UEV变压器,MTETransformer
+11222,UIV变压器,MTETransformer
+11223,UMV变压器,MTETransformer
+11224,UXV变压器,MTETransformer
+11230,UEV机器外壳,MTEBasicHull
+11231,UIV机器外壳,MTEBasicHull
+11232,UMV机器外壳,MTEBasicHull
+11233,UXV机器外壳,MTEBasicHull
+11234,MAX机器外壳,MTEBasicHull
+11240,超极限压电池箱,MTEBasicBatteryBuffer
+11241,极强导压电池箱,MTEBasicBatteryBuffer
+11242,极剧差压电池箱,MTEBasicBatteryBuffer
+11243,极上拓压电池箱,MTEBasicBatteryBuffer
+11245,MAX电池箱,MTEBasicBatteryBuffer
+11250,超极限压电池箱,MTEBasicBatteryBuffer
+11251,极强导压电池箱,MTEBasicBatteryBuffer
+11252,极剧差压电池箱,MTEBasicBatteryBuffer
+11253,极上拓压电池箱,MTEBasicBatteryBuffer
+11255,MAX电池箱,MTEBasicBatteryBuffer
+11260,超极限压电池箱,MTEBasicBatteryBuffer
+11261,极强导压电池箱,MTEBasicBatteryBuffer
+11262,极剧差压电池箱,MTEBasicBatteryBuffer
+11263,极上拓压电池箱,MTEBasicBatteryBuffer
+11265,MAX电池箱,MTEBasicBatteryBuffer
+11270,超极限压电池箱,MTEBasicBatteryBuffer
+11271,极强导压电池箱,MTEBasicBatteryBuffer
+11272,极剧差压电池箱,MTEBasicBatteryBuffer
+11273,极上拓压电池箱,MTEBasicBatteryBuffer
+11275,MAX电池箱,MTEBasicBatteryBuffer
+11280,超极限压电池充电器,MTECharger
+11281,极强导压电池充电器,MTECharger
+11282,极剧差压电池充电器,MTECharger
+11283,极上拓压电池充电器,MTECharger
+11290,UEV动力仓,MTEHatchDynamo
+11291,UIV动力仓,MTEHatchDynamo
+11292,UMV动力仓,MTEHatchDynamo
+11293,UXV动力仓,MTEHatchDynamo
+11300,UEV能源仓,MTEHatchEnergy
+11301,UIV能源仓,MTEHatchEnergy
+11302,UMV能源仓,MTEHatchEnergy
+11303,UXV能源仓,MTEHatchEnergy
+11304,Debug能源仓,MTEHatchEnergyDebug
+11305,Debug输入总线,MTEHatchInputBusDebug
+11306,Debug输入仓,MTEHatchInputDebug
+11310,1x基岩导线,MTECable
+11311,2x基岩导线,MTECable
+11312,4x基岩导线,MTECable
+11313,8x基岩导线,MTECable
+11314,12x基岩导线,MTECable
+11315,16x基岩导线,MTECable
+11316,1x基岩线缆,MTECable
+11317,2x基岩线缆,MTECable
+11318,4x基岩线缆,MTECable
+11319,8x基岩线缆,MTECable
+11320,12x基岩线缆,MTECable
+11321,16x基岩线缆,MTECable
+11330,1x龙导线,MTECable
+11331,2x龙导线,MTECable
+11332,4x龙导线,MTECable
+11333,8x龙导线,MTECable
+11334,12x龙导线,MTECable
+11335,16x龙导线,MTECable
+11336,1x龙线缆,MTECable
+11337,2x龙线缆,MTECable
+11338,4x龙线缆,MTECable
+11339,8x龙线缆,MTECable
+11340,12x龙线缆,MTECable
+11341,16x龙线缆,MTECable
+11350,1x下界之星导线,MTECable
+11351,2x下界之星导线,MTECable
+11352,4x下界之星导线,MTECable
+11353,8x下界之星导线,MTECable
+11354,12x下界之星导线,MTECable
+11355,16x下界之星导线,MTECable
+11356,1x下界之星线缆,MTECable
+11357,2x下界之星线缆,MTECable
+11358,4x下界之星线缆,MTECable
+11359,8x下界之星线缆,MTECable
+11360,12x下界之星线缆,MTECable
+11361,16x下界之星线缆,MTECable
+11370,1x量子导线,MTECable
+11371,2x量子导线,MTECable
+11372,4x量子导线,MTECable
+11373,8x量子导线,MTECable
+11374,12x量子导线,MTECable
+11375,16x量子导线,MTECable
+11376,1x量子线缆,MTECable
+11377,2x量子线缆,MTECable
+11378,4x量子线缆,MTECable
+11379,8x量子线缆,MTECable
+11380,12x量子线缆,MTECable
+11381,16x量子线缆,MTECable
+11390,1x黑钚导线,MTECable
+11391,2x黑钚导线,MTECable
+11392,4x黑钚导线,MTECable
+11393,8x黑钚导线,MTECable
+11394,12x黑钚导线,MTECable
+11395,16x黑钚导线,MTECable
+11410,1x觉醒龙导线,MTECable
+11411,2x觉醒龙导线,MTECable
+11412,4x觉醒龙导线,MTECable
+11413,8x觉醒龙导线,MTECable
+11414,12x觉醒龙导线,MTECable
+11415,16x觉醒龙导线,MTECable
+11430,1x无尽导线,MTECable
+11431,2x无尽导线,MTECable
+11432,4x无尽导线,MTECable
+11433,8x无尽导线,MTECable
+11434,12x无尽导线,MTECable
+11435,16x无尽导线,MTECable
+11450,1x三元金属导线,MTECable
+11451,2x三元金属导线,MTECable
+11452,4x三元金属导线,MTECable
+11453,8x三元金属导线,MTECable
+11454,12x三元金属导线,MTECable
+11455,16x三元金属导线,MTECable
+11456,1x三元金属线缆,MTECable
+11457,2x三元金属线缆,MTECable
+11458,4x三元金属线缆,MTECable
+11459,8x三元金属线缆,MTECable
+11460,12x三元金属线缆,MTECable
+11461,16x三元金属线缆,MTECable
+11470,1x高速钢-S导线,MTECable
+11471,2x高速钢-S导线,MTECable
+11472,4x高速钢-S导线,MTECable
+11473,8x高速钢-S导线,MTECable
+11474,12x高速钢-S导线,MTECable
+11475,16x高速钢-S导线,MTECable
+11476,1x高速钢-S线缆,MTECable
+11477,2x高速钢-S线缆,MTECable
+11478,4x高速钢-S线缆,MTECable
+11479,8x高速钢-S线缆,MTECable
+11480,12x高速钢-S线缆,MTECable
+11481,16x高速钢-S线缆,MTECable
+11490,1x磁钢导线,MTECable
+11491,2x磁钢导线,MTECable
+11492,4x磁钢导线,MTECable
+11493,8x磁钢导线,MTECable
+11494,12x磁钢导线,MTECable
+11495,16x磁钢导线,MTECable
+11496,1x磁钢线缆,MTECable
+11497,2x磁钢线缆,MTECable
+11498,4x磁钢线缆,MTECable
+11499,8x磁钢线缆,MTECable
+11500,12x磁钢线缆,MTECable
+11501,16x磁钢线缆,MTECable
+11510,1x充能合金导线,MTECable
+11511,2x充能合金导线,MTECable
+11512,4x充能合金导线,MTECable
+11513,8x充能合金导线,MTECable
+11514,12x充能合金导线,MTECable
+11515,16x充能合金导线,MTECable
+11516,1x充能合金线缆,MTECable
+11517,2x充能合金线缆,MTECable
+11518,4x充能合金线缆,MTECable
+11519,8x充能合金线缆,MTECable
+11520,12x充能合金线缆,MTECable
+11521,16x充能合金线缆,MTECable
+11530,1x脉冲合金导线,MTECable
+11531,2x脉冲合金导线,MTECable
+11532,4x脉冲合金导线,MTECable
+11533,8x脉冲合金导线,MTECable
+11534,12x脉冲合金导线,MTECable
+11535,16x脉冲合金导线,MTECable
+11536,1x脉冲合金线缆,MTECable
+11537,2x脉冲合金线缆,MTECable
+11538,4x脉冲合金线缆,MTECable
+11539,8x脉冲合金线缆,MTECable
+11540,12x脉冲合金线缆,MTECable
+11541,16x脉冲合金线缆,MTECable
+11550,1x旋律合金导线,MTECable
+11551,2x旋律合金导线,MTECable
+11552,4x旋律合金导线,MTECable
+11553,8x旋律合金导线,MTECable
+11554,12x旋律合金导线,MTECable
+11555,16x旋律合金导线,MTECable
+11556,1x旋律合金线缆,MTECable
+11557,2x旋律合金线缆,MTECable
+11558,4x旋律合金线缆,MTECable
+11559,8x旋律合金线缆,MTECable
+11560,12x旋律合金线缆,MTECable
+11561,16x旋律合金线缆,MTECable
+11570,1x恒星合金导线,MTECable
+11571,2x恒星合金导线,MTECable
+11572,4x恒星合金导线,MTECable
+11573,8x恒星合金导线,MTECable
+11574,12x恒星合金导线,MTECable
+11575,16x恒星合金导线,MTECable
+11576,1x恒星合金线缆,MTECable
+11577,2x恒星合金线缆,MTECable
+11578,4x恒星合金线缆,MTECable
+11579,8x恒星合金线缆,MTECable
+11580,12x恒星合金线缆,MTECable
+11581,16x恒星合金线缆,MTECable
+11590,1x高速钢-E导线,MTECable
+11591,2x高速钢-E导线,MTECable
+11592,4x高速钢-E导线,MTECable
+11593,8x高速钢-E导线,MTECable
+11594,12x高速钢-E导线,MTECable
+11595,16x高速钢-E导线,MTECable
+11596,1x高速钢-E线缆,MTECable
+11597,2x高速钢-E线缆,MTECable
+11598,4x高速钢-E线缆,MTECable
+11599,8x高速钢-E线缆,MTECable
+11600,12x高速钢-E线缆,MTECable
+11601,16x高速钢-E线缆,MTECable
+11610,1x铱锇合金导线,MTECable
+11611,2x铱锇合金导线,MTECable
+11612,4x铱锇合金导线,MTECable
+11613,8x铱锇合金导线,MTECable
+11614,12x铱锇合金导线,MTECable
+11615,16x铱锇合金导线,MTECable
+11616,1x铱锇合金线缆,MTECable
+11617,2x铱锇合金线缆,MTECable
+11618,4x铱锇合金线缆,MTECable
+11619,8x铱锇合金线缆,MTECable
+11620,12x铱锇合金线缆,MTECable
+11621,16x铱锇合金线缆,MTECable
+11910,UEV高电流变压器,MTETransformerHiAmp
+11911,UIV高电流变压器,MTETransformerHiAmp
+11912,UMV高电流变压器,MTETransformerHiAmp
+11913,UXV高电流变压器,MTETransformerHiAmp
+11989,UHV高电流变压器,MTETransformerHiAmp
+12000,ULV高能变压器,MTEWetTransformer
+12001,LV高能变压器,MTEWetTransformer
+12002,MV高能变压器,MTEWetTransformer
+12003,HV高能变压器,MTEWetTransformer
+12004,EV高能变压器,MTEWetTransformer
+12005,IV高能变压器,MTEWetTransformer
+12006,LuV高能变压器,MTEWetTransformer
+12007,ZPM高能变压器,MTEWetTransformer
+12008,UV高能变压器,MTEWetTransformer
+12009,UHV高能变压器,MTEWetTransformer
+12010,UEV高能变压器,MTEWetTransformer
+12011,UIV高能变压器,MTEWetTransformer
+12012,UMV高能变压器,MTEWetTransformer
+12013,UXV高能变压器,MTEWetTransformer
+12020,大型空气过滤机T1,MTEAirFilter1
+12021,大型空气过滤机T2,MTEAirFilter2
+12022,大型空气过滤机T3,MTEAirFilter3
+12040,超低压涡轮充电器,MTETurboCharger
+12041,低压涡轮充电器,MTETurboCharger
+12042,中压涡轮充电器,MTETurboCharger
+12043,高压涡轮充电器,MTETurboCharger
+12044,超高压涡轮充电器,MTETurboCharger
+12045,强导压涡轮充电器,MTETurboCharger
+12046,剧差压涡轮充电器,MTETurboCharger
+12047,零点压涡轮充电器,MTETurboCharger
+12048,极限压涡轮充电器,MTETurboCharger
+12049,极高压涡轮充电器,MTETurboCharger
+12060,超极限压缓存器,MTEChestBuffer
+12061,极强导压缓存器,MTEChestBuffer
+12062,极剧差压缓存器,MTEChestBuffer
+12070,去命名器,MTENameRemover
+12071,强化台,MTEModificationTable
+12080,低温岩浆固化者R-9200,MTERockBreaker
+12081,低温岩浆固化者R-10200,MTERockBreaker
+12082,低温岩浆固化者R-11200,MTERockBreaker
+12083,低温岩浆固化者R-12200,MTERockBreaker
+12084,低温岩浆固化者R-13200,MTERockBreaker
+12085,低温岩浆固化者R-14200,MTERockBreaker
+12086,低温岩浆固化者R-15200,MTERockBreaker
+12090,终极电路组装机,MTEBasicMachineWithRecipe
+12091,终极电路组装机 II,MTEBasicMachineWithRecipe
+12092,终极电路组装机 III,MTEBasicMachineWithRecipe
+12093,终极电路组装机 IV,MTEBasicMachineWithRecipe
+12094,终极电路组装机 V,MTEBasicMachineWithRecipe
+12096,MAX电路组装机,MTEBasicMachineWithRecipe
+12097,输入仓(UEV),MTEHatchInput
+12098,输入仓(UIV),MTEHatchInput
+12099,输入仓(UMV),MTEHatchInput
+12100,输入仓(UXV),MTEHatchInput
+12102,输入仓(MAX),MTEHatchInput
+12103,输出仓(UEV),MTEHatchOutput
+12104,输出仓(UIV),MTEHatchOutput
+12105,输出仓(UMV),MTEHatchOutput
+12106,输出仓(UXV),MTEHatchOutput
+12108,输出仓(MAX),MTEHatchOutput
+12109,虚空仓,MTEHatchVoid
+12110,虚空总线,MTEHatchVoidBus
+12600,LESU,MTELESU
+12601,能量分配器(ULV),MTEEnergyDistributor
+12602,能量分配器(LV),MTEEnergyDistributor
+12603,能量分配器(MV),MTEEnergyDistributor
+12604,能量分配器(HV),MTEEnergyDistributor
+12605,能量分配器(EV),MTEEnergyDistributor
+12606,能量分配器(IV),MTEEnergyDistributor
+12607,能量分配器(LuV),MTEEnergyDistributor
+12608,能量分配器(ZPM),MTEEnergyDistributor
+12609,能量分配器(UV),MTEEnergyDistributor
+12610,能量分配器(UHV),MTEEnergyDistributor
+12611,能量分配器(UEV),MTEEnergyDistributor
+12612,能量分配器(UIV),MTEEnergyDistributor
+12613,能量分配器(UMV),MTEEnergyDistributor
+12614,能量分配器(UXV),MTEEnergyDistributor
+12615,能量分配器(MAX),MTEEnergyDistributor
+12617,线缆二极管 2A ULV,MTEDiode
+12618,线缆二极管 2A LV,MTEDiode
+12619,线缆二极管 2A MV,MTEDiode
+12620,线缆二极管 2A HV,MTEDiode
+12621,线缆二极管 2A EV,MTEDiode
+12622,线缆二极管 2A IV,MTEDiode
+12623,线缆二极管 2A LuV,MTEDiode
+12624,线缆二极管 2A ZPM,MTEDiode
+12625,线缆二极管 2A UV,MTEDiode
+12626,线缆二极管 2A UHV,MTEDiode
+12627,线缆二极管 2A UEV,MTEDiode
+12628,线缆二极管 2A UIV,MTEDiode
+12629,线缆二极管 2A UMV,MTEDiode
+12630,线缆二极管 2A UXV,MTEDiode
+12631,线缆二极管 2A MAX,MTEDiode
+12633,线缆二极管 4A ULV,MTEDiode
+12634,线缆二极管 4A LV,MTEDiode
+12635,线缆二极管 4A MV,MTEDiode
+12636,线缆二极管 4A HV,MTEDiode
+12637,线缆二极管 4A EV,MTEDiode
+12638,线缆二极管 4A IV,MTEDiode
+12639,线缆二极管 4A LuV,MTEDiode
+12640,线缆二极管 4A ZPM,MTEDiode
+12641,线缆二极管 4A UV,MTEDiode
+12642,线缆二极管 4A UHV,MTEDiode
+12643,线缆二极管 4A UEV,MTEDiode
+12644,线缆二极管 4A UIV,MTEDiode
+12645,线缆二极管 4A UMV,MTEDiode
+12646,线缆二极管 4A UXV,MTEDiode
+12647,线缆二极管 4A MAX,MTEDiode
+12649,线缆二极管 8A ULV,MTEDiode
+12650,线缆二极管 8A LV,MTEDiode
+12651,线缆二极管 8A MV,MTEDiode
+12652,线缆二极管 8A HV,MTEDiode
+12653,线缆二极管 8A EV,MTEDiode
+12654,线缆二极管 8A IV,MTEDiode
+12655,线缆二极管 8A LuV,MTEDiode
+12656,线缆二极管 8A ZPM,MTEDiode
+12657,线缆二极管 8A UV,MTEDiode
+12658,线缆二极管 8A UHV,MTEDiode
+12659,线缆二极管 8A UEV,MTEDiode
+12660,线缆二极管 8A UIV,MTEDiode
+12661,线缆二极管 8A UMV,MTEDiode
+12662,线缆二极管 8A UXV,MTEDiode
+12663,线缆二极管 8A MAX,MTEDiode
+12665,线缆二极管 12A ULV,MTEDiode
+12666,线缆二极管 12A LV,MTEDiode
+12667,线缆二极管 12A MV,MTEDiode
+12668,线缆二极管 12A HV,MTEDiode
+12669,线缆二极管 12A EV,MTEDiode
+12670,线缆二极管 12A IV,MTEDiode
+12671,线缆二极管 12A LuV,MTEDiode
+12672,线缆二极管 12A ZPM,MTEDiode
+12673,线缆二极管 12A UV,MTEDiode
+12674,线缆二极管 12A UHV,MTEDiode
+12675,线缆二极管 12A UEV,MTEDiode
+12676,线缆二极管 12A UIV,MTEDiode
+12677,线缆二极管 12A UMV,MTEDiode
+12678,线缆二极管 12A UXV,MTEDiode
+12679,线缆二极管 12A MAX,MTEDiode
+12681,线缆二极管 16A ULV,MTEDiode
+12682,线缆二极管 16A LV,MTEDiode
+12683,线缆二极管 16A MV,MTEDiode
+12684,线缆二极管 16A HV,MTEDiode
+12685,线缆二极管 16A EV,MTEDiode
+12686,线缆二极管 16A IV,MTEDiode
+12687,线缆二极管 16A LuV,MTEDiode
+12688,线缆二极管 16A ZPM,MTEDiode
+12689,线缆二极管 16A UV,MTEDiode
+12690,线缆二极管 16A UHV,MTEDiode
+12691,线缆二极管 16A UEV,MTEDiode
+12692,线缆二极管 16A UIV,MTEDiode
+12693,线缆二极管 16A UMV,MTEDiode
+12694,线缆二极管 16A UXV,MTEDiode
+12695,线缆二极管 16A MAX,MTEDiode
+12697,可调变压器,MTEManualTrafo
+12698,风车,MTEWindmill
+12699,生物实验室,MTEBioLab
+12700,生物实验室,MTEBioLab
+12701,生物实验室,MTEBioLab
+12702,生物实验室,MTEBioLab
+12703,生物实验室,MTEBioLab
+12704,生物实验室,MTEBioLab
+12705,生物实验室,MTEBioLab
+12706,生物实验室,MTEBioLab
+12707,生物实验室,MTEBioLab
+12708,生物实验室,MTEBioLab
+12712,细菌培养缸,MTEBioVat
+12713,放射仓,MTERadioHatch
+12726,酸性发电机 MV,MTEAcidGenerator
+12727,酸性发电机 HV,MTEAcidGenerator
+12728,酸性发电机 EV,MTEAcidGenerator
+12729,深地热泵,MTEDeepEarthHeatingPump
+12730,巨型工业高炉,MTEMegaBlastFurnaceLegacy
+12731,巨型真空冷冻机,MTEMegaVacuumFreezerLegacy
+12732,大型硅岩反应堆,MTEMultiNqGeneratorLegacy
+12733,钍高温反应堆,MTEThoriumHighTempReactor
+12734,电动聚爆压缩机,MTEElectricImplosionCompressorLegacy
+12735,电路装配线,MTECircuitAssemblyLine
+12736,液态空气仓,MTECompressedFluidHatch
+12737,巨型输出仓,MTEGiantOutputHatch
+12738,巨型蒸馏塔,MTEMegaDistillTowerLegacy
+12739,虚空采矿场 III,VMUV
+12740,虚空采矿场 II,VMZPM
+12741,虚空采矿场 I,VMLUV
+12742,酸性发电机 IV,MTEAcidGenerator
+12791,高温气冷反应堆,MTEHighTempGasCooledReactor
+12792,极限工业温室,MTEExtremeIndustrialGreenhouse
+12793,酸性发电机 LV,MTEAcidGenerator
+12799,巨型输入仓,MTEHumongousInputHatch
+12800,Debug扫描仪,MTECreativeScanner
+13001,Research Completer,MTEResearchCompleter
+13101,固体氧化物燃料电池 MK-I,MTESOFuelCellMK1
+13102,固体氧化物燃料电池 MK-II,MTESOFuelCellMK2
+13104,T.F.F.T,MTETankTFFT
+13106,兰波顿超级电容库,MTELapotronicSuperCapacitor
+13109,T.F.F.T多重输入/输出仓,MTEHatchTFFT
+13115,微型虫洞发生器,MTEWormholeGenerator
+13366,巨型化学反应釜,MTEMegaChemicalReactorLegacy
+13367,巨型石油裂化机,MTEMegaOilCracker
+13532,进阶装配线,MTEAdvAssLine
+13533,共享输入总线,MTELinkedInputBus
+14001,戴森云地面单元,TileEntityDysonSwarm
+14002,行星气体钻机,TileEntityPlanetaryGasSiphonLegacy
+14003,太空电梯,TileEntitySpaceElevator
+14004,太空组装模块MK-I,TileEntityModuleAssemblerT1
+14005,太空组装模块MK-II,TileEntityModuleAssemblerT2
+14006,太空组装模块MK-III,TileEntityModuleAssemblerT3
+14007,太空采矿模块MK-I,TileEntityModuleMinerT1
+14008,太空采矿模块MK-II,TileEntityModuleMinerT2
+14009,太空采矿模块MK-III,TileEntityModuleMinerT3
+14010,太空钻机模块MK-I,TileEntityModulePumpT1
+14011,太空钻机模块MK-II,TileEntityModulePumpT2
+14012,太空项目管理器,TileEntityModuleManager
+14013,太空研究模块,TileEntityModuleResearch
+14014,太空钻机模块MK-III,TileEntityModulePumpT3
+14050,异星铸造塔,MTEExoFoundry
+14101,大型分子装配室,MTELargeMolecularAssembler
+14201,Extreme Entity Crusher,MTEExtremeEntityCrusher
+14202,巨型工业蜂箱,MTEMegaIndustrialApiary
+14203,电极仓,MTEElectrodeHatch
+14204,电极检测仓,MTEElectrodeDetectorHatch
+14301,基础电动唱片机,MTEBetterJukebox
+14302,进阶电动唱片机,MTEBetterJukebox
+14303,进阶电动唱片机 II,MTEBetterJukebox
+14304,超级唱片机,MTEBetterJukebox
+14305,混音公爵3D唱片机,MTEBetterJukebox
+14600,无线能量监视器,MTEWirelessEnergyMonitor
+15040,充能无线动力仓,MTEHatchWirelessDynamoMulti
+15065,4安EV无线能源仓,MTEHatchWirelessMulti
+15066,16安EV无线能源仓,MTEHatchWirelessMulti
+15067,64安EV无线能源仓,MTEHatchWirelessMulti
+15068,4安IV无线能源仓,MTEHatchWirelessMulti
+15069,16安IV无线能源仓,MTEHatchWirelessMulti
+15070,64安IV无线能源仓,MTEHatchWirelessMulti
+15071,4安LuV无线能源仓,MTEHatchWirelessMulti
+15072,16安LuV无线能源仓,MTEHatchWirelessMulti
+15073,64安LuV无线能源仓,MTEHatchWirelessMulti
+15074,4安ZPM无线能源仓,MTEHatchWirelessMulti
+15075,16安ZPM无线能源仓,MTEHatchWirelessMulti
+15076,64安ZPM无线能源仓,MTEHatchWirelessMulti
+15077,4安UV无线能源仓,MTEHatchWirelessMulti
+15078,16安UV无线能源仓,MTEHatchWirelessMulti
+15079,64安UV无线能源仓,MTEHatchWirelessMulti
+15080,4安UHV无线能源仓,MTEHatchWirelessMulti
+15081,16安UHV无线能源仓,MTEHatchWirelessMulti
+15082,64安UHV无线能源仓,MTEHatchWirelessMulti
+15083,4安UEV无线能源仓,MTEHatchWirelessMulti
+15084,16安UEV无线能源仓,MTEHatchWirelessMulti
+15085,64安UEV无线能源仓,MTEHatchWirelessMulti
+15086,4安UIV无线能源仓,MTEHatchWirelessMulti
+15087,16安UIV无线能源仓,MTEHatchWirelessMulti
+15088,64安UIV无线能源仓,MTEHatchWirelessMulti
+15089,4安UMV无线能源仓,MTEHatchWirelessMulti
+15090,16安UMV无线能源仓,MTEHatchWirelessMulti
+15091,64安UMV无线能源仓,MTEHatchWirelessMulti
+15092,4安UXV无线能源仓,MTEHatchWirelessMulti
+15093,16安UXV无线能源仓,MTEHatchWirelessMulti
+15094,64安UXV无线能源仓,MTEHatchWirelessMulti
+15095,4安MAX无线能源仓,MTEHatchWirelessMulti
+15096,16安MAX无线能源仓,MTEHatchWirelessMulti
+15097,64安MAX无线能源仓,MTEHatchWirelessMulti
+15100,4安IV能源仓,MTEHatchEnergyMulti
+15101,4安LuV能源仓,MTEHatchEnergyMulti
+15102,4安ZPM能源仓,MTEHatchEnergyMulti
+15103,4安UV能源仓,MTEHatchEnergyMulti
+15104,4安UHV能源仓,MTEHatchEnergyMulti
+15105,4安UEV能源仓,MTEHatchEnergyMulti
+15106,4安UIV能源仓,MTEHatchEnergyMulti
+15107,4安UMV能源仓,MTEHatchEnergyMulti
+15108,4安UXV能源仓,MTEHatchEnergyMulti
+15109,4安EV能源仓,MTEHatchEnergyMulti
+15110,16安IV能源仓,MTEHatchEnergyMulti
+15111,16安LuV能源仓,MTEHatchEnergyMulti
+15112,16安ZPM能源仓,MTEHatchEnergyMulti
+15113,16安UV能源仓,MTEHatchEnergyMulti
+15114,16安UHV能源仓,MTEHatchEnergyMulti
+15115,16安UEV能源仓,MTEHatchEnergyMulti
+15116,16安UIV能源仓,MTEHatchEnergyMulti
+15117,16安UMV能源仓,MTEHatchEnergyMulti
+15118,16安UXV能源仓,MTEHatchEnergyMulti
+15119,16安EV能源仓,MTEHatchEnergyMulti
+15120,64安IV能源仓,MTEHatchEnergyMulti
+15121,64安LuV能源仓,MTEHatchEnergyMulti
+15122,64安ZPM能源仓,MTEHatchEnergyMulti
+15123,64安UV能源仓,MTEHatchEnergyMulti
+15124,64安UHV能源仓,MTEHatchEnergyMulti
+15125,64安UEV能源仓,MTEHatchEnergyMulti
+15126,64安UIV能源仓,MTEHatchEnergyMulti
+15127,64安UMV能源仓,MTEHatchEnergyMulti
+15128,64安UXV能源仓,MTEHatchEnergyMulti
+15129,64安EV能源仓,MTEHatchEnergyMulti
+15130,IV 256A 激光靶仓,MTEHatchEnergyTunnel
+15131,LuV 256A 激光靶仓,MTEHatchEnergyTunnel
+15132,ZPM 256A 激光靶仓,MTEHatchEnergyTunnel
+15133,UV 256A 激光靶仓,MTEHatchEnergyTunnel
+15134,UHV 256A 激光靶仓,MTEHatchEnergyTunnel
+15135,UEV 256A 激光靶仓,MTEHatchEnergyTunnel
+15136,UIV 256A 激光靶仓,MTEHatchEnergyTunnel
+15137,UMV 256A 激光靶仓,MTEHatchEnergyTunnel
+15138,UXV 256A 激光靶仓,MTEHatchEnergyTunnel
+15141,"LuV 1,024A 激光靶仓",MTEHatchEnergyTunnel
+15142,"ZPM 1,024A 激光靶仓",MTEHatchEnergyTunnel
+15143,"UV 1,024A 激光靶仓",MTEHatchEnergyTunnel
+15144,"UHV 1,024A 激光靶仓",MTEHatchEnergyTunnel
+15145,"UEV 1,024A 激光靶仓",MTEHatchEnergyTunnel
+15146,"UIV 1,024A 激光靶仓",MTEHatchEnergyTunnel
+15147,"UMV 1,024A 激光靶仓",MTEHatchEnergyTunnel
+15148,"UXV 1,024A 激光靶仓",MTEHatchEnergyTunnel
+15152,"ZPM 4,096A 激光靶仓",MTEHatchEnergyTunnel
+15153,"UV 4,096A 激光靶仓",MTEHatchEnergyTunnel
+15154,"UHV 4,096A 激光靶仓",MTEHatchEnergyTunnel
+15155,"UEV 4,096A 激光靶仓",MTEHatchEnergyTunnel
+15156,"UIV 4,096A 激光靶仓",MTEHatchEnergyTunnel
+15157,"UMV 4,096A 激光靶仓",MTEHatchEnergyTunnel
+15158,"UXV 4,096A 激光靶仓",MTEHatchEnergyTunnel
+15163,"UV 16,384A 激光靶仓",MTEHatchEnergyTunnel
+15164,"UHV 16,384A 激光靶仓",MTEHatchEnergyTunnel
+15165,"UEV 16,384A 激光靶仓",MTEHatchEnergyTunnel
+15166,"UIV 16,384A 激光靶仓",MTEHatchEnergyTunnel
+15167,"UMV 16,384A 激光靶仓",MTEHatchEnergyTunnel
+15168,"UXV 16,384A 激光靶仓",MTEHatchEnergyTunnel
+15174,"UHV 65,536A 激光靶仓",MTEHatchEnergyTunnel
+15175,"UEV 65,536A 激光靶仓",MTEHatchEnergyTunnel
+15176,"UIV 65,536A 激光靶仓",MTEHatchEnergyTunnel
+15177,"UMV 65,536A 激光靶仓",MTEHatchEnergyTunnel
+15178,"UXV 65,536A 激光靶仓",MTEHatchEnergyTunnel
+15185,"UEV 262,144A 激光靶仓",MTEHatchEnergyTunnel
+15186,"UIV 262,144A 激光靶仓",MTEHatchEnergyTunnel
+15187,"UMV 262,144A 激光靶仓",MTEHatchEnergyTunnel
+15188,"UXV 262,144A 激光靶仓",MTEHatchEnergyTunnel
+15196,"UIV 1,048,576A 激光靶仓",MTEHatchEnergyTunnel
+15197,"UMV 1,048,576A 激光靶仓",MTEHatchEnergyTunnel
+15198,"UXV 1,048,576A 激光靶仓",MTEHatchEnergyTunnel
+15199,传奇激光靶仓,MTEHatchEnergyTunnel
+15200,4安IV动力仓,MTEHatchDynamoMulti
+15201,4安LuV动力仓,MTEHatchDynamoMulti
+15202,4安ZPM动力仓,MTEHatchDynamoMulti
+15203,4安UV动力仓,MTEHatchDynamoMulti
+15204,4安UHV动力仓,MTEHatchDynamoMulti
+15205,4安UEV动力仓,MTEHatchDynamoMulti
+15206,4安UIV动力仓,MTEHatchDynamoMulti
+15207,4安UMV动力仓,MTEHatchDynamoMulti
+15208,4安UXV动力仓,MTEHatchDynamoMulti
+15209,4安EV动力仓,MTEHatchDynamoMulti
+15210,16安IV动力仓,MTEHatchDynamoMulti
+15211,16安LuV动力仓,MTEHatchDynamoMulti
+15212,16安ZPM动力仓,MTEHatchDynamoMulti
+15213,16安UV动力仓,MTEHatchDynamoMulti
+15214,16安UHV动力仓,MTEHatchDynamoMulti
+15215,16安UEV动力仓,MTEHatchDynamoMulti
+15216,16安UIV动力仓,MTEHatchDynamoMulti
+15217,16安UMV动力仓,MTEHatchDynamoMulti
+15218,16安UXV动力仓,MTEHatchDynamoMulti
+15219,16安EV动力仓,MTEHatchDynamoMulti
+15220,64安IV动力仓,MTEHatchDynamoMulti
+15221,64安LuV动力仓,MTEHatchDynamoMulti
+15222,64安ZPM动力仓,MTEHatchDynamoMulti
+15223,64安UV动力仓,MTEHatchDynamoMulti
+15224,64安UHV动力仓,MTEHatchDynamoMulti
+15225,64安UEV动力仓,MTEHatchDynamoMulti
+15226,64安UIV动力仓,MTEHatchDynamoMulti
+15227,64安UMV动力仓,MTEHatchDynamoMulti
+15228,64安UXV动力仓,MTEHatchDynamoMulti
+15229,64安EV动力仓,MTEHatchDynamoMulti
+15230,IV 256A 激光源仓,MTEHatchDynamoTunnel
+15231,LuV 256A 激光源仓,MTEHatchDynamoTunnel
+15232,ZPM 256A 激光源仓,MTEHatchDynamoTunnel
+15233,UV 256A 激光源仓,MTEHatchDynamoTunnel
+15234,UHV 256A 激光源仓,MTEHatchDynamoTunnel
+15235,UEV 256A 激光源仓,MTEHatchDynamoTunnel
+15236,UIV 256A 激光源仓,MTEHatchDynamoTunnel
+15237,UMV 256A 激光源仓,MTEHatchDynamoTunnel
+15238,UXV 256A 激光源仓,MTEHatchDynamoTunnel
+15239,4安HV动力仓,MTEHatchDynamoMulti
+15241,"LuV 1,024A 激光源仓",MTEHatchDynamoTunnel
+15242,"ZPM 1,024A 激光源仓",MTEHatchDynamoTunnel
+15243,"UV 1,024A 激光源仓",MTEHatchDynamoTunnel
+15244,"UHV 1,024A 激光源仓",MTEHatchDynamoTunnel
+15245,"UEV 1,024A 激光源仓",MTEHatchDynamoTunnel
+15246,"UIV 1,024A 激光源仓",MTEHatchDynamoTunnel
+15247,"UMV 1,024A 激光源仓",MTEHatchDynamoTunnel
+15248,"UXV 1,024A 激光源仓",MTEHatchDynamoTunnel
+15252,"ZPM 4,096A 激光源仓",MTEHatchDynamoTunnel
+15253,"UV 4,096A 激光源仓",MTEHatchDynamoTunnel
+15254,"UHV 4,096A 激光源仓",MTEHatchDynamoTunnel
+15255,"UEV 4,096A 激光源仓",MTEHatchDynamoTunnel
+15256,"UIV 4,096A 激光源仓",MTEHatchDynamoTunnel
+15257,"UMV 4,096A 激光源仓",MTEHatchDynamoTunnel
+15258,"UXV 4,096A 激光源仓",MTEHatchDynamoTunnel
+15263,"UV 16,384A 激光源仓",MTEHatchDynamoTunnel
+15264,"UHV 16,384A 激光源仓",MTEHatchDynamoTunnel
+15265,"UEV 16,384A 激光源仓",MTEHatchDynamoTunnel
+15266,"UIV 16,384A 激光源仓",MTEHatchDynamoTunnel
+15267,"UMV 16,384A 激光源仓",MTEHatchDynamoTunnel
+15268,"UXV 16,384A 激光源仓",MTEHatchDynamoTunnel
+15274,"UHV 65,536A 激光源仓",MTEHatchDynamoTunnel
+15275,"UEV 65,536A 激光源仓",MTEHatchDynamoTunnel
+15276,"UIV 65,536A 激光源仓",MTEHatchDynamoTunnel
+15277,"UMV 65,536A 激光源仓",MTEHatchDynamoTunnel
+15278,"UXV 65,536A 激光源仓",MTEHatchDynamoTunnel
+15285,"UEV 262,144A 激光源仓",MTEHatchDynamoTunnel
+15286,"UIV 262,144A 激光源仓",MTEHatchDynamoTunnel
+15287,"UMV 262,144A 激光源仓",MTEHatchDynamoTunnel
+15288,"UXV 262,144A 激光源仓",MTEHatchDynamoTunnel
+15296,"UIV 1,048,576A 激光源仓",MTEHatchDynamoTunnel
+15297,"UMV 1,048,576A 激光源仓",MTEHatchDynamoTunnel
+15298,"UXV 1,048,576A 激光源仓",MTEHatchDynamoTunnel
+15299,传奇激光源仓,MTEHatchDynamoTunnel
+15300,有源变压器,MTEActiveTransformer
+15310,QoS加权网络交换机,MTENetworkSwitch
+15311,量子计算机,MTEQuantumComputer
+15312,微波发生仪,MTEMicrowave
+15313,数据库,MTEDataBank
+15314,特斯拉电塔,MTETeslaTower
+15315,QoS静态网络交换机,MTENetworkSwitchAdv
+15331,研究站,MTEResearchStation
+15350,能量注入仪,MTEEnergyInfuser
+15410,鸿蒙之眼,MTEEyeOfHarmony
+15411,诸神之锻炉,MTEForgeOfGods
+15412,太阳烈焰能量锻炉,MTESmeltingModule
+15413,太阳射流融化核心,MTEMoltenModule
+15414,太阳热能等离子制造机,MTEPlasmaModule
+15415,太阳聚变异化器,MTEExoticModule
+15430,未定元解析器,MTEHatchUncertainty
+15431,未定元解析器 X,MTEHatchUncertainty
+15440,光学接收接口,MTEHatchDataInput
+15441,光学发送接口,MTEHatchDataOutput
+15442,装配线接收接口,MTEHatchDataItemsInput
+15443,数据库发送接口,MTEHatchDataItemsOutput
+15444,云算力数据服务仓,MTEHatchWirelessComputationOutput
+15445,云算力数据客户仓,MTEHatchWirelessComputationInput
+15446,装配线无线接收接口,MTEHatchWirelessDataItemsInput
+15447,数据库无线发送接口,MTEHatchWirelessDataItemsOutput
+15450,计算机机柜,MTEHatchRack
+15451,物品固定容器,MTEHatchObjectHolder
+15452,电容仓,MTEHatchCapacitor
+15465,激光真空管,MTEPipeLaser
+15466,激光真空反射镜,MTEPipeLaserMirror
+15470,光缆,MTEPipeData
+15472,激光真空管机械方块,MTEPipeBlockLaser
+15473,光缆机械方块,MTEPipeBlockData
+15475,玻色-爱因斯坦凝聚态物质导管,MTEPipeBEC
+15476,玻色-爱因斯坦凝聚态物质仓,MTEHatchBEC
+15477,玻色-爱因斯坦凝聚态物质导管机械方块,MTEPipeBECBlock
+15480,所有者检测机,MTEOwnerDetector
+15485,IV降压变压器,MTEBuckConverter
+15486,LuV降压变压器,MTEBuckConverter
+15487,ZPM降压变压器,MTEBuckConverter
+15488,UV降压变压器,MTEBuckConverter
+15489,UHV降压变压器,MTEBuckConverter
+15490,UEV降压变压器,MTEBuckConverter
+15491,UIV降压变压器,MTEBuckConverter
+15492,UMV降压变压器,MTEBuckConverter
+15493,UXV降压变压器,MTEBuckConverter
+15495,Debug污染生成机,MTEDebugPollutor
+15496,Debug数据仓,MTEHatchCreativeData
+15497,Debug维护仓,MTEHatchCreativeMaintenance
+15498,Debug发电机,MTEDebugPowerGenerator
+15500,256安UXV无线能源仓,MTEHatchWirelessMulti
+15501,"1,024安UXV无线能源仓",MTEHatchWirelessMulti
+15502,"4,096安UXV无线能源仓",MTEHatchWirelessMulti
+15503,"16,384安UXV无线能源仓",MTEHatchWirelessMulti
+15504,"65,536安UXV无线能源仓",MTEHatchWirelessMulti
+15505,"262,144安UXV无线能源仓",MTEHatchWirelessMulti
+15506,"1,048,576安UXV无线能源仓",MTEHatchWirelessMulti
+15510,Debug未定元解析器,MTEHatchCreativeUncertainty
+15511,工业线缆机,MTEIndustrialWireMill
+15512,工业离心机,MTEIndustrialCentrifuge
+15513,亚马逊仓库,MTEIndustrialPackager
+15514,工业电解机,MTEIndustrialElectrolyzer
+15515,巨型化学反应釜,MTEMegaChemicalReactor
+15516,巨型蒸馏塔,MTEMegaDistillationTower
+15517,放热壁炉,MTEExothermicHearth
+15518,吸热冰箱,MTEEndothermicFridge
+15519,特大蒸汽涡轮,MTEXLTurbineSteam
+15520,特大高压蒸汽涡轮,MTEXLTurbineHPSteam
+15521,特大超临界蒸汽涡轮,MTEXLTurbineSCSteam
+15522,特大燃气涡轮,MTEXLTurbineGas
+15523,特大等离子涡轮,MTEXLTurbinePlasma
+15524,大型蒸汽涡轮,MTELargeTurbineSteam
+15525,大型高压蒸汽涡轮,MTELargeTurbineHPSteam
+15526,超临界蒸汽涡轮,MTELargeTurbineSCSteam
+15527,大型燃气涡轮,MTELargeTurbineGas
+15528,大型等离子涡轮,MTELargeTurbinePlasma
+15529,大型青铜锅炉,MTELargeBoilerBronze
+15530,大型钢锅炉,MTELargeBoilerSteel
+15531,大型钛锅炉,MTELargeBoilerTitanium
+15532,大型钨钢锅炉,MTELargeBoilerTungstenSteel
+15533,大型内燃引擎,MTELargeCombustionEngine
+15534,极限内燃引擎,MTEExtremeCombustionEngine
+15535,通用化学燃料引擎,MTEUniversalChemicalFuelEngine
+15536,硅岩燃料精炼厂,MTENaquadahFuelRefinery
+15537,大型硅岩反应堆,MTELargeNaquadahReactor
+15538,工业热力精炼厂,MTEIndustrialThermalCentrifuge
+15539,工业粉碎机,MTEIndustrialMacerator
+15540,工业切割机,MTEIndustrialCuttingMachine
+15541,原木拟生场,MTETreeFarm
+15542,工业筛选机,MTEIndustrialSifter
+15543,工业焦炉,MTEIndustrialCokeOven
+15544,珠海渔场,MTEIndustrialFishingPond
+15545,藻类农场,MTEAlgaePond
+15546,热解炉,MTEPyrolyseOven
+15547,进阶聚爆压缩机,MTEAdvImplosionCompressor
+15548,工业电弧炉,MTEIndustrialArcFurnace
+15549,工业压模机,MTEIndustrialExtruder
+15550,工业洗矿厂,MTEOreWashingPlant
+15551,工业化学浸洗机,MTEIndustrialChemicalBath
+15552,工业冲压机床,MTEIndustrialFormingPress
+15553,工业卷板机,MTEIndustrialBendingMachine
+15554,工业3D打印机,MTEIndustrialChisel
+15555,工业锻造锤,MTEIndustrialForgeHammer
+15556,工业碎石机,MTEIndustrialRockBreaker
+15557,地热锅炉,MTEThermalBoiler
+15558,大型分子重组仪,MTEIndustrialMolecularTransformer
+15559,行星气体钻机,MTEPlanetaryGasSiphon
+15560,工业浮选机,MTEFrothFlotationCell
+15563,电动聚爆压缩机,MTEElectricImplosionCompressor
+15564,集成矿石处理厂,MTEIntegratedOreFactory
+15565,凛冰冷冻机,MTECryogenicFreezer
+15566,工业搅拌机,MTEIndustrialMixer
+15567,无尽流体钻机,MTEOilDrillInfinite
+15568,无人机控制中心,MTEDroneCentre
+15750,熵变处理厂,MTEEntropicProcessor
+15751,放射物衰变库,MTEDecayWarehouse
+15752,L.A.T.E.X.,MTELatex
+15753,Vis-Regulated Maintenance Hatch,MTEMagicalMaintenanceHatch
+15754,玻色-爱因斯坦凝聚态物质纠缠装置,MTEBECGenerator
+15755,玻色-爱因斯坦凝聚态物质约束场,MTEBECStorage
+15756,玻色-爱因斯坦凝聚态物质观测阵列,MTEBECAssembler
+15757,观测阵列传送节点,MTEBECIONode
+15758,纳米蜂群探测仓,MTEHatchNaniteDetector
+15759,传送节点控制仓,MTEHatchIONodeController
+15760,玻色-爱因斯坦凝聚态物质麦克斯韦门,MTEBECDiode
+15761,玻色-爱因斯坦凝聚态探测仓,MTEHatchCondensateDetector
+16000,基础特斯拉收发器,MTETeslaCoil
+16001,进阶特斯拉收发器,MTETeslaCoil
+16002,霄龙特斯拉收发器,MTETeslaCoil
+16003,极限特斯拉收发器,MTETeslaCoil
+16004,疯狂特斯拉收发器,MTETeslaCoil
+16005,基础特斯拉收发器,MTETeslaCoil
+16006,进阶特斯拉收发器,MTETeslaCoil
+16007,霄龙特斯拉收发器,MTETeslaCoil
+16008,极限特斯拉收发器,MTETeslaCoil
+16009,疯狂特斯拉收发器,MTETeslaCoil
+16010,基础特斯拉收发器,MTETeslaCoil
+16011,进阶特斯拉收发器,MTETeslaCoil
+16012,霄龙特斯拉收发器,MTETeslaCoil
+16013,极限特斯拉收发器,MTETeslaCoil
+16014,疯狂特斯拉收发器,MTETeslaCoil
+16015,基础特斯拉收发器,MTETeslaCoil
+16016,进阶特斯拉收发器,MTETeslaCoil
+16017,霄龙特斯拉收发器,MTETeslaCoil
+16018,极限特斯拉收发器,MTETeslaCoil
+16019,疯狂特斯拉收发器,MTETeslaCoil
+16020,"UMV 4,194,304A/t 激光源仓",MTEHatchDynamoTunnel
+16021,"UXV 4,194,304A/t 激光源仓",MTEHatchDynamoTunnel
+16022,"UXV 16,777,216A/t 激光源仓",MTEHatchDynamoTunnel
+16023,"UMV 4,194,304A/t 激光靶仓",MTEHatchEnergyTunnel
+16024,"UXV 4,194,304A/t 激光靶仓",MTEHatchEnergyTunnel
+16025,"UXV 16,777,216A/t 激光靶仓",MTEHatchEnergyTunnel
+16026,"4,194,304安UXV无线能源仓",MTEHatchWirelessMulti
+16027,"16,777,216安UXV无线能源仓",MTEHatchWirelessMulti
+16030,256安UV动力仓,MTEHatchDynamoMulti
+16031,256安UHV动力仓,MTEHatchDynamoMulti
+16032,256安UEV动力仓,MTEHatchDynamoMulti
+16033,256安UIV动力仓,MTEHatchDynamoMulti
+16034,256安UMV动力仓,MTEHatchDynamoMulti
+16035,256安UXV动力仓,MTEHatchDynamoMulti
+16999,硅岩燃料精炼厂,MTEFuelRefineFactoryLegacy
+17000,Hydro Dam,HEHydroDamTileEntity
+17002,Hydro Pump (LV),LV
+17003,Hydro Pump (MV),MV
+17004,Hydro Pump (HV),HV
+17005,Hydro Pump (EV),EV
+17006,Hydro Pump (IV),IV
+17007,Hydro Pump (LuV),LuV
+17008,Hydro Pump (ZPM),ZPM
+17009,Hydro Pump (UV),UV
+17010,Hydro Pump (UHV),UHV
+17011,Hydro Pump (UEV),UEV
+17012,Hydro Pump (UIV),UIV
+17013,Hydro Pump (UMV),UMV
+17014,Hydro Pump (UXV),UXV
+17015,Hydro Pump (MAX),MAX
+17018,Hydro Turbine (LV),LV
+17019,Hydro Turbine (MV),MV
+17020,Hydro Turbine (HV),HV
+17021,Hydro Turbine (EV),EV
+17022,Hydro Turbine (IV),IV
+17023,Hydro Turbine (LuV),LuV
+17024,Hydro Turbine (ZPM),ZPM
+17025,Hydro Turbine (UV),UV
+17026,Hydro Turbine (UHV),UHV
+17027,Hydro Turbine (UEV),UEV
+17028,Hydro Turbine (UIV),UIV
+17029,Hydro Turbine (UMV),UMV
+17030,Hydro Turbine (UXV),UXV
+17031,Hydro Turbine (MAX),MAX
+18791,压印电路仓T1,TST_CircuitImprintHatch
+18792,压印电路仓T2,TST_CircuitImprintHatch
+18793,固化仓(IV),GT_MetaTileEntity_Hatch_Solidify
+18794,固化仓(LuV),GT_MetaTileEntity_Hatch_Solidify
+18795,固化仓(ZPM),GT_MetaTileEntity_Hatch_Solidify
+18796,固化仓(UV),GT_MetaTileEntity_Hatch_Solidify
+18797,固化仓(UHV),GT_MetaTileEntity_Hatch_Solidify
+18798,传奇无线能源仓,GT_Hatch_InfiniteWirelessMulti
+18799,鸿蒙无线能源仓,GT_Hatch_InfiniteWirelessMulti
+18800,动态并行控制器模块T1,DynamicParallelController
+18801,动态并行控制器模块T2,DynamicParallelController
+18802,动态并行控制器模块T3,DynamicParallelController
+18803,动态并行控制器模块T4,DynamicParallelController
+18804,动态并行控制器模块T5,DynamicParallelController
+18805,动态并行控制器模块T6,DynamicParallelController
+18806,动态并行控制器模块T7,DynamicParallelController
+18807,动态并行控制器模块T8,DynamicParallelController
+18808,静态并行控制器模块T1,StaticParallelController
+18809,静态并行控制器模块T2,StaticParallelController
+18810,静态并行控制器模块T3,StaticParallelController
+18811,静态并行控制器模块T4,StaticParallelController
+18812,静态并行控制器模块T5,StaticParallelController
+18813,静态并行控制器模块T6,StaticParallelController
+18814,静态并行控制器模块T7,StaticParallelController
+18815,静态并行控制器模块T8,StaticParallelController
+18816,动态速度控制器模块T1,DynamicSpeedController
+18817,动态速度控制器模块T2,DynamicSpeedController
+18818,动态速度控制器模块T3,DynamicSpeedController
+18819,动态速度控制器模块T4,DynamicSpeedController
+18820,动态速度控制器模块T5,DynamicSpeedController
+18821,动态速度控制器模块T6,DynamicSpeedController
+18822,动态速度控制器模块T7,DynamicSpeedController
+18823,动态速度控制器模块T8,DynamicSpeedController
+18824,静态速度控制器模块T1,StaticSpeedController
+18825,静态速度控制器模块T2,StaticSpeedController
+18826,静态速度控制器模块T3,StaticSpeedController
+18827,静态速度控制器模块T4,StaticSpeedController
+18828,静态速度控制器模块T5,StaticSpeedController
+18829,静态速度控制器模块T6,StaticSpeedController
+18830,静态速度控制器模块T7,StaticSpeedController
+18831,静态速度控制器模块T8,StaticSpeedController
+18832,静态耗能控制器模块T1,StaticPowerConsumptionController
+18833,静态耗能控制器模块T2,StaticPowerConsumptionController
+18834,静态耗能控制器模块T3,StaticPowerConsumptionController
+18835,静态耗能控制器模块T4,StaticPowerConsumptionController
+18836,静态耗能控制器模块T5,StaticPowerConsumptionController
+18837,静态耗能控制器模块T6,StaticPowerConsumptionController
+18838,静态耗能控制器模块T7,StaticPowerConsumptionController
+18839,静态耗能控制器模块T8,StaticPowerConsumptionController
+18840,低速无损超频控制器模块,StaticOverclockController
+18841,无损超频控制器模块,StaticOverclockController
+18842,奇点无损超频控制器模块,StaticOverclockController
+18843,执行核心模块,ExecutionCore
+18844,高级执行核心模块,AdvExecutionCore
+18845,完美执行核心模块,PerfectExecutionCore
+18846,血液仓,TST_BloodOrbHatch
+18847,样板访问仓,TST_PatternAccessHatch
+18848,Debug血液仓,TST_Debug_BloodHatch
+18956,无线主光学接口,GT_Hatch_WirelessData_output
+18957,无线副光学接口,GT_Hatch_WirelessData_input
+18958,机箱控制器,GT_Hatch_RackComputationMonitor
+18959,机箱模拟器,GT_Hatch_RackComputationMonitor
+18960,激光智能节点,GT_MetaTileEntity_Pipe_EnergySmart
+18961,激光聚焦智能节点,GT_MetaTileEntity_Pipe_EnergySmart_Focusing
+18978,Debug未定元解析器,GT_MetaTileEntity_Hatch_UncertaintyDebug
+18979,Mana Hatch,TST_ManaHatch
+18980,输入总成 (IV),GT_MetaTileEntity_Hatch_DualInput
+18981,输入总成 (LuV),GT_MetaTileEntity_Hatch_DualInput
+18982,输入总成 (ZPM),GT_MetaTileEntity_Hatch_DualInput
+18983,输入总成 (UV),GT_MetaTileEntity_Hatch_DualInput
+18984,缓存能源仓LV,GT_Hatch_BufferedEnergyHatch
+18985,缓存能源仓MV,GT_Hatch_BufferedEnergyHatch
+18986,缓存能源仓HV,GT_Hatch_BufferedEnergyHatch
+18987,缓存能源仓EV,GT_Hatch_BufferedEnergyHatch
+18988,缓存能源仓IV,GT_Hatch_BufferedEnergyHatch
+18989,缓存能源仓LuV,GT_Hatch_BufferedEnergyHatch
+18990,缓存能源仓ZPM,GT_Hatch_BufferedEnergyHatch
+18991,缓存能源仓UV,GT_Hatch_BufferedEnergyHatch
+18992,缓存能源仓UHV,GT_Hatch_BufferedEnergyHatch
+18993,缓存能源仓UEV,GT_Hatch_BufferedEnergyHatch
+18994,缓存能源仓UIV,GT_Hatch_BufferedEnergyHatch
+18995,缓存能源仓UMV,GT_Hatch_BufferedEnergyHatch
+18996,缓存能源仓UXV,GT_Hatch_BufferedEnergyHatch
+18997,缓存能源仓MAX,GT_Hatch_BufferedEnergyHatch
+18998,无限无线动力仓,GT_Hatch_InfiniteWirelessDynamoHatch
+18999,无限进气仓,GT_MetaTileEntity_Hatch_Air
+19001,深度化学扭曲仪,GT_TileEntity_IntensifyChemicalDistorter
+19002,精密高能光量子掌控者,GT_TileEntity_PreciseHighEnergyPhotonicQuantumMaster
+19003,奇迹顶点,GT_TileEntity_MiracleTop
+19004,磁驱压力成型机,GT_TileEntity_MagneticDrivePressureFormer
+19005,物质形态转换器,GT_TileEntity_PhysicalFormSwitcher
+19006,"小型"磁力搅拌机,GT_TileEntity_MagneticMixer
+19007,磁畴构建器,GT_TileEntity_MagneticDomainConstructor
+19008,丝之歌,GT_TileEntity_Silksong
+19009,神圣分离者,GT_TileEntity_HolySeparator
+19010,空间缩放仪,GT_TileEntity_SpaceScaler
+19011,分子解构器,GT_TileEntity_MoleculeDeconstructor
+19012,无限晶胞,GTCM_CrystallineInfinitier
+19013,戴森球模块发射场,TST_DSPLauncher
+19014,戴森球射线接收站,TST_DSPReceiver
+19015,人造恒星,TST_ArtificialStar
+19016,奇迹之门,TST_MiracleDoor
+19017,通用矿物处理厂TST,TST_OreProcessingFactory
+19020,通用电路板转换器,TST_CircuitConverter
+19021,大型工业炼焦厂,TST_LargeIndustrialCokingFactory
+19022,巨型砖高炉,GT_TileEntity_MegaBrickedBlastFurnace
+19023,拾荒者,TST_Scavenger
+19024,TST超净间,TST_CleanRoom
+19025,生物圈III号,TST_BiosphereIII
+19026,抽象之塔,GT_TileEntity_MegaEggGenerator
+19027,进阶巨型石油裂化机,TST_AdvancedMegaOilCracker
+19028,§8§l不可视之触§r,TST_IndistinctTentacle
+19029,星规阵列,TST_Computer
+19030,热能饕餮,TST_ThermalEnergyDevourer
+19031,真空抽滤器,TST_VacuumFilterExtractor
+19032,大型蒸汽锻造锤,TST_LargeSteamForgeHammer
+19033,大型蒸汽合金炉,TST_LargeSteamAlloySmelter
+19034,武德之眼,TST_EyeOfWood
+19035,蜜蜂操纵者 (Prototype),TST_BeeEngineer
+19036,"小型"家用破壁机,TST_MegaMacerator
+19037,赫菲斯托斯的工坊,TST_HephaestusAtelier
+19038,展开的纳米核心,TST_DeployedNanoCore
+19039,人类能源设施的核心装置,TST_CoreDeviceOfHumanPowerGenerationFacility
+19040,星核钻机,TST_StarcoreMiner
+19041,TST大型拆解机,TST_Disassembler
+19042,太空蜂箱模块 MK-I,TST_SpaceApiaryT1
+19043,太空蜂箱模块 MK-II,TST_SpaceApiaryT2
+19044,太空蜂箱模块 MK-III,TST_SpaceApiaryT3
+19045,太空蜂箱模块 MK-IV,TST_SpaceApiaryT4
+19046,球状闪电,TST_BallLightning
+19047,§0工业注魔矩阵,GT_TileEntity_IndustrialMagicMatrix
+19048,大型装罐机,TST_LargeCanner
+19049,大哥阵列,TST_BigBroArray
+19050,工业电磁离析机,TST_IndustrialMagnetarSeparator
+19051,拟似生态圈,TST_MegaTreeFarm
+19052,梦魇工业合成中心,TST_MegaCraftingCenter
+19053,闪电尖塔,GTCM_LightningSpire
+19054,超维度物质等离子锻炉原型机MK-II,MM_DimensionallyTranscendentMatterPlasmaForgePrototypeMK2
+19055,大型中子振荡器,MM_LargeNeutronOscillator
+19056,§8§l不可视之触§r原型机MK-II,MM_IndistinctTentaclePrototypeMK2
+19057,质量发生器 : 创世纪,MM_MassFabricatorGenesis
+19058,PULSAR - 非紧凑式回旋加速器,TST_IncompactCyclotron
+19059,奇异物质聚合器,TST_StrangeMatterAggregator
+19060,微型时空发生器,TST_MicroSpaceTimeFabricatorio
+19061,血狱,TST_BloodyHell
+19062,硅岩制造机,TST_MegaStoneBreaker
+19063,加工中心,TST_ManufacturingCenter
+19064,工业炼金塔,TST_IndustrialAlchemyTower
+19065,巨型真空干燥炉,TST_GiantVacuumDryingFurnace
+19066,TST处理阵列,TST_ProcessingArray
+19067,进阶电路装配线,TST_AdvCircuitAssemblyLine
+19068,熯焱高炉,TST_SwelegfyrBlastFurnace
+19069,高能态热对流器,TST_HyperThermalConvector
+19070,初源解离机,TST_PrimordialDisjunctus
+19071,穿云尖塔,TST_SkypiercerTower
+19072,激光陨星采矿场,TST_LaserMeteorMiner
+19073,基础蒸汽发电机,TST_SteamBasicGenerator
+19074,通用发电机,TST_UniversalGenerator
+19075,注魔分配器,TST_InfusionMaterialDispenser
+19076,大型太阳能锅炉,TST_LargeSolarBoiler
+19077,地狱接口,TST_NetherInterface
+19078,超净水生成器,TST_SuperWaterPurifier
+19079,集成装配矩阵,TST_IntegratedAssemblyMatrix
+19080,巨型太阳能板工厂,TST_MegaSolarPanelFactory
+19081,巨型硅岩反应堆,TST_MegaNqReactor
+19500,精灵工坊,GTCM_ElvenWorkshop
+19501,极限时空转换仪,GTCM_HyperSpacetimeTransformer
+21001,量子计算机,QuantumComputer
+21002,装配矩阵,AssemblerMatrix
+21003,原子能激发工厂,AtomicEnergyExcitationPlant
+21004,“伊甸”生态奇点,EdenGarden
+21005,大型蒸汽电路组装机,LargeSteamCircuitAssembler
+21006,初代目行星发动机,GenerationEarthEngine
+21007,血魂祭祀阵,BloodSoulSacrificialArray
+21008,真·湮灭发电机,RealArtificialStar
+21009,精灵传送法阵,TeleportationArrayToAlfheim
+21010,兰波顿工厂,LapotronChip
+21011,中子丝线切割机,NeutroniumWireCutting
+21012,大型蒸汽破碎机,LargeSteamCrusher
+21013,部件组装机,ComponentAssembler
+21014,大型蒸汽熔炉,LargeSteamFurnace
+21015,大型蒸汽合金炉,LargeSteamAlloySmelter
+21016,大型蒸汽热力离心机,LargeSteamThermalCentrifuge
+21017,蒸汽裂化机,SteamCracking
+21018,大型蒸汽化学浸洗机,LargeSteamChemicalBath
+21019,原始蒸馏塔,PrimitiveDistillationTower
+21020,激光陨星采矿场,MeteorMiner
+21021,脱硫机,Desulfurizer
+21022,大型电路组装设施,LargeCircuitAssembler
+21023,石化工厂,PetrochemicalPlant
+21024,合金搅拌炉,SmeltingMixingFurnace
+21025,白夜发电机,WhiteNightGenerator
+21026,处理阵列：重生,ProcessingArray
+21027,巨型工业高炉,MegaBlastFurnace
+21028,砖高炉,BrickedBlastFurnace
+21029,稀土离心机,RareEarthCentrifugal
+21030,寒冰冷冻机,ColdIceFreezer
+21031,烈焰高炉,BlazeBlastFurnace
+21032,化工厂,ChemicalPlant
+21033,真空冷冻机,VacuumFreezer
+21034,工业奥术装配室,IndustrialArcaneAssembler
+21035,充能光伏电站,EnergeticPhotovoltaicPowerStation
+21036,高级光伏电站,AdvancedPhotovoltaicPowerStation
+21037,脉冲光伏电站,VibrantPhotovoltaicPowerStation
+21038,大型研磨塔,LargeMacerationTower
+21039,洛克菲勒之手,HandOfJohnDavisonRockefeller
+21040,大型筛选漏斗,LargeSiftingFunnel
+21041,大型切割机,LargeCutter
+21042,大型酿造厂,LargeBrewer
+21043,大型工业车床,LargeIndustrialLathe
+21044,大型挤压机,LargeMaterialPress
+21045,大型线材工厂,LargeWiremill
+21046,大型卷板机,LargeBender
+21047,电动聚爆压缩机,ElectricImplosionCompressor
+21048,大型压模机,LargeExtruder
+21049,大型电弧炉,LargeArcSmelter
+21050,大型冲压机,LargeForming
+21051,物质生成机,MatterFabricator
+21052,大型电解槽,LargeElectrolyzer
+21053,大型电磁工厂,LargeElectromagnet
+21054,大型组装厂,LargeAssembler
+21055,大型搅拌罐,LargeMixer
+21056,大型离心机组,LargeCentrifuge
+21057,§e废墟图书馆,LibraryOfRuina
+21058,大型化学浸洗机,LargeChemicalBath
+21059,大型高压结晶釜,LargeAutoclave
+21060,大型固化阵列,LargeSolidifier
+21061,大型提取机,LargeExtractor
+21062,反应炉,ReactionFurnace
+21063,能量注入仪,EnergyInfuser
+21064,大型装罐机,LargeCanning
+21065,煮解池,Digester
+21066,合金冶炼炉,AlloyBlastSmelter
+21067,大型蒸汽提取机,LargeSteamExtractor
+21068,大型蒸汽洗矿机,LargeSteamOreWasher
+21069,大型锻造锤,LargeHammer
+21070,艾萨研磨机,IsaMill
+21071,工业浮选机,FlotationCellRegulator
+21072,真空干燥炉,VacuumDryingFurnace
+21073,大型分馏蒸馏厂,LargeDistillery
+21074,培养缸,Incubator
+21075,大型培养缸,LargeIncubator
+21076,大型激光蚀刻机,LargeEngravingLaser
+21077,渔场,FishingGround
+21078,元素复制机,ElementCopying
+21079,木化工厂,WoodDistillation
+21080,大型打包机,LargePacker
+21081,大型合金炉,LargeAlloySmelter
+21082,分子重组仪,MolecularTransformer
+21083,大型热解炉,LargePyrolyseOven
+21084,大型硅岩反应堆,LargeNaquadahReactor
+21085,神龙聚合装置,DraconicFusionCrafting
+21086,大型蒸汽压模机,LargeSteamExtruder
+21087,衰变加速器,DecayHastener
+21088,精密组装机,PrecisionAssembler
+21089,巨型合金冶炼炉,MegaAlloyBlastSmelter
+21090,大型装配线,GrandAssemblyLine
+21091,燃料精炼复合体,FuelRefiningComplex
+21092,太空电梯资源采集模块,ResourceCollectionModule
+21093,狂飙一号巨型聚变反应堆控制电脑,LuVTier
+21094,狂飙二号巨型聚变反应堆控制电脑,ZPMTier
+21095,狂飙三号巨型聚变反应堆控制电脑,UVTier
+21096,狂飙四号巨型聚变反应堆控制电脑,UHVTier
+21097,狂飙五号巨型聚变反应堆控制电脑,UEVTier
+21098,大型蒸汽离心机,LargeSteamCentrifuge
+21099,大型蒸汽锻造锤,LargeSteamHammer
+21100,大型蒸汽压缩机,LargeSteamCompressor
+21101,大型蒸汽筛选机,LargeSteamSifter
+21102,大型青铜锅炉,LargeBoilerBronze
+21103,大型钢锅炉,LargeBoilerSteel
+21104,大型钛锅炉,LargeBoilerTitanium
+21105,大型钨钢锅炉,LargeBoilerTungstenSteel
+21106,大型蒸汽冲压机床,LargeSteamFormingPress
+21107,大型蒸汽搅拌机,LargeSteamMixer
+21108,裂解反应枢纽,CrackerHub
+21109,进阶无尽油气钻机,AdvancedInfiniteDriller
+21110,电力工业高炉,ElectricBlastFurnace
+21111,铂族工业统合枢纽,PlatinumBasedTreatment
+21112,浅层化学耦合,ShallowChemicalCoupling
+21113,蒸汽之门基础方块,Steamgate
+21114,蒸汽至臻先驱者,SteamGateAssembler
+21115,超级蒸汽压缩机,MegaSteamCompressor
+21116,巨型高压太阳能锅炉,MegaSolarBoiler
+21117,仙人掌奇迹,SteamCactusWonder
+21118,蒸汽木匠,SteamCarpenter
+21119,超级石头加热器,SteamLavaMaker
+21120,蒸汽制造商,SteamManufacturer
+21121,蒸汽造石机,SteamRockBreaker
+21122,蒸汽树场,SteamWoodcutter
+21123,蒸汽精萃机,SteamExtractinator
+21124,超高压反应堆,SteamFusionReactor
+21125,压缩超高压反应堆,HighPressureSteamFusionReactor
+21126,炼狱焦炉,SteamInfernalCokeOven
+21127,综合组装车间,IntegratedAssemblyFacility
+21128,树状图设计者,TreeDiagram
+21129,纳米吞噬厂,NanoPhagocytosisPlant
+21130,磁能反应炉,MagneticEnergyReactionFurnace
+21131,纳米集成加工中心,NanitesIntegratedProcessingCenter
+21132,生物工程模块,BioengineeringModule
+21133,聚合物扭曲模块,PolymerTwistingModule
+21134,矿石萃取模块,OreExtractionModule
+21135,超级太空电梯,SuperSpaceElevator
+21136,大型生物实验室,LargeBioLab
+21137,大型集气室,LargeGasCollector
+21138,永恒格雷工坊,EternalGregTechWorkshop
+21139,永恒格雷工坊 - 聚变模块,EGTWFusionModule
+21140,太空组装机,SpaceAssembler
+21141,激光蚀刻工厂,EngravingLaserPlant
+21142,旋涡物质离心器,VortexMatterCentrifuge
+21143,超导电磁工厂,SuperconductingElectromagnetism
+21144,力场锻压机,FieldForgePress
+21145,超导磁驱冲击装置,SuperconductingMagneticPresser
+21146,重型辊轧机,HeavyRolling
+21147,高能激光车床,HighEnergyLaserLathe
+21148,巨型搅拌机,MegaMixer
+21149,蒸汽信标模块 I,SteamBeaconModule
+21150,蒸汽信标模块 II,SteamBeaconModule
+21151,蒸汽信标模块 III,SteamBeaconModule
+21152,纳米蜂群电路组装厂,NanitesCircuitAssemblyFactory
+21153,永恒格雷工坊 - 鸿蒙之眼模块,ETGWEyeOfHarmonyModule
+21154,以太压铸机,AetronPressor
+21155,蒸汽楼梯,SteamElevator
+21156,蒸汽敌对生物驱逐模块 I,SteamMonsterRepellentModule
+21157,蒸汽敌对生物驱逐模块 II,SteamMonsterRepellentModule
+21158,蒸汽敌对生物驱逐模块 III,SteamMonsterRepellentModule
+21159,蒸汽飞行模块,SteamFlightModule
+21160,蒸汽天气更替模块,SteamWeatherModule
+21161,纳米组装机Mark-50,NanoAssemblerMarkL
+21162,高性能计算阵列,HighPerformanceComputationArray
+21163,鸿蒙之眼注入器,EyeOfHarmonyInjector
+21164,复合式极端冷却装置,CompoundExtremeCoolingUnit
+21165,蒸汽矿石处理模块,SteamOreProcessorModule
+21166,大型蒸汽车床,LargeSteamLathe
+21167,大型蒸汽切割机,LargeSteamCutting
+21168,蒸汽物品保险库,SteamItemVault
+21169,直焰窑,PrimitiveBrickKiln
+21170,奇点数据中枢,SingularityDataHub
+21171,电化学电池发电机,ElectrocellGenerator
+21172,太阳炽热合金炉,FOGAlloySmelterModule
+21173,太阳聚焦融合核心,FOGAlloyBlastSmelterModule
+21174,太阳热离精粹机,FOGExtractorModule
+21175,蒸汽屠宰场模块,SteamEntityCrusherModule
+21176,蒸汽蜜蜂养殖模块,SteamApiaryModule
+21177,蒸汽蜜蜂繁殖模块,SteamBeeBreedingModule
+21178,蒸汽温室种植模块,SteamGreenhouseModule
+21179,火箭组装厂,RocketAssembler
+21180,蒸汽流体钻机模块 I,SteamOilDrillModule
+21181,蒸汽流体钻机模块 II,SteamOilDrillModule
+21182,蒸汽流体钻机模块 III,SteamOilDrillModule
+21183,进阶稀土离心机,AdvancedRareEarthCentrifugal
+21184,质量发生器,MassFabricator
+21185,进阶质量发生器,AdvancedMassFabricator
+21186,卧式压缩机,HorizontalCompressor
+21187,巨型真空干燥炉,MegaVacuumDryingFurnace
+21188,巨型浸洗池,MegaBathTank
+21189,特大装罐机,MegaCanner
+21190,复合式蒸馏分馏塔,CompoundDistillationFractionator
+21191,巨型酿造厂,MegaBrewer
+21192,微生物之主,MicroorganismMaster
+21193,熔火之心,MoltenCore
+21194,晶体构建者,CrystalBuilder
+21195,大型碎岩机,LargeRockCrusher
+21196,相变魔方,PhaseChangeCube
+21197,地层撕裂者,MantleCrusher
+21198,智能筛选中枢,SmartSiftingHub
+21199,巨型电化学工作站,GiantElectrochemicalWorkstation
+21200,双子星封装系统,GeminiContainmentSystem
+21201,极限压缩装置,ExtremeCompressor
+21202,极限电炉,ExtremeElectricFurnace
+21203,数据中心,DataCenter
+21204,克尔·纽曼均质仪,KerrNewmanHomogenizer
+21205,大型蒸汽卷板机,LargeSteamBending
+21206,化工复合体,ChemicalComplex
+21207,特大线材轧机,MegaWiremill
+21208,巨型浮游选矿池,GiantFlotationTank
+21209,溶解核心,DissolutionCore
+21210,蜂群之心,SwarmCore
+21211,超能硅岩反应堆,HyperNaquadahReactor
+21212,进阶超能硅岩反应堆,AdvancedHyperNaquadahReactor
+21213,超限绿洲,TransliminalOasis
+21214,快中子增殖堆,FastNeutronBreederReactor
+21215,磁约束维度震荡装置,MagneticConfinementDimensionalityShockDevice
+21216,运算中心,SupercomputingCenter
+21217,PCB工厂,PCBFactory
+21218,熔炉组,FurnaceArray
+21219,太阳μ子催化器,FOGSolarMuonCatalystModule
+21220,Large Essentia Generator,LargeEssentiaGenerator
+21221,超生高速,HighwayToHell
+21222,大型蒸汽线材轧机,LargeSteamWiremill
+21223,科研中心,ResearchCenter
+21501,魔力输入仓,CustomFluidHatch
+21502,碎冰输入仓,CustomFluidHatch
+21503,烈焰输入仓,CustomFluidHatch
+21504,超级样板输入总成 (ME),SuperCraftingInputHatchME
+21505,超级样板输入总线 (ME),SuperCraftingInputHatchME
+21506,巨型固化仓,HumongousSolidifierHatch
+21507,Debug能源仓,DebugEnergyHatch
+21508,九重输入仓 (EV),NinefoldInputHatch
+21509,九重输入仓 (IV),NinefoldInputHatch
+21510,九重输入仓 (LuV),NinefoldInputHatch
+21511,九重输入仓 (ZPM),NinefoldInputHatch
+21512,九重输入仓 (UV),NinefoldInputHatch
+21513,九重输入仓 (UHV),NinefoldInputHatch
+21514,九重输入仓 (UEV),NinefoldInputHatch
+21515,九重输入仓 (UIV),NinefoldInputHatch
+21516,九重输入仓 (UMV),NinefoldInputHatch
+21517,九重输入仓 (UXV),NinefoldInputHatch
+21518,九重输入仓 (MAX),NinefoldInputHatch
+21519,巨型九重输入仓,HumongousNinefoldInputHatch
+21520,输入总成 (LV),DualInputHatch
+21521,输入总成 (MV),DualInputHatch
+21522,输入总成 (HV),DualInputHatch
+21523,输入总成 (EV),DualInputHatch
+21524,输入总成 (IV),DualInputHatch
+21525,输入总成 (LuV),DualInputHatch
+21526,输入总成 (ZPM),DualInputHatch
+21527,输入总成 (UV),DualInputHatch
+21528,输入总成 (UHV),DualInputHatch
+21529,输入总成 (UEV),DualInputHatch
+21530,输入总成 (UIV),DualInputHatch
+21531,输入总成 (UMV),DualInputHatch
+21532,输入总成 (UXV),DualInputHatch
+21533,输入总成 (MAX),DualInputHatch
+21534,超级样板输入镜像,SuperCraftingInputProxy
+21535,超级数据访问仓,SuperDataAccessHatch
+21536,巨型输入总成 (LV),HumongousDualInputHatch
+21537,巨型输入总成 (MV),HumongousDualInputHatch
+21538,巨型输入总成 (HV),HumongousDualInputHatch
+21539,巨型输入总成 (EV),HumongousDualInputHatch
+21540,巨型输入总成 (IV),HumongousDualInputHatch
+21541,巨型输入总成 (LuV),HumongousDualInputHatch
+21542,巨型输入总成 (ZPM),HumongousDualInputHatch
+21543,巨型输入总成 (UV),HumongousDualInputHatch
+21544,巨型输入总成 (UHV),HumongousDualInputHatch
+21545,巨型输入总成 (UEV),HumongousDualInputHatch
+21546,巨型输入总成 (UIV),HumongousDualInputHatch
+21547,巨型输入总成 (UMV),HumongousDualInputHatch
+21548,巨型输入总成 (UXV),HumongousDualInputHatch
+21549,巨型输入总成 (MAX),HumongousDualInputHatch
+21550,可配置无菌维护仓,CustomMaintenanceHatch
+21551,可配置鸿蒙维护仓,CustomMaintenanceHatch
+21919,作弊者的究极集成矿处,CheatOreProcessingFactory
+21920,大明科技,NineIndustrialMultiMachine
+22000,编程二合一输入仓 (ULV),DualInputHatch
+22001,编程二合一输入仓 (LV),DualInputHatch
+22002,编程二合一输入仓 (MV),DualInputHatch
+22003,编程二合一输入仓 (HV),DualInputHatch
+22004,编程二合一输入仓 (EV),DualInputHatch
+22005,编程二合一输入仓 (IV),DualInputHatch
+22006,编程二合一输入仓 (LuV),DualInputHatch
+22007,编程二合一输入仓 (ZPM),DualInputHatch
+22008,编程二合一输入仓 (UV),DualInputHatch
+22009,编程二合一输入仓 (UHV),DualInputHatch
+22010,编程二合一输入仓 (UEV),DualInputHatch
+22011,编程二合一输入仓 (UIV),DualInputHatch
+22012,编程二合一输入仓 (UMV),DualInputHatch
+22013,编程二合一输入仓 (UXV),DualInputHatch
+22014,编程二合一输入仓 (MAX),DualInputHatch
+22016,编程多流体二合一输入仓 (ULV),DualInputHatch
+22017,编程多流体二合一输入仓 (LV),DualInputHatch
+22018,编程多流体二合一输入仓 (MV),DualInputHatch
+22019,编程多流体二合一输入仓 (HV),DualInputHatch
+22020,编程多流体二合一输入仓 (EV),DualInputHatch
+22021,编程多流体二合一输入仓 (IV),DualInputHatch
+22022,编程多流体二合一输入仓 (LuV),DualInputHatch
+22023,编程多流体二合一输入仓 (ZPM),DualInputHatch
+22024,编程多流体二合一输入仓 (UV),DualInputHatch
+22025,编程多流体二合一输入仓 (UHV),DualInputHatch
+22026,编程多流体二合一输入仓 (UEV),DualInputHatch
+22027,编程多流体二合一输入仓 (UIV),DualInputHatch
+22028,编程多流体二合一输入仓 (UMV),DualInputHatch
+22029,编程多流体二合一输入仓 (UXV),DualInputHatch
+22030,编程多流体二合一输入仓 (MAX),DualInputHatch
+22032,编程缓冲二合一输入仓 (ULV),BufferedDualInputHatch
+22033,编程缓冲二合一输入仓 (LV),BufferedDualInputHatch
+22034,编程缓冲二合一输入仓 (MV),BufferedDualInputHatch
+22035,编程缓冲二合一输入仓 (HV),BufferedDualInputHatch
+22036,编程缓冲二合一输入仓 (EV),BufferedDualInputHatch
+22037,编程缓冲二合一输入仓 (IV),BufferedDualInputHatch
+22038,编程缓冲二合一输入仓 (LuV),BufferedDualInputHatch
+22039,编程缓冲二合一输入仓 (ZPM),BufferedDualInputHatch
+22040,编程缓冲二合一输入仓 (UV),BufferedDualInputHatch
+22041,编程缓冲二合一输入仓 (UHV),BufferedDualInputHatch
+22042,编程缓冲二合一输入仓 (UEV),BufferedDualInputHatch
+22043,编程缓冲二合一输入仓 (UIV),BufferedDualInputHatch
+22044,编程缓冲二合一输入仓 (UMV),BufferedDualInputHatch
+22045,编程缓冲二合一输入仓 (UXV),BufferedDualInputHatch
+22046,编程缓冲二合一输入仓 (MAX),BufferedDualInputHatch
+22048,编程器电路提供器 (T1),ProgrammingCircuitProvider
+22049,二合一输入镜像,DualInputHatchSlave
+22050,远程输入总线,RemoteInputBus
+22051,进阶编程缓冲多流体二合一输入仓 (ULV),BufferedDualInputHatch
+22052,进阶编程缓冲多流体二合一输入仓 (LV),BufferedDualInputHatch
+22053,进阶编程缓冲多流体二合一输入仓 (MV),BufferedDualInputHatch
+22054,进阶编程缓冲多流体二合一输入仓 (HV),BufferedDualInputHatch
+22055,进阶编程缓冲多流体二合一输入仓 (EV),BufferedDualInputHatch
+22056,进阶编程缓冲多流体二合一输入仓 (IV),BufferedDualInputHatch
+22057,进阶编程缓冲多流体二合一输入仓 (LuV),BufferedDualInputHatch
+22058,进阶编程缓冲多流体二合一输入仓 (ZPM),BufferedDualInputHatch
+22059,进阶编程缓冲多流体二合一输入仓 (UV),BufferedDualInputHatch
+22060,进阶编程缓冲多流体二合一输入仓 (UHV),BufferedDualInputHatch
+22061,进阶编程缓冲多流体二合一输入仓 (UEV),BufferedDualInputHatch
+22062,进阶编程缓冲多流体二合一输入仓 (UIV),BufferedDualInputHatch
+22063,进阶编程缓冲多流体二合一输入仓 (UMV),BufferedDualInputHatch
+22064,进阶编程缓冲多流体二合一输入仓 (UXV),BufferedDualInputHatch
+22065,进阶编程缓冲多流体二合一输入仓 (MAX),BufferedDualInputHatch
+22067,远程输入仓,RemoteInputHatch
+22068,超级流体二合一输入仓,
+22069,编程样板输入总成,PatternDualInputHatch
+22070,吝物输出总线 (ULV),FilterOutputBus
+22071,吝物输出总线 (LV),FilterOutputBus
+22072,吝物输出总线 (MV),FilterOutputBus
+22073,吝物输出总线 (HV),FilterOutputBus
+22074,过滤输出总线 (ULV),FilterOutputBus
+22075,过滤输出总线 (LV),FilterOutputBus
+22076,过滤输出总线 (MV),FilterOutputBus
+22077,过滤输出总线 (HV),FilterOutputBus
+22079,原材料缓存仓 (T0),IngredientBuffer
+22080,原材料缓存仓 (T1),IngredientBuffer
+22081,水提供器,WaterProvider
+22082,自动化焦点输入总线(ME),NBTHatchMEFocus
+22083,自动化数据球仓,AutoDataOrbHatch
+22084,自动化催化剂仓(ME),NBTHatchMECatalyst
+22085,库存二合一输入仓(ME),StockingDualInputHatchME
+22086,进阶库存二合一输入仓(ME),StockingDualInputHatchME
+22087,虚拟输入总线,PhantomInputBus
+22090,合成CPU,TileCPU
+22100,编程缓冲多流体二合一输入仓 (ULV),BufferedDualInputHatch
+22101,编程缓冲多流体二合一输入仓 (LV),BufferedDualInputHatch
+22102,编程缓冲多流体二合一输入仓 (MV),BufferedDualInputHatch
+22103,编程缓冲多流体二合一输入仓 (HV),BufferedDualInputHatch
+22104,编程缓冲多流体二合一输入仓 (EV),BufferedDualInputHatch
+22105,编程缓冲多流体二合一输入仓 (IV),BufferedDualInputHatch
+22106,编程缓冲多流体二合一输入仓 (LuV),BufferedDualInputHatch
+22107,编程缓冲多流体二合一输入仓 (ZPM),BufferedDualInputHatch
+22108,编程缓冲多流体二合一输入仓 (UV),BufferedDualInputHatch
+22109,编程缓冲多流体二合一输入仓 (UHV),BufferedDualInputHatch
+22110,编程缓冲多流体二合一输入仓 (UEV),BufferedDualInputHatch
+22111,编程缓冲多流体二合一输入仓 (UIV),BufferedDualInputHatch
+22112,编程缓冲多流体二合一输入仓 (UMV),BufferedDualInputHatch
+22113,编程缓冲多流体二合一输入仓 (UXV),BufferedDualInputHatch
+22114,编程缓冲多流体二合一输入仓 (MAX),BufferedDualInputHatch
+22116,大型编程器电路提供器,LargeProgrammingCircuitProvider
+22117,提供器访问仓,ProviderChainer
+22118,编程器电路提供器 (T0),ProgrammingCircuitProvider
+22119,ME超级箱 I,SuperChestME
+22120,ME超级箱 II,SuperChestME
+22121,ME超级箱 III,SuperChestME
+22122,ME超级箱 IV,SuperChestME
+22123,ME超级箱 V,SuperChestME
+22124,ME量子箱 I,SuperChestME
+22125,ME量子箱 II,SuperChestME
+22126,ME量子箱 III,SuperChestME
+22127,ME量子箱 IV,SuperChestME
+22128,ME量子箱 V,SuperChestME
+22130,编程样板输入总线,
+22131,ME超级缸 I,SuperTankME
+22132,ME超级缸 II,SuperTankME
+22133,ME超级缸 III,SuperTankME
+22134,ME超级缸 IV,SuperTankME
+22135,ME超级缸 V,SuperTankME
+22136,ME量子缸 I,SuperTankME
+22137,ME量子缸 II,SuperTankME
+22138,ME量子缸 III,SuperTankME
+22139,ME量子缸 IV,SuperTankME
+22140,ME量子缸 V,SuperTankME
+22142,电力原料分配器(WIP),IngredientDistributor
+22143,预构电路提供器(编程电路),ProgrammingCircuitProviderPrefabricated
+22144,预构电路提供器(模具),ProgrammingCircuitProviderPrefabricated
+22145,预构电路提供器(刀具),ProgrammingCircuitProviderPrefabricated
+22146,预构电路提供器(模头),ProgrammingCircuitProviderPrefabricated
+22147,预构电路提供器(白矮星物质模头),ProgrammingCircuitProviderPrefabricated
+22148,预构电路提供器(透镜),ProgrammingCircuitProviderPrefabricated
+22150,多电路输入总线(ULV),MultiCircuitInputBus
+22151,多电路输入总线(LV),MultiCircuitInputBus
+22152,多电路输入总线(MV),MultiCircuitInputBus
+22153,多电路输入总线(HV),MultiCircuitInputBus
+22162,数据访问仓 (ME),DataHatchME
+22163,限制存储输入仓(ME),RestrictedInputHatchME
+22164,限制存储输入总线(ME),RestrictedInputBusME
+22165,可编程二合一输入枢纽(ME),DualInputHachOC
+22166,二合一输入区映射镜像,DualInputHatchInventoryMappingSlave
+22167,二合一输入区映射镜像(ME),PatternDualInputHatchInventoryMappingSlave
+22168,物品输入镜像,DualInputHatchSlaveBus
+22169,流体输入镜像,DualInputHatchSlaveHatch
+22170,状态总线通讯端口,CommunicationPortHatch
+22171,装配线诱骗存储输入总线(ME),DecoyInputBusME
+22172,装配线诱骗存储输入仓(ME),DecoyInputHatchME
+22173,优先级过滤存储输入总线(ME),PriorityFilterInputBusME
+22174,优先级过滤存储输入仓(ME),PriorityFilterInputHatchME
+22175,销毁输出仓,VoidOutputHatch
+22176,销毁输出总线,VoidOutputBus
+22177,存储输出总线(ME),StorageOutputBus
+22178,存储输出仓(ME),StorageOutputHatch
+22179,编程样板输入总成 MK.II,
+22180,配方表输入总成,
+22501,基础蒸汽轮机,SteamTurbine
+22502,进阶蒸汽轮机,SteamTurbine
+22503,进阶蒸汽轮机 II,SteamTurbine
+22504,蒸汽组装机,SteamAssemblerBronze
+22505,高压蒸汽组装机,SteamAssemblerSteel
+22506,1x Stargate Wire,MTECable
+22507,2x Stargate Wire,MTECable
+22508,4x Stargate Wire,MTECable
+22509,8x Stargate Wire,MTECable
+22510,12x Stargate Wire,MTECable
+22511,16x Stargate Wire,MTECable
+22518,大型蒸汽仓,CustomFluidHatch
+22519,微型蓝色合金物品管道,MTEItemPipe
+22520,小型蓝色合金物品管道,MTEItemPipe
+22521,蓝色合金物品管道,MTEItemPipe
+22522,大型蓝色合金物品管道,MTEItemPipe
+22523,巨型蓝色合金物品管道,MTEItemPipe
+22524,魔力缸,ManaTank
+22525,稀释魔力动力仓,ManaDynamoHatch
+22526,魔力动力仓,ManaDynamoHatch
+22527,神话动力仓,ManaDynamoHatch
+22528,盖亚动力仓,ManaDynamoHatch
+22529,微型压缩蒸汽流体管道,MTEFluidPipe
+22530,小型压缩蒸汽流体管道,MTEFluidPipe
+22531,压缩蒸汽流体管道,MTEFluidPipe
+22532,大型压缩蒸汽流体管道,MTEFluidPipe
+22533,巨型压缩蒸汽流体管道,MTEFluidPipe
+22534,微型青钢流体管道,MTEFluidPipe
+22535,小型青钢流体管道,MTEFluidPipe
+22536,青钢流体管道,MTEFluidPipe
+22537,大型青钢流体管道,MTEFluidPipe
+22538,巨型青钢流体管道,MTEFluidPipe
+22539,微型青铁流体管道,MTEFluidPipe
+22540,小型青铁流体管道,MTEFluidPipe
+22541,青铁流体管道,MTEFluidPipe
+22542,大型青铁流体管道,MTEFluidPipe
+22543,巨型青铁流体管道,MTEFluidPipe
+22544,稀释魔力能源仓,ManaEnergyHatch
+22545,魔力能源仓,ManaEnergyHatch
+22546,神话能源仓,ManaEnergyHatch
+22547,盖亚能源仓,ManaEnergyHatch
+22548,并行控制仓 (LV),ParallelControllerHatch
+22549,并行控制仓 (MV),ParallelControllerHatch
+22550,并行控制仓 (HV),ParallelControllerHatch
+22551,并行控制仓 (EV),ParallelControllerHatch
+22552,并行控制仓 (IV),ParallelControllerHatch
+22553,并行控制仓 (LuV),ParallelControllerHatch
+22554,并行控制仓 (ZPM),ParallelControllerHatch
+22555,并行控制仓 (UV),ParallelControllerHatch
+22556,并行控制仓 (UHV),ParallelControllerHatch
+22557,并行控制仓 (UEV),ParallelControllerHatch
+22558,并行控制仓 (UIV),ParallelControllerHatch
+22559,并行控制仓 (UMV),ParallelControllerHatch
+22560,并行控制仓 (UXV),ParallelControllerHatch
+22561,并行控制仓 (MAX),ParallelControllerHatch
+22562,基础集气室,MTEBasicMachineWithRecipe
+22563,进阶集气室,MTEBasicMachineWithRecipe
+22564,进阶集气室 II,MTEBasicMachineWithRecipe
+22565,进阶集气室 III,MTEBasicMachineWithRecipe
+22566,精英集气室,MTEBasicMachineWithRecipe
+22567,精英集气室 II,MTEBasicMachineWithRecipe
+22568,精英集气室 III,MTEBasicMachineWithRecipe
+22569,终极集气室,MTEBasicMachineWithRecipe
+22570,史诗集气室,MTEBasicMachineWithRecipe
+22571,史诗集气室 II,MTEBasicMachineWithRecipe
+22572,史诗集气室 III,MTEBasicMachineWithRecipe
+22573,史诗集气室 IV,MTEBasicMachineWithRecipe
+22574,传奇集气室,MTEBasicMachineWithRecipe
+22575,动能动力仓,TapDynamoHatch
+22576,无管蒸汽仓,WirelessSteamEnergyHatch
+22577,无管蒸汽排气口,WirelessSteamDynamoHatch
+22578,无管喷流仓,WirelessSteamEnergyHatch
+22579,无管喷流排气口,WirelessSteamDynamoHatch
+22580,可配置自动维护仓,CustomMaintenanceHatch
+22581,爆炸动力仓,ExplosionDynamoHatch
+22582,Debug研究站,DebugResearchStation
+22583,超级存储输入总线(ME),SuperInputBusME
+22584,进阶超级存储输入总线(ME),SuperInputBusME
+22585,超级存储输入仓(ME),SuperInputHatchME
+22586,进阶超级存储输入仓(ME),SuperInputHatchME
+22587,复制器,Replicator
+22588,矿辞存储输入总线(ME),OredictInputBusME
+22589,附魔器,Enchanting
+22590,能源监视器,EnergyMonitor
+22591,保险库多方块输入/输出总成,VaultPortHatch
+22592,输入仓(蒸汽),OriginalInputHatch
+22593,输出仓(蒸汽),OriginalOutputHatch
+22594,超级虚空总线,SuperVoidBus
+22595,超级虚空仓,SuperVoidHatch
+22596,Debug数据访问仓,DebugDataAccessHatch
+22597,基础燃气轮机,GasTurbine
+22598,进阶燃气轮机,GasTurbine
+22599,进阶燃气轮机 II,GasTurbine
+22600,基础内燃发电机,DieselGenerator
+22601,进阶内燃发电机,DieselGenerator
+22602,进阶内燃发电机 II,DieselGenerator
+22603,万用通量传输节点,EnergyTransferNode
+22604,兑奖机,LootBagRedemption
+22605,过滤存储输入总线(ME),TypeFilteredInputBusME
+22620,超级存储输入总成(ME),SuperDualInputHatchME
+22621,进阶超级存储输入总成(ME),SuperDualInputHatchME
+22622,MAX能源仓,MTEHatchEnergy
+22623,4安LV能源仓,MTEHatchEnergyMulti
+22624,4安MV能源仓,MTEHatchEnergyMulti
+22625,4安HV能源仓,MTEHatchEnergyMulti
+22626,16安LV能源仓,MTEHatchEnergyMulti
+22627,16安MV能源仓,MTEHatchEnergyMulti
+22628,16安HV能源仓,MTEHatchEnergyMulti
+22629,64安LV能源仓,MTEHatchEnergyMulti
+22630,64安MV能源仓,MTEHatchEnergyMulti
+22631,64安HV能源仓,MTEHatchEnergyMulti
+22632,4安MAX能源仓,MTEHatchEnergyMulti
+22633,16安MAX能源仓,MTEHatchEnergyMulti
+22634,64安MAX能源仓,MTEHatchEnergyMulti
+22635,"IV 4,194,304A/t 激光靶仓",MTEHatchEnergyTunnel
+22636,"IV 16,777,216A/t 激光靶仓",MTEHatchEnergyTunnel
+22637,"LuV 4,194,304A/t 激光靶仓",MTEHatchEnergyTunnel
+22638,"LuV 16,777,216A/t 激光靶仓",MTEHatchEnergyTunnel
+22639,"ZPM 4,194,304A/t 激光靶仓",MTEHatchEnergyTunnel
+22640,"ZPM 16,777,216A/t 激光靶仓",MTEHatchEnergyTunnel
+22641,"UV 4,194,304A/t 激光靶仓",MTEHatchEnergyTunnel
+22642,"UV 16,777,216A/t 激光靶仓",MTEHatchEnergyTunnel
+22643,"UHV 4,194,304A/t 激光靶仓",MTEHatchEnergyTunnel
+22644,"UHV 16,777,216A/t 激光靶仓",MTEHatchEnergyTunnel
+22645,"UEV 4,194,304A/t 激光靶仓",MTEHatchEnergyTunnel
+22646,"UEV 16,777,216A/t 激光靶仓",MTEHatchEnergyTunnel
+22647,"UIV 4,194,304A/t 激光靶仓",MTEHatchEnergyTunnel
+22648,"UIV 16,777,216A/t 激光靶仓",MTEHatchEnergyTunnel
+22649,"UMV 16,777,216A/t 激光靶仓",MTEHatchEnergyTunnel
+22650,MAX 256A/t 激光靶仓,MTEHatchEnergyTunnel
+22651,"MAX 1,024A/t 激光靶仓",MTEHatchEnergyTunnel
+22652,"MAX 4,096A/t 激光靶仓",MTEHatchEnergyTunnel
+22653,"MAX 16,384A/t 激光靶仓",MTEHatchEnergyTunnel
+22654,"MAX 65,536A/t 激光靶仓",MTEHatchEnergyTunnel
+22655,"MAX 262,144A/t 激光靶仓",MTEHatchEnergyTunnel
+22656,"MAX 1,048,576A/t 激光靶仓",MTEHatchEnergyTunnel
+22657,"MAX 4,194,304A/t 激光靶仓",MTEHatchEnergyTunnel
+22658,"MAX 16,777,216A/t 激光靶仓",MTEHatchEnergyTunnel
+22659,"IV 4,194,304A/t 激光源仓",MTEHatchDynamoTunnel
+22660,"IV 16,777,216A/t 激光源仓",MTEHatchDynamoTunnel
+22661,"LuV 4,194,304A/t 激光源仓",MTEHatchDynamoTunnel
+22662,"LuV 16,777,216A/t 激光源仓",MTEHatchDynamoTunnel
+22663,"ZPM 4,194,304A/t 激光源仓",MTEHatchDynamoTunnel
+22664,"ZPM 16,777,216A/t 激光源仓",MTEHatchDynamoTunnel
+22665,"UV 4,194,304A/t 激光源仓",MTEHatchDynamoTunnel
+22666,"UV 16,777,216A/t 激光源仓",MTEHatchDynamoTunnel
+22667,"UHV 4,194,304A/t 激光源仓",MTEHatchDynamoTunnel
+22668,"UHV 16,777,216A/t 激光源仓",MTEHatchDynamoTunnel
+22669,"UEV 4,194,304A/t 激光源仓",MTEHatchDynamoTunnel
+22670,"UEV 16,777,216A/t 激光源仓",MTEHatchDynamoTunnel
+22671,"UIV 4,194,304A/t 激光源仓",MTEHatchDynamoTunnel
+22672,"UIV 16,777,216A/t 激光源仓",MTEHatchDynamoTunnel
+22673,"UMV 16,777,216A/t 激光源仓",MTEHatchDynamoTunnel
+22674,MAX 256A/t 激光源仓,MTEHatchDynamoTunnel
+22675,"MAX 1,024A/t 激光源仓",MTEHatchDynamoTunnel
+22676,"MAX 4,096A/t 激光源仓",MTEHatchDynamoTunnel
+22677,"MAX 16,384A/t 激光源仓",MTEHatchDynamoTunnel
+22678,"MAX 65,536A/t 激光源仓",MTEHatchDynamoTunnel
+22679,"MAX 262,144A/t 激光源仓",MTEHatchDynamoTunnel
+22680,"MAX 1,048,576A/t 激光源仓",MTEHatchDynamoTunnel
+22681,"MAX 4,194,304A/t 激光源仓",MTEHatchDynamoTunnel
+22682,"MAX 16,777,216A/t 激光源仓",MTEHatchDynamoTunnel
+22683,4安LV无线能源仓,MTEHatchWirelessMulti
+22684,16安LV无线能源仓,MTEHatchWirelessMulti
+22685,64安LV无线能源仓,MTEHatchWirelessMulti
+22686,4安MV无线能源仓,MTEHatchWirelessMulti
+22687,16安MV无线能源仓,MTEHatchWirelessMulti
+22688,64安MV无线能源仓,MTEHatchWirelessMulti
+22689,4安HV无线能源仓,MTEHatchWirelessMulti
+22690,16安HV无线能源仓,MTEHatchWirelessMulti
+22691,64安HV无线能源仓,MTEHatchWirelessMulti
+22692,256安IV无线能源仓,MTEHatchWirelessMulti
+22693,1024安IV无线能源仓,MTEHatchWirelessMulti
+22694,4096安IV无线能源仓,MTEHatchWirelessMulti
+22695,16384安IV无线能源仓,MTEHatchWirelessMulti
+22696,65536安IV无线能源仓,MTEHatchWirelessMulti
+22697,262144安IV无线能源仓,MTEHatchWirelessMulti
+22698,1048576安IV无线能源仓,MTEHatchWirelessMulti
+22699,4194304安IV无线能源仓,MTEHatchWirelessMulti
+22700,16777216安IV无线能源仓,MTEHatchWirelessMulti
+22701,256安LuV无线能源仓,MTEHatchWirelessMulti
+22702,1024安LuV无线能源仓,MTEHatchWirelessMulti
+22703,4096安LuV无线能源仓,MTEHatchWirelessMulti
+22704,16384安LuV无线能源仓,MTEHatchWirelessMulti
+22705,65536安LuV无线能源仓,MTEHatchWirelessMulti
+22706,262144安LuV无线能源仓,MTEHatchWirelessMulti
+22707,1048576安LuV无线能源仓,MTEHatchWirelessMulti
+22708,4194304安LuV无线能源仓,MTEHatchWirelessMulti
+22709,16777216安LuV无线能源仓,MTEHatchWirelessMulti
+22710,256安ZPM无线能源仓,MTEHatchWirelessMulti
+22711,1024安ZPM无线能源仓,MTEHatchWirelessMulti
+22712,4096安ZPM无线能源仓,MTEHatchWirelessMulti
+22713,16384安ZPM无线能源仓,MTEHatchWirelessMulti
+22714,65536安ZPM无线能源仓,MTEHatchWirelessMulti
+22715,262144安ZPM无线能源仓,MTEHatchWirelessMulti
+22716,1048576安ZPM无线能源仓,MTEHatchWirelessMulti
+22717,4194304安ZPM无线能源仓,MTEHatchWirelessMulti
+22718,16777216安ZPM无线能源仓,MTEHatchWirelessMulti
+22719,256安UV无线能源仓,MTEHatchWirelessMulti
+22720,1024安UV无线能源仓,MTEHatchWirelessMulti
+22721,4096安UV无线能源仓,MTEHatchWirelessMulti
+22722,16384安UV无线能源仓,MTEHatchWirelessMulti
+22723,65536安UV无线能源仓,MTEHatchWirelessMulti
+22724,262144安UV无线能源仓,MTEHatchWirelessMulti
+22725,1048576安UV无线能源仓,MTEHatchWirelessMulti
+22726,4194304安UV无线能源仓,MTEHatchWirelessMulti
+22727,16777216安UV无线能源仓,MTEHatchWirelessMulti
+22728,256安UHV无线能源仓,MTEHatchWirelessMulti
+22729,1024安UHV无线能源仓,MTEHatchWirelessMulti
+22730,4096安UHV无线能源仓,MTEHatchWirelessMulti
+22731,16384安UHV无线能源仓,MTEHatchWirelessMulti
+22732,65536安UHV无线能源仓,MTEHatchWirelessMulti
+22733,262144安UHV无线能源仓,MTEHatchWirelessMulti
+22734,1048576安UHV无线能源仓,MTEHatchWirelessMulti
+22735,4194304安UHV无线能源仓,MTEHatchWirelessMulti
+22736,16777216安UHV无线能源仓,MTEHatchWirelessMulti
+22737,256安UEV无线能源仓,MTEHatchWirelessMulti
+22738,1024安UEV无线能源仓,MTEHatchWirelessMulti
+22739,4096安UEV无线能源仓,MTEHatchWirelessMulti
+22740,16384安UEV无线能源仓,MTEHatchWirelessMulti
+22741,65536安UEV无线能源仓,MTEHatchWirelessMulti
+22742,262144安UEV无线能源仓,MTEHatchWirelessMulti
+22743,1048576安UEV无线能源仓,MTEHatchWirelessMulti
+22744,4194304安UEV无线能源仓,MTEHatchWirelessMulti
+22745,16777216安UEV无线能源仓,MTEHatchWirelessMulti
+22746,256安UIV无线能源仓,MTEHatchWirelessMulti
+22747,1024安UIV无线能源仓,MTEHatchWirelessMulti
+22748,4096安UIV无线能源仓,MTEHatchWirelessMulti
+22749,16384安UIV无线能源仓,MTEHatchWirelessMulti
+22750,65536安UIV无线能源仓,MTEHatchWirelessMulti
+22751,262144安UIV无线能源仓,MTEHatchWirelessMulti
+22752,1048576安UIV无线能源仓,MTEHatchWirelessMulti
+22753,4194304安UIV无线能源仓,MTEHatchWirelessMulti
+22754,16777216安UIV无线能源仓,MTEHatchWirelessMulti
+22755,256安UMV无线能源仓,MTEHatchWirelessMulti
+22756,1024安UMV无线能源仓,MTEHatchWirelessMulti
+22757,4096安UMV无线能源仓,MTEHatchWirelessMulti
+22758,16384安UMV无线能源仓,MTEHatchWirelessMulti
+22759,65536安UMV无线能源仓,MTEHatchWirelessMulti
+22760,262144安UMV无线能源仓,MTEHatchWirelessMulti
+22761,1048576安UMV无线能源仓,MTEHatchWirelessMulti
+22762,4194304安UMV无线能源仓,MTEHatchWirelessMulti
+22763,16777216安UMV无线能源仓,MTEHatchWirelessMulti
+22764,256安MAX无线能源仓,MTEHatchWirelessMulti
+22765,1024安MAX无线能源仓,MTEHatchWirelessMulti
+22766,4096安MAX无线能源仓,MTEHatchWirelessMulti
+22767,16384安MAX无线能源仓,MTEHatchWirelessMulti
+22768,65536安MAX无线能源仓,MTEHatchWirelessMulti
+22769,262144安MAX无线能源仓,MTEHatchWirelessMulti
+22770,1048576安MAX无线能源仓,MTEHatchWirelessMulti
+22771,4194304安MAX无线能源仓,MTEHatchWirelessMulti
+22772,16777216安MAX无线能源仓,MTEHatchWirelessMulti
+22773,鸿蒙无线能源仓,MTEHatchWirelessMulti
+22774,鸿蒙无线动力仓,WirelessMultiDynamoHatch
+22775,MAX动力仓,MTEHatchDynamo
+22776,4安LV动力仓,MTEHatchDynamoMulti
+22777,4安MV动力仓,MTEHatchDynamoMulti
+22778,4安HV动力仓,MTEHatchDynamoMulti
+22779,16安LV动力仓,MTEHatchDynamoMulti
+22780,16安MV动力仓,MTEHatchDynamoMulti
+22781,16安HV动力仓,MTEHatchDynamoMulti
+22782,64安LV动力仓,MTEHatchDynamoMulti
+22783,64安MV动力仓,MTEHatchDynamoMulti
+22784,64安HV动力仓,MTEHatchDynamoMulti
+22785,4安MAX动力仓,MTEHatchDynamoMulti
+22786,16安MAX动力仓,MTEHatchDynamoMulti
+22787,64安MAX动力仓,MTEHatchDynamoMulti
+22789,超级矿辞存储输入总线(ME),OredictInputBusME
+22790,超级过滤存储输入总线(ME),TypeFilteredInputBusME
+22791,输出总线镜像(ME),OutputBusMEProxy
+22792,输出仓镜像(ME),OutputHatchMEProxy
+22793,gt.blockmachines.gt.blockmachines.beamlinepipemirror.name.name,BeamlinePipeMirror
+22794,可配置无人机下行模块,CustomDroneDownLinkHatch
+23001,大型贸易机,EOHB_VendingMachines
+23002,大型风力发电机,EOHB_WindTurbine
+23003,太阳能阵列,EOHB_SolarEnergyArray
+23004,物质重塑仪,EOHB_SubstanceReshapingDevice
+23005,蓝狗喷泉,EOHB_BlueDogMachine
+23006,圣皇家搬屎大祭司,EOHB_MonkeyShit
+23515,异星渔场,OTEFishtorio
+23516,巨龙之墓,OTEGraveDragon
+23517,吊炸天热交换机,OTEHeatExchanger
+23518,末影接口综合体,OTEEIO
+23519,盖世神功垃圾桶,OTELargeBin
+23520,终极压缩巨型加工厂,OTEMegaNineInOne
+23521,神之艾萨锻炉,OTEMegaIsaForge
+23522,神人无线能源仓(123),MTEHatchWirelessMulti
+23523,传奇无线能源仓(123),MTEHatchWirelessMulti
+23524,"MAX 1,048,576A 无线能源仓(123)",MTEHatchWirelessMulti
+23525,神威大将军·奇迹和魔法并不是免费的~我真是个笨蛋阿·面硬加咸蔬菜加倍蒜末和油多多还有韭菜盒子~天上天下天地无双毁天灭地无敌金刚炮的·粗制的·原始的·稳定的·先进的·异星的·完美的·太初的·鸿蒙的·终焉寂灭~无线能源仓();,OTEWTFHatch
+23526,狄拉克潮汐,OTEMegaQFT
+23527,巨型炽焱高炉,OTEMegaEBFGTpp
+23528,巨型凛冰冷冻机,OTEMegaFreezerGTpp
+23533,中国石化集成工厂,OTESINOPEC
+23534,铑钯蜜汁化工厂,OTELaoBaChemicalReactor
+23535,唐山炼钢厂,OTETangShanSteelFactory
+23536,噬魂监狱,OTEMegaEEC
+23537,红日之将军恩情配件厂,OTESunFactory
+23538,大型电路组装机,OTELargeCircuitAssembler
+23539,史诗焦炭终结者 T123,OTEEpicCokeOven
+23540,压缩原木聚变反应堆Mk 0,OTEWoodenFusionReactor
+23541,HV 1073741824A 能源仓,MTEHatchEnergyMulti
+23542,HV 2147483647A 动力仓,MTEHatchDynamoMulti
+23543,§dThe IMBA EBF,OTEIMBABlastFurnace
+23544,艾萨处理集成工厂OTH,OTEMegaIsaFactory
+23545,食物发电机,OTEFoodGenerator
+23546,通用硅岩燃料引擎,OTENQFuelGeneratorUniversal
+23547,迷你有源变压器,OTEMiniActiveTransformer
+23548,压缩硅岩燃料精炼厂,OTEMegaNQFuelFactory
+23549,进阶高能电路装配线,OTEMegaCircuitAssLine
+23550,"LV 1,073,741,824A 激光源仓",MTEHatchDynamoTunnel
+23551,"LV 1,073,741,824A 激光靶仓",MTEHatchEnergyTunnel
+23552,"MV 1,073,741,824A 激光源仓",MTEHatchDynamoTunnel
+23553,"MV 1,073,741,824A 激光靶仓",MTEHatchEnergyTunnel
+23554,"HV 1,073,741,824A 激光源仓",MTEHatchDynamoTunnel
+23555,"HV 1,073,741,824A 激光靶仓",MTEHatchEnergyTunnel
+23556,"EV 1,073,741,824A 激光源仓",MTEHatchDynamoTunnel
+23557,"EV 1,073,741,824A 激光靶仓",MTEHatchEnergyTunnel
+23558,"IV 1,073,741,824A 激光源仓",MTEHatchDynamoTunnel
+23559,"IV 1,073,741,824A 激光靶仓",MTEHatchEnergyTunnel
+23560,"LUV 1,073,741,824A 激光源仓",MTEHatchDynamoTunnel
+23561,"LUV 1,073,741,824A 激光靶仓",MTEHatchEnergyTunnel
+23562,"ZPM 1,073,741,824A 激光源仓",MTEHatchDynamoTunnel
+23563,"ZPM 1,073,741,824A 激光靶仓",MTEHatchEnergyTunnel
+23564,"UV 1,073,741,824A 激光源仓",MTEHatchDynamoTunnel
+23565,"UV 1,073,741,824A 激光靶仓",MTEHatchEnergyTunnel
+23566,"UHV 1,073,741,824A 激光源仓",MTEHatchDynamoTunnel
+23567,"UHV 1,073,741,824A 激光靶仓",MTEHatchEnergyTunnel
+23568,"UEV 1,073,741,824A 激光源仓",MTEHatchDynamoTunnel
+23569,"UEV 1,073,741,824A 激光靶仓",MTEHatchEnergyTunnel
+23570,"UIV 1,073,741,824A 激光源仓",MTEHatchDynamoTunnel
+23571,"UIV 1,073,741,824A 激光靶仓",MTEHatchEnergyTunnel
+23572,"UMV 1,073,741,824A 激光源仓",MTEHatchDynamoTunnel
+23573,"UMV 1,073,741,824A 激光靶仓",MTEHatchEnergyTunnel
+23574,"UXV 1,073,741,824A 激光源仓",MTEHatchDynamoTunnel
+23575,"UXV 1,073,741,824A 激光靶仓",MTEHatchEnergyTunnel
+23576,太空钻机模块MK-123,ModulePumpT4
+23577,小型蒸汽加工厂,OTEMiniSteamNineInOne
+23578,Beeyonds之家,OTEBeeyonds
+23579,超维度憋憋锻炉,OTEBBPlasmaForge
+23580,§l§u异星§c量子超级计算机§r,OTEComputer
+23581,计算机箱,OTEHatchRack
+23582,"集成式""火""箭装配车间",OTEFireRocketAssembler
+23583,大型蒸汽输入仓,MTEHatchCustomFluidBase
+23584,乌拉尔山脉热分离厂,OTEMegaThermalCentrifuge
+25000,奥术工业高炉,TCBlastFurnace
+25001,初级蛋机能源吸收器,MTEMagicalEggMachine
+25002,中级蛋机能源吸收器,MTEMagicalEggMachine
+25003,高级蛋机能源吸收器,MTEMagicalEggMachine
+25004,史诗蛋机能源吸收器,MTEMagicalEggMachine
+25005,传奇蛋机能源吸收器,MTEMagicalEggMachine
+25006,神圣蛋机能源吸收器,MTEMagicalEggMachine
+25007,星辉蛋机能源吸收器,MTEMagicalEggMachine
+25008,永恒蛋机能源吸收器,MTEMagicalEggMachine
+25009,寰宇蛋机能源吸收器,MTEMagicalEggMachine
+25010,奇点蛋机能源吸收器,MTEMagicalEggMachine
+25011,究极无敌传奇星辉永恒寰宇奇点宇宙蛋机能源吸收器,MTEMagicalEggMachine
+25101,4安EV无线动力仓,MTEWirelessHatchDynamoMulti
+25102,16安EV无线动力仓,MTEWirelessHatchDynamoMulti
+25103,64安EV无线动力仓,MTEWirelessHatchDynamoMulti
+25104,256安IV无线能源仓,MTEWirelessHatchEnergyMulti
+25105,4安IV无线动力仓,MTEWirelessHatchDynamoMulti
+25106,16安IV无线动力仓,MTEWirelessHatchDynamoMulti
+25107,64安IV无线动力仓,MTEWirelessHatchDynamoMulti
+25108,256安IV无线动力仓,MTEWirelessHatchDynamoMulti
+25109,256安LuV无线能源仓,MTEWirelessHatchEnergyMulti
+25110,"1,024安LuV无线能源仓",MTEWirelessHatchEnergyMulti
+25111,4安LuV无线动力仓,MTEWirelessHatchDynamoMulti
+25112,16安LuV无线动力仓,MTEWirelessHatchDynamoMulti
+25113,64安LuV无线动力仓,MTEWirelessHatchDynamoMulti
+25114,256安LuV无线动力仓,MTEWirelessHatchDynamoMulti
+25115,"1,024安LuV无线动力仓",MTEWirelessHatchDynamoMulti
+25116,256安ZPM无线能源仓,MTEWirelessHatchEnergyMulti
+25117,"1,024安ZPM无线能源仓",MTEWirelessHatchEnergyMulti
+25118,"4,096安ZPM无线能源仓",MTEWirelessHatchEnergyMulti
+25119,4安ZPM无线动力仓,MTEWirelessHatchDynamoMulti
+25120,16安ZPM无线动力仓,MTEWirelessHatchDynamoMulti
+25121,64安ZPM无线动力仓,MTEWirelessHatchDynamoMulti
+25122,256安ZPM无线动力仓,MTEWirelessHatchDynamoMulti
+25123,"1,024安ZPM无线动力仓",MTEWirelessHatchDynamoMulti
+25124,"4,096安ZPM无线动力仓",MTEWirelessHatchDynamoMulti
+25125,256安UV无线能源仓,MTEWirelessHatchEnergyMulti
+25126,"1,024安UV无线能源仓",MTEWirelessHatchEnergyMulti
+25127,"4,096安UV无线能源仓",MTEWirelessHatchEnergyMulti
+25128,"16,384安UV无线能源仓",MTEWirelessHatchEnergyMulti
+25129,4安UV无线动力仓,MTEWirelessHatchDynamoMulti
+25130,16安UV无线动力仓,MTEWirelessHatchDynamoMulti
+25131,64安UV无线动力仓,MTEWirelessHatchDynamoMulti
+25132,256安UV无线动力仓,MTEWirelessHatchDynamoMulti
+25133,"1,024安UV无线动力仓",MTEWirelessHatchDynamoMulti
+25134,"4,096安UV无线动力仓",MTEWirelessHatchDynamoMulti
+25135,"16,384安UV无线动力仓",MTEWirelessHatchDynamoMulti
+25136,256安UHV无线能源仓,MTEWirelessHatchEnergyMulti
+25137,"1,024安UHV无线能源仓",MTEWirelessHatchEnergyMulti
+25138,"4,096安UHV无线能源仓",MTEWirelessHatchEnergyMulti
+25139,"16,384安UHV无线能源仓",MTEWirelessHatchEnergyMulti
+25140,"65,536安UHV无线能源仓",MTEWirelessHatchEnergyMulti
+25141,4安UHV无线动力仓,MTEWirelessHatchDynamoMulti
+25142,16安UHV无线动力仓,MTEWirelessHatchDynamoMulti
+25143,64安UHV无线动力仓,MTEWirelessHatchDynamoMulti
+25144,256安UHV无线动力仓,MTEWirelessHatchDynamoMulti
+25145,"1,024安UHV无线动力仓",MTEWirelessHatchDynamoMulti
+25146,"4,096安UHV无线动力仓",MTEWirelessHatchDynamoMulti
+25147,"16,384安UHV无线动力仓",MTEWirelessHatchDynamoMulti
+25148,"65,536安UHV无线动力仓",MTEWirelessHatchDynamoMulti
+25149,256安UEV无线能源仓,MTEWirelessHatchEnergyMulti
+25150,"1,024安UEV无线能源仓",MTEWirelessHatchEnergyMulti
+25151,"4,096安UEV无线能源仓",MTEWirelessHatchEnergyMulti
+25152,"16,384安UEV无线能源仓",MTEWirelessHatchEnergyMulti
+25153,"65,536安UEV无线能源仓",MTEWirelessHatchEnergyMulti
+25154,"262,144安UEV无线能源仓",MTEWirelessHatchEnergyMulti
+25155,4安UEV无线动力仓,MTEWirelessHatchDynamoMulti
+25156,16安UEV无线动力仓,MTEWirelessHatchDynamoMulti
+25157,64安UEV无线动力仓,MTEWirelessHatchDynamoMulti
+25158,256安UEV无线动力仓,MTEWirelessHatchDynamoMulti
+25159,"1,024安UEV无线动力仓",MTEWirelessHatchDynamoMulti
+25160,"4,096安UEV无线动力仓",MTEWirelessHatchDynamoMulti
+25161,"16,384安UEV无线动力仓",MTEWirelessHatchDynamoMulti
+25162,"65,536安UEV无线动力仓",MTEWirelessHatchDynamoMulti
+25163,"262,144安UEV无线动力仓",MTEWirelessHatchDynamoMulti
+25164,256安UIV无线能源仓,MTEWirelessHatchEnergyMulti
+25165,"1,024安UIV无线能源仓",MTEWirelessHatchEnergyMulti
+25166,"4,096安UIV无线能源仓",MTEWirelessHatchEnergyMulti
+25167,"16,384安UIV无线能源仓",MTEWirelessHatchEnergyMulti
+25168,"65,536安UIV无线能源仓",MTEWirelessHatchEnergyMulti
+25169,"262,144安UIV无线能源仓",MTEWirelessHatchEnergyMulti
+25170,"1,048,576安UIV无线能源仓",MTEWirelessHatchEnergyMulti
+25171,4安UIV无线动力仓,MTEWirelessHatchDynamoMulti
+25172,16安UIV无线动力仓,MTEWirelessHatchDynamoMulti
+25173,64安UIV无线动力仓,MTEWirelessHatchDynamoMulti
+25174,256安UIV无线动力仓,MTEWirelessHatchDynamoMulti
+25175,"1,024安UIV无线动力仓",MTEWirelessHatchDynamoMulti
+25176,"4,096安UIV无线动力仓",MTEWirelessHatchDynamoMulti
+25177,"16,384安UIV无线动力仓",MTEWirelessHatchDynamoMulti
+25178,"65,536安UIV无线动力仓",MTEWirelessHatchDynamoMulti
+25179,"262,144安UIV无线动力仓",MTEWirelessHatchDynamoMulti
+25180,"1,048,576安UIV无线动力仓",MTEWirelessHatchDynamoMulti
+25181,256安UMV无线能源仓,MTEWirelessHatchEnergyMulti
+25182,"1,024安UMV无线能源仓",MTEWirelessHatchEnergyMulti
+25183,"4,096安UMV无线能源仓",MTEWirelessHatchEnergyMulti
+25184,"16,384安UMV无线能源仓",MTEWirelessHatchEnergyMulti
+25185,"65,536安UMV无线能源仓",MTEWirelessHatchEnergyMulti
+25186,"262,144安UMV无线能源仓",MTEWirelessHatchEnergyMulti
+25187,"1,048,576安UMV无线能源仓",MTEWirelessHatchEnergyMulti
+25188,"4,194,304安UMV无线能源仓",MTEWirelessHatchEnergyMulti
+25189,256安MAX无线能源仓,MTEWirelessHatchEnergyMulti
+25190,"1,024安MAX无线能源仓",MTEWirelessHatchEnergyMulti
+25191,"4,096安MAX无线能源仓",MTEWirelessHatchEnergyMulti
+25192,"16,384安MAX无线能源仓",MTEWirelessHatchEnergyMulti
+25193,"65,536安MAX无线能源仓",MTEWirelessHatchEnergyMulti
+25194,"262,144安MAX无线能源仓",MTEWirelessHatchEnergyMulti
+25195,"1,048,576安MAX无线能源仓",MTEWirelessHatchEnergyMulti
+25196,"4,194,304安MAX无线能源仓",MTEWirelessHatchEnergyMulti
+25197,"16,777,216安MAX无线能源仓",MTEWirelessHatchEnergyMulti
+25198,"67,108,864安MAX无线能源仓",MTEWirelessHatchEnergyMulti
+25200,4安LV无线能源仓,MTEWirelessHatchEnergyMulti
+25201,16安LV无线能源仓,MTEWirelessHatchEnergyMulti
+25202,64安LV无线能源仓,MTEWirelessHatchEnergyMulti
+25203,4安MV无线能源仓,MTEWirelessHatchEnergyMulti
+25204,16安MV无线能源仓,MTEWirelessHatchEnergyMulti
+25205,64安MV无线能源仓,MTEWirelessHatchEnergyMulti
+25206,4安HV无线能源仓,MTEWirelessHatchEnergyMulti
+25207,16安HV无线能源仓,MTEWirelessHatchEnergyMulti
+25208,64安HV无线能源仓,MTEWirelessHatchEnergyMulti
+25221,4安LV能源仓,MTEHatchEnergyMulti
+25222,16安LV能源仓,MTEHatchEnergyMulti
+25223,64安LV能源仓,MTEHatchEnergyMulti
+25224,4安MV能源仓,MTEHatchEnergyMulti
+25225,16安MV能源仓,MTEHatchEnergyMulti
+25226,64安MV能源仓,MTEHatchEnergyMulti
+25227,4安HV能源仓,MTEHatchEnergyMulti
+25228,16安HV能源仓,MTEHatchEnergyMulti
+25229,64安HV能源仓,MTEHatchEnergyMulti
+25230,4安MAX能源仓,MTEHatchEnergyMulti
+25231,16安MAX能源仓,MTEHatchEnergyMulti
+25232,64安MAX能源仓,MTEHatchEnergyMulti
+25233,MAX动力仓,MTEHatchDynamo
+25234,MAX能源仓,MTEHatchEnergy
+26763,Void Miner EX I,VMLV
+26764,Void Miner EX II,VMHV
+26765,Void Miner EX III,VMIV
+28001,基础作物管理器,MTECropManager
+28002,进阶作物管理器,MTECropManager
+28003,进阶作物管理器 II,MTECropManager
+28004,进阶作物管理器 III,MTECropManager
+28005,进阶作物管理器 IV,MTECropManager
+28006,精英作物管理器,MTECropManager
+28007,精英作物管理器 II,MTECropManager
+28008,终极作物管理器,MTECropManager
+28009,史诗作物管理器,MTECropManager
+28010,史诗作物管理器 II,MTECropManager
+28011,史诗作物管理器 III,MTECropManager
+28012,史诗作物管理器 IV,MTECropManager
+28013,基础种子生成器,MTESeedGenerator
+28014,进阶种子生成器,MTESeedGenerator
+28015,进阶种子生成器 II,MTESeedGenerator
+28016,进阶种子生成器 III,MTESeedGenerator
+28017,进阶种子生成器 IV,MTESeedGenerator
+28018,精英种子生成器,MTESeedGenerator
+28019,精英种子生成器 II,MTESeedGenerator
+28020,终极种子复制机,MTESeedGenerator
+28021,史诗种子复制机,MTESeedGenerator
+28022,史诗种子复制机 II,MTESeedGenerator
+28023,史诗种子复制机 III,MTESeedGenerator
+28024,史诗种子复制机 IV,MTESeedGenerator
+28025,基础作物培育机,MTECropBreeder
+28026,进阶作物培育机,MTECropBreeder
+28027,进阶作物培育机 II,MTECropBreeder
+28028,进阶作物培育机 III,MTECropBreeder
+28029,进阶作物培育机 IV,MTECropBreeder
+28030,精英作物培育机,MTECropBreeder
+28031,精英作物培育机 II,MTECropBreeder
+28032,终极作物培育机,MTECropBreeder
+28033,史诗作物培育机,MTECropBreeder
+28034,史诗作物培育机 II,MTECropBreeder
+28035,史诗作物培育机 III,MTECropBreeder
+28036,史诗作物培育机 IV,MTECropBreeder
+28037,作物基因提取器,MTECropGeneExtractor
+28038,进阶作物基因提取器,MTECropGeneExtractor
+28039,精英作物基因提取器,MTECropGeneExtractor
+28040,精英作物基因提取器 II,MTECropGeneExtractor
+28041,终极作物基因提取器,MTECropGeneExtractor
+28042,史诗作物基因提取器,MTECropGeneExtractor
+28043,史诗作物基因提取器 II,MTECropGeneExtractor
+28044,史诗作物基因提取器 III,MTECropGeneExtractor
+28045,史诗作物基因提取器 IV,MTECropGeneExtractor
+28046,作物合成器,MTECropSynthesizer
+28047,进阶作物合成器,MTECropSynthesizer
+28048,精英作物合成器,MTECropSynthesizer
+28049,精英作物合成器 II,MTECropSynthesizer
+28050,终极作物合成器,MTECropSynthesizer
+28051,史诗作物合成器,MTECropSynthesizer
+28052,史诗作物合成器 II,MTECropSynthesizer
+28053,史诗作物合成器 III,MTECropSynthesizer
+28054,史诗作物合成器 IV,MTECropSynthesizer
+28055,工业农场,MTEIndustrialFarm
+29990,进阶磁悬浮能量塔,MTEMagLevPylon
+29991,进阶磁悬浮能量塔 II,MTEMagLevPylon
+29992,进阶磁悬浮能量塔 III,MTEMagLevPylon
+30001,进阶消声仓(LV),MTEHatchMufflerAdvanced
+30002,进阶消声仓(MV),MTEHatchMufflerAdvanced
+30003,进阶消声仓(HV),MTEHatchMufflerAdvanced
+30004,进阶消声仓(EV),MTEHatchMufflerAdvanced
+30005,进阶消声仓(IV),MTEHatchMufflerAdvanced
+30006,进阶消声仓(LuV),MTEHatchMufflerAdvanced
+30007,进阶消声仓(ZPM),MTEHatchMufflerAdvanced
+30008,进阶消声仓(UV),MTEHatchMufflerAdvanced
+30009,进阶消声仓(UHV),MTEHatchMufflerAdvanced
+30010,转子仓,MTEHatchTurbine
+30022,§c已弃用！§r超级输入总线(LV),MTEHatchSuperBusInput
+30023,§c已弃用！§r超级输入总线(MV),MTEHatchSuperBusInput
+30024,§c已弃用！§r超级输入总线(HV),MTEHatchSuperBusInput
+30025,§c已弃用！§r超级输入总线(EV),MTEHatchSuperBusInput
+30026,§c已弃用！§r超级输入总线(IV),MTEHatchSuperBusInput
+30027,§c已弃用！§r超级输入总线(LuV),MTEHatchSuperBusInput
+30028,§c已弃用！§r超级输入总线(ZPM),MTEHatchSuperBusInput
+30029,§c已弃用！§r超级输入总线(UV),MTEHatchSuperBusInput
+30030,§c已弃用！§r超级输入总线(UHV),MTEHatchSuperBusInput
+30032,§c已弃用！§r超级输出总线(LV),MTESuperBusOutput
+30033,§c已弃用！§r超级输出总线(MV),MTESuperBusOutput
+30034,§c已弃用！§r超级输出总线(HV),MTESuperBusOutput
+30035,§c已弃用！§r超级输出总线(EV),MTESuperBusOutput
+30036,§c已弃用！§r超级输出总线(IV),MTESuperBusOutput
+30037,§c已弃用！§r超级输出总线(LuV),MTESuperBusOutput
+30038,§c已弃用！§r超级输出总线(ZPM),MTESuperBusOutput
+30039,§c已弃用！§r超级输出总线(UV),MTESuperBusOutput
+30040,§c已弃用！§r超级输出总线(UHV),MTESuperBusOutput
+30500,微型掺碳三元硅岩合金流体管道,GTPPMTEFluidPipe
+30501,小型掺碳三元硅岩合金流体管道,GTPPMTEFluidPipe
+30502,掺碳三元硅岩合金流体管道,GTPPMTEFluidPipe
+30503,大型掺碳三元硅岩合金流体管道,GTPPMTEFluidPipe
+30504,巨型掺碳三元硅岩合金流体管道,GTPPMTEFluidPipe
+30585,1x海珀珍导线,GTPPMTECable
+30586,2x海珀珍导线,GTPPMTECable
+30587,4x海珀珍导线,GTPPMTECable
+30588,8x海珀珍导线,GTPPMTECable
+30589,12x海珀珍导线,GTPPMTECable
+30590,16x海珀珍导线,GTPPMTECable
+30645,1x红石合金导线,GTPPMTECable
+30646,2x红石合金导线,GTPPMTECable
+30647,4x红石合金导线,GTPPMTECable
+30648,8x红石合金导线,GTPPMTECable
+30649,12x红石合金导线,GTPPMTECable
+30650,16x红石合金导线,GTPPMTECable
+30651,1x红石合金线缆,GTPPMTECable
+30652,2x红石合金线缆,GTPPMTECable
+30653,4x红石合金线缆,GTPPMTECable
+30654,8x红石合金线缆,GTPPMTECable
+30655,12x红石合金线缆,GTPPMTECable
+30656,16x红石合金线缆,GTPPMTECable
+30700,微型贫铀合金流体管道,GTPPMTEFluidPipe
+30701,小型贫铀合金流体管道,GTPPMTEFluidPipe
+30702,贫铀合金流体管道,GTPPMTEFluidPipe
+30703,大型贫铀合金流体管道,GTPPMTEFluidPipe
+30704,巨型贫铀合金流体管道,GTPPMTEFluidPipe
+30705,微型钽钨合金-60流体管道,GTPPMTEFluidPipe
+30706,小型钽钨合金-60流体管道,GTPPMTEFluidPipe
+30707,钽钨合金-60流体管道,GTPPMTEFluidPipe
+30708,大型钽钨合金-60流体管道,GTPPMTEFluidPipe
+30709,巨型钽钨合金-60流体管道,GTPPMTEFluidPipe
+30710,微型钽钨合金-61流体管道,GTPPMTEFluidPipe
+30711,小型钽钨合金-61流体管道,GTPPMTEFluidPipe
+30712,钽钨合金-61流体管道,GTPPMTEFluidPipe
+30713,大型钽钨合金-61流体管道,GTPPMTEFluidPipe
+30714,巨型钽钨合金-61流体管道,GTPPMTEFluidPipe
+30715,微型虚空金属流体管道,GTPPMTEFluidPipe
+30716,小型虚空金属流体管道,GTPPMTEFluidPipe
+30717,虚空金属流体管道,GTPPMTEFluidPipe
+30718,大型虚空金属流体管道,GTPPMTEFluidPipe
+30719,巨型虚空金属流体管道,GTPPMTEFluidPipe
+30720,微型铕流体管道,MTEFluidPipe
+30721,小型铕流体管道,MTEFluidPipe
+30722,铕流体管道,MTEFluidPipe
+30723,大型铕流体管道,MTEFluidPipe
+30724,巨型铕流体管道,MTEFluidPipe
+30725,微型粗青铜合金流体管道,GTPPMTEFluidPipe
+30726,小型粗青铜合金流体管道,GTPPMTEFluidPipe
+30727,粗青铜合金流体管道,GTPPMTEFluidPipe
+30728,大型粗青铜合金流体管道,GTPPMTEFluidPipe
+30729,巨型粗青铜合金流体管道,GTPPMTEFluidPipe
+30730,微型马氏体时效钢300流体管道,GTPPMTEFluidPipe
+30731,小型马氏体时效钢300流体管道,GTPPMTEFluidPipe
+30732,马氏体时效钢300流体管道,GTPPMTEFluidPipe
+30733,大型马氏体时效钢300流体管道,GTPPMTEFluidPipe
+30734,巨型马氏体时效钢300流体管道,GTPPMTEFluidPipe
+30735,微型马氏体时效钢350流体管道,GTPPMTEFluidPipe
+30736,小型马氏体时效钢350流体管道,GTPPMTEFluidPipe
+30737,马氏体时效钢350流体管道,GTPPMTEFluidPipe
+30738,大型马氏体时效钢350流体管道,GTPPMTEFluidPipe
+30739,巨型马氏体时效钢350流体管道,GTPPMTEFluidPipe
+30740,微型镍铬基合金-690流体管道,GTPPMTEFluidPipe
+30741,小型镍铬基合金-690流体管道,GTPPMTEFluidPipe
+30742,镍铬基合金-690流体管道,GTPPMTEFluidPipe
+30743,大型镍铬基合金-690流体管道,GTPPMTEFluidPipe
+30744,巨型镍铬基合金-690流体管道,GTPPMTEFluidPipe
+30745,微型镍铬基合金-792流体管道,GTPPMTEFluidPipe
+30746,小型镍铬基合金-792流体管道,GTPPMTEFluidPipe
+30747,镍铬基合金-792流体管道,GTPPMTEFluidPipe
+30748,大型镍铬基合金-792流体管道,GTPPMTEFluidPipe
+30749,巨型镍铬基合金-792流体管道,GTPPMTEFluidPipe
+30750,微型哈斯特洛依合金-X流体管道,GTPPMTEFluidPipe
+30751,小型哈斯特洛依合金-X流体管道,GTPPMTEFluidPipe
+30752,哈斯特洛依合金-X流体管道,GTPPMTEFluidPipe
+30753,大型哈斯特洛依合金-X流体管道,GTPPMTEFluidPipe
+30754,巨型哈斯特洛依合金-X流体管道,GTPPMTEFluidPipe
+30755,微型钨流体管道,MTEFluidPipe
+30756,小型钨流体管道,MTEFluidPipe
+30757,钨流体管道,MTEFluidPipe
+30758,大型钨流体管道,MTEFluidPipe
+30759,巨型钨流体管道,MTEFluidPipe
+30760,微型玄钢流体管道,MTEFluidPipe
+30761,小型玄钢流体管道,MTEFluidPipe
+30762,玄钢流体管道,MTEFluidPipe
+30763,大型玄钢流体管道,MTEFluidPipe
+30764,巨型玄钢流体管道,MTEFluidPipe
+30765,微型黏土流体管道,MTEFluidPipe
+30766,小型黏土流体管道,MTEFluidPipe
+30767,黏土流体管道,MTEFluidPipe
+30768,大型黏土流体管道,MTEFluidPipe
+30769,巨型黏土流体管道,MTEFluidPipe
+30770,微型铅流体管道,MTEFluidPipe
+30771,小型铅流体管道,MTEFluidPipe
+30772,铅流体管道,MTEFluidPipe
+30773,大型铅流体管道,MTEFluidPipe
+30774,巨型铅流体管道,MTEFluidPipe
+30995,微型耐热铬铁合金-903流体管道,MTEFluidPipe
+30996,小型耐热铬铁合金-903流体管道,MTEFluidPipe
+30997,耐热铬铁合金-903流体管道,MTEFluidPipe
+30998,大型耐热铬铁合金-903流体管道,MTEFluidPipe
+30999,巨型耐热铬铁合金-903流体管道,MTEFluidPipe
+31010,无限物品箱,MTEInfiniteItemHolder
+31017,简易洗矿池 II,MTEBasicMachineWithRecipe
+31018,简易洗矿池 IV,MTEBasicMachineWithRecipe
+31019,简易洗矿池 VI,MTEBasicMachineWithRecipe
+31020,简易洗矿池 VIII,MTEBasicMachineWithRecipe
+31021,丹格特蒸馏厂,MTEAdvDistillationTower
+31023,工业合金炉,MTEIndustrialAlloySmelter
+31025,涡轮仓,MTEHatchTurbineProvider
+31026,大型半流质发电机,MTELargeSemifluidGenerator
+31027,艾萨研磨机,MTEIsaMill
+31028,工业浮选机,MTEFrothFlotationCellLegacy
+31029,研磨球仓,MTEHatchMillingBalls
+31030,催化剂仓,MTEHatchCatalysts
+31031,反应堆处理单元 I,MTEBasicMachineWithRecipe
+31032,反应堆处理单元 II,MTEBasicMachineWithRecipe
+31033,冷阱 I,MTEBasicMachineWithRecipe
+31034,冷阱 II,MTEBasicMachineWithRecipe
+31035,气涤塔,MTESpargeTower
+31039,Debug蒸汽仓,MTEHatchCustomFluidBaseDebug
+31040,蒸汽仓,MTEHatchCustomFluidBase
+31041,大型蒸汽研磨机,MTESteamMacerator
+31046,输入总线(蒸汽),MTEHatchSteamBusInput
+31047,输出总线(蒸汽),MTEHatchSteamBusOutput
+31050,大型元素复制机,MTEElementalDuplicator
+31051,数据球仓,MTEHatchElementalDataOrbHolder
+31065,工业碎石机,MTEIndustrialRockBreakerLegacy
+31066,基础自动雕刻机,MTEAutoChisel
+31067,进阶自动雕刻机,MTEAutoChisel
+31068,精密自动雕刻机,MTEAutoChisel
+31069,工业3D打印机,MTEIndustrialChiselLegacy
+31070,超级进气仓,MTEHatchAirIntakeExtreme
+31071,蓄水仓,MTEHatchReservoir
+31072,大型分子重组仪,MTEIndustrialMolecularTransformerLegacy
+31073,特大燃气涡轮,MTELargerTurbineGasLegacy
+31074,特大等离子涡轮,MTELargerTurbinePlasmaLegacy
+31075,工业锻造锤,MTEIndustrialForgeHammerLegacy
+31076,特大超临界蒸汽涡轮,MTELargerTurbineSCSteamLegacy
+31077,工业流体加热器,MTEIndustrialFluidHeater
+31078,大型蒸汽压缩机,MTESteamCompressor
+31079,特大热交换机,MTEAdvHeatExchanger
+31080,大型蒸汽离心机,MTESteamCentrifuge
+31082,大型蒸汽洗矿厂,MTESteamWasher
+31083,大型蒸汽锻造锤,MTESteamForgeHammer
+31084,大型蒸汽搅拌机,MTESteamMixer
+31085,蒸汽水泵,MTESteamWaterPump
+31086,大型蒸汽合金炉,MTESteamAlloySmelter
+31087,蒸汽壁炉,MTESteamFurnaceMulti
+31088,大型中和引擎,MTELargeNeutralizationEngine
+31091,自动工作台（LV）,MTEElectricAutoWorkbench
+31092,自动工作台（MV）,MTEElectricAutoWorkbench
+31093,自动工作台（HV）,MTEElectricAutoWorkbench
+31094,自动工作台（EV）,MTEElectricAutoWorkbench
+31095,自动工作台（IV）,MTEElectricAutoWorkbench
+31096,自动工作台（LuV）,MTEElectricAutoWorkbench
+31097,自动工作台（ZPM）,MTEElectricAutoWorkbench
+31098,自动工作台（UV）,MTEElectricAutoWorkbench
+31150,巨型合金冶炼炉,MTEMegaAlloyBlastSmelter
+31151,量子操纵者,MTEQuantumForceTransformer
+31778,输入总线(凿子) I,MTEHatchChiselBus
+31779,输入总线(凿子) II,MTEHatchChiselBus
+31780,输入总线(凿子) III,MTEHatchChiselBus
+31781,固化仓 I,MTEHatchSolidifier
+31782,固化仓 II,MTEHatchSolidifier
+31783,固化仓 III,MTEHatchSolidifier
+31784,固化仓 IV,MTEHatchSolidifier
+31785,压模总线 I,MTEHatchExtrusion
+31786,压模总线 II,MTEHatchExtrusion
+31787,压模总线 III,MTEHatchExtrusion
+31788,压模总线 IV,MTEHatchExtrusion
+31790,简易洗矿池 I,MTEBasicMachineWithRecipe
+31791,简易洗矿池 III,MTEBasicMachineWithRecipe
+31792,简易洗矿池 V,MTEBasicMachineWithRecipe
+31793,简易洗矿池 VII,MTEBasicMachineWithRecipe
+31803,红石控制灯具,MTERedstoneLamp
+32000,万能维护仓,AE2MaintenanceHatchUniversal
+32001,通用化学燃料引擎,MTEUniversalChemicalFuelEngineLegacy
+32003,ULV中子加速器,MTENeutronAccelerator
+32004,LV中子加速器,MTENeutronAccelerator
+32005,MV中子加速器,MTENeutronAccelerator
+32006,HV中子加速器,MTENeutronAccelerator
+32007,EV中子加速器,MTENeutronAccelerator
+32008,IV中子加速器,MTENeutronAccelerator
+32009,LuV中子加速器,MTENeutronAccelerator
+32010,ZPM中子加速器,MTENeutronAccelerator
+32011,UV中子加速器,MTENeutronAccelerator
+32012,中子传感器,MTENeutronSensor
+32013,中子活化器,MTENeutronActivator
+32014,YOT储罐,MTEYottaFluidTank
+32015,YOT仓,MTEYOTTAHatch
+32016,超临界蒸汽涡轮,MTESupercriticalFluidTurbineLegacy
+32017,超级热交换机,MTEExtremeHeatExchanger
+32018,精密自动组装机MT-3662,MTEPreciseAssembler
+32019,压缩核聚变反应堆控制电脑MK-I,MTELargeFusionComputer1
+32020,压缩核聚变反应堆控制电脑MK-II,MTELargeFusionComputer2
+32021,压缩核聚变反应堆控制电脑MK-III,MTELargeFusionComputer3
+32022,压缩核聚变反应堆控制电脑MK-IV,MTELargeFusionComputer4
+32023,压缩核聚变反应堆控制电脑MK-V,MTELargeFusionComputer5
+32024,Large Essentia Smeltery,MTELargeEssentiaSmeltery
+32025,冷却塔,MTECoolantTower
+32026,部件装配线,MTEComponentAssemblyLine
+32027,半稳定反物质稳定序列器,AntimatterForge
+32028,屏蔽拉格朗日湮灭矩阵,AntimatterGenerator
+32029,反物质仓,AntimatterOutputHatch
+32050,Basic Drawer Framer,MTEDrawerFramer
+32051,Advanced Drawer Framer,MTEDrawerFramer
+32052,Precise Drawer Framer,MTEDrawerFramer
+32100,自适应电网终端,AdaptiveNetTerminal
+32102,自适应电网仓,AdaptiveNetHatch
+32103,自适应电网激光仓,AdaptiveNetLaserHatch
+32104,自适应电网动力仓,AdaptiveNetDynamoHatch
+32105,自适应电网激光靶仓,AdaptiveNetLaserTargetHatch
+32110,无线电网输出终端,WirelessEnergyOutputTerminal
+32111,无线电网输入终端,WirelessEnergyInputTerminal
+32737,1x流明导线,MTECable
+32738,2x流明导线,MTECable
+32739,4x流明导线,MTECable
+32740,8x流明导线,MTECable
+32741,12x流明导线,MTECable
+32742,16x流明导线,MTECable
+32743,1x流明线缆,MTECable
+32744,2x流明线缆,MTECable
+32745,4x流明线缆,MTECable
+32746,8x流明线缆,MTECable
+32747,12x流明线缆,MTECable
+32748,16x流明线缆,MTECable
+32749,1x信素导线,MTECable
+32750,2x信素导线,MTECable
+32751,4x信素导线,MTECable
+32752,8x信素导线,MTECable
+32753,12x信素导线,MTECable
+32754,16x信素导线,MTECable
+32755,1x信素线缆,MTECable
+32756,2x信素线缆,MTECable
+32757,4x信素线缆,MTECable
+32758,8x信素线缆,MTECable
+32759,12x信素线缆,MTECable
+32760,16x信素线缆,MTECable
+32761,UHV中子加速器,MTENeutronAccelerator
+32762,UEV中子加速器,MTENeutronAccelerator
+32763,UIV中子加速器,MTENeutronAccelerator
+32764,UMV中子加速器,MTENeutronAccelerator
+32765,大气层进气仓,MTEHatchAirIntakeAtmosphere

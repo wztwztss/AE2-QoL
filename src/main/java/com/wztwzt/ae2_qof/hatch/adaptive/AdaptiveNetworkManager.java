@@ -1,5 +1,7 @@
 package com.wztwzt.ae2_qof.hatch.adaptive;
 
+import net.minecraft.world.World;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -7,6 +9,7 @@ import java.util.UUID;
 public class AdaptiveNetworkManager {
 
     private static final Map<String, AdaptiveNetwork> networks = new HashMap<>();
+    private static World serverWorld;
 
     public static String makeKey(UUID owner, int frequency) {
         if (owner == null) return "null:" + frequency;
@@ -31,17 +34,27 @@ public class AdaptiveNetworkManager {
         String key = makeKey(owner, frequency);
         AdaptiveNetwork network = networks.remove(key);
         if (network != null) {
+            saveStatsToDisk(network);
             network.destroy();
         }
     }
 
     public static void registerTerminal(AdaptiveNetTerminal terminal) {
+        registerTerminal(terminal, null);
+    }
+
+    public static void registerTerminal(AdaptiveNetTerminal terminal, World world) {
         UUID owner = terminal.getNetworkOwner();
         int frequency = terminal.getNetworkFrequency();
         if (owner == null) return;
 
+        if (world != null) {
+            serverWorld = world;
+        }
+
         AdaptiveNetwork network = getOrCreateNetwork(owner, frequency);
         if (network.getTerminal() == null) {
+            loadStatsFromDisk(network);
             network.setTerminal(terminal);
         }
     }
@@ -61,9 +74,17 @@ public class AdaptiveNetworkManager {
     }
 
     public static void registerHatch(AdaptiveHatchHelper helper) {
+        registerHatch(helper, null);
+    }
+
+    public static void registerHatch(AdaptiveHatchHelper helper, World world) {
         UUID owner = helper.getNetworkOwner();
         int frequency = helper.getNetworkFrequency();
         if (owner == null) return;
+
+        if (world != null) {
+            serverWorld = world;
+        }
 
         AdaptiveNetwork network = getOrCreateNetwork(owner, frequency);
         network.addHelper(helper);
@@ -96,6 +117,53 @@ public class AdaptiveNetworkManager {
 
         for (AdaptiveHatchHelper helper : oldNetwork.getAllHelpers()) {
             helper.migrateTo(newOwner, newFreq);
+        }
+    }
+
+    private static void loadStatsFromDisk(AdaptiveNetwork network) {
+        if (serverWorld == null) return;
+        String key = makeKey(network.getOwner(), network.getFrequency());
+        GridEnergyWorldData worldData = GridEnergyWorldData.get(serverWorld);
+        GridEnergyStats saved = worldData.getStats(key);
+        if (saved != null) {
+            network.replaceStats(saved);
+        }
+    }
+
+    private static void saveStatsToDisk(AdaptiveNetwork network) {
+        if (serverWorld == null) return;
+        String key = makeKey(network.getOwner(), network.getFrequency());
+        GridEnergyWorldData worldData = GridEnergyWorldData.get(serverWorld);
+        GridEnergyStats stats = network.getStats();
+        if (stats != null) {
+            worldData.setStats(key, stats);
+            worldData.markDirty();
+        }
+    }
+
+    public static void saveAllStats() {
+        if (serverWorld == null) return;
+        GridEnergyWorldData worldData = GridEnergyWorldData.get(serverWorld);
+        for (AdaptiveNetwork network : networks.values()) {
+            String key = makeKey(network.getOwner(), network.getFrequency());
+            GridEnergyStats stats = network.getStats();
+            if (stats != null) {
+                worldData.setStats(key, stats);
+            }
+        }
+        worldData.markDirty();
+    }
+
+    public static void saveStatsForKey(UUID owner, int frequency) {
+        if (serverWorld == null) return;
+        AdaptiveNetwork network = getNetwork(owner, frequency);
+        if (network == null) return;
+        String key = makeKey(owner, frequency);
+        GridEnergyWorldData worldData = GridEnergyWorldData.get(serverWorld);
+        GridEnergyStats stats = network.getStats();
+        if (stats != null) {
+            worldData.setStats(key, stats);
+            worldData.markDirty();
         }
     }
 }

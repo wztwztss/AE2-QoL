@@ -66,6 +66,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
     private int networkFrequency = 0;
     private boolean autoReconnect = true;
     private int displayMode = 0; // 0=regular, 1=scientific, 2=KMG
+    private net.minecraft.world.World world;
 
     private int currentVoltageTier = 0;
     private int[] hatchTiers = new int[HatchType.COUNT];
@@ -166,7 +167,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
             }
 
             entries.add(new HatchListCache.HatchEntry(
-                h.getCachedName(), h.getCachedMetaId(), eut, tier, amps,
+                h.getCachedName(), h.getCachedMetaId(), eut, h.getRealFlowEUt(), tier, amps,
                 ht.ordinal(), globalIndex,
                 h.getX(), h.getY(), h.getZ(), h.getDim()));
             globalIndex++;
@@ -262,9 +263,10 @@ public class AdaptiveNetTerminal extends MTEHatch {
     public void onFirstTick(IGregTechTileEntity aBase) {
         super.onFirstTick(aBase);
         if (aBase.isServerSide()) {
+            this.world = aBase.getWorld();
             networkOwner = aBase.getOwnerUuid();
             if (networkOwner != null) {
-                AdaptiveNetworkManager.registerTerminal(this);
+                AdaptiveNetworkManager.registerTerminal(this, world);
             }
         }
     }
@@ -305,7 +307,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
                     LOG.info("[AE2QoL] Terminal updated: oldFreq={} -> newFreq={}, owner={}", oldFreq, stickFreq, stickOwner);
                     AdaptiveNetworkManager.migrateHatches(stickOwner, oldFreq, stickOwner, stickFreq);
                     AdaptiveNetworkManager.unregisterTerminal(this);
-                    AdaptiveNetworkManager.registerTerminal(this);
+                    AdaptiveNetworkManager.registerTerminal(this, world);
                     applySettings();
                     aPlayer.addChatMessage(new net.minecraft.util.ChatComponentText(
                         EnumChatFormatting.GREEN
@@ -318,7 +320,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
                 if (!aPlayer.worldObj.isRemote) {
                     if (networkOwner == null) {
                         networkOwner = aPlayer.getUniqueID();
-                        AdaptiveNetworkManager.registerTerminal(this);
+                        AdaptiveNetworkManager.registerTerminal(this, world);
                         LOG.info("[AE2QoL] Auto-initialized owner from player: {}", networkOwner);
                     }
                     LOG.info("[AE2QoL] Writing to flash drive: owner={}, freq={}", networkOwner, networkFrequency);
@@ -352,7 +354,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
                     if (networkOwner != null) {
                         AdaptiveNetworkManager.migrateHatches(networkOwner, oldFreq, networkOwner, v);
                         AdaptiveNetworkManager.unregisterTerminal(this);
-                        AdaptiveNetworkManager.registerTerminal(this);
+                        AdaptiveNetworkManager.registerTerminal(this, world);
                         applySettings();
                     }
                 }
@@ -662,9 +664,9 @@ public class AdaptiveNetTerminal extends MTEHatch {
     }
 
     private static String formatDuration(long ticks) {
-        if (ticks <= 0) return "Infinite";
+        if (ticks <= 0) return "\u221e";
         long seconds = ticks / 20;
-        if (seconds <= 0) return "1s";
+        if (seconds <= 0) return "1\u79d2";
         long years = seconds / 31536000L;
         seconds %= 31536000L;
         long months = seconds / 2592000L;
@@ -676,12 +678,12 @@ public class AdaptiveNetTerminal extends MTEHatch {
         long minutes = seconds / 60L;
         seconds %= 60L;
         StringBuilder sb = new StringBuilder();
-        if (years > 0) sb.append(years).append("y ");
+        if (years > 0) sb.append(years).append("\u5e74 ");
         if (months > 0) sb.append(months).append("\u6708 ");
-        if (days > 0) sb.append(days).append("d ");
-        if (hours > 0) sb.append(hours).append("h ");
-        if (minutes > 0) sb.append(minutes).append("m ");
-        if (seconds > 0 || sb.length() == 0) sb.append(seconds).append("s");
+        if (days > 0) sb.append(days).append("\u5929 ");
+        if (hours > 0) sb.append(hours).append("\u65f6 ");
+        if (minutes > 0) sb.append(minutes).append("\u5206 ");
+        if (seconds > 0 || sb.length() == 0) sb.append(seconds).append("\u79d2");
         return sb.toString().trim();
     }
 
@@ -742,7 +744,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
             long gridEU = gridEUSync.getLongValue();
             String timeStr;
             if (avgOut <= 0 || gridEU <= 0) {
-                timeStr = "Infinite";
+                timeStr = "\u221e";
             } else {
                 long ticks = gridEU / avgOut;
                 timeStr = formatDuration(ticks);
@@ -811,8 +813,8 @@ public class AdaptiveNetTerminal extends MTEHatch {
                     .child(new TextWidget<>(IKey.dynamic(() -> {
                         String tierName = GTUtility.getColoredTierNameFromTier((byte) entry.tier);
                         String ampStr = String.format("(%.1fA %s)", (double) entry.amps, tierName);
-                        String eutStr = entry.eut > 0
-                            ? formatEU(entry.eut, displayMode) + " EU/t"
+                        String eutStr = entry.realFlowEUt > 0
+                            ? formatEU(entry.realFlowEUt, displayMode) + " EU/t"
                             : "0 EU/t";
                         String typeTag = entry.hatchType == 0 ? "[D]" : entry.hatchType == 1 ? "[E]"
                             : entry.hatchType == 2 ? "[LS]" : "[LT]";
@@ -824,6 +826,9 @@ public class AdaptiveNetTerminal extends MTEHatch {
                     .tooltipBuilder(t -> {
                         t.addLine(IKey.str(
                             EnumChatFormatting.GRAY + "[" + entry.x + ", " + entry.y + ", " + entry.z + "] dim:" + entry.dim));
+                        t.addLine(IKey.str(
+                            EnumChatFormatting.YELLOW + "Capacity: " + formatEU(entry.eut, displayMode) + " EU/t"
+                            + " | Flow: " + formatEU(entry.realFlowEUt, displayMode) + " EU/t"));
                         t.addLine(IKey.str(
                             EnumChatFormatting.YELLOW + "Left Click: Highlight | Shift+Click: Teleport"));
                     })

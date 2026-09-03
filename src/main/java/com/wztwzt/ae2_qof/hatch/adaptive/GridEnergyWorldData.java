@@ -61,4 +61,8 @@ public class GridEnergyWorldData extends WorldSavedData {
     public GridEnergyStats getStats(String key) {
         return statsMap.get(key);
     }
+
+    public void setStats(String key, GridEnergyStats stats) {
+        statsMap.put(key, stats);
+    }
 }

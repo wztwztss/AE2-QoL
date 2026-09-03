@@ -17,8 +17,9 @@ public class AdaptiveNetwork {
 
     private final int[] hatchTiers = new int[HatchType.COUNT];
     private final int[] hatchAmps = new int[HatchType.COUNT];
-    private final GridEnergyStats stats = new GridEnergyStats();
+    private GridEnergyStats stats = new GridEnergyStats();
     private boolean hatchListDirty = true;
+    private int saveCounter = 0;
 
     public AdaptiveNetwork(UUID owner, int frequency) {
         this.owner = owner;
@@ -148,8 +149,17 @@ public class AdaptiveNetwork {
         return stats;
     }
 
+    public void replaceStats(GridEnergyStats newStats) {
+        this.stats = newStats;
+    }
+
     public void tickStats(long currentEU) {
         stats.tick(currentEU);
+        saveCounter++;
+        if (saveCounter >= 6000) {
+            saveCounter = 0;
+            AdaptiveNetworkManager.saveStatsForKey(owner, frequency);
+        }
     }
 
     public void destroy() {

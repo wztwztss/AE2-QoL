@@ -37,6 +37,7 @@ public class AdaptiveNetHatch extends MTEHatchEnergy {
     private static final Logger LOG = LogManager.getLogger("AE2QoL");
     protected final AdaptiveHatchHelper helper = new AdaptiveHatchHelper();
     private long lastStoredEU = 0;
+    private net.minecraft.world.World world;
 
     public AdaptiveNetHatch(int aID, String aName, String aNameRegional, int aTier) {
         super(aID, aName, aNameRegional, aTier);
@@ -109,6 +110,7 @@ public class AdaptiveNetHatch extends MTEHatchEnergy {
             if (consumed > 0) {
                 WirelessNetworkManager.addEUToGlobalEnergyMap(owner, BigInteger.valueOf(-consumed));
             }
+            helper.setRealFlowEUt(consumed > 0 ? (int) consumed : 0);
             BigInteger gridEU = WirelessNetworkManager.getUserEU(owner);
             long maxStore = maxEUStore();
             long halfStore = maxStore / 2;
@@ -127,6 +129,7 @@ public class AdaptiveNetHatch extends MTEHatchEnergy {
     public void onFirstTick(IGregTechTileEntity aBase) {
         super.onFirstTick(aBase);
         if (aBase.isServerSide()) {
+            this.world = aBase.getWorld();
             helper.setPosition(aBase.getXCoord(), aBase.getYCoord(), aBase.getZCoord(), aBase.getWorld().provider.dimensionId);
             gregtech.api.metatileentity.MetaTileEntity mte = (gregtech.api.metatileentity.MetaTileEntity) aBase.getMetaTileEntity();
             if (mte != null) {
@@ -140,7 +143,7 @@ public class AdaptiveNetHatch extends MTEHatchEnergy {
             }
             lastStoredEU = aBase.getStoredEU();
             if (helper.isBound()) {
-                AdaptiveNetworkManager.registerHatch(helper);
+                AdaptiveNetworkManager.registerHatch(helper, world);
             }
         }
     }

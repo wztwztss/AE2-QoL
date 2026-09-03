@@ -61,6 +61,7 @@ public class CommonProxy {
     }
 
     public void serverStopping(FMLServerStoppingEvent event) {
+        com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveNetworkManager.saveAllStats();
         InfinityCellStorage.getInstance()
             .saveAll();
         InfinityCellStorage.getInstance()

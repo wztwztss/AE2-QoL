@@ -1,0 +1,1591 @@
+ID,Name,Localized Name,Temperature,Luminosity,Density,Viscosity,Placeable,Block ID,Block Class
+1,water,水,300,0,1000,1000,true,minecraft:water,cofh.asmhooks.block.BlockWater
+2,lava,岩浆,1300,15,3000,6000,true,minecraft:lava,net.minecraft.block.BlockStaticLiquid
+3,ic2uumatter,UU物质,300,0,3000,3000,true,IC2:fluidUuMatter,ic2.core.block.BlockIC2Fluid
+4,ic2constructionfoam,建筑泡沫,300,0,10000,50000,true,IC2:fluidConstructionFoam,ic2.core.block.BlockIC2Fluid
+5,ic2coolant,冷却液,300,0,1000,3000,true,IC2:fluidCoolant,ic2.core.block.BlockIC2Fluid
+6,ic2hotcoolant,热冷却液,1200,0,1000,3000,true,IC2:fluidHotCoolant,ic2.core.block.BlockIC2Fluid
+7,ic2pahoehoelava,熔岩岩浆,1200,10,50000,250000,true,IC2:fluidPahoehoeLava,ic2.core.block.BlockIC2Fluid
+8,ic2biomass,生物质,300,0,1000,3000,true,IC2:fluidBiomass,ic2.core.block.BlockIC2Fluid
+9,ic2biogas,沼气,300,0,1000,3000,true,IC2:fluidBiogas,ic2.core.block.BlockIC2Fluid
+10,ic2distilledwater,蒸馏水,300,0,1000,1000,true,IC2:fluidDistilledWater,ic2.core.block.BlockIC2Fluid
+11,ic2superheatedsteam,过热蒸汽,600,0,-3000,100,true,IC2:fluidSuperheatedSteam,ic2.core.block.BlockIC2Fluid
+12,ic2steam,蒸汽,420,0,-800,300,true,IC2:fluidSteam,ic2.core.block.BlockIC2Fluid
+13,ic2hotwater,Heated Water,350,0,1000,1000,true,IC2:fluidHotWater,ic2.core.block.BlockIC2Fluid
+14,fluxgoo,咒波黏浆,300,7,8,6000,true,Thaumcraft:blockFluxGoo,thaumcraft.common.blocks.BlockFluxGoo
+15,fluidpure,净化之水,300,10,1000,1000,true,Thaumcraft:blockFluidPure,thaumcraft.common.blocks.BlockFluidPure
+16,fluiddeath,死亡之水,300,8,1000,1500,true,Thaumcraft:blockFluidDeath,thaumcraft.common.blocks.BlockFluidDeath
+17,slime.blue,液态蓝史莱姆,300,0,1000,1000,true,TConstruct:liquid.slime,tconstruct.blocks.slime.SlimeFluid
+18,iron.molten,熔融铁,1300,12,3000,6000,true,TConstruct:fluid.molten.iron,tconstruct.smeltery.blocks.TConstructFluid
+19,gold.molten,熔融金,1300,12,3000,6000,true,TConstruct:fluid.molten.gold,tconstruct.smeltery.blocks.TConstructFluid
+20,copper.molten,熔融铜,1300,12,3000,6000,true,TConstruct:fluid.molten.copper,tconstruct.smeltery.blocks.TConstructFluid
+21,tin.molten,熔融锡,1300,12,3000,6000,true,TConstruct:fluid.molten.tin,tconstruct.smeltery.blocks.TConstructFluid
+22,aluminum.molten,熔融铝,1300,12,3000,6000,true,TConstruct:fluid.molten.aluminum,tconstruct.smeltery.blocks.TConstructFluid
+23,cobalt.molten,熔融钴,1300,12,3000,6000,true,TConstruct:fluid.molten.cobalt,tconstruct.smeltery.blocks.TConstructFluid
+24,ardite.molten,熔融阿迪特,1300,12,3000,6000,true,TConstruct:fluid.molten.ardite,tconstruct.smeltery.blocks.TConstructFluid
+25,bronze.molten,熔融青铜,1300,12,3000,6000,true,TConstruct:fluid.molten.bronze,tconstruct.smeltery.blocks.TConstructFluid
+26,aluminumbrass.molten,熔融铝黄铜,1300,12,3000,6000,true,TConstruct:fluid.molten.alubrass,tconstruct.smeltery.blocks.TConstructFluid
+27,manyullyn.molten,熔融玛玉灵,1300,12,3000,6000,true,TConstruct:fluid.molten.manyullyn,tconstruct.smeltery.blocks.TConstructFluid
+28,alumite.molten,熔融锌曜钢,1300,12,3000,6000,true,TConstruct:fluid.molten.alumite,tconstruct.smeltery.blocks.TConstructFluid
+29,obsidian.molten,熔融黑曜石,1300,12,3000,6000,true,TConstruct:fluid.molten.obsidian,tconstruct.smeltery.blocks.TConstructFluid
+30,steel.molten,熔融钢,1300,12,3000,6000,true,TConstruct:fluid.molten.steel,tconstruct.smeltery.blocks.TConstructFluid
+31,glass.molten,熔融玻璃,1300,12,3000,6000,true,TConstruct:fluid.molten.glass,tconstruct.smeltery.blocks.TConstructFluid
+32,stone.seared,熔融石头,1300,12,3000,6000,true,TConstruct:molten.stone,tconstruct.smeltery.blocks.TConstructFluid
+33,emerald.liquid,熔融绿宝石,1300,12,3000,6000,true,TConstruct:molten.emerald,tconstruct.smeltery.blocks.TConstructFluid
+34,quartz.molten,熔融下界石英,1300,12,3000,6000,true,TConstruct:molten.quartz,tconstruct.smeltery.blocks.TConstructFluid
+35,nickel.molten,熔融镍,1300,12,3000,6000,true,TConstruct:fluid.molten.nickel,tconstruct.smeltery.blocks.TConstructFluid
+36,lead.molten,熔融铅,1300,12,3000,6000,true,TConstruct:fluid.molten.lead,tconstruct.smeltery.blocks.TConstructFluid
+37,silver.molten,熔融银,1300,12,3000,6000,true,TConstruct:fluid.molten.silver,tconstruct.smeltery.blocks.TConstructFluid
+38,platinum.molten,熔融铂金,1300,12,3000,6000,true,TConstruct:fluid.molten.shiny,tconstruct.smeltery.blocks.TConstructFluid
+39,invar.molten,熔融殷钢,1300,12,3000,6000,true,TConstruct:fluid.molten.invar,tconstruct.smeltery.blocks.TConstructFluid
+40,electrum.molten,熔融琥珀金,1300,12,3000,6000,true,TConstruct:fluid.molten.electrum,tconstruct.smeltery.blocks.TConstructFluid
+41,ender,熔融末影珍珠,295,0,3000,6000,true,TConstruct:fluid.ender,tconstruct.smeltery.blocks.TConstructFluid
+42,lumium.molten,熔融流明,1300,12,3000,6000,true,TConstruct:fluid.molten.lumium,tconstruct.smeltery.blocks.TConstructFluid
+43,signalum.molten,熔融信素,1300,12,3000,6000,true,TConstruct:fluid.molten.signalum,tconstruct.smeltery.blocks.TConstructFluid
+44,mithril.molten,熔融蕴魔金属,1300,12,3000,6000,true,TConstruct:fluid.molten.mithril,tconstruct.smeltery.blocks.TConstructFluid
+45,enderium.molten,熔融末影,1300,12,3000,6000,true,TConstruct:fluid.molten.enderium,tconstruct.smeltery.blocks.TConstructFluid
+46,blood,血,1300,0,3000,6000,true,TConstruct:liquid.blood,tconstruct.smeltery.blocks.BloodBlock
+47,glue,凝胶,200,0,6000,6000,true,TConstruct:liquid.glue,tconstruct.smeltery.blocks.GlueFluid
+48,pigiron.molten,生铁,1300,0,3000,6000,true,TConstruct:fluid.molten.pigiron,tconstruct.smeltery.blocks.PigIronMoltenBlock
+49,milk,牛奶,290,0,1200,1200,false,null,null
+50,melonjuice,西瓜汁,300,0,1000,1000,false,null,null
+51,mushroomstew,蘑菇煲,300,0,1200,1200,false,null,null
+52,oil,石油,295,0,800,10000,true,BuildCraft|Energy:blockOil,buildcraft.core.lib.block.BlockBuildCraftFluid
+53,fuel,燃油,295,0,1000,1000,true,BuildCraft|Energy:blockFuel,buildcraft.core.lib.block.BlockBuildCraftFluid
+54,redplasma,红等离子体,300,30,10000,10000,true,BuildCraft|Energy:blockRedPlasma,buildcraft.core.lib.block.BlockBuildCraftFluid
+55,methane,甲烷,295,0,1,11,false,null,null
+56,atmosphericgases,空气,295,0,1,13,false,null,null
+57,liquidmethane,液态甲烷,109,0,450,120,true,GalaxySpace:liquidmethane,galaxyspace.core.block.BlockMethane
+58,liquidoxygen,液态氧,90,0,1141,140,false,null,null
+59,oxygen,氧气,295,0,1,13,false,null,null
+60,liquidnitrogen,液态氮,77,0,808,130,false,null,null
+61,nitrogen,氮气,295,0,1,12,false,null,null
+62,carbondioxide,二氧化碳,295,0,2,20,false,null,null
+63,hydrogen,氢气,295,0,1,1,false,null,null
+64,argon,氩气,295,0,1,4,false,null,null
+65,liquidargon,液态氩,87,0,900,100,false,null,null
+66,helium,氦气,295,0,1,1,false,null,null
+67,bacterialsludge,菌泥,300,0,800,1500,true,GalacticraftMars:tile.sludge,micdoodle8.mods.galacticraft.planets.mars.blocks.BlockSludge
+68,poison,毒液,300,0,1000,1000,true,BiomesOPlenty:poison,biomesoplenty.common.fluids.blocks.BlockPoisonFluid
+69,hell_blood,血水,300,0,1000,1000,true,BiomesOPlenty:hell_blood,biomesoplenty.common.fluids.blocks.BlockBloodFluid
+70,honey,蜂蜜,300,0,1000,1500,true,BiomesOPlenty:honey,biomesoplenty.common.fluids.blocks.BlockHoneyFluid
+71,endergoo,末影黏浆,220,0,1500,1500,true,HardcoreEnderExpansion:ender_goo,chylex.hee.block.BlockEnderGoo
+72,bioethanol,生物乙醇,295,0,790,1000,true,Forestry:fluid.bioethanol,forestry.core.fluids.BlockForestryFluid
+73,biomass,生物质,295,0,400,6560,true,Forestry:fluid.biomass,forestry.core.fluids.BlockForestryFluid
+74,glass,液态玻璃,1200,0,2400,10000,true,Forestry:fluid.glass,forestry.core.fluids.BlockForestryFluid
+75,for.honey,蜂蜜,295,0,1420,73600,true,Forestry:fluid.honey,forestry.core.fluids.BlockForestryFluid
+76,ice,碎冰,265,0,920,1000,true,Forestry:fluid.ice,forestry.core.fluids.BlockForestryFluid
+77,juice,果汁,295,0,1000,1000,true,Forestry:fluid.juice,forestry.core.fluids.BlockForestryFluid
+78,seedoil,种子油,295,0,885,5000,true,Forestry:fluid.seedoil,forestry.core.fluids.BlockForestryFluid
+79,short.mead,蜂蜜酒,295,0,1000,1200,true,Forestry:fluid.short.mead,forestry.core.fluids.BlockForestryFluid
+80,mead,蜂蜜陈酿,295,0,1000,1200,true,Forestry:fluid.mead,forestry.core.fluids.BlockForestryFluid
+81,creosote,杂酚油,295,0,800,1500,true,Railcraft:fluid.creosote,mods.railcraft.common.fluids.BlockRailcraftFluid
+82,steam,蒸汽,375,0,-1000,500,true,Railcraft:fluid.steam,mods.railcraft.common.fluids.BlockRailcraftFluidFinite
+83,nutrient_distillation,营养精华液,300,0,1500,3000,true,EnderIO:blockNutrient_distillation,crazypants.enderio.fluid.BlockFluidEio
+84,hootch,烈酒,300,0,900,1000,true,EnderIO:blockHootch,crazypants.enderio.fluid.BlockFluidEio
+85,rocket_fuel,火箭燃料,295,0,900,1000,true,EnderIO:blockRocket_fuel,crazypants.enderio.fluid.BlockFluidEio
+86,fire_water,火焰水,2600,0,900,1000,true,EnderIO:blockFire_water,crazypants.enderio.fluid.BlockFluidEio
+87,liquid_sunshine,液态阳光,300,0,200,400,true,EnderIO:blockLiquid_sunshine,crazypants.enderio.fluid.BlockFluidEio
+88,cloud_seed,云之精华,300,0,500,800,true,EnderIO:blockCloud_seed,crazypants.enderio.fluid.BlockFluidEio
+89,cloud_seed_concentrated,浓缩云之精华,300,0,1000,1200,true,EnderIO:blockCloud_seed_concentrated,crazypants.enderio.fluid.BlockFluidEio
+90,ender_distillation,深渊露水,175,0,200,1000,true,EnderIO:blockEnder_distillation,crazypants.enderio.fluid.BlockFluidEio
+91,vapor_of_levity,轻盈之气,5,0,-10,100,true,EnderIO:blockVapor_of_levity,crazypants.enderio.fluid.BlockFluidEio
+92,gelatinmixture,Gelatin Mixture,300,0,1000,1000,false,null,null
+93,meatextract,Meat Extract,300,0,1000,1000,false,null,null
+94,unknownnutrientagar,Unknown Nutrient Agar,300,0,1000,1000,false,null,null
+95,seaweedbroth,Seaweed Broth,300,0,1000,1000,false,null,null
+96,concrete,混凝土,300,0,1000,1000,true,dreamcraft:dreamcraft_Concrete,eu.usrv.yamcore.fluids.ModSimpleBaseFluid
+97,fluidmilk,牛奶,300,0,1000,1050,true,Automagy:blockFluidMilk,tuhljin.automagy.blocks.fluid.BlockFluidMilk
+98,fluidmushroom,蘑菇汤,300,0,1000,1500,true,Automagy:blockFluidMushroom,tuhljin.automagy.blocks.fluid.BlockFluidMushroom
+99,fluidvishroom,毒菇汤,300,8,1000,1500,true,Automagy:blockFluidVishroom,tuhljin.automagy.blocks.fluid.BlockFluidVishroom
+100,lifeessence,Life Essence,295,0,2000,2000,true,AWWayofTime:lifeEssence,WayofTime.alchemicalWizardry.common.block.LifeEssenceBlock
+101,acid,酸,300,0,1000,1000,false,null,null
+102,sap,树液,300,0,1000,1000,false,null,null
+103,resin,树脂,300,0,1000,1000,false,null,null
+104,latex,乳胶,300,0,1000,1000,false,null,null
+105,turpentine,松节油,300,0,1000,1000,false,null,null
+106,binnie.growthmedium,培养基,300,0,1000,1000,false,null,null
+107,binnie.bacteria,细菌,300,0,1000,1000,false,null,null
+108,binnie.bacteriapoly,聚合菌,300,0,1000,1000,false,null,null
+109,binnie.dna.raw,原生 DNA,300,0,1000,1000,false,null,null
+110,binnie.bacteriavector,细菌质粒,300,0,1000,1000,false,null,null
+111,witchery:fluidspirit,精神,300,0,500,2000,true,witchery:spiritflowing,com.emoniph.witchery.blocks.BlockFlowingSpirit
+112,witchery:hollowtears,虚伪泪水,300,0,100,1500,true,witchery:hollowtears,com.emoniph.witchery.blocks.BlockFlowingSpirit
+113,witchery:brew,酿造,300,0,100,1500,true,witchery:brew,com.emoniph.witchery.brewing.BlockBrew
+114,witchery:brewgas,气态酿造,300,0,1000,1000,false,null,null
+115,witchery:brewliquid,液态酿造,300,0,1000,1000,true,witchery:brewliquid,com.emoniph.witchery.brewing.BlockBrewLiquidEffect
+116,witchery:fluiddisease,瘟疫,300,0,50,3000,true,witchery:disease,com.emoniph.witchery.blocks.BlockDisease
+117,mutagen,诱变剂,295,0,1000,1000,true,gendustry:fluid.Mutagen,net.bdew.gendustry.fluids.BlockFluid
+118,liquiddna,液态DNA,295,0,1000,1000,true,gendustry:fluid.LiquidDNA,net.bdew.gendustry.fluids.BlockFluid
+119,protein,蛋白质,295,0,1000,1000,true,gendustry:fluid.Protein,net.bdew.gendustry.fluids.BlockFluid
+120,air,空气,295,0,-100,200,false,null,null
+121,liquidair,液态空气,77,0,1000,1000,false,null,null
+122,deuterium,氘,295,0,-100,200,false,null,null
+123,tritium,氚,295,0,-100,200,false,null,null
+124,radon,氡,295,0,-100,200,false,null,null
+125,fluorine,氟,53,0,-100,200,false,null,null
+126,titaniumtetrachloride,四氯化钛,295,0,1000,1000,false,null,null
+127,helium-3,氦-3,295,0,-100,200,false,null,null
+128,nitrogendioxide,二氧化氮,295,0,-100,200,false,null,null
+129,liquid_extra_heavy_oil,极重油,295,0,1000,1000,false,null,null
+130,liquid_epichlorhydrin,环氧氯丙烷,295,0,1000,1000,false,null,null
+131,liquid_drillingfluid,钻井液,295,0,1000,1000,false,null,null
+132,liquid_toluene,甲苯,295,0,1000,1000,false,null,null
+133,liquid_nitrationmixture,硝酸混酸,295,0,1000,1000,false,null,null
+134,liquid_heavy_oil,重油,295,0,1000,1000,false,null,null
+135,liquid_medium_oil,原油,295,0,1000,1000,false,null,null
+136,liquid_light_oil,轻油,295,0,1000,1000,false,null,null
+137,gas_natural_gas,天然气,295,0,-100,200,false,null,null
+138,liquid_hydricsulfur,硫化氢,295,0,-100,200,false,null,null
+139,gas_sulfuricgas,含硫炼油气,295,0,-100,200,false,null,null
+140,gas_gas,炼油气,295,0,-100,200,false,null,null
+141,liquid_sulfuricnaphtha,含硫石脑油,295,0,1000,1000,false,null,null
+142,liquid_sufluriclight_fuel,含硫轻燃油,295,0,1000,1000,false,null,null
+143,liquid_sulfuricheavy_fuel,含硫重燃油,295,0,1000,1000,false,null,null
+144,liquid_naphtha,石脑油,295,0,1000,1000,false,null,null
+145,liquid_light_fuel,轻燃油,295,0,1000,1000,false,null,null
+146,liquid_heavy_fuel,重燃油,295,0,1000,1000,false,null,null
+147,liquid_lpg,液化石油气,295,0,1000,1000,false,null,null
+148,charcoal_byproducts,木炭副产,775,0,-100,200,false,null,null
+149,molten.bisphenol_a,熔融双酚A,432,0,1000,1000,false,null,null
+150,uuamplifier,UU增幅液体,295,0,1000,1000,false,null,null
+151,chlorine,氯,295,0,-100,200,false,null,null
+152,mercury,汞,295,0,1000,1000,false,null,null
+153,nitrofuel,高十六烷值柴油,295,0,1000,1000,false,null,null
+154,sodiumpersulfate,过硫酸钠,295,0,1000,1000,false,null,null
+155,glyceryl,硝化甘油,295,0,1000,1000,false,null,null
+156,lubricant,润滑油,295,0,1000,1000,false,null,null
+157,fishoil,鱼油,295,0,1000,1000,false,null,null
+158,sulfuricacid,硫酸,295,0,1000,1000,false,null,null
+159,mcguffium,麦高芬239,295,0,1000,1000,false,null,null
+160,refinedglue,精制胶水,295,0,1000,1000,false,null,null
+161,hotfryingoil,热煎炸油,400,0,1000,1000,false,null,null
+162,sodiumpotassium,钠钾合金,295,0,1000,1000,false,null,null
+163,pollution,污染,295,0,1000,1000,false,null,null
+164,enrichedbacterialsludge,富集菌泥,300,15,1000,1000,false,null,null
+165,fermentedbacterialsludge,发酵菌泥,300,8,1000,1000,false,null,null
+166,dimensionallytranscendentresidue,超维度残留,2000000000,0,1000,1000,false,null,null
+167,exciteddtcc,激发的粗制超维度催化剂,500000000,0,1000,1000,false,null,null
+168,exciteddtpc,激发的平凡超维度催化剂,500000000,0,1000,1000,false,null,null
+169,exciteddtrc,激发的光辉超维度催化剂,500000000,0,1000,1000,false,null,null
+170,exciteddtec,激发的异星超维度催化剂,500000000,0,1000,1000,false,null,null
+171,exciteddtsc,激发的恒星超维度催化剂,500000000,0,1000,1000,false,null,null
+172,rawstarmatter,浓缩原始恒星等离子体混合物,10000000,0,1000,1000,false,null,null
+173,spatialfluid,扩大化空间流体,0,0,1000,1000,false,null,null
+174,temporalfluid,富快子时间流体,0,0,1000,1000,false,null,null
+175,primordialmatter,流体本源物质,2000000000,0,1000,1000,false,null,null
+176,quarkgluonplasma,简并夸克胶子等离子体,2000000000,0,1000,1000,false,null,null
+177,phononmedium,无损声子传输介质,500,0,1000,1000,false,null,null
+178,phononcrystalsolution,饱和声子晶体溶液,500,0,1000,1000,false,null,null
+179,antimatter,半稳定反物质,1000000,0,1000,1000,false,null,null
+180,protomatter,元始物质,1,0,1000,1000,false,null,null
+181,plasma.infinity,无尽等离子体,10000,15,55536,10,false,null,null
+182,plasma.bedrockium,基岩等离子体,10000,15,55536,10,false,null,null
+183,plasma.cosmicneutronium,宇宙中子态素等离子体,10000,15,55536,10,false,null,null
+184,molten.cosmicneutronium,熔融宇宙中子态素,9900,15,1000,1000,false,null,null
+185,plasma.ichorium,灵宝等离子体,9000,15,55536,10,false,null,null
+186,molten.ichorium,熔融灵宝,9000,15,1000,1000,false,null,null
+187,inactivecosmicsolder,惰性寰宇焊料,1000000,0,1000,1000,false,null,null
+188,boundlesscosmicsolder,无界寰宇焊料,1000000,0,1000,1000,false,null,null
+189,fieryblood,炽热的血液,6400,0,1000,1000,false,null,null
+190,holywater,圣水,295,0,1000,1000,false,null,null
+191,squidink,墨水,295,0,1000,1000,false,null,null
+192,indigo,靛蓝染料,295,0,1000,1000,false,null,null
+193,dye.watermixed.dyeblack,水溶黑色染料,295,0,1000,1000,false,null,null
+194,dye.chemical.dyeblack,黑色化学染料,295,0,1000,1000,false,null,null
+195,dye.watermixed.dyered,水溶红色染料,295,0,1000,1000,false,null,null
+196,dye.chemical.dyered,红色化学染料,295,0,1000,1000,false,null,null
+197,dye.watermixed.dyegreen,水溶绿色染料,295,0,1000,1000,false,null,null
+198,dye.chemical.dyegreen,绿色化学染料,295,0,1000,1000,false,null,null
+199,dye.watermixed.dyebrown,水溶棕色染料,295,0,1000,1000,false,null,null
+200,dye.chemical.dyebrown,棕色化学染料,295,0,1000,1000,false,null,null
+201,dye.watermixed.dyeblue,水溶蓝色染料,295,0,1000,1000,false,null,null
+202,dye.chemical.dyeblue,蓝色化学染料,295,0,1000,1000,false,null,null
+203,dye.watermixed.dyepurple,水溶紫色染料,295,0,1000,1000,false,null,null
+204,dye.chemical.dyepurple,紫色化学染料,295,0,1000,1000,false,null,null
+205,dye.watermixed.dyecyan,水溶青色染料,295,0,1000,1000,false,null,null
+206,dye.chemical.dyecyan,青色化学染料,295,0,1000,1000,false,null,null
+207,dye.watermixed.dyelightgray,水溶淡灰色染料,295,0,1000,1000,false,null,null
+208,dye.chemical.dyelightgray,淡灰色化学染料,295,0,1000,1000,false,null,null
+209,dye.watermixed.dyegray,水溶灰色染料,295,0,1000,1000,false,null,null
+210,dye.chemical.dyegray,灰色化学染料,295,0,1000,1000,false,null,null
+211,dye.watermixed.dyepink,水溶粉色染料,295,0,1000,1000,false,null,null
+212,dye.chemical.dyepink,粉色化学染料,295,0,1000,1000,false,null,null
+213,dye.watermixed.dyelime,水溶黄绿色染料,295,0,1000,1000,false,null,null
+214,dye.chemical.dyelime,黄绿色化学染料,295,0,1000,1000,false,null,null
+215,dye.watermixed.dyeyellow,水溶黄色染料,295,0,1000,1000,false,null,null
+216,dye.chemical.dyeyellow,黄色化学染料,295,0,1000,1000,false,null,null
+217,dye.watermixed.dyelightblue,水溶淡蓝色染料,295,0,1000,1000,false,null,null
+218,dye.chemical.dyelightblue,淡蓝色化学染料,295,0,1000,1000,false,null,null
+219,dye.watermixed.dyemagenta,水溶品红色染料,295,0,1000,1000,false,null,null
+220,dye.chemical.dyemagenta,品红色化学染料,295,0,1000,1000,false,null,null
+221,dye.watermixed.dyeorange,水溶橙色染料,295,0,1000,1000,false,null,null
+222,dye.chemical.dyeorange,橙色化学染料,295,0,1000,1000,false,null,null
+223,dye.watermixed.dyewhite,水溶白色染料,295,0,1000,1000,false,null,null
+224,dye.chemical.dyewhite,白色化学染料,295,0,1000,1000,false,null,null
+225,molten.glass,熔融玻璃,1500,3,1000,1000,false,null,null
+226,molten.redstone,熔融红石,500,0,1000,1000,false,null,null
+227,molten.blaze,熔融烈焰,6400,15,1000,1000,false,null,null
+228,wet.concrete,湿混凝土,300,0,1000,1000,false,null,null
+229,molten.granitered,熔融红花岗岩,1520,3,1000,1000,false,null,null
+230,molten.graniteblack,熔融黑花岗岩,1520,3,1000,1000,false,null,null
+231,activatednetherite,活性下界合金,50000000,15,1000,1000,false,null,null
+232,molten.aluminium,熔融铝,933,0,1000,1000,false,null,null
+233,plasma.aluminium,铝等离子体,10000,15,55536,10,false,null,null
+234,molten.americium,熔融镅,1449,3,1000,1000,false,null,null
+235,plasma.americium,镅等离子体,10000,15,55536,10,false,null,null
+236,molten.antimony,熔融锑,903,0,1000,1000,false,null,null
+237,plasma.antimony,锑等离子体,10000,15,55536,10,false,null,null
+238,plasma.argon,氩等离子体,10000,15,55536,10,false,null,null
+239,molten.arsenic,熔融砷,1090,1,1000,1000,false,null,null
+240,plasma.arsenic,砷等离子体,10000,15,55536,10,false,null,null
+241,molten.barium,熔融钡,1000,1,1000,1000,false,null,null
+242,plasma.barium,钡等离子体,10000,15,55536,10,false,null,null
+243,molten.beryllium,熔融铍,1560,4,1000,1000,false,null,null
+244,plasma.beryllium,铍等离子体,10000,15,55536,10,false,null,null
+245,molten.bismuth,熔融铋,544,0,1000,1000,false,null,null
+246,plasma.bismuth,铋等离子体,10000,15,55536,10,false,null,null
+247,molten.boron,熔融硼,2349,8,1000,1000,false,null,null
+248,plasma.boron,硼等离子体,10000,15,55536,10,false,null,null
+249,molten.caesium,熔融铯,301,0,1000,1000,false,null,null
+250,plasma.caesium,铯等离子体,10000,15,55536,10,false,null,null
+251,plasma.calcium,钙等离子体,10000,15,55536,10,false,null,null
+252,plasma.carbon,碳等离子体,10000,15,55536,10,false,null,null
+253,plasma.cadmium,镉等离子体,10000,15,55536,10,false,null,null
+254,molten.cerium,熔融铈,1068,1,1000,1000,false,null,null
+255,plasma.cerium,铈等离子体,10000,15,55536,10,false,null,null
+256,plasma.chlorine,氯等离子体,10000,15,55536,10,false,null,null
+257,molten.chrome,熔融铬,2180,7,1000,1000,false,null,null
+258,plasma.chrome,铬等离子体,10000,15,55536,10,false,null,null
+259,molten.cobalt,熔融钴,1768,5,1000,1000,false,null,null
+260,plasma.cobalt,钴等离子体,10000,15,55536,10,false,null,null
+261,molten.copper,熔融铜,1357,2,1000,1000,false,null,null
+262,plasma.copper,铜等离子体,10000,15,55536,10,false,null,null
+263,molten.desh,熔融戴斯,2500,9,1000,1000,false,null,null
+264,plasma.desh,戴斯等离子体,10000,15,55536,10,false,null,null
+265,molten.dysprosium,熔融镝,1680,4,1000,1000,false,null,null
+266,plasma.dysprosium,镝等离子体,10000,15,55536,10,false,null,null
+267,plasma.empty,空等离子体,10000,15,55536,10,false,null,null
+268,molten.erbium,熔融铒,1802,5,1000,1000,false,null,null
+269,plasma.erbium,铒等离子体,10000,15,55536,10,false,null,null
+270,molten.europium,熔融铕,1099,1,1000,1000,false,null,null
+271,plasma.europium,铕等离子体,10000,15,55536,10,false,null,null
+272,molten.flerovium_gt5u,熔融,0,0,1000,1000,false,null,null
+273,plasma.flerovium_gt5u,等离子体,10000,15,55536,10,false,null,null
+274,plasma.fluorine,氟等离子体,10000,15,55536,10,false,null,null
+275,plasma.francium_gt5u,钫等离子体,10000,15,55536,10,false,null,null
+276,molten.gadolinium,熔融钆,1585,4,1000,1000,false,null,null
+277,plasma.gadolinium,钆等离子体,10000,15,55536,10,false,null,null
+278,molten.gallium,熔融镓,302,0,1000,1000,false,null,null
+279,plasma.gallium,镓等离子体,10000,15,55536,10,false,null,null
+280,molten.gold,熔融金,1337,2,1000,1000,false,null,null
+281,plasma.gold,金等离子体,10000,15,55536,10,false,null,null
+282,molten.holmium,熔融钬,1734,5,1000,1000,false,null,null
+283,plasma.holmium,钬等离子体,10000,15,55536,10,false,null,null
+284,plasma.hydrogen,氢等离子体,10000,15,55536,10,false,null,null
+285,plasma.helium,氦等离子体,10000,15,55536,10,false,null,null
+286,molten.indium,熔融铟,429,0,1000,1000,false,null,null
+287,plasma.indium,铟等离子体,10000,15,55536,10,false,null,null
+288,molten.iridium,熔融铱,2719,10,1000,1000,false,null,null
+289,plasma.iridium,铱等离子体,10000,15,55536,10,false,null,null
+290,molten.iron,熔融铁,1811,5,1000,1000,false,null,null
+291,plasma.iron,铁等离子体,10000,15,55536,10,false,null,null
+292,molten.lanthanum,熔融镧,1193,2,1000,1000,false,null,null
+293,plasma.lanthanum,镧等离子体,10000,15,55536,10,false,null,null
+294,molten.lead,熔融铅,600,0,1000,1000,false,null,null
+295,plasma.lead,铅等离子体,10000,15,55536,10,false,null,null
+296,molten.lithium,熔融锂,454,0,1000,1000,false,null,null
+297,plasma.lithium,锂等离子体,10000,15,55536,10,false,null,null
+298,molten.lutetium,熔融镥,1925,6,1000,1000,false,null,null
+299,plasma.lutetium,镥等离子体,10000,15,55536,10,false,null,null
+300,molten.magic,熔融魔力,5000,15,1000,1000,false,null,null
+301,plasma.magic,魔力等离子体,10000,15,55536,10,false,null,null
+302,molten.magnesium,熔融镁,923,0,1000,1000,false,null,null
+303,plasma.magnesium,镁等离子体,10000,15,55536,10,false,null,null
+304,molten.manganese,熔融锰,1519,3,1000,1000,false,null,null
+305,plasma.manganese,锰等离子体,10000,15,55536,10,false,null,null
+306,plasma.mercury,汞等离子体,10000,15,55536,10,false,null,null
+307,molten.meteoriciron,熔融陨铁,1811,5,1000,1000,false,null,null
+308,plasma.meteoriciron,陨铁等离子体,10000,15,55536,10,false,null,null
+309,molten.molybdenum,熔融钼,2896,11,1000,1000,false,null,null
+310,plasma.molybdenum,钼等离子体,10000,15,55536,10,false,null,null
+311,molten.naquadah,熔融硅岩,5400,15,1000,1000,false,null,null
+312,plasma.naquadah,硅岩等离子体,10000,15,55536,10,false,null,null
+313,molten.neodymium,熔融钕,1297,2,1000,1000,false,null,null
+314,plasma.neodymium,钕等离子体,10000,15,55536,10,false,null,null
+315,molten.neutronium,熔融中子,10000,15,1000,1000,false,null,null
+316,plasma.neutronium,中子等离子体,10000,15,55536,10,false,null,null
+317,molten.nickel,熔融镍,1728,5,1000,1000,false,null,null
+318,plasma.nickel,镍等离子体,10000,15,55536,10,false,null,null
+319,molten.niobium,熔融铌,2750,10,1000,1000,false,null,null
+320,plasma.niobium,铌等离子体,10000,15,55536,10,false,null,null
+321,plasma.nitrogen,氮等离子体,10000,15,55536,10,false,null,null
+322,plasma.null,NULL等离子体,10000,15,55536,10,false,null,null
+323,molten.oriharukon,熔融奥利哈钢,5400,15,1000,1000,false,null,null
+324,plasma.oriharukon,奥利哈钢等离子体,10000,15,55536,10,false,null,null
+325,molten.osmium,熔融锇,3306,13,1000,1000,false,null,null
+326,plasma.osmium,锇等离子体,10000,15,55536,10,false,null,null
+327,plasma.oxygen,氧等离子体,10000,15,55536,10,false,null,null
+328,molten.palladium,熔融钯,1828,5,1000,1000,false,null,null
+329,plasma.palladium,钯等离子体,10000,15,55536,10,false,null,null
+330,plasma.phosphorus,磷等离子体,10000,15,55536,10,false,null,null
+331,molten.platinum,熔融铂,2041,6,1000,1000,false,null,null
+332,plasma.platinum,铂等离子体,10000,15,55536,10,false,null,null
+333,molten.plutonium,熔融钚-239,912,0,1000,1000,false,null,null
+334,plasma.plutonium,钚-239等离子体,10000,15,55536,10,false,null,null
+335,molten.potassium,熔融钾,336,0,1000,1000,false,null,null
+336,plasma.potassium,钾等离子体,10000,15,55536,10,false,null,null
+337,molten.praseodymium,熔融镨,1208,2,1000,1000,false,null,null
+338,plasma.praseodymium,镨等离子体,10000,15,55536,10,false,null,null
+339,molten.promethium,熔融钷,1315,2,1000,1000,false,null,null
+340,plasma.promethium,钷等离子体,10000,15,55536,10,false,null,null
+341,plasma.radon,氡等离子体,10000,15,55536,10,false,null,null
+342,molten.rubidium,熔融铷,312,0,1000,1000,false,null,null
+343,plasma.rubidium,铷等离子体,10000,15,55536,10,false,null,null
+344,molten.samarium,熔融钐,1345,2,1000,1000,false,null,null
+345,plasma.samarium,钐等离子体,10000,15,55536,10,false,null,null
+346,molten.scandium,熔融钪,1814,5,1000,1000,false,null,null
+347,plasma.scandium,钪等离子体,10000,15,55536,10,false,null,null
+348,molten.silicon,熔融生硅,2273,8,1000,1000,false,null,null
+349,plasma.silicon,生硅等离子体,10000,15,55536,10,false,null,null
+350,molten.silver,熔融银,1234,2,1000,1000,false,null,null
+351,plasma.silver,银等离子体,10000,15,55536,10,false,null,null
+352,plasma.sodium,钠等离子体,10000,15,55536,10,false,null,null
+353,molten.strontium,熔融锶,1050,1,1000,1000,false,null,null
+354,plasma.strontium,锶等离子体,10000,15,55536,10,false,null,null
+355,plasma.sulfur,硫等离子体,10000,15,55536,10,false,null,null
+356,molten.tantalum,熔融钽,3290,13,1000,1000,false,null,null
+357,plasma.tantalum,钽等离子体,10000,15,55536,10,false,null,null
+358,molten.tellurium,熔融碲,722,0,1000,1000,false,null,null
+359,plasma.tellurium,碲等离子体,10000,15,55536,10,false,null,null
+360,molten.terbium,熔融铽,1629,4,1000,1000,false,null,null
+361,plasma.terbium,铽等离子体,10000,15,55536,10,false,null,null
+362,molten.thorium,熔融钍,2115,7,1000,1000,false,null,null
+363,plasma.thorium,钍等离子体,10000,15,55536,10,false,null,null
+364,molten.thulium,熔融铥,1818,5,1000,1000,false,null,null
+365,plasma.thulium,铥等离子体,10000,15,55536,10,false,null,null
+366,molten.tin,熔融锡,505,0,1000,1000,false,null,null
+367,plasma.tin,锡等离子体,10000,15,55536,10,false,null,null
+368,molten.titanium,熔融钛,1941,6,1000,1000,false,null,null
+369,plasma.titanium,钛等离子体,10000,15,55536,10,false,null,null
+370,molten.tritanium,熔融三钛,9900,15,1000,1000,false,null,null
+371,plasma.tritanium,三钛等离子体,10000,15,55536,10,false,null,null
+372,molten.tungsten,熔融钨,3695,15,1000,1000,false,null,null
+373,plasma.tungsten,钨等离子体,10000,15,55536,10,false,null,null
+374,molten.uranium,熔融铀-238,1405,3,1000,1000,false,null,null
+375,plasma.uranium,铀-238等离子体,10000,15,55536,10,false,null,null
+376,molten.vanadium,熔融钒,2183,7,1000,1000,false,null,null
+377,plasma.vanadium,钒等离子体,10000,15,55536,10,false,null,null
+378,molten.ytterbium,熔融镱,1097,1,1000,1000,false,null,null
+379,plasma.ytterbium,镱等离子体,10000,15,55536,10,false,null,null
+380,molten.yttrium,熔融钇,1799,5,1000,1000,false,null,null
+381,plasma.yttrium,钇等离子体,10000,15,55536,10,false,null,null
+382,molten.zinc,熔融锌,692,0,1000,1000,false,null,null
+383,plasma.zinc,锌等离子体,10000,15,55536,10,false,null,null
+384,plasma.deuterium,氘等离子体,10000,15,55536,10,false,null,null
+385,plasma.helium_3,氦-3等离子体,10000,15,55536,10,false,null,null
+386,molten.plutonium241,熔融钚-241,912,0,1000,1000,false,null,null
+387,plasma.plutonium241,钚-241等离子体,10000,15,55536,10,false,null,null
+388,plasma.tritium,氚等离子体,10000,15,55536,10,false,null,null
+389,molten.uranium235,熔融铀-235,1405,3,1000,1000,false,null,null
+390,plasma.uranium235,铀-235等离子体,10000,15,55536,10,false,null,null
+391,flocculationwasteliquid,絮凝废液,273,0,1000,1000,false,null,null
+392,grade1purifiedwater,过滤澄清水(一级净化水),273,0,1000,1000,false,null,null
+393,grade2purifiedwater,臭氧处理水(二级净化水),273,0,1000,1000,false,null,null
+394,grade3purifiedwater,絮凝沉降水(三级净化水),273,0,1000,1000,false,null,null
+395,grade4purifiedwater,酸碱中和水(四级净化水),273,0,1000,1000,false,null,null
+396,grade5purifiedwater,极温净化水(五级净化水),273,0,1000,1000,false,null,null
+397,grade6purifiedwater,紫外辐照水(六级净化水),273,0,1000,1000,false,null,null
+398,grade7purifiedwater,去杂脱气水(七级净化水),273,0,1000,1000,false,null,null
+399,grade8purifiedwater,理想微粒水(八级净化水),273,0,1000,1000,false,null,null
+400,molten.darkthaumium,熔融神秘玄铁,0,0,1000,1000,false,null,null
+401,molten.draconium,熔融龙,5000,15,1000,1000,false,null,null
+402,plasma.draconium,龙等离子体,10000,15,55536,10,false,null,null
+403,molten.draconiumawakened,熔融觉醒龙,9900,15,1000,1000,false,null,null
+404,plasma.draconiumawakened,觉醒龙等离子体,10000,15,55536,10,false,null,null
+405,molten.heeendium,熔融终末,0,0,1000,1000,false,null,null
+406,molten.phasedgold,熔融相移金,0,0,1000,1000,false,null,null
+407,molten.phasediron,熔融相移铁,3300,13,1000,1000,false,null,null
+408,molten.serpentine,熔融蛇纹石,0,0,1000,1000,false,null,null
+409,molten.teslatite,熔融特斯拉金属,0,0,1000,1000,false,null,null
+410,molten.adamantium,熔融精金,7200,15,1000,1000,false,null,null
+411,molten.adluorite,熔融亚荧石,0,0,1000,1000,false,null,null
+412,molten.alduorite,熔融神秘蓝金,6600,15,1000,1000,false,null,null
+413,molten.amordrine,熔融魔力之石,0,0,1000,1000,false,null,null
+414,molten.ardite,熔融阿迪特,1600,4,1000,1000,false,null,null
+415,plasma.ardite,阿迪特等离子体,10000,15,55536,10,false,null,null
+416,molten.aredrite,熔融希尔金,0,0,1000,1000,false,null,null
+417,molten.blutonium,熔融蓝钚,0,0,1000,1000,false,null,null
+418,molten.ceruclase,熔融暗影秘银,6600,15,1000,1000,false,null,null
+419,molten.darkiron,熔融玄铁,0,0,1000,1000,false,null,null
+420,molten.desichalkos,熔融虚空之魂石,0,0,1000,1000,false,null,null
+421,molten.duranium,熔融铿铀,0,0,1000,1000,false,null,null
+422,molten.electrumflux,熔融通流琥珀金,9000,15,1000,1000,false,null,null
+423,molten.enderiumbase,熔融末影粗胚,3600,15,1000,1000,false,null,null
+424,molten.fierysteel,熔融炽热的钢,1811,5,1000,1000,false,null,null
+425,molten.force,熔融力量,0,0,1000,1000,false,null,null
+426,molten.glowstone,熔融荧石,0,0,1000,1000,false,null,null
+427,molten.hematite,熔融赤铁矿,0,0,1000,1000,false,null,null
+428,molten.hsla,熔融HSLA钢,1811,5,1000,1000,false,null,null
+429,molten.infusedgold,熔融注魔金,0,0,1000,1000,false,null,null
+430,molten.mercassium,熔融玛卡斯,0,0,1000,1000,false,null,null
+431,molten.meteoricsteel,熔融陨钢,1811,5,1000,1000,false,null,null
+432,molten.naquadahalloy,熔融硅岩合金,7200,15,1000,1000,false,null,null
+433,molten.naquadahenriched,熔融富集硅岩,4500,15,1000,1000,false,null,null
+434,molten.naquadria,熔融超能硅岩,9000,15,1000,1000,false,null,null
+435,plasma.naquadria,超能硅岩等离子体,10000,15,55536,10,false,null,null
+436,molten.obsidianflux,熔融通流黑曜石,0,0,1000,1000,false,null,null
+437,molten.orichalcum,熔融山铜,6000,15,1000,1000,false,null,null
+438,molten.osmonium,熔融幻锇,0,0,1000,1000,false,null,null
+439,molten.phoenixite,熔融凤晶,0,0,1000,1000,false,null,null
+440,molten.rubracium,熔融褐铜,0,0,1000,1000,false,null,null
+441,molten.tartarite,熔融熔火之石,10400,15,1000,1000,false,null,null
+442,molten.void,熔融虚空金属,0,0,1000,1000,false,null,null
+443,molten.vulcanite,熔融胶木,8400,15,1000,1000,false,null,null
+444,molten.vyroxeres,熔融幽冥剧毒结晶,5400,15,1000,1000,false,null,null
+445,molten.yellorium,熔融黄铀,0,0,1000,1000,false,null,null
+446,molten.zectium,熔融泽克防爆石,0,0,1000,1000,false,null,null
+447,molten.cheese,熔融奶酪,320,0,1000,1000,false,null,null
+448,fermentedbiomass,发酵生物质,295,0,1000,1000,false,null,null
+449,advancedglue,高级胶水,295,0,1000,1000,false,null,null
+450,molten.reinforced,熔融强化,0,0,1000,1000,false,null,null
+451,weedex9000,除草剂-9000,295,0,1000,1000,false,null,null
+452,woodgas,木炭气,295,0,-100,200,false,null,null
+453,woodtar,木焦油,295,0,1000,1000,false,null,null
+454,woodvinegar,木醋酸,295,0,1000,1000,false,null,null
+455,molten.aluminiumbrass,熔融铝黄铜,0,0,1000,1000,false,null,null
+456,molten.osmiridium,熔融铱锇合金,3500,15,1000,1000,false,null,null
+457,molten.sunnarium,熔融阳光化合物,4200,15,1000,1000,false,null,null
+458,aceticacid,乙酸,295,0,1000,1000,false,null,null
+459,acetone,丙酮,295,0,1000,1000,false,null,null
+460,allylchloride,烯丙基氯,295,0,1000,1000,false,null,null
+461,ammonia,氨,295,0,-100,200,false,null,null
+462,molten.annealedcopper,熔融退火铜,0,0,1000,1000,false,null,null
+463,molten.batteryalloy,熔融电池合金,0,0,1000,1000,false,null,null
+464,benzene,苯,295,0,1000,1000,false,null,null
+465,molten.brass,熔融黄铜,0,0,1000,1000,false,null,null
+466,molten.bronze,熔融青铜,0,0,1000,1000,false,null,null
+467,chlorobenzene,氯苯,295,0,1000,1000,false,null,null
+468,molten.chromiumdioxide,熔融二氧化铬,650,0,1000,1000,false,null,null
+469,molten.cupronickel,熔融白铜,0,0,1000,1000,false,null,null
+470,molten.deepiron,熔融深渊铁,7500,15,1000,1000,false,null,null
+471,dilutedhydrochloricacid_gt5u,稀盐酸,295,0,1000,1000,false,null,null
+472,molten.electrum,熔融琥珀金,0,0,1000,1000,false,null,null
+473,molten.epoxid,熔融环氧树脂,400,0,1000,1000,false,null,null
+474,molten.invar,熔融殷钢,0,0,1000,1000,false,null,null
+475,molten.kanthal,熔融坎塔尔,1800,5,1000,1000,false,null,null
+476,molten.magnalium,熔融镁铝合金,0,0,1000,1000,false,null,null
+477,molten.nichrome,熔融镍铬合金,2700,10,1000,1000,false,null,null
+478,molten.nickelzincferrite,熔融镍锌铁氧体,0,0,1000,1000,false,null,null
+479,molten.niobiumnitride,熔融氮化铌,2573,9,1000,1000,false,null,null
+480,molten.niobiumtitanium,熔融铌钛合金,4500,15,1000,1000,false,null,null
+481,noblegases,稀有气体,295,0,-100,200,false,null,null
+482,molten.obsidian,熔融黑曜石,0,0,1000,1000,false,null,null
+483,molten.pigiron,熔融生铁,0,0,1000,1000,false,null,null
+484,molten.polycaprolactam,熔融聚己内酰胺（PCL）,500,0,1000,1000,false,null,null
+485,molten.plastic,熔融聚乙烯（PE）,400,0,1000,1000,false,null,null
+486,molten.polytetrafluoroethylene,熔融聚四氟乙烯（PTFE）,600,0,1000,1000,false,null,null
+487,molten.rubber,熔融橡胶,400,0,1000,1000,false,null,null
+488,molten.silicone,熔融硅橡胶,900,0,1000,1000,false,null,null
+489,densesteam,致密蒸汽,295,0,-100,200,false,null,null
+490,densesuperheatedsteam,过热致密蒸汽,295,0,-100,200,false,null,null
+491,densesupercriticalsteam,超临界致密蒸汽,295,0,-100,200,false,null,null
+492,supercoolant,超级冷却液,1,0,1000,1000,false,null,null
+493,molten.enrichedholmium,熔融富集钬,0,0,1000,1000,false,null,null
+494,molten.tengampurified,熔融纯镃,0,0,1000,1000,false,null,null
+495,molten.tengamattuned,熔融谐镃,0,0,1000,1000,false,null,null
+496,lightlyhydrocracked.gas,轻度加氢裂化炼油气,775,0,-100,200,false,null,null
+497,moderatelyhydrocracked.gas,中度加氢裂化炼油气,775,0,-100,200,false,null,null
+498,severelyhydrocracked.gas,重度加氢裂化炼油气,775,0,-100,200,false,null,null
+499,lightlysteamcracked.gas,轻度蒸汽裂化炼油气,775,0,-100,200,false,null,null
+500,moderatelysteamcracked.gas,中度蒸汽裂化炼油气,775,0,-100,200,false,null,null
+501,severelysteamcracked.gas,重度蒸汽裂化炼油气,775,0,-100,200,false,null,null
+502,lightlyhydrocracked.heavyfuel,轻度加氢裂化重燃油,775,0,-100,200,false,null,null
+503,moderatelyhydrocracked.heavyfuel,中度加氢裂化重燃油,775,0,-100,200,false,null,null
+504,severelyhydrocracked.heavyfuel,重度加氢裂化重燃油,775,0,-100,200,false,null,null
+505,lightlysteamcracked.heavyfuel,轻度蒸汽裂化重燃油,775,0,-100,200,false,null,null
+506,moderatelysteamcracked.heavyfuel,中度蒸汽裂化重燃油,775,0,-100,200,false,null,null
+507,severelysteamcracked.heavyfuel,重度蒸汽裂化重燃油,775,0,-100,200,false,null,null
+508,lightlyhydrocracked.lightfuel,轻度加氢裂化轻燃油,775,0,-100,200,false,null,null
+509,moderatelyhydrocracked.lightfuel,中度加氢裂化轻燃油,775,0,-100,200,false,null,null
+510,severelyhydrocracked.lightfuel,重度加氢裂化轻燃油,775,0,-100,200,false,null,null
+511,lightlysteamcracked.lightfuel,轻度蒸汽裂化轻燃油,775,0,-100,200,false,null,null
+512,moderatelysteamcracked.lightfuel,中度蒸汽裂化轻燃油,775,0,-100,200,false,null,null
+513,severelysteamcracked.lightfuel,重度蒸汽裂化轻燃油,775,0,-100,200,false,null,null
+514,lightlyhydrocracked.naphtha,轻度加氢裂化石脑油,775,0,-100,200,false,null,null
+515,moderatelyhydrocracked.naphtha,中度加氢裂化石脑油,775,0,-100,200,false,null,null
+516,severelyhydrocracked.naphtha,重度加氢裂化石脑油,775,0,-100,200,false,null,null
+517,lightlysteamcracked.naphtha,轻度蒸汽裂化石脑油,775,0,-100,200,false,null,null
+518,moderatelysteamcracked.naphtha,中度蒸汽裂化石脑油,775,0,-100,200,false,null,null
+519,severelysteamcracked.naphtha,重度蒸汽裂化石脑油,775,0,-100,200,false,null,null
+520,biomediumraw,生物培养基原液,295,0,1000,1000,false,null,null
+521,biohmediumsterilized,灭菌生物培养基,295,0,1000,1000,false,null,null
+522,molten.reinforcedglass,熔融防爆玻璃,2000,6,1000,1000,false,null,null
+523,growthmediumraw,培养基原液,295,0,1000,1000,false,null,null
+524,growthmediumsterilized,无菌培养基,295,0,1000,1000,false,null,null
+525,biodiesel,生物柴油,295,0,1000,1000,false,null,null
+526,butadiene,丁二烯,295,0,-100,200,false,null,null
+527,lightlyhydrocracked.butadiene,轻度加氢裂化丁二烯,775,0,-100,200,false,null,null
+528,moderatelyhydrocracked.butadiene,中度加氢裂化丁二烯,775,0,-100,200,false,null,null
+529,severelyhydrocracked.butadiene,重度加氢裂化丁二烯,775,0,-100,200,false,null,null
+530,lightlysteamcracked.butadiene,轻度蒸汽裂化丁二烯,775,0,-100,200,false,null,null
+531,moderatelysteamcracked.butadiene,中度蒸汽裂化丁二烯,775,0,-100,200,false,null,null
+532,severelysteamcracked.butadiene,重度蒸汽裂化丁二烯,775,0,-100,200,false,null,null
+533,butane,丁烷,295,0,-100,200,false,null,null
+534,lightlyhydrocracked.butane,轻度加氢裂化丁烷,775,0,-100,200,false,null,null
+535,moderatelyhydrocracked.butane,中度加氢裂化丁烷,775,0,-100,200,false,null,null
+536,severelyhydrocracked.butane,重度加氢裂化丁烷,775,0,-100,200,false,null,null
+537,lightlysteamcracked.butane,轻度蒸汽裂化丁烷,775,0,-100,200,false,null,null
+538,moderatelysteamcracked.butane,中度蒸汽裂化丁烷,775,0,-100,200,false,null,null
+539,severelysteamcracked.butane,重度蒸汽裂化丁烷,775,0,-100,200,false,null,null
+540,butene,丁烯,295,0,-100,200,false,null,null
+541,lightlyhydrocracked.butene,轻度加氢裂化丁烯,775,0,-100,200,false,null,null
+542,moderatelyhydrocracked.butene,中度加氢裂化丁烯,775,0,-100,200,false,null,null
+543,severelyhydrocracked.butene,重度加氢裂化丁烯,775,0,-100,200,false,null,null
+544,lightlysteamcracked.butene,轻度蒸汽裂化丁烯,775,0,-100,200,false,null,null
+545,moderatelysteamcracked.butene,中度蒸汽裂化丁烯,775,0,-100,200,false,null,null
+546,severelysteamcracked.butene,重度蒸汽裂化丁烯,775,0,-100,200,false,null,null
+547,calciumacetatesolution,乙酸钙溶液,295,0,1000,1000,false,null,null
+548,carbonmonoxide,一氧化碳,295,0,-100,200,false,null,null
+549,chloramine,氯胺,295,0,1000,1000,false,null,null
+550,chloroform,氯仿,295,0,1000,1000,false,null,null
+551,chloromethane,氯甲烷,295,0,-100,200,false,null,null
+552,isopropylbenzene,异丙苯,295,0,1000,1000,false,null,null
+553,dichlorobenzene,对二氯苯,295,0,1000,1000,false,null,null
+554,dimethylamine,二甲胺,295,0,-100,200,false,null,null
+555,dimethyldichlorosilane,二甲基氯硅烷,295,0,1000,1000,false,null,null
+556,"1,1dimethylhydrazine",偏二甲肼,295,0,1000,1000,false,null,null
+557,dinitrogentetroxide,四氧化二氮,295,0,-100,200,false,null,null
+558,ethane,乙烷,295,0,-100,200,false,null,null
+559,lightlyhydrocracked.ethane,轻度加氢裂化乙烷,775,0,-100,200,false,null,null
+560,moderatelyhydrocracked.ethane,中度加氢裂化乙烷,775,0,-100,200,false,null,null
+561,severelyhydrocracked.ethane,重度加氢裂化乙烷,775,0,-100,200,false,null,null
+562,lightlysteamcracked.ethane,轻度蒸汽裂化乙烷,775,0,-100,200,false,null,null
+563,moderatelysteamcracked.ethane,中度蒸汽裂化乙烷,775,0,-100,200,false,null,null
+564,severelysteamcracked.ethane,重度蒸汽裂化乙烷,775,0,-100,200,false,null,null
+565,ethenone,乙烯酮,295,0,-100,200,false,null,null
+566,ethylene,乙烯,295,0,-100,200,false,null,null
+567,lightlyhydrocracked.ethylene,轻度加氢裂化乙烯,775,0,-100,200,false,null,null
+568,moderatelyhydrocracked.ethylene,中度加氢裂化乙烯,775,0,-100,200,false,null,null
+569,severelyhydrocracked.ethylene,重度加氢裂化乙烯,775,0,-100,200,false,null,null
+570,lightlysteamcracked.ethylene,轻度蒸汽裂化乙烯,775,0,-100,200,false,null,null
+571,moderatelysteamcracked.ethylene,中度蒸汽裂化乙烯,775,0,-100,200,false,null,null
+572,severelysteamcracked.ethylene,重度蒸汽裂化乙烯,775,0,-100,200,false,null,null
+573,glycerol,甘油,295,0,1000,1000,false,null,null
+574,hydrochloricacid_gt5u,氢氯酸,295,0,1000,1000,false,null,null
+575,hydrofluoricacid_gt5u,氢氟酸,295,0,1000,1000,false,null,null
+576,hypochlorousacid,次氯酸,295,0,1000,1000,false,null,null
+577,ironiiichloride,三氯化铁,295,0,1000,1000,false,null,null
+578,isoprene,异戊二烯,295,0,1000,1000,false,null,null
+579,methanol,甲醇,295,0,1000,1000,false,null,null
+580,methylacetate,乙酸甲酯,295,0,1000,1000,false,null,null
+581,nitricacid,硝酸,295,0,1000,1000,false,null,null
+582,nitricoxide,一氧化氮,295,0,-100,200,false,null,null
+583,phenol,苯酚,295,0,1000,1000,false,null,null
+584,phosphoricacid_gt5u,磷酸,295,0,1000,1000,false,null,null
+585,molten.polyphenylenesulfide,熔融聚苯硫醚（PPS）,0,0,1000,1000,false,null,null
+586,molten.polystyrene,熔融聚苯乙烯（PS）,0,0,1000,1000,false,null,null
+587,polyvinylacetate,聚乙酸乙烯酯,295,0,1000,1000,false,null,null
+588,molten.polyvinylchloride,熔融聚氯乙烯（PVC）,0,0,1000,1000,false,null,null
+589,propane,丙烷,295,0,-100,200,false,null,null
+590,lightlyhydrocracked.propane,轻度加氢裂化丙烷,775,0,-100,200,false,null,null
+591,moderatelyhydrocracked.propane,中度加氢裂化丙烷,775,0,-100,200,false,null,null
+592,severelyhydrocracked.propane,重度加氢裂化丙烷,775,0,-100,200,false,null,null
+593,lightlysteamcracked.propane,轻度蒸汽裂化丙烷,775,0,-100,200,false,null,null
+594,moderatelysteamcracked.propane,中度蒸汽裂化丙烷,775,0,-100,200,false,null,null
+595,severelysteamcracked.propane,重度蒸汽裂化丙烷,775,0,-100,200,false,null,null
+596,propene,丙烯,295,0,-100,200,false,null,null
+597,lightlyhydrocracked.propene,轻度加氢裂化丙烯,775,0,-100,200,false,null,null
+598,moderatelyhydrocracked.propene,中度加氢裂化丙烯,775,0,-100,200,false,null,null
+599,severelyhydrocracked.propene,重度加氢裂化丙烯,775,0,-100,200,false,null,null
+600,lightlysteamcracked.propene,轻度蒸汽裂化丙烯,775,0,-100,200,false,null,null
+601,moderatelysteamcracked.propene,中度蒸汽裂化丙烯,775,0,-100,200,false,null,null
+602,severelysteamcracked.propene,重度蒸汽裂化丙烯,775,0,-100,200,false,null,null
+603,saltwater,盐水,295,0,1000,1000,false,null,null
+604,styrene,苯乙烯,295,0,1000,1000,false,null,null
+605,molten.styrenebutadienerubber,熔融丁苯橡胶（SBR）,0,0,1000,1000,false,null,null
+606,sulfurdioxide,二氧化硫,295,0,-100,200,false,null,null
+607,sulfurtrioxide,三氧化硫,295,0,-100,200,false,null,null
+608,tetrafluoroethylene,四氟乙烯,295,0,-100,200,false,null,null
+609,tetranitromethane,四硝基甲烷,295,0,1000,1000,false,null,null
+610,vinylacetate,乙酸乙烯酯,295,0,1000,1000,false,null,null
+611,vinylchloride,氯乙烯,295,0,-100,200,false,null,null
+612,dichlorosilane,二氯硅烷,295,0,-100,200,false,null,null
+613,hexachlorodisilane,六氯乙硅烷,272,0,1000,1000,false,null,null
+614,silane,硅烷,295,0,-100,200,false,null,null
+615,molten.siliconsolargrade,熔融太阳能级硅(多晶硅),2273,8,1000,1000,false,null,null
+616,silicontetrachloride,四氯化硅,204,0,1000,1000,false,null,null
+617,silicontetrafluoride,四氟化硅,295,0,-100,200,false,null,null
+618,trichlorosilane,三氯硅烷,139,0,1000,1000,false,null,null
+619,molten.galliumarsenide,熔融砷化镓,0,0,1000,1000,false,null,null
+620,molten.indiumgalliumphosphide,熔融磷化铟镓,0,0,1000,1000,false,null,null
+621,molten.solderingalloy,熔融焊锡,400,0,1000,1000,false,null,null
+622,molten.stainlesssteel,熔融不锈钢,0,0,1000,1000,false,null,null
+623,molten.steel,熔融钢,1811,5,1000,1000,false,null,null
+624,molten.tinalloy,熔融锡铁合金,0,0,1000,1000,false,null,null
+625,molten.ultimet,熔融哈氏合金,2700,10,1000,1000,false,null,null
+626,molten.vanadiumgallium,熔融钒镓合金,4500,15,1000,1000,false,null,null
+627,molten.castiron,熔融铸铁,1811,5,1000,1000,false,null,null
+628,molten.yttriumbariumcuprate,熔融钇钡铜氧合金,4500,15,1000,1000,false,null,null
+629,molten.alumite,熔融锌曜钢,0,0,1000,1000,false,null,null
+630,molten.bismuthbronze,熔融铋青铜,0,0,1000,1000,false,null,null
+631,molten.blackbronze,熔融黑青铜,0,0,1000,1000,false,null,null
+632,molten.blacksteel,熔融黑钢,0,0,1000,1000,false,null,null
+633,molten.chrysotile,熔融白石棉,9400,15,1000,1000,false,null,null
+634,molten.cobaltbrass,熔融钴黄铜,0,0,1000,1000,false,null,null
+635,molten.damascussteel,熔融大马士革钢,2000,6,1000,1000,false,null,null
+636,dilutedsulfuricacid,稀硫酸,295,0,1000,1000,false,null,null
+637,molten.electricalsteel,熔融磁钢,1811,5,1000,1000,false,null,null
+638,molten.epoxidfiberreinforced,熔融纤维强化的环氧树脂,400,0,1000,1000,false,null,null
+639,molten.knightmetal,熔融骑士金属,0,0,1000,1000,false,null,null
+640,molten.manyullyn,熔融玛玉灵,3600,15,1000,1000,false,null,null
+641,molten.realgar,熔融雄黄,0,0,1000,1000,false,null,null
+642,redmud,赤泥,295,0,1000,1000,false,null,null
+643,plasma.redstone,红石等离子体,10000,15,55536,10,false,null,null
+644,molten.rosegold,熔融玫瑰金,0,0,1000,1000,false,null,null
+645,molten.sterlingsilver,熔融标准纯银,0,0,1000,1000,false,null,null
+646,molten.sugar,熔融糖,0,0,1000,1000,false,null,null
+647,molten.thaumium,熔融神秘,0,0,1000,1000,false,null,null
+648,molten.tpvalloy,熔融钛铂钒合金,3000,12,1000,1000,false,null,null
+649,molten.tungstencarbide,熔融碳化钨,2460,9,1000,1000,false,null,null
+650,molten.tungstensteel,熔融钨钢,4000,15,1000,1000,false,null,null
+651,molten.vanadiumsteel,熔融钒钢,1453,3,1000,1000,false,null,null
+652,molten.vinteum,熔融温特姆,0,0,1000,1000,false,null,null
+653,molten.bluesteel,熔融蓝钢,0,0,1000,1000,false,null,null
+654,molten.borosilicateglass,熔融硼玻璃,0,0,1000,1000,false,null,null
+655,molten.darksteel,熔融玄钢,0,0,1000,1000,false,null,null
+656,molten.hssg,熔融高速钢-G,4500,15,1000,1000,false,null,null
+657,molten.ironwood,熔融铁木,0,0,1000,1000,false,null,null
+658,molten.redalloy,熔融红色合金,500,0,1000,1000,false,null,null
+659,molten.redsteel,熔融红钢,0,0,1000,1000,false,null,null
+660,molten.redstonealloy,熔融红石合金,671,0,1000,1000,false,null,null
+661,molten.conductiveiron,熔融导电铁,0,0,1000,1000,false,null,null
+662,molten.endsteel,熔融末影钢,940,0,1000,1000,false,null,null
+663,molten.hsse,熔融高速钢-E,5400,15,1000,1000,false,null,null
+664,molten.hsss,熔融高速钢-S,5400,15,1000,1000,false,null,null
+665,molten.pulsatingiron,熔融脉冲铁,0,0,1000,1000,false,null,null
+666,molten.crystallinealloy,熔融晶化合金,4500,15,1000,1000,false,null,null
+667,molten.energeticalloy,熔融充能合金,0,0,1000,1000,false,null,null
+668,molten.energeticsilver,熔融充能银,0,0,1000,1000,false,null,null
+669,molten.melodicalloy,熔融旋律合金,5400,15,1000,1000,false,null,null
+670,molten.crystallinepinkslime,熔融晶化粉红史莱姆,5000,15,1000,1000,false,null,null
+671,molten.stellaralloy,熔融恒星合金,7200,15,1000,1000,false,null,null
+672,molten.vibrantalloy,熔融脉冲合金,3300,13,1000,1000,false,null,null
+673,molten.vividalloy,熔融生动合金,3300,13,1000,1000,false,null,null
+674,"3,3diaminobenzidine","3,3'-二氨基联苯胺",295,0,1000,1000,false,null,null
+675,"3,3dichlorobenzidine","3,3'-二氯联苯胺",295,0,1000,1000,false,null,null
+676,dimethylbenzene,邻二甲苯,248,0,1000,1000,false,null,null
+677,diphenylisophtalate,间苯二甲酸二苯酯,295,0,1000,1000,false,null,null
+678,2nitrochlorobenzene,2-硝基氯苯,295,0,1000,1000,false,null,null
+679,phtalicacid,邻苯二甲酸,295,0,1000,1000,false,null,null
+680,molten.polybenzimidazole,熔融聚苯并咪唑（PBI）,1450,3,1000,1000,false,null,null
+681,ethyltertbutylether,抗爆剂,295,0,1000,1000,false,null,null
+682,highoctanegasoline,高辛烷值汽油,295,0,1000,1000,false,null,null
+683,rawgasoline,粗汽油,295,0,1000,1000,false,null,null
+684,gasoline,汽油,295,0,1000,1000,false,null,null
+685,mtbereactionmixture(butene),MTBE反应混合物(丁烯),295,0,-100,200,false,null,null
+686,mtbereactionmixture(butane),MTBE反应混合物(丁烷),295,0,-100,200,false,null,null
+687,nitrousoxide,一氧化二氮,295,0,-100,200,false,null,null
+688,octane,辛烷,295,0,1000,1000,false,null,null
+689,molten.bloodinfusediron,熔融注血铁,2400,8,1000,1000,false,null,null
+690,molten.electrotine,熔融蓝石,0,0,1000,1000,false,null,null
+691,molten.galgadorian,熔融混合晶,3000,12,1000,1000,false,null,null
+692,molten.enhancedgalgadorian,熔融强化混合晶,4500,15,1000,1000,false,null,null
+693,molten.shadow,熔融暗影金属,1800,5,1000,1000,false,null,null
+694,molten.blackplutonium,熔融黑钚,9000,15,1000,1000,false,null,null
+695,molten.callistoice,熔融木卫四冰,0,0,1000,1000,false,null,null
+696,molten.duralumin,熔融硬铝,1600,4,1000,1000,false,null,null
+697,molten.ledox,熔融深铅,0,0,1000,1000,false,null,null
+698,molten.mysteriouscrystal,熔融神秘水晶,7200,15,1000,1000,false,null,null
+699,molten.mytryl,熔融深空秘银,3600,15,1000,1000,false,null,null
+700,molten.quantium,熔融量子,9900,15,1000,1000,false,null,null
+701,molten.astralsilver,熔融星辰银,0,0,1000,1000,false,null,null
+702,molten.bluealloy,熔融蓝色合金,0,0,1000,1000,false,null,null
+703,molten.crudesteel,熔融复合黏土,0,0,1000,1000,false,null,null
+704,molten.enderium,熔融末影(te),4500,15,1000,1000,false,null,null
+705,molten.mithril,熔融秘银,6600,15,1000,1000,false,null,null
+706,molten.shadowiron,熔融暗影铁,8400,15,1000,1000,false,null,null
+707,molten.shadowsteel,熔融暗影钢,0,0,1000,1000,false,null,null
+708,molten.soularium,熔融魂金,800,0,1000,1000,false,null,null
+709,molten.bedrockium,熔融基岩,9900,15,1000,1000,false,null,null
+710,molten.infinity,熔融无尽,10800,15,1000,1000,false,null,null
+711,molten.infinitycatalyst,熔融无尽催化剂,10800,15,1000,1000,false,null,null
+712,molten.trinium,熔融三元金属,7200,15,1000,1000,false,null,null
+713,molten.pentacadmiummagnesiumhexaoxid,熔融MV超导粗胚,2500,9,1000,1000,false,null,null
+714,molten.titaniumonabariumdecacoppereikosaoxid,熔融HV超导粗胚,3300,13,1000,1000,false,null,null
+715,molten.uraniumtriplatinid,熔融EV超导粗胚,4400,15,1000,1000,false,null,null
+716,molten.vanadiumtriindinid,熔融IV超导粗胚,5200,15,1000,1000,false,null,null
+717,molten.tetraindiumditindibariumtitaniumheptacoppertetrakaidekaoxid,熔融LuV超导粗胚,6000,15,1000,1000,false,null,null
+718,molten.tetranaquadahdiindiumhexaplatiumosminid,熔融ZPM超导粗胚,8100,15,1000,1000,false,null,null
+719,molten.longasssuperconductornameforuvwire,熔融UV超导粗胚,9900,15,1000,1000,false,null,null
+720,molten.longasssuperconductornameforuhvwire,熔融UHV超导粗胚,10800,15,1000,1000,false,null,null
+721,molten.superconductoruevbase,熔融UEV超导粗胚,11700,15,1000,1000,false,null,null
+722,molten.superconductoruivbase,熔融UIV超导粗胚,12700,15,1000,1000,false,null,null
+723,molten.superconductorumvbase,熔融UMV超导粗胚,13600,15,1000,1000,false,null,null
+724,polyaluminiumchloride,聚氯化铝,295,0,1000,1000,false,null,null
+725,ozone,臭氧,295,0,-100,200,false,null,null
+726,stablebaryonicmatter,稳定重子物质,295,0,1000,1000,false,null,null
+727,crackedradox,裂化拉多X,295,0,-100,200,false,null,null
+728,radoxgas,拉多X气,295,0,-100,200,false,null,null
+729,heavyradox,重拉多X,295,0,1000,1000,false,null,null
+730,lightradox,轻拉多X,295,0,-100,200,false,null,null
+731,molten.radoxpoly,熔融拉多X聚合物,6203,15,1000,1000,false,null,null
+732,radoxpoly,拉多X聚合物,6203,0,-100,200,false,null,null
+733,rawradox,粗制拉多X,295,0,1000,1000,false,null,null
+734,superheavyradox,超重拉多X,295,0,1000,1000,false,null,null
+735,superlightradox,超轻拉多X,295,0,-100,200,false,null,null
+736,xenoxene,异氙,295,0,1000,1000,false,null,null
+737,dilutedxenoxene,钝化异氙,295,0,1000,1000,false,null,null
+738,netherair,下界空气,295,0,1000,1000,false,null,null
+739,nethersemifluid,半流质下界空气,295,0,1000,1000,false,null,null
+740,nefariousgas,邪恶气体,295,0,1000,1000,false,null,null
+741,nefariousoil,邪恶原油,295,0,1000,1000,false,null,null
+742,poornetherwaste,贫瘠下界废水,295,0,1000,1000,false,null,null
+743,richnetherwaste,富集下界废水,295,0,1000,1000,false,null,null
+744,molten.hellishmetal,熔融地狱金属,1200,2,1000,1000,false,null,null
+745,prismarinesolution,海晶石溶液,295,0,1000,1000,false,null,null
+746,prismarinecontaminatedhydrogenperoxide,海晶参杂的过氧化氢,295,0,1000,1000,false,null,null
+747,prismarinerichnitrobenzenesolution,富海晶硝基苯溶液,295,0,1000,1000,false,null,null
+748,prismarinecontaminatednitrobenzenesolution,海晶参杂的硝基苯溶液,295,0,1000,1000,false,null,null
+749,prismaticgas,海晶气,295,0,1000,1000,false,null,null
+750,prismaticacid,海晶酸,295,0,1000,1000,false,null,null
+751,molten.prismaticnaquadah,熔融海晶硅岩,0,0,1000,1000,false,null,null
+752,prismaticnaquadahcompositeslurry,海晶硅岩混合砂浆,295,0,1000,1000,false,null,null
+753,impurefranciumsolution,不纯的钫溶液,295,0,1000,1000,false,null,null
+754,franciumslurry,钫泥浆,295,0,1000,1000,false,null,null
+755,thoriumelutionadsorbent,钍洗脱吸附剂,295,0,1000,1000,false,null,null
+756,phosphoruschlorinemixture,磷氯混合物,295,0,1000,1000,false,null,null
+757,phosphoruspentachloride,五氯化磷,295,0,1000,1000,false,null,null
+758,toxicair,毒性空气,295,0,-100,200,false,null,null
+759,toxicslurry,毒性泥浆,295,0,1000,1000,false,null,null
+760,destabilizationslurry,不稳定浆液,295,0,1000,1000,false,null,null
+761,agitatingslurry,搅拌泥浆,295,0,1000,1000,false,null,null
+762,ultracontaminatedgas,超重度污染气体,295,0,-100,200,false,null,null
+763,stagnantwastewater,不流动的废水,295,0,1000,1000,false,null,null
+764,activatedwastewater,活性废液,295,0,1000,1000,false,null,null
+765,chlorosulfonicacid,氯磺酸,295,0,1000,1000,false,null,null
+766,poisonousslurry,毒性泥浆,295,0,1000,1000,false,null,null
+767,complexitycatalyst,复杂度催化剂,295,0,1000,1000,false,null,null
+768,entropiccatalyst,混沌催化剂,295,0,1000,1000,false,null,null
+769,soulinfusedmedium,灵魂灌注溶剂,295,0,1000,1000,false,null,null
+770,molten.manasteel,熔融魔力钢,1500,3,1000,1000,false,null,null
+771,molten.terrasteel,熔融泰拉钢,5400,15,1000,1000,false,null,null
+772,molten.elvenelementium,熔融源质钢,7200,15,1000,1000,false,null,null
+773,molten.gaiaspirit,熔融盖亚之魂,0,0,1000,1000,false,null,null
+774,diaminodiphenylmethanmixture,二氨基二苯甲烷混合物,365,0,1000,1000,false,null,null
+775,diphenylmethanediisocyanatemixture,二苯基甲烷二异氰酸酯混合物,310,0,1000,1000,false,null,null
+776,butyraldehyde,丁醛,176,0,1000,1000,false,null,null
+777,isobutyraldehyde,异丁醛,208,0,1000,1000,false,null,null
+778,nickeltetracarbonyl,四羰基镍,256,0,1000,1000,false,null,null
+779,ethyleneoxide,环氧乙烷,295,0,-100,200,false,null,null
+780,siliconoil,硅油,473,0,1000,1000,false,null,null
+781,ethyleneglycol,乙二醇,260,0,1000,1000,false,null,null
+782,acetaldehyde,乙醛,295,0,-100,200,false,null,null
+783,polyurethaneresin,聚氨酯树脂,295,0,1000,1000,false,null,null
+784,nmethylpyrolidone,N-甲基吡咯烷酮,249,0,1000,1000,false,null,null
+785,acetylene,乙炔,295,0,-100,200,false,null,null
+786,4nitroaniline,4-硝基苯胺,420,0,1000,1000,false,null,null
+787,methylamine,甲胺,295,0,-100,200,false,null,null
+788,trimethylamine,三甲胺,295,0,-100,200,false,null,null
+789,gammabutyrolactone,γ-丁内酯,229,0,1000,1000,false,null,null
+790,liquidcrystalkevlar,液晶凯芙拉,295,0,1000,1000,false,null,null
+791,molten.nickelaluminide,熔融铝化镍,1668,4,1000,1000,false,null,null
+792,thionylchloride,氯化亚砜,295,0,1000,1000,false,null,null
+793,sulfurdichloride,二氯化硫,295,0,1000,1000,false,null,null
+794,dimethylterephthalate,对苯二甲酸二甲酯,415,0,1000,1000,false,null,null
+795,molten.kevlar,熔融凯芙拉,0,0,1000,1000,false,null,null
+796,terephthalicacid,对苯二甲酸,480,0,1000,1000,false,null,null
+797,"1,3dimethylbenzene",间二甲苯,225,0,1000,1000,false,null,null
+798,"1,4dimethylbenzene",对二甲苯,286,0,1000,1000,false,null,null
+799,naphthenicacid,环烷酸,295,0,1000,1000,false,null,null
+800,phosphorustrichloride,三氯化磷,179,0,1000,1000,false,null,null
+801,trimethylborate,硼酸三甲酯,239,0,1000,1000,false,null,null
+802,bauxiteslurry,铝土泥浆,295,0,1000,1000,false,null,null
+803,headedbauxiteslurry,热铝土泥浆,295,0,1000,1000,false,null,null
+804,sluicejuice,废液,295,0,1000,1000,false,null,null
+805,greensapphirejuice,绿色蓝宝石汁,295,0,1000,1000,false,null,null
+806,sapphirejuice,蓝宝石汁,295,0,1000,1000,false,null,null
+807,rubyjuice,红宝石汁,295,0,1000,1000,false,null,null
+808,dimensionallytranscendentcrudecatalyst,粗制超维度催化剂,25000000,0,1000,1000,false,null,null
+809,dimensionallytranscendentprosaiccatalyst,平凡超维度催化剂,50000000,0,1000,1000,false,null,null
+810,dimensionallytranscendentresplendentcatalyst,光辉超维度催化剂,75000000,0,1000,1000,false,null,null
+811,dimensionallytranscendentexoticcatalyst,异星超维度催化剂,100000000,0,1000,1000,false,null,null
+812,dimensionallytranscendentstellarcatalyst,恒星超维度催化剂,100000000,0,1000,1000,false,null,null
+813,molten.spacetime,熔融时空,0,0,1000,1000,false,null,null
+814,molten.transcendentmetal,熔融超时空金属,0,0,1000,1000,false,null,null
+815,molten.magnetohydrodynamicallyconstrainedstarmatter,熔融磁流体约束恒星物质,0,0,1000,1000,false,null,null
+816,molten.whitedwarfmatter,熔融白矮星物质,0,0,1000,1000,false,null,null
+817,whitedwarfmatter,白矮星物质,295,0,1000,1000,false,null,null
+818,molten.blackdwarfmatter,熔融黑矮星物质,0,0,1000,1000,false,null,null
+819,blackdwarfmatter,黑矮星物质,295,0,1000,1000,false,null,null
+820,molten.universium,熔融宇宙素,0,0,1000,1000,false,null,null
+821,molten.eternity,熔融永恒,0,0,1000,1000,false,null,null
+822,molten.magmatter,熔融磁物质,0,0,1000,1000,false,null,null
+823,molten.sixphasedcopper,熔融六相铜,1000,1,1000,1000,false,null,null
+824,plasma.sixphasedcopper,六相铜等离子体,10000,15,55536,10,false,null,null
+825,molten.mellion,熔融灿茶合金,1000,1,1000,1000,false,null,null
+826,molten.creon,熔融创律合金,1000,1,1000,1000,false,null,null
+827,plasma.creon,创律合金等离子体,10000,15,55536,10,false,null,null
+828,dimensionallyshiftedsuperfluid,维度偏移超流体,295,0,1000,1000,false,null,null
+829,protohalkonitebase,熔融原初恒坚钢基底,295,0,1000,1000,false,null,null
+830,moltenexohalkonitebase,熔融超然恒坚钢配制基底,295,0,1000,1000,false,null,null
+831,sgcrystalslurry,星门水晶浆液,295,0,1000,1000,false,null,null
+832,brightlumipodextract,明亮卢米坡德提取物,298,0,1000,1000,false,null,null
+833,biocatalyzedpropulsionfluid,生物催化推进液,303,0,1000,1000,false,null,null
+834,molten.shijima,熔融静寂,0,0,1000,1000,false,null,null
+835,molten.churitsu,熔融中立,0,0,1000,1000,false,null,null
+836,molten.signalum,熔融信素,0,0,1000,1000,false,null,null
+837,molten.lumium,熔融流明,0,0,1000,1000,false,null,null
+838,unformed hexanite,未成形的咒源玄晶,9000,0,1000,1000,false,null,null
+839,potion.awkward,粗制的药水,295,0,1000,1000,false,null,null
+840,potion.thick,浑浊的药水,295,0,1000,1000,false,null,null
+841,potion.mundane,平凡的药水,295,0,1000,1000,false,null,null
+842,potion.damage,伤害药水,295,0,1000,1000,false,null,null
+843,potion.damage.strong,加强伤害药水,295,0,1000,1000,false,null,null
+844,potion.damage.splash,喷溅伤害药水,295,0,1000,1000,false,null,null
+845,potion.damage.strong.splash,加强喷溅伤害药水,295,0,1000,1000,false,null,null
+846,potion.health,治愈药水,295,0,1000,1000,false,null,null
+847,potion.health.strong,加强治愈药水,295,0,1000,1000,false,null,null
+848,potion.health.splash,喷溅治愈药水,295,0,1000,1000,false,null,null
+849,potion.health.strong.splash,加强喷溅治愈药水,295,0,1000,1000,false,null,null
+850,potion.speed,迅捷药水,295,0,1000,1000,false,null,null
+851,potion.speed.strong,加强迅捷药水,295,0,1000,1000,false,null,null
+852,potion.speed.long,加长迅捷药水,295,0,1000,1000,false,null,null
+853,potion.speed.splash,喷溅迅捷药水,295,0,1000,1000,false,null,null
+854,potion.speed.strong.splash,加强喷溅迅捷药水,295,0,1000,1000,false,null,null
+855,potion.speed.long.splash,加长喷溅迅捷药水,295,0,1000,1000,false,null,null
+856,potion.strength,力量药水,295,0,1000,1000,false,null,null
+857,potion.strength.strong,加强力量药水,295,0,1000,1000,false,null,null
+858,potion.strength.long,加长力量药水,295,0,1000,1000,false,null,null
+859,potion.strength.splash,喷溅力量药水,295,0,1000,1000,false,null,null
+860,potion.strength.strong.splash,加强喷溅力量药水,295,0,1000,1000,false,null,null
+861,potion.strength.long.splash,加长喷溅力量药水,295,0,1000,1000,false,null,null
+862,potion.regen,再生药水,295,0,1000,1000,false,null,null
+863,potion.regen.strong,加强再生药水,295,0,1000,1000,false,null,null
+864,potion.regen.long,加长再生药水,295,0,1000,1000,false,null,null
+865,potion.regen.splash,喷溅再生药水,295,0,1000,1000,false,null,null
+866,potion.regen.strong.splash,加强喷溅再生药水,295,0,1000,1000,false,null,null
+867,potion.regen.long.splash,加长喷溅再生药水,295,0,1000,1000,false,null,null
+868,potion.poison,剧毒药水,295,0,1000,1000,false,null,null
+869,potion.poison.strong,加强剧毒药水,295,0,1000,1000,false,null,null
+870,potion.poison.long,加长剧毒药水,295,0,1000,1000,false,null,null
+871,potion.poison.splash,喷溅剧毒药水,295,0,1000,1000,false,null,null
+872,potion.poison.strong.splash,加强喷溅剧毒药水,295,0,1000,1000,false,null,null
+873,potion.poison.long.splash,加长喷溅剧毒药水,295,0,1000,1000,false,null,null
+874,potion.fireresistance,抗火药水,375,0,1000,1000,false,null,null
+875,potion.fireresistance.long,加长抗火药水,375,0,1000,1000,false,null,null
+876,potion.fireresistance.splash,喷溅抗火药水,375,0,1000,1000,false,null,null
+877,potion.fireresistance.long.splash,加长喷溅抗火药水,375,0,1000,1000,false,null,null
+878,potion.nightvision,夜视药水,295,0,1000,1000,false,null,null
+879,potion.nightvision.long,加长夜视药水,295,0,1000,1000,false,null,null
+880,potion.nightvision.splash,喷溅夜视药水,295,0,1000,1000,false,null,null
+881,potion.nightvision.long.splash,加长喷溅夜视药水,295,0,1000,1000,false,null,null
+882,potion.weakness,虚弱药水,295,0,1000,1000,false,null,null
+883,potion.weakness.long,加长虚弱药水,295,0,1000,1000,false,null,null
+884,potion.weakness.splash,喷溅虚弱药水,295,0,1000,1000,false,null,null
+885,potion.weakness.long.splash,加长喷溅虚弱药水,295,0,1000,1000,false,null,null
+886,potion.slowness,迟缓药水,295,0,1000,1000,false,null,null
+887,potion.slowness.long,加长迟缓药水,295,0,1000,1000,false,null,null
+888,potion.slowness.splash,喷溅迟缓药水,295,0,1000,1000,false,null,null
+889,potion.slowness.long.splash,加长喷溅迟缓药水,295,0,1000,1000,false,null,null
+890,potion.waterbreathing,水肺药水,295,0,1000,1000,false,null,null
+891,potion.waterbreathing.long,加长水肺药水,295,0,1000,1000,false,null,null
+892,potion.waterbreathing.splash,喷溅水肺药水,295,0,1000,1000,false,null,null
+893,potion.waterbreathing.long.splash,加长喷溅水肺药水,295,0,1000,1000,false,null,null
+894,potion.invisibility,隐身药水,295,0,1000,1000,false,null,null
+895,potion.invisibility.long,加长隐身药水,295,0,1000,1000,false,null,null
+896,potion.invisibility.splash,喷溅隐身药水,295,0,1000,1000,false,null,null
+897,potion.invisibility.long.splash,加长喷溅隐身药水,295,0,1000,1000,false,null,null
+898,potion.purpledrink,紫色饮料,275,0,1000,1000,false,null,null
+899,potion.grapejuice,葡萄汁,295,0,1000,1000,false,null,null
+900,potion.wine,葡萄酒,295,0,1000,1000,false,null,null
+901,potion.vinegar,醋,295,0,1000,1000,false,null,null
+902,potion.potatojuice,土豆汁,295,0,1000,1000,false,null,null
+903,potion.vodka,伏特加,275,0,1000,1000,false,null,null
+904,potion.leninade,列宁柠檬汁,275,0,1000,1000,false,null,null
+905,potion.mineralwater,矿泉水,275,0,1000,1000,false,null,null
+906,potion.saltywater,盐水,275,0,1000,1000,false,null,null
+907,potion.reedwater,甘蔗水,295,0,1000,1000,false,null,null
+908,potion.rum,朗姆酒,295,0,1000,1000,false,null,null
+909,potion.piratebrew,海盗之酿,295,0,1000,1000,false,null,null
+910,potion.hopsjuice,啤酒花汁,295,0,1000,1000,false,null,null
+911,potion.darkbeer,黑啤,275,0,1000,1000,false,null,null
+912,potion.dragonblood,龙血,375,0,1000,1000,false,null,null
+913,potion.wheatyjuice,小麦汁,295,0,1000,1000,false,null,null
+914,potion.scotch,苏格兰威士忌,275,0,1000,1000,false,null,null
+915,potion.glenmckenner,格伦·麦肯纳,275,0,1000,1000,false,null,null
+916,potion.wheatyhopsjuice,小麦啤酒花汁,295,0,1000,1000,false,null,null
+917,potion.beer,啤酒,275,0,1000,1000,false,null,null
+918,potion.chillysauce,辣酱,375,0,1000,1000,false,null,null
+919,potion.hotsauce,红辣酱,380,0,1000,1000,false,null,null
+920,potion.diabolosauce,恶魔辣酱,385,0,1000,1000,false,null,null
+921,potion.diablosauce,恐惧辣酱,390,0,1000,1000,false,null,null
+922,potion.diablosauce.strong,祖传配方秘制而成的恐惧辣酱,999,0,1000,1000,false,null,null
+923,potion.applejuice,苹果汁,295,0,1000,1000,false,null,null
+924,potion.cider,苹果酒,295,0,1000,1000,false,null,null
+925,potion.goldenapplejuice,金苹果汁,295,0,1000,1000,false,null,null
+926,potion.goldencider,金苹果酒,295,0,1000,1000,false,null,null
+927,potion.idunsapplejuice,青春苹果汁,295,0,1000,1000,false,null,null
+928,potion.notchesbrew,附魔金苹果之酿,295,0,1000,1000,false,null,null
+929,potion.lemonjuice,柠檬汁,295,0,1000,1000,false,null,null
+930,potion.limoncello,意大利柠檬甜酒,295,0,1000,1000,false,null,null
+931,potion.lemonade,柠檬汽水,275,0,1000,1000,false,null,null
+932,potion.alcopops,波普甜酒,275,0,1000,1000,false,null,null
+933,potion.cavejohnsonsgrenadejuice,约翰逊的炸弹柠檬汁,295,0,1000,1000,false,null,null
+934,potion.coffee,咖啡,295,0,1000,1000,false,null,null
+935,potion.sweetcoffee,甜咖啡,295,0,1000,1000,false,null,null
+936,potion.latte,拿铁,295,0,1000,1000,false,null,null
+937,potion.sweetlatte,甜拿铁,295,0,1000,1000,false,null,null
+938,potion.sweetjesuslatte,美味拿铁,295,0,1000,1000,false,null,null
+939,potion.darkchocolatemilk,黑巧克力奶,295,0,1000,1000,false,null,null
+940,potion.chocolatemilk,巧克力牛奶,295,0,1000,1000,false,null,null
+941,potion.tea,茶,295,0,1000,1000,false,null,null
+942,potion.sweettea,甜茶,295,0,1000,1000,false,null,null
+943,potion.icetea,冰红茶,255,0,1000,1000,false,null,null
+944,liquid_sodium,液钠,495,0,1000,1000,false,null,null
+945,entangled_neutronium,纠缠玻色-爱因斯坦凝聚态中子,0,0,-100,200,false,null,null
+946,entangled_cosmicneutronium,纠缠玻色-爱因斯坦凝聚态宇宙中子态素,0,0,-100,200,false,null,null
+947,entangled_bedrockium,纠缠玻色-爱因斯坦凝聚态基岩,0,0,-100,200,false,null,null
+948,entangled_chromaticglass,纠缠玻色-爱因斯坦凝聚态彩色玻璃,0,0,-100,200,false,null,null
+949,entangled_celestialtungsten,纠缠玻色-爱因斯坦凝聚态天体钨,0,0,-100,200,false,null,null
+950,entangled_infinity,纠缠玻色-爱因斯坦凝聚态无尽,0,0,-100,200,false,null,null
+951,entangled_hypogen,纠缠玻色-爱因斯坦凝聚态海珀珍,0,0,-100,200,false,null,null
+952,entangled_transcendentmetal,纠缠玻色-爱因斯坦凝聚态超时空金属,0,0,-100,200,false,null,null
+953,entangled_dimshiftedsuperfluid,纠缠玻色-爱因斯坦凝聚态维度偏移超流体,0,0,-100,200,false,null,null
+954,entangled_spacetime,纠缠玻色-爱因斯坦凝聚态时空,0,0,-100,200,false,null,null
+955,entangled_time,纠缠玻色-爱因斯坦凝聚态富快子,0,0,-100,200,false,null,null
+956,entangled_space,纠缠玻色-爱因斯坦凝聚态扩大化空间,0,0,-100,200,false,null,null
+957,entangled_cosmicsolder,纠缠玻色-爱因斯坦凝聚态寰宇焊料,0,0,-100,200,false,null,null
+958,entangled_mhdcsm,纠缠玻色-爱因斯坦凝聚态蓝框岩浆,0,0,-100,200,false,null,null
+959,entangled_magmatter,纠缠玻色-爱因斯坦凝聚态磁物质,0,0,-100,200,false,null,null
+960,entangled_universium,纠缠玻色-爱因斯坦凝聚态宇宙素,0,0,-100,200,false,null,null
+961,entangled_eternity,纠缠玻色-爱因斯坦凝聚态永恒,0,0,-100,200,false,null,null
+962,lightlycrackednaquadahgas,轻度裂化硅岩气,800,0,1000,1000,true,GoodGenerator:lightlyCrackedNaquadahGas,goodgenerator.blocks.myFluids.BaseFluid
+963,moderatelycrackednaquadahgas,中度裂化硅岩气,800,0,1000,1000,true,GoodGenerator:moderatelyCrackedNaquadahGas,goodgenerator.blocks.myFluids.BaseFluid
+964,heavilycrackednaquadahgas,重度裂化硅岩气,800,0,1000,1000,true,GoodGenerator:heavilyCrackedNaquadahGas,goodgenerator.blocks.myFluids.BaseFluid
+965,lightlycrackedlightnaquadahfuel,轻度裂化轻质硅岩燃料,1200,0,1000,1000,true,GoodGenerator:lightlyCrackedLightNaquadahFuel,goodgenerator.blocks.myFluids.BaseFluid
+966,moderatelycrackedlightnaquadahfuel,中度裂化轻质硅岩燃料,1200,0,1000,1000,true,GoodGenerator:moderatelyCrackedLightNaquadahFuel,goodgenerator.blocks.myFluids.BaseFluid
+967,heavilycrackedlightnaquadahfuel,重度裂化轻质硅岩燃料,1200,0,1000,1000,true,GoodGenerator:heavilyCrackedLightNaquadahFuel,goodgenerator.blocks.myFluids.BaseFluid
+968,lightlycrackedheavynaquadahfuel,轻度裂化重质硅岩燃料,1200,0,1000,1000,true,GoodGenerator:lightlyCrackedHeavyNaquadahFuel,goodgenerator.blocks.myFluids.BaseFluid
+969,moderatelycrackedheavynaquadahfuel,中度裂化重质硅岩燃料,1200,0,1000,1000,true,GoodGenerator:moderatelyCrackedHeavyNaquadahFuel,goodgenerator.blocks.myFluids.BaseFluid
+970,heavilycrackedheavynaquadahfuel,重度裂化重质硅岩燃料,1200,0,1000,1000,true,GoodGenerator:heavilyCrackedHeavyNaquadahFuel,goodgenerator.blocks.myFluids.BaseFluid
+971,lightlycrackednaquadahasphalt,轻度裂化硅岩沥青,1800,0,20000,20000,true,GoodGenerator:lightlyCrackedNaquadahAsphalt,goodgenerator.blocks.myFluids.BaseFluid
+972,moderatelycrackednaquadahasphalt,中度裂化硅岩沥青,1800,0,20000,20000,true,GoodGenerator:moderatelyCrackedNaquadahAsphalt,goodgenerator.blocks.myFluids.BaseFluid
+973,heavilycrackednaquadahasphalt,重度裂化硅岩沥青,1800,0,20000,20000,true,GoodGenerator:heavilyCrackedNaquadahAsphalt,goodgenerator.blocks.myFluids.BaseFluid
+974,combustionpromotor,助燃剂,300,0,1000,1000,true,GoodGenerator:combustionPromotor,goodgenerator.blocks.myFluids.BaseFluid
+975,fluid.coaltar,煤焦,450,0,1000,1000,true,GoodGenerator:coalTar,goodgenerator.blocks.myFluids.BaseFluid
+976,supercriticalsteam,超临界蒸汽,648,0,1000,1000,true,GoodGenerator:supercriticalSteam,goodgenerator.blocks.myFluids.BaseFluid
+977,xpjuice,液态经验,300,10,800,1500,false,null,null
+978,neon,氖,25,15,-10000,10,false,null,null
+979,plasma.neon,氖等离子体,10000,15,-10000,10,false,null,null
+980,molten.germanium,熔融锗,1210,0,1000,1000,false,null,null
+981,plasma.germanium,锗等离子体,10000,15,-10000,10,false,null,null
+982,molten.selenium,熔融硒,490,0,1000,1000,false,null,null
+983,plasma.selenium,硒等离子体,10000,15,-10000,10,false,null,null
+984,molten.bromine,溴,265,0,1000,10000,false,null,null
+985,plasma.bromine,溴等离子体,10000,15,-10000,10,false,null,null
+986,krypton,氪,115,15,-10000,10,false,null,null
+987,plasma.krypton,氪等离子体,10000,15,-10000,10,false,null,null
+988,molten.zirconium,熔融锆,2130,0,1000,1000,false,null,null
+989,plasma.zirconium,锆等离子体,10000,15,-10000,10,false,null,null
+990,molten.ruthenium,熔融钌,2525,0,1000,1000,false,null,null
+991,plasma.ruthenium,钌等离子体,10000,15,-10000,10,false,null,null
+992,molten.rhodium,熔融铑,2240,0,1000,1000,false,null,null
+993,plasma.rhodium,铑等离子体,10000,15,-10000,10,false,null,null
+994,molten.technetium,熔融锝,2475,0,1000,1000,false,null,null
+995,plasma.technetium,锝等离子体,10000,15,-10000,10,false,null,null
+996,molten.neptunium,熔融镎,915,0,1000,1000,false,null,null
+997,plasma.neptunium,镎等离子体,10000,15,-10000,10,false,null,null
+998,molten.iodine,熔融碘,385,0,1000,1000,false,null,null
+999,plasma.iodine,碘等离子体,10000,15,-10000,10,false,null,null
+1000,xenon,氙,160,15,-10000,10,false,null,null
+1001,plasma.xenon,氙等离子体,10000,15,-10000,10,false,null,null
+1002,molten.hafnium,熔融铪,2425,0,1000,1000,false,null,null
+1003,plasma.hafnium,铪等离子体,10000,15,-10000,10,false,null,null
+1004,molten.rhenium,熔融铼,3455,0,1000,1000,false,null,null
+1005,plasma.rhenium,铼等离子体,10000,15,-10000,10,false,null,null
+1006,molten.thallium,熔融铊,575,0,1000,1000,false,null,null
+1007,plasma.thallium,铊等离子体,10000,15,-10000,10,false,null,null
+1008,molten.polonium,熔融钋,525,0,1000,1000,false,null,null
+1009,plasma.polonium,钋等离子体,10000,15,-10000,10,false,null,null
+1010,molten.radium,熔融镭,975,0,1000,1000,false,null,null
+1011,plasma.radium,镭等离子体,10000,15,-10000,10,false,null,null
+1012,molten.protactinium,熔融镤,1840,0,1000,1000,false,null,null
+1013,plasma.protactinium,镤等离子体,10000,15,-10000,10,false,null,null
+1014,molten.curium,熔融锔,1615,0,1000,1000,false,null,null
+1015,plasma.curium,锔等离子体,10000,15,-10000,10,false,null,null
+1016,molten.californium,熔融锎,1170,0,1000,1000,false,null,null
+1017,plasma.californium,锎等离子体,10000,15,-10000,10,false,null,null
+1018,molten.fermium,镄,1800,0,1000,10000,false,null,null
+1019,plasma.fermium,镄等离子体,10000,15,-10000,10,false,null,null
+1020,molten.lithium7,熔融锂-7,725,0,1000,1000,false,null,null
+1021,molten.uranium232,熔融铀-232,1405,0,1000,1000,false,null,null
+1022,plasma.uranium232,铀-232等离子体,10000,15,-10000,10,false,null,null
+1023,molten.uranium233,熔融铀-233,1405,0,1000,1000,false,null,null
+1024,plasma.uranium233,铀-233等离子体,10000,15,-10000,10,false,null,null
+1025,molten.thorium232,熔融钍-232,2390,0,1000,1000,false,null,null
+1026,plasma.thorium232,钍-232等离子体,10000,15,-10000,10,false,null,null
+1027,molten.plutonium238,熔融钚-238,1185,0,1000,1000,false,null,null
+1028,plasma.plutonium238,钚-238等离子体,10000,15,-10000,10,false,null,null
+1029,molten.energycrystal,熔融能量水晶,4935,0,1000,1000,false,null,null
+1030,molten.bloodsteel,熔融血钢,2775,0,1000,1000,false,null,null
+1031,molten.staballoy,熔融贫铀合金,3725,0,1000,1000,false,null,null
+1032,molten.tantalloy60,熔融钽钨合金-60,3300,0,1000,1000,false,null,null
+1033,molten.tantalloy61,熔融钽钨合金-61,3305,0,1000,1000,false,null,null
+1034,molten.tumbaga,熔融铜金合金,1575,0,1000,1000,false,null,null
+1035,molten.potin,熔融粗青铜合金,1575,0,1000,1000,false,null,null
+1036,molten.inconel625,熔融镍铬基合金-625,2700,0,1000,1000,false,null,null
+1037,molten.inconel690,熔融镍铬基合金-690,3700,0,1000,1000,false,null,null
+1038,molten.inconel792,熔融镍铬基合金-792,3700,0,1000,1000,false,null,null
+1039,molten.nitinol60,熔融镍钛诺60,5925,0,1000,1000,false,null,null
+1040,molten.zeron100,熔融塞龙-100,6375,0,1000,1000,false,null,null
+1041,molten.maragingsteel250,熔融马氏体时效钢250,2685,0,1000,1000,false,null,null
+1042,molten.maragingsteel300,熔融马氏体时效钢300,2685,0,1000,1000,false,null,null
+1043,molten.maragingsteel350,熔融马氏体时效钢350,2685,0,1000,1000,false,null,null
+1044,molten.watertightsteel,熔融防水钢,2945,0,1000,1000,false,null,null
+1045,molten.stellite,熔融铬钴锰钛合金,4585,0,1000,1000,false,null,null
+1046,molten.talonite,熔融铬钴磷酸盐合金,3725,0,1000,1000,false,null,null
+1047,molten.hastelloyw,熔融哈斯特洛依合金-W,3625,0,1000,1000,false,null,null
+1048,molten.hastelloyx,熔融哈斯特洛依合金-X,3625,0,1000,1000,false,null,null
+1049,molten.hastelloyn,熔融哈斯特洛依合金-N,4625,0,1000,1000,false,null,null
+1050,molten.hastelloyc276,熔融哈斯特洛依合金-C276,4625,0,1000,1000,false,null,null
+1051,molten.incoloy020,熔融耐热铬铁合金-020,3700,0,1000,1000,false,null,null
+1052,molten.incoloyds,熔融耐热铬铁合金-DS,3700,0,1000,1000,false,null,null
+1053,molten.incoloyma956,熔融耐热铬铁合金-MA956,4700,0,1000,1000,false,null,null
+1054,molten.tungstentitaniumcarbide,熔融碳化钨钛合金,4695,0,1000,1000,false,null,null
+1055,molten.siliconcarbide,熔融碳化硅,1685,0,1000,1000,false,null,null
+1056,molten.tantalumcarbide,熔融碳化钽,3255,0,1000,1000,false,null,null
+1057,molten.zirconiumcarbide,熔融碳化锆,1830,0,1000,1000,false,null,null
+1058,molten.niobiumcarbide,熔融碳化铌,2750,0,1000,1000,false,null,null
+1059,molten.arcanite,熔融奥金,5940,0,1000,1000,false,null,null
+1060,molten.grisium,熔融灰钛合金,4125,0,1000,1000,false,null,null
+1061,molten.eglinsteelbasecompound,熔融埃格林钢粗胚,1475,0,1000,1000,false,null,null
+1062,molten.eglinsteel,熔融埃格林钢,1320,0,1000,1000,false,null,null
+1063,molten.hg1223,HG-1223,6630,0,1000,10000,false,null,null
+1064,molten.hs188a,熔融HS188-A,5145,0,1000,1000,false,null,null
+1065,molten.triniumtitaniumalloy,熔融三元钛合金,4025,0,1000,1000,false,null,null
+1066,molten.triniumnaquadahalloy,熔融三元硅岩合金,4475,0,1000,1000,false,null,null
+1067,molten.triniumnaquadahcarbonite,熔融掺碳三元硅岩合金,6775,0,1000,1000,false,null,null
+1068,molten.arceusalloy2b,熔融阿尔宙斯合金2B,7830,0,1000,1000,false,null,null
+1069,molten.koboldite,熔融妖金,1450,0,1000,1000,false,null,null
+1070,molten.helicopter,熔融HeLiCoPtEr,6035,0,1000,1000,false,null,null
+1071,molten.lafiumcompound,熔融路菲恩化合物,6625,0,1000,1000,false,null,null
+1072,molten.cinobitea243,熔融西诺柏A243,7625,0,1000,1000,false,null,null
+1073,molten.pikyonium64b,熔融皮卡优合金64B,7125,0,1000,1000,false,null,null
+1074,molten.abyssalalloy,熔融深渊合金,9925,0,1000,1000,false,null,null
+1075,molten.laurenium,熔融劳伦姆合金,7100,0,1000,1000,false,null,null
+1076,molten.botmium,熔融博特姆合金,8495,0,1000,1000,false,null,null
+1077,molten.titansteel,熔融泰坦精钢,8525,0,1000,1000,false,null,null
+1078,molten.octiron,熔融八角铁,9395,0,1000,1000,false,null,null
+1079,molten.blacktitanium,熔融黑钛,8035,0,1000,1000,false,null,null
+1080,molten.babbitalloy,熔融巴氏合金,540,0,1000,1000,false,null,null
+1081,molten.indalloy140,熔融铋铅合金140,5475,0,1000,1000,false,null,null
+1082,molten.quantum,熔融量子合金,10775,0,1000,1000,false,null,null
+1083,molten.celestialtungsten,熔融天体钨,9170,0,1000,1000,false,null,null
+1084,plasma.celestialtungsten,天体钨等离子体,10000,15,-10000,10,false,null,null
+1085,molten.astraltitanium,熔融星体钛,9715,0,1000,1000,false,null,null
+1086,plasma.astraltitanium,星体钛等离子体,10000,15,-10000,10,false,null,null
+1087,molten.chromaticglass,熔融彩色玻璃,9475,0,1000,1000,false,null,null
+1088,plasma.chromaticglass,彩色玻璃等离子体,10000,15,-10000,10,false,null,null
+1089,molten.advancednitinol,熔融高级镍钛诺,8675,0,1000,1000,false,null,null
+1090,plasma.advancednitinol,高级镍钛诺等离子体,10000,15,-10000,10,false,null,null
+1091,molten.hypogen,熔融海珀珍,10530,0,1000,1000,false,null,null
+1092,plasma.hypogen,海珀珍等离子体,10000,15,-10000,10,false,null,null
+1093,molten.rhugnor,熔融鲁格诺,9025,0,1000,1000,false,null,null
+1094,plasma.rhugnor,鲁格诺等离子体,10000,15,-10000,10,false,null,null
+1095,plasma.force,力量等离子体,10000,15,-10000,10,false,null,null
+1096,molten.blackmetal,熔融黑物质,2625,0,1000,1000,false,null,null
+1097,molten.ancientgranite,熔融古花岗岩,775,0,1000,1000,false,null,null
+1098,molten.runite,熔融虚恩,7025,0,1000,1000,false,null,null
+1099,plasma.runite,虚恩等离子体,10000,15,-10000,10,false,null,null
+1100,molten.dragonblood,熔融龙血,10435,0,1000,1000,false,null,null
+1101,plasma.dragonblood,龙血等离子体,10000,15,-10000,10,false,null,null
+1102,molten.potassiumnitrate,熔融硝酸钾,425,0,1000,1000,false,null,null
+1103,molten.sodiumnitrate,熔融硝酸钠,435,0,1000,1000,false,null,null
+1104,molten.solarsaltcold,太阳能盐（冷）,430,0,1000,10000,false,null,null
+1105,molten.solarsalthot,太阳能盐（热）,1475,0,1000,10000,false,null,null
+1106,molten.strontiumoxide,熔融氧化锶,825,0,1000,1000,false,null,null
+1107,molten.seleniumdioxide,二氧化硒,410,0,1000,10000,false,null,null
+1108,molten.seleniousacid,亚硒酸,340,0,1000,10000,false,null,null
+1109,hydrogencyanide,氢氰酸,275,15,-10000,10,false,null,null
+1110,molten.wood'sglass,熔融伍德玻璃,1615,0,1000,1000,false,null,null
+1111,molten.ammonium,铵,310,0,1000,10000,false,null,null
+1112,molten.hydrogenchloridemix,氯化氢混合物,365,0,1000,10000,false,null,null
+1113,molten.strontiumhydroxide,熔融氢氧化锶,645,0,1000,1000,false,null,null
+1114,molten.aceticanhydride,乙酸酐,200,0,1000,10000,false,null,null
+1115,molten.chloroaceticacid,一氯乙酸,335,0,1000,10000,false,null,null
+1116,molten.dichloroaceticacid,二氯乙酸,285,0,1000,10000,false,null,null
+1117,molten.trichloroaceticacid,三氯乙酸,330,0,1000,10000,false,null,null
+1118,molten.chloroaceticmixture,氯乙酸混合物,315,0,1000,10000,false,null,null
+1119,molten.sodiumcyanide,熔融氰化钠,835,0,1000,1000,false,null,null
+1120,molten.cyanoaceticacid,熔融氰乙酸,340,0,1000,1000,false,null,null
+1121,molten.solidacidcatalystmixture,固体酸催化剂混合物,265,0,1000,10000,false,null,null
+1122,molten.copperiisulfate,熔融硫酸铜(II),865,0,1000,1000,false,null,null
+1123,molten.copperiisulfatepentahydrate,熔融五水合硫酸铜(II),865,0,1000,1000,false,null,null
+1124,molten.ethylcyanoacetate,氰乙酸乙酯,250,0,1000,10000,false,null,null
+1125,molten.cyanoacrylatepolymer,氰基丙烯酸酯聚合物,250,0,1000,10000,false,null,null
+1126,molten.ethylcyanoacrylatesuperglue,氰基丙烯酸乙酯(502胶水),250,0,1000,10000,false,null,null
+1127,molten.mutatedlivingsolder,突变活性焊料,75,0,1000,10000,false,null,null
+1128,molten.fluoritef,熔融氟石(F),325,0,1000,1000,false,null,null
+1129,molten.thoriumtetrafluoride,四氟化钍,1355,0,1000,10000,false,null,null
+1130,molten.thoriumhexafluoride,六氟化钍,1700,0,1000,10000,false,null,null
+1131,molten.uraniumtetrafluoride,四氟化铀,865,0,1000,10000,false,null,null
+1132,molten.uraniumhexafluoride,六氟化铀,595,0,1000,10000,false,null,null
+1133,molten.berylliumfluoride,氟化铍,1080,0,1000,10000,false,null,null
+1134,molten.lithiumfluoride,氟化锂,525,0,1000,10000,false,null,null
+1135,molten.ammoniumbifluoride,氟化氢铵,400,0,1000,10000,false,null,null
+1136,molten.berylliumhydroxide,氢氧化铍,815,0,1000,10000,false,null,null
+1137,molten.ammoniumtetrafluoroberyllate,氟铍酸铵,555,0,1000,10000,false,null,null
+1138,neptuniumhexafluoride,六氟化镎,620,15,-10000,10,false,null,null
+1139,technetiumhexafluoride,六氟化锝,1400,15,-10000,10,false,null,null
+1140,seleniumhexafluoride,六氟化硒,410,15,-10000,10,false,null,null
+1141,molten.sodiumfluoride,氟化钠,485,0,1000,10000,false,null,null
+1142,molten.lithiumtetrafluoroberyllatelftb,四氟铍酸锂(LTFB),840,0,1000,10000,false,null,null
+1143,molten.lftrfuel3,液态氟钍反应堆燃料3,840,0,1000,10000,false,null,null
+1144,molten.lftrfuel2,液态氟钍反应堆燃料2,925,0,1000,10000,false,null,null
+1145,molten.lftrfuel1,液态氟钍反应堆燃料1,865,0,1000,10000,false,null,null
+1146,molten.burntreactorfueli,枯竭反应堆燃料 I,1130,0,1000,10000,false,null,null
+1147,molten.burntreactorfuelii,枯竭反应堆燃料 II,1130,0,1000,10000,false,null,null
+1148,molten.uraniumdepletedmoltensaltusalt,枯竭铀熔盐,1075,0,1000,10000,false,null,null
+1149,molten.heliumspargedusalt,氦涤枯竭铀熔盐,1075,0,1000,10000,false,null,null
+1150,molten.phosphorousuraniumhexafluoridepuf6,磷化六氟化铀(P-UF6),505,0,1000,10000,false,null,null
+1151,molten.stablemoltensaltbase,稳定熔盐基,800,0,1000,10000,false,null,null
+1152,molten.lftrfuelbase,液态氟钍反应堆基燃料,835,0,1000,10000,false,null,null
+1153,molten.thoriumdepletedmoltensalttsalt,枯竭钍熔盐,940,0,1000,10000,false,null,null
+1154,molten.thoriumberylliumdepletedmoltensalttbsalt,枯竭钍铍熔盐,985,0,1000,10000,false,null,null
+1155,molten.fluorinespargedtsalt,氟涤枯竭钍熔盐,940,0,1000,10000,false,null,null
+1156,molten.fluorinespargedtbsalt,氟涤枯竭钍铍熔盐,985,0,1000,10000,false,null,null
+1157,molten.fluorinateduraniumhexafluoridefuf6,氟化六氟化铀(F-UF6),460,0,1000,10000,false,null,null
+1158,zirconiumtetrafluoride,四氟化锆,500,0,1000,1000,false,null,null
+1159,fluid.sludge,污泥,295,8,8196,3000,true,miscutils:miscutils_fluidBlockSludge,gtPlusPlus.core.block.general.fluids.BlockFluidSludge
+1160,mud.red.slurry,赤泥浆,207,0,1000,1000,false,null,null
+1161,propionicacid,丙酸,200,0,1000,1000,false,null,null
+1162,fermentation.base,发酵基,200,0,1000,1000,false,null,null
+1163,ureamix,尿素混合物,200,0,1000,1000,false,null,null
+1164,liquidresin,液态树脂,200,0,1000,1000,false,null,null
+1165,butanol,丁醇,200,0,1000,1000,false,null,null
+1166,froth.zincflotation,闪锌泡沫,207,0,1000,1000,false,null,null
+1167,froth.copperflotation,黄铜泡沫,207,0,1000,1000,false,null,null
+1168,froth.nickelflotation,镍泡沫,207,0,1000,1000,false,null,null
+1169,froth.platinumflotation,铂泡沫,207,0,1000,1000,false,null,null
+1170,froth.pentlanditeflotation,镍黄铁泡沫,207,0,1000,1000,false,null,null
+1171,froth.redstoneflotation,红石泡沫,207,0,1000,1000,false,null,null
+1172,froth.spessartineflotation,锰铝榴石泡沫,207,0,1000,1000,false,null,null
+1173,froth.grossularflotation,钙铝榴石泡沫,207,0,1000,1000,false,null,null
+1174,froth.almandineflotation,铁铝榴石泡沫,207,0,1000,1000,false,null,null
+1175,froth.pyropeflotation,镁铝榴石泡沫,207,0,1000,1000,false,null,null
+1176,froth.monaziteflotation,独居石泡沫,207,0,1000,1000,false,null,null
+1177,froth.netherrackflotation,地狱岩泡沫,207,0,1000,1000,false,null,null
+1178,pineoil,松油,207,0,1000,1000,false,null,null
+1179,fluid.coalgas,煤气,500,0,1000,1000,false,null,null
+1180,fluid.ethylbenzene,乙苯,136,0,1000,1000,false,null,null
+1181,fluid.anthracene,蒽,340,0,1000,1000,false,null,null
+1182,fluid.coaltaroil,煤焦油,240,0,1000,1000,false,null,null
+1183,fluid.sulfuriccoaltaroil,含硫煤焦油,240,0,1000,1000,false,null,null
+1184,fluid.naphthalene,萘,115,0,1000,1000,false,null,null
+1185,nitrobenzene,硝基苯,278,0,1000,1000,false,null,null
+1186,aniline,苯胺,266,0,1000,1000,false,null,null
+1187,boricacid,硼酸,278,0,1000,1000,false,null,null
+1188,polyurethane,聚氨酯,350,0,1000,1000,false,null,null
+1189,cyclohexane,环己烷,207,0,1000,1000,false,null,null
+1190,cyclohexanone,环己酮,207,0,1000,1000,false,null,null
+1191,cadaverine,尸胺,207,0,1000,1000,false,null,null
+1192,putrescine,腐胺,207,0,1000,1000,false,null,null
+1193,fluid.2ethylanthraquinone,2-乙基蒽醌,415,0,1000,1000,false,null,null
+1194,fluid.2ethylanthrahydroquinone,2-乙基蒽氢醌,415,0,1000,1000,false,null,null
+1195,fluid.hydrogenperoxide,过氧化氢,150,0,1000,1000,false,null,null
+1196,fluid.lithiumperoxide,过氧化锂,446,0,1000,1000,false,null,null
+1197,carbondisulfide,二硫化碳,350,0,1000,1000,false,null,null
+1198,fluid.kerosene,煤油,233,0,1000,1000,false,null,null
+1199,fluid.rp1fuel,RP-1燃料,500,0,1000,1000,false,null,null
+1200,fluid.nitrogentetroxide,四氧化二氮,261,0,1000,1000,false,null,null
+1201,fluid.hydrazine,肼,275,0,1000,1000,false,null,null
+1202,fluid.monomethylhydrazine,一甲基肼,221,0,1000,1000,false,null,null
+1203,fluid.ammoniumnitrateslurry,水合硝酸铵浆,450,0,1000,1000,false,null,null
+1204,fluid.liquidhydrogen,液氢,14,0,1000,1000,false,null,null
+1205,fluid.formaldehyde,甲醛,185,0,1000,1000,false,null,null
+1206,fluid.rocketfuelmixa,H8N4C2O4火箭燃料,216,0,1000,1000,false,null,null
+1207,fluid.rocketfuelmixb,RP-1火箭燃料,250,0,1000,1000,false,null,null
+1208,fluid.rocketfuelmixc,CN3H7O3火箭燃料,221,0,1000,1000,false,null,null
+1209,fluid.rocketfuelmixd,浓缩肼火箭燃料,275,0,1000,1000,false,null,null
+1210,fluid.burntlifbef2thf4uf4,枯竭铀钍复合氟化物熔盐,545,0,1000,1000,false,null,null
+1211,fluid.burntlifbef2zrf4uf4,枯竭铀锆复合氟化物熔盐,520,0,1000,1000,false,null,null
+1212,fluid.burntlifbef2zrf4u235,枯竭铀235复合氟化物熔盐,533,0,1000,1000,false,null,null
+1213,fluid.impurelifbef2,含杂熔盐基,533,0,1000,1000,false,null,null
+1214,nuclear.waste,核废水,1000,0,1000,10000,false,null,null
+1215,fluid.geneticmutagen,遗传诱变剂,12,0,1000,1000,false,null,null
+1216,cryotheum,极寒之凛冰,5,0,1000,1000,true,miscutils:FluidCryotheum,gtPlusPlus.xmod.thermalfoundation.block.TFBlockFluidCryotheum
+1217,pyrotheum,烈焰之炽焱,4000,0,1000,1000,true,miscutils:FluidPyrotheum,gtPlusPlus.xmod.thermalfoundation.block.TFBlockFluidPyrotheum
+1218,hydrofluoricacid,工业氢氟酸,120,0,1000,1000,false,null,null
+1219,sulfurousacid,亚硫酸,75,0,1000,1000,false,null,null
+1220,sulfuricapatite,硫酸-磷灰石混合物,500,0,1000,1000,false,null,null
+1221,hydrogenchloride,工业氯化氢,75,0,1000,1000,false,null,null
+1222,sulfuriclithium,硫酸锂溶液,280,0,1000,1000,false,null,null
+1223,lithiumhydroxide,氢氧化锂,500,0,1000,1000,false,null,null
+1224,fluid.raisinjuice,葡萄汁,2,0,1000,1000,false,null,null
+1225,mobessence,怪物精华液,0,0,1000,1000,false,null,null
+1226,cropsnh.fertilizer,肥料,300,0,1000,1000,false,null,null
+1227,cropsnh.enrichedfertilizer,富集肥料,300,0,1000,1000,false,null,null
+1228,cropsnh:fwheat,发酵小麦酒,295,0,1125,1125,false,null,null
+1229,cropsnh:korn,科恩酒,295,0,1125,1125,false,null,null
+1230,cropsnh:dkorn,两次蒸馏的科恩酒,295,0,1125,1125,false,null,null
+1231,cropsnh:freed,发酵甘蔗水,295,0,1125,1125,false,null,null
+1232,cropsnh:swhine,糖浆,295,0,1125,1125,false,null,null
+1233,cropsnh:mash,麦芽浆,295,0,1125,1125,false,null,null
+1234,cropsnh:wash,淡酒,295,0,1125,1125,false,null,null
+1235,cropsnh:ghp,无商标的高酒精度饮料（假酒）,295,0,1125,1125,false,null,null
+1236,cropsnh:jagi,正牌野格牌利口酒!,295,0,1125,1125,false,null,null
+1237,cropsnh:njagi,假冒野格牌利口酒,295,0,1125,1125,false,null,null
+1238,biofuel,生物燃料,300,0,600,2500,true,GalaxySpace:biofuel,galaxyspace.core.block.BlockBioFuel
+1239,unknowwater,不明液体,300,0,400,3000,true,GalaxySpace:unknowwater,galaxyspace.BarnardsSystem.planets.barnardaC.block.BarnardaCBlockUnknowWater
+1240,sludge,菌泥,300,2,1800,25000,true,ToxicEverglades:fluidSludge,gtPlusPlus.core.block.base.BlockBaseFluid
+1241,pressurized_water,加压水,300,0,1000,1000,false,null,null
+1242,shimmer,微光,300,0,1000,800,true,sciencenotleisure:tile.shimmer,com.science.gtnl.common.block.blocks.BlockShimmerFluid
+1243,moltenaeonsteel,熔融伊恩钢,1300,15,3000,6000,true,tinkersdefense:moltenaeonsteel,gmail.Lance5057.liquids.moltenAeonsteelFluid
+1244,moltenqueensgold,熔融女王之金,1300,15,3000,6000,true,tinkersdefense:moltenQueensGold,gmail.Lance5057.liquids.moltenQueensGoldFluid
+1245,moltendogbearium,熔融多格比合金,1300,15,3000,6000,true,tinkersdefense:moltenDogbearium,gmail.Lance5057.liquids.moltenDogbeariumFluid
+1246,aquaregiaoth,fluid.aquaregiaoth,300,0,100,300,true,123Technology:aquaregiaoth,com.newmaa.othtech.common.blocks.fluids.FluidAquaRegia
+1247,lcl,fluid.lcl,300,0,100,300,true,123Technology:LCL,com.newmaa.othtech.common.blocks.fluids.FluidLCL
+1248,molten.bedrockiumingots,熔融基岩锭,1300,0,3000,6000,false,null,null
+1249,molten.unstableingots,熔融不稳定金属锭,1300,0,3000,6000,false,null,null
+1250,oilgc,GC石油,300,0,800,1500,false,null,null
+1251,fuelgc,GC燃油,300,0,400,900,false,null,null
+1252,betterquesting.placeholder,占位符,300,0,1000,1000,false,null,null
+1253,fulvic acid,黄腐酸,300,0,1000,1000,false,null,null
+1254,heated fulvic acid,热黄腐酸,720,0,1000,1000,false,null,null
+1255,kerogen,油母质,300,0,1000,1000,false,null,null
+1256,fluorecentddna,荧光DNA,300,0,1000,1000,false,null,null
+1257,enzymessollution,酶溶液,300,0,1000,1000,false,null,null
+1258,penicillin,青霉素,300,0,1000,1000,false,null,null
+1259,polymerase,聚合酶,300,0,1000,1000,false,null,null
+1260,saccharomycescerevisiaefluid,普通酵母菌液体,300,0,1000,1000,false,null,null
+1261,saccharomycescerevisiaevarbayanusfluid,葡萄酒酵母菌液体,300,0,1000,1000,false,null,null
+1262,saccharomycescerevisiaevarcerevisiaefluid,啤酒酵母菌液体,300,0,1000,1000,false,null,null
+1263,escherichiakolifluid,大肠杆菌液体,300,0,1000,1000,false,null,null
+1264,pseudomonasveroniifluid,石油厌氧菌液体,300,0,1000,1000,false,null,null
+1265,saccharomycesescherichiafluid,通用酵母菌液体,300,0,1000,1000,false,null,null
+1266,oganesson,鿫,300,0,-100,200,false,null,null
+1267,molten.calcium,熔融钙,1115,1,1000,1000,false,null,null
+1268,molten.bartimaeusnek,熔融BArTiMaEuSNeK,9001,15,1000,1000,false,null,null
+1269,platinum concentrate,浓缩铂,300,0,1000,1000,false,null,null
+1270,aqua regia,王水,300,0,1000,1000,false,null,null
+1271,ammonium chloride,氯化铵,300,0,1000,1000,false,null,null
+1272,palladium enriched ammonia,富钯氨,300,0,1000,1000,false,null,null
+1273,sodium formate,甲酸钠,300,0,1000,1000,false,null,null
+1274,formic acid,甲酸,300,0,1000,1000,false,null,null
+1275,molten.potassium disulfate,熔融焦硫酸钾,1123,1,1000,1000,false,null,null
+1276,rhodium sulfate,硫酸铑,300,0,-100,200,false,null,null
+1277,rhodium sulfate solution,硫酸铑溶液,300,0,1000,1000,false,null,null
+1278,calcium chloride,氯化钙,300,0,1000,1000,false,null,null
+1279,ruthenium tetroxide,四氧化钌,313,0,1000,1000,false,null,null
+1280,hot ruthenium tetroxide solution,热四氧化钌溶液,700,0,1000,1000,false,null,null
+1281,ruthenium tetroxide solution,四氧化钌溶液,313,0,1000,1000,false,null,null
+1282,acidic osmium solution,酸性锇溶液,300,0,1000,1000,false,null,null
+1283,osmium solution,锇溶液,300,0,1000,1000,false,null,null
+1284,acidic iridium solution,酸性铱溶液,300,0,1000,1000,false,null,null
+1285,rhodium salt solution,铑盐溶液,300,0,1000,1000,false,null,null
+1286,rhodium filter cake solution,铑滤饼溶液,300,0,1000,1000,false,null,null
+1287,molten.rhodium-plated palladium,熔融镀铑钯,4500,15,1000,1000,false,null,null
+1288,molten.ruridit,熔融钌铱合金,4500,15,1000,1000,false,null,null
+1289,molten.high durability compound steel,熔融高耐久性复合钢,9000,15,1000,1000,false,null,null
+1290,molten.ademic steel,熔融阿岱姆钢,1800,5,1000,1000,false,null,null
+1291,hexafluorosilicic acid,氟硅酸,300,0,1000,1000,false,null,null
+1292,unformed fluorophlogopite,未定型氟金云母,300,0,1000,1000,false,null,null
+1293,liquid helium,液氦,4,0,1000,1000,false,null,null
+1294,molten.tantalum hafnium carbide,熔融碳化钽铪,4263,15,1000,1000,false,null,null
+1295,uranium based liquid fuel,铀基流体燃料,300,0,1000,1000,false,null,null
+1296,uranium based liquid fuel (excited state),铀基流体燃料(激发态),300,0,1000,1000,false,null,null
+1297,uranium based liquid fuel (depleted),铀基流体燃料(枯竭的),300,0,1000,1000,false,null,null
+1298,thorium based liquid fuel,钍基流体燃料,300,0,1000,1000,false,null,null
+1299,thorium based liquid fuel (excited state),钍基流体燃料(激发态),300,0,1000,1000,false,null,null
+1300,thorium based liquid fuel (depleted),钍基流体燃料(枯竭的),300,0,1000,1000,false,null,null
+1301,plutonium based liquid fuel,钚基流体燃料,300,0,1000,1000,false,null,null
+1302,plutonium based liquid fuel (excited state),钚基流体燃料(激发态),300,0,1000,1000,false,null,null
+1303,plutonium based liquid fuel (depleted),钚基流体燃料(枯竭的),300,0,1000,1000,false,null,null
+1304,oxalic acid,草酸,300,0,1000,1000,false,null,null
+1305,thorium nitrate,硝酸钍,300,0,1000,1000,false,null,null
+1306,thorium tetrachloride,四氯化钍,300,0,1000,1000,false,null,null
+1307,thorium tetrafluoride,四氟化钍,300,0,1000,1000,false,null,null
+1308,thorium-232 tetrafluoride,四氟化钍-232,300,0,1000,1000,false,null,null
+1309,molten.orundum,熔融合成玉,1123,1,1000,1000,false,null,null
+1310,molten.atomic separation catalyst,熔融原子分离催化剂,5000,15,1000,1000,false,null,null
+1311,molten.extremely unstable naquadah,熔融极不稳定硅岩,7000,15,1000,1000,false,null,null
+1312,light naquadah fuel,轻质硅岩燃料,300,0,1000,1000,false,null,null
+1313,heavy naquadah fuel,重质硅岩燃料,300,0,1000,1000,false,null,null
+1314,naquadah gas,硅岩气,300,0,-100,200,false,null,null
+1315,naquadah asphalt,硅岩沥青,300,0,1000,1000,false,null,null
+1316,ether,乙醚,300,0,1000,1000,false,null,null
+1317,antimony trichloride solution,三氯化锑溶液,300,0,1000,1000,false,null,null
+1318,antimony pentachloride solution,五氯化锑溶液,300,0,1000,1000,false,null,null
+1319,antimony pentachloride,五氯化锑,300,0,1000,1000,false,null,null
+1320,antimony pentafluoride,五氟化锑,300,0,1000,1000,false,null,null
+1321,fluoroantimonic acid,氟锑酸,300,0,1000,1000,false,null,null
+1322,acid naquadah emulsion,酸性硅岩乳液,300,0,1000,1000,false,null,null
+1323,naquadah emulsion,硅岩乳液,300,0,1000,1000,false,null,null
+1324,naquadah solution,硅岩溶液,300,0,1000,1000,false,null,null
+1325,naquadah based liquid fuel mki,硅岩基流体燃料-MkI,300,0,1000,1000,false,null,null
+1326,naquadah based liquid fuel mki (depleted),硅岩基流体燃料-MkI(枯竭的),300,0,1000,1000,false,null,null
+1327,naquadah based liquid fuel mkii,硅岩基流体燃料-MkII,300,0,1000,1000,false,null,null
+1328,naquadah based liquid fuel mkii (depleted),硅岩基流体燃料-MkII(枯竭的),300,0,1000,1000,false,null,null
+1329,naquadah based liquid fuel mkiii,硅岩基流体燃料-MkIII,300,0,1000,1000,false,null,null
+1330,naquadah based liquid fuel mkiii (depleted),硅岩基流体燃料-MkIII(枯竭的),300,0,1000,1000,false,null,null
+1331,naquadah based liquid fuel mkiv,硅岩基流体燃料-MkIV,300,0,1000,1000,false,null,null
+1332,naquadah based liquid fuel mkiv (depleted),硅岩基流体燃料-MkIV(枯竭的),300,0,1000,1000,false,null,null
+1333,naquadah based liquid fuel mkv,硅岩基流体燃料-MkV,300,0,1000,1000,false,null,null
+1334,naquadah based liquid fuel mkv (depleted),硅岩基流体燃料-MkV(枯竭的),300,0,1000,1000,false,null,null
+1335,naquadah based liquid fuel mkvi,硅岩基流体燃料-MkVI,300,0,1000,1000,false,null,null
+1336,naquadah based liquid fuel mkvi (depleted),硅岩基流体燃料-MkVI(枯竭的),300,0,1000,1000,false,null,null
+1337,molten.zn-th alloy,熔融锌钍合金,1123,1,1000,1000,false,null,null
+1338,low quality naquadah emulsion,低纯硅岩乳液,300,0,1000,1000,false,null,null
+1339,low quality naquadah solution,低纯硅岩溶液,300,0,1000,1000,false,null,null
+1340,2-ethyl-1-hexanol,2-乙基己醇,300,0,1000,1000,false,null,null
+1341,p-507,P-507,300,0,1000,1000,false,null,null
+1342,naquadah-adamantium solution,硅岩-精金溶液,300,0,1000,1000,false,null,null
+1343,naquadah-rich solution,高纯硅岩溶液,300,0,1000,1000,false,null,null
+1344,fluorine-rich waste liquid,富氟废液,300,0,1000,1000,false,null,null
+1345,waste liquid,废液,300,0,1000,1000,false,null,null
+1346,enriched-naquadah-rich solution,高纯富集硅岩溶液,300,0,1000,1000,false,null,null
+1347,naquadria-rich solution,高纯超能硅岩溶液,300,0,1000,1000,false,null,null
+1348,low quality naquadria sulphate,低纯硫酸超能硅岩,300,0,1000,1000,false,null,null
+1349,naquadah goo,硅岩黏浆,300,0,1000,1000,false,null,null
+1350,enriched naquadah goo,富集硅岩黏浆,300,0,1000,1000,false,null,null
+1351,naquadria goo,超能硅岩黏浆,300,0,1000,1000,false,null,null
+1352,molten.zircaloy-4,熔融锆锡合金-4,2800,11,1000,1000,false,null,null
+1353,molten.zircaloy-2,熔融锆锡合金-2,2800,11,1000,1000,false,null,null
+1354,molten.incoloy-903,熔融耐热铬铁合金-903,3700,15,1000,1000,false,null,null
+1355,molten.adamantium alloy,熔融精金合金,5500,15,1000,1000,false,null,null
+1356,ethanol gasoline,乙醇汽油,300,0,1000,1000,false,null,null
+1357,cyclopentadiene,环戊二烯,300,0,1000,1000,false,null,null
+1358,iron ii chloride,氯化亚铁,300,0,1000,1000,false,null,null
+1359,diethylamine,二乙胺,300,0,1000,1000,false,null,null
+1360,impure ferrocene mixture,含杂二茂铁混合物,300,0,1000,1000,false,null,null
+1361,ferrocene solution,二茂铁溶液,300,0,1000,1000,false,null,null
+1362,ferrocene waste,二茂铁废水,300,0,1000,1000,false,null,null
+1363,jet fuel no.3,航空煤油#3,300,0,1000,1000,false,null,null
+1364,jet fuel a,航空煤油A,300,0,1000,1000,false,null,null
+1365,molten.mar-m200 steel,熔融MAR-M200特种钢,5000,15,1000,1000,false,null,null
+1366,molten.mar-ce-m200 steel,熔融MAR-Ce-M200特种钢,5000,15,1000,1000,false,null,null
+1367,molten.lithium chloride,熔融氯化锂,1123,1,1000,1000,false,null,null
+1368,molten.signalium,熔融信素,4000,15,1000,1000,false,null,null
+1369,molten.lumiium,熔融流明,4000,15,1000,1000,false,null,null
+1370,molten.artherium-sn,熔融阿瑟锡,6500,15,1000,1000,false,null,null
+1371,molten.tanmolyium beta-c,熔融钛钼合金β-C,5300,15,1000,1000,false,null,null
+1372,molten.dalisenite,熔融大力合金,8700,15,1000,1000,false,null,null
+1373,molten.hikarium,熔融光素,5400,15,1000,1000,false,null,null
+1374,molten.tairitsu,熔融对立合金,7400,15,1000,1000,false,null,null
+1375,antimony pentafluoride solution,五氟化锑溶液,300,0,1000,1000,false,null,null
+1376,molten.precious metals alloy,熔融稀有金属合金,10000,15,1000,1000,false,null,null
+1377,molten.enriched naquadah alloy,熔融富集硅岩合金,11000,15,1000,1000,false,null,null
+1378,molten.metastable oganesson,熔融亚稳态鿫,11000,15,1000,1000,false,null,null
+1379,molten.shirabon,熔融调律源金,13000,15,1000,1000,false,null,null
+1380,molten.magnesia,熔融苦土,300,0,1000,1000,false,null,null
+1381,hafnium tetrachloride solution,四氯化铪溶液,300,0,1000,1000,false,null,null
+1382,zirconium tetrachloride solution,四氯化锆溶液,300,0,1000,1000,false,null,null
+1383,iodine,碘,484,0,-100,200,false,null,null
+1384,muddy monazite rare earth solution,独居石稀土浊溶液,300,0,1000,1000,false,null,null
+1385,diluted monazite rare earth mud,稀释独居石稀土泥浆,300,0,1000,1000,false,null,null
+1386,diluted monazite sulfate,稀释硫酸独居石溶液,300,0,1000,1000,false,null,null
+1387,nitrogenated monazite rare earth concentrate,浓缩氮化独居石稀土溶液,300,0,1000,1000,false,null,null
+1388,nitric monazite leached concentrate,浓缩硝酸独居石浸出溶液,300,0,1000,1000,false,null,null
+1389,ammonium nitrate solution,硝酸铵溶液,300,0,1000,1000,false,null,null
+1390,seaweed concentrate,浓缩海藻溶液,300,0,1000,1000,false,null,null
+1391,potassium permanganate solution,高锰酸钾溶液,300,0,1000,1000,false,null,null
+1392,seaweed byproducts,海藻副产,300,0,1000,1000,false,null,null
+1393,nitric-leached monazite mixture,硝酸独居石浸出混合物,300,0,1000,1000,false,null,null
+1394,muddy bastnasite rare earth solution,氟碳镧铈稀土浊溶液,300,0,1000,1000,false,null,null
+1395,sodiumfluorosilicate,氟硅酸钠,300,0,1000,1000,false,null,null
+1396,steam-cracked bastnasite mud,蒸汽裂化氟碳镧铈泥浆,300,0,1000,1000,false,null,null
+1397,conditioned bastnasite mud,调制氟碳镧铈泥浆,300,0,1000,1000,false,null,null
+1398,diluted bastnasite mud,稀释氟碳镧铈泥浆,300,0,1000,1000,false,null,null
+1399,filtered bastnasite mud,过滤氟碳镧铈泥浆,300,0,1000,1000,false,null,null
+1400,nitrogenated bastnasite rarer earth oxides,氮化氟碳镧铈罕土氧化物,300,0,1000,1000,false,null,null
+1401,bastnasite rarer earth oxide suspension,氟碳镧铈罕土氧化物悬浊液,300,0,1000,1000,false,null,null
+1402,calcium fluoride,氟化钙,300,0,1000,1000,false,null,null
+1403,"1,4-butanediol","1,4-丁二醇",300,0,1000,1000,false,null,null
+1404,dinitrotoluene,二硝基甲苯,300,0,1000,1000,false,null,null
+1405,diaminotoluene,二氨基甲苯,300,0,1000,1000,false,null,null
+1406,molten.potassium chlorate,熔融氯酸钾,1123,1,1000,1000,false,null,null
+1407,diluted acetone,稀释丙酮,300,0,1000,1000,false,null,null
+1408,muddy samarium rare earth solution,钐稀土浊液,300,0,1000,1000,false,null,null
+1409,samarium rare earth mud,钐稀土泥浆,300,0,1000,1000,false,null,null
+1410,diluted samarium rare earth solution,钐稀土稀释液,300,0,1000,1000,false,null,null
+1411,molten.samarium(iii)-chloride,熔融氯化钐(III),1123,1,1000,1000,false,null,null
+1412,chlorinated rare earth concentrate,氯化稀土浓缩液,300,0,1000,1000,false,null,null
+1413,chlorinated rare earth enriched solution,氯化稀土富集液,300,0,1000,1000,false,null,null
+1414,chlorinated rare earth diluted solution,氯化稀土稀释液,300,0,1000,1000,false,null,null
+1415,lanthanum extracting nano resin,镧萃取纳米树脂,300,0,1000,1000,false,null,null
+1416,filled lanthanum extracting nano resin,满溢的镧萃取纳米树脂,300,0,1000,1000,false,null,null
+1417,praseodymium extracting nano resin,镨萃取纳米树脂,300,0,1000,1000,false,null,null
+1418,filled praseodymium extracting nano resin,满溢的镨萃取纳米树脂,300,0,1000,1000,false,null,null
+1419,cerium extracting nano resin,铈萃取纳米树脂,300,0,1000,1000,false,null,null
+1420,filled cerium extracting nano resin,满溢的铈萃取纳米树脂,300,0,1000,1000,false,null,null
+1421,neodymium extracting nano resin,钕萃取纳米树脂,300,0,1000,1000,false,null,null
+1422,filled neodymium extracting nano resin,满溢的钕萃取纳米树脂,300,0,1000,1000,false,null,null
+1423,samarium extracting nano resin,钐萃取纳米树脂,300,0,1000,1000,false,null,null
+1424,filled samarium extracting nano resin,满溢的钐萃取纳米树脂,300,0,1000,1000,false,null,null
+1425,europium extracting nano resin,铕萃取纳米树脂,300,0,1000,1000,false,null,null
+1426,filled europium extracting nano resin,满溢的铕萃取纳米树脂,300,0,1000,1000,false,null,null
+1427,gadolinium extracting nano resin,钆萃取纳米树脂,300,0,1000,1000,false,null,null
+1428,filled gadolinium extracting nano resin,满溢的钆萃取纳米树脂,300,0,1000,1000,false,null,null
+1429,terbium extracting nano resin,铽萃取纳米树脂,300,0,1000,1000,false,null,null
+1430,filled terbium extracting nano resin,满溢的铽萃取纳米树脂,300,0,1000,1000,false,null,null
+1431,dysprosium extracting nano resin,镝萃取纳米树脂,300,0,1000,1000,false,null,null
+1432,filled dysprosium extracting nano resin,满溢的镝萃取纳米树脂,300,0,1000,1000,false,null,null
+1433,holmium extracting nano resin,钬萃取纳米树脂,300,0,1000,1000,false,null,null
+1434,filled holmium extracting nano resin,满溢的钬萃取纳米树脂,300,0,1000,1000,false,null,null
+1435,erbium extracting nano resin,铒萃取纳米树脂,300,0,1000,1000,false,null,null
+1436,filled erbium extracting nano resin,满溢的铒萃取纳米树脂,300,0,1000,1000,false,null,null
+1437,thulium extracting nano resin,铥萃取纳米树脂,300,0,1000,1000,false,null,null
+1438,filled thulium extracting nano resin,满溢的铥萃取纳米树脂,300,0,1000,1000,false,null,null
+1439,ytterbium extracting nano resin,镱萃取纳米树脂,300,0,1000,1000,false,null,null
+1440,filled ytterbium extracting nano resin,满溢的镱萃取纳米树脂,300,0,1000,1000,false,null,null
+1441,lutetium extracting nano resin,镥萃取纳米树脂,300,0,1000,1000,false,null,null
+1442,filled lutetium extracting nano resin,满溢的镥萃取纳米树脂,300,0,1000,1000,false,null,null
+1443,lanthanum chloride concentrate,氯化镧浓缩液,300,0,1000,1000,false,null,null
+1444,praseodymium chloride concentrate,氯化镨浓缩液,300,0,1000,1000,false,null,null
+1445,cerium chloride concentrate,氯化铈浓缩液,300,0,1000,1000,false,null,null
+1446,neodymium chloride concentrate,氯化钕浓缩液,300,0,1000,1000,false,null,null
+1447,promethium chloride concentrate,氯化钷浓缩液,300,0,1000,1000,false,null,null
+1448,samarium chloride concentrate,氯化钐浓缩液,300,0,1000,1000,false,null,null
+1449,europium chloride concentrate,氯化铕浓缩液,300,0,1000,1000,false,null,null
+1450,gadolinium chloride concentrate,氯化钆浓缩液,300,0,1000,1000,false,null,null
+1451,terbium chloride concentrate,氯化铽浓缩液,300,0,1000,1000,false,null,null
+1452,dysprosium chloride concentrate,氯化镝浓缩液,300,0,1000,1000,false,null,null
+1453,holmium chloride concentrate,氯化钬浓缩液,300,0,1000,1000,false,null,null
+1454,erbium chloride concentrate,氯化铒浓缩液,300,0,1000,1000,false,null,null
+1455,thulium chloride concentrate,氯化铥浓缩液,300,0,1000,1000,false,null,null
+1456,ytterbium chloride concentrate,氯化镱浓缩液,300,0,1000,1000,false,null,null
+1457,lutetium chloride concentrate,氯化镥浓缩液,300,0,1000,1000,false,null,null
+1458,molten.cerium-doped lutetium aluminium oxygen blend,熔融掺铈镥铝氧混合物,1123,1,1000,1000,false,null,null
+1459,fluoroform,氟仿,300,0,1000,1000,false,null,null
+1460,reactive-ion etching mixture,反应性离子刻蚀混合物,300,0,1000,1000,false,null,null
+1461,boron trichloride,三氯化硼,300,0,1000,1000,false,null,null
+1462,silane-nitrogen plasma mixture,硅烷-氮等离子混合物,300,0,1000,1000,false,null,null
+1463,hot super coolant,热超级冷却液,300,0,1000,1000,false,null,null
+1464,sodium tungstate,钨酸钠,300,0,1000,1000,false,null,null
+1465,phosgene,碳酰氯,300,0,1000,1000,false,null,null
+1466,nitromethane,硝基甲烷,300,0,1000,1000,false,null,null
+1467,eohb-solution,EOHB-Solution,300,0,1000,1000,false,null,null
+1468,fluidgalaxy,FluidGalaxy,300,0,1000,1000,false,null,null
+1469,fluidvoid,FluidVoid,300,0,1000,1000,false,null,null
+1470,moltenstar,MoltenStar,300,0,1000,1000,false,null,null
+1471,l.c.l,L.C.L,300,0,1000,1000,false,null,null
+1472,a.l.s,A.L.S,300,0,1000,1000,false,null,null
+1473,fuela,FUELA,300,0,1000,1000,false,null,null
+1474,fuela_de,FUELA_DE,300,0,1000,1000,false,null,null
+1475,promoterzpm,PromoterZPM,300,0,1000,1000,false,null,null
+1476,promoteruev,PromoterUEV,300,0,1000,1000,false,null,null
+1477,hcl10,HCl10,300,0,1000,1000,false,null,null
+1478,hcl100,HCl100,300,0,1000,1000,false,null,null
+1479,hcl1000,HCl1000,300,0,1000,1000,false,null,null
+1480,hcl10000,HCl10000,300,0,1000,1000,false,null,null
+1481,hcl100000,HCl100000,300,0,1000,1000,false,null,null
+1482,molten.irossm,熔融IrOsSm,114514,15,1000,1000,false,null,null
+1483,molten.holmium garnet,熔融钬石榴石,1123,1,1000,1000,false,null,null
+1484,pure mana,至纯魔力,300,0,1000,1000,false,null,null
+1485,liquid mana,液态魔力,300,0,1000,1000,false,null,null
+1486,purified mana,纯净魔力,300,0,1000,1000,false,null,null
+1487,stabilise void matter,稳定虚空物质,300,0,1000,1000,false,null,null
+1488,liquid stargate,液态星门,300,0,1000,1000,false,null,null
+1489,concentrated uu-matter,浓缩UU物质,300,0,1000,1000,false,null,null
+1490,highly energetic dimensional entropic fluid,高能维度熵流体,300,0,1000,1000,false,null,null
+1491,chrono-dimensionally annihilative entropic fluid,时空湮灭维度熵流体,300,0,1000,1000,false,null,null
+1492,ethylenediamine,乙二胺,300,0,1000,1000,false,null,null
+1493,ethanolamine,乙醇胺,300,0,1000,1000,false,null,null
+1494,silica gel base,硅胶基质,300,0,1000,1000,false,null,null
+1495,fluoroboric acid,氟硼酸,300,0,1000,1000,false,null,null
+1496,boron fluoride,氟化硼,300,0,1000,1000,false,null,null
+1497,benzaldehyde,苯甲醇,300,0,1000,1000,false,null,null
+1498,hydrobromic acid,氢溴酸,300,0,1000,1000,false,null,null
+1499,hydroxylamine hydrochloride,盐酸羟胺,300,0,1000,1000,false,null,null
+1500,molten.acrylonitrile butadiene styrene,熔融ABS塑料,1123,1,1000,1000,false,null,null
+1501,nitrous acid,亚硝酸,300,0,1000,1000,false,null,null
+1502,sodium nitrate solution,硝酸钠溶液,300,0,1000,1000,false,null,null
+1503,benzylamine,苄胺,300,0,1000,1000,false,null,null
+1504,glyoxal,乙二醛,300,0,1000,1000,false,null,null
+1505,benzyl chloride,氯化苄,300,0,1000,1000,false,null,null
+1506,maleic anhydride,顺丁烯二酸酐,300,0,1000,1000,false,null,null
+1507,super mutated living solder,超突变活性焊料,300,0,1000,1000,false,null,null
+1508,molten.polyimide,熔融聚酰亚胺,1123,1,1000,1000,false,null,null
+1509,ployamic acid,聚酰胺酸（PAA）,300,0,1000,1000,false,null,null
+1510,oxydianiline,二氨基二苯醚,300,0,1000,1000,false,null,null
+1511,molten.germaniumtungstennitride,熔融锗-钨氮化物,8200,15,1000,1000,false,null,null
+1512,molten.polyetheretherketone,熔融聚醚醚酮,1123,1,1000,1000,false,null,null
+1513,fluid mana,液态魔力,300,0,1000,1000,false,null,null
+1514,excited naquadah fuel,激发的混合硅岩基燃料,300,0,1000,1000,false,null,null
+1515,rare earth hydroxides,稀土氢氧化物,300,0,1000,1000,false,null,null
+1516,rare earth chlorides,稀土氯化物,300,0,1000,1000,false,null,null
+1517,barnarda c sappy,巴纳德C树汁,300,0,1000,1000,false,null,null
+1518,neutralised red mud,中和赤泥,300,0,1000,1000,false,null,null
+1519,ferric ree chloride,含稀土氯化铁,300,0,1000,1000,false,null,null
+1520,landoxides solution,镧-钕氧化物,300,0,1000,1000,false,null,null
+1521,smgdoxides solution,钐-钆氧化物,300,0,1000,1000,false,null,null
+1522,tbhooxides solution,铽-钬氧化物,300,0,1000,1000,false,null,null
+1523,erluoxides solution,饵-镥氧化物,300,0,1000,1000,false,null,null
+1524,molten.molybdenum disilicide,熔融二硅化钼,2301,8,1000,1000,false,null,null
+1525,molten.hsla steel,熔融HSLA钢,1711,4,1000,1000,false,null,null
+1526,molten.actinium,熔融锕,1123,1,1000,1000,false,null,null
+1527,molten.rutherfordium,熔融𬬻,1123,1,1000,1000,false,null,null
+1528,molten.dubnium,熔融𬭊,1123,1,1000,1000,false,null,null
+1529,molten.seaborgium,熔融𬭳,1123,1,1000,1000,false,null,null
+1530,molten.bohrium,熔融𬭛,1123,1,1000,1000,false,null,null
+1531,molten.hassium,熔融𬭶,1123,1,1000,1000,false,null,null
+1532,molten.meitnerium,熔融鿏,1123,1,1000,1000,false,null,null
+1533,molten.darmstadtium,熔融𫟼,1123,1,1000,1000,false,null,null
+1534,molten.roentgenium,熔融𬬭,1123,1,1000,1000,false,null,null
+1535,molten.copernicium,熔融鿔,1123,1,1000,1000,false,null,null
+1536,molten.moscovium,熔融镆,1123,1,1000,1000,false,null,null
+1537,molten.livermorium,熔融𫟷,1123,1,1000,1000,false,null,null
+1538,molten.astatine,熔融砹,1123,1,1000,1000,false,null,null
+1539,molten.tennessine,熔融鿬,1123,1,1000,1000,false,null,null
+1540,molten.francium,熔融钫,1123,1,1000,1000,false,null,null
+1541,molten.berkelium,熔融锫,1123,1,1000,1000,false,null,null
+1542,molten.einsteinium,熔融锿,1123,1,1000,1000,false,null,null
+1543,molten.mendelevium,熔融钔,1123,1,1000,1000,false,null,null
+1544,molten.nobelium,熔融锘,1123,1,1000,1000,false,null,null
+1545,molten.lawrencium,熔融铹,1123,1,1000,1000,false,null,null
+1546,molten.nihonium,熔融鿭,1123,1,1000,1000,false,null,null
+1547,benzenediazonium tetrafluoroborate,四氟硼酸重氮苯,300,0,1000,1000,false,null,null
+1548,fluoro benzene,氟苯,300,0,1000,1000,false,null,null
+1549,antimony trifluoride,三氟化锑,300,0,1000,1000,false,null,null
+1550,fluorotoluene,氟甲苯,300,0,1000,1000,false,null,null
+1551,resorcinol,间苯二酚,300,0,1000,1000,false,null,null
+1552,hydroquinone,对苯二酚,300,0,1000,1000,false,null,null
+1553,fluorine cracked naquadah,加氟裂化硅岩,300,0,1000,1000,false,null,null
+1554,enriched naquadah waste,富集硅岩废液,300,0,1000,1000,false,null,null
+1555,radon cracked enriched naquadah,加氡裂化富集硅岩,300,0,1000,1000,false,null,null
+1556,naquadria waste,超能硅岩废液,300,0,1000,1000,false,null,null
+1557,small baka,硝苯氮,300,0,1000,1000,false,null,null
+1558,large baka,𫟼苯氮,300,0,1000,1000,false,null,null
+1559,molten.compressed steam,熔融压缩蒸汽,1123,1,1000,1000,false,null,null
+1560,molten.stronze,熔融青钢,1123,1,1000,1000,false,null,null
+1561,molten.breel,熔融青铁,1123,1,1000,1000,false,null,null
+1562,gravel sluice,沙砾泥浆,300,0,1000,1000,false,null,null
+1563,sand sluice,沙子泥浆,300,0,1000,1000,false,null,null
+1564,obsidian sluice,黑曜石泥浆,300,0,1000,1000,false,null,null
+1565,gem sluice,宝石泥浆,300,0,1000,1000,false,null,null
+1566,ender air,末地空气,300,0,-100,200,false,null,null
+1567,liquid ender air,液态末地空气,300,0,1000,1000,false,null,null
+1568,mixture pineoil,松油混合物,300,0,1000,1000,false,null,null
+1569,toxic mercury sludge,剧毒水银污泥,300,0,1000,1000,false,null,null
+1570,post process be waste,后处理铍废液,300,0,1000,1000,false,null,null
+1571,quantum infusion,量子灌输液,300,0,1000,1000,false,null,null
+1572,glow thorium,荧光钍燃料,300,0,1000,1000,false,null,null
+1573,mixed uranium fuel,混合铀燃料,300,0,1000,1000,false,null,null
+1574,uranium waste,铀废料,300,0,1000,1000,false,null,null
+1575,ammonium bisulfate,硫酸氢铵,300,0,1000,1000,false,null,null
+1576,ammonium persulfate,过硫酸铵,300,0,1000,1000,false,null,null
+1577,twilight sluice,暮色泥浆,300,0,1000,1000,false,null,null
+1578,molten.periodicium,熔融錭錤錶,1123,1,1000,1000,false,null,null
+1579,molten.stargate,熔融星门,1123,1,1000,1000,false,null,null
+1580,solution.bluevitriol,蓝矾溶液,295,0,1000,1000,false,null,null
+1581,solution.nickelsulfate,硫酸镍溶液,295,0,1000,1000,false,null,null
+1582,solution.greenvitriol,绿矾溶液,295,0,1000,1000,false,null,null
+1583,indiumconcentrate,铟富集溶液,295,0,1000,1000,false,null,null
+1584,leadzincsolution,铅锌溶液,295,0,1000,1000,false,null,null
+1585,barnadafisarboriatorisfluid,巴纳德乔木培养液,300,0,1000,1000,false,null,null
+1586,tcetieisfucusserratusfluid,鲸鱼座T星藻类培养液,300,0,1000,1000,false,null,null
+1587,binnibacteriafluid,双杆菌液体,300,0,1000,1000,false,null,null
+1588,molten.blood_infused_iron,熔融注血铁,1400,0,3000,6000,false,null,null
+1589,molten.brine,卤水,485,0,1000,10000,false,null,null
+1590,froth.naquadahenrichedflotation,富集硅岩泡沫,207,0,1000,1000,false,null,null
