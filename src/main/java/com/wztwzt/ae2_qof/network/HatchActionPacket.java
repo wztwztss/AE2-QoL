@@ -154,7 +154,8 @@ public class HatchActionPacket implements IMessage {
 
                 switch (msg.action) {
                     case ACTION_HIGHLIGHT:
-                        handleHighlight(player, x, y, z, dim);
+                        int hatchType = helper.getHatchType() != null ? helper.getHatchType().ordinal() : 0;
+                        handleHighlight(player, x, y, z, dim, hatchType);
                         break;
                     case ACTION_TELEPORT:
                         if (player.getUniqueID().equals(uuid)) {
@@ -169,8 +170,8 @@ public class HatchActionPacket implements IMessage {
             }
         }
 
-        private void handleHighlight(EntityPlayerMP player, int x, int y, int z, int dim) {
-            java.util.List<int[]> positions = new ArrayList<>(Collections.singletonList(new int[] { dim, x, y, z }));
+        private void handleHighlight(EntityPlayerMP player, int x, int y, int z, int dim, int hatchType) {
+            java.util.List<int[]> positions = new ArrayList<>(Collections.singletonList(new int[] { dim, x, y, z, hatchType }));
             ModNetwork.CHANNEL.sendTo(new WirelessHighlightPacket(positions, true), player);
             scheduleClear(player, MinecraftServer.getServer().getTickCounter() + 100);
         }

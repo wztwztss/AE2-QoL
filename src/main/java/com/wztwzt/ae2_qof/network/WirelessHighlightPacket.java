@@ -31,7 +31,6 @@ public class WirelessHighlightPacket implements IMessage {
         try {
             enable = buf.readBoolean();
             int size = buf.readInt();
-            // 恶意包防护：预分配容量钳制，防止 new ArrayList<>(巨量) OOM（#45），超界按空列表处理
             if (size < 0 || size > 1024) {
                 size = 0;
             }
@@ -41,10 +40,10 @@ public class WirelessHighlightPacket implements IMessage {
                 int x = buf.readInt();
                 int y = buf.readInt();
                 int z = buf.readInt();
-                positions.add(new int[] { dim, x, y, z });
+                int type = buf.readByte();
+                positions.add(new int[] { dim, x, y, z, type });
             }
         } catch (Throwable t) {
-            // 防御性解码：任何异常都不得导致玩家断连
             positions = new ArrayList<int[]>();
             enable = false;
         }
@@ -59,6 +58,7 @@ public class WirelessHighlightPacket implements IMessage {
             buf.writeInt(pos[1]);
             buf.writeInt(pos[2]);
             buf.writeInt(pos[3]);
+            buf.writeByte(pos.length > 4 ? pos[4] : 0);
         }
     }
 

@@ -17,6 +17,13 @@ public class WirelessHighlightRenderer {
 
     public static final WirelessHighlightRenderer INSTANCE = new WirelessHighlightRenderer();
 
+    private static final int[][] HATCH_COLORS = {
+        { 255, 160, 0 },
+        { 0, 160, 255 },
+        { 180, 0, 255 },
+        { 255, 255, 0 }
+    };
+
     private int tickCount = 0;
 
     @SubscribeEvent
@@ -51,13 +58,16 @@ public class WirelessHighlightRenderer {
             int x = pos[1];
             int y = pos[2];
             int z = pos[3];
+            int type = pos.length > 4 ? pos[4] : 0;
 
             if (dim != currentDim) continue;
+
+            int[] color = HATCH_COLORS[type >= 0 && type < HATCH_COLORS.length ? type : 0];
 
             AxisAlignedBB box = AxisAlignedBB
                 .getBoundingBox(x - 0.06, y - 0.06, z - 0.06, x + 1.06, y + 1.06, z + 1.06);
 
-            drawBoundingBox(box, px, py, pz, 255, 0, 0, alpha);
+            drawBoundingBox(box, px, py, pz, color[0], color[1], color[2], alpha);
         }
 
         GL11.glDepthMask(true);

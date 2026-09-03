@@ -1,3 +1,27 @@
+## 3.18.1-fix5 - 仓室高亮颜色区分
+
+> 作者：wztwzt | 更新时间：2026-09-03 | 基于 3.18.1-fix4
+
+### 优化：仓室高亮按类型着色
+
+- `WirelessHighlightPacket` 协议每个位置新增 `type` 字段（byte），从 `{dim,x,y,z}` 扩展为 `{dim,x,y,z,type}`
+- `HatchActionPacket.handleHighlight` 传递 `hatchType` 给高亮包
+- `WirelessHighlightRenderer` 按仓室类型着色：
+  - 0 动力仓 → 橙色 (255, 160, 0)
+  - 1 能量仓 → 蓝色 (0, 160, 255)
+  - 2 激光源 → 紫色 (180, 0, 255)
+  - 3 激光目标 → 黄色 (255, 255, 0)
+- 保留脉冲 alpha 效果（0.40~0.70）
+- 无线收发器高亮兼容4元素数组，默认橙色
+
+### 变更文件
+
+- `network/WirelessHighlightPacket.java`：协议加 type 字段
+- `network/HatchActionPacket.java`：传递 hatchType
+- `client/render/WirelessHighlightRenderer.java`：按类型着色
+
+---
+
 ## 3.18.1-fix4 - 多人共享电网支持
 
 > 作者：wztwzt | 更新时间：2026-09-03 | 基于 3.18.1-fix3
