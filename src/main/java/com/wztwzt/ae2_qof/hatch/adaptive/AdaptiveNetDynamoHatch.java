@@ -93,14 +93,25 @@ public class AdaptiveNetDynamoHatch extends MTEHatchDynamo {
         if (aBase.isServerSide()) {
             this.world = aBase.getWorld();
             helper.setPosition(aBase.getXCoord(), aBase.getYCoord(), aBase.getZCoord(), aBase.getWorld().provider.dimensionId);
-            gregtech.api.metatileentity.MetaTileEntity mte = (gregtech.api.metatileentity.MetaTileEntity) aBase.getMetaTileEntity();
-            if (mte != null) {
-                net.minecraft.item.ItemStack stack = mte.getStackForm(1L);
-                if (stack != null) {
-                    helper.setCachedInfo((short) stack.getItemDamage(), stack.getDisplayName());
+            gregtech.api.metatileentity.MetaTileEntity machineMTE = AdaptiveHatchHelper.findAttachedMachine(aBase);
+            if (machineMTE != null) {
+                net.minecraft.item.ItemStack machineStack = machineMTE.getStackForm(1L);
+                if (machineStack != null) {
+                    helper.setMachineInfo((short) machineStack.getItemDamage(), machineStack.getDisplayName());
                 } else {
-                    helper.setCachedInfo((short) -1,
+                    helper.setMachineInfo((short) -1,
                         net.minecraft.util.StatCollector.translateToLocal(helper.getHatchType().getTranslationKey()));
+                }
+            } else {
+                gregtech.api.metatileentity.MetaTileEntity mte = (gregtech.api.metatileentity.MetaTileEntity) aBase.getMetaTileEntity();
+                if (mte != null) {
+                    net.minecraft.item.ItemStack stack = mte.getStackForm(1L);
+                    if (stack != null) {
+                        helper.setMachineInfo((short) stack.getItemDamage(), stack.getDisplayName());
+                    } else {
+                        helper.setMachineInfo((short) -1,
+                            net.minecraft.util.StatCollector.translateToLocal(helper.getHatchType().getTranslationKey()));
+                    }
                 }
             }
             if (helper.isBound()) {

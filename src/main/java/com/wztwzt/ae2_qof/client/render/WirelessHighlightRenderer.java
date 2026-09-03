@@ -43,7 +43,7 @@ public class WirelessHighlightRenderer {
         double py = player.lastTickPosY + (player.posY - player.lastTickPosY) * event.partialTicks;
         double pz = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * event.partialTicks;
 
-        float alpha = 0.55F + 0.15F * (float) Math.sin(tickCount * 0.08);
+        float alpha = 0.80F + 0.20F * (float) Math.sin(tickCount * 0.08);
 
         GL11.glPushMatrix();
         GL11.glEnable(GL11.GL_BLEND);
@@ -51,7 +51,7 @@ public class WirelessHighlightRenderer {
         GL11.glDisable(GL11.GL_TEXTURE_2D);
         GL11.glDisable(GL11.GL_DEPTH_TEST);
         GL11.glDepthMask(false);
-        GL11.glLineWidth(3.0F);
+        GL11.glLineWidth(5.0F);
 
         for (int[] pos : ClientState.highlightPositions) {
             int dim = pos[0];
@@ -65,7 +65,7 @@ public class WirelessHighlightRenderer {
             int[] color = HATCH_COLORS[type >= 0 && type < HATCH_COLORS.length ? type : 0];
 
             AxisAlignedBB box = AxisAlignedBB
-                .getBoundingBox(x - 0.06, y - 0.06, z - 0.06, x + 1.06, y + 1.06, z + 1.06);
+                .getBoundingBox(x - 0.12, y - 0.12, z - 0.12, x + 1.12, y + 1.12, z + 1.12);
 
             drawBoundingBox(box, px, py, pz, color[0], color[1], color[2], alpha);
         }

@@ -8,6 +8,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.StatCollector;
+import net.minecraftforge.common.util.ForgeDirection;
+import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,6 +28,8 @@ public class AdaptiveHatchHelper {
     private int posX, posY, posZ, posDim;
     private short cachedMetaId = -1;
     private String cachedName = "";
+    private short machineMetaId = -1;
+    private String machineName = "";
     private int realFlowEUt = 0;
 
     public HatchType getHatchType() {
@@ -78,6 +82,61 @@ public class AdaptiveHatchHelper {
     public void setCachedInfo(short metaId, String name) {
         this.cachedMetaId = metaId;
         this.cachedName = name != null ? name : "";
+    }
+
+    public short getMachineMetaId() { return machineMetaId; }
+    public String getMachineName() { return machineName; }
+
+    public void setMachineInfo(short metaId, String name) {
+        this.machineMetaId = metaId;
+        this.machineName = name != null ? name : "";
+    }
+
+    public static gregtech.api.metatileentity.MetaTileEntity findAttachedMachine(IGregTechTileEntity aBase) {
+        net.minecraft.world.World world = aBase.getWorld();
+        int x = aBase.getXCoord();
+        int y = aBase.getYCoord();
+        int z = aBase.getZCoord();
+
+        ForgeDirection back = aBase.getBackFacing();
+        IGregTechTileEntity neighbor = aBase.getIGregTechTileEntityAtSide(back);
+        if (neighbor != null) {
+            Object rawMte = neighbor.getMetaTileEntity();
+            if (rawMte instanceof gregtech.api.metatileentity.MetaTileEntity) {
+                gregtech.api.metatileentity.MetaTileEntity mte =
+                    (gregtech.api.metatileentity.MetaTileEntity) rawMte;
+                if (!(mte instanceof AdaptiveNetHatch)
+                    && !(mte instanceof AdaptiveNetDynamoHatch)
+                    && !(mte instanceof AdaptiveNetLaserHatch)
+                    && !(mte instanceof AdaptiveNetLaserTargetHatch)) {
+                    return mte;
+                }
+            }
+        }
+
+        for (int dx = -8; dx <= 8; dx++) {
+            for (int dy = -8; dy <= 8; dy++) {
+                for (int dz = -8; dz <= 8; dz++) {
+                    if (dx == 0 && dy == 0 && dz == 0) continue;
+                    net.minecraft.tileentity.TileEntity te = world.getTileEntity(x + dx, y + dy, z + dz);
+                    if (te instanceof IGregTechTileEntity) {
+                        IGregTechTileEntity gte = (IGregTechTileEntity) te;
+                        Object rawMte = gte.getMetaTileEntity();
+                        if (rawMte instanceof gregtech.api.metatileentity.MetaTileEntity) {
+                            gregtech.api.metatileentity.MetaTileEntity mte =
+                                (gregtech.api.metatileentity.MetaTileEntity) rawMte;
+                            if (!(mte instanceof AdaptiveNetHatch)
+                                && !(mte instanceof AdaptiveNetDynamoHatch)
+                                && !(mte instanceof AdaptiveNetLaserHatch)
+                                && !(mte instanceof AdaptiveNetLaserTargetHatch)) {
+                                return mte;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     public int getRealFlowEUt() { return realFlowEUt; }
@@ -173,6 +232,8 @@ public class AdaptiveHatchHelper {
         aNBT.setInteger("ae2qolPD", posDim);
         aNBT.setShort("ae2qolMI", cachedMetaId);
         aNBT.setString("ae2qolMN", cachedName);
+        aNBT.setShort("ae2qolMMI", machineMetaId);
+        aNBT.setString("ae2qolMMN", machineName);
     }
 
     public void loadNBT(NBTTagCompound aNBT) {
@@ -192,6 +253,9 @@ public class AdaptiveHatchHelper {
         cachedMetaId = aNBT.getShort("ae2qolMI");
         cachedName = aNBT.getString("ae2qolMN");
         if (cachedName == null) cachedName = "";
+        machineMetaId = aNBT.getShort("ae2qolMMI");
+        machineName = aNBT.getString("ae2qolMMN");
+        if (machineName == null) machineName = "";
     }
 
     public void migrateTo(UUID newOwner, int newFrequency) {

@@ -49,6 +49,7 @@ public class HatchListSyncPacket implements IMessage {
             for (int i = 0; i < count; i++) {
                 int index = buf.readUnsignedShort();
                 short metaId = buf.readShort();
+                short machineMetaId = buf.readShort();
                 String name = cpw.mods.fml.common.network.ByteBufUtils.readUTF8String(buf);
                 int eut = buf.readInt();
                 int realFlowEUt = buf.readInt();
@@ -61,7 +62,7 @@ public class HatchListSyncPacket implements IMessage {
                 int dim = buf.readShort();
                 String ownerName = cpw.mods.fml.common.network.ByteBufUtils.readUTF8String(buf);
                 this.entries.add(new HatchListCache.HatchEntry(
-                    name, metaId, eut, realFlowEUt, tier, amps, hatchType, index, x, y, z, dim, ownerName));
+                    name, metaId, machineMetaId, eut, realFlowEUt, tier, amps, hatchType, index, x, y, z, dim, ownerName));
             }
         } catch (Throwable t) {
             this.owner = null;
@@ -88,6 +89,7 @@ public class HatchListSyncPacket implements IMessage {
             for (HatchListCache.HatchEntry e : entries) {
                 buf.writeShort(e.index);
                 buf.writeShort(e.metaId);
+                buf.writeShort(e.machineMetaId);
                 cpw.mods.fml.common.network.ByteBufUtils.writeUTF8String(buf, e.name != null ? e.name : "");
                 buf.writeInt(e.eut);
                 buf.writeInt(e.realFlowEUt);

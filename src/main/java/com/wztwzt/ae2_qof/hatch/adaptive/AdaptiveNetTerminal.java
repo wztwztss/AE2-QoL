@@ -179,8 +179,13 @@ public class AdaptiveNetTerminal extends MTEHatch {
                 totalOut++;
             }
 
+            String displayName = h.getMachineName();
+            if (displayName == null || displayName.isEmpty()) displayName = h.getCachedName();
+            short displayMetaId = h.getMachineMetaId();
+            if (displayMetaId < 0) displayMetaId = h.getCachedMetaId();
+
             entries.add(new HatchListCache.HatchEntry(
-                h.getCachedName(), h.getCachedMetaId(), eut, h.getRealFlowEUt(), tier, amps,
+                displayName, h.getCachedMetaId(), displayMetaId, eut, h.getRealFlowEUt(), tier, amps,
                 ht.ordinal(), globalIndex,
                 h.getX(), h.getY(), h.getZ(), h.getDim(),
                 ownerName));
@@ -457,6 +462,17 @@ public class AdaptiveNetTerminal extends MTEHatch {
             v -> {});
         syncManager.syncValue("wNO", ownerSync);
 
+        final StringSyncValue ownerNameSync = new StringSyncValue(
+            () -> {
+                if (networkOwner == null) return "";
+                if (world == null) return networkOwner.toString().substring(0, Math.min(8, networkOwner.toString().length()));
+                net.minecraft.entity.player.EntityPlayerMP p = findPlayerByUUID(world, networkOwner);
+                if (p != null) return p.getCommandSenderName();
+                return networkOwner.toString().substring(0, Math.min(8, networkOwner.toString().length()));
+            },
+            v -> {});
+        syncManager.syncValue("wNM", ownerNameSync);
+
         final LongSyncValue change1hSync = new LongSyncValue(() -> {
             AdaptiveNetwork n = getCurrentNetwork();
             if (n == null) return 0;
@@ -507,7 +523,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
             .controller(tabController)
             .pos(CONTENT_X, 4)
             .size(CONTENT_W, 260)
-            .addPage(buildStatusTab(frequencySync, voltageTierSync, hatchTierSyncs, hatchAmpSyncs, hatchCountSyncs))
+            .addPage(buildStatusTab(frequencySync, voltageTierSync, hatchTierSyncs, hatchAmpSyncs, hatchCountSyncs, ownerNameSync))
             .addPage(buildSettingsTab(hatchTierSyncs, hatchAmpSyncs))
             .addPage(buildFrequencyTab(frequencySync))
             .addPage(buildMonitorTab(gridEUSync, change1hSync, change10mSync, avgOut10mSync,
@@ -532,7 +548,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
 
     private Flow buildStatusTab(IntSyncValue frequencySync, IntSyncValue voltageTierSync,
                                 IntSyncValue[] hatchTierSyncs, IntSyncValue[] hatchAmpSyncs,
-                                IntSyncValue[] hatchCountSyncs) {
+                                IntSyncValue[] hatchCountSyncs, StringSyncValue ownerNameSync) {
         Flow tab = Flow.column().coverChildren().childPadding(4);
 
         tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.title")).size(CONTENT_W, 16));
@@ -550,11 +566,11 @@ public class AdaptiveNetTerminal extends MTEHatch {
                 return EnumChatFormatting.RED + "\u25cf "
                     + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.no_owner");
             }
-            String ownerStr = networkOwner != null ? networkOwner.toString() : "";
-            if (ownerStr.length() > 8) ownerStr = ownerStr.substring(0, 8) + "...";
+            String ownerDisplay = ownerNameSync.getValue();
+            if (ownerDisplay == null || ownerDisplay.isEmpty()) ownerDisplay = "---";
             return EnumChatFormatting.GREEN + "\u25cf "
                 + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.owner")
-                + ": " + EnumChatFormatting.WHITE + ownerStr;
+                + ": " + EnumChatFormatting.WHITE + ownerDisplay;
         })).size(CONTENT_W, 14));
 
         tab.child(separator(CONTENT_W));
@@ -847,7 +863,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
 
         ListWidget list = new ListWidget();
         list.scrollDirection(com.cleanroommc.modularui.api.GuiAxis.Y);
-        list.size(CONTENT_W, 200);
+        list.size(CONTENT_W, 188);
 
         com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache cache = com.wztwzt.ae2_qof.client.ClientState.hatchListCache;
         if (cache != null) {
@@ -855,9 +871,10 @@ public class AdaptiveNetTerminal extends MTEHatch {
                 final com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache.HatchEntry entry = cache.entries.get(i);
 
                 net.minecraft.item.ItemStack iconStack = null;
-                if (entry.metaId >= 0 && entry.metaId < GregTechAPI.METATILEENTITIES.length
-                    && GregTechAPI.METATILEENTITIES[entry.metaId] instanceof MetaTileEntity) {
-                    iconStack = ((MetaTileEntity) GregTechAPI.METATILEENTITIES[entry.metaId]).getStackForm(1L);
+                short iconMetaId = entry.machineMetaId >= 0 ? entry.machineMetaId : entry.metaId;
+                if (iconMetaId >= 0 && iconMetaId < GregTechAPI.METATILEENTITIES.length
+                    && GregTechAPI.METATILEENTITIES[iconMetaId] instanceof MetaTileEntity) {
+                    iconStack = ((MetaTileEntity) GregTechAPI.METATILEENTITIES[iconMetaId]).getStackForm(1L);
                 }
                 final IWidget iconWidget = iconStack != null
                     ? new ItemDrawable(iconStack).asWidget().size(16, 16)

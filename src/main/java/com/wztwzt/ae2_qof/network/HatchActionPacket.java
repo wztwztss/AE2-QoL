@@ -173,7 +173,7 @@ public class HatchActionPacket implements IMessage {
         private void handleHighlight(EntityPlayerMP player, int x, int y, int z, int dim, int hatchType) {
             java.util.List<int[]> positions = new ArrayList<>(Collections.singletonList(new int[] { dim, x, y, z, hatchType }));
             ModNetwork.CHANNEL.sendTo(new WirelessHighlightPacket(positions, true), player);
-            scheduleClear(player, MinecraftServer.getServer().getTickCounter() + 100);
+            scheduleClear(player, MinecraftServer.getServer().getTickCounter() + 200);
         }
 
         private void handleTeleport(EntityPlayerMP player, int x, int y, int z, int dim) {

@@ -1,3 +1,49 @@
+## 3.18.1-fix8 - 高亮增强 + 所有者显示 + 机器名/图标 + Footer修复
+
+> 作者：wztwzt | 更新时间：2026-09-03 | 基于 3.18.1-fix7
+
+### 修复：高亮增强（更容易发现目标仓室）
+
+- 线宽：3px → 5px（更粗更醒目）
+- Alpha 范围：0.40-0.70 → 0.60-1.0（更亮）
+- Box 尺寸：1.06 → 1.12（更大覆盖范围）
+- 高亮持续时间：5秒 → 10秒（更充裕的观察时间）
+
+### 修复：Status Tab 所有者显示玩家名
+
+- 新增 `ownerNameSync` (StringSyncValue) 同步玩家名到客户端
+- 不再显示截断 UUID（如 "abc12345..."），改为显示在线玩家名（如 "wztwztwzt"）
+- 离线时回退显示 UUID 前8位
+
+### 修复：子仓列表显示所连接机器名 + 机器图标
+
+- `AdaptiveHatchHelper` 新增 `machineMetaId` / `machineName` 字段
+- 新增 `findAttachedMachine()` 方法：查找舱室背后的 GT 机器
+  - 优先检查 `getBackFacing()` 方向的相邻方块
+  - 回退搜索 8 格范围内的所有 GT 机器
+- 所有 4 个舱室（Energy/Dynamo/Laser/LaserTarget）的 `onFirstTick` 改用 `findAttachedMachine`
+- `HatchEntry` 新增 `machineMetaId` 字段（用于客户端图标渲染）
+- 列表图标改用机器图标（`machineMetaId`）而非舱室图标（`metaId`）
+
+### 修复：Footer "输入仓/输出仓" 遮挡修复
+
+- 子仓列表高度：200px → 188px，确保底部统计行可见
+
+### 变更文件
+
+- `client/render/WirelessHighlightRenderer.java`：线宽/Alpha/Box 尺寸
+- `network/HatchActionPacket.java`：高亮持续时间 100→200 tick
+- `hatch/adaptive/AdaptiveHatchHelper.java`：+machineMetaId/machineName +findAttachedMachine
+- `hatch/adaptive/AdaptiveNetHatch.java`：onFirstTick 改用 findAttachedMachine
+- `hatch/adaptive/AdaptiveNetDynamoHatch.java`：同上
+- `hatch/adaptive/AdaptiveNetLaserHatch.java`：同上
+- `hatch/adaptive/AdaptiveNetLaserTargetHatch.java`：同上
+- `hatch/adaptive/HatchListCache.java`：HatchEntry +machineMetaId
+- `network/HatchListSyncPacket.java`：序列化 machineMetaId
+- `hatch/adaptive/AdaptiveNetTerminal.java`：+ownerNameSync + 机器名/图标 + footer 修复
+
+---
+
 ## 3.18.1-fix7 - owner同步 + 跨维度传送 + ownerName + 列表布局修复
 
 > 作者：wztwzt | 更新时间：2026-09-03 | 基于 3.18.1-fix6

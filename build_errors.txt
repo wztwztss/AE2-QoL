@@ -1,0 +1,157 @@
+﻿
+> Configure project :
+[DEPRECATION NOTICE] Support for running Gradle using Java versions older than 21 with the RetroFuturaGradle plugin is scheduled to be removed, please upgrade your local and CI workflow Java version to 21 or newer. This does NOT mean that mod code has to use newer Java, the Gradle process itself will require Java 21 but the compiler and mod code can keep on using Java 8.
+You might want to check out './gradlew :faq' if your build fails.
+
+> Task :extractDependencyATs SKIPPED
+> Task :generateForgeSrgMappings SKIPPED
+> Task :downloadVanillaJars SKIPPED
+> Task :mergeVanillaSidedJars SKIPPED
+> Task :deobfuscateMergedJarToSrg SKIPPED
+> Task :downloadFernflower SKIPPED
+> Task :decompileSrgJar SKIPPED
+> Task :cleanupDecompSrgJar SKIPPED
+> Task :patchDecompiledJar SKIPPED
+> Task :applySourceAccessTransformers SKIPPED
+> Task :remapDecompiledJar SKIPPED
+> Task :decompressDecompiledSources UP-TO-DATE
+> Task :compilePatchedMcJava UP-TO-DATE
+> Task :processPatchedMcResources UP-TO-DATE
+> Task :patchedMcClasses UP-TO-DATE
+> Task :compileApiJava NO-SOURCE
+> Task :processApiResources NO-SOURCE
+> Task :apiClasses UP-TO-DATE
+> Task :injectTags UP-TO-DATE
+> Task :compileInjectedTagsJava UP-TO-DATE
+> Task :extractNatives2 UP-TO-DATE
+> Task :createMcLauncherFiles UP-TO-DATE
+> Task :compileMcLauncherJava UP-TO-DATE
+> Task :processInjectedTagsResources NO-SOURCE
+> Task :injectedTagsClasses UP-TO-DATE
+> Task :processMcLauncherResources NO-SOURCE
+> Task :mcLauncherClasses UP-TO-DATE
+
+> Task :compileJava
+Jabel: initialized
+注: SpongePowered MIXIN Annotation Processor Version=0.8.7
+注: Supported obfuscation types: ObfuscationServiceMCP supports [searge,notch]
+注: Loading searge mappings from C:\Users\29357\.gradle\caches\minecraft\net\minecraftforge\forge\1.7.10-10.13.4.1614-1.7.10\unpacked\srgs\mcp-srg.srg
+注: Writing refmap to E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\build\tmp\mixins\mixins.ae2_qof.refmap.json
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinContainerInterface.java:31: 警告: Unable to locate obfuscation mapping for @Shadow field
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinCraftingCPUCluster.java:81: 警告: Unable to locate obfuscation mapping for @Shadow field
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinCraftingCPUCluster.java:84: 警告: Unable to locate obfuscation mapping for @Shadow field
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinCraftingCPUCluster.java:87: 警告: Unable to locate obfuscation mapping for @Shadow field
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinCraftingCPUCluster.java:90: 警告: Unable to locate obfuscation mapping for @Shadow field
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinCraftingCPUCluster.java:93: 警告: Unable to locate obfuscation mapping for @Shadow field
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinCraftingCPUCluster.java:96: 警告: Unable to locate obfuscation mapping for @Shadow field
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinCraftingCPUCluster.java:99: 警告: Unable to locate obfuscation mapping for @Shadow field
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinCraftingCPUCluster.java:102: 警告: Unable to locate obfuscation mapping for @Shadow field
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinCraftingCPUCluster.java:105: 警告: Unable to locate obfuscation mapping for @Shadow field
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinCraftingCPUCluster.java:108: 警告: Unable to locate obfuscation mapping for @Shadow field
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinCraftingCPUCluster.java:111: 警告: Unable to locate obfuscation mapping for @Shadow method
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinCraftingCPUCluster.java:114: 警告: Unable to locate obfuscation mapping for @Shadow method
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinCraftingCPUCluster.java:118: 警告: Unable to locate obfuscation mapping for @Shadow method
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinCraftingCPUCluster.java:121: 警告: Unable to locate obfuscation mapping for @Shadow method
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinCraftingCPUCluster.java:125: 警告: Unable to locate obfuscation mapping for @Shadow method
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinCraftingCPUCluster.java:128: 警告: Unable to locate obfuscation mapping for @Shadow method
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinCraftingCPUCluster.java:131: 警告: Unable to locate obfuscation mapping for @Shadow method
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinCraftingCPUCluster.java:134: 警告: Unable to locate obfuscation mapping for @Shadow method
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinCraftingCPUCluster.java:137: 警告: Unable to locate obfuscation mapping for @Shadow method
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinCraftingCPUCluster.java:140: 警告: Unable to locate obfuscation mapping for @Shadow method
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinCraftingCPUCluster.java:143: 警告: Unable to locate obfuscation mapping for @Shadow field
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinDualityInterface.java:42: 警告: Unable to locate obfuscation mapping for @Shadow field
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinDualityInterface.java:46: 警告: Unable to locate obfuscation mapping for @Shadow field
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinDualityInterface.java:50: 警告: Unable to locate obfuscation mapping for @Shadow method
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinDualityInterface.java:53: 警告: Unable to locate obfuscation mapping for @Shadow method
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinDualityInterface.java:56: 警告: Unable to locate obfuscation mapping for @Shadow method
+    @Shadow
+    ^
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\mixin\ae\MixinGuiSuperDualInterface.java:43: 警告: Unable to locate obfuscation mapping for @Shadow field
+    @Shadow
+    ^
+注: Writing refmap to E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\build\tmp\mixins\mixins.ae2_qof.refmap.json
+注: Writing searge output SRGs to E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\build\tmp\mixins\mixins.srg
+注: Writing refmap to E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\build\tmp\mixins\mixins.ae2_qof.refmap.json
+注: Writing refmap to E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\build\tmp\mixins\mixins.ae2_qof.refmap.json
+注: Writing searge output SRGs to E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\build\tmp\mixins\mixins.srg
+E:\wzt\MC\modcreater\AE2-QoL-1.7.10-GTNH\src\main\java\com\wztwzt\ae2_qof\hatch\adaptive\AdaptiveHatchHelper.java:125: 错误: 无法访问ITileWithModularUI
+                            ((gregtech.api.metatileentity.BaseMetaTileEntity) te).getMetaTileEntity();
+                                                                                 ^
+  找不到com.gtnewhorizons.modularui.api.screen.ITileWithModularUI的类文件
+注: 某些输入文件使用或覆盖了已过时的 API。
+注: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
+注: 某些输入文件使用了未经检查或不安全的操作。
+注: 有关详细信息, 请使用 -Xlint:unchecked 重新编译。
+1 个错误
+28 个警告
+
+> Task :compileJava FAILED
+
+[Incubating] Problems report is available at: file:///E:/wzt/MC/modcreater/AE2-QoL-1.7.10-GTNH/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileJava'.
+> Compilation failed; see the compiler output below.
+  注: SpongePowered MIXIN Annotation Processor Version=0.8.7
+  1 个错误
+  28 个警告
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 14s
+9 actionable tasks: 1 executed, 8 up-to-date

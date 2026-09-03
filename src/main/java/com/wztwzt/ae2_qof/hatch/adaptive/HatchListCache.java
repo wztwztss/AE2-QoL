@@ -25,6 +25,7 @@ public class HatchListCache {
     public static class HatchEntry {
         public final String name;
         public final short metaId;
+        public final short machineMetaId;
         public final int eut;
         public final int realFlowEUt;
         public final int tier;
@@ -34,11 +35,12 @@ public class HatchListCache {
         public final int x, y, z, dim;
         public final String ownerName;
 
-        public HatchEntry(String name, short metaId, int eut, int realFlowEUt, int tier, int amps,
+        public HatchEntry(String name, short metaId, short machineMetaId, int eut, int realFlowEUt, int tier, int amps,
                          int hatchType, int index, int x, int y, int z, int dim,
                          String ownerName) {
             this.name = name != null ? name : "";
             this.metaId = metaId;
+            this.machineMetaId = machineMetaId;
             this.eut = eut;
             this.realFlowEUt = realFlowEUt;
             this.tier = tier;
