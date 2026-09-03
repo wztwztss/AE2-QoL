@@ -1,0 +1,41 @@
+﻿{
+  "type": "production_line",
+  "id": "epoxy_resin",
+  "name": "环氧树脂产线",
+  "category": "hv_chemical",
+  "description": "丙烯+苯→环氧氯丙烷+苯酚丙酮→熔融环氧树脂（3步合并，大型化学反应釜跳过双酚A）",
+  "minVoltageTier": 3,
+  "requiredMachines": [
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "大型化学反应釜控制器（步骤1：环氧氯丙烷合成）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "大型化学反应釜控制器（步骤2：苯酚+丙酮合成/异丙苯法）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "大型化学反应釜控制器（步骤3：环氧树脂合成，跳过双酚A）" }
+  ],
+  "inputs": {
+    "items": [
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 12, "note": "氢氧化钠粉" }
+    ],
+    "fluids": [
+      { "fluid": "propene", "amount": 4000, "note": "丙烯" },
+      { "fluid": "chlorine", "amount": 4000, "note": "氯" },
+      { "fluid": "water", "amount": 2000, "note": "水" },
+      { "fluid": "mercury", "amount": 200, "note": "汞（疑似催化剂，输出中未列出）" },
+      { "fluid": "benzene", "amount": 2000, "note": "苯" },
+      { "fluid": "phosphoricacid_gt5u", "amount": 200, "note": "磷酸（疑似催化剂，输出中未列出）" },
+      { "fluid": "oxygen", "amount": 4000, "note": "氧气" },
+      { "fluid": "hydrochloricacid_gt5u", "amount": 1000, "note": "盐酸" }
+    ]
+  },
+  "outputs": {
+    "items": [],
+    "fluids": [
+      { "fluid": "epoxid.molten", "amount": 1000, "note": "熔融环氧树脂（主产物，注册名待确认）" },
+      { "fluid": "saltwater", "amount": 4000, "note": "盐水" },
+      { "fluid": "hydrogen", "amount": 4000, "note": "氢气" },
+      { "fluid": "acetone", "amount": 1000, "note": "丙酮（多余副产物）" }
+    ]
+  },
+  "euPerTick": 30,
+  "duration": 2240,
+  "parallel": 64,
+  "_note": "3步合并；步骤1/2各运行2次；汞/磷酸疑似催化剂（输出中未列出）；中间产物环氧氯丙烷/苯酚完全消耗；duration=640×2+480×2+480=2240ticks"
+}

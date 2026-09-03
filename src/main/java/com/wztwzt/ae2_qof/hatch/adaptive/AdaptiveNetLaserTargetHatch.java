@@ -27,6 +27,7 @@ import gregtech.api.metatileentity.implementations.MTEHatchDynamo;
 import gregtech.api.render.TextureFactory;
 
 import gregtech.common.misc.WirelessNetworkManager;
+import gregtech.api.util.GTUtility;
 
 public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
 
@@ -94,13 +95,26 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
             gregtech.api.metatileentity.MetaTileEntity mte = (gregtech.api.metatileentity.MetaTileEntity) aBase.getMetaTileEntity();
             if (mte != null) {
                 net.minecraft.item.ItemStack stack = mte.getStackForm(1L);
-                helper.setCachedInfo((short) stack.getItemDamage(), stack.getDisplayName());
+                if (stack != null) {
+                    helper.setCachedInfo((short) stack.getItemDamage(), stack.getDisplayName());
+                } else {
+                    helper.setCachedInfo((short) -1,
+                        net.minecraft.util.StatCollector.translateToLocal(helper.getHatchType().getTranslationKey()));
+                }
             }
             if (helper.isBound()) {
                 AdaptiveNetworkManager.registerHatch(helper);
             }
             transferEU(aBase);
         }
+    }
+
+    @Override
+    public void onRemoval() {
+        if (helper.isBound()) {
+            AdaptiveNetworkManager.unregisterHatch(helper);
+        }
+        super.onRemoval();
     }
 
     @Override
@@ -157,10 +171,10 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
 
         column.child(new TextWidget<>(IKey.dynamic(() -> {
             int v = helper.getCurrentVoltageTier();
-            String tierName = HatchType.getTierName(v);
+            String tierName = GTUtility.getColoredTierNameFromTier((byte) v);
             return EnumChatFormatting.AQUA
                 + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.voltage")
-                + " " + EnumChatFormatting.WHITE + tierName + " (" + V[v] + " EU/t)";
+                + " " + tierName + " (" + V[v] + " EU/t)";
         })).size(260, 14));
 
         column.child(new TextWidget<>(IKey.dynamic(() -> {
@@ -227,7 +241,7 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
         super.getWailaBody(itemStack, currenttip, accessor, config);
         try {
             int v = helper.getCurrentVoltageTier();
-            String tierName = HatchType.getTierName(v);
+            String tierName = GTUtility.getColoredTierNameFromTier((byte) v);
             currenttip.add(EnumChatFormatting.AQUA + "V:" + tierName + " (" + V[v] + ") | A:" + helper.getCurrentAmps());
             java.math.BigInteger gridEU = helper.isBound() && helper.getNetworkOwner() != null
                 ? WirelessNetworkManager.getUserEU(helper.getNetworkOwner()) : java.math.BigInteger.ZERO;

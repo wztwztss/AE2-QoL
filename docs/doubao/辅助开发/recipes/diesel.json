@@ -1,0 +1,36 @@
+﻿{
+  "type": "production_line",
+  "id": "diesel",
+  "name": "柴油产线",
+  "category": "mv_fuel",
+  "description": "石油→蒸馏→脱硫→搅拌→柴油+副产物（5步合并，氢气完美循环）",
+  "minVoltageTier": 2,
+  "requiredMachines": [
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "蒸馏塔控制器（步骤1：石油蒸馏）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 2, "note": "大型化学反应釜控制器（步骤2-3：轻燃油/重燃油脱硫）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "工业搅拌机控制器（步骤4：搅拌燃油）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "工业电解机控制器（步骤5：电解硫化氢）" }
+  ],
+  "inputs": {
+    "items": [],
+    "fluids": [
+      { "fluid": "oil", "amount": 1250000, "note": "石油（5000×250放大）" }
+    ]
+  },
+  "outputs": {
+    "items": [
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 151, "note": "硫粉（0.604×250放大）" }
+    ],
+    "fluids": [
+      { "fluid": "fuel", "amount": 1500000, "note": "柴油（6000×250，主产物，注册名fuel）" },
+      { "fluid": "naphthenicacid", "amount": 62500, "note": "环烷酸（250×250）" },
+      { "fluid": "liquid_sulfuricnaphtha", "amount": 500000, "note": "含硫石脑油（2000×250）" },
+      { "fluid": "gas_sulfuricgas", "amount": 1500000, "note": "含硫炼油气（6000×250）" },
+      { "fluid": "liquid_sulfuricheavy_fuel", "amount": 125000, "note": "重燃油（500×250）" }
+    ]
+  },
+  "euPerTick": 120,
+  "duration": 0,
+  "parallel": 64,
+  "_note": "5步合并；放大250倍使硫粉0.604为整数151；氢气完美循环（脱硫消耗=电解产出）；净输入仅石油；duration待计算"
+}

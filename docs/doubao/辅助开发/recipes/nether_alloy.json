@@ -1,0 +1,56 @@
+﻿{
+  "type": "production_line",
+  "id": "nether_alloy",
+  "name": "下界合金线",
+  "category": "luv_alloy",
+  "description": "荧石粉+下界空气→地狱岩→研磨→分馏→裂化→浮选→干燥→浸洗→粉碎→高炉→强键合下界合金纳米颗粒+15种副产（11步合并）",
+  "minVoltageTier": 6,
+  "requiredMachines": [
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "碎石机（步骤1）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "艾萨研磨机控制器（步骤2）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "真空冷冻机控制器（步骤3）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "蒸馏塔控制器（步骤4）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "石油裂化机控制器（步骤5）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "工业浮选机控制器（步骤6）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "真空干燥炉控制器（步骤7，7200K硅岩）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 2, "note": "化学浸洗机控制器（步骤8-9）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "研磨机控制器（步骤10）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "工业高炉控制器（步骤11）" }
+  ],
+  "inputs": {
+    "items": [
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 11520, "note": "荧石粉" }
+    ],
+    "fluids": [
+      { "fluid": "netherair", "amount": 60000000, "note": "下界空气" },
+      { "fluid": "ozonewater", "amount": 2500, "note": "臭氧处理水" },
+      { "fluid": "lava", "amount": 48000, "note": "岩浆" },
+      { "fluid": "moltenhellmetal", "amount": 12960, "note": "熔融地狱金属" }
+    ]
+  },
+  "outputs": {
+    "items": [
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 90, "note": "强键合下界合金纳米颗粒（主产物）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 600, "note": "下界石英粉" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 3840, "note": "硫粉" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 480, "note": "钴粉" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 825, "note": "锑粉" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 600, "note": "赛特斯石英粉" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 480, "note": "阿迪特粉" }
+    ],
+    "fluids": [
+      { "fluid": "evilgas", "amount": 440000, "note": "邪恶气体" },
+      { "fluid": "neon", "amount": 2160000, "note": "氖" },
+      { "fluid": "nitrogendioxide", "amount": 8400000, "note": "二氧化氮" },
+      { "fluid": "sulfurdioxide", "amount": 22800000, "note": "二氧化硫" },
+      { "fluid": "sulfurtrioxide", "amount": 12600000, "note": "三氧化硫" },
+      { "fluid": "gas", "amount": 960000, "note": "煤气" },
+      { "fluid": "fluid.anthracene", "amount": 3960000, "note": "蒽" },
+      { "fluid": "moltenthau", "amount": 2880, "note": "熔融神秘" }
+    ]
+  },
+  "euPerTick": 30720,
+  "duration": 0,
+  "parallel": 16,
+  "_note": "11步合并；所有数量整数无需放大；duration极长需并行多台；步骤8-11详细数据待补充；流体注册名待确认"
+}

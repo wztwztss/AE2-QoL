@@ -1,0 +1,47 @@
+{
+  "type": "production_line",
+  "id": "xenoxene_line",
+  "name": "异氙线",
+  "category": "uhv_biological",
+  "description": "三氧化二锑粉+锇粉+石油→细菌培养缸制异氙→焦炉→蒸馏→裂化→化合→熔融拉多X聚合物（8配方，产率0.488%，UEV细菌培养缸）",
+  "minVoltageTier": 9,
+  "requiredMachines": [
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "细菌培养缸控制器（步骤1，UEV，140Sv富集硅岩杆，UV玻璃）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "工业焦炉控制器（步骤2）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 3, "note": "蒸馏塔控制器（步骤3,4,7）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 2, "note": "石油裂化机控制器（步骤5-6，顶部银等离子体）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "大型化学反应釜控制器（步骤8）" }
+  ],
+  "inputs": {
+    "items": [
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 0, "note": "三氧化二锑粉（数量待推导）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 0, "note": "锇粉（数量待推导）" },
+      { "item": "gregtech:gt.meta.item", "meta": 0, "count": 0, "note": "巴纳德C树木原木（数量待推导）" }
+    ],
+    "fluids": [
+      { "fluid": "oil", "amount": 0, "note": "石油（数量待推导）" },
+      { "fluid": "silverplasma", "amount": 0, "note": "银等离子体（核聚变MK_III）" },
+      { "fluid": "oxygenplasma", "amount": 0, "note": "氧等离子体" },
+      { "fluid": "titaniumplasma", "amount": 0, "note": "钛等离子体" }
+    ]
+  },
+  "outputs": {
+    "items": [
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 0, "note": "灰烬（大量副产）" }
+    ],
+    "fluids": [
+      { "fluid": "moltenradoxpolymer", "amount": 0, "note": "熔融拉多X聚合物（主产物，产率0.488%）" },
+      { "fluid": "creosote", "amount": 0, "note": "杂酚油（副产）" },
+      { "fluid": "heavyoil", "amount": 0, "note": "重油（副产）" },
+      { "fluid": "fermentedbiomass", "amount": 0, "note": "发酵生物质（副产）" },
+      { "fluid": "bacterialsludge", "amount": 0, "note": "发酵菌泥（副产）" },
+      { "fluid": "ultraheavylox", "amount": 0, "note": "超重拉多X（副产）" },
+      { "fluid": "heavylox", "amount": 0, "note": "重拉多X（副产）" },
+      { "fluid": "water", "amount": 0, "note": "水（副产）" }
+    ]
+  },
+  "euPerTick": 7864320,
+  "duration": 0,
+  "parallel": 1,
+  "_note": "8配方；框架版，净输入/净输出数量需基于完整计算器线性方程推导；产率0.488%（每53865L异氙→263L拉多X聚合物）；细菌培养缸需UEV+140Sv富集硅岩杆+UV玻璃；等离子体需核聚变MK_III"
+}

@@ -1,0 +1,46 @@
+﻿{
+  "type": "production_line",
+  "id": "silicon_rock_processing",
+  "name": "硅岩处理产线（3分支合并）",
+  "category": "luv_silicon_rock",
+  "description": "氧化硅岩/富集硅岩/超能硅岩混合物粉→硅岩粉+富集硅岩粉+超能硅岩粉+钛/镓/精金/三元金属/铟副产（3分支合并）",
+  "minVoltageTier": 5,
+  "requiredMachines": [
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 3, "note": "中子活化器控制器（3分支各1台）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 6, "note": "大型化学反应釜控制器" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 2, "note": "工业电解机控制器" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 2, "note": "工业离心机控制器" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "流体固化器控制器" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "流体提取机控制器" }
+  ],
+  "inputs": {
+    "items": [
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 41640, "note": "氧化硅岩混合物粉（10410×4）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 6940, "note": "氧化富集硅岩混合物粉（1735×4）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 13880, "note": "氧化超能硅岩混合物粉（3470×4）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 464633, "note": "氢氧化钠（116158.25×4）" }
+    ],
+    "fluids": [
+      { "fluid": "fluorine", "amount": 76777220, "note": "氟（19194305×4）" },
+      { "fluid": "sulfuricacid", "amount": 34700000, "note": "硫酸（8675000×4）" },
+      { "fluid": "phosphoricacid_gt5u", "amount": 13880000, "note": "磷酸（3470000×4）" }
+    ]
+  },
+  "outputs": {
+    "items": [
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 126720, "note": "硅岩粉（31680×4）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 34920, "note": "富集硅岩粉（8730×4）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 18536, "note": "超能硅岩粉（4634×4）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 88320, "note": "镓粉（22080×4）" },
+      { "item": "gregtech:gt.meta.ingot", "meta": 0, "count": 44160, "note": "钛锭（11040×4）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 36864, "note": "精金粉（9216×4）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 740, "note": "三元金属粉（185×4）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 694, "note": "铟粉（173.5×4）" }
+    ],
+    "fluids": []
+  },
+  "euPerTick": 0,
+  "duration": 0,
+  "parallel": 16,
+  "_note": "3分支合并；放大4倍使氢氧化钠/铟为整数；P-507溶剂完全循环未列入；euPerTick/duration待计算"
+}

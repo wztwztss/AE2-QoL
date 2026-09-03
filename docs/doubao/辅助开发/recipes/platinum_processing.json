@@ -1,0 +1,59 @@
+{
+  "type": "production_line",
+  "id": "platinum_processing",
+  "name": "铂处理产线（6分支合并）",
+  "category": "iv_platinum",
+  "description": "铂金属粉→铂粉+钯粉+铑粉+钌粉+锇粉+铱粉+副产物（6分支合并，链式流水线）",
+  "minVoltageTier": 4,
+  "requiredMachines": [
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 2, "note": "蒸馏塔控制器" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 8, "note": "大型化学反应釜控制器" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 4, "note": "工业筛选机控制器" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 5, "note": "工业高炉控制器" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "流体固化器控制器" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "流体提取机控制器" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "工业搅拌机控制器" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "粉碎机控制器" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "化学浸洗机控制器" }
+  ],
+  "inputs": {
+    "items": [
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 38500, "note": "铂金属粉（7700×5放大）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 2600, "note": "硫粉（520×5）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 5940, "note": "硝酸钠（1188×5）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 28500, "note": "硝石粉（5700×5）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 17100, "note": "钙粉（3420×5，可循环）" }
+    ],
+    "fluids": [
+      { "fluid": "oxygen", "amount": 65725000, "note": "氧气（13145000×5）" },
+      { "fluid": "hydrogen", "amount": 181692405, "note": "氢气（36338481×5）" },
+      { "fluid": "chlorine", "amount": 35095420, "note": "氯气（7019084×5）" },
+      { "fluid": "ammonia", "amount": 21857000, "note": "氨气（4371400×5，有损循环）" },
+      { "fluid": "carbonmonoxide", "amount": 11000000, "note": "一氧化碳（2200000×5）" },
+      { "fluid": "saltwater", "amount": 2850000, "note": "盐水（570000×5）" }
+    ]
+  },
+  "outputs": {
+    "items": [
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 27500, "note": "铂粉（5500×5）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 11000, "note": "钯粉（2200×5）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 34100, "note": "钯金属粉（6820×5）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 5643, "note": "铑粉（1128.6×5，放大后整数）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 20520, "note": "钌粉（4104×5）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 855, "note": "锇粉（171×5）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 8550, "note": "铱粉（1710×5）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 13140, "note": "盐（2628×5，增殖副产物）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 5130, "note": "二氧化硅粉（1026×5）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 3420, "note": "金粉（684×5）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 4275, "note": "铜粉（855×5）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 4275, "note": "镍粉（855×5）" }
+    ],
+    "fluids": [
+      { "fluid": "ethylene", "amount": 5500000, "note": "乙烯（1100000×5，副产物）" }
+    ]
+  },
+  "euPerTick": 1920,
+  "duration": 0,
+  "parallel": 16,
+  "_note": "6分支合并；配方整体放大5倍使铑粉为整数；中间产物富钯氨/铂渣粉/浸出渣粉/稀有金属渣粉/铱金属渣粉完全消耗；duration待计算"
+}

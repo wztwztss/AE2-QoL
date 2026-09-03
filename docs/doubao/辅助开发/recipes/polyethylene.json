@@ -1,0 +1,34 @@
+﻿{
+  "type": "production_line",
+  "id": "molten.plastic",
+  "name": "聚乙烯产线",
+  "category": "mv_polymer",
+  "description": "乙醇脱水制乙烯+乙烯聚合，产出熔融聚乙烯（硫酸被稀释为稀硫酸）",
+  "minVoltageTier": 2,
+  "requiredMachines": [
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "大化学反应机控制器（步骤1：乙醇脱水），meta待确认" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "大化学反应机控制器（步骤2：乙烯聚合），meta待确认" }
+  ],
+  "inputs": {
+    "items": [
+      { "item": "gregtech:gt.metaitem.01", "meta": 0, "count": 1, "note": "空气单元（催化剂，输入=输出）" }
+    ],
+    "fluids": [
+      { "fluid": "ethanol", "amount": 1000, "note": "乙醇" },
+      { "fluid": "sulfuricacid", "amount": 1000, "note": "硫酸（被消耗，变成稀硫酸）" }
+    ]
+  },
+  "outputs": {
+    "items": [
+      { "item": "gregtech:gt.metaitem.01", "meta": 0, "count": 1, "note": "空单元（催化剂，输入=输出）" }
+    ],
+    "fluids": [
+      { "fluid": "molten.plastic", "amount": 1000, "note": "熔融聚乙烯（主产物，注册名可能是plastic）" },
+      { "fluid": "dilutedsulfuricacid", "amount": 1000, "note": "稀硫酸（硫酸脱水副产物）" }
+    ]
+  },
+  "euPerTick": 120,
+  "duration": 2311,
+  "parallel": 64,
+  "_note": "乙醇脱水路径（简化版，2步）；硫酸被稀释为稀硫酸（非催化剂）；空气单元/空单元为催化剂；聚合步骤按1000/144比例缩放"
+}

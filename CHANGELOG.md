@@ -1,3 +1,45 @@
+## 3.18.1-fix1 - 自适应电网监控数据正确性修复 + 子仓列表优化
+
+> 作者：wztwzt | 更新时间：2026-09-03 | 基于 3.18.0
+
+### 修复：监控数据单位错误（审计核对）
+
+- **1h 平均速率大 20 倍**：`AdaptiveNetTerminal` L722 `÷3600L` → `÷72000L`（应除以 tick 数而非秒数）
+- **10min 平均速率大 20 倍**：同文件 L732 `÷600L` → `÷12000L`
+- **瞬时速率大 100 倍**：`GridEnergyStats.getInstantInputRate()/getInstantOutputRate()` 返回 `bufferSumInput/Output`（100 tick 累计），现改为 `÷100` 输出真实 EU/t
+
+### 修复：电压切换后子仓列表不刷新
+
+- `AdaptiveNetwork.setVoltageTier()`/`setHatchTier()`/`setHatchAmps()` 在修改配置后未标记 `hatchListDirty`，导致子仓 Tab 的 tier/amps/EU-t 停留旧值
+- 三个方法均添加 `markHatchListDirty()` 调用
+
+### 优化：子仓列表去掉 50 行上限
+
+- 移除 `MAX_HATCH_COORD_DISPLAY` (50) 硬编码上限和 `...N more` 截断提示
+- `ListWidget` 全量渲染所有条目（本身支持滚动），通常几十条性能可接受
+
+### 修复：电网监控时间窗口常量（此前轮次修复，本轮确认）
+
+- `GridEnergyStats.WINDOW_10M` 600 → 12000（10 分钟 = 12000 tick）
+- `GridEnergyStats.WINDOW_1H` 3600 → 72000（1 小时 = 72000 tick）
+- 预计耗尽时间公式移除 `×20L`（avgOut 已是 EU/tick）
+
+### 修复：ams 溢出 + 仓室破坏残留（此前轮次修复，本轮确认）
+
+- `HatchListSyncPacket` amps 编码从 `writeByte` 改为 `writeShort`（防止 256A 溢出）
+- `AdaptiveNetDynamoHatch`/`AdaptiveNetLaserTargetHatch` 添加 `onRemoval()` 调用 `unregisterHatch()`
+- `AdaptiveNetwork.setHatchAmps`/`AdaptiveHatchHelper.setAmps` 钳制 `Math.max(1, amps)`
+- 4 个仓室 `onFirstTick` 添加 `getStackForm()` null 检查（非标准 MTE 无 StackForm 时 fallback 用翻译 key）
+- `formatDuration` 月份显示 `"mo "` → `"月 "`
+
+### 变更文件
+
+- `hatch/adaptive/AdaptiveNetTerminal.java`：÷72000/÷12000、去掉 50 行上限
+- `hatch/adaptive/GridEnergyStats.java`：瞬时速率 ÷100
+- `hatch/adaptive/AdaptiveNetwork.java`：三处 setter 加 markHatchListDirty
+
+---
+
 ## 3.18.0 - 自适应电网系统大重构（4仓类型 + 4-tab UI + 权限指纹 + 自动迁移）
 
 > 作者：wztwzt | 更新时间：2026-08-31 | 基于 3.17.1
@@ -748,6 +790,7 @@
 | **智能倍增（Smart Doubling）**：ME 接口/样板输入机复选框 + CPU 一次性推送 N 轮（默认不限 0=不限，可配） | `api/ISmartDoublingMedium` + `mixin/ae/MixinDualityInterface` + `mixin/ae/MixinCraftingCPUCluster` + `mixin/ae/MixinGuiInterface`/`MixinContainerInterface` + `mixin/gt/MixinMTEHatchInputBus` | ✅ 可用（3.2.0；3.3.2 兼容 GTNotLeisure 超级接口；3.3.3 支持 GT/SNL/PH 样板输入机；3.3.5 修复实测失效；3.3.6 默认 0=不限；3.3.7 批量记账/功率 O(1) 修复大订单卡死） |
 | 统一配置文件 `settings.json` + 热加载 + OP 命令 `/ae2qof reload` + 游戏内配置 GUI（含范围显示 + 名字映射热编辑） | `Config` + `CommandAe2QoL` + `client/gui/ConfigGuiFactory`/`GuiConfigScreen` + `network/ConfigSetPacket`/`ConfigUpdatePacket` | ✅ 可用（3.3.0；3.3.6 新增 GUI 页面；3.3.7 范围显示 + 映射编辑） |
 | **F：样板 + 接口二合一终端**（独立有线方块） | `merged/GuiMergedTerminal` + `ContainerMergedTerminal` + `PatternContainer` + `BlockMergedTerminal`/`TileMergedTerminal` + `client/event/MergedTerminalPanelHandler` + `client/gui/MergedPanelLayout` + `network/MergedTerminalActionPacket`/`MergedTerminalResultPacket` + `api/IMergedPatternTerminal` | ✅ 可用（3.4.0 起；3.5.0 改为独立有线方块 + 原生 AE2Things 风格面板，移除两个 mixin；3.5.1 修复 openContext NPE 崩溃/NEI 返回错位/处理样板改终极样板/网络拉空白样板/NEI「+」与 `↓` 读回/隐藏 NEI 面板）；**3.6.0 新增：样板回读二次编辑、编辑快照持久化、PH 编程工具箱适配、装配矩阵上传按钮（AM）、流体解析严格匹配修复、数量上限移除与输出格禁编、覆盖层模态化 |
+| **自适应电网系统**（终端+4仓+监控+列表） | `hatch/adaptive/AdaptiveNetTerminal`/`AdaptiveNetHatch`/`AdaptiveNetLaserHatch`/`AdaptiveNetDynamoHatch`/`AdaptiveNetLaserTargetHatch` + `AdaptiveNetwork`/`AdaptiveNetworkManager`/`AdaptiveHatchHelper`/`HatchType`/`HatchListCache`/`GridEnergyStats` + `network/HatchListSyncPacket`/`HatchActionPacket` | ✅ 可用（3.17.0；3.18.0 重构为4仓类型+4-tab UI+权限指纹+自动迁移；3.18.1-fix1 修复监控速率单位/列表dirty/50行上限） |
 
 # 已知风险登记表
 

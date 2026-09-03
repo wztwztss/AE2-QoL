@@ -1,0 +1,33 @@
+{
+  "type": "production_line",
+  "id": "ce_luag",
+  "name": "掺铈镥铝石榴石（Ce:LuAG）",
+  "category": "uhv_crystal",
+  "description": "铈粉+镥粉+蓝宝石粉→混合物→晶种→晶体生长→Ce:LuAG精致宝石（气奥路径100%产率，UHV高压釜）",
+  "minVoltageTier": 10,
+  "requiredMachines": [
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "工业搅拌机控制器（步骤1：Ce:LuAG混合物制备，UV）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "高压釜控制器（步骤2：晶种制备，UV，产率51.4%）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "高压釜控制器（步骤3：晶体生长，气奥路径100%，UHV）" }
+  ],
+  "inputs": {
+    "items": [
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 1, "note": "铈粉" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 3, "note": "镥粉" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 5, "note": "蓝宝石粉（铝源，可选绿蓝宝石/氧化铝）" }
+    ],
+    "fluids": [
+      { "fluid": "moltenlutetium", "amount": 1152, "note": "熔融镥（晶种制备熔剂，8锭）" },
+      { "fluid": "oganesson", "amount": 10, "note": "气奥（晶体生长气氛，UHV稀有气体）" }
+    ]
+  },
+  "outputs": {
+    "items": [
+      { "item": "gregtech:gt.meta.item", "meta": 0, "count": 1, "note": "Ce:LuAG精致宝石（主产物，晶体SoC原料）" }
+    ]
+  },
+  "euPerTick": 245760,
+  "duration": 0,
+  "parallel": 1,
+  "_note": "4步合并；选择气奥路径100%产率；材料类名CeriumDopedLutetiumAluminiumGarnet（gtnhlanth）；混合物类名CeriumDopedLutetiumAluminiumOxygenBlend；源码位置gtnhlanth/loader/RecipeLoader.java:3312-3442；可选真空炉路径（2台机器，100%产率，9100K）；铝源三选一：蓝宝石/绿蓝宝石/氧化铝"
+}

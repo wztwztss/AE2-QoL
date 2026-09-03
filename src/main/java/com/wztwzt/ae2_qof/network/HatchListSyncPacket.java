@@ -52,7 +52,7 @@ public class HatchListSyncPacket implements IMessage {
                 String name = cpw.mods.fml.common.network.ByteBufUtils.readUTF8String(buf);
                 int eut = buf.readInt();
                 int tier = buf.readUnsignedByte();
-                int amps = buf.readUnsignedByte();
+                int amps = buf.readUnsignedShort();
                 int hatchType = buf.readUnsignedByte();
                 int x = buf.readInt();
                 int y = buf.readInt();
@@ -89,7 +89,7 @@ public class HatchListSyncPacket implements IMessage {
                 cpw.mods.fml.common.network.ByteBufUtils.writeUTF8String(buf, e.name != null ? e.name : "");
                 buf.writeInt(e.eut);
                 buf.writeByte(e.tier);
-                buf.writeByte(e.amps);
+                buf.writeShort(e.amps);
                 buf.writeByte(e.hatchType);
                 buf.writeInt(e.x);
                 buf.writeInt(e.y);

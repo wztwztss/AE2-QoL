@@ -1,0 +1,60 @@
+{
+  "type": "production_line",
+  "id": "kevlar",
+  "name": "凯芙拉（芳纶纤维）",
+  "category": "uv_polymer",
+  "description": "对苯二甲酸+对苯二胺+NMP+聚氨酯树脂→液晶凯芙拉→纺丝→编织→化学浴→凯芙拉板（4条子线+主路径，24台机器，UV阶段）",
+  "minVoltageTier": 8,
+  "requiredMachines": [
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 2, "note": "蒸馏塔控制器（子线1对苯二甲酸蒸馏/子线4 MDI蒸馏）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "蒸馏室控制器（子线4 4,4'-MDI蒸馏）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 12, "note": "大型化学反应釜控制器（子线1-4+主路径聚合，LCR）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 6, "note": "化学反应釜控制器（子线1-4单方块步骤，CR）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "流体固化器控制器（主路径凯芙拉纺丝，喷丝头）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "装配机控制器（主路径凯芙拉编织）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "化学浴控制器（主路径化学浴浸洗）" }
+  ],
+  "inputs": {
+    "items": [
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 0, "note": "硫/锰/钴/钯/银/锡/钠/盐（数量待完整推导）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 1, "note": "氯化钙粉（主路径液晶凯芙拉聚合）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 9, "note": "对苯二胺粉（主路径，来自子线2）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 9, "note": "对苯二甲酰氯粉（主路径，来自子线1）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 1, "note": "凯芙拉催化剂粉（子线4，锡粉+丁醇+丙酸+三氯化铁）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 1, "note": "季戊四醇粉（子线4聚氨酯树脂）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 5, "note": "二苯基甲烷二异氰酸酯粉（子线4）" },
+      { "item": "gregtech:gt.meta.item", "meta": 0, "count": 8, "note": "电路（主路径凯芙拉编织）" }
+    ],
+    "fluids": [
+      { "fluid": "benzene", "amount": 0, "note": "苯（子线1二甲苯/子线2氯苯，数量待推导）" },
+      { "fluid": "chlorine", "amount": 0, "note": "氯（子线1/2/4，数量待推导）" },
+      { "fluid": "oxygen", "amount": 0, "note": "氧气（子线1对苯二甲酸氧化/子线3乙醛，数量待推导）" },
+      { "fluid": "hydrogen", "amount": 6000, "note": "氢气（子线2对苯二胺还原）" },
+      { "fluid": "ammonia", "amount": 0, "note": "氨（子线2硝基苯胺氨解/子线3甲胺，数量待推导）" },
+      { "fluid": "methanol", "amount": 0, "note": "甲醇（子线1酯化/子线3甲胺，数量待推导）" },
+      { "fluid": "ethylene", "amount": 0, "note": "乙烯（子线3乙醛/子线4乙二醇，数量待推导）" },
+      { "fluid": "water", "amount": 0, "note": "水（多步副产/消耗，数量待推导）" },
+      { "fluid": "formaldehyde", "amount": 0, "note": "甲醛（子线4 MDI/季戊四醇，数量待推导）" },
+      { "fluid": "carbonmonoxide", "amount": 0, "note": "一氧化碳（子线4光气，数量待推导）" },
+      { "fluid": "nmp", "amount": 1000, "note": "N-甲基吡咯烷酮（主路径液晶凯芙拉溶剂，来自子线3）" },
+      { "fluid": "nitrogendioxide", "amount": 100, "note": "二氧化氮（子线2对苯二胺还原）" },
+      { "fluid": "ethyleneglycol", "amount": 4000, "note": "乙二醇（子线4聚氨酯树脂）" },
+      { "fluid": "siliconeoil", "amount": 1000, "note": "硅油（子线4聚氨酯树脂）" },
+      { "fluid": "polyurethaneresin", "amount": 1000, "note": "聚氨酯树脂（主路径化学浴浸洗，来自子线4）" }
+    ]
+  },
+  "outputs": {
+    "items": [
+      { "item": "gregtech:gt.meta.item", "meta": 0, "count": 1, "note": "凯芙拉板（主产物，T9轻质合金/电路基板）" }
+    ],
+    "fluids": [
+      { "fluid": "liquidcrystalkevlar", "amount": 8856, "note": "液晶凯芙拉（9000-144=8856L多余副产）" },
+      { "fluid": "dilutedhydrochloricacid", "amount": 2000, "note": "稀盐酸（主路径聚合副产）" },
+      { "fluid": "water", "amount": 0, "note": "水（多步副产，数量待推导）" }
+    ]
+  },
+  "euPerTick": 61440,
+  "duration": 0,
+  "parallel": 1,
+  "_note": "4条子线（对苯二甲酰氯7步+对苯二胺4步+NMP 5步+聚氨酯树脂8步）+主路径4步=24台机器；主路径配平基准：1凯芙拉板=8纤维=144L液晶凯芙拉=0.144对苯二胺+0.144对苯二甲酰氯（JSON需放大）；已从GT5源码确认9个关键配方完整数据（ChemicalRecipes.java:967-975/4928-4940/5966-5977/931-940/5890-5900/4870-4880/6044-6056，FluidSolidifierRecipes.java:282-288，AssemblerRecipes.java:3077-3083，ChemicalBathRecipes.java:329-335）；流程图存档docs/kevlar_flowchart.png；最早出现LuV，使用阶段ZPM；养蜂法可选（UHV复制机基座）"
+}

@@ -38,7 +38,7 @@ public class HatchListCache {
             this.metaId = metaId;
             this.eut = eut;
             this.tier = tier;
-            this.amps = amps;
+            this.amps = Math.max(1, amps);
             this.hatchType = hatchType;
             this.index = index;
             this.x = x;

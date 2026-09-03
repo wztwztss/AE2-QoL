@@ -55,6 +55,7 @@ public class AdaptiveNetwork {
     public void setVoltageTier(int voltageTier) {
         this.voltageTier = Math.max(0, Math.min(voltageTier, 15));
         updateAllHelpers();
+        markHatchListDirty();
     }
 
     public boolean isAutoReconnect() {
@@ -75,10 +76,12 @@ public class AdaptiveNetwork {
 
     public void setHatchTier(HatchType type, int tier) {
         hatchTiers[type.slotIndex] = Math.max(0, Math.min(tier, 15));
+        markHatchListDirty();
     }
 
     public void setHatchAmps(HatchType type, int amps) {
-        hatchAmps[type.slotIndex] = Math.max(0, amps);
+        hatchAmps[type.slotIndex] = Math.max(1, amps);
+        markHatchListDirty();
     }
 
     public int getHatchCount(HatchType type) {

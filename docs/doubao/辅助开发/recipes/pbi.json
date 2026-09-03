@@ -1,0 +1,38 @@
+{
+  "type": "production_line",
+  "id": "pbi",
+  "name": "聚苯并咪唑（PBI）产线",
+  "category": "iv_polymer",
+  "description": "氯苯+邻苯二甲酸→硝化→偶联→胺化→酯化→聚合→熔融PBI（7步合并，苯酚催化剂循环）",
+  "minVoltageTier": 4,
+  "requiredMachines": [
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "工业搅拌机控制器（步骤0：硝酸混酸制备）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 5, "note": "大型化学反应釜控制器（步骤1-5）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "蒸馏塔控制器（步骤6：稀硫酸蒸馏回收）" }
+  ],
+  "inputs": {
+    "items": [
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 1, "note": "铜粉（实际0.111，需放大9倍）" },
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 1, "note": "锌粉" }
+    ],
+    "fluids": [
+      { "fluid": "phthalicacid", "amount": 1000, "note": "邻苯二甲酸" },
+      { "fluid": "nitricacid", "amount": 2000, "note": "硝酸" },
+      { "fluid": "chlorobenzene", "amount": 2000, "note": "氯苯" },
+      { "fluid": "dilutedsulfuricacid", "amount": 1500, "note": "稀硫酸（净补充）" },
+      { "fluid": "ammonia", "amount": 2000, "note": "氨" }
+    ]
+  },
+  "outputs": {
+    "items": [],
+    "fluids": [
+      { "fluid": "hydrochloricacid_gt5u", "amount": 2000, "note": "氢氯酸/盐酸（副产物）" },
+      { "fluid": "polybenzimidazole.molten", "amount": 1000, "note": "熔融PBI（主产物）" },
+      { "fluid": "water", "amount": 1500, "note": "水（稀硫酸蒸馏副产物）" }
+    ]
+  },
+  "euPerTick": 7680,
+  "duration": 0,
+  "parallel": 64,
+  "_note": "7步合并；铜粉0.111需放大9倍；苯酚为内部催化剂；duration待计算"
+}

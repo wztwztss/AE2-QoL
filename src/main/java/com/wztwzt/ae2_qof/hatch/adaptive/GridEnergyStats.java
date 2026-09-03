@@ -13,8 +13,8 @@ public class GridEnergyStats {
     private long bufferSumInput;
     private long bufferSumOutput;
 
-    private static final int WINDOW_10M = 600;
-    private static final int WINDOW_1H = 3600;
+    private static final int WINDOW_10M = 12000;
+    private static final int WINDOW_1H = 72000;
     private long gridEU_10min_ago;
     private long gridEU_1h_ago;
     private long snapshotTick;
@@ -86,18 +86,20 @@ public class GridEnergyStats {
     }
 
     public long getInstantInputRate() {
-        return bufferSumInput;
+        return bufferSumInput / 100;
     }
 
     public long getInstantOutputRate() {
-        return bufferSumOutput;
+        return bufferSumOutput / 100;
     }
 
     public long getChange1h(long currentEU) {
+        if (!initialized) return 0;
         return currentEU - gridEU_1h_ago;
     }
 
     public long getChange10min(long currentEU) {
+        if (!initialized) return 0;
         return currentEU - gridEU_10min_ago;
     }
 

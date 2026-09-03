@@ -1,0 +1,45 @@
+﻿{
+  "type": "production_line",
+  "id": "nitro_fuel",
+  "name": "高十六烷值柴油产线",
+  "category": "hv_fuel",
+  "description": "石油→蒸馏→脱硫→裂化→乙烯→乙酸→乙烯酮→四硝基甲烷→柴油→高十六烷值柴油（14步合并）",
+  "minVoltageTier": 3,
+  "requiredMachines": [
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "蒸馏塔控制器（步骤1：石油蒸馏）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 10, "note": "大型化学反应釜控制器（步骤2-6脱硫+裂化,8-11乙酸/乙烯酮/硝酸/四硝基甲烷,13合成）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "蒸馏塔控制器（步骤7：炼油气蒸馏，替代蒸馏室）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "工业搅拌机控制器（步骤12：搅拌柴油）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "工业电解机控制器（步骤14：电解硫化氢）" }
+  ],
+  "inputs": {
+    "items": [],
+    "fluids": [
+      { "fluid": "oil", "amount": 5000, "note": "石油" },
+      { "fluid": "hydrogen", "amount": 1440, "note": "氢气（脱硫用）" },
+      { "fluid": "steam", "amount": 250, "note": "蒸汽（裂化用）" },
+      { "fluid": "oxygen", "amount": 2040, "note": "氧气" },
+      { "fluid": "sulfuricacid", "amount": 60, "note": "硫酸" },
+      { "fluid": "nitrogen", "amount": 480, "note": "氮气" }
+    ]
+  },
+  "outputs": {
+    "items": [
+      { "item": "gregtech:gt.metaitem.01", "meta": 0, "count": 1, "note": "碳粉（0.2需取整）" },
+      { "item": "gregtech:gt.metaitem.01", "meta": 0, "count": 2, "note": "硫粉（1.15需取整）" }
+    ],
+    "fluids": [
+      { "fluid": "naphthenicacid", "amount": 250, "note": "环烷酸" },
+      { "fluid": "heavyfuel", "amount": 500, "note": "重燃油" },
+      { "fluid": "liquid_naphtha", "amount": 2000, "note": "石脑油" },
+      { "fluid": "gas", "amount": 5750, "note": "炼油气" },
+      { "fluid": "dilutedsulfuricacid", "amount": 60, "note": "稀硫酸" },
+      { "fluid": "water", "amount": 1020, "note": "水" },
+      { "fluid": "nitrofuel", "amount": 6000, "note": "高十六烷值柴油（主产物，材料名NitroFuel）" }
+    ]
+  },
+  "euPerTick": 480,
+  "duration": 0,
+  "parallel": 64,
+  "_note": "14步合并；duration待计算；碳粉0.2/硫粉1.15需取整或放大配方；高十六烷值柴油注册名nitrofuel"
+}

@@ -1,0 +1,50 @@
+﻿{
+  "type": "production_line",
+  "id": "premium_gasoline",
+  "name": "高辛烷值汽油",
+  "category": "ev_fuel",
+  "description": "石油→蒸馏→脱硫→裂化→辛烷/甲苯→粗汽油→普通汽油→抗爆剂→一氧化二氮→混合→高辛烷值汽油（11步合并，EV阶段）",
+  "minVoltageTier": 5,
+  "requiredMachines": [
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 2, "note": "蒸馏塔控制器（步骤1石油蒸馏/步骤5辛烷蒸馏）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "蒸馏室控制器（步骤6甲苯蒸馏）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 4, "note": "大型化学反应釜控制器（步骤2-3脱硫/步骤9抗爆剂/步骤10一氧化二氮）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "石油裂化机控制器（步骤4轻燃油加氢裂化）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 2, "note": "工业搅拌机控制器（步骤7粗汽油/步骤11高辛烷值汽油混合）" },
+    { "item": "gregtech:gt.blockmachines", "meta": 0, "count": 1, "note": "工业电解机控制器（硫化氢电解回收氢气）" }
+  ],
+  "inputs": {
+    "items": [],
+    "fluids": [
+      { "fluid": "oil", "amount": 0, "note": "石油（主原料，数量待完整配平推导）" },
+      { "fluid": "hydrogen", "amount": 0, "note": "氢气（脱硫+裂化，硫化氢电解回收，数量待推导）" },
+      { "fluid": "methanol", "amount": 1000, "note": "甲醇（粗汽油制备）" },
+      { "fluid": "acetone", "amount": 1000, "note": "丙酮（粗汽油制备）" },
+      { "fluid": "ethanol", "amount": 3000, "note": "乙醇（抗爆剂制备，可选MTBE路径用甲醇）" },
+      { "fluid": "butene", "amount": 3000, "note": "丁烯（抗爆剂制备，来自炼油气裂化）" },
+      { "fluid": "nitrogen", "amount": 12000, "note": "氮气（一氧化二氮制备）" },
+      { "fluid": "oxygen", "amount": 6000, "note": "氧气（一氧化二氮制备）" }
+    ]
+  },
+  "outputs": {
+    "items": [
+      { "item": "gregtech:gt.meta.dust", "meta": 0, "count": 0, "note": "硫粉（硫化氢电解副产，数量待推导）" }
+    ],
+    "fluids": [
+      { "fluid": "highoctanegasoline", "amount": 32000, "note": "高辛烷值汽油（主产物，材料名GasolinePremium）" },
+      { "fluid": "naphthenicacid", "amount": 0, "note": "环烷酸（蒸馏副产，数量待推导）" },
+      { "fluid": "liquid_sulfuricnaphtha", "amount": 0, "note": "含硫石脑油（蒸馏副产，数量待推导）" },
+      { "fluid": "gas_sulfuricgas", "amount": 0, "note": "含硫炼油气（蒸馏副产，数量待推导）" },
+      { "fluid": "liquid_sulfuricheavy_fuel", "amount": 0, "note": "重燃油（蒸馏副产，数量待推导）" },
+      { "fluid": "gasoline", "amount": 2000, "note": "普通汽油（步骤8多余副产）" },
+      { "fluid": "butane", "amount": 3000, "note": "丁烷（裂化副产）" },
+      { "fluid": "propane", "amount": 4000, "note": "丙烷（裂化副产）" },
+      { "fluid": "ethane", "amount": 2500, "note": "乙烷（裂化副产）" },
+      { "fluid": "methane", "amount": 2500, "note": "甲烷（裂化副产）" }
+    ]
+  },
+  "euPerTick": 1920,
+  "duration": 0,
+  "parallel": 64,
+  "_note": "11步合并；核心混合比例（源码确认）：普通汽油20000L+辛烷2000L+一氧化二氮6000L+甲苯1000L+抗爆剂3000L→高辛烷值汽油32000L（工业搅拌机EV 1920EU/t 2.5s）；材料注册名：GasolinePremium/GasolineRegular/GasolineRaw/Octane/Toluene/AntiKnock/NitrousOxide/MTBEMixture；甲苯两种路径（重燃油蒸馏/裂化石脑油副产）；抗爆剂两种路径（乙醇+丁烯20s/甲醇+丁烯→MTBE 1s）；源码位置MixerRecipes.java:1407-1429/ChemicalRecipes.java:5758-5807/DistilleryRecipes.java:1094-1101；以32000L高辛烷值汽油为基准配平；石油/氢气/硫粉数量待完整线性方程推导"
+}
