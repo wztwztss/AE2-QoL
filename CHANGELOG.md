@@ -1,3 +1,24 @@
+## 3.18.1-fix4 - 多人共享电网支持
+
+> 作者：wztwzt | 更新时间：2026-09-03 | 基于 3.18.1-fix3
+
+### 新增：多人共享电网仓室列表同步
+
+- `AdaptiveNetwork` 新增 `activeViewers` 集合，跟踪当前打开终端 GUI 的所有玩家 UUID
+- `addViewer()` 注册观看者时自动标记 `hatchListDirty`，确保新观看者能收到同步
+- `removeViewer()` 注销观看者
+- `buildUI()` 中注册当前打开 GUI 的玩家为观看者
+- `ModularPanel.onCloseAction()` 关闭 GUI 时自动注销观看者
+- `sendHatchListSync()` 改为遍历 `network.getActiveViewers()` 发送给所有观看者，而非仅发送给 networkOwner
+- 新增 `findPlayerByUUID()` 工具方法，通过 UUID 查找在线玩家
+
+### 变更文件
+
+- `hatch/adaptive/AdaptiveNetwork.java`：`activeViewers` 集合 + `addViewer/removeViewer/getActiveViewers`
+- `hatch/adaptive/AdaptiveNetTerminal.java`：`buildUI` 注册/注销观看者 + `sendHatchListSync` 多播 + `findPlayerByUUID`
+
+---
+
 ## 3.18.1-fix3 - 子仓 BigInteger 简化 + 仓室列表同步频率优化
 
 > 作者：wztwzt | 更新时间：2026-09-03 | 基于 3.18.1-fix2

@@ -176,13 +176,11 @@ public class AdaptiveNetTerminal extends MTEHatch {
 
         HatchListSyncPacket packet = new HatchListSyncPacket(
             networkOwner, networkFrequency, helpers.size(), entries, totalIn, totalOut);
-        net.minecraft.entity.player.EntityPlayerMP player = aBase.getWorld().playerEntities.stream()
-            .filter(p -> p instanceof net.minecraft.entity.player.EntityPlayerMP
-                && ((net.minecraft.entity.player.EntityPlayerMP) p).getGameProfile().getId().equals(networkOwner))
-            .map(p -> (net.minecraft.entity.player.EntityPlayerMP) p)
-            .findFirst().orElse(null);
-        if (player != null) {
-            com.wztwzt.ae2_qof.network.ModNetwork.CHANNEL.sendTo(packet, player);
+        for (UUID viewerUUID : network.getActiveViewers()) {
+            net.minecraft.entity.player.EntityPlayerMP viewer = findPlayerByUUID(aBase.getWorld(), viewerUUID);
+            if (viewer != null) {
+                com.wztwzt.ae2_qof.network.ModNetwork.CHANNEL.sendTo(packet, viewer);
+            }
         }
     }
 
@@ -348,6 +346,14 @@ public class AdaptiveNetTerminal extends MTEHatch {
 
     @Override
     public ModularPanel buildUI(PosGuiData guiData, PanelSyncManager syncManager, UISettings uiSettings) {
+        if (guiData != null && guiData.getPlayer() != null && networkOwner != null) {
+            UUID viewerUUID = guiData.getPlayer().getUniqueID();
+            AdaptiveNetwork net = AdaptiveNetworkManager.getNetwork(networkOwner, networkFrequency);
+            if (net != null) {
+                net.addViewer(viewerUUID);
+            }
+        }
+
         IntSyncValue frequencySync = new IntSyncValue(
             () -> networkFrequency,
             v -> {
@@ -492,6 +498,17 @@ public class AdaptiveNetTerminal extends MTEHatch {
         panel.child(pages);
 
         panel.bindPlayerInventory();
+
+        if (guiData != null && guiData.getPlayer() != null && networkOwner != null) {
+            UUID viewerUUID = guiData.getPlayer().getUniqueID();
+            panel.onCloseAction(() -> {
+                AdaptiveNetwork net = AdaptiveNetworkManager.getNetwork(networkOwner, networkFrequency);
+                if (net != null) {
+                    net.removeViewer(viewerUUID);
+                }
+            });
+        }
+
         return panel;
     }
 
@@ -1023,5 +1040,17 @@ public class AdaptiveNetTerminal extends MTEHatch {
     public boolean allowPutStack(IGregTechTileEntity a, int i, net.minecraftforge.common.util.ForgeDirection s,
         ItemStack stack) {
         return false;
+    }
+
+    private static net.minecraft.entity.player.EntityPlayerMP findPlayerByUUID(
+            net.minecraft.world.World world, UUID uuid) {
+        if (world == null || uuid == null) return null;
+        for (Object obj : world.playerEntities) {
+            if (obj instanceof net.minecraft.entity.player.EntityPlayerMP) {
+                net.minecraft.entity.player.EntityPlayerMP p = (net.minecraft.entity.player.EntityPlayerMP) obj;
+                if (uuid.equals(p.getGameProfile().getId())) return p;
+            }
+        }
+        return null;
     }
 }

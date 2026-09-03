@@ -1,6 +1,7 @@
 package com.wztwzt.ae2_qof.hatch.adaptive;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -20,6 +21,7 @@ public class AdaptiveNetwork {
     private GridEnergyStats stats = new GridEnergyStats();
     private boolean hatchListDirty = true;
     private int saveCounter = 0;
+    private final Set<UUID> activeViewers = new HashSet<>();
 
     public AdaptiveNetwork(UUID owner, int frequency) {
         this.owner = owner;
@@ -127,6 +129,21 @@ public class AdaptiveNetwork {
 
     public void markHatchListDirty() {
         hatchListDirty = true;
+    }
+
+    public void addViewer(UUID playerUUID) {
+        if (playerUUID != null) {
+            activeViewers.add(playerUUID);
+            hatchListDirty = true;
+        }
+    }
+
+    public void removeViewer(UUID playerUUID) {
+        if (playerUUID != null) activeViewers.remove(playerUUID);
+    }
+
+    public Set<UUID> getActiveViewers() {
+        return activeViewers;
     }
 
     public boolean isEmpty() {
