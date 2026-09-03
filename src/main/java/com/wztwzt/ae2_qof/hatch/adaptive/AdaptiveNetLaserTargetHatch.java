@@ -2,7 +2,6 @@ package com.wztwzt.ae2_qof.hatch.adaptive;
 
 import static gregtech.api.enums.GTValues.V;
 
-import java.math.BigInteger;
 import java.util.UUID;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -142,7 +141,7 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
         }
 
         aBase.decreaseStoredEnergyUnits(stored, false);
-        WirelessNetworkManager.addEUToGlobalEnergyMap(owner, BigInteger.valueOf(stored));
+        WirelessNetworkManager.addEUToGlobalEnergyMap(owner, stored);
         helper.setRealFlowEUt((int) stored);
     }
 
@@ -193,11 +192,11 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
         })).size(260, 14));
 
         column.child(new TextWidget<>(IKey.dynamic(() -> {
-            java.math.BigInteger gridEU = helper.isBound() && helper.getNetworkOwner() != null
-                ? WirelessNetworkManager.getUserEU(helper.getNetworkOwner()) : java.math.BigInteger.ZERO;
+            long gridEU = helper.isBound() && helper.getNetworkOwner() != null
+                ? AdaptiveHatchHelper.getGridEULong(helper.getNetworkOwner()) : 0L;
             return EnumChatFormatting.AQUA
                 + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.grid_energy")
-                + " " + EnumChatFormatting.WHITE + formatEU(gridEU.min(java.math.BigInteger.valueOf(Long.MAX_VALUE)).longValue());
+                + " " + EnumChatFormatting.WHITE + formatEU(gridEU);
         })).size(260, 14));
 
         panel.bindPlayerInventory();
@@ -252,9 +251,9 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
             int v = helper.getCurrentVoltageTier();
             String tierName = GTUtility.getColoredTierNameFromTier((byte) v);
             currenttip.add(EnumChatFormatting.AQUA + "V:" + tierName + " (" + V[v] + ") | A:" + helper.getCurrentAmps());
-            java.math.BigInteger gridEU = helper.isBound() && helper.getNetworkOwner() != null
-                ? WirelessNetworkManager.getUserEU(helper.getNetworkOwner()) : java.math.BigInteger.ZERO;
-            currenttip.add(EnumChatFormatting.AQUA + "Grid: " + formatEU(gridEU.min(java.math.BigInteger.valueOf(Long.MAX_VALUE)).longValue()));
+            long gridEU = helper.isBound() && helper.getNetworkOwner() != null
+                ? AdaptiveHatchHelper.getGridEULong(helper.getNetworkOwner()) : 0L;
+            currenttip.add(EnumChatFormatting.AQUA + "Grid: " + formatEU(gridEU));
             if (helper.isBound()) {
                 currenttip.add(EnumChatFormatting.GREEN
                     + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.bound"));

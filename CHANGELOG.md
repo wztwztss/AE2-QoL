@@ -1,3 +1,34 @@
+## 3.18.1-fix3 - 子仓 BigInteger 简化 + 仓室列表同步频率优化
+
+> 作者：wztwzt | 更新时间：2026-09-03 | 基于 3.18.1-fix2
+
+### 优化：子仓 BigInteger 简化
+
+- `AdaptiveHatchHelper` 新增 `getGridEULong(UUID)` 和 `getGridEUBigInteger(UUID)` 静态工具方法，封装 BigInteger→long 转换
+- 4 个子仓（能量/激光源/动力/激光目标）的 `addEUToGlobalEnergyMap` 调用改用 long 重载，移除 `BigInteger.valueOf()` 包装
+- 4 个子仓 GUI 和 WAILA 中电网余额显示改用 `getGridEULong()`，移除冗余 BigInteger 转换
+- 4 个子仓文件移除 `import java.math.BigInteger`（不再需要）
+- Terminal 的 `tickStats` 和 `gridEUSync` 也改用 `getGridEULong()`
+- 监控 Tab 总电量显示仍保留 BigInteger 路径（后期整合包可能超 long 上限）
+- 无线终端 BigInteger 保持不变（终局手段可能超 long）
+
+### 优化：仓室列表同步频率
+
+- `AdaptiveNetTerminal.onPreTick` 新增 `syncTick` 计数器
+- 仓室列表同步从每 tick 检查改为每 20 tick（1秒）检查一次 dirty 标记
+- 减少网络数据包发送频率，降低网络流量
+
+### 变更文件
+
+- `hatch/adaptive/AdaptiveHatchHelper.java`：新增 `getGridEULong` / `getGridEUBigInteger` 工具方法
+- `hatch/adaptive/AdaptiveNetHatch.java`：BigInteger→long 简化
+- `hatch/adaptive/AdaptiveNetLaserHatch.java`：同上
+- `hatch/adaptive/AdaptiveNetDynamoHatch.java`：同上
+- `hatch/adaptive/AdaptiveNetLaserTargetHatch.java`：同上
+- `hatch/adaptive/AdaptiveNetTerminal.java`：BigInteger 简化 + syncTick 计数器
+
+---
+
 ## 3.18.1-fix2 - WorldData 持久化 + 真实负载 EU/t + 耗尽时间汉化 + 彩色 Tier
 
 > 作者：wztwzt | 更新时间：2026-09-03 | 基于 3.18.1-fix1

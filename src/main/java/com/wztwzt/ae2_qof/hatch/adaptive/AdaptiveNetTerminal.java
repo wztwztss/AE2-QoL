@@ -67,6 +67,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
     private boolean autoReconnect = true;
     private int displayMode = 0; // 0=regular, 1=scientific, 2=KMG
     private net.minecraft.world.World world;
+    private int syncTick = 0;
 
     private int currentVoltageTier = 0;
     private int[] hatchTiers = new int[HatchType.COUNT];
@@ -246,11 +247,14 @@ public class AdaptiveNetTerminal extends MTEHatch {
         if (aBase.isServerSide() && networkOwner != null) {
             AdaptiveNetwork network = AdaptiveNetworkManager.getNetwork(networkOwner, networkFrequency);
             if (network != null) {
-                java.math.BigInteger gridEU = gregtech.common.misc.WirelessNetworkManager.getUserEU(networkOwner);
-                network.tickStats(gridEU.min(java.math.BigInteger.valueOf(Long.MAX_VALUE)).longValue());
-                if (network.isHatchListDirty()) {
-                    network.clearHatchListDirty();
-                    sendHatchListSync(aBase, network);
+                network.tickStats(AdaptiveHatchHelper.getGridEULong(networkOwner));
+                syncTick++;
+                if (syncTick >= 20) {
+                    syncTick = 0;
+                    if (network.isHatchListDirty()) {
+                        network.clearHatchListDirty();
+                        sendHatchListSync(aBase, network);
+                    }
                 }
             }
         }
@@ -425,8 +429,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
 
         final LongSyncValue gridEUSync = new LongSyncValue(() -> {
             if (networkOwner == null) return 0;
-            java.math.BigInteger eu = gregtech.common.misc.WirelessNetworkManager.getUserEU(networkOwner);
-            return eu.min(java.math.BigInteger.valueOf(Long.MAX_VALUE)).longValue();
+            return AdaptiveHatchHelper.getGridEULong(networkOwner);
         }, v -> {});
         syncManager.syncValue("wGE", gridEUSync);
 

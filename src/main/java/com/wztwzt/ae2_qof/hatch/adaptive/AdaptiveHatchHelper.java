@@ -1,5 +1,6 @@
 package com.wztwzt.ae2_qof.hatch.adaptive;
 
+import java.math.BigInteger;
 import java.util.UUID;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -81,6 +82,17 @@ public class AdaptiveHatchHelper {
 
     public int getRealFlowEUt() { return realFlowEUt; }
     public void setRealFlowEUt(int realFlowEUt) { this.realFlowEUt = realFlowEUt; }
+
+    public static long getGridEULong(UUID owner) {
+        if (owner == null) return 0;
+        BigInteger eu = gregtech.common.misc.WirelessNetworkManager.getUserEU(owner);
+        return eu.min(BigInteger.valueOf(Long.MAX_VALUE)).longValue();
+    }
+
+    public static BigInteger getGridEUBigInteger(UUID owner) {
+        if (owner == null) return BigInteger.ZERO;
+        return gregtech.common.misc.WirelessNetworkManager.getUserEU(owner);
+    }
 
     public boolean isBound() {
         return networkOwner != null && networkFrequency >= 0;
