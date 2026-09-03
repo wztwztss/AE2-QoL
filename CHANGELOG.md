@@ -1,3 +1,45 @@
+## 3.18.1-fix6 - 团队归一 + 仓室图标 + UI 全面优化
+
+> 作者：wztwzt | 更新时间：2026-09-03 | 基于 3.18.1-fix5
+
+### 新增：SpaceProjectManager 团队归一
+
+- 新增 `AdaptiveTeamHelper.java`：`resolveLeader(UUID)` / `resolveMembers(UUID)` / `isMemberOf(player, leader)`
+- `AdaptiveNetworkManager` 所有 owner 入口（`getOrCreateNetwork`/`getNetwork`/`removeNetwork`/`registerTerminal`/`registerHatch`/`unregisterTerminal`/`unregisterHatch`/`updateAllHatches`/`migrateHatches`）均先 `resolveLeader` 归一
+- `AdaptiveNetTerminal.onFirstTick`：`networkOwner = AdaptiveTeamHelper.resolveLeader(aBase.getOwnerUuid())`
+- `HatchActionPacket` 传送权限：`player.getUniqueID().equals(uuid)` → `AdaptiveTeamHelper.isMemberOf(player.getUniqueID(), uuid)`
+- `ItemNetworkDataStick.writeData`：写入时存 leader UUID，团队成员共享闪存
+
+### 新增：仓室物品图标
+
+- 仓室列表每行左侧渲染16x16仓室物品图标（`ItemDrawable`）
+- 通过 `GregTechAPI.METATILEENTITIES[metaId].getStackForm(1L)` 获取 ItemStack
+- `metaId == -1` 时显示空占位
+
+### 优化：UI 全面优化
+
+- **统一宽度**：所有 Tab 控件宽度统一为 `CONTENT_W` (330px)，修复 Monitor Tab 350px 溢出
+- **分隔线**：每个 Tab 标题下方、各区块之间加1px分隔线（`separator()`）
+- **UUID 截断**：Status Tab owner 显示截取前8位 + `...`
+- **Settings Tab**：4个 slot 行之间加分隔线
+- **Monitor Tab**：模式按钮加 `BUTTON_CLEAN` 背景
+- **Hatch List Tab**：
+  - 行布局改为 `[图标] [文本]`，图标16x16 + 4px间距
+  - 名称移入 tooltip 第一行，主显示只显示 `[D] amps tier EU/t`
+  - 列表高度从175增至185
+  - footer 分隔符改为 ` | `
+- **间距统一**：childPadding 统一为4px
+
+### 变更文件
+
+- 新增 `hatch/adaptive/AdaptiveTeamHelper.java`
+- `hatch/adaptive/AdaptiveNetworkManager.java`：所有 owner 入口 resolveLeader
+- `hatch/adaptive/AdaptiveNetTerminal.java`：onFirstTick 归一 + UI 全面重写 + 图标
+- `network/HatchActionPacket.java`：传送权限改团队
+- `item/ItemNetworkDataStick.java`：写入时存 leader
+
+---
+
 ## 3.18.1-fix5 - 仓室高亮颜色区分
 
 > 作者：wztwzt | 更新时间：2026-09-03 | 基于 3.18.1-fix4

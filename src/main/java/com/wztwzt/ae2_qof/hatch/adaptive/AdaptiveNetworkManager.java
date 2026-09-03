@@ -17,21 +17,27 @@ public class AdaptiveNetworkManager {
     }
 
     public static AdaptiveNetwork getOrCreateNetwork(UUID owner, int frequency) {
-        String key = makeKey(owner, frequency);
+        UUID leader = AdaptiveTeamHelper.resolveLeader(owner);
+        if (leader == null) return null;
+        String key = makeKey(leader, frequency);
         AdaptiveNetwork network = networks.get(key);
         if (network == null) {
-            network = new AdaptiveNetwork(owner, frequency);
+            network = new AdaptiveNetwork(leader, frequency);
             networks.put(key, network);
         }
         return network;
     }
 
     public static AdaptiveNetwork getNetwork(UUID owner, int frequency) {
-        return networks.get(makeKey(owner, frequency));
+        UUID leader = AdaptiveTeamHelper.resolveLeader(owner);
+        if (leader == null) return null;
+        return networks.get(makeKey(leader, frequency));
     }
 
     public static void removeNetwork(UUID owner, int frequency) {
-        String key = makeKey(owner, frequency);
+        UUID leader = AdaptiveTeamHelper.resolveLeader(owner);
+        if (leader == null) return;
+        String key = makeKey(leader, frequency);
         AdaptiveNetwork network = networks.remove(key);
         if (network != null) {
             saveStatsToDisk(network);
@@ -53,7 +59,7 @@ public class AdaptiveNetworkManager {
         }
 
         AdaptiveNetwork network = getOrCreateNetwork(owner, frequency);
-        if (network.getTerminal() == null) {
+        if (network != null && network.getTerminal() == null) {
             loadStatsFromDisk(network);
             network.setTerminal(terminal);
         }
@@ -87,7 +93,9 @@ public class AdaptiveNetworkManager {
         }
 
         AdaptiveNetwork network = getOrCreateNetwork(owner, frequency);
-        network.addHelper(helper);
+        if (network != null) {
+            network.addHelper(helper);
+        }
     }
 
     public static void unregisterHatch(AdaptiveHatchHelper helper) {
@@ -158,7 +166,7 @@ public class AdaptiveNetworkManager {
         if (serverWorld == null) return;
         AdaptiveNetwork network = getNetwork(owner, frequency);
         if (network == null) return;
-        String key = makeKey(owner, frequency);
+        String key = makeKey(network.getOwner(), network.getFrequency());
         GridEnergyWorldData worldData = GridEnergyWorldData.get(serverWorld);
         GridEnergyStats stats = network.getStats();
         if (stats != null) {

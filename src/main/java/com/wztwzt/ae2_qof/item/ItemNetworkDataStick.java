@@ -8,6 +8,8 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumChatFormatting;
+
+import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveTeamHelper;
 import net.minecraft.util.StatCollector;
 
 import cpw.mods.fml.common.registry.GameRegistry;
@@ -52,14 +54,16 @@ public class ItemNetworkDataStick extends Item {
                 stack != null ? stack.getItem() : "null");
             return;
         }
+        UUID leader = AdaptiveTeamHelper.resolveLeader(owner);
+        if (leader == null) leader = owner;
         NBTTagCompound nbt = stack.getTagCompound();
         if (nbt == null) {
             nbt = new NBTTagCompound();
             stack.setTagCompound(nbt);
         }
-        nbt.setString(NBT_OWNER, owner.toString());
+        nbt.setString(NBT_OWNER, leader.toString());
         nbt.setInteger(NBT_FREQUENCY, frequency);
-        LOG.info("[AE2QoL] writeData: owner={}, freq={}", owner, frequency);
+        LOG.info("[AE2QoL] writeData: owner={}, leader={}, freq={}", owner, leader, frequency);
     }
 
     public static boolean hasData(ItemStack stack) {

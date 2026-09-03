@@ -158,7 +158,7 @@ public class HatchActionPacket implements IMessage {
                         handleHighlight(player, x, y, z, dim, hatchType);
                         break;
                     case ACTION_TELEPORT:
-                        if (player.getUniqueID().equals(uuid)) {
+                        if (com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveTeamHelper.isMemberOf(player.getUniqueID(), uuid)) {
                             handleTeleport(player, x, y, z);
                         }
                         break;

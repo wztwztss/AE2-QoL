@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.cleanroommc.modularui.api.drawable.IKey;
 import com.cleanroommc.modularui.drawable.GuiTextures;
+import com.cleanroommc.modularui.drawable.ItemDrawable;
 import com.cleanroommc.modularui.factory.PosGuiData;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.screen.UISettings;
@@ -266,7 +267,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
         super.onFirstTick(aBase);
         if (aBase.isServerSide()) {
             this.world = aBase.getWorld();
-            networkOwner = aBase.getOwnerUuid();
+            networkOwner = AdaptiveTeamHelper.resolveLeader(aBase.getOwnerUuid());
             if (networkOwner != null) {
                 AdaptiveNetworkManager.registerTerminal(this, world);
             }
@@ -517,26 +518,29 @@ public class AdaptiveNetTerminal extends MTEHatch {
                                 IntSyncValue[] hatchCountSyncs) {
         Flow tab = Flow.column().coverChildren().childPadding(4);
 
-        tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.title")).size(300, 16));
+        tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.title")).size(CONTENT_W, 16));
+        tab.child(separator(CONTENT_W));
 
         tab.child(new TextWidget<>(IKey.dynamic(() -> {
             return EnumChatFormatting.AQUA
                 + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.frequency")
                 + ": " + EnumChatFormatting.WHITE + frequencySync.getIntValue();
-        })).size(300, 14));
+        })).size(CONTENT_W, 14));
 
         tab.child(new TextWidget<>(IKey.dynamic(() -> {
             boolean bound = frequencySync.getIntValue() >= 0;
             if (!bound) {
-                return EnumChatFormatting.RED + "● "
+                return EnumChatFormatting.RED + "\u25cf "
                     + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.no_owner");
             }
-            return EnumChatFormatting.GREEN + "● "
+            String ownerStr = networkOwner != null ? networkOwner.toString() : "";
+            if (ownerStr.length() > 8) ownerStr = ownerStr.substring(0, 8) + "...";
+            return EnumChatFormatting.GREEN + "\u25cf "
                 + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.owner")
-                + ": " + EnumChatFormatting.WHITE + networkOwner;
-        })).size(300, 14));
+                + ": " + EnumChatFormatting.WHITE + ownerStr;
+        })).size(CONTENT_W, 14));
 
-        tab.child(new TextWidget<>(IKey.str("")).size(300, 4));
+        tab.child(separator(CONTENT_W));
 
         String[] labels = {
             "ae2_qof.gui.adaptive_terminal.dynamo_hatch",
@@ -561,15 +565,15 @@ public class AdaptiveNetTerminal extends MTEHatch {
                         + ": " + tierName
                         + " (" + EnumChatFormatting.GOLD + V[tier] + EnumChatFormatting.WHITE + ")"
                         + " " + EnumChatFormatting.GREEN + amps + "A"
-                        + " -" + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.loaded") + ": "
+                        + " | " + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.loaded") + ": "
                         + loadedStr;
                 }
                 return EnumChatFormatting.WHITE
                     + StatCollector.translateToLocal(labels[idx])
                     + ": " + EnumChatFormatting.YELLOW + "ULV 0V 0A"
-                    + " -" + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.loaded") + ": "
+                    + " | " + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.loaded") + ": "
                     + loadedStr;
-            })).size(310, 14));
+            })).size(CONTENT_W, 14));
         }
 
         return tab;
@@ -578,8 +582,9 @@ public class AdaptiveNetTerminal extends MTEHatch {
     private Flow buildSettingsTab(IntSyncValue[] hatchTierSyncs, IntSyncValue[] hatchAmpSyncs) {
         Flow tab = Flow.column().coverChildren().childPadding(4);
 
-        tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.settings.title")).size(300, 16));
-        tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.settings.slots")).size(300, 14));
+        tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.settings.title")).size(CONTENT_W, 16));
+        tab.child(separator(CONTENT_W));
+        tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.settings.slots")).size(CONTENT_W, 14));
 
         String[] slotLabels = {
             "ae2_qof.gui.adaptive_terminal.dynamo_slot",
@@ -603,11 +608,13 @@ public class AdaptiveNetTerminal extends MTEHatch {
                     }
                     return EnumChatFormatting.YELLOW + "ULV 0V 0A";
                 })).size(120, 14)));
+            if (i < 3) tab.child(separator(CONTENT_W));
         }
 
-        tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.settings.hint")).size(300, 14));
+        tab.child(separator(CONTENT_W));
+        tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.settings.hint")).size(CONTENT_W, 14));
         tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.settings.all_slots_required"))
-            .size(300, 14));
+            .size(CONTENT_W, 14));
 
         return tab;
     }
@@ -615,15 +622,16 @@ public class AdaptiveNetTerminal extends MTEHatch {
     private Flow buildFrequencyTab(IntSyncValue frequencySync) {
         Flow tab = Flow.column().coverChildren().childPadding(4);
 
-        tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.frequency.title")).size(300, 16));
-        tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.frequency.input")).size(300, 14));
+        tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.frequency.title")).size(CONTENT_W, 16));
+        tab.child(separator(CONTENT_W));
+        tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.frequency.input")).size(CONTENT_W, 14));
 
         tab.child(new TextFieldWidget().value(frequencySync).formatAsInteger(true)
             .numbersInt(() -> (long) Integer.MIN_VALUE, () -> (long) Integer.MAX_VALUE)
             .setMaxLength(12).size(200, 16));
 
-        tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.frequency.hint")).size(300, 14));
-        tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.frequency.hint2")).size(300, 14));
+        tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.frequency.hint")).size(CONTENT_W, 14));
+        tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.frequency.hint2")).size(CONTENT_W, 14));
 
         return tab;
     }
@@ -724,20 +732,20 @@ public class AdaptiveNetTerminal extends MTEHatch {
             .child(new TextWidget<>(IKey.dynamic(() ->
                 StatCollector.translateToLocal(MODE_KEYS[displayMode])
             )).size(80, 12))
+            .background(GuiTextures.BUTTON_CLEAN)
             .onMousePressed((event) -> {
                 displayMode = (displayMode + 1) % 3;
                 return true;
             }));
         tab.child(titleRow);
-
-        tab.child(new TextWidget<>(IKey.str("")).size(300, 4));
+        tab.child(separator(CONTENT_W));
 
         tab.child(new TextWidget<>(IKey.dynamic(() -> {
             long gridEU = gridEUSync.getLongValue();
             String value = formatEU(gridEU, displayMode) + " EU";
             return EnumChatFormatting.AQUA + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.monitor.grid_energy")
                 + ": " + EnumChatFormatting.WHITE + value;
-        })).size(300, 14));
+        })).size(CONTENT_W, 14));
 
         tab.child(new TextWidget<>(IKey.dynamic(() -> {
             long change = change1hSync.getLongValue();
@@ -747,7 +755,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
             EnumChatFormatting color = change >= 0 ? EnumChatFormatting.GREEN : EnumChatFormatting.RED;
             return color + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.monitor.change_1h")
                 + ": " + EnumChatFormatting.WHITE + changeStr + EnumChatFormatting.YELLOW + rateStr;
-        })).size(350, 14));
+        })).size(CONTENT_W, 14));
 
         tab.child(new TextWidget<>(IKey.dynamic(() -> {
             long change = change10mSync.getLongValue();
@@ -757,7 +765,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
             EnumChatFormatting color = change >= 0 ? EnumChatFormatting.GREEN : EnumChatFormatting.RED;
             return color + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.monitor.change_10m")
                 + ": " + EnumChatFormatting.WHITE + changeStr + EnumChatFormatting.YELLOW + rateStr;
-        })).size(350, 14));
+        })).size(CONTENT_W, 14));
 
         tab.child(new TextWidget<>(IKey.dynamic(() -> {
             long avgOut = avgOut10mSync.getLongValue();
@@ -771,25 +779,25 @@ public class AdaptiveNetTerminal extends MTEHatch {
             }
             return EnumChatFormatting.YELLOW + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.monitor.estimated_empty")
                 + ": " + EnumChatFormatting.WHITE + timeStr;
-        })).size(300, 14));
+        })).size(CONTENT_W, 14));
 
-        tab.child(new TextWidget<>(IKey.str("")).size(300, 4));
+        tab.child(separator(CONTENT_W));
 
         tab.child(new TextWidget<>(IKey.dynamic(() -> {
             int inRate = instantInputSync.getIntValue();
             String value = formatEU(inRate, displayMode) + " EU/t" + formatAmpTier(inRate);
             return EnumChatFormatting.GREEN + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.monitor.instant_input")
                 + ": " + EnumChatFormatting.WHITE + value;
-        })).size(300, 14));
+        })).size(CONTENT_W, 14));
 
         tab.child(new TextWidget<>(IKey.dynamic(() -> {
             int outRate = instantOutputSync.getIntValue();
             String value = formatEU(outRate, displayMode) + " EU/t" + formatAmpTier(outRate);
             return EnumChatFormatting.RED + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.monitor.instant_output")
                 + ": " + EnumChatFormatting.WHITE + value;
-        })).size(300, 14));
+        })).size(CONTENT_W, 14));
 
-        tab.child(new TextWidget<>(IKey.str("")).size(300, 4));
+        tab.child(separator(CONTENT_W));
 
         tab.child(new TextWidget<>(IKey.dynamic(() -> {
             int inRate = instantInputSync.getIntValue();
@@ -803,7 +811,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
                 + ": " + EnumChatFormatting.GREEN + "+" + inStr
                 + EnumChatFormatting.WHITE + " / "
                 + EnumChatFormatting.RED + "-" + outStr;
-        })).size(350, 14));
+        })).size(CONTENT_W, 14));
 
         return tab;
     }
@@ -822,28 +830,41 @@ public class AdaptiveNetTerminal extends MTEHatch {
 
         ListWidget list = new ListWidget();
         list.scrollDirection(com.cleanroommc.modularui.api.GuiAxis.Y);
-        list.size(CONTENT_W, 175);
+        list.size(CONTENT_W, 185);
 
         com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache cache = com.wztwzt.ae2_qof.client.ClientState.hatchListCache;
         if (cache != null) {
             for (int i = 0; i < cache.entries.size(); i++) {
                 final com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache.HatchEntry entry = cache.entries.get(i);
                 final int fi = i;
+
+                net.minecraft.item.ItemStack iconStack = null;
+                if (entry.metaId >= 0 && entry.metaId < GregTechAPI.METATILEENTITIES.length
+                    && GregTechAPI.METATILEENTITIES[entry.metaId] instanceof MetaTileEntity) {
+                    iconStack = ((MetaTileEntity) GregTechAPI.METATILEENTITIES[entry.metaId]).getStackForm(1L);
+                }
+                final IWidget iconWidget = iconStack != null
+                    ? new ItemDrawable(iconStack).asWidget().size(16, 16)
+                    : new ItemDrawable().asWidget().size(16, 16);
+
                 list.child(new ButtonWidget<>()
-                    .child(new TextWidget<>(IKey.dynamic(() -> {
-                        String tierName = GTUtility.getColoredTierNameFromTier((byte) entry.tier);
-                        String ampStr = String.format("(%.1fA %s)", (double) entry.amps, tierName);
-                        String eutStr = entry.realFlowEUt > 0
-                            ? formatEU(entry.realFlowEUt, displayMode) + " EU/t"
-                            : "0 EU/t";
-                        String typeTag = entry.hatchType == 0 ? "[D]" : entry.hatchType == 1 ? "[E]"
-                            : entry.hatchType == 2 ? "[LS]" : "[LT]";
-                        return EnumChatFormatting.WHITE + typeTag + " "
-                            + entry.name + " "
-                            + EnumChatFormatting.AQUA + ampStr + " "
-                            + EnumChatFormatting.GREEN + eutStr;
-                    })).size(CONTENT_W - 8, 12))
+                    .child(Flow.row().coverChildren().childPadding(4)
+                        .child(iconWidget)
+                        .child(new TextWidget<>(IKey.dynamic(() -> {
+                            String tierName = GTUtility.getColoredTierNameFromTier((byte) entry.tier);
+                            String ampStr = String.format("%.1fA", (double) entry.amps);
+                            String eutStr = entry.realFlowEUt > 0
+                                ? formatEU(entry.realFlowEUt, displayMode) + " EU/t"
+                                : "0 EU/t";
+                            String typeTag = entry.hatchType == 0 ? "[D]" : entry.hatchType == 1 ? "[E]"
+                                : entry.hatchType == 2 ? "[LS]" : "[LT]";
+                            return EnumChatFormatting.WHITE + typeTag + " "
+                                + EnumChatFormatting.AQUA + ampStr + " " + tierName + " "
+                                + EnumChatFormatting.GREEN + eutStr;
+                        })).size(CONTENT_W - 28, 12)))
                     .tooltipBuilder(t -> {
+                        t.addLine(IKey.str(
+                            EnumChatFormatting.WHITE + entry.name));
                         t.addLine(IKey.str(
                             EnumChatFormatting.GRAY + "[" + entry.x + ", " + entry.y + ", " + entry.z + "] dim:" + entry.dim));
                         t.addLine(IKey.str(
@@ -870,10 +891,15 @@ public class AdaptiveNetTerminal extends MTEHatch {
             com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache c = com.wztwzt.ae2_qof.client.ClientState.hatchListCache;
             if (c == null) return EnumChatFormatting.GRAY + "---";
             return EnumChatFormatting.WHITE + c.inputCountText
-                + EnumChatFormatting.WHITE + "  " + c.outputCountText;
+                + EnumChatFormatting.GRAY + " | "
+                + EnumChatFormatting.WHITE + c.outputCountText;
         })).size(CONTENT_W, 12));
 
         return tab;
+    }
+
+    private static IWidget separator(int width) {
+        return new TextWidget<>(IKey.str("")).size(width, 1);
     }
 
     @Override
