@@ -184,9 +184,11 @@ public class HatchActionPacket implements IMessage {
             MinecraftServer server = MinecraftServer.getServer();
             net.minecraft.world.WorldServer targetWorld = server.worldServerForDimension(dim);
             if (targetWorld == null) return;
-            int oldDim = player.dimension;
-            server.getConfigurationManager().transferPlayerToDimension(player, dim, new net.minecraft.world.Teleporter(targetWorld));
+            server.getConfigurationManager().transferPlayerToDimension(player, dim,
+                new net.minecraft.world.Teleporter(targetWorld));
             player.setPositionAndUpdate(x + 0.5, y + 1, z + 0.5);
+            player.addChatMessage(new net.minecraft.util.ChatComponentText(
+                net.minecraft.util.EnumChatFormatting.GREEN + "Teleported to [" + x + ", " + y + ", " + z + "] dim:" + dim));
         }
     }
 }

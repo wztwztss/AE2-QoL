@@ -1,3 +1,26 @@
+## 3.18.1-fix9 - GT数据棒链接 + 跨维度传送修复
+
+> 作者：wztwzt | 更新时间：2026-09-03 | 基于 3.18.1-fix8
+
+### 新增：GT 数据棒链接（MergedTerminal）
+
+- 在二合一终端的接口列表中，手持 GT 数据棒点击接口条目
+- 自动将接口方块坐标写入数据棒 NBT（type/x/y/z/dim）
+- 数据棒显示名称更新为 "Crafting Input Buffer Link Data Stick (x, y, z)"
+- 聊天提示链接成功
+
+### 修复：跨维度传送
+
+- `HatchActionPacket.handleTeleport` 修复传送后位置同步
+- 传送成功后发送聊天提示（绿色文字显示目标坐标和维度）
+
+### 变更文件
+
+- `merged/ContainerMergedTerminal.java`：GT 数据棒链接逻辑
+- `network/HatchActionPacket.java`：传送后聊天提示 + 位置同步修复
+
+---
+
 ## 3.18.1-fix8 - 高亮增强 + 所有者显示 + 机器名/图标 + Footer修复
 
 > 作者：wztwzt | 更新时间：2026-09-03 | 基于 3.18.1-fix7

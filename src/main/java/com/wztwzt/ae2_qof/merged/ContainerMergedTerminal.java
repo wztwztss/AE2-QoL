@@ -268,6 +268,29 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
             InvTracker tracker = this.trackedById.get(id);
             if (tracker == null) return;
             ItemStack is = player.inventory.getItemStack();
+
+            if (is != null && gregtech.api.enums.ItemList.Tool_DataStick.isStackEqual(is)) {
+                if (!player.worldObj.isRemote) {
+                    net.minecraft.nbt.NBTTagCompound tag = is.getTagCompound();
+                    if (tag == null) {
+                        tag = new net.minecraft.nbt.NBTTagCompound();
+                        is.setTagCompound(tag);
+                    }
+                    tag.setString("type", "CraftingInputBuffer");
+                    tag.setInteger("x", tracker.x);
+                    tag.setInteger("y", tracker.y);
+                    tag.setInteger("z", tracker.z);
+                    tag.setInteger("dim", tracker.dim);
+                    is.setStackDisplayName("Crafting Input Buffer Link Data Stick ("
+                        + tracker.x + ", " + tracker.y + ", " + tracker.z + ")");
+                    player.inventory.markDirty();
+                    player.inventoryContainer.detectAndSendChanges();
+                    player.addChatMessage(new net.minecraft.util.ChatComponentText(
+                        net.minecraft.util.EnumChatFormatting.GREEN + "Linked to [" + tracker.x + ", " + tracker.y + ", " + tracker.z + "]"));
+                }
+                return;
+            }
+
             if (is != null && !(is.getItem() instanceof ItemEncodedPattern)) return;
             ItemStack slotStack = tracker.patterns.getStackInSlot(slotId);
             AdaptorPlayerHand playerHand = new AdaptorPlayerHand(player);
