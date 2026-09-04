@@ -97,9 +97,9 @@ public class AdaptiveNetDynamoHatch extends MTEHatchDynamo {
             if (machineMTE != null) {
                 net.minecraft.item.ItemStack machineStack = machineMTE.getStackForm(1L);
                 if (machineStack != null) {
-                    helper.setMachineInfo((short) machineStack.getItemDamage(), machineStack.getDisplayName());
+                    helper.setMachineInfo(machineStack.getItemDamage(), machineStack.getDisplayName());
                 } else {
-                    helper.setMachineInfo((short) -1,
+                    helper.setMachineInfo(-1,
                         net.minecraft.util.StatCollector.translateToLocal(helper.getHatchType().getTranslationKey()));
                 }
             } else {
@@ -107,9 +107,9 @@ public class AdaptiveNetDynamoHatch extends MTEHatchDynamo {
                 if (mte != null) {
                     net.minecraft.item.ItemStack stack = mte.getStackForm(1L);
                     if (stack != null) {
-                        helper.setMachineInfo((short) stack.getItemDamage(), stack.getDisplayName());
+                        helper.setMachineInfo(stack.getItemDamage(), stack.getDisplayName());
                     } else {
-                        helper.setMachineInfo((short) -1,
+                        helper.setMachineInfo(-1,
                             net.minecraft.util.StatCollector.translateToLocal(helper.getHatchType().getTranslationKey()));
                     }
                 }

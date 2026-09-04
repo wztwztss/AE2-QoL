@@ -10,6 +10,10 @@ import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.StatCollector;
 import net.minecraftforge.common.util.ForgeDirection;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
+import gregtech.api.metatileentity.MetaTileEntity;
+import gregtech.api.metatileentity.implementations.MTEMultiBlockBase;
+import gregtech.api.metatileentity.implementations.MTEEnhancedMultiBlockBase;
+import org.joml.Vector3f;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,7 +32,7 @@ public class AdaptiveHatchHelper {
     private int posX, posY, posZ, posDim;
     private short cachedMetaId = -1;
     private String cachedName = "";
-    private short machineMetaId = -1;
+    private int machineMetaId = -1;
     private String machineName = "";
     private int realFlowEUt = 0;
 
@@ -84,15 +88,22 @@ public class AdaptiveHatchHelper {
         this.cachedName = name != null ? name : "";
     }
 
-    public short getMachineMetaId() { return machineMetaId; }
+    public int getMachineMetaId() { return machineMetaId; }
     public String getMachineName() { return machineName; }
 
-    public void setMachineInfo(short metaId, String name) {
+    public void setMachineInfo(int metaId, String name) {
         this.machineMetaId = metaId;
         this.machineName = name != null ? name : "";
     }
 
-    public static gregtech.api.metatileentity.MetaTileEntity findAttachedMachine(IGregTechTileEntity aBase) {
+    public static boolean isAdaptiveHatch(MetaTileEntity mte) {
+        return mte instanceof AdaptiveNetHatch
+            || mte instanceof AdaptiveNetDynamoHatch
+            || mte instanceof AdaptiveNetLaserHatch
+            || mte instanceof AdaptiveNetLaserTargetHatch;
+    }
+
+    public static MetaTileEntity findAttachedMachine(IGregTechTileEntity aBase) {
         net.minecraft.world.World world = aBase.getWorld();
         int x = aBase.getXCoord();
         int y = aBase.getYCoord();
@@ -102,17 +113,16 @@ public class AdaptiveHatchHelper {
         IGregTechTileEntity neighbor = aBase.getIGregTechTileEntityAtSide(back);
         if (neighbor != null) {
             Object rawMte = neighbor.getMetaTileEntity();
-            if (rawMte instanceof gregtech.api.metatileentity.MetaTileEntity) {
-                gregtech.api.metatileentity.MetaTileEntity mte =
-                    (gregtech.api.metatileentity.MetaTileEntity) rawMte;
-                if (!(mte instanceof AdaptiveNetHatch)
-                    && !(mte instanceof AdaptiveNetDynamoHatch)
-                    && !(mte instanceof AdaptiveNetLaserHatch)
-                    && !(mte instanceof AdaptiveNetLaserTargetHatch)) {
+            if (rawMte instanceof MetaTileEntity) {
+                MetaTileEntity mte = (MetaTileEntity) rawMte;
+                if (!isAdaptiveHatch(mte)) {
                     return mte;
                 }
             }
         }
+
+        MTEMultiBlockBase bestMultiblock = null;
+        double bestDistSq = Double.MAX_VALUE;
 
         for (int dx = -8; dx <= 8; dx++) {
             for (int dy = -8; dy <= 8; dy++) {
@@ -120,15 +130,52 @@ public class AdaptiveHatchHelper {
                     if (dx == 0 && dy == 0 && dz == 0) continue;
                     net.minecraft.tileentity.TileEntity te = world.getTileEntity(x + dx, y + dy, z + dz);
                     if (te instanceof IGregTechTileEntity) {
-                        IGregTechTileEntity gte = (IGregTechTileEntity) te;
-                        Object rawMte = gte.getMetaTileEntity();
-                        if (rawMte instanceof gregtech.api.metatileentity.MetaTileEntity) {
-                            gregtech.api.metatileentity.MetaTileEntity mte =
-                                (gregtech.api.metatileentity.MetaTileEntity) rawMte;
-                            if (!(mte instanceof AdaptiveNetHatch)
-                                && !(mte instanceof AdaptiveNetDynamoHatch)
-                                && !(mte instanceof AdaptiveNetLaserHatch)
-                                && !(mte instanceof AdaptiveNetLaserTargetHatch)) {
+                        Object rawMte = ((IGregTechTileEntity) te).getMetaTileEntity();
+                        if (rawMte instanceof MTEMultiBlockBase) {
+                            MTEMultiBlockBase multi = (MTEMultiBlockBase) rawMte;
+                            if (!multi.mMachine) continue;
+                            if (multi instanceof MTEEnhancedMultiBlockBase) {
+                                MTEEnhancedMultiBlockBase<?> enhanced =
+                                    (MTEEnhancedMultiBlockBase<?>) multi;
+                                Vector3f center = enhanced.getCenter();
+                                if (center != null) {
+                                    double cdx = center.x - (x + 0.5);
+                                    double cdy = center.y - (y + 0.5);
+                                    double cdz = center.z - (z + 0.5);
+                                    double distSq = cdx * cdx + cdy * cdy + cdz * cdz;
+                                    int radius = enhanced.getApproximateRadius();
+                                    if (distSq <= (radius + 2) * (radius + 2) && distSq < bestDistSq) {
+                                        bestDistSq = distSq;
+                                        bestMultiblock = multi;
+                                    }
+                                }
+                            } else {
+                                double distSq = dx * dx + dy * dy + dz * dz;
+                                if (distSq < bestDistSq) {
+                                    bestDistSq = distSq;
+                                    bestMultiblock = multi;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (bestMultiblock != null) {
+            return bestMultiblock;
+        }
+
+        for (int dx = -4; dx <= 4; dx++) {
+            for (int dy = -4; dy <= 4; dy++) {
+                for (int dz = -4; dz <= 4; dz++) {
+                    if (dx == 0 && dy == 0 && dz == 0) continue;
+                    net.minecraft.tileentity.TileEntity te = world.getTileEntity(x + dx, y + dy, z + dz);
+                    if (te instanceof IGregTechTileEntity) {
+                        Object rawMte = ((IGregTechTileEntity) te).getMetaTileEntity();
+                        if (rawMte instanceof MetaTileEntity) {
+                            MetaTileEntity mte = (MetaTileEntity) rawMte;
+                            if (!isAdaptiveHatch(mte)) {
                                 return mte;
                             }
                         }
@@ -232,7 +279,7 @@ public class AdaptiveHatchHelper {
         aNBT.setInteger("ae2qolPD", posDim);
         aNBT.setShort("ae2qolMI", cachedMetaId);
         aNBT.setString("ae2qolMN", cachedName);
-        aNBT.setShort("ae2qolMMI", machineMetaId);
+        aNBT.setInteger("ae2qolMMI", machineMetaId);
         aNBT.setString("ae2qolMMN", machineName);
     }
 
@@ -253,7 +300,7 @@ public class AdaptiveHatchHelper {
         cachedMetaId = aNBT.getShort("ae2qolMI");
         cachedName = aNBT.getString("ae2qolMN");
         if (cachedName == null) cachedName = "";
-        machineMetaId = aNBT.getShort("ae2qolMMI");
+        machineMetaId = aNBT.getInteger("ae2qolMMI");
         machineName = aNBT.getString("ae2qolMMN");
         if (machineName == null) machineName = "";
     }

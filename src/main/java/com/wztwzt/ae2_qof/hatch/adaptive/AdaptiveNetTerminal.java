@@ -143,6 +143,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
             helpers = network.getAllHelpers();
         }
 
+        java.util.LinkedHashSet<String> seenPositions = new java.util.LinkedHashSet<>();
         java.util.List<HatchListCache.HatchEntry> entries = new java.util.ArrayList<>(helpers.size());
         int globalIndex = 0;
         int totalIn = 0, totalOut = 0;
@@ -158,22 +159,25 @@ public class AdaptiveNetTerminal extends MTEHatch {
         }
 
         for (AdaptiveHatchHelper h : helpers) {
+            String posKey = h.getX() + "," + h.getY() + "," + h.getZ() + "," + h.getDim();
+            if (!seenPositions.add(posKey)) continue;
+
             int tier = h.getCurrentVoltageTier();
             int amps = h.getCurrentAmps();
             HatchType ht = h.getHatchType();
-            int eut = 0;
+            long eut = 0;
 
             if (ht == HatchType.ENERGY) {
-                eut = (int) (V[tier] * (long) amps);
+                eut = V[tier] * (long) amps;
                 totalIn++;
             } else if (ht == HatchType.LASER_SOURCE) {
-                eut = (int) (V[tier] * 2L * amps);
+                eut = V[tier] * 2L * amps;
                 totalIn++;
             } else if (ht == HatchType.DYNAMO) {
-                eut = (int) (V[tier] * (long) amps);
+                eut = V[tier] * (long) amps;
                 totalOut++;
             } else if (ht == HatchType.LASER_TARGET) {
-                eut = (int) (V[tier] * 2L * amps);
+                eut = V[tier] * 2L * amps;
                 totalOut++;
             } else {
                 totalOut++;
@@ -181,7 +185,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
 
             String displayName = h.getMachineName();
             if (displayName == null || displayName.isEmpty()) displayName = h.getCachedName();
-            short displayMetaId = h.getMachineMetaId();
+            int displayMetaId = h.getMachineMetaId();
             if (displayMetaId < 0) displayMetaId = h.getCachedMetaId();
 
             entries.add(new HatchListCache.HatchEntry(
@@ -549,7 +553,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
     private Flow buildStatusTab(IntSyncValue frequencySync, IntSyncValue voltageTierSync,
                                 IntSyncValue[] hatchTierSyncs, IntSyncValue[] hatchAmpSyncs,
                                 IntSyncValue[] hatchCountSyncs, StringSyncValue ownerNameSync) {
-        Flow tab = Flow.column().coverChildren().childPadding(4);
+        Flow tab = Flow.column().size(CONTENT_W, 0).childPadding(4);
 
         tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.title")).size(CONTENT_W, 16));
         tab.child(separator(CONTENT_W));
@@ -757,7 +761,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
     private Flow buildMonitorTab(LongSyncValue gridEUSync, LongSyncValue change1hSync, LongSyncValue change10mSync,
                                   LongSyncValue avgOut10mSync, IntSyncValue instantInputSync,
                                   IntSyncValue instantOutputSync) {
-        Flow tab = Flow.column().coverChildren().childPadding(4);
+        Flow tab = Flow.column().size(CONTENT_W, 0).childPadding(4);
 
         Flow titleRow = Flow.row().coverChildren().childPadding(4);
         titleRow.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.monitor.title")).size(200, 16));
@@ -863,7 +867,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
 
         ListWidget list = new ListWidget();
         list.scrollDirection(com.cleanroommc.modularui.api.GuiAxis.Y);
-        list.size(CONTENT_W, 188);
+        list.size(CONTENT_W, 170);
 
         com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache cache = com.wztwzt.ae2_qof.client.ClientState.hatchListCache;
         if (cache != null) {
@@ -871,7 +875,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
                 final com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache.HatchEntry entry = cache.entries.get(i);
 
                 net.minecraft.item.ItemStack iconStack = null;
-                short iconMetaId = entry.machineMetaId >= 0 ? entry.machineMetaId : entry.metaId;
+                int iconMetaId = entry.machineMetaId >= 0 ? entry.machineMetaId : entry.metaId;
                 if (iconMetaId >= 0 && iconMetaId < GregTechAPI.METATILEENTITIES.length
                     && GregTechAPI.METATILEENTITIES[iconMetaId] instanceof MetaTileEntity) {
                     iconStack = ((MetaTileEntity) GregTechAPI.METATILEENTITIES[iconMetaId]).getStackForm(1L);

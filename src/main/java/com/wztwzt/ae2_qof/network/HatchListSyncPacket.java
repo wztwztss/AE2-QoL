@@ -49,9 +49,9 @@ public class HatchListSyncPacket implements IMessage {
             for (int i = 0; i < count; i++) {
                 int index = buf.readUnsignedShort();
                 short metaId = buf.readShort();
-                short machineMetaId = buf.readShort();
+                int machineMetaId = buf.readInt();
                 String name = cpw.mods.fml.common.network.ByteBufUtils.readUTF8String(buf);
-                int eut = buf.readInt();
+                long eut = buf.readLong();
                 int realFlowEUt = buf.readInt();
                 int tier = buf.readUnsignedByte();
                 int amps = buf.readUnsignedShort();
@@ -89,9 +89,9 @@ public class HatchListSyncPacket implements IMessage {
             for (HatchListCache.HatchEntry e : entries) {
                 buf.writeShort(e.index);
                 buf.writeShort(e.metaId);
-                buf.writeShort(e.machineMetaId);
+                buf.writeInt(e.machineMetaId);
                 cpw.mods.fml.common.network.ByteBufUtils.writeUTF8String(buf, e.name != null ? e.name : "");
-                buf.writeInt(e.eut);
+                buf.writeLong(e.eut);
                 buf.writeInt(e.realFlowEUt);
                 buf.writeByte(e.tier);
                 buf.writeShort(e.amps);

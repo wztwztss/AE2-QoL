@@ -1,3 +1,54 @@
+## 3.18.1-fix10 - 重复条目去重 + int溢出修复 + 文字溢出修复 + Footer截断修复
+
+> 作者：wztwzt | 更新时间：2026-09-04 | 基于 3.18.1-fix9
+
+### 修复：子仓列表重复条目
+
+- 根因：chunk 卸载后重建 TileEntity，旧 helper 仍留在 network 的 LinkedHashSet 中，新 helper 重复注册
+- 修复：`sendHatchListSync()` 新增按坐标去重（`LinkedHashSet<String>` 按 x,y,z,dim 去重），相同位置只保留一条
+
+### 修复：Capacity 显示 -2,147,483,648（int 溢出）
+
+- 根因：`eut` 字段为 `int`，`(int)(V[14] * amps)` 对 tier ≥14 溢出为 Integer.MIN_VALUE
+- 修复：`eut` 全链路改为 `long`：
+  - `HatchListCache.HatchEntry.eut` → `long`
+  - `HatchListSyncPacket.toBytes/fromBytes` → `writeLong/readLong`
+  - `sendHatchListSync()` 计算去掉 `(int)` 强转
+
+### 修复：机器图标/名称错误（machineMetaId short 截断）
+
+- 根因：`machineMetaId` 为 `short`，GT MetaTileEntity ID 可能超过 Short.MAX_VALUE (32767)
+- 修复：`machineMetaId` 全链路改为 `int`：
+  - `AdaptiveHatchHelper.machineMetaId` → `int`，`setMachineInfo` 参数 → `int`
+  - `HatchListCache.HatchEntry.machineMetaId` → `int`
+  - `HatchListSyncPacket` → `writeInt/readInt`
+  - NBT 存储 → `setInteger/getInteger`
+  - 4 个舱室 `onFirstTick` 去掉 `(short)` 强转
+
+### 修复：Status/Monitor Tab 文字溢出
+
+- 根因：`buildStatusTab`/`buildMonitorTab` 的 `Flow.column().coverChildren()` 不约束宽度，中文文字超出面板边界
+- 修复：改为 `Flow.column().size(CONTENT_W, 0).childPadding(4)` 显式约束宽度
+
+### 修复：子仓列表 Footer 被背包遮挡
+
+- 根因：ListWidget 高度 188px 过大，footer 位置过低被玩家背包覆盖
+- 修复：ListWidget 高度 188px → 170px
+
+### 变更文件
+
+- `hatch/adaptive/AdaptiveHatchHelper.java`：machineMetaId 改 int + NBT 改 setInteger/getInteger
+- `hatch/adaptive/HatchListCache.java`：eut 改 long + machineMetaId 改 int
+- `network/HatchListSyncPacket.java`：eut 改 writeLong/readLong + machineMetaId 改 writeInt/readInt
+- `hatch/adaptive/AdaptiveNetTerminal.java`：sendHatchListSync 去重 + int 溢出修复 + Flow 宽度约束 + ListWidget 高度调整
+- `hatch/adaptive/AdaptiveNetHatch.java`：onFirstTick 去掉 (short) 强转
+- `hatch/adaptive/AdaptiveNetDynamoHatch.java`：同上
+- `hatch/adaptive/AdaptiveNetLaserHatch.java`：同上
+- `hatch/adaptive/AdaptiveNetLaserTargetHatch.java`：同上
+- `hatch/adaptive/AdaptiveHatchHelper.java`：findAttachedMachine 重写（多方块控制器优先）
+
+---
+
 ## 3.18.1-fix9 - GT数据棒链接 + 跨维度传送修复
 
 > 作者：wztwzt | 更新时间：2026-09-03 | 基于 3.18.1-fix8
