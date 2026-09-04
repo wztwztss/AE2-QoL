@@ -1,3 +1,36 @@
+## 3.18.1-fix17 - 样板自动上传功能优化（中文名称识别 + 搜索框自动填入 + 完整映射表）
+
+> 作者：wztwzt | 更新时间：2026-09-04 | 基于 3.18.1-fix16
+
+### 增强：配方名称识别——NEI 中文名称兜底（方案A）
+
+- 问题：`ClientRecipeNameUtil.mapRecipeHandlerToSearchKey()` 在映射表查不到 overlayId 时，直接返回 `toDisplayString(overlayId)`（英文 id 拆分），供应器选择界面显示 `gt recipe largechemicalreactor` 而非"大型化学反应釜"
+- 修复：映射表查不到时，优先调用 `handler.getRecipeName()`（NEI 已提供中文名称），仍为空才 fallback 到英文拆分
+- 变更文件：`client/ClientRecipeNameUtil.java`
+
+### 增强：二合一终端搜索框自动填入（搜索框优化）
+
+- 问题：`NeiRecipeCapture.fillMergedTerminal()` 中 `!resolved.equals(recipeMap)` 条件导致映射表查不到时搜索框留空，玩家从 NEI 转移配方后需手动输入机器名过滤
+- 修复：
+  - `ClientState` 新增 `pendingRecipeCnName` 字段，`extractFrom()` 中捕获 `handler.getRecipeName()` 中文名称
+  - `fillMergedTerminal()` 中映射表查不到时用 `pendingRecipeCnName` 兜底，只要非空就填入搜索框
+- 变更文件：`client/ClientState.java`、`client/NeiRecipeCapture.java`
+
+### 增强：内置映射表从46条扩充至313条（方案B）
+
+- 问题：内置 `recipe_type_names.json` 只有46条，覆盖率17.6%，大部分多方块机器（工业电解机、煮解池、化工厂、细菌培养缸等）显示英文 id
+- 修复：用从 `handlers.json`（GTNH 2.9.0-beta-1 游戏内导出，494个NEI配方处理器）提取的313条完整映射表替换，覆盖 GT/GT++/GTNL/BartWorks/TST/gtnhlanth/GTNHCoreMod 等所有 mod
+- 变更文件：`resources/apu/recipe_type_names.json`
+
+### 变更文件
+
+- `client/ClientRecipeNameUtil.java`：getRecipeName 中文兜底
+- `client/ClientState.java`：新增 pendingRecipeCnName 字段
+- `client/NeiRecipeCapture.java`：捕获中文名 + 搜索框兜底填入
+- `resources/apu/recipe_type_names.json`：46条 → 313条
+
+---
+
 ## 3.18.1-fix16 - 退出重进绑定丢失修复（P0）+ 服务器兼容性确认
 
 > 作者：wztwzt | 更新时间：2026-09-04 | 基于 3.18.1-fix15

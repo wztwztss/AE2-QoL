@@ -46,6 +46,14 @@ public final class ClientRecipeNameUtil {
                 if (mapped != null) {
                     return mapped;
                 }
+                // 映射表查不到时，优先用 NEI 的 getRecipeName()（已提供中文名称）
+                try {
+                    String recipeName = handler.getRecipeName();
+                    if (recipeName != null && !recipeName.trim()
+                        .isEmpty()) {
+                        return recipeName.trim();
+                    }
+                } catch (Throwable ignored) {}
                 return toDisplayString(overlayId);
             }
         } catch (Throwable ignored) {}

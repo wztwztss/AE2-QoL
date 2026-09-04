@@ -42,6 +42,9 @@ public class ClientState {
 
     public static String pendingRecipeMap = null;
 
+    /** NEI 配方处理器的中文名称（getRecipeName），供搜索框自动填入兜底 */
+    public static String pendingRecipeCnName = null;
+
     /** 二合一终端编码成功后回传的机器中文名（服务端→客户端即时反馈） */
     public static volatile String mergedMachineName = null;
 
@@ -66,6 +69,7 @@ public class ClientState {
         lastProviderName = null;
         lastProviderId = 0;
         lastRecipeMap = null;
+        pendingRecipeCnName = null;
     }
 
     public static void set(String name, long id) {

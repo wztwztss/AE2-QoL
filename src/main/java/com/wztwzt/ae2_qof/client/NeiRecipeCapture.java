@@ -92,11 +92,15 @@ public final class NeiRecipeCapture {
         String recipeMap = data.crafting ? null : ClientState.pendingRecipeMap;
         ModNetwork.CHANNEL.sendToServer(
             MergedTerminalActionPacket.fill(data.inputs, data.outputs, data.crafting, data.cells, recipeMap));
-        // 自动把机器名填入搜索框，过滤出刚填充的机器（仅处理配方且有中文映射时）
+        // 自动把机器名填入搜索框，过滤出刚填充的机器
         if (!data.crafting && recipeMap != null && !recipeMap.isEmpty()) {
             ClientState.lastRecipeMap = recipeMap;
             String resolved = RecipeMapNameConfig.resolveSearchKeyword(recipeMap);
-            if (resolved != null && !resolved.equals(recipeMap)) {
+            // 映射表查不到时，用 NEI 的 getRecipeName() 中文兜底
+            if (resolved == null || resolved.equals(recipeMap)) {
+                resolved = ClientState.pendingRecipeCnName;
+            }
+            if (resolved != null && !resolved.isEmpty()) {
                 GuiMergedTerminal.setSearchFieldText(resolved);
             }
         }
@@ -177,6 +181,14 @@ public final class NeiRecipeCapture {
                 if (id != null && !id.isEmpty()) {
                     ClientState.pendingRecipeMap = id;
                 }
+                // 捕获 NEI 配方处理器的中文名称，供搜索框自动填入兜底
+                try {
+                    String cnName = handler.getRecipeName();
+                    if (cnName != null && !cnName.trim()
+                        .isEmpty()) {
+                        ClientState.pendingRecipeCnName = cnName.trim();
+                    }
+                } catch (Throwable ignored) {}
             }
             // 合成配方记录格子位置（3×3），供服务端按形状填入；无效位置退化为顺序填充
             if (data.crafting && cellList.size() == data.inputs.length) {
