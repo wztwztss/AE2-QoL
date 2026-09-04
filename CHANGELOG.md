@@ -1,3 +1,16 @@
+## 3.18.1-fix18 - 供应器选择界面搜索框中文修复
+
+> 作者：wztwzt | 更新时间：2026-09-04 | 基于 3.18.1-fix17
+
+### 修复：上传页面搜索框显示英文 id 而非中文名
+
+- 问题：从二合一终端上传样板时，弹出的供应器选择界面顶部搜索框显示 `gt.recipe.eyeofharmony`（英文 overlayId），而二合一终端的搜索框已正确显示"鸿蒙之眼"
+- 根因：`ClientProxy.openGuiWithSearch()` 直接把服务端回传的英文 `message.recipeMap` 作为 searchKey 调用 `gui.setPresetSearchKey()`，覆盖了构造函数里从 `RecipeNameUtil.getLastRecipeName()` 读取的中文名
+- 修复：`openGuiWithSearch()` 中先用 `RecipeMapNameConfig.resolveSearchKeyword()` 解析中文名，查不到时用 `ClientState.pendingRecipeCnName`（NEI 捕获的中文名）兜底，最后才用英文 id
+- 变更文件：`ClientProxy.java`
+
+---
+
 ## 3.18.1-fix17 - 样板自动上传功能优化（中文名称识别 + 搜索框自动填入 + 完整映射表）
 
 > 作者：wztwzt | 更新时间：2026-09-04 | 基于 3.18.1-fix16

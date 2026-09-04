@@ -20,6 +20,7 @@ import appeng.container.implementations.ContainerPatternTerm;
 import appeng.container.implementations.ContainerPatternTermEx;
 
 import com.wztwzt.ae2_qof.client.ClientState;
+import com.wztwzt.ae2_qof.common.RecipeMapNameConfig;
 import com.wztwzt.ae2_qof.client.CommandOverlay;
 import com.wztwzt.ae2_qof.client.event.GuiUploadButtonHandler;
 import com.wztwzt.ae2_qof.client.event.KeyInputHandler;
@@ -165,7 +166,16 @@ public class ClientProxy extends CommonProxy {
         GuiScreen current = Minecraft.getMinecraft().currentScreen;
         String searchKey = null;
         if (message.recipeMap != null && !message.recipeMap.isEmpty()) {
-            searchKey = message.recipeMap;
+            // 优先用映射表解析中文名，查不到时用 NEI 捕获的中文名兜底，最后才用英文 id
+            searchKey = RecipeMapNameConfig.resolveSearchKeyword(message.recipeMap);
+            if (searchKey == null || searchKey.equals(message.recipeMap)) {
+                String cnName = ClientState.pendingRecipeCnName;
+                if (cnName != null && !cnName.isEmpty()) {
+                    searchKey = cnName;
+                } else {
+                    searchKey = message.recipeMap;
+                }
+            }
         }
         GuiProviderSelect gui = new GuiProviderSelect(current, message.ids, message.names, message.emptySlots);
         if (searchKey != null) {
