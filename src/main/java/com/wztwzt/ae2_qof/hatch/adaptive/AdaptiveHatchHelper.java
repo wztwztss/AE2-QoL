@@ -8,7 +8,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.StatCollector;
-import net.minecraftforge.common.util.ForgeDirection;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.implementations.MTEMultiBlockBase;
@@ -103,87 +102,69 @@ public class AdaptiveHatchHelper {
             || mte instanceof AdaptiveNetLaserTargetHatch;
     }
 
+    /**
+     * 识别仓室连接的多方块主机。
+     * <p>
+     * 只通过全局 {@link MultiblockRegistry} 查找多方块主机，按 center/radius 范围匹配。
+     * 找不到主机时返回 {@code null}，由调用方显示仓室本身的名字和图标。
+     * <p>
+     * 不检查 {@code mMachine}：仓室 onFirstTick 可能早于主机的结构检查，此时 mMachine 仍为 false，
+     * 会导致已注册的主机被跳过。注册表中的主机均为 MTEMultiBlockBase，未成型主机的 center/radius
+     * 为默认值，通常不会误匹配。
+     */
     public static MetaTileEntity findAttachedMachine(IGregTechTileEntity aBase) {
         net.minecraft.world.World world = aBase.getWorld();
         int x = aBase.getXCoord();
         int y = aBase.getYCoord();
         int z = aBase.getZCoord();
+        int dim = world.provider.dimensionId;
 
-        ForgeDirection back = aBase.getBackFacing();
-        IGregTechTileEntity neighbor = aBase.getIGregTechTileEntityAtSide(back);
-        if (neighbor != null) {
-            Object rawMte = neighbor.getMetaTileEntity();
-            if (rawMte instanceof MetaTileEntity) {
-                MetaTileEntity mte = (MetaTileEntity) rawMte;
-                if (!isAdaptiveHatch(mte)) {
-                    return mte;
-                }
-            }
-        }
-
+        MultiblockRegistry.cleanupInvalid();
         MTEMultiBlockBase bestMultiblock = null;
         double bestDistSq = Double.MAX_VALUE;
 
-        for (int dx = -8; dx <= 8; dx++) {
-            for (int dy = -8; dy <= 8; dy++) {
-                for (int dz = -8; dz <= 8; dz++) {
-                    if (dx == 0 && dy == 0 && dz == 0) continue;
-                    net.minecraft.tileentity.TileEntity te = world.getTileEntity(x + dx, y + dy, z + dz);
-                    if (te instanceof IGregTechTileEntity) {
-                        Object rawMte = ((IGregTechTileEntity) te).getMetaTileEntity();
-                        if (rawMte instanceof MTEMultiBlockBase) {
-                            MTEMultiBlockBase multi = (MTEMultiBlockBase) rawMte;
-                            if (!multi.mMachine) continue;
-                            if (multi instanceof MTEEnhancedMultiBlockBase) {
-                                MTEEnhancedMultiBlockBase<?> enhanced =
-                                    (MTEEnhancedMultiBlockBase<?>) multi;
-                                Vector3f center = enhanced.getCenter();
-                                if (center != null) {
-                                    double cdx = center.x - (x + 0.5);
-                                    double cdy = center.y - (y + 0.5);
-                                    double cdz = center.z - (z + 0.5);
-                                    double distSq = cdx * cdx + cdy * cdy + cdz * cdz;
-                                    int radius = enhanced.getApproximateRadius();
-                                    if (distSq <= (radius + 2) * (radius + 2) && distSq < bestDistSq) {
-                                        bestDistSq = distSq;
-                                        bestMultiblock = multi;
-                                    }
-                                }
-                            } else {
-                                double distSq = dx * dx + dy * dy + dz * dz;
-                                if (distSq < bestDistSq) {
-                                    bestDistSq = distSq;
-                                    bestMultiblock = multi;
-                                }
-                            }
-                        }
-                    }
+        for (MTEMultiBlockBase multi : MultiblockRegistry.snapshot()) {
+            IGregTechTileEntity mbBase = multi.getBaseMetaTileEntity();
+            if (mbBase == null || mbBase.getWorld() == null
+                || mbBase.getWorld().provider.dimensionId != dim) {
+                continue;
+            }
+
+            double cx, cy, cz;
+            int radius;
+            if (multi instanceof MTEEnhancedMultiBlockBase) {
+                MTEEnhancedMultiBlockBase<?> enhanced = (MTEEnhancedMultiBlockBase<?>) multi;
+                Vector3f center = enhanced.getCenter();
+                if (center != null) {
+                    cx = center.x;
+                    cy = center.y;
+                    cz = center.z;
+                    radius = enhanced.getApproximateRadius();
+                } else {
+                    cx = mbBase.getXCoord();
+                    cy = mbBase.getYCoord();
+                    cz = mbBase.getZCoord();
+                    radius = 4;
                 }
+            } else {
+                cx = mbBase.getXCoord();
+                cy = mbBase.getYCoord();
+                cz = mbBase.getZCoord();
+                radius = 4;
+            }
+
+            double dx = cx - (x + 0.5);
+            double dy = cy - (y + 0.5);
+            double dz = cz - (z + 0.5);
+            double distSq = dx * dx + dy * dy + dz * dz;
+
+            if (distSq <= (radius + 2) * (radius + 2) && distSq < bestDistSq) {
+                bestDistSq = distSq;
+                bestMultiblock = multi;
             }
         }
 
-        if (bestMultiblock != null) {
-            return bestMultiblock;
-        }
-
-        for (int dx = -4; dx <= 4; dx++) {
-            for (int dy = -4; dy <= 4; dy++) {
-                for (int dz = -4; dz <= 4; dz++) {
-                    if (dx == 0 && dy == 0 && dz == 0) continue;
-                    net.minecraft.tileentity.TileEntity te = world.getTileEntity(x + dx, y + dy, z + dz);
-                    if (te instanceof IGregTechTileEntity) {
-                        Object rawMte = ((IGregTechTileEntity) te).getMetaTileEntity();
-                        if (rawMte instanceof MetaTileEntity) {
-                            MetaTileEntity mte = (MetaTileEntity) rawMte;
-                            if (!isAdaptiveHatch(mte)) {
-                                return mte;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return null;
+        return bestMultiblock;
     }
 
     public int getRealFlowEUt() { return realFlowEUt; }

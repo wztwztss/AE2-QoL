@@ -180,11 +180,9 @@ public class AdaptiveNetwork {
     }
 
     public void destroy() {
-        for (AdaptiveHatchHelper helper : helpers) {
-            if (helper.isBound()) {
-                helper.unbind();
-            }
-        }
+        // 只清理网络自身的引用，不修改仓室的绑定状态。
+        // 之前调用 helper.unbind() 会把 networkOwner 设为 null，导致退出存档时
+        // NBT 保存丢失绑定信息，重进后显示"未绑定"。
         helpers.clear();
         terminal = null;
     }

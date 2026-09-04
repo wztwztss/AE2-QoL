@@ -1,3 +1,175 @@
+## 3.18.1-fix16 - 退出重进绑定丢失修复（P0）+ 服务器兼容性确认
+
+> 作者：wztwzt | 更新时间：2026-09-04 | 基于 3.18.1-fix15
+
+### 修复：退出存档重进后仓室显示"未绑定"（P0）
+
+- 根因：`AdaptiveNetwork.destroy()` 中遍历所有 helpers 调用 `helper.unbind()`，把仓室的 `networkOwner` 设为 null。退出存档时，世界卸载触发所有仓室 `onRemoval` → `unregisterHatch`，最后一个仓室移除后网络为空 → `removeNetwork` → `destroy()` → 所有仓室 `networkOwner=null`。此时若 NBT 保存在 destroy 之后触发，`ae2qolNO` 不会被写入，重进后绑定丢失
+- 修复：`destroy()` 只清理网络自身的 `helpers` 列表和 `terminal` 引用，**不修改仓室的绑定状态**。仓室的绑定信息由 NBT 持久化，重进后 `onFirstTick` 自动重新 `registerHatch`
+- 变更文件：`hatch/adaptive/AdaptiveNetwork.java`
+
+### 服务器兼容性确认
+
+- `MultiblockRegistry`：register 检查 `world.isRemote`，只注册服务端主机 ✓
+- `AdaptiveNetworkManager`：所有操作在 `isServerSide` 检查后执行 ✓
+- 网络包（HatchAction/HatchListSync/WirelessHighlight）：均检查 `ctx.side`，服务端用 `scheduleServerTask` 调度 ✓
+- 传送：服务端检查团队权限 + `worldServerForDimension` 获取目标世界 ✓
+- 客户端类（ClientState/Renderer）：仅在 `ctx.side == CLIENT` 分支引用，服务器不会加载 ✓
+
+---
+
+## 3.18.1-fix15 - 机器识别简化（只认多方块主机，认不到显示仓室本身）
+
+> 作者：wztwzt | 更新时间：2026-09-04 | 基于 3.18.1-fix14
+
+### 修复：子仓列表仍显示输入总线名而非主机名
+
+- 根因：fix14 注册表方案中 `findAttachedMachine` 检查 `mMachine`，但仓室 `onFirstTick` 可能早于主机的结构检查（checkMachine），此时主机 `mMachine=false`，注册表中的主机被跳过，回退到背面邻居（输入总线），显示"编程样板输入总成 MK.II"
+- 修复：
+  - 去掉 `mMachine` 检查：注册表中的主机均为 `MTEMultiBlockBase`，未成型主机的 center/radius 为默认值，不会误匹配
+  - 去掉背面邻居单方块机器返回：不再显示输入总线/能量仓等附属方块名
+  - 去掉兜底 4×4×4 搜索：认不到主机就返回 null
+  - 返回 null 时，仓室 `onFirstTick` 自动用仓室本身的名字和图标（自适应能源仓/动力仓/激光仓等）
+- 变更文件：`hatch/adaptive/AdaptiveHatchHelper.java`
+
+---
+
+## 3.18.1-fix14 - 多方块主机识别重构（全局注册表方案）
+
+> 作者：wztwzt | 更新时间：2026-09-04 | 基于 3.18.1-fix13
+
+### 重构：多方块主机识别——从空间搜索改为全局注册表
+
+- 问题：fix13 的"背面半球两轮搜索"仍是空间搜索，当两个多方块结构紧挨着且主机在仓室背面半球内距离相近时，仍可能选错主机；17×17×17 遍历性能也较差
+- 方案：借鉴 GTNL `EnergyMonitorRegistry`，改用全局注册表
+  - 新建 `MultiblockRegistry`：全局 `Set<MTEMultiBlockBase>`，线程安全（ConcurrentHashMap 支撑）
+  - 新建 `MixinCommonBaseMetaTileEntityMultiblockRegistry`：注入 `CommonBaseMetaTileEntity.handleFirstTick(boolean)` TAIL，所有多方块主机加载时自动注册
+  - 重写 `findAttachedMachine`：
+    1. **查注册表**：遍历所有已注册主机，过滤同维度 + `mMachine=true`，用 `center/radius` 判断仓室坐标是否在主机范围内，选最近的返回。紧邻多方块不会干扰——每个主机有自己的 center 和 radius，仓室坐标只落在一个主机范围内
+    2. **背面邻居**：单独放地上的单方块机器（非自适应仓室、非多方块主机）直接返回，显示本身名字和图标
+    3. **兜底**：周围 4×4×4 内找第一个非自适应仓室的 MTE
+- `MTEEnhancedMultiBlockBase` 用 `getCenter()/getApproximateRadius()`；普通 `MTEMultiBlockBase` 用主机坐标 + 默认 radius=4
+- 注册表每次查询前 `cleanupInvalid()` 自动清理已拆除/已失效的主机
+
+### 变更文件
+
+- 新增 `hatch/adaptive/MultiblockRegistry.java`：全局多方块主机注册表
+- 新增 `mixin/gt/MixinCommonBaseMetaTileEntityMultiblockRegistry.java`：Mixin 自动注册
+- 修改 `mixins.ae2_qof.json`：注册新 Mixin
+- 修改 `hatch/adaptive/AdaptiveHatchHelper.java`：重写 findAttachedMachine
+
+---
+
+## 3.18.1-fix13 - 多方块主机识别增强（背面半球优先）
+
+> 作者：wztwzt | 更新时间：2026-09-04 | 基于 3.18.1-fix12
+
+### 增强：多方块主机识别——紧邻多方块场景下避免选错主机
+
+- 问题：当两个多方块结构紧挨着时，17×17×17 全方向搜索可能选到旁边机器的主机（距离更近），而非仓室所属机器的主机
+- 修复：两轮搜索
+  - 第一轮：只搜索**背面半球**（主机位置与仓室背面方向的点积 > 0），即主机必须在仓室背面方向，排除正面/侧面的其他机器
+  - 第二轮：若背面半球内未找到主机，全方向搜索兜底（兼容特殊结构/单方块机器）
+- 对 `MTEEnhancedMultiBlockBase` 用 `center` 计算方向点积；对普通 `MTEMultiBlockBase` 用方块坐标计算
+- 变更文件：`hatch/adaptive/AdaptiveHatchHelper.java`
+
+---
+
+## 3.18.1-fix12 - 机器识别修复 + 监控Tab遮挡修复 + 仓室GUI遮挡修复
+
+> 作者：wztwzt | 更新时间：2026-09-04 | 基于 3.18.1-fix11
+
+### 修复：子仓列表机器名识别错误（多方块主机识别）
+
+- 根因：`findAttachedMachine` 第 1 步检查背面邻居时，只要是非自适应仓室的 GT MTE 就直接返回。当背面是输入总线/输出总线等附属方块时，直接返回了附属方块名（如"编程样板输入总成 MK.II"），未继续搜索多方块主机
+- 修复：
+  - 背面邻居是 `MTEMultiBlockBase` 且 `mMachine=true` 时才直接返回（背面即主机）
+  - 背面邻居是普通单方块机器时，记为 `singleBlockCandidate`，不直接返回
+  - 17×17×17 范围搜索多方块主机，找到则优先返回主机
+  - 未找到主机时返回 `singleBlockCandidate`（单方块机器）
+  - 最后兜底 9×9×9 搜索任意 MTE
+
+### 修复：监控 Tab 底部被玩家背包遮挡
+
+- 根因：4 个灰色区块标签（总览/能量变化/预测/瞬时速率）各占 10px+padding，内容总高约 227px，超出面板可见区域（约 200px），瞬时输出速率和能量活动被背包遮挡
+- 修复：
+  - 去掉 4 个灰色区块标签（分隔线已能区分区块，且灰色小字本身可读性差）
+  - `childPadding` 4→2，进一步压缩行间距
+  - 内容总高降至约 160px，全部行可见
+
+### 修复：4个仓室 GUI 电网电量行被背包遮挡
+
+- 根因：`Flow.column().childPadding(6).top(10)` 间距过大，电量行 y 坐标过低，与玩家背包第一行物品槽重叠，"EU" 后缀被遮挡
+- 修复：`childPadding(6).top(10)` → `childPadding(2).top(6)`，整体上移 20px，电量行不再被遮挡
+
+### 变更文件
+
+- `hatch/adaptive/AdaptiveHatchHelper.java`：findAttachedMachine 多方块主机优先逻辑
+- `hatch/adaptive/AdaptiveNetTerminal.java`：监控 Tab 去掉区块标签 + 压缩 padding
+- `hatch/adaptive/AdaptiveNetHatch.java`：仓室 GUI 上移
+- `hatch/adaptive/AdaptiveNetDynamoHatch.java`：同上
+- `hatch/adaptive/AdaptiveNetLaserHatch.java`：同上
+- `hatch/adaptive/AdaptiveNetLaserTargetHatch.java`：同上
+
+---
+
+## 3.18.1-fix11 - 传送修复 + UI全面美化 + 仓室电量单位修复
+
+> 作者：wztwzt | 更新时间：2026-09-04 | 基于 3.18.1-fix10
+
+### 修复：传送按钮完全不可用（P0）
+
+- 根因：`AdaptiveNetTerminal` 用 `Minecraft.getMinecraft().gameSettings.keyBindSneak.getIsKeyPressed()` 检测 Shift，GUI 打开时 keyBind 状态不更新，永远返回 false，导致永远发高亮而非传送
+- 修复：改用 ModularUI `event.isShiftKeyDown()`（与 GTNL EnergyMonitorGui 同款用法）
+
+### 修复：跨维度传送位置错误
+
+- 根因：`HatchActionPacket.handleTeleport` 用 `new Teleporter(targetWorld)` 默认传送器，会搜索/建造下界传送门，不放到指定坐标
+- 修复：匿名类重写 `placeInPortal` 直接 setLocationAndAngles 到目标坐标，覆写 `placeInExistingPortal` 返回 false 强制不走现有传送门
+
+### 新增：传送权限提示
+
+- 非团队成员 Shift+点击"定位"按钮时，聊天提示红色"无传送权限：不属于该电网团队"，避免静默失败
+
+### 美化：子仓列表 Tab 全面重构
+
+- 行占满宽度（`CONTENT_W-8`）+ 左对齐，消除左侧大片空白
+- 行高 18→20px，图标垂直居中，行间 1px 分隔线
+- 行文本三段式布局：`[图标] 机器名(白色左对齐,超16字符截断)  EU/t(绿色右对齐)  tier(彩色右对齐)`
+- 去掉 `[E]/[LS]/[D]/[LT]` 类型标签（图标已区分）
+- 机器名从 tooltip 移到主行显示，tooltip 保留全名+坐标+容量+操作提示
+- 传送+高亮合并为行末右侧"定位"按钮（42×18，BUTTON_CLEAN 背景），左键=高亮、Shift+左键=传送，热区明确可点
+- 标题行合并标题（左）+ 总数（右），去掉单独的"绑定总数"行
+- ListWidget 高度 170→148px，footer 前加分隔线，不再被背包遮挡
+
+### 美化：监控 Tab 分区重构
+
+- 数据分 4 区块：总览 / 能量变化 / 预测 / 瞬时速率，每区块灰色小字标签 + 分隔线
+- 每行标签左对齐、数值右对齐（`Flow.row` + `textAlign(CenterRight)`），不再纯文字堆砌
+- 变化率加 ↑/↓ 箭头（绿充/红放），直观显示充放电状态
+- 耗空时间 >100 年简化为 `>100年（近似无穷）`，避免 672376年4月24天... 超长文本
+- 计数按钮（常规/科学/KMG）移到标题行右侧，尺寸 64×14，统一样式
+
+### 美化：状态 Tab
+
+- 标题（左）+ 频率（右）合并为一行，节省空间
+
+### 修复：4个仓室 GUI 电网电量缺少单位
+
+- 根因：`formatEU(gridEU)` 返回 `"1.11E"`（KMG 格式 E=exa），但未拼接 `" EU"` 后缀，显示为 `"电网电量: 1.11E"` 看似被截断
+- 修复：4 个仓室（能量仓/动力仓/激光源仓/激光靶仓）GUI 电网电量行加 `" EU"` 后缀
+
+### 变更文件
+
+- `network/HatchActionPacket.java`：自定义 Teleporter + 传送权限提示
+- `hatch/adaptive/AdaptiveNetTerminal.java`：Shift 检测修复 + 列表Tab重构 + 监控Tab重构 + 状态Tab合并
+- `hatch/adaptive/AdaptiveNetHatch.java`：电量加 EU 后缀
+- `hatch/adaptive/AdaptiveNetDynamoHatch.java`：同上
+- `hatch/adaptive/AdaptiveNetLaserHatch.java`：同上
+- `hatch/adaptive/AdaptiveNetLaserTargetHatch.java`：同上
+
+---
+
 ## 3.18.1-fix10 - 重复条目去重 + int溢出修复 + 文字溢出修复 + Footer截断修复
 
 > 作者：wztwzt | 更新时间：2026-09-04 | 基于 3.18.1-fix9

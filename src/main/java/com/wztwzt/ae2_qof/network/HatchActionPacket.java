@@ -160,6 +160,9 @@ public class HatchActionPacket implements IMessage {
                     case ACTION_TELEPORT:
                         if (com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveTeamHelper.isMemberOf(player.getUniqueID(), uuid)) {
                             handleTeleport(player, x, y, z, dim);
+                        } else {
+                            player.addChatMessage(new net.minecraft.util.ChatComponentText(
+                                net.minecraft.util.EnumChatFormatting.RED + "无传送权限：不属于该电网团队"));
                         }
                         break;
                     default:
@@ -179,16 +182,40 @@ public class HatchActionPacket implements IMessage {
         private void handleTeleport(EntityPlayerMP player, int x, int y, int z, int dim) {
             if (player.dimension == dim) {
                 player.setPositionAndUpdate(x + 0.5, y + 1, z + 0.5);
+                player.addChatMessage(new net.minecraft.util.ChatComponentText(
+                    net.minecraft.util.EnumChatFormatting.GREEN + "传送到 [" + x + ", " + y + ", " + z + "] dim:" + dim));
                 return;
             }
             MinecraftServer server = MinecraftServer.getServer();
             net.minecraft.world.WorldServer targetWorld = server.worldServerForDimension(dim);
             if (targetWorld == null) return;
+            final int tx = x;
+            final int ty = y;
+            final int tz = z;
             server.getConfigurationManager().transferPlayerToDimension(player, dim,
-                new net.minecraft.world.Teleporter(targetWorld));
-            player.setPositionAndUpdate(x + 0.5, y + 1, z + 0.5);
+                new net.minecraft.world.Teleporter(targetWorld) {
+                    @Override
+                    public void placeInPortal(net.minecraft.entity.Entity entity,
+                                              double px, double py, double pz, float yaw) {
+                        entity.setLocationAndAngles(tx + 0.5, ty + 1, tz + 0.5,
+                            entity.rotationYaw, entity.rotationPitch);
+                        entity.motionX = 0;
+                        entity.motionY = 0;
+                        entity.motionZ = 0;
+                    }
+                    @Override
+                    public boolean placeInExistingPortal(net.minecraft.entity.Entity entity,
+                                                         double px, double py, double pz, float yaw) {
+                        placeInPortal(entity, px, py, pz, yaw);
+                        return true;
+                    }
+                    @Override
+                    public boolean makePortal(net.minecraft.entity.Entity entity) {
+                        return true;
+                    }
+                });
             player.addChatMessage(new net.minecraft.util.ChatComponentText(
-                net.minecraft.util.EnumChatFormatting.GREEN + "Teleported to [" + x + ", " + y + ", " + z + "] dim:" + dim));
+                net.minecraft.util.EnumChatFormatting.GREEN + "传送到 [" + x + ", " + y + ", " + z + "] dim:" + dim));
         }
     }
 }

@@ -183,7 +183,7 @@ public class AdaptiveNetHatch extends MTEHatchEnergy {
     public ModularPanel buildUI(PosGuiData guiData, PanelSyncManager syncManager, UISettings uiSettings) {
         ModularPanel panel = ModularPanel.defaultPanel("adaptive_net_hatch", 280, 200);
 
-        Flow column = Flow.column().coverChildren().childPadding(6).top(10).left(10);
+        Flow column = Flow.column().coverChildren().childPadding(2).top(6).left(10);
 
         column.child(
             new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_hatch.title")).size(260, 16));
@@ -216,7 +216,7 @@ public class AdaptiveNetHatch extends MTEHatchEnergy {
                 ? AdaptiveHatchHelper.getGridEULong(helper.getNetworkOwner()) : 0L;
             return EnumChatFormatting.AQUA
                 + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.grid_energy")
-                + " " + EnumChatFormatting.WHITE + formatEU(gridEU);
+                + " " + EnumChatFormatting.WHITE + formatEU(gridEU) + " EU";
         })).size(260, 14));
 
         panel.bindPlayerInventory();

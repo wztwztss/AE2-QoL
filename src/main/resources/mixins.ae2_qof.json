@@ -13,6 +13,7 @@
     "ae.MixinPinsHolder",
     "gt.MixinMTEHatchInputBus",
     "gt.MixinMTEMultiBlockBase",
+    "gt.MixinCommonBaseMetaTileEntityMultiblockRegistry",
     "gt.MixinMultiblockParallel",
     "TileDriveMixin"
   ],
