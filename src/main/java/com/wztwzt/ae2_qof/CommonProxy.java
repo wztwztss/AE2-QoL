@@ -367,7 +367,8 @@ public class CommonProxy {
         }
     }
 
-    public void postInit(FMLPostInitializationEvent event) {}
+    public void postInit(FMLPostInitializationEvent event) {
+    }
 
     public void serverStarting(FMLServerStartingEvent event) {
         event.registerServerCommand(new CommandAe2QoL());

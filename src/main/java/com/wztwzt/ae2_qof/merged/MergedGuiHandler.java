@@ -15,6 +15,8 @@ import com.wztwzt.ae2_qof.wireless.WirelessGuiHandler;
 
 import appeng.api.parts.IPart;
 import cpw.mods.fml.common.network.IGuiHandler;
+import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
+import gregtech.api.metatileentity.implementations.MTEHatch;
 
 /**
  * 总 GUI 处理器：合并二合一终端三种形态的 Gui ID 与原有无线收发器 Gui ID。

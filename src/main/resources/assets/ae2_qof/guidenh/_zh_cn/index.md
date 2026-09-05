@@ -9,26 +9,30 @@ author: wztwzt
 
 AE2 QoL 为 Applied Energistics 2（GTNH 版）提供一系列效率增强功能。
 
-## 全部功能一览（15 项）
+## 全部功能一览（19 项）
 
 | # | 功能 | 一句话说明 | 详情页 |
 |---|---|---|---|
 | 1 | 样板上传/撤回/交换 | 任意样板终端 GUI 内一键管理网络接口上的样板 | [NEI 集成](nei_features.md) |
 | 2 | NEI 取物/合成下单 | Shift+左键从网络提取物品；中键对可合成物品下单 | [NEI 集成](nei_features.md) |
-| 3 | NEI tooltip 存量/可合成 | 悬停任意物品显示其在网络中的存量与可合成状态 | [NEI 集成](nei_features.md) |
-| 4 | NEI 书签数量角标 | 书签面板与配方页直接叠加显示网络存量数字 | [NEI 集成](nei_features.md) |
-| 5 | 合成完成通知 | CPU 订单完成时屏幕右上角横幅+音效提醒 | [合成工具](crafting_tools.md) |
-| 6 | 合成重新规划 Replan | 材料变化后一键重提订单，无需重新下单 | [合成工具](crafting_tools.md) |
-| 7 | 强化 IO 端口 | 单次传输量按倍率放大，高吞吐搬运 | [强化 IO 端口](ex_io_port.md) |
-| 8 | 无限水岩浆磁盘 | 水/岩浆各约 92 亿 mB 的永不枯竭元件 | [无限磁盘](infinity_cell.md) |
-| 9 | 无线收发器+连接器 | ME 网络隔空组网，收发器对支持跨维度 | [无线组网](wireless.md) |
-| 10 | 石英切割刀复制名称 | 手持切割刀右键方块/机器/AE 部件，复制名称到剪贴板 | [切割刀](knife.md) |
-| 11 | F 键搜索填充 | 在 NEI 上按 F，把鼠标所指物品名填入终端搜索框 | [NEI 集成](nei_features.md) |
-| 12 | NEI 叠加层开关 | OV 按钮 / `/apu-overlay` 命令切换所有角标与提示 | [NEI 集成](nei_features.md) |
-| 13 | 智能倍增 | CPU 一次性推送 N 轮材料，消除逐轮补料等待 | [智能倍增](smart_doubling.md) |
-| 14 | 二合一终端 | 样板编码+接口管理同屏，三种形态（方块/部件/无线） | [二合一终端](merged_terminal.md) |
-| 15 | ME 任务检测器 | ME 网络物品自动完成 BQ 检索型任务（不消耗） | [ME 任务检测器](quest_detector.md) |
-| 16 | 无限存储元件 | 物品/流体/源质无限存储，悬停统计 + NEI 查看 | [无限存储元件](infinity_storage.md) |
+| 3 | 合成产物置顶行 | 下单后产物自动钉选到终端顶部独立行，显示全网存量 | [合成工具](crafting_tools.md) |
+| 4 | NEI tooltip 存量/可合成 | 悬停任意物品显示其在网络中的存量与可合成状态 | [NEI 集成](nei_features.md) |
+| 5 | NEI 书签数量角标 | 书签面板与配方页直接叠加显示网络存量数字 | [NEI 集成](nei_features.md) |
+| 6 | 合成完成通知 | CPU 订单完成时屏幕右上角横幅+音效提醒 | [合成工具](crafting_tools.md) |
+| 7 | 合成重新规划 Replan | 材料变化后一键重提订单，无需重新下单 | [合成工具](crafting_tools.md) |
+| 8 | 强化 IO 端口 | 单次传输量按倍率放大，高吞吐搬运 | [强化 IO 端口](ex_io_port.md) |
+| 9 | 无限水岩浆磁盘 | 水/岩浆各约 92 亿 mB 的永不枯竭元件 | [无限磁盘](infinity_cell.md) |
+| 10 | 无线收发器+连接器 | ME 网络隔空组网，收发器对支持跨维度 | [无线组网](wireless.md) |
+| 11 | 石英切割刀复制名称 | 手持切割刀右键方块/机器/AE 部件，复制名称到剪贴板 | [切割刀](knife.md) |
+| 12 | F 键搜索填充 | 在 NEI 上按 F，把鼠标所指物品名填入终端搜索框 | [NEI 集成](nei_features.md) |
+| 13 | NEI 叠加层开关 | OV 按钮 / `/apu-overlay` 命令切换所有角标与提示 | [NEI 集成](nei_features.md) |
+| 14 | 智能倍增 | CPU 一次性推送 N 轮材料，消除逐轮补料等待 | [智能倍增](smart_doubling.md) |
+| 15 | 二合一终端 | 样板编码+接口管理同屏，三种形态（方块/部件/无线） | [二合一终端](merged_terminal.md) |
+| 16 | ME 任务检测器 | ME 网络物品自动完成 BQ 检索型任务（不消耗） | [ME 任务检测器](quest_detector.md) |
+| 17 | 无限存储元件 | 物品/流体/源质无限存储，悬停统计 + NEI 查看 | [无限存储元件](infinity_storage.md) |
+| 18 | 万能维护仓 | 维护绕过+无线能源+电路板并行映射三合一 | [万能维护仓](universal_maintenance_hatch.md) |
+| 19 | GT 无线 EU 网格 | 输入/输出仓室无线传输 EU，跨维度供电 | [GT 无线 EU 网格](wireless_eu_grid.md) |
+| 20 | 自适应电网系统 | 数据棒配置网络，多仓室自动适配电压/电流/频率 | [自适应电网](adaptive_grid.md) |
 
 ## 快速上手
 
