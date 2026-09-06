@@ -14,6 +14,7 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.fluids.FluidContainerRegistry;
 import net.minecraftforge.fluids.FluidStack;
 
+import com.glodblock.github.common.item.ItemFluidPacket;
 import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.common.RecipeMapNameConfig;
 import com.wztwzt.ae2_qof.merged.slot.SlotPatternFake;
@@ -1063,6 +1064,8 @@ public class PatternContainer implements IOptionalSlotHost {
         }
         // GT ItemFluidDisplay：类名包含 "ItemFluidDisplay"
         if (isGTFluidDisplayItem(stack)) return true;
+        // ae2fc ItemFluidPacket
+        if (stack.getItem() instanceof ItemFluidPacket) return true;
         return false;
     }
 
@@ -1150,6 +1153,11 @@ public class PatternContainer implements IOptionalSlotHost {
             if (f != null && stack.stackSize > 0) {
                 return new FluidStack(f, stack.stackSize);
             }
+        }
+        // ae2fc ItemFluidPacket：NBT "FluidStack" 子标签
+        if (stack.getItem() instanceof ItemFluidPacket) {
+            FluidStack pkt = ItemFluidPacket.getFluidStack(stack);
+            if (pkt != null) return pkt;
         }
         return null;
     }
