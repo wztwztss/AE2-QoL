@@ -271,3 +271,4 @@ ae2_qof.data_stick.read.success=§aNetwork config loaded from data stick
 ae2_qof.adaptive.bind.success=§aBound to adaptive network
 ae2_qof.adaptive.bind.fail=§cBind failed - owner data invalid
 ae2_qof.adaptive.bind.empty_stick=§eEmpty data stick - write config at terminal first
+ae2_qof.adaptive.bind.invalid_stick=§cFlash drive owner data invalid

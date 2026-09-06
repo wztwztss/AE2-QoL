@@ -271,3 +271,4 @@ ae2_qof.data_stick.read.success=§a已从闪存读取网络配置
 ae2_qof.adaptive.bind.success=§a已绑定到自适应电网
 ae2_qof.adaptive.bind.fail=§c绑定失败 - 所有者数据无效
 ae2_qof.adaptive.bind.empty_stick=§e空数据棒 - 请先在终端写入配置
+ae2_qof.adaptive.bind.invalid_stick=§c闪存所有者数据无效

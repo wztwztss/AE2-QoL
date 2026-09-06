@@ -24,12 +24,18 @@ import appeng.api.networking.IGrid;
 import appeng.api.networking.energy.IEnergySource;
 import appeng.api.networking.storage.IStorageGrid;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.container.slot.IOptionalSlotHost;
 import appeng.container.slot.SlotFake;
 import appeng.container.slot.SlotFakeCraftingMatrix;
 import appeng.container.slot.SlotRestrictedInput;
 import appeng.tile.inventory.AppEngInternalInventory;
 import appeng.util.Platform;
+
+import com.glodblock.github.common.item.ItemFluidDrop;
+import com.glodblock.github.common.item.ItemFluidEncodedPattern;
+import com.glodblock.github.loader.ItemAndBlockHolder;
+import com.glodblock.github.util.FluidPatternDetails;
 
 /**
  * 样板编码小组件，移植自 AE2Things PatternContainer（原生 4×4 网格布局）。
@@ -242,7 +248,11 @@ public class PatternContainer implements IOptionalSlotHost {
     // ===== 编码 =====
 
     public void encode() {
-        encodeItemPattern();
+        if (!craftingMode && checkHasFluidPattern()) {
+            encodeFluidPattern();
+        } else {
+            encodeItemPattern();
+        }
     }
 
     private void encodeItemPattern() {
@@ -354,6 +364,111 @@ public class PatternContainer implements IOptionalSlotHost {
         patternSlotOUT.putStack(output);
     }
 
+    /** 检测处理模式下输入/输出格是否包含流体物品（GT ItemFluidDisplay / ae2fc ItemFluidPacket 等） */
+    private boolean checkHasFluidPattern() {
+        for (final SlotFake slot : craftingExSlots) {
+            if (slot.isEnabled() && isFluidItem(slot.getStack())) return true;
+        }
+        for (final SlotFake slot : outputExSlots) {
+            if (slot.isEnabled() && isFluidItem(slot.getStack())) return true;
+        }
+        return false;
+    }
+
+    /**
+     * 流体编码路径：创建 ae2fc ItemFluidEncodedPattern（橙色文字），
+     * 通过 FluidPatternDetails 正确序列化流体输入/输出。
+     */
+    private void encodeFluidPattern() {
+        ItemStack output = patternSlotOUT.getStack();
+        final ItemStack[] in = getInputs();
+        final ItemStack[] out = getOutputs();
+
+        if (in == null || out == null) {
+            MyMod.LOG.info("[Encode-Fluid] panel empty (in={}, out={}), abort", in != null, out != null);
+            return;
+        }
+        if (output != null && notPattern(output)) {
+            MyMod.LOG.info("[Encode-Fluid] OUT slot holds non-pattern item, abort");
+            return;
+        }
+        if (output == null) {
+            ItemStack blank = patternSlotIN.getStack();
+            if (blank != null && isBlankPattern(blank)) {
+                blank.stackSize--;
+                if (blank.stackSize == 0) {
+                    patternSlotIN.putStack(null);
+                }
+            } else if (blank == null) {
+                if (!consumeBlankFromNetwork()) {
+                    MyMod.LOG.info("[Encode-Fluid] no blank pattern in slot and network, abort");
+                    return;
+                }
+            } else {
+                MyMod.LOG.info("[Encode-Fluid] blank slot holds non-blank item, abort");
+                return;
+            }
+        }
+
+        output = ItemAndBlockHolder.PATTERN.stack(1);
+        if (output == null) return;
+
+        FluidPatternDetails pattern = new FluidPatternDetails(output);
+        IAEStack<?>[] aeInputs = new IAEStack<?>[in.length];
+        IAEStack<?>[] aeOutputs = new IAEStack<?>[out.length];
+        for (int i = 0; i < in.length; i++) {
+            aeInputs[i] = convertToAEStack(in[i]);
+        }
+        for (int i = 0; i < out.length; i++) {
+            aeOutputs[i] = convertToAEStack(out[i]);
+        }
+        pattern.setInputs(aeInputs);
+        pattern.setOutputs(aeOutputs);
+        pattern.setCanBeSubstitute(beSubstitute ? 1 : 0);
+        output = pattern.writeToStack();
+        stampAuthor(output);
+
+        // GT 配方池反查
+        applyRecipeMapMeta(null);
+        try {
+            String playerKey = playerInv.player.getUniqueID().toString();
+            String recipeMap = pendingRecipeMap;
+            if (recipeMap == null || recipeMap.isEmpty()) {
+                recipeMap = RecipeMapDetector.detectRecipeMap(in, out, playerKey);
+            }
+            if (recipeMap != null && !recipeMap.isEmpty()) {
+                output.getTagCompound().setString("apu:recipeMap", recipeMap);
+                applyRecipeMapMeta(recipeMap);
+                MyMod.LOG.info("[Encode-Fluid] done, recipeMap={}", recipeMap);
+            } else {
+                MyMod.LOG.info("[Encode-Fluid] done, recipeMap=none");
+            }
+        } catch (Throwable t) {
+            MyMod.LOG.warn("encode fluid pattern recipeMap error", t);
+        }
+
+        patternSlotOUT.putStack(output);
+    }
+
+    /**
+     * 将 ItemStack 转换为 IAEStack：流体物品 → ae2fc ItemFluidDrop 封装的 IAEItemStack，
+     * 普通物品 → AEItemStack。
+     */
+    private static IAEStack<?> convertToAEStack(ItemStack stack) {
+        if (stack == null) return null;
+        if (isFluidItem(stack)) {
+            FluidStack fs = getFluidFromItem(stack);
+            if (fs != null) {
+                if (isGTFluidDisplayItem(stack)) {
+                    fs.amount = fs.amount * stack.stackSize;
+                }
+                IAEItemStack drop = ItemFluidDrop.newAeStack(fs);
+                if (drop != null) return drop;
+            }
+        }
+        return appeng.util.item.AEItemStack.create(stack);
+    }
+
     private ItemStack stampAuthor(ItemStack patternStack) {
         if (patternStack.stackTagCompound == null) {
             patternStack.stackTagCompound = new NBTTagCompound();
@@ -386,6 +501,8 @@ public class PatternContainer implements IOptionalSlotHost {
 
     private boolean notPattern(final ItemStack output) {
         if (output == null) return true;
+        // ae2fc 流体编码样板
+        if (output.getItem() instanceof ItemFluidEncodedPattern) return false;
         final var definitions = AEApi.instance()
             .definitions();
         boolean isPattern = definitions.items()

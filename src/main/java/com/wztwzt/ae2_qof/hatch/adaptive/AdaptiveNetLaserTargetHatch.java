@@ -14,6 +14,8 @@ import com.cleanroommc.modularui.api.drawable.IKey;
 import com.cleanroommc.modularui.factory.PosGuiData;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.screen.UISettings;
+import com.cleanroommc.modularui.value.sync.IntSyncValue;
+import com.cleanroommc.modularui.value.sync.LongSyncValue;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
 import com.cleanroommc.modularui.widgets.TextWidget;
 import com.cleanroommc.modularui.widgets.layout.Flow;
@@ -114,6 +116,9 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
                     }
                 }
             }
+            if (!helper.isBound()) {
+                helper.tryAutoBindFromPlacer(aBase);
+            }
             if (helper.isBound()) {
                 AdaptiveNetworkManager.registerHatch(helper, world);
             }
@@ -174,13 +179,23 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
     public ModularPanel buildUI(PosGuiData guiData, PanelSyncManager syncManager, UISettings uiSettings) {
         ModularPanel panel = ModularPanel.defaultPanel("adaptive_laser_target_hatch", 280, 180);
 
+        IntSyncValue boundSync = new IntSyncValue(() -> helper.isBound() ? 1 : 0, v -> {});
+        IntSyncValue voltageSync = new IntSyncValue(() -> helper.getCurrentVoltageTier(), v -> {});
+        IntSyncValue ampSync = new IntSyncValue(() -> helper.getCurrentAmps(), v -> {});
+        LongSyncValue gridEUSync = new LongSyncValue(() -> helper.isBound() && helper.getNetworkOwner() != null
+            ? AdaptiveHatchHelper.getGridEULong(helper.getNetworkOwner()) : 0L, v -> {});
+        syncManager.syncValue("aBD", boundSync);
+        syncManager.syncValue("aVT", voltageSync);
+        syncManager.syncValue("aAM", ampSync);
+        syncManager.syncValue("aGE", gridEUSync);
+
         Flow column = Flow.column().coverChildren().childPadding(2).top(6).left(10);
 
         column.child(
             new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_laser_target_hatch.title")).size(260, 16));
 
         column.child(new TextWidget<>(IKey.dynamic(() -> {
-            if (!helper.isBound()) {
+            if (boundSync.getIntValue() == 0) {
                 return EnumChatFormatting.RED + "● "
                     + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.unbound");
             }
@@ -189,7 +204,7 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
         })).size(260, 14));
 
         column.child(new TextWidget<>(IKey.dynamic(() -> {
-            int v = helper.getCurrentVoltageTier();
+            int v = voltageSync.getIntValue();
             String tierName = GTUtility.getColoredTierNameFromTier((byte) v);
             return EnumChatFormatting.AQUA
                 + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.voltage")
@@ -199,12 +214,11 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
         column.child(new TextWidget<>(IKey.dynamic(() -> {
             return EnumChatFormatting.YELLOW
                 + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.amperage")
-                + " " + EnumChatFormatting.WHITE + maxAmperesOut() + " A";
+                + " " + EnumChatFormatting.WHITE + ampSync.getIntValue() + " A";
         })).size(260, 14));
 
         column.child(new TextWidget<>(IKey.dynamic(() -> {
-            long gridEU = helper.isBound() && helper.getNetworkOwner() != null
-                ? AdaptiveHatchHelper.getGridEULong(helper.getNetworkOwner()) : 0L;
+            long gridEU = gridEUSync.getLongValue();
             return EnumChatFormatting.AQUA
                 + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.grid_energy")
                 + " " + EnumChatFormatting.WHITE + formatEU(gridEU) + " EU";
@@ -259,11 +273,11 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
         mcp.mobius.waila.api.IWailaDataAccessor accessor, mcp.mobius.waila.api.IWailaConfigHandler config) {
         super.getWailaBody(itemStack, currenttip, accessor, config);
         try {
-            int v = helper.getCurrentVoltageTier();
+            int v = helper.getLastVoltageTier();
+            int a = helper.getLastAmps();
             String tierName = GTUtility.getColoredTierNameFromTier((byte) v);
-            currenttip.add(EnumChatFormatting.AQUA + "V:" + tierName + " (" + V[v] + ") | A:" + helper.getCurrentAmps());
-            long gridEU = helper.isBound() && helper.getNetworkOwner() != null
-                ? AdaptiveHatchHelper.getGridEULong(helper.getNetworkOwner()) : 0L;
+            currenttip.add(EnumChatFormatting.AQUA + "V:" + tierName + " (" + V[v] + ") | A:" + a);
+            long gridEU = helper.getLastGridEU();
             currenttip.add(EnumChatFormatting.AQUA + "Grid: " + formatEU(gridEU));
             if (helper.isBound()) {
                 currenttip.add(EnumChatFormatting.GREEN

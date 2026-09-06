@@ -4,10 +4,12 @@ import java.math.BigInteger;
 import java.util.UUID;
 
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.StatCollector;
+import net.minecraft.world.World;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.implementations.MTEMultiBlockBase;
@@ -35,6 +37,11 @@ public class AdaptiveHatchHelper {
     private String machineName = "";
     private int realFlowEUt = 0;
 
+    // WAILA缓存字段（服务端更新，客户端读取）
+    private int lastVoltageTier = 0;
+    private int lastAmps = 1;
+    private long lastGridEU = 0L;
+
     public HatchType getHatchType() {
         return hatchType;
     }
@@ -61,10 +68,12 @@ public class AdaptiveHatchHelper {
 
     public void setVoltageTier(int tier) {
         this.currentVoltageTier = Math.max(0, Math.min(tier, 15));
+        this.lastVoltageTier = this.currentVoltageTier;
     }
 
     public void setAmps(int amps) {
         this.currentAmps = Math.max(1, amps);
+        this.lastAmps = this.currentAmps;
     }
 
     public int getX() { return posX; }
@@ -170,6 +179,13 @@ public class AdaptiveHatchHelper {
     public int getRealFlowEUt() { return realFlowEUt; }
     public void setRealFlowEUt(int realFlowEUt) { this.realFlowEUt = realFlowEUt; }
 
+    public int getLastVoltageTier() { return lastVoltageTier; }
+    public void setLastVoltageTier(int v) { this.lastVoltageTier = v; }
+    public int getLastAmps() { return lastAmps; }
+    public void setLastAmps(int a) { this.lastAmps = a; }
+    public long getLastGridEU() { return lastGridEU; }
+    public void setLastGridEU(long eu) { this.lastGridEU = eu; }
+
     public static long getGridEULong(UUID owner) {
         if (owner == null) return 0;
         BigInteger eu = gregtech.common.misc.WirelessNetworkManager.getUserEU(owner);
@@ -205,6 +221,37 @@ public class AdaptiveHatchHelper {
         this.networkOwner = null;
         this.networkFrequency = 0;
         this.currentVoltageTier = 0;
+    }
+
+    public static EntityPlayerMP findPlayerByUUID(World world, UUID uuid) {
+        if (world == null || uuid == null) return null;
+        for (Object obj : world.playerEntities) {
+            if (obj instanceof EntityPlayerMP p) {
+                if (uuid.equals(p.getGameProfile().getId())) return p;
+            }
+        }
+        return null;
+    }
+
+    public boolean tryAutoBindFromPlacer(IGregTechTileEntity aBase) {
+        if (isBound()) return false;
+        UUID placerUuid = aBase.getOwnerUuid();
+        if (placerUuid == null) return false;
+        EntityPlayerMP player = findPlayerByUUID(aBase.getWorld(), placerUuid);
+        if (player == null) return false;
+        for (int i = 0; i < player.inventory.getSizeInventory(); i++) {
+            ItemStack stack = player.inventory.getStackInSlot(i);
+            if (stack != null && stack.getItem() instanceof ItemNetworkDataStick
+                && ItemNetworkDataStick.hasData(stack)) {
+                UUID owner = ItemNetworkDataStick.getOwner(stack);
+                int freq = ItemNetworkDataStick.getFrequency(stack);
+                if (owner != null) {
+                    bind(owner, freq);
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public boolean handleDataStickRightClick(EntityPlayer aPlayer) {
@@ -262,6 +309,9 @@ public class AdaptiveHatchHelper {
         aNBT.setString("ae2qolMN", cachedName);
         aNBT.setInteger("ae2qolMMI", machineMetaId);
         aNBT.setString("ae2qolMMN", machineName);
+        aNBT.setInteger("ae2qolLVT", lastVoltageTier);
+        aNBT.setInteger("ae2qolLA", lastAmps);
+        aNBT.setLong("ae2qolLGE", lastGridEU);
     }
 
     public void loadNBT(NBTTagCompound aNBT) {
@@ -284,6 +334,10 @@ public class AdaptiveHatchHelper {
         machineMetaId = aNBT.getInteger("ae2qolMMI");
         machineName = aNBT.getString("ae2qolMMN");
         if (machineName == null) machineName = "";
+        lastVoltageTier = aNBT.getInteger("ae2qolLVT");
+        lastAmps = aNBT.getInteger("ae2qolLA");
+        if (lastAmps <= 0) lastAmps = 1;
+        lastGridEU = aNBT.getLong("ae2qolLGE");
     }
 
     public void migrateTo(UUID newOwner, int newFrequency) {

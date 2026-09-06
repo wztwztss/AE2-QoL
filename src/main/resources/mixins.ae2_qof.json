@@ -14,7 +14,7 @@
     "gt.MixinMTEHatchInputBus",
     "gt.MixinMTEMultiBlockBase",
     "gt.MixinCommonBaseMetaTileEntityMultiblockRegistry",
-    "gt.MixinMultiblockParallel",
+    "gt.MixinProcessingLogicSpeed",
     "TileDriveMixin"
   ],
   "client": [

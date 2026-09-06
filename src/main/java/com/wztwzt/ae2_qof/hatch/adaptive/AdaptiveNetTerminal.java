@@ -322,7 +322,8 @@ public class AdaptiveNetTerminal extends MTEHatch {
                     if (stickOwner == null) {
                         LOG.warn("[AE2QoL] Flash drive owner is null!");
                         aPlayer.addChatMessage(new net.minecraft.util.ChatComponentText(
-                            EnumChatFormatting.RED + "Flash drive owner data invalid"));
+                            EnumChatFormatting.RED
+                                + StatCollector.translateToLocal("ae2_qof.adaptive.bind.invalid_stick")));
                         return true;
                     }
                     int oldFreq = networkFrequency;
