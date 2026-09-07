@@ -1066,6 +1066,8 @@ public class PatternContainer implements IOptionalSlotHost {
         if (isGTFluidDisplayItem(stack)) return true;
         // ae2fc ItemFluidPacket
         if (stack.getItem() instanceof ItemFluidPacket) return true;
+        // ae2fc ItemFluidDrop
+        if (stack.getItem() instanceof ItemFluidDrop) return true;
         return false;
     }
 
