@@ -9,7 +9,7 @@ author: wztwzt
 
 AE2 QoL brings a set of quality-of-life enhancements to Applied Energistics 2 (GTNH edition).
 
-## All Features (19)
+## All Features (21)
 
 | # | Feature | Summary | Page |
 |---|---|---|---|
@@ -33,6 +33,7 @@ AE2 QoL brings a set of quality-of-life enhancements to Applied Energistics 2 (G
 | 18 | Universal Maintenance Hatch | Maintenance bypass + wireless energy + circuit parallel mapping in one | [Universal Maintenance Hatch](universal_maintenance_hatch.md) |
 | 19 | GT Wireless EU Grid | Input/output hatches wirelessly transfer EU, cross-dimensional power | [Wireless EU Grid](wireless_eu_grid.md) |
 | 20 | Adaptive Energy Grid | Data Stick configures network; hatches auto-adapt V/A/frequency | [Adaptive Grid](adaptive_grid.md) |
+| 21 | Stock Monitor Terminal | Centrally view/edit AE2 level emitters and stock monitor covers, power-free with Nexus wireless | [Stock Monitor Terminal](stock_monitor_terminal.md) |
 
 ## Quick Start
 

@@ -126,6 +126,7 @@ ae2_qof.gui.hatch.title=§6万能维护仓
 ae2_qof.gui.hatch.parallel=并行数:
 ae2_qof.gui.hatch.speed=速度:
 ae2_qof.gui.hatch.circuit_slot=插入任意电路板设置上限:
+ae2_qof.gui.hatch.threads=线程:
 ae2_qof.modname=AE2 QoL
 
 # ===== 自适应电网系统 =====
@@ -265,6 +266,42 @@ ae2_qof.gui.wireless_input_terminal.current_ref=电流档位
 
 ae2_qof.wireless.bind.success=§a已绑定到无线电网
 ae2_qof.wireless.unbind.success=§e已解除绑定
+
+# ===== 库存检测覆盖板 =====
+item.ae2_qof.stock_monitor_cover.name=库存检测覆盖板
+item.ae2_qof.stock_monitor_cover.tooltip.1=监控AE网络库存并控制机器启停
+item.ae2_qof.stock_monitor_cover.tooltip.2=贴到机器任意面 → 空手Shift+右键设置监控目标与数量
+item.ae2_qof.stock_monitor_cover.tooltip.3=撬棍拆卸（配置保留）；Shift+右键物品清空配置
+ae2_qof.cover.stock_monitor.config_cleared=覆盖板配置已清空
+
+# ===== 库存检测覆盖板 GUI =====
+ae2_qof.gui.stock_monitor.connect=连接AE
+ae2_qof.gui.stock_monitor.disconnect=断开连接
+ae2_qof.gui.stock_monitor.cannot_disconnect_neighbor=邻接连接无法断开，请移除覆盖板
+ae2_qof.gui.stock_monitor.target=监控目标:
+ae2_qof.gui.stock_monitor.no_target=(未设置目标)
+ae2_qof.gui.stock_monitor.threshold=目标数量:
+ae2_qof.gui.stock_monitor.mode=模式:
+ae2_qof.gui.stock_monitor.mode_below=低于N开机
+ae2_qof.gui.stock_monitor.mode_above=高于N开机
+ae2_qof.gui.stock_monitor.more=更多检测槽位 (2-9)
+ae2_qof.gui.stock_monitor.more_slots=更多检测槽位
+ae2_qof.gui.stock_monitor.back=返回
+ae2_qof.gui.stock_monitor.current_stock=当前库存:
+ae2_qof.gui.stock_monitor.machine_running=机器: 运行中
+ae2_qof.gui.stock_monitor.machine_stopped=机器: 已停机
+ae2_qof.gui.stock_monitor.connected_wireless=无线已连接
+ae2_qof.gui.stock_monitor.connected_neighbor=邻接已连接
+ae2_qof.gui.stock_monitor.disconnected=未连接
+ae2_qof.gui.stock_monitor.nexus_not_installed=未安装 AE Wireless Nexus - 请使用邻接AE设备
+ae2_qof.gui.stock_monitor.no_networks=附近没有可用的AE无线网络
+ae2_qof.gui.stock_monitor.available_networks=可用AE无线网络:
+ae2_qof.gui.stock_monitor.bind_hint=使用 /ae2qof smbind <网络ID> 绑定到网络
+ae2_qof.gui.stock_monitor.select_network=选择 AE 无线网络
+ae2_qof.gui.stock_monitor.network_count=网络数:
+ae2_qof.gui.stock_monitor.network_online=在线
+ae2_qof.gui.stock_monitor.network_offline=离线
+ae2_qof.gui.stock_monitor.close=关闭
 ae2_qof.data_stick.write.success=§a已写入网络配置到闪存
 ae2_qof.data_stick.write.no_owner=§e终端未初始化，无法写入配置
 ae2_qof.data_stick.read.success=§a已从闪存读取网络配置
@@ -272,3 +309,17 @@ ae2_qof.adaptive.bind.success=§a已绑定到自适应电网
 ae2_qof.adaptive.bind.fail=§c绑定失败 - 所有者数据无效
 ae2_qof.adaptive.bind.empty_stick=§e空数据棒 - 请先在终端写入配置
 ae2_qof.adaptive.bind.invalid_stick=§c闪存所有者数据无效
+  
+ae2_qof.terminal.stock_monitor.title=库存统计终端  
+ae2_qof.terminal.stock_monitor.desc=集中查看和修改AE2发信器与库存检测覆盖板  
+ae2_qof.terminal.stock_monitor.desc.0=免电信息终端  
+ae2_qof.terminal.stock_monitor.desc.1=右键打开管理界面  
+ae2_qof.terminal.emitters=AE2发信器  
+ae2_qof.terminal.covers=库存覆盖板  
+ae2_qof.terminal.no_emitters=未找到发信器  
+ae2_qof.terminal.no_covers=未找到覆盖板  
+ae2_qof.terminal.threshold=阈值:  
+ae2_qof.terminal.mode=模式:  
+ae2_qof.terminal.no_permission=§c没有修改权限  
+ae2_qof.terminal.cover_offline=§c覆盖板已失联  
+ae2_qof.terminal.cover_not_found=§c覆盖板不存在 

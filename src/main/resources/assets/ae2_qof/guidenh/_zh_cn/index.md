@@ -9,7 +9,7 @@ author: wztwzt
 
 AE2 QoL 为 Applied Energistics 2（GTNH 版）提供一系列效率增强功能。
 
-## 全部功能一览（19 项）
+## 全部功能一览（21 项）
 
 | # | 功能 | 一句话说明 | 详情页 |
 |---|---|---|---|
@@ -33,6 +33,7 @@ AE2 QoL 为 Applied Energistics 2（GTNH 版）提供一系列效率增强功能
 | 18 | 万能维护仓 | 维护绕过+无线能源+电路板并行映射三合一 | [万能维护仓](universal_maintenance_hatch.md) |
 | 19 | GT 无线 EU 网格 | 输入/输出仓室无线传输 EU，跨维度供电 | [GT 无线 EU 网格](wireless_eu_grid.md) |
 | 20 | 自适应电网系统 | 数据棒配置网络，多仓室自动适配电压/电流/频率 | [自适应电网](adaptive_grid.md) |
+| 21 | 库存统计终端 | 集中查看/修改 AE2 发信器与库存覆盖板，免电 Nexus 无线连接 | [库存统计终端](stock_monitor_terminal.md) |
 
 ## 快速上手
 

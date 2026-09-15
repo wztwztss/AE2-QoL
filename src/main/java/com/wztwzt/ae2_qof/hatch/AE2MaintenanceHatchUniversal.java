@@ -35,6 +35,8 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
     private static final int[] SPEED_MAX = { 0, 0, 2, 5, 8, 13, 18, 25, 33, 41, 51, 62, 73, 86, 100, 100 };
     private static final int[] PARALLEL_MAX = { 1, 4, 16, 64, 256, 1024, 4096, 16384, 65536, 262144, 1048576,
         4194304, 16777216, 67108864, 268435456, 1073741824 };
+    // 线程上限：HV(3) 起可用，UV(8) 封顶 64
+    private static final int[] THREAD_MAX = { 1, 1, 1, 2, 4, 8, 16, 32, 64, 64, 64, 64, 64, 64, 64, 64 };
 
     private static final String[] CIRCUIT_KEYS = { "CircuitULV", "CircuitLV", "CircuitMV", "CircuitHV", "CircuitEV",
         "CircuitIV", "CircuitLuV", "CircuitZPM", "CircuitUV", "CircuitUHV", "CircuitUEV", "CircuitUIV",
@@ -43,6 +45,7 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
 
     private int userParallel;
     private int userSpeed;
+    private int userThreads;
 
     public AE2MaintenanceHatchUniversal(int aID, String aName, String aNameRegional, int aTier) {
         super(aID, aName, aNameRegional, aTier);
@@ -99,6 +102,7 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
     public int getCircuitLevelPublic() { return getCircuitLevel(); }
     public int getUserParallel() { return userParallel; }
     public int getUserSpeed() { return userSpeed; }
+    public int getUserThreads() { return userThreads; }
 
     public int getMaxParallelForLevel() {
         int lvl = getCircuitLevel();
@@ -110,6 +114,11 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
         return (lvl >= 0 && lvl < SPEED_MAX.length) ? SPEED_MAX[lvl] : 0;
     }
 
+    public int getMaxThreadsForLevel() {
+        int lvl = getCircuitLevel();
+        return (lvl >= 0 && lvl < THREAD_MAX.length) ? THREAD_MAX[lvl] : 1;
+    }
+
     public int getEffectiveParallel() {
         return Math.max(1, Math.min(userParallel, getMaxParallelForLevel()));
     }
@@ -118,6 +127,10 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
         int max = getMaxSpeedForLevel();
         int clamped = Math.max(-max, Math.min(userSpeed, max));
         return 1.0 - clamped / 100.0;
+    }
+
+    public int getEffectiveThreads() {
+        return Math.max(1, Math.min(userThreads, getMaxThreadsForLevel()));
     }
 
     @Override
@@ -137,8 +150,12 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
             this::getUserSpeed,
             v -> { int m = getMaxSpeedForLevel(); this.userSpeed = Math.max(-m, Math.min(v, m)); }
         ).allowC2S();
+        IntSyncValue threadSync = new IntSyncValue(
+            this::getUserThreads,
+            v -> this.userThreads = Math.max(1, Math.min(v, getMaxThreadsForLevel()))
+        ).allowC2S();
 
-        ModularPanel panel = ModularPanel.defaultPanel("universal_maintenance_hatch", 260, 180);
+        ModularPanel panel = ModularPanel.defaultPanel("universal_maintenance_hatch", 260, 210);
 
         Flow column = Flow.column().coverChildren().childPadding(3).top(7).left(7);
 
@@ -163,6 +180,12 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
                 .setMaxLength(5).size(80, 14),
             IKey.dynamic(() -> "max " + getMaxSpeedForLevel() + "%")));
 
+        column.child(paramRow("ae2_qof.gui.hatch.threads",
+            new TextFieldWidget().value(threadSync).formatAsInteger(true)
+                .numbersInt(() -> 1L, () -> (long) getMaxThreadsForLevel())
+                .setMaxLength(3).size(80, 14),
+            IKey.dynamic(() -> "max " + getMaxThreadsForLevel())));
+
         panel.bindPlayerInventory();
         panel.child(column);
         return panel;
@@ -180,6 +203,7 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
         super.saveNBTData(aNBT);
         aNBT.setInteger("ae2qolPar", userParallel);
         aNBT.setInteger("ae2qolSpd", userSpeed);
+        aNBT.setInteger("ae2qolThr", userThreads);
     }
 
     @Override
@@ -188,6 +212,8 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
         userParallel = aNBT.getInteger("ae2qolPar");
         if (userParallel <= 0) userParallel = 1;
         userSpeed = aNBT.getInteger("ae2qolSpd");
+        userThreads = aNBT.getInteger("ae2qolThr");
+        if (userThreads <= 0) userThreads = 1;
     }
 
     @Override public boolean allowPullStack(IGregTechTileEntity a, int i, ForgeDirection s, ItemStack stack) { return false; }
@@ -199,7 +225,8 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
         super.getWailaBody(itemStack, currenttip, accessor, config);
         try {
             currenttip.add(EnumChatFormatting.AQUA + "P:" + getEffectiveParallel()
-                + " | S:" + (getUserSpeed() >= 0 ? "+" : "") + getUserSpeed() + "%");
+                + " | S:" + (getUserSpeed() >= 0 ? "+" : "") + getUserSpeed() + "%"
+                + " | T:" + getEffectiveThreads());
         } catch (Exception ignored) {}
     }
 }

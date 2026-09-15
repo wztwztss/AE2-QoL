@@ -40,6 +40,13 @@ public class Config {
      */
     public static volatile boolean pinRowEnabled = true;
 
+    /**
+     * 库存检测覆盖板快捷数量预设（热加载字段）。
+     * 格式：按钮文字=数值，分号分隔；内置值可增删改。
+     * 数值必须 ≥0（负数直接忽略并打日志）。
+     */
+    public static volatile String stockMonitorPresets = "1万=10000;100万=1000000;10亿=1000000000;清零=0";
+
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting()
         .disableHtmlEscaping()
         .create();
@@ -72,7 +79,7 @@ public class Config {
                     1,
                     Integer.MAX_VALUE);
                 int oldRounds = readLegacyCfgInt(configFile, "smartDoublingMaxRounds", smartDoublingMaxRounds, 1, 4096);
-                writeFile(oldRate, oldRounds, true, pinRowEnabled);
+                writeFile(oldRate, oldRounds, true, pinRowEnabled, stockMonitorPresets);
                 configFile.delete();
             }
             reload();
@@ -92,9 +99,10 @@ public class Config {
         int rounds = smartDoublingMaxRounds;
         boolean overlay = neiOverlayEnabled;
         boolean pinRow = pinRowEnabled;
+        String presets = stockMonitorPresets;
         try {
             if (!Files.exists(SETTINGS_FILE)) {
-                writeFile(io, rounds, overlay, pinRow);
+                writeFile(io, rounds, overlay, pinRow, presets);
                 return;
             }
             try (InputStreamReader reader = new InputStreamReader(
@@ -120,6 +128,10 @@ public class Config {
                     if (value != null && value.isJsonPrimitive()) {
                         pinRow = value.getAsBoolean();
                     }
+                    value = obj.get("stock_monitor_presets");
+                    if (value != null && value.isJsonPrimitive()) {
+                        presets = value.getAsString();
+                    }
                 }
             }
         } catch (Throwable t) {
@@ -129,6 +141,7 @@ public class Config {
         smartDoublingMaxRounds = rounds;
         neiOverlayEnabled = overlay;
         pinRowEnabled = pinRow;
+        stockMonitorPresets = presets;
         lastLoadedMtime = currentMtime();
     }
 
@@ -160,7 +173,7 @@ public class Config {
         if (SETTINGS_FILE == null) {
             return;
         }
-        writeFile(exIOPortTransferContentsRate, smartDoublingMaxRounds, enabled, pinRowEnabled);
+        writeFile(exIOPortTransferContentsRate, smartDoublingMaxRounds, enabled, pinRowEnabled, stockMonitorPresets);
         lastLoadedMtime = currentMtime();
     }
 
@@ -205,7 +218,7 @@ public class Config {
             return false;
         }
         if (SETTINGS_FILE != null) {
-            writeFile(exIOPortTransferContentsRate, smartDoublingMaxRounds, neiOverlayEnabled, pinRowEnabled);
+            writeFile(exIOPortTransferContentsRate, smartDoublingMaxRounds, neiOverlayEnabled, pinRowEnabled, stockMonitorPresets);
             lastLoadedMtime = currentMtime();
         }
         return true;
@@ -222,7 +235,7 @@ public class Config {
         exIOPortTransferContentsRate = clamp(io, 1, Integer.MAX_VALUE, exIOPortTransferContentsRate);
         smartDoublingMaxRounds = clamp(rounds, 0, Integer.MAX_VALUE, smartDoublingMaxRounds);
         if (SETTINGS_FILE != null) {
-            writeFile(exIOPortTransferContentsRate, smartDoublingMaxRounds, neiOverlayEnabled, pinRowEnabled);
+            writeFile(exIOPortTransferContentsRate, smartDoublingMaxRounds, neiOverlayEnabled, pinRowEnabled, stockMonitorPresets);
             lastLoadedMtime = currentMtime();
         }
     }
@@ -249,7 +262,7 @@ public class Config {
         }
     }
 
-    private static void writeFile(int ioRate, int rounds, boolean overlay, boolean pinRow) {
+    private static void writeFile(int ioRate, int rounds, boolean overlay, boolean pinRow, String presets) {
         try {
             Path parent = SETTINGS_FILE.getParent();
             if (parent != null && !Files.exists(parent)) {
@@ -260,6 +273,7 @@ public class Config {
             root.addProperty("smart_doubling_max_rounds", rounds);
             root.addProperty("nei_overlay_enabled", overlay);
             root.addProperty("pin_row_enabled", pinRow);
+            root.addProperty("stock_monitor_presets", presets);
             try (OutputStreamWriter writer = new OutputStreamWriter(
                 Files.newOutputStream(SETTINGS_FILE),
                 StandardCharsets.UTF_8)) {

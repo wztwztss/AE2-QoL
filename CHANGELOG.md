@@ -1,3 +1,168 @@
+## 3.19.0-fix11 - M6 库存统计终端（发信器+覆盖板集中管理 + Nexus 无线连接）
+
+> 作者：wztwzt | 更新时间：2026-09-11 | 基于 3.19.0-fix10
+
+### 新增：M6 库存统计终端（P1，文档 §12 设计落地）
+
+- GT 单方块免电信息终端（ID 32001，继承 MTEHatch，0 库存槽，isElectric=false）
+- 集中查看/修改 AE2 标准发信器（`PartLevelEmitter`）与本模组库存检测覆盖板
+- GUI 双列表：上半部分发信器列表，下半部分覆盖板列表，点击条目弹出编辑子面板
+
+### 新增：覆盖板全局注册表 CoverRegistry（WorldSavedData）
+
+- `DATA_ID="ae2_qof_cover_registry"`，键格式 `dim:x:y:z:side`
+- 存储覆盖板位置+配置摘要（networkId/targetName/targetIsFluid/threshold/modeOrdinal/online）
+- `StockMonitorCover.doCoverThings` 每 10tick upsert，`onCoverRemoval` 移除
+- 支持跨维度枚举，区块未加载时标记离线（灰色显示）
+
+### 新增：Nexus 无线网络连接（与覆盖板完全相同的机制）
+
+- 新建 `StockMonitorTerminalWirelessEndpoint`（实现 `WirelessBindableEndpoint`，14 方法，不占频道）
+- GUI 顶部连接状态显示 + "连接 AE"按钮，弹出 Nexus 原生 `WirelessSelectionPanel`
+- 终端存储 `networkId`（NBT 持久化），支持绑定/解绑/切换网络
+- 发信器枚举双模式：优先 Nexus 无线（`WirelessAeConnector.getGridForNetwork`），回退邻接（`NeighborAeConnector.findGrid`）
+
+### 新增：编辑子面板（MUI2 syncedPanel + SyncValue 双向同步）
+
+- 覆盖板编辑：阈值输入框（`LongSyncValue.allowC2S`）+ 模式切换（BELOW/ABOVE，`IntSyncValue.allowC2S`）+ 位置信息 + 关闭按钮
+- 发信器编辑：阈值输入框 + 类型显示（物品/流体/能量）+ 能量类型只读提示
+- 修改自动写回服务端，覆盖板调用 `markCoverDirty()` 标记脏，发信器调用 `setReportingValue()`
+- 发信器修改需 AE2 网络 `SecurityPermissions.BUILD` 权限拦截
+
+### 修复：覆盖板模式切换不同步（fix10，P1）
+
+- 根因：模式切换按钮 `onMousePressed` 是客户端-only，只改客户端内存，服务端 mode 不变，下次 GUI 刷新从服务端同步回来就变回"低于N开机"
+- 修复：模式改用 MUI2 `IntSyncValue.allowC2S()`，点击时通过 `modeSync.setValue()` 修改，MUI2 自动推送到服务端并写回 `coverData.setMode()`
+
+### 修复：维护仓跨配方纯流体配方 NPE（fix9，P0）
+
+- 根因：纯流体配方 `helper.getItemOutputs()` 返回 null，`for (ItemStack out : null)` 抛 NPE，被 catch 吞掉返回 NO_RECIPE
+- 日志定位：第二次 process() 输入 `fluid.oxygenx2147483647` → matched recipes=1 → build ok=true → 紧接着 NPE
+- 修复：输出数组遍历前加 null 检查 + 元素 null 检查，去掉调试日志
+
+### 修复：覆盖板流体库存读取为 0（fix7，P0，用户多次反馈"流体就识别不到"）
+
+- 根因：AE2UEL `AEFluidStack.equals`（302-303行）对 `AEFluidStack` 参数比较的是 **Fluid 实例引用（==）和 NBT 引用（==）**，不是比较流体 ID 或 NBT 内容。新建的 target 的 Fluid 实例和 AE2 网络里存储的实例不是同一个对象引用 → `findPrecise` 永远匹配不到 → 返回 0
+- 修复：`AeStockReader.readStock` 流体分支改用遍历 `getStorageList()` + `getFluid().getID()` 比较
+
+### 修复：phantom 槽改进（fix7）
+
+- 新建 `StockMonitorPhantomSlot`（继承 `PhantomItemSlot`），重写 `drawSlotAmountText` 为空（不显示数量）、重写 `onMousePressed` 检测 Shift+左键时清空标记
+- 用户需求："只用标记，不用显示数量，shift 左键点击取消标记"
+
+### 修复：覆盖板 GUI 实时刷新（fix6）
+
+- `lastChannel/lastStock/lastShouldWork` 注册为 MUI2 `IntSyncValue/LongSyncValue/BooleanSyncValue`（S2C 自动推送），动态文本改读 SyncValue
+- 断开按钮邻接连接时提示"邻接连接无法断开，请移除覆盖板"
+
+### 工程：版本号升级 + 文档同步 + GuideNH
+
+- `gradle.properties` + `mcmod.info`：`3.19.0-fix5` → `3.19.0-fix11`（两个文件同步）
+- GuideNH 新增 `stock_monitor_terminal.md`（中英文），index.md 功能列表从 20 项更新为 21 项
+- 构建产物：`build/libs/AE2-QoL-3.19.0-fix11.jar`（1,059,821 字节，编译通过）
+
+### 变更文件
+
+| 文件 | 内容 |
+|---|---|
+| `terminal/CoverRegistry.java`（新） | WorldSavedData 全局覆盖板注册表 |
+| `terminal/StockMonitorTerminal.java`（新） | GT MTE 统计终端（免电，networkId NBT 读写，IInventory/ISidedInventory 全实现） |
+| `terminal/StockMonitorTerminalGui.java`（新） | MUI2 GUI（发信器+覆盖板双列表 + 编辑子面板 + Nexus 连接） |
+| `terminal/StockMonitorTerminalWirelessEndpoint.java`（新） | Nexus WirelessBindableEndpoint 包装 |
+| `cover/stockmonitor/StockMonitorCover.java` | doCoverThings 加 upsert、onCoverRemoval 加 remove、新增 markCoverDirty() |
+| `cover/stockmonitor/gui/StockMonitorCoverGui.java` | fix6 SyncValue 实时刷新 + fix10 模式切换 SyncValue |
+| `cover/stockmonitor/gui/StockMonitorPhantomSlot.java`（新，fix7） | phantom 槽不显示数量 + Shift 左键取消 |
+| `cover/stockmonitor/ae/AeStockReader.java`（fix7） | 流体分支遍历+getFluidID 比较 |
+| `mixin/gt/MixinProcessingLogicSpeed.java`（fix9） | 输出数组 null 检查 |
+| `CommonProxy.java` | 注册 StockMonitorTerminal（ID 32001）+ 合成配方 |
+| `lang/zh_CN.lang` + `lang/en_US.lang` | 终端相关 14 个键 |
+| `guidenh/_zh_cn/stock_monitor_terminal.md` + `_en_us/`（新） | GuideNH 页面 |
+| `guidenh/_zh_cn/index.md` + `_en_us/index.md` | 功能列表 20→21 |
+| `gradle.properties` + `mcmod.info` | 版本号 fix5→fix11 |
+
+---
+
+## 3.19.0-fix5 - 三大模块实测问题全量修复（维护仓线程/覆盖板流体与断开与Nexus原生UI/终端原生流体）
+
+> 作者：wztwzt | 更新时间：2026-09-10 | 基于 3.19.0-fix4
+
+### 修复：万能维护仓线程数增加后机器停止工作（P0）
+
+- 问题：维护仓 GUI 把线程数设为 >1 后，机器完全停止工作（线程=1 时正常）
+- 根因（`MixinProcessingLogicSpeed.ae2qol$crossRecipeProcess` 三处）：
+  1. `prepareCatalyst(inputItems)` 结果只赋给局部变量 `items`，未写回 `this.inputItems`，导致 `createParallelHelper`/`findRecipeMatches` 仍用旧输入——对催化剂机器配方匹配失败 → NO_RECIPE
+  2. 多配方遍历共用同一输入数组：`ParallelHelper.build()` 会原地消耗 `itemInputs`/`fluidInputs`，第一个 recipe 消耗后后续 recipe 用已耗尽输入 → 全部失败
+  3. `catch (Throwable)` 静默吞异常，无法定位真正的运行时错误
+- 修复：
+  1. `this.inputItems = prepareCatalyst(this.inputItems)` 写回字段
+  2. 每个 recipe 调用 `helper.setItemInputs(Arrays.copyOf(...))` / `setFluidInputs(Arrays.copyOf(...))` 使用输入副本
+  3. catch 块改为 `MyMod.LOG.warn("[AE2-QoL] crossRecipeProcess failed", t)` 打印完整异常栈
+- 变更文件：`mixin/gt/MixinProcessingLogicSpeed.java`
+
+### 修复：库存检测覆盖板流体仍识别为物品（P1）
+
+- 问题：物品检测正常，但流体目标仍被识别为物品，库存读数永远为 0
+- 根因：`tryRecognizeFluidItem` 只识别三类（ae2fc ItemFluidPacket / ItemFluidDrop、GT ItemFluidDisplay），GT 流体单元、ae2fc 流体存储单元（FCBaseItemCell）等实现 `IFluidContainerItem` 接口的容器未覆盖
+- 修复：
+  1. 新增 `IFluidContainerItem` 接口识别：`((IFluidContainerItem) item).getFluid(stack)` 读取流体
+  2. 新增通用 NBT 兜底：`"FluidStack"` 复合标签（FluidStack.writeToNBT 格式）+ `"Fluid"` 字符串键 + amount
+- 变更文件：`cover/stockmonitor/StockMonitorCoverData.java`
+
+### 修复：库存检测覆盖板连接网络后无法断开（P1）
+
+- 问题：点"断开"按钮无效果，服务端仍保持绑定状态
+- 根因：断开按钮用 `ButtonWidget.onMousePressed(event -> { coverData.setNetworkId(""); return true; })`——这是**客户端回调**，`setNetworkId("")` 只改了客户端 coverData，服务端未同步（对比连接按钮用 `InteractionSyncHandler` 双端执行）
+- 修复：断开按钮改为 `InteractionSyncHandler`（`syncManager.syncValue("disconnect", ...)`），双端执行 `setNetworkId("")`
+- 变更文件：`cover/stockmonitor/gui/StockMonitorCoverGui.java`
+
+### 修复：库存检测覆盖板只能关机不能自动开机（P1，联动修复）
+
+- 问题：库存高于阈值时能正常关机，但低于阈值后不会自动开机
+- 根因：流体被识别为物品 → `AeStockReader.readStock` 读物品通道（流体数量=0 或物品通道里有"液态氧液滴"物品）→ count 永远高于阈值 → `shouldWork` 永远 false → 永远不触发 `enableWorking()`
+- 修复：随"流体识别为物品"修复联动解决；流体正确识别后 count 读流体通道，低于阈值时 `shouldWork=true` → 自动开机
+- 变更文件：随 `StockMonitorCoverData.java` 流体识别修复联动
+
+### 增强：库存检测覆盖板网络选择 UI 替换为 Nexus 原生面板（P1）
+
+- 问题：自定义网络选择面板只有网络名+在线状态+关闭按钮，缺少优先级、频道数（0/288）、断开按钮，与 Nexus 原生 UI 体验不一致
+- 修复：
+  1. 新增 `StockMonitorWirelessEndpoint` 类，实现 Nexus `WirelessBindableEndpoint` 接口（14 个方法：getTargetNetworkId/getWirelessPriority/getRequestedChannels/getBindingPlayerId/getStableEndpointKey/getWirelessGridNode/isWirelessEndpointValid/setWirelessLease + getEndpointWorld/getEndpointDisplayName/getWirelessLeaseStatus/bindToNetwork/unbindFromNetwork/setWirelessPriority），不调用 registerEndpoint，不占用无线频道，仅用于网络选择/绑定
+  2. `StockMonitorCoverGui` 网络子面板 builder 改为：Nexus 可用时调用 `WirelessSelectionPanel.build("ae2qol_net_select", endpoint, player, syncManager, true)`（原生面板，含优先级输入框/频道数/断开按钮）；Nexus 不可用时回退自定义 `NetworkSelectPanel`
+- 变更文件：`cover/stockmonitor/ae/StockMonitorWirelessEndpoint.java`（新增）、`cover/stockmonitor/gui/StockMonitorCoverGui.java`
+
+### 修复：二合一终端不识别原生流体（P0，用户多次反馈）
+
+- 问题：终端编码样板时把 1000L 液态氧编码成"1,000 液态氧液滴"物品（ae2fc ItemFluidDrop），而非原生流体，合成 CPU 无法识别为流体
+- 根因（两处）：
+  1. `PatternContainer.convertToAEStack` 流体分支用 `ItemFluidDrop.newAeStack(fs)` 返回 `IAEItemStack`（物品），而非 `IAEFluidStack`
+  2. `FluidPatternDetails.writeToStack()` 内部用 `this.inputs`（legacy 物品数组）写 NBT，而 `setInputs` 会把 `IAEFluidStack` 经 `stackConvert` 转成 ItemFluidDrop 存入 legacy——即使 convertToAEStack 返回流体，writeToStack 仍会写成物品
+- 修复：
+  1. `convertToAEStack` 流体分支改返回 `AEFluidStack.create(fs)`（原生 `IAEFluidStack`）
+  2. 绕过 `FluidPatternDetails.writeToStack()`，自己构造 NBT：用 `pattern.getCondensedAEInputs()`/`getCondensedAEOutputs()`（原生流体数组）+ `FluidPatternDetails.writeStackArray()` 写入 "in"/"out" 键，保留 combine/beSubstitute 字段
+- 变更文件：`merged/PatternContainer.java`
+
+### 工程：版本号升级 + 文档同步
+
+- `gradle.properties`：`modVersion = 3.19.0-fix4` → `3.19.0-fix5`
+- 三份文档同步更新：
+  - `docs/AE库存检测覆盖板-开发指南.md` v0.6 → v0.7（新增 B10/B11/B12/B13 修复记录）
+  - `docs/AE2-QoL流体识别问题调研与解决方案.md`（新增 fix5 终端原生流体彻底修复状态）
+  - `docs/万能维护仓-并行速度与线程跨配方并行-方案.md` v1.1 → v1.2（新增 crossRecipeProcess 三处根因修复）
+- 构建命令：`$env:JAVA_HOME="E:\java17"; .\gradlew.bat build --offline -x spotlessCheck -x spotlessJavaCheck`
+- 构建产物：`build/libs/AE2-QoL-3.19.0-fix5.jar`（1,036,596 字节，编译通过）
+
+### 变更文件
+
+- `src/main/java/com/wztwzt/ae2_qof/mixin/gt/MixinProcessingLogicSpeed.java`：crossRecipeProcess 补 prepareCatalyst 写回 + 输入副本 + catch 日志
+- `src/main/java/com/wztwzt/ae2_qof/cover/stockmonitor/StockMonitorCoverData.java`：流体识别扩展 IFluidContainerItem + 通用 NBT 兜底
+- `src/main/java/com/wztwzt/ae2_qof/cover/stockmonitor/gui/StockMonitorCoverGui.java`：断开按钮改 InteractionSyncHandler + Nexus 原生面板
+- `src/main/java/com/wztwzt/ae2_qof/cover/stockmonitor/ae/StockMonitorWirelessEndpoint.java`：新增，实现 WirelessBindableEndpoint
+- `src/main/java/com/wztwzt/ae2_qof/merged/PatternContainer.java`：convertToAEStack 改原生流体 + 绕过 writeToStack 自己写流体 NBT
+- `gradle.properties`：版本号 fix4 → fix5
+- `docs/AE库存检测覆盖板-开发指南.md`、`docs/AE2-QoL流体识别问题调研与解决方案.md`、`docs/万能维护仓-并行速度与线程跨配方并行-方案.md`
+
+---
+
 ## 3.18.1-fix18 - 供应器选择界面搜索框中文修复 + .ai_cache 加入 gitignore
 
 > 作者：wztwzt | 更新时间：2026-09-04 | 基于 3.18.1-fix17

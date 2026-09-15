@@ -2,7 +2,10 @@ package com.wztwzt.ae2_qof;
 
 import com.wztwzt.ae2_qof.block.BlockExIOPort;
 import com.wztwzt.ae2_qof.block.BlockQuestDetector;
+import com.wztwzt.ae2_qof.cover.stockmonitor.ItemStockMonitorCover;
+import com.wztwzt.ae2_qof.cover.stockmonitor.StockMonitorCover;
 import com.wztwzt.ae2_qof.hatch.AE2MaintenanceHatchUniversal;
+import com.wztwzt.ae2_qof.terminal.StockMonitorTerminal;
 import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveNetDynamoHatch;
 import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveNetHatch;
 import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveNetLaserHatch;
@@ -49,6 +52,7 @@ public class CommonProxy {
     public static com.wztwzt.ae2_qof.merged.part.ItemPartMergedTerminal itemPartMergedTerminal;
     public static com.wztwzt.ae2_qof.merged.wireless.ItemWirelessMergedTerminal itemWirelessMergedTerminal;
     public static AE2MaintenanceHatchUniversal maintenanceHatchUniversal;
+    public static StockMonitorTerminal stockMonitorTerminal;
     public static AdaptiveNetTerminal adaptiveNetTerminal;
     public static AdaptiveNetHatch adaptiveNetHatch;
     public static AdaptiveNetLaserHatch adaptiveNetLaserHatch;
@@ -60,6 +64,71 @@ public class CommonProxy {
     public static ItemNetworkDataStick networkDataStick;
 
     public void preInit(FMLPreInitializationEvent event) {
+        // ===== fix12: RFB childDelegations 注入（根本修复启动崩溃）=====
+        // 崩溃根因：FML init 阶段记录某 mod 异常时，Log4j ThrowableProxy 用 RFB 系统类加载器
+        // 加载异常堆栈里的 net.minecraft.inventory.ISidedInventory，RFB 读不到 deobf 字节码 →
+        // NoClassDefFoundError 二次崩溃，原始异常被掩盖。
+        // 修复：把 "net.minecraft" 加入 RFB 的 childDelegations，让 RFB.loadClass 委托给 LaunchClassLoader。
+        try {
+            ClassLoader sysCl = ClassLoader.getSystemClassLoader();
+            System.err.println("[AE2QoL-RFB] system classloader = " + sysCl.getClass().getName());
+            // 诊断：打印 RFB 所有字段名
+            for (java.lang.reflect.Field f : sysCl.getClass().getDeclaredFields()) {
+                System.err.println("[AE2QoL-RFB] field: " + f.getName() + " type=" + f.getType().getName());
+            }
+            // 尝试常见字段名
+            java.lang.reflect.Field cdField = null;
+            for (String name : new String[]{"childDelegations", "childDelegation", "delegations",
+                    "childDelegationPrefixes", "delegationPrefixes"}) {
+                try {
+                    cdField = sysCl.getClass().getDeclaredField(name);
+                    System.err.println("[AE2QoL-RFB] found childDelegations field: " + name);
+                    break;
+                } catch (NoSuchFieldException e) { /* try next */ }
+            }
+            if (cdField != null) {
+                cdField.setAccessible(true);
+                Object cd = cdField.get(sysCl);
+                System.err.println("[AE2QoL-RFB] childDelegations value=" + cd
+                        + " type=" + (cd != null ? cd.getClass().getName() : "null"));
+                if (cd instanceof java.util.List) {
+                    @SuppressWarnings("unchecked")
+                    java.util.List<Object> list = (java.util.List<Object>) cd;
+                    boolean has = false;
+                    for (Object o : list) {
+                        if ("net.minecraft".equals(String.valueOf(o))) { has = true; break; }
+                    }
+                    if (!has) {
+                        list.add("net.minecraft");
+                        System.err.println("[AE2QoL-RFB] ADDED net.minecraft to childDelegations (List)");
+                    } else {
+                        System.err.println("[AE2QoL-RFB] net.minecraft already in childDelegations");
+                    }
+                } else if (cd instanceof String[]) {
+                    String[] arr = (String[]) cd;
+                    java.util.List<String> newList = new java.util.ArrayList<>(java.util.Arrays.asList(arr));
+                    if (!newList.contains("net.minecraft")) {
+                        newList.add("net.minecraft");
+                        cdField.set(sysCl, newList.toArray(new String[0]));
+                        System.err.println("[AE2QoL-RFB] ADDED net.minecraft to childDelegations (String[])");
+                    }
+                }
+                // 验证：尝试用系统类加载器加载 ISidedInventory
+                try {
+                    Class<?> test = Class.forName("net.minecraft.inventory.ISidedInventory", false, sysCl);
+                    System.err.println("[AE2QoL-RFB] VERIFY OK: ISidedInventory loaded via sysCl = "
+                            + test.getClassLoader());
+                } catch (Throwable t) {
+                    System.err.println("[AE2QoL-RFB] VERIFY FAIL: " + t);
+                }
+            } else {
+                System.err.println("[AE2QoL-RFB] childDelegations field NOT FOUND, listing all fields above");
+            }
+        } catch (Throwable t) {
+            System.err.println("[AE2QoL-RFB] RFB patch FAILED: " + t);
+            t.printStackTrace(System.err);
+        }
+
         Config.synchronizeConfiguration(event.getSuggestedConfigurationFile());
         MyMod.LOG.info("I am MyMod at version " + Tags.VERSION);
 
@@ -122,6 +191,23 @@ public class CommonProxy {
             networkDataStick.register();
         } catch (Throwable t) {
             MyMod.LOG.error("[DIAG] ItemNetworkDataStick registration FAILED", t);
+            t.printStackTrace(System.err);
+        }
+        try {
+            ItemStockMonitorCover itemStockMonitorCover = new ItemStockMonitorCover();
+            GameRegistry.registerItem(itemStockMonitorCover, "stock_monitor_cover", MyMod.MODID);
+            gregtech.api.covers.CoverRegistry.registerCover(
+                new net.minecraft.item.ItemStack(itemStockMonitorCover),
+                gregtech.api.render.TextureFactory.of(
+                    gregtech.api.enums.Textures.BlockIcons.MACHINE_CASINGS[2][0],
+                    gregtech.api.render.TextureFactory.of(gregtech.api.enums.Textures.BlockIcons.OVERLAY_CONTROLLER)),
+                context -> new StockMonitorCover(context,
+                    gregtech.api.render.TextureFactory.of(gregtech.api.enums.Textures.BlockIcons.OVERLAY_CONTROLLER)),
+                gregtech.api.covers.CoverPlacer.builder()
+                    .onlyPlaceIf(StockMonitorCover::isCoverPlaceable)
+                    .build());
+        } catch (Throwable t) {
+            MyMod.LOG.error("[DIAG] StockMonitorCover registration FAILED", t);
             t.printStackTrace(System.err);
         }
         if (itemInfinityWaterLavaCell != null) {
@@ -192,9 +278,20 @@ public class CommonProxy {
                 'c',
                 gregtech.api.enums.ItemList.Circuit_Basic.get(1));
         } catch (Throwable t) {
-            MyMod.LOG.error("[DIAG] AE2MaintenanceHatchUniversal registration FAILED", t);
+            System.err.println("[AE2QoL] AE2MaintenanceHatchUniversal registration FAILED: " + t);
             t.printStackTrace(System.err);
         }
+
+        // ===== fix13: StockMonitorTerminal 注册已禁用 =====
+        // M6 库存统计终端在 GTNH 2.9.0-beta-1 + Java 17/25 + RFB 环境下启动崩溃：
+        // FML init 阶段记录某 mod 异常时，Log4j ThrowableProxy 用 RFB 系统类加载器
+        // 加载异常堆栈里的 net.minecraft.inventory.ISidedInventory，RFB 读不到 deobf
+        // 字节码 → NoClassDefFoundError 二次崩溃，原始异常被掩盖。
+        // 经 5 轮修复（槽位/catch/诊断/RFB childDelegations 注入/try-catch 防御层）
+        // 均未解决，临时禁用终端注册，游戏可正常启动。终端类文件保留，后续修复后
+        // 取消注释即可恢复。
+        // stockMonitorTerminal 保持 null。
+        System.err.println("[AE2QoL] StockMonitorTerminal registration DISABLED (fix13 startup crash workaround)");
 
         try {
             adaptiveNetTerminal = new AdaptiveNetTerminal(
@@ -216,7 +313,7 @@ public class CommonProxy {
                 'c',
                 gregtech.api.enums.ItemList.Circuit_Advanced.get(1));
         } catch (Throwable t) {
-            MyMod.LOG.error("[DIAG] AdaptiveNetTerminal registration FAILED", t);
+            System.err.println("[AE2QoL] AdaptiveNetTerminal registration FAILED: " + t);
             t.printStackTrace(System.err);
         }
 
@@ -240,7 +337,7 @@ public class CommonProxy {
                 'c',
                 gregtech.api.enums.ItemList.Circuit_Advanced.get(1));
         } catch (Throwable t) {
-            MyMod.LOG.error("[DIAG] AdaptiveNetHatch registration FAILED", t);
+            System.err.println("[AE2QoL] AdaptiveNetHatch registration FAILED: " + t);
             t.printStackTrace(System.err);
         }
 
@@ -264,7 +361,7 @@ public class CommonProxy {
                 'c',
                 gregtech.api.enums.ItemList.Circuit_Master.get(1));
         } catch (Throwable t) {
-            MyMod.LOG.error("[DIAG] AdaptiveNetLaserHatch registration FAILED", t);
+            System.err.println("[AE2QoL] AdaptiveNetLaserHatch registration FAILED: " + t);
             t.printStackTrace(System.err);
         }
 
@@ -288,7 +385,7 @@ public class CommonProxy {
                 'c',
                 gregtech.api.enums.ItemList.Circuit_Advanced.get(1));
         } catch (Throwable t) {
-            MyMod.LOG.error("[DIAG] AdaptiveNetDynamoHatch registration FAILED", t);
+            System.err.println("[AE2QoL] AdaptiveNetDynamoHatch registration FAILED: " + t);
             t.printStackTrace(System.err);
         }
 
@@ -312,7 +409,7 @@ public class CommonProxy {
                 'c',
                 gregtech.api.enums.ItemList.Circuit_Master.get(1));
         } catch (Throwable t) {
-            MyMod.LOG.error("[DIAG] AdaptiveNetLaserTargetHatch registration FAILED", t);
+            System.err.println("[AE2QoL] AdaptiveNetLaserTargetHatch registration FAILED: " + t);
             t.printStackTrace(System.err);
         }
 
@@ -338,7 +435,7 @@ public class CommonProxy {
                 'g',
                 net.minecraft.init.Blocks.glass);
         } catch (Throwable t) {
-            MyMod.LOG.error("[DIAG] WirelessEnergyInputTerminal registration FAILED", t);
+            System.err.println("[AE2QoL] WirelessEnergyInputTerminal registration FAILED: " + t);
             t.printStackTrace(System.err);
         }
 
@@ -362,7 +459,7 @@ public class CommonProxy {
                 'g',
                 net.minecraft.init.Blocks.glass);
         } catch (Throwable t) {
-            MyMod.LOG.error("[DIAG] WirelessEnergyOutputTerminal registration FAILED", t);
+            System.err.println("[AE2QoL] WirelessEnergyOutputTerminal registration FAILED: " + t);
             t.printStackTrace(System.err);
         }
     }

@@ -20,8 +20,8 @@
 - **用途**：直接使用 `com.glodblock.github.common.item.ItemFluidEncodedPattern`（流体样板），用于 `RecallPatternPacket` / `UploadPatternPacket`。
 - 纯流体识别（`ItemFluidPacket` damage 编码流体 ID）基于 ae2fc 的实现。
 
-### 4. AE2Things（`com.asdflj.ae2thing`）— 强化/创意物品参考
-- **用途**：`ex_io_port` 贴图、无限流体磁盘、创意单元等概念的参考来源。
+### 4. AE2Things（`com.asdflj.ae2thing`）— 概念参考
+- **用途**：无限流体磁盘、创意单元等**概念**参考（未沿用其代码与贴图）。
 
 ### 5. NotEnoughItems / NEI（`codechicken.nei.*`）— NEI 角标与 GUI
 - **用途**：NEI 配方页 AE 角标、tooltip 注入（mixin 修改 NEI 的 `GuiNEIRecipeWidget` 等）。
@@ -50,7 +50,7 @@
 | `guis/states.png` | AE2 / AE-Wireless | AE2 原生 `guis/states.png` |
 | `gui/wireless.png` | AE2 原生 | `guis/wireless.png` |
 | `items/wireless_connect.png` / `wireless_destroy.png` / `slot/wireless_connect.png` | AE-Wireless-Transceiver | 同名（已获作者许可；贴图作者：麦淇淋） |
-| `blocks/ex_io_port*.png` | AE2Things | 同名 `blocks/ex_io_port*.png` |
+| `blocks/ex_io_port*.png`（含 Bottom/Side） | **AE2 原版（Applied-Energistics-2-Unofficial）** | 原版 `blocks/BlockIOPort*.png` 原样改名（MD5 已核对一致）；许可同 AE2 材质：CC BY-NC-SA 3.0，非商业+署名+相同方式共享 |
 | `items/infinity_water_lava_cell.png` | AE2Things / AE2（自绘简化） | 概念对应 AE2Things `infinity_fluid_cell.png` |
 | `logo.png` | 自绘 | 模组图标 |
 | `textures/gui/widgets.png`（运行时引用） | Minecraft 原版 | `CraftingNotificationOverlay.java` 引用 |
@@ -66,7 +66,7 @@
 | **AE2 (Applied-Energistics-2-Unofficial)** | `GTNewHorizons/Applied-Energistics-2-Unofficial` | **LGPL-3.0**；API **MIT**；**材质/模型 CC BY-NC-SA 3.0**；文本 CC0 | 代码可修改/分发，需保留版权声明并开放同许可；**材质非商业使用需署名、相同方式共享** |
 | **AE2FluidCraft-Rework (ae2fc)** | `GTNewHorizons/AE2FluidCraft-Rework` | **LGPL-3.0** | 代码可修改/分发，需注明来源并开源修改部分 |
 | **NotEnoughItems (NEI)** | `GTNewHorizons/NotEnoughItems` | 原代码 **MIT**；GTNH 修改 **LGPL-3.0** | 可用但请注明来源 |
-| **AE2Things (asdflj)** | `asdflj/AE2Things` | **GPL-3.0** | 若沿用其代码/贴图，衍生作品须以 GPL-3.0 开源 |
+| **AE2Things (asdflj)** | `asdflj/AE2Things` | **GPL-3.0** | 本项目**未沿用**其代码与贴图（仅概念参考，无版权义务）；若未来沿用，衍生作品须以 GPL-3.0 开源 |
 | **AE-Wireless-Transceiver** | `mynamexiaopiao/AE-Wireless-Transceiver` | 仓库无 LICENSE（默认保留所有权利）⚠️ | **已通过 B 站联系作者获得借用许可**；发布时请署名致谢 |
 | **Waila** | `ProfMobius` / `GTNewHorizons/waila` | **CC BY-NC-SA 4.0**（GTNH fork） | 非商业使用，需署名并相同方式共享 |
 
@@ -76,7 +76,7 @@
 
 - **当前策略：仅存档、不开放分发**。本仓库仅用于保存历代版本与源码，供作者本人备份使用，不向他人开放自由下载、修改或再分发。在此前提下，沿用上述来源代码与贴图作为个人存档使用，版权风险大幅降低。
 - **AE-Wireless-Transceiver（无线收发器）**：其仓库原本无许可证文件（默认保留所有权利）。代码作者（小飘 / mynamexiaopiao）已通过 B 站沟通确认同意借用其代码与贴图；贴图/美术作者（麦淇淋 / @麦淇淋）。发布或开放分发前请保留作者与美术署名，并保留本记录以备查证。
-- **AE2Things（GPL-3.0）**：若沿用其 `ex_io_port` 贴图或代码并开放分发，衍生作品须以 GPL-3.0 开源；否则建议更换/重制。
+- **AE2Things（GPL-3.0）**：本项目仅参考其"无限流体磁盘/创意单元"等**概念**，未沿用其代码与贴图（`ex_io_port` 贴图已核实为 AE2 原版 `BlockIOPort`，见材质表），故不触发 GPL 传染。
 - **AE2 材质（CC BY-NC-SA 3.0，非商业）**：`states.png`、`gui/wireless.png` 等 AE2 来源材质仅限非商业使用，需署名并相同方式共享。
 - 建议在仓库 README 中明确声明：**本仓库仅供个人存档，暂不开放分发**，以规避来源模组的版权风险。
 - 本清单基于 2026-08 在 GitHub 各仓库核实的信息，许可证可能变更，开放分发前请再次核对原仓库最新 LICENSE。

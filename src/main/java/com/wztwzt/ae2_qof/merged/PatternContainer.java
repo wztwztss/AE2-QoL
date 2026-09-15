@@ -426,7 +426,19 @@ public class PatternContainer implements IOptionalSlotHost {
         pattern.setInputs(aeInputs);
         pattern.setOutputs(aeOutputs);
         pattern.setCanBeSubstitute(beSubstitute ? 1 : 0);
-        output = pattern.writeToStack();
+        // 绕过 FluidPatternDetails.writeToStack()：它内部用 legacy 物品数组（this.inputs）写 NBT，
+        // 会把 IAEFluidStack 经 stackConvert 转成 ItemFluidDrop 物品（"液态氧液滴"），
+        // 导致样板 NBT 里存的是物品而非原生流体，合成 CPU 无法识别为流体。
+        // 这里直接用 getCondensedAEInputs()（原生 IAEFluidStack）写 "in"/"out" 键，
+        // readFromStack() 读回时能正确还原为流体。
+        NBTTagCompound fluidTag = new NBTTagCompound();
+        fluidTag.setTag("in", com.glodblock.github.util.FluidPatternDetails
+            .writeStackArray(pattern.getCondensedAEInputs()));
+        fluidTag.setTag("out", com.glodblock.github.util.FluidPatternDetails
+            .writeStackArray(pattern.getCondensedAEOutputs()));
+        fluidTag.setInteger("combine", pattern.getCombine());
+        fluidTag.setBoolean("beSubstitute", pattern.canBeSubstitute());
+        output.setTagCompound(fluidTag);
         stampAuthor(output);
 
         // GT 配方池反查
@@ -452,8 +464,10 @@ public class PatternContainer implements IOptionalSlotHost {
     }
 
     /**
-     * 将 ItemStack 转换为 IAEStack：流体物品 → ae2fc ItemFluidDrop 封装的 IAEItemStack，
+     * 将 ItemStack 转换为 IAEStack：流体物品 → 原生 IAEFluidStack（GTNH AE2 原生流体），
      * 普通物品 → AEItemStack。
+     * 注意：FluidPatternDetails 要求流体输入/输出为 IAEFluidStack，否则 writeToStack 会把
+     * 流体写成 ItemFluidDrop 物品（"液态氧液滴"），导致合成 CPU 无法识别为流体。
      */
     private static IAEStack<?> convertToAEStack(ItemStack stack) {
         if (stack == null) return null;
@@ -463,8 +477,8 @@ public class PatternContainer implements IOptionalSlotHost {
                 if (isGTFluidDisplayItem(stack)) {
                     fs.amount = fs.amount * stack.stackSize;
                 }
-                IAEItemStack drop = ItemFluidDrop.newAeStack(fs);
-                if (drop != null) return drop;
+                appeng.util.item.AEFluidStack aeFluid = appeng.util.item.AEFluidStack.create(fs);
+                if (aeFluid != null) return aeFluid;
             }
         }
         return appeng.util.item.AEItemStack.create(stack);

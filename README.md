@@ -4,13 +4,13 @@
 
 **为 GTNH 打造的 AE2 效率增强模组**：把 NEI 配方一键推送进 AE 样板终端、从 NEI 面板直接提取 AE 网络物品、查看每个物品在 AE 网络中的存量与可合成状态、无线传输 AE 网络、自适应电网系统等。
 
-适配：GTNH 2.9.0-beta-1（Minecraft 1.7.10）| 当前版本：**3.18.1-fix18** | 作者：wztwzt
+适配：GTNH 2.9.0-beta-1（Minecraft 1.7.10）| 当前版本：**3.19.0-fix11** | 作者：wztwzt
 
 ---
 
 ## 📦 安装
 
-1. 将 `AE2-QoL-3.18.1-fix18.jar` 放入 `.minecraft/mods/`
+1. 将 `AE2-QoL-3.19.0-fix11.jar` 放入 `.minecraft/mods/`
 2. 确认已安装依赖：AE2（`rv3-beta-977-GTNH`）、ae2fc（`1.5.88-gtnh`）、NotEnoughItems（NEI）
 3. 启动游戏。配置会生成在 `config/` 下
 
@@ -198,6 +198,27 @@ AE 合成 CPU 完成订单时，屏幕右上角滑入 **AE2 原生样式横幅**
 
 **使用流程**：放置自适应终端 → Shift+右键数据棒写入配置 → 右键仓室绑定 → 右键终端读取配置 → 仓室自动适配等级
 
+### 20. 库存检测覆盖板（3.19.0）
+
+贴在任意机器/方块侧面的覆盖板，监控 AE2 网络中指定物品/流体的库存，按阈值自动控制机器开关（红石信号输出）。
+
+- **双模式连网**：邻接 AE2 线缆直连，或 Nexus 无线网络绑定（原生 `WirelessSelectionPanel` 选择网络）
+- **物品/流体双支持**：正确识别 AE2 原生流体（修复 `AEFluidStack.equals` 引用比较 bug，改用 `getFluid().getID()` 遍历匹配）
+- **阈值+模式**：低于 N 开机 / 高于 N 开机，阈值实时修改并同步服务端
+- **phantom 标记槽**：Shift+左键取消标记，不显示数量（纯标记用）
+- **GUI 实时刷新**：库存/频道/工作状态用 MUI2 SyncValue 自动推送，无需重开 GUI
+
+### 21. 库存统计终端（3.19.0-fix11）
+
+GT 单方块免电信息终端，集中查看/修改 AE2 标准发信器（`PartLevelEmitter`）与本模组库存检测覆盖板。无需逐个跑到机器前调整阈值。
+
+- **发信器集中管理**：自动枚举当前 AE2 网络所有标准发信器，显示监控目标/阈值/类型（物品/流体/能量），点击编辑阈值（能量类型只读）
+- **覆盖板集中管理**：全局注册表（WorldSavedData）跨维度发现所有覆盖板，显示阈值/模式/在线状态，点击编辑阈值和模式，拆卸自动移除
+- **Nexus 无线连接**：与覆盖板完全相同的绑定机制，点击"连接 AE"弹出 Nexus 原生网络选择面板，不占无线频道
+- **双模式枚举**：优先 Nexus 无线网络枚举发信器，未绑定时回退邻接 AE2 网络
+- **权限拦截**：发信器修改需 AE2 网络 BUILD 权限
+- **免电**：`isElectric()=false`，不消耗任何能量
+
 ---
 
 ## 🕐 规划中
@@ -232,8 +253,8 @@ AE 合成 CPU 完成订单时，屏幕右上角滑入 **AE2 原生样式横幅**
 
 ### 材质参考
 - **AE-Wireless-Transceiver**（作者：小飘 / mynamexiaopiao；贴图作者：麦淇淋 / @麦淇淋）—— 无线收发器方块贴图、`de.png` / `de1.png` / `widgets.png`、无线连接器贴图（已获作者许可）
-- **Applied Energistics 2** —— `guis/states.png`、`gui/wireless.png` 等（CC BY-NC-SA 3.0，非商业使用）
-- **AE2Things** —— `ex_io_port*.png` 强化 IO 端口贴图、无限流体磁盘概念
+- **Applied Energistics 2** —— `guis/states.png`、`gui/wireless.png`、`ex_io_port*.png`（原版 `BlockIOPort*.png` 改名）等（CC BY-NC-SA 3.0，非商业使用）
+- **AE2Things** —— 无限流体磁盘等概念参考（未沿用其代码与贴图）
 - **Minecraft 原版** —— `textures/gui/widgets.png`（运行时引用）
 - `logo.png` 为自绘
 
