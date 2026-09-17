@@ -72,6 +72,10 @@ public class MergedTerminalScrollReplacePacket implements IMessage {
 
                     Slot slot = container.inventorySlots.get(message.slotNumber);
                     if (slot == null) return;
+                    // P0-001 安全校验：只允许处理面板虚拟样板格。
+                    // 该容器同时包含玩家背包真实槽与真实样板槽，若不校验槽对象身份，
+                    // 伪造包可把网络物品表示直接写进真实背包/样板槽，绕过 ME 网络提取形成刷物。
+                    if (!cmt.isVirtualPanelSlot(slot)) return;
                     ItemStack current = slot.getStack();
                     if (current == null) return;
 
@@ -110,12 +114,16 @@ public class MergedTerminalScrollReplacePacket implements IMessage {
     /**
      * 查询 ME 网络中与指定槽位物品同 OreDict 的候选列表。
      * 供滚轮替换与候选预览共用；返回副本，不含当前物品本身。
+     * <p>
+     * 候选全部取自当前终端 ME 网络的库存列表，因此换入的必定是网络里已存在的物品；
+     * 面板虚拟格只是样板的「表示」，本身不持有真实物品，故不存在凭空生成物品的路径。
      */
     public static List<ItemStack> findAlternatives(ContainerMergedTerminal cmt, int slotNumber) {
         List<ItemStack> result = new ArrayList<>();
         try {
             Slot slot = cmt.inventorySlots.get(slotNumber);
             if (slot == null) return result;
+            if (!cmt.isVirtualPanelSlot(slot)) return result;
             ItemStack current = slot.getStack();
             if (current == null) return result;
 

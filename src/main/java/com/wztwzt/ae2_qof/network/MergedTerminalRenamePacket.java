@@ -8,6 +8,7 @@ import net.minecraft.nbt.NBTTagCompound;
 
 import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.api.IMergedPatternTerminal;
+import com.wztwzt.ae2_qof.merged.ContainerMergedTerminal;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -74,10 +75,18 @@ public class MergedTerminalRenamePacket implements IMessage {
                         if (slot == null) return;
                         ItemStack stack = slot.getStack();
                         if (stack == null) return;
+                        if (!(merged instanceof ContainerMergedTerminal cmt)) return;
+                        if (!cmt.isVirtualPanelSlot(slot)) return;
                         if (message.newName.isEmpty()) {
-                            // 清除自定义名称
-                            if (stack.stackTagCompound != null) {
-                                stack.stackTagCompound.removeTag("display");
+                            // 仅清除自定义名称，保留 lore / 颜色等 display 其他子标签
+                            if (stack.stackTagCompound != null && stack.stackTagCompound.hasKey("display")) {
+                                NBTTagCompound display = stack.stackTagCompound.getCompoundTag("display");
+                                display.removeTag("Name");
+                                if (display.hasNoTags()) {
+                                    stack.stackTagCompound.removeTag("display");
+                                } else {
+                                    stack.stackTagCompound.setTag("display", display);
+                                }
                             }
                         } else {
                             if (stack.stackTagCompound == null) {

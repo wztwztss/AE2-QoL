@@ -171,6 +171,19 @@ public class PatternContainer implements IOptionalSlotHost {
         return allSlots;
     }
 
+    /**
+     * 该槽是否为「虚拟样板格」（合成 3×3、处理扩展输入/输出、合成结果格）。
+     * <p>
+     * 面板上的这些格子只是样板内容的显示/编辑载体，既不能取出也不对应任何真实物品；
+     * 而 {@code patternSlotIN}/{@code patternSlotOUT} 是真实样板库存槽，玩家背包槽更是真实物品槽。
+     * 服务端处理客户端「改内容」请求（滚轮替换、重命名）时必须先经本方法白名单校验，
+     * 否则可被伪造包写入真实槽，造成刷物或物品数据损坏。
+     */
+    public boolean isVirtualPanelSlot(Slot slot) {
+        if (slot == null || !(slot instanceof SlotFake)) return false;
+        return allSlots.contains(slot);
+    }
+
     // ===== 模式/页/反转切换：显示/隐藏槽 =====
 
     public void updateOrderOfOutputSlots() {

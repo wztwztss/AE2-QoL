@@ -574,6 +574,16 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
         return mergedSlotBase;
     }
 
+    /**
+     * 该槽是否为面板虚拟样板格（合成 3x3 / 处理扩展输入输出 / 合成结果格）。
+     * <p>
+     * 网络包服务端处理必须先用本方法做白名单校验：本容器槽号列表同时包含
+     * 玩家背包真实槽与真实样板槽，只有虚拟格才是安全的「改内容」目标。
+     */
+    public boolean isVirtualPanelSlot(Slot slot) {
+        return patternContainer != null && patternContainer.isVirtualPanelSlot(slot);
+    }
+
     @Override
     public boolean isMergedCraftingMode() {
         return patternContainer.isCraftingMode();
