@@ -40,12 +40,15 @@ public class RequestProvidersListPacket implements IMessage {
         final List<Long> ids;
         final List<String> names;
         final List<Integer> emptySlots;
+        final List<ICraftingProvider> providers;
         final long timestamp;
 
-        CachedProviders(List<Long> ids, List<String> names, List<Integer> emptySlots) {
+        CachedProviders(List<Long> ids, List<String> names, List<Integer> emptySlots,
+            List<ICraftingProvider> providers) {
             this.ids = ids;
             this.names = names;
             this.emptySlots = emptySlots;
+            this.providers = providers;
             this.timestamp = System.currentTimeMillis();
         }
 
@@ -201,22 +204,51 @@ public class RequestProvidersListPacket implements IMessage {
                 List<Long> ids;
                 List<String> names;
                 List<Integer> emptySlots;
+                List<ICraftingProvider> providers;
                 CachedProviders cached = PROVIDER_CACHE.get(grid);
                 if (cached != null && cached.isFresh()) {
                     ids = cached.ids;
                     names = cached.names;
                     emptySlots = cached.emptySlots;
+                    providers = cached.providers;
                 } else {
                     ids = new ArrayList<Long>();
                     names = new ArrayList<String>();
                     emptySlots = new ArrayList<Integer>();
-                    collectProviders(grid, ids, names, emptySlots);
+                    providers = new ArrayList<ICraftingProvider>();
+                    collectProviders(grid, ids, names, emptySlots, providers);
                     if (PROVIDER_CACHE.size() > 64) {
                         PROVIDER_CACHE.clear();
                     }
-                    PROVIDER_CACHE.put(grid, new CachedProviders(ids, names, emptySlots));
+                    PROVIDER_CACHE.put(grid, new CachedProviders(ids, names, emptySlots, providers));
                 }
 
+                // F1: keep only providers that accept this encoded pattern
+                ItemStack encodedForFilter = readEncodedPattern(container);
+                if (encodedForFilter != null && providers.size() == ids.size()) {
+                    List<Integer> accept = new ArrayList<Integer>();
+                    for (int i = 0; i < providers.size(); i++) {
+                        if (emptySlots.get(i) > 0 && acceptsPattern(providers.get(i), encodedForFilter)) {
+                            accept.add(i);
+                        }
+                    }
+                    if (!accept.isEmpty()) {
+                        List<Long> fIds = new ArrayList<Long>(accept.size());
+                        List<String> fNames = new ArrayList<String>(accept.size());
+                        List<Integer> fEmpty = new ArrayList<Integer>(accept.size());
+                        for (Integer i : accept) {
+                            fIds.add(ids.get(i));
+                            fNames.add(names.get(i));
+                            fEmpty.add(emptySlots.get(i));
+                        }
+                        ids = fIds;
+                        names = fNames;
+                        emptySlots = fEmpty;
+                    }
+                }
+                final List<Long> filteredIds = ids;
+                final List<String> filteredNames = names;
+                final List<Integer> filteredEmptySlots = emptySlots;
                 // 尺寸预算（#57）：1.7.10 S3F 自定义负载长度为 short（≤32767 字节），
                 // 超大网络的供应器名列表可能超限 → 编码/发送失败、客户端选择界面静默无响应。
                 // 超限时优先保留「有空槽」的提供器（自动上传才能真正落目标），无空槽的靠后丢弃；
@@ -227,9 +259,9 @@ public class RequestProvidersListPacket implements IMessage {
 
                 int totalUsed = baseUsed;
                 boolean overflow = false;
-                for (int i = 0; i < ids.size(); i++) {
+                for (int i = 0; i < filteredIds.size(); i++) {
                     totalUsed += 8 + 2
-                        + names.get(i)
+                        + filteredNames.get(i)
                             .getBytes(java.nio.charset.StandardCharsets.UTF_8).length
                         + 4;
                     if (totalUsed > 32000) {
@@ -240,20 +272,20 @@ public class RequestProvidersListPacket implements IMessage {
 
                 List<Integer> keep = new ArrayList<Integer>();
                 if (!overflow) {
-                    for (int i = 0; i < ids.size(); i++) {
+                    for (int i = 0; i < filteredIds.size(); i++) {
                         keep.add(i);
                     }
                 } else {
-                    // 优先保留有空槽的提供器：按 emptySlots 降序稳定排序后贪心选取，最后还原原顺序
-                    Integer[] idxArr = new Integer[ids.size()];
-                    for (int i = 0; i < ids.size(); i++) {
+                    // 优先保留有空槽的提供器：按空槽数降序稳定排序后贪心选取，最后还原原顺序
+                    Integer[] idxArr = new Integer[filteredIds.size()];
+                    for (int i = 0; i < filteredIds.size(); i++) {
                         idxArr[i] = i;
                     }
-                    Arrays.sort(idxArr, (a, b) -> Integer.compare(emptySlots.get(b), emptySlots.get(a)));
+                    Arrays.sort(idxArr, (a, b) -> Integer.compare(filteredEmptySlots.get(b), filteredEmptySlots.get(a)));
                     int budget = baseUsed;
                     for (Integer i : idxArr) {
                         int add = 8 + 2
-                            + names.get(i)
+                            + filteredNames.get(i)
                                 .getBytes(java.nio.charset.StandardCharsets.UTF_8).length
                             + 4;
                         if (budget + add > 32000) {
@@ -265,16 +297,16 @@ public class RequestProvidersListPacket implements IMessage {
                     keep.sort(Integer::compare);
                     MyMod.LOG.warn(
                         "[Upload] providers list truncated to fit packet budget (kept {} with empty-slot priority): {} -> {}",
-                        keep.size(), ids.size(), keep.size());
+                        keep.size(), filteredIds.size(), keep.size());
                 }
 
                 List<Long> outIds = new ArrayList<Long>(keep.size());
                 List<String> outNames = new ArrayList<String>(keep.size());
                 List<Integer> outEmpty = new ArrayList<Integer>(keep.size());
                 for (Integer i : keep) {
-                    outIds.add(ids.get(i));
-                    outNames.add(names.get(i));
-                    outEmpty.add(emptySlots.get(i));
+                    outIds.add(filteredIds.get(i));
+                    outNames.add(filteredNames.get(i));
+                    outEmpty.add(filteredEmptySlots.get(i));
                 }
 
                 ModNetwork.CHANNEL.sendTo(
@@ -287,7 +319,7 @@ public class RequestProvidersListPacket implements IMessage {
         }
 
         private static void collectProviders(IGrid grid, List<Long> ids, List<String> names,
-            List<Integer> emptySlots) {
+            List<Integer> emptySlots, List<ICraftingProvider> providers) {
             for (Class<? extends IGridHost> hostClass : grid.getMachinesClasses()) {
                 if (!ICraftingProvider.class.isAssignableFrom(hostClass)) {
                     continue;
@@ -306,12 +338,94 @@ public class RequestProvidersListPacket implements IMessage {
                     }
                     ICraftingProvider provider = (ICraftingProvider) machine;
                     long id = System.identityHashCode(provider);
-                    String name = resolveProviderName(machine);
+                    String name = qualifyProviderName(resolveProviderName(machine), machineNode);
                     ids.add(id);
                     names.add(name);
                     emptySlots.add(estimateEmptySlots(provider));
+                    providers.add(provider);
                 }
             }
+        }
+
+        /**
+         * 读取玩家当前终端里那张「待上传样板」。取不到时返回 null，调用方跳过过滤。
+         * 复用 IMergedPatternTerminal / 原生样板终端两条既有解析路径，避免新增反射面。
+         */
+        private static ItemStack readEncodedPattern(Container container) {
+            try {
+                if (container instanceof com.wztwzt.ae2_qof.api.IMergedPatternTerminal merged) {
+                    net.minecraft.inventory.Slot out = merged.getMergedEncodedSlot();
+                    if (out != null && out.getStack() != null) {
+                        return out.getStack();
+                    }
+                    return null;
+                }
+                String fieldName = null;
+                if (container instanceof appeng.container.implementations.ContainerPatternTerm) {
+                    fieldName = "patternSlotOUT";
+                } else if (container instanceof appeng.container.implementations.ContainerPatternTermEx) {
+                    fieldName = "patternSlotOUT";
+                }
+                if (fieldName == null) {
+                    return null;
+                }
+                java.lang.reflect.Field f = findField(container.getClass(), fieldName);
+                f.setAccessible(true);
+                Object slot = f.get(container);
+                if (slot instanceof net.minecraft.inventory.Slot s && s.getStack() != null) {
+                    return s.getStack();
+                }
+            } catch (Throwable ignored) {}
+            return null;
+        }
+
+        private static java.lang.reflect.Field findField(Class<?> cls, String name) throws NoSuchFieldException {
+            for (Class<?> c = cls; c != null && c != Object.class; c = c.getSuperclass()) {
+                try {
+                    return c.getDeclaredField(name);
+                } catch (NoSuchFieldException ignored) {}
+            }
+            throw new NoSuchFieldException(name);
+        }
+
+        /**
+         * 判断某个供应器的样板槽能否吃下这张样板。走 IInventory.isItemValidForSlot，
+         * 与 UploadPatternPacket 的实际写入条件保持一致：两者结论相同，过滤才有意义。
+         */
+        private static boolean acceptsPattern(ICraftingProvider provider, ItemStack pattern) {
+            try {
+                if (provider instanceof IInterfaceViewable viewable) {
+                    IInventory patterns = viewable.getPatterns();
+                    if (patterns == null) {
+                        return false;
+                    }
+                    int availableSlots = viewable.rows() * viewable.rowSize();
+                    int limit = Math.min(availableSlots, patterns.getSizeInventory());
+                    for (int i = 0; i < limit; i++) {
+                        ItemStack slot = patterns.getStackInSlot(i);
+                        if (slot == null || slot.stackSize <= 0) {
+                            return patterns.isItemValidForSlot(i, pattern);
+                        }
+                    }
+                    return false;
+                }
+            } catch (Throwable ignored) {}
+            return false;
+        }
+
+        /**
+         * F1：把节点坐标拼到供应器展示名后，使同名机器可区分。
+         * 旧实现只按机器名匹配，同名时命中哪一台取决于遍历顺序，是自动上传随机传错目标的根因。
+         */
+        private static String qualifyProviderName(String baseName, IGridNode node) {
+            try {
+                appeng.api.util.DimensionalCoord loc = node.getGridBlock()
+                    .getLocation();
+                if (loc != null) {
+                    return baseName + " @D" + loc.getDimension() + " " + loc.x + "," + loc.y + "," + loc.z;
+                }
+            } catch (Throwable ignored) {}
+            return baseName;
         }
 
         private static int estimateEmptySlots(ICraftingProvider provider) {

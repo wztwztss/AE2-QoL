@@ -142,6 +142,21 @@ public class ClientProxy extends CommonProxy {
                                 matchCount++;
                             }
                         }
+                        // 兼容旧配置：旧版 remembered 只存基础机器名，没有坐标后缀。
+                        // 仅当基础名唯一命中时才采用，多个同名候选仍交给玩家手动选择。
+                        if (matchCount != 1) {
+                            matchId = 0;
+                            matchCount = 0;
+                            String base = stripLocationSuffix(rememberedName);
+                            for (int i = 0; i < message.ids.size(); i++) {
+                                if (message.emptySlots.get(i) > 0
+                                    && stripLocationSuffix(message.names.get(i))
+                                        .equals(base)) {
+                                    matchId = message.ids.get(i);
+                                    matchCount++;
+                                }
+                            }
+                        }
                         MyMod.LOG.info("[Upload] strategy2: matchCount={}, matchId={}", matchCount, matchId);
                         if (matchCount == 1) {
                             MyMod.LOG.info("[Upload] strategy2: remembered provider '{}', id={}", rememberedName, matchId);
@@ -165,7 +180,17 @@ public class ClientProxy extends CommonProxy {
     private void openGuiWithSearch(ProvidersListS2CPacket message) {
         GuiScreen current = Minecraft.getMinecraft().currentScreen;
         String searchKey = null;
-        if (message.recipeMap != null && !message.recipeMap.isEmpty()) {
+        boolean craftingPattern = message.recipeMap != null && "crafting".equalsIgnoreCase(message.recipeMap.trim());
+        if (craftingPattern) {
+            // F1：工作台合成样板的目标是 AE2 接口一类机器，而不是某台 GT 加工机。
+            // 旧实现把 crafting 解析成关键词“合成”预填搜索框，界面里没有任何机器叫“合成”，
+            // 玩家因此看不出该选哪台，表现为“工作台合成类无法识别”。
+            // 改为：优先用上次记住的目标名过滤，没有记住就不预填、直接展示全部可选目标。
+            String remembered = ClientState.getRememberedProviderName(message.recipeMap);
+            if (remembered != null && !remembered.isEmpty()) {
+                searchKey = remembered;
+            }
+        } else if (message.recipeMap != null && !message.recipeMap.isEmpty()) {
             // 优先用映射表解析中文名，查不到时用 NEI 捕获的中文名兜底，最后才用英文 id
             searchKey = RecipeMapNameConfig.resolveSearchKeyword(message.recipeMap);
             if (searchKey == null || searchKey.equals(message.recipeMap)) {
@@ -183,6 +208,17 @@ public class ClientProxy extends CommonProxy {
         }
         Minecraft.getMinecraft()
             .displayGuiScreen(gui);
+    }
+
+    /**
+     * 去掉供应器展示名里的「 @D维度 x,y,z」坐标后缀，用于兼容旧配置中只存机器名的映射。
+     */
+    private static String stripLocationSuffix(String name) {
+        if (name == null) {
+            return "";
+        }
+        int idx = name.indexOf(" @D");
+        return idx >= 0 ? name.substring(0, idx) : name;
     }
 
     @Override
