@@ -162,6 +162,29 @@ public class AdaptiveNetworkManager {
         worldData.markDirty();
     }
 
+    /**
+     * P1-012：服务器停止时保存统计并清空全部静态引用。
+     *
+     * 历史实现只保存统计，networks 与 serverWorld 会一直留在 JVM 静态字段里。
+     * 单机退回主菜单再进新存档时，旧世界的终端/仓室/网络仍然存在，
+     * 新终端可能因旧引用占位而注册失败，或被误判为已连接。
+     * 这里在保存后统一断开并清空，保证每个存档从干净状态开始。
+     */
+    public static void shutdown() {
+        try {
+            saveAllStats();
+        } catch (Throwable t) {
+            com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] adaptive stats save on shutdown failed", t);
+        }
+        for (AdaptiveNetwork network : networks.values()) {
+            try {
+                network.destroy();
+            } catch (Throwable ignored) {}
+        }
+        networks.clear();
+        serverWorld = null;
+    }
+
     public static void saveStatsForKey(UUID owner, int frequency) {
         if (serverWorld == null) return;
         AdaptiveNetwork network = getNetwork(owner, frequency);

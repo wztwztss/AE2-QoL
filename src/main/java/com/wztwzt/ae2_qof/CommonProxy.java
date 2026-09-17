@@ -467,6 +467,25 @@ public class CommonProxy {
         event.registerServerCommand(new CommandAe2QoL());
     }
 
+    /**
+     * 服务器/单机世界停止时的统一清理（P1-012/P1-021）。
+     * 保存自适应电网统计后清空静态网络与无线频道注册表，
+     * 防止单机切换存档后旧世界的终端、仓室、频道与方块链接残留。
+     */
+    public void serverStopping(cpw.mods.fml.common.event.FMLServerStoppingEvent event) {
+        try {
+            com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveNetworkManager.shutdown();
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] adaptive shutdown cleanup failed", t);
+        }
+        try {
+            com.wztwzt.ae2_qof.wireless.WirelessData.instance()
+                .clear();
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] wireless registry cleanup failed", t);
+        }
+    }
+
     // ===== S2C 包客户端处理分发（#74）=====
     // 专用服务器 JVM 没有 client 类：S2C Handler 若直接引用 Minecraft/thePlayer，
     // 注册时 Class.newInstance 触发类验证即抛 NoClassDefFoundError，导致网络包半注册。

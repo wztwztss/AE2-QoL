@@ -64,6 +64,11 @@ public class MyMod {
         proxy.serverStarting(event);
     }
 
+    @Mod.EventHandler
+    public void serverStopping(cpw.mods.fml.common.event.FMLServerStoppingEvent event) {
+        proxy.serverStopping(event);
+    }
+
     /** 玩家登录时向该玩家推送当前配置（服务端）。 */
     public static class ConfigSyncHandler {
 

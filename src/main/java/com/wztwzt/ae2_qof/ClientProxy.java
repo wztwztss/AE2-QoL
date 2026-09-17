@@ -444,5 +444,21 @@ public class ClientProxy extends CommonProxy {
 
         // 3.15.0：旧自绘横幅（CraftingNotificationOverlay）已由 AE2 原生 GuiNotification 取代，
         // 其渲染由 AE2 自己的 NotificationManager（RenderTickEvent）驱动，此处不再订阅。
+
+        /**
+         * P1-023/P1-024：离开世界（退回主菜单、断开服务器、切换存档）时清理所有客户端静态缓存。
+         * 否则旧的无线高亮坐标、自适应仓列表与 NEI 网络库存会在新存档里继续显示最多 5 分钟。
+         */
+        @SubscribeEvent
+        public void onWorldUnload(net.minecraftforge.event.world.WorldEvent.Unload event) {
+            try {
+                ClientState.highlightEnabled = false;
+                ClientState.highlightPositions = new java.util.ArrayList<int[]>();
+                ClientState.adaptiveHighlightPositions = new java.util.ArrayList<int[]>();
+                ClientState.adaptiveHighlightExpiryTick = 0;
+                ClientState.hatchListCache = null;
+                com.wztwzt.ae2_qof.client.NetworkInventoryCache.clear();
+            } catch (Throwable ignored) {}
+        }
     }
 }
