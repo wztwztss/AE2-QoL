@@ -63,14 +63,14 @@ public class ItemNetworkDataStick extends Item {
         }
         nbt.setString(NBT_OWNER, leader.toString());
         nbt.setInteger(NBT_FREQUENCY, frequency);
-        LOG.info("[AE2QoL] writeData: owner={}, leader={}, freq={}", owner, leader, frequency);
+        LOG.debug("[AE2QoL] writeData: owner={}, leader={}, freq={}", owner, leader, frequency);
     }
 
     public static boolean hasData(ItemStack stack) {
         if (stack == null || !(stack.getItem() instanceof ItemNetworkDataStick)) return false;
         NBTTagCompound nbt = stack.getTagCompound();
         boolean result = nbt != null && nbt.hasKey(NBT_OWNER) && nbt.hasKey(NBT_FREQUENCY);
-        LOG.info("[AE2QoL] hasData: result={}, nbt={}", result, nbt);
+        LOG.debug("[AE2QoL] hasData: result={}", result);
         return result;
     }
 

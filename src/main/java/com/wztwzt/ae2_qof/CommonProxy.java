@@ -64,77 +64,46 @@ public class CommonProxy {
     public static ItemNetworkDataStick networkDataStick;
 
     public void preInit(FMLPreInitializationEvent event) {
-        // ===== fix12: RFB childDelegations 注入（根本修复启动崩溃）=====
-        // 崩溃根因：FML init 阶段记录某 mod 异常时，Log4j ThrowableProxy 用 RFB 系统类加载器
-        // 加载异常堆栈里的 net.minecraft.inventory.ISidedInventory，RFB 读不到 deobf 字节码 →
-        // NoClassDefFoundError 二次崩溃，原始异常被掩盖。
-        // 修复：把 "net.minecraft" 加入 RFB 的 childDelegations，让 RFB.loadClass 委托给 LaunchClassLoader。
+        // ===== RFB childDelegations 注入 =====
+        // 背景：早期把 F22 启动崩溃误判为 RFB 类加载问题，因此加了这段注入。
+        // 后续确认真实根因是 MetaTileEntity ID 32001 被 GT 本体占用（见下方 fix30），
+        // 但这段注入对部分环境下的异常栈打印仍有帮助，故保留最小实现并去掉全部诊断刷屏。
+        // P1-004：原先会打印类加载器全部字段 + VERIFY 结果，日志噪声极大，现已降为 debug。
         try {
             ClassLoader sysCl = ClassLoader.getSystemClassLoader();
-            System.err.println("[AE2QoL-RFB] system classloader = " + sysCl.getClass().getName());
-            // 诊断：打印 RFB 所有字段名
-            for (java.lang.reflect.Field f : sysCl.getClass().getDeclaredFields()) {
-                System.err.println("[AE2QoL-RFB] field: " + f.getName() + " type=" + f.getType().getName());
-            }
-            // 尝试常见字段名
             java.lang.reflect.Field cdField = null;
             for (String name : new String[]{"childDelegations", "childDelegation", "delegations",
                     "childDelegationPrefixes", "delegationPrefixes"}) {
                 try {
                     cdField = sysCl.getClass().getDeclaredField(name);
-                    System.err.println("[AE2QoL-RFB] found childDelegations field: " + name);
                     break;
                 } catch (NoSuchFieldException e) { /* try next */ }
             }
             if (cdField != null) {
                 cdField.setAccessible(true);
                 Object cd = cdField.get(sysCl);
-                System.err.println("[AE2QoL-RFB] childDelegations value=" + cd
-                        + " type=" + (cd != null ? cd.getClass().getName() : "null"));
                 if (cd instanceof java.util.Set) {
                     @SuppressWarnings("unchecked")
                     java.util.Set<Object> set = (java.util.Set<Object>) cd;
-                    if (set.add("net.minecraft")) {
-                        System.err.println("[AE2QoL-RFB] ADDED net.minecraft to childDelegations (Set)");
-                    } else {
-                        System.err.println("[AE2QoL-RFB] net.minecraft already in childDelegations");
-                    }
+                    set.add("net.minecraft");
                 } else if (cd instanceof java.util.List) {
                     @SuppressWarnings("unchecked")
                     java.util.List<Object> list = (java.util.List<Object>) cd;
-                    boolean has = false;
-                    for (Object o : list) {
-                        if ("net.minecraft".equals(String.valueOf(o))) { has = true; break; }
-                    }
-                    if (!has) {
-                        list.add("net.minecraft");
-                        System.err.println("[AE2QoL-RFB] ADDED net.minecraft to childDelegations (List)");
-                    } else {
-                        System.err.println("[AE2QoL-RFB] net.minecraft already in childDelegations");
-                    }
+                    if (!list.contains("net.minecraft")) list.add("net.minecraft");
                 } else if (cd instanceof String[]) {
                     String[] arr = (String[]) cd;
                     java.util.List<String> newList = new java.util.ArrayList<>(java.util.Arrays.asList(arr));
                     if (!newList.contains("net.minecraft")) {
                         newList.add("net.minecraft");
                         cdField.set(sysCl, newList.toArray(new String[0]));
-                        System.err.println("[AE2QoL-RFB] ADDED net.minecraft to childDelegations (String[])");
                     }
                 }
-                // 验证：尝试用系统类加载器加载 ISidedInventory
-                try {
-                    Class<?> test = Class.forName("net.minecraft.inventory.ISidedInventory", false, sysCl);
-                    System.err.println("[AE2QoL-RFB] VERIFY OK: ISidedInventory loaded via sysCl = "
-                            + test.getClassLoader());
-                } catch (Throwable t) {
-                    System.err.println("[AE2QoL-RFB] VERIFY FAIL: " + t);
-                }
+                MyMod.LOG.debug("[AE2QoL-RFB] childDelegations patched via {}", cdField.getName());
             } else {
-                System.err.println("[AE2QoL-RFB] childDelegations field NOT FOUND, listing all fields above");
+                MyMod.LOG.debug("[AE2QoL-RFB] childDelegations field not found; skipping patch");
             }
         } catch (Throwable t) {
-            System.err.println("[AE2QoL-RFB] RFB patch FAILED: " + t);
-            t.printStackTrace(System.err);
+            MyMod.LOG.debug("[AE2QoL-RFB] patch skipped: {}", t.toString());
         }
 
         Config.synchronizeConfiguration(event.getSuggestedConfigurationFile());

@@ -310,7 +310,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
         if (heldItem != null && heldItem.getItem() instanceof ItemNetworkDataStick) {
             boolean hasData = ItemNetworkDataStick.hasData(heldItem);
             if (!aPlayer.worldObj.isRemote) {
-                LOG.info("[AE2QoL] Terminal rightclick: player={}, hasData={}", aPlayer.getCommandSenderName(), hasData);
+                LOG.debug("[AE2QoL] Terminal rightclick: player={}, hasData={}", aPlayer.getCommandSenderName(), hasData);
             }
 
             if (hasData) {
@@ -318,7 +318,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
                 UUID stickOwner = ItemNetworkDataStick.getOwner(heldItem);
                 int stickFreq = ItemNetworkDataStick.getFrequency(heldItem);
                 if (!aPlayer.worldObj.isRemote) {
-                    LOG.info("[AE2QoL] Reading flash drive: owner={}, freq={}", stickOwner, stickFreq);
+                    LOG.debug("[AE2QoL] Reading flash drive: owner={}, freq={}", stickOwner, stickFreq);
                     if (stickOwner == null) {
                         LOG.warn("[AE2QoL] Flash drive owner is null!");
                         aPlayer.addChatMessage(new net.minecraft.util.ChatComponentText(
@@ -329,7 +329,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
                     int oldFreq = networkFrequency;
                     networkOwner = stickOwner;
                     networkFrequency = stickFreq;
-                    LOG.info("[AE2QoL] Terminal updated: oldFreq={} -> newFreq={}, owner={}", oldFreq, stickFreq, stickOwner);
+                    LOG.debug("[AE2QoL] Terminal updated: oldFreq={} -> newFreq={}, owner={}", oldFreq, stickFreq, stickOwner);
                     AdaptiveNetworkManager.migrateHatches(stickOwner, oldFreq, stickOwner, stickFreq);
                     AdaptiveNetworkManager.unregisterTerminal(this);
                     AdaptiveNetworkManager.registerTerminal(this, world);
@@ -346,9 +346,9 @@ public class AdaptiveNetTerminal extends MTEHatch {
                     if (networkOwner == null) {
                         networkOwner = aPlayer.getUniqueID();
                         AdaptiveNetworkManager.registerTerminal(this, world);
-                        LOG.info("[AE2QoL] Auto-initialized owner from player: {}", networkOwner);
+                        LOG.debug("[AE2QoL] Auto-initialized owner from player: {}", networkOwner);
                     }
-                    LOG.info("[AE2QoL] Writing to flash drive: owner={}, freq={}", networkOwner, networkFrequency);
+                    LOG.debug("[AE2QoL] Writing to flash drive: owner={}, freq={}", networkOwner, networkFrequency);
                     ItemNetworkDataStick.writeData(heldItem, networkOwner, networkFrequency);
                     aPlayer.addChatMessage(new net.minecraft.util.ChatComponentText(
                         EnumChatFormatting.GREEN
