@@ -54,7 +54,7 @@ public class StockMonitorTerminal extends MTEHatch {
     public StockMonitorTerminal(String aName, int aTier, int aInvSlotCount, String[] aDescription,
             ITexture[][][] aTextures) {
         super(aName, aTier, aInvSlotCount, aDescription, aTextures);
-        this.terminalId = 32001; // newMetaEntity 用的构造器，ID 固定
+        this.terminalId = 32101; // newMetaEntity 用的构造器，ID 固定
     }
 
     /**

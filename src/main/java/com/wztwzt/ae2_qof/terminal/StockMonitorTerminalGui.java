@@ -56,9 +56,28 @@ public class StockMonitorTerminalGui {
     private static final int EDIT_PANEL_W = 220;
     private static final int EDIT_PANEL_H = 160;
 
-    // 当前选中的条目（服务端变量，用于编辑子面板）
-    private static CoverEntry selectedCover;
-    private static PartLevelEmitter selectedEmitter;
+    // 当前选中的条目：按玩家 UUID 隔离，避免多名玩家打开同一终端时互相串目标（P1-016）。
+    // 键是玩家 UUID，值是玩家各自的选择；玩家退出后条目会随下次会话覆盖，数量受在线玩家数约束。
+    private static final java.util.Map<java.util.UUID, CoverEntry> SELECTED_COVERS =
+        new java.util.concurrent.ConcurrentHashMap<>();
+    private static final java.util.Map<java.util.UUID, PartLevelEmitter> SELECTED_EMITTERS =
+        new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static CoverEntry getSelectedCover(EntityPlayer player) {
+        return player == null ? null : SELECTED_COVERS.get(player.getUniqueID());
+    }
+
+    private static void setSelectedCover(EntityPlayer player, CoverEntry entry) {
+        if (player != null) SELECTED_COVERS.put(player.getUniqueID(), entry);
+    }
+
+    private static PartLevelEmitter getSelectedEmitter(EntityPlayer player) {
+        return player == null ? null : SELECTED_EMITTERS.get(player.getUniqueID());
+    }
+
+    private static void setSelectedEmitter(EntityPlayer player, PartLevelEmitter emitter) {
+        if (player != null) SELECTED_EMITTERS.put(player.getUniqueID(), emitter);
+    }
 
     public static ModularPanel build(StockMonitorTerminal terminal, PosGuiData guiData,
             PanelSyncManager syncManager, UISettings uiSettings) {
@@ -158,7 +177,7 @@ public class StockMonitorTerminalGui {
             final LevelType type = (LevelType) emitter.getConfigManager().getSetting(Settings.LEVEL_TYPE);
 
             InteractionSyncHandler handler = new InteractionSyncHandler().setOnMousePressed(mouse -> {
-                selectedEmitter = emitter;
+                setSelectedEmitter(player, emitter);
                 editPanel.openPanel();
             });
 
@@ -237,7 +256,7 @@ public class StockMonitorTerminalGui {
             ThresholdMode mode = ThresholdMode.values()[entry.modeOrdinal];
 
             InteractionSyncHandler handler = new InteractionSyncHandler().setOnMousePressed(mouse -> {
-                selectedCover = fe;
+                setSelectedCover(player, fe);
                 editPanel.openPanel();
             });
 
@@ -261,35 +280,35 @@ public class StockMonitorTerminalGui {
         ModularPanel edit = ModularPanel.defaultPanel("cover_edit_panel", EDIT_PANEL_W, EDIT_PANEL_H);
         EntityPlayer player = syncManager.getPlayer();
 
-        if (selectedCover == null) {
+        CoverEntry selCover = getSelectedCover(player);
+        if (selCover == null) {
             edit.child(new TextWidget<>(IKey.str("No cover selected")).pos(10, 10));
             return edit;
         }
 
-        StockMonitorCover cover = locateCover(selectedCover);
+        StockMonitorCover cover = locateCover(selCover);
         if (cover == null) {
             edit.child(new TextWidget<>(IKey.str(EnumChatFormatting.RED + "Cover not found"))
                 .pos(10, 10));
             return edit;
         }
 
-        if (!hasPermission(player, cover)) {
-            edit.child(new TextWidget<>(IKey.str(EnumChatFormatting.RED + "No permission"))
-                .pos(10, 10));
-            return edit;
-        }
+        // P1-015：权限校验放在写入回调（服务端执行）里，保证客户端/服务端注册的同步项一致。
+        // 权限不足时界面照常显示，但任何修改都会被服务端丢弃。
+        final boolean canEdit = hasPermission(player, terminal);
 
         StockMonitorCoverData data = cover.getCoverData();
         final StockMonitorCover finalCover = cover;
 
         // 标题
-        String targetName = selectedCover.targetName.isEmpty() ? "(unset)" : selectedCover.targetName;
+        String targetName = selCover.targetName.isEmpty() ? "(unset)" : selCover.targetName;
         edit.child(new TextWidget<>(IKey.str(targetName)).pos(10, 8).size(EDIT_PANEL_W - 20, 14));
 
         // 阈值
         LongSyncValue thresholdSync = new LongSyncValue(
             () -> data.getSlot(0).threshold,
             v -> {
+                if (!canEdit) return;
                 data.getSlot(0).threshold = v;
                 finalCover.markCoverDirty();
             }).allowC2S();
@@ -305,7 +324,9 @@ public class StockMonitorTerminalGui {
         IntSyncValue modeSync = new IntSyncValue(
             () -> data.getMode().ordinal(),
             v -> {
-                data.setMode(ThresholdMode.values()[v]);
+                if (!canEdit) return;
+                int idx = v < 0 ? 0 : (v >= ThresholdMode.values().length ? ThresholdMode.values().length - 1 : v);
+                data.setMode(ThresholdMode.values()[idx]);
                 finalCover.markCoverDirty();
             }).allowC2S();
         syncManager.syncValue("cover_mode", modeSync);
@@ -327,7 +348,7 @@ public class StockMonitorTerminalGui {
 
         // 位置信息
         edit.child(new TextWidget<>(IKey.str(
-            "Dim:" + selectedCover.dim + " X:" + selectedCover.x + " Y:" + selectedCover.y + " Z:" + selectedCover.z))
+            "Dim:" + selCover.dim + " X:" + selCover.x + " Y:" + selCover.y + " Z:" + selCover.z))
             .pos(10, 80).color(0xFF999999).size(EDIT_PANEL_W - 20, 10));
 
         // 关闭按钮
@@ -348,18 +369,16 @@ public class StockMonitorTerminalGui {
         ModularPanel edit = ModularPanel.defaultPanel("emitter_edit_panel", EDIT_PANEL_W, 140);
         EntityPlayer player = syncManager.getPlayer();
 
-        if (selectedEmitter == null) {
+        PartLevelEmitter selEmitter = getSelectedEmitter(player);
+        if (selEmitter == null) {
             edit.child(new TextWidget<>(IKey.str("No emitter selected")).pos(10, 10));
             return edit;
         }
 
-        if (!hasPermission(player, selectedEmitter)) {
-            edit.child(new TextWidget<>(IKey.str(EnumChatFormatting.RED + "No permission"))
-                .pos(10, 10));
-            return edit;
-        }
+        // P1-015：同理，权限不足时不拦截界面构建，只在服务端写入回调里拒绝修改。
+        final boolean canEdit = hasPermission(player, selEmitter);
 
-        final PartLevelEmitter emitter = selectedEmitter;
+        final PartLevelEmitter emitter = selEmitter;
         String label = getEmitterLabel(emitter);
         LevelType type = (LevelType) emitter.getConfigManager().getSetting(Settings.LEVEL_TYPE);
 
@@ -374,6 +393,7 @@ public class StockMonitorTerminalGui {
         LongSyncValue thresholdSync = new LongSyncValue(
             emitter::getReportingValue,
             v -> {
+                if (!canEdit) return;
                 emitter.setReportingValue(v);
             }).allowC2S();
         syncManager.syncValue("emitter_threshold", thresholdSync);
@@ -437,10 +457,40 @@ public class StockMonitorTerminalGui {
         }
     }
 
-    private static boolean hasPermission(EntityPlayer player, StockMonitorCover cover) {
-        // 覆盖板本身不连 AE2 网络，权限检查简化为总是允许
-        // 后续可通过覆盖板的 networkId 关联网格做权限检查
-        return true;
+    /**
+     * P1-015：覆盖板远程编辑权限。覆盖板本身不是 AE2 设备，因此沿用终端的连网结果：
+     * 终端绑定/邻接的 AE2 网络存在时，必须拥有该网络 BUILD 权限才能远程改配置；
+     * 终端完全没有连网时不做拦截（此时覆盖板也无法被别的网络操作）。
+     */
+    private static boolean hasPermission(EntityPlayer player, StockMonitorTerminal terminal) {
+        IGrid grid = resolveTerminalGrid(terminal);
+        if (grid == null) return true;
+        try {
+            ISecurityGrid security = grid.getCache(ISecurityGrid.class);
+            if (security == null || !security.isAvailable()) return true;
+            return security.hasPermission(player, SecurityPermissions.BUILD);
+        } catch (Throwable t) {
+            return true;
+        }
+    }
+
+    /** 解析终端当前生效的 AE2 网络：优先 Nexus 无线绑定，其次邻接连接。 */
+    private static IGrid resolveTerminalGrid(StockMonitorTerminal terminal) {
+        try {
+            net.minecraft.tileentity.TileEntity te = (net.minecraft.tileentity.TileEntity) terminal.getBaseMetaTileEntity();
+            if (te == null) return null;
+            if (terminal.isBound() && WirelessAeConnector.isNexusAvailable()) {
+                try {
+                    java.util.UUID netId = java.util.UUID.fromString(terminal.getNetworkId());
+                    IGrid grid = WirelessAeConnector.getGridForNetwork(netId, te.getWorldObj());
+                    if (grid != null) return grid;
+                } catch (IllegalArgumentException ignored) {}
+            }
+            return NeighborAeConnector.findGrid(te.getWorldObj(), te.xCoord, te.yCoord, te.zCoord,
+                ForgeDirection.UNKNOWN);
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
     private static String formatNumber(long n) {

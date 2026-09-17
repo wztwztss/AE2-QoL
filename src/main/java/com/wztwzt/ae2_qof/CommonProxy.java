@@ -290,16 +290,35 @@ public class CommonProxy {
             t.printStackTrace(System.err);
         }
 
-        // ===== fix13: StockMonitorTerminal 注册已禁用 =====
-        // M6 库存统计终端在 GTNH 2.9.0-beta-1 + Java 17/25 + RFB 环境下启动崩溃：
-        // FML init 阶段记录某 mod 异常时，Log4j ThrowableProxy 用 RFB 系统类加载器
-        // 加载异常堆栈里的 net.minecraft.inventory.ISidedInventory，RFB 读不到 deobf
-        // 字节码 → NoClassDefFoundError 二次崩溃，原始异常被掩盖。
-        // 经 5 轮修复（槽位/catch/诊断/RFB childDelegations 注入/try-catch 防御层）
-        // 均未解决，临时禁用终端注册，游戏可正常启动。终端类文件保留，后续修复后
-        // 取消注释即可恢复。
-        // stockMonitorTerminal 保持 null。
-        System.err.println("[AE2QoL] StockMonitorTerminal registration DISABLED (fix13 startup crash workaround)");
+        // ===== fix30: StockMonitorTerminal 恢复注册（F22）=====
+        // fix13 曾因“启动崩溃”禁用本终端。真正根因不是 RFB：MetaTileEntity ID 32001
+        // 已被 GT 本体 LegacyUniversalChemicalFuelEngine（通用化学燃料引擎）占用。
+        // CommonMetaTileEntity 构造器发现 ID 重复会抛 IllegalArgumentException，
+        // 该异常在 FML init 阶段被 Log4j 记录时又触发 RFB 二次加载错误（NoClassDefFoundError），
+        // 把真正的“ID 占用”异常掩盖成了类加载问题。改用空闲 ID 32101 后注册恢复正常。
+        try {
+            stockMonitorTerminal = new StockMonitorTerminal(
+                32101,
+                "stock_monitor_terminal",
+                "Stock Monitor Terminal",
+                1);
+            GameRegistry.addShapedRecipe(
+                stockMonitorTerminal.getStackForm(1L),
+                "ici",
+                "rgr",
+                "ici",
+                'i',
+                net.minecraft.init.Items.iron_ingot,
+                'g',
+                net.minecraft.init.Blocks.glass,
+                'r',
+                net.minecraft.init.Items.redstone,
+                'c',
+                gregtech.api.enums.ItemList.Circuit_Basic.get(1));
+        } catch (Throwable t) {
+            System.err.println("[AE2QoL] StockMonitorTerminal registration FAILED: " + t);
+            t.printStackTrace(System.err);
+        }
 
         try {
             adaptiveNetTerminal = new AdaptiveNetTerminal(
