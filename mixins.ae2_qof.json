@@ -13,7 +13,8 @@
     "ae.MixinPinsHolder",
     "gt.MixinMTEHatchInputBus",
     "gt.MixinMTEMultiBlockBase",
-    "gt.MixinMultiblockParallel",
+    "gt.MixinCommonBaseMetaTileEntityMultiblockRegistry",
+    "gt.MixinProcessingLogicSpeed",
     "TileDriveMixin"
   ],
   "client": [
