@@ -43,7 +43,7 @@ GTNH 2.9.0-beta-1（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 ## 四、当前进行中
 
 - 任务标题：阶段 3 —— 按优先级分批修复 `docs/STATIC_AUDIT_ISSUES.md` 中的缺陷，并逐条回填实测结果
-- 整体进度：约 92%（阶段 1 静态审查 100%；阶段 2 脚本与实测回填 100%；阶段 3 代码修复已完成 fix22~fix38 共 17 个提交，32 条审查问题中 29 条已修复/部分处理，剩余为需实机进一步观察的 2 条与需裁剪环境验证的 1 条）
+- 整体进度：约 92%（阶段 1 静态审查 100%；阶段 2 脚本与实测回填 100%；阶段 3 代码修复已完成 fix22~fix38 共 17 个提交，32 条审查问题中 31 条已给出修复结论（其中 P2-027、P2-028 为部分处理），仅 P2-029 需 GTNL/PH 裁剪环境实测定级）
 - 涉及文件：
   - 审计与实测：`docs/STATIC_AUDIT_ISSUES.md`、`docs/SINGLEPLAYER_TEST_SCRIPT.md`
   - 本阶段已修改：网络包鉴权（`network/WirelessActionPacket.java`、`network/HatchActionPacket.java`、`network/MergedTerminalScrollReplacePacket.java`、`network/MergedTerminalRenamePacket.java`、`network/InfinityCellStatsPacket.java`、`network/RequestProvidersListPacket.java`、`network/HatchListSyncPacket.java`）、库存统计终端与覆盖板注册表（`CommonProxy.java`、`terminal/StockMonitorTerminal.java`、`terminal/StockMonitorTerminalGui.java`、`terminal/CoverRegistry.java`、`cover/stockmonitor/StockMonitorCover.java`）、合并终端上传 UI（`client/gui/GuiProviderSelect.java`）、智能倍增（`mixin/ae/MixinCraftingCPUCluster.java`）、跨配方并行（`mixin/gt/MixinProcessingLogicSpeed.java`）、自适应电网（`hatch/adaptive/`）、配置（`Config.java`）、生命周期（`MyMod.java`、`ClientProxy.java`）
