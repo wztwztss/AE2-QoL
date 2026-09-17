@@ -16,6 +16,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.wztwzt.ae2_qof.Config;
+import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.api.ISmartDoublingMedium;
 
 import appeng.api.config.InsertionMode;
@@ -67,6 +68,7 @@ public abstract class MixinDualityInterface implements ISmartDoublingMedium {
     public void setSmartDoubling(boolean enabled) {
         this.smartDoubling = enabled;
         this.iHost.saveChanges();
+        MyMod.LOG.info("[AE2QoL] smart doubling set to {} on {}", enabled, this.iHost.getTileEntity());
     }
 
     @Override
