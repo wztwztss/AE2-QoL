@@ -163,7 +163,14 @@ public abstract class MixinProcessingLogicSpeed {
                 if (!helper.getResult().wasSuccessful() || helper.getCurrentParallel() <= 0) continue;
 
                 long perRecipeEUt = calc.getConsumption();
-                int perRecipeDuration = calc.getDuration();
+                // P1-020：duration 先做溢出判断再转 int；乘法前用除法判界避免 long 溢出。
+                long perRecipeDurationLong = calc.getDuration();
+                if (perRecipeDurationLong <= 0) continue;
+                if (perRecipeDurationLong > Integer.MAX_VALUE) return CheckRecipeResultRegistry.DURATION_OVERFLOW;
+                int perRecipeDuration = (int) perRecipeDurationLong;
+                if (perRecipeEUt > 0 && perRecipeEUt > Long.MAX_VALUE / perRecipeDurationLong) {
+                    return CheckRecipeResultRegistry.POWER_OVERFLOW;
+                }
 
                 // 合并输出（按机器输出槽位上限截断）
                 // 注意：getItemOutputs()/getFluidOutputs() 可能返回 null（纯流体/纯物品配方），必须判空
@@ -186,7 +193,11 @@ public abstract class MixinProcessingLogicSpeed {
                     }
                 }
 
-                totalEu += perRecipeEUt * perRecipeDuration;
+                long recipeEu = perRecipeEUt * perRecipeDurationLong;
+                if (totalEu > Long.MAX_VALUE - recipeEu) {
+                    return CheckRecipeResultRegistry.POWER_OVERFLOW;
+                }
+                totalEu += recipeEu;
                 totalParallels += helper.getCurrentParallel();
                 remain -= helper.getCurrentParallel();
                 matchedRecipes++;
@@ -195,11 +206,17 @@ public abstract class MixinProcessingLogicSpeed {
 
             // 5. 结果
             if (matchedRecipes == 0) return CheckRecipeResultRegistry.NO_RECIPE;
+            // P1-020：电压×电流同样先判界，避免 int/long 溢出后算出错误功率。
+            if (availableVoltage > 0 && availableAmperage > 0
+                && availableVoltage > Long.MAX_VALUE / availableAmperage) {
+                return CheckRecipeResultRegistry.POWER_OVERFLOW;
+            }
             long maxPower = availableVoltage * availableAmperage;
             if (maxPower <= 0) return CheckRecipeResultRegistry.NO_RECIPE;
-            int duration = (int) Math.max(Math.ceil((double) totalEu / maxPower), 20);
+            double durationExact = Math.ceil((double) totalEu / maxPower);
+            if (durationExact >= Integer.MAX_VALUE) return CheckRecipeResultRegistry.DURATION_OVERFLOW;
+            int duration = (int) Math.max(durationExact, 20);
             long eut = (long) Math.ceil((double) totalEu / duration);
-            if (duration >= Integer.MAX_VALUE) return CheckRecipeResultRegistry.DURATION_OVERFLOW;
             if (eut > Integer.MAX_VALUE) return CheckRecipeResultRegistry.POWER_OVERFLOW;
 
             // 6. 写字段
@@ -219,7 +236,9 @@ public abstract class MixinProcessingLogicSpeed {
     private static void addItemMerged(List<ItemStack> list, ItemStack stack) {
         for (ItemStack existing : list) {
             if (existing.isItemEqual(stack) && ItemStack.areItemStackTagsEqual(existing, stack)) {
-                existing.stackSize += stack.stackSize;
+                // P1-020：int 上限饱和，避免输出合并溢出成负数。
+                long sum = (long) existing.stackSize + stack.stackSize;
+                existing.stackSize = (int) Math.min(Integer.MAX_VALUE, sum);
                 return;
             }
         }
@@ -230,7 +249,8 @@ public abstract class MixinProcessingLogicSpeed {
         for (FluidStack existing : list) {
             if (existing.getFluid() == stack.getFluid()
                 && FluidStack.areFluidStackTagsEqual(existing, stack)) {
-                existing.amount += stack.amount;
+                long sum = (long) existing.amount + stack.amount;
+                existing.amount = (int) Math.min(Integer.MAX_VALUE, sum);
                 return;
             }
         }

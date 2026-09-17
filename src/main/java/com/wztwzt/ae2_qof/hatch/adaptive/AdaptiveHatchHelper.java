@@ -35,7 +35,7 @@ public class AdaptiveHatchHelper {
     private String cachedName = "";
     private int machineMetaId = -1;
     private String machineName = "";
-    private int realFlowEUt = 0;
+    private long realFlowEUt = 0;
 
     // WAILA缓存字段（服务端更新，客户端读取）
     private int lastVoltageTier = 0;
@@ -176,8 +176,8 @@ public class AdaptiveHatchHelper {
         return bestMultiblock;
     }
 
-    public int getRealFlowEUt() { return realFlowEUt; }
-    public void setRealFlowEUt(int realFlowEUt) { this.realFlowEUt = realFlowEUt; }
+    public long getRealFlowEUt() { return realFlowEUt; }
+    public void setRealFlowEUt(long realFlowEUt) { this.realFlowEUt = realFlowEUt; }
 
     public int getLastVoltageTier() { return lastVoltageTier; }
     public void setLastVoltageTier(int v) { this.lastVoltageTier = v; }

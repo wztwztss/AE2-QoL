@@ -158,7 +158,7 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
 
         aBase.decreaseStoredEnergyUnits(stored, false);
         WirelessNetworkManager.addEUToGlobalEnergyMap(owner, stored);
-        helper.setRealFlowEUt((int) stored);
+        helper.setRealFlowEUt(stored);
     }
 
     @Override

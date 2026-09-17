@@ -110,7 +110,7 @@ public class AdaptiveNetHatch extends MTEHatchEnergy {
             if (consumed > 0) {
                 WirelessNetworkManager.addEUToGlobalEnergyMap(owner, -consumed);
             }
-            helper.setRealFlowEUt(consumed > 0 ? (int) consumed : 0);
+            helper.setRealFlowEUt(consumed > 0 ? consumed : 0L);
             long gridEU = AdaptiveHatchHelper.getGridEULong(owner);
             helper.setLastGridEU(gridEU);
             long maxStore = maxEUStore();

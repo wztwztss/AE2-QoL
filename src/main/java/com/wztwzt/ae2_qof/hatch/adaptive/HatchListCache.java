@@ -11,7 +11,7 @@ public class HatchListCache {
     public final String inputCountText;
     public final String outputCountText;
 
-    public static final Comparator<HatchEntry> EU_T_DESC = (a, b) -> Integer.compare(b.realFlowEUt, a.realFlowEUt);
+    public static final Comparator<HatchEntry> EU_T_DESC = (a, b) -> Long.compare(b.realFlowEUt, a.realFlowEUt);
 
     public HatchListCache(int totalCount, List<HatchEntry> entries,
                           String inputCountText, String outputCountText) {
@@ -27,7 +27,7 @@ public class HatchListCache {
         public final short metaId;
         public final int machineMetaId;
         public final long eut;
-        public final int realFlowEUt;
+        public final long realFlowEUt;
         public final int tier;
         public final int amps;
         public final int hatchType;
@@ -35,7 +35,7 @@ public class HatchListCache {
         public final int x, y, z, dim;
         public final String ownerName;
 
-        public HatchEntry(String name, short metaId, int machineMetaId, long eut, int realFlowEUt, int tier, int amps,
+        public HatchEntry(String name, short metaId, int machineMetaId, long eut, long realFlowEUt, int tier, int amps,
                          int hatchType, int index, int x, int y, int z, int dim,
                          String ownerName) {
             this.name = name != null ? name : "";
