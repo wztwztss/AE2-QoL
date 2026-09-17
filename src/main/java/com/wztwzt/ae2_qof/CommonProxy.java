@@ -64,47 +64,20 @@ public class CommonProxy {
     public static ItemNetworkDataStick networkDataStick;
 
     public void preInit(FMLPreInitializationEvent event) {
-        // ===== RFB childDelegations 注入 =====
-        // 背景：早期把 F22 启动崩溃误判为 RFB 类加载问题，因此加了这段注入。
-        // 后续确认真实根因是 MetaTileEntity ID 32001 被 GT 本体占用（见下方 fix30），
-        // 但这段注入对部分环境下的异常栈打印仍有帮助，故保留最小实现并去掉全部诊断刷屏。
-        // P1-004：原先会打印类加载器全部字段 + VERIFY 结果，日志噪声极大，现已降为 debug。
-        try {
-            ClassLoader sysCl = ClassLoader.getSystemClassLoader();
-            java.lang.reflect.Field cdField = null;
-            for (String name : new String[]{"childDelegations", "childDelegation", "delegations",
-                    "childDelegationPrefixes", "delegationPrefixes"}) {
-                try {
-                    cdField = sysCl.getClass().getDeclaredField(name);
-                    break;
-                } catch (NoSuchFieldException e) { /* try next */ }
-            }
-            if (cdField != null) {
-                cdField.setAccessible(true);
-                Object cd = cdField.get(sysCl);
-                if (cd instanceof java.util.Set) {
-                    @SuppressWarnings("unchecked")
-                    java.util.Set<Object> set = (java.util.Set<Object>) cd;
-                    set.add("net.minecraft");
-                } else if (cd instanceof java.util.List) {
-                    @SuppressWarnings("unchecked")
-                    java.util.List<Object> list = (java.util.List<Object>) cd;
-                    if (!list.contains("net.minecraft")) list.add("net.minecraft");
-                } else if (cd instanceof String[]) {
-                    String[] arr = (String[]) cd;
-                    java.util.List<String> newList = new java.util.ArrayList<>(java.util.Arrays.asList(arr));
-                    if (!newList.contains("net.minecraft")) {
-                        newList.add("net.minecraft");
-                        cdField.set(sysCl, newList.toArray(new String[0]));
-                    }
-                }
-                MyMod.LOG.debug("[AE2QoL-RFB] childDelegations patched via {}", cdField.getName());
-            } else {
-                MyMod.LOG.debug("[AE2QoL-RFB] childDelegations field not found; skipping patch");
-            }
-        } catch (Throwable t) {
-            MyMod.LOG.debug("[AE2QoL-RFB] patch skipped: {}", t.toString());
-        }
+        // ===== fix39: 已移除 RFB childDelegations 注入 =====
+        // 历史背景：fix12 把 F22「加入库存统计终端就崩溃」误判为 RFB 类加载问题，
+        // 于是往 RFB 系统类加载器的 childDelegations 里塞 "net.minecraft"。
+        // 但当时这段代码本身是失效的——字段实际类型是 HashSet，旧代码只处理 List/String[]，
+        // 所以它从未真正生效，游戏一直正常（fix14 的 VERIFY FAIL 日志即为证据）。
+        //
+        // 本次质检把它「修对」后（改为处理 Set），立刻引发启动崩溃：
+        // 加入 "net.minecraft" 前缀后，net.minecraftforge.* 也被委托给子类加载器，
+        // 绕过 RFB 的 ExtensibleEnumTransformer，导致 lwjgl3ify 的枚举扩展失效，
+        // Railcraft 注册 PopulateChunkEvent$Populate$EventType 时抛
+        //「was not made extensible, add it to lwjgl3ify configs」而整局崩溃。
+        //
+        // 而 F22 崩溃的真实根因后来已查明是 MTE ID 32001 与 GT 本体重号（见下方 fix30），
+        // 与 RFB 无关。因此这段注入既无必要、又有害，现彻底删除，恢复 fix14 的加载行为。
 
         Config.synchronizeConfiguration(event.getSuggestedConfigurationFile());
         MyMod.LOG.info("I am MyMod at version " + Tags.VERSION);

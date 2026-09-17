@@ -4,13 +4,13 @@
 
 **为 GTNH 打造的 AE2 效率增强模组**：把 NEI 配方一键推送进 AE 样板终端、从 NEI 面板直接提取 AE 网络物品、查看每个物品在 AE 网络中的存量与可合成状态、无线传输 AE 网络、自适应电网系统等。
 
-适配：GTNH 2.9.0-beta-1（Minecraft 1.7.10）| 当前版本：**3.19.0-fix38** | 作者：wztwzt
+适配：GTNH 2.9.0-beta-1（Minecraft 1.7.10）| 当前版本：**3.19.0-fix39** | 作者：wztwzt
 
 ---
 
 ## 📦 安装
 
-1. 将 `AE2-QoL-3.19.0-fix38.jar` 放入 `.minecraft/mods/`
+1. 将 `AE2-QoL-3.19.0-fix39.jar` 放入 `.minecraft/mods/`
 2. 确认已安装依赖：AE2（`rv3-beta-977-GTNH`）、ae2fc（`1.5.88-gtnh`）、NotEnoughItems（NEI）
 3. 启动游戏。配置会生成在 `config/` 下
 
@@ -208,7 +208,7 @@ AE 合成 CPU 完成订单时，屏幕右上角滑入 **AE2 原生样式横幅**
 - **phantom 标记槽**：Shift+左键取消标记，不显示数量（纯标记用）
 - **GUI 实时刷新**：库存/频道/工作状态用 MUI2 SyncValue 自动推送，无需重开 GUI
 
-### 21. 库存统计终端（3.19.0-fix38）
+### 21. 库存统计终端（3.19.0-fix39）
 
 GT 单方块免电信息终端，集中查看/修改 AE2 标准发信器（`PartLevelEmitter`）与本模组库存检测覆盖板。无需逐个跑到机器前调整阈值。
 

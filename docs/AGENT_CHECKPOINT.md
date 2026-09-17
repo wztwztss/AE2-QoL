@@ -28,6 +28,7 @@ GTNH 2.9.0-beta-1（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 
 > 按完成时间倒序排列，均标注产出文件路径。
 
+- [x] 2026-09-17 | 工具：Codex | 模型：GPT-5：**紧急修复 fix38 启动崩溃**：定位到崩溃由 fix32「修好」的 RFB `childDelegations` 注入引起（该补丁在 fix14 中因类型判断错误实际失效，修复后反而让 `net.minecraftforge.*` 绕过 RFB 的 ExtensibleEnumTransformer，导致 Railcraft 枚举扩展失败）；现已彻底删除该注入，发布 `3.19.0-fix39`
 - [x] 2026-09-17 | 工具：Codex | 模型：GPT-5：完成阶段 3 全部可修复项（fix22~fix38，共 17 个提交）：P0-001、P1-002~P1-024、P2-025、P2-026、P2-030、P1-031、P1-032 已修复或部分处理；统一版本号为 `3.19.0-fix38`，补齐 CHANGELOG/README，同步根目录 mixin 配置；完整构建 `gradlew build --offline` 通过，产物 `build/libs/AE2-QoL-3.19.0-fix38.jar`（1,096,116 字节）
 - [x] 2026-09-17 | 工具：Codex | 模型：GPT-5：F22 库存统计终端恢复可用：定位到真正根因是 MTE ID 32001 被 GT 本体 LegacyUniversalChemicalFuelEngine 占用，改用空闲 ID 32101（提交 `bb45f36`）
 - [x] 2026-09-17 | 工具：Codex | 模型：GPT-5：F1 样板自动上传重构：目标名加维度坐标后缀、按样板可接纳性过滤、工作台配方独立分支；上传选择界面参考 GTNH-ECO 重做为图标卡片列表（提交 `ca4120f`、`c0f2f21`）
@@ -123,6 +124,7 @@ GTNH 2.9.0-beta-1（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 - 发布产物：`build/libs/AE2-QoL-3.19.0-fix38.jar`（1,096,116 字节）。
 
 **关键机制结论**
+- **RFB `childDelegations` 注入已彻底删除（fix39）**：该补丁最初为绕开被误判的 RFB 类加载问题而写，但旧实现只处理 `List`/`String[]`、真实字段是 `HashSet`，因此从未生效。修复类型判断让它真正生效后，`net.minecraftforge.*` 被委托给子类加载器，绕过 RFB 的 `ExtensibleEnumTransformer`，导致 lwjgl3ify 枚举扩展失效、Railcraft `GeodePopulator` 静态初始化抛 `was not made extensible` 崩溃。**任何智能体不得再次加入该注入**；F22 崩溃的真实根因是 MTE ID 重号（见上）。
 
 - F1 上传策略：strategy1 唯一供应器直传 → strategy2 按「记住的机器名（含 `@D维度 x,y,z` 后缀）」匹配 → strategy3 手动选；工作台类配方强制 `apu:recipeMap=crafting` 走独立分支，不再预填「合成」关键词；供应器列表按样板可接纳性过滤，同名机器聚合为一张卡片并固定指向空槽最多的那台。
 - F6 通知条件（fix23 后）：`submitJob` 只要拿到返回值就记录下单玩家与产物；完成时若玩家背包没有绑定同网络的无线终端，退化为直接通知本人。`submitJob` 返回 null（CPU 忙）时保留进行中任务的通知状态（fix35）。
@@ -143,6 +145,26 @@ GTNH 2.9.0-beta-1（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 
 > 按时间倒序排列。
 
+```Plain Text
+[2026-09-17 23:05] | 工具平台：Codex | 底层模型：GPT-5
+- 本次完成内容：处理用户反馈的 fix38 启动崩溃（crash-2026-09-17_22.53.09-client.txt）。
+  定位：崩溃点虽是 Railcraft GeodePopulator，但根因是本轮 fix32 把历史上失效的
+  RFB childDelegations 注入「修对」了。该注入在 fix14 中因只判断 List/String[]、
+  而真实字段是 HashSet 而从未生效；修复后 net.minecraftforge.* 被委托给子类加载器，
+  绕过 RFB 的 ExtensibleEnumTransformer，使 lwjgl3ify 的可扩展枚举改写失效，
+  Railcraft 注册 PopulateChunkEvent$Populate$EventType 时抛
+  "was not made extensible, add it to lwjgl3ify configs" 导致启动崩溃。
+  F22 崩溃真实根因早已查明是 MTE ID 32001 重号（fix30），与 RFB 无关。
+  处置：彻底删除该注入代码块，恢复 fix14 的类加载行为；版本号 3.19.0-fix38 → 3.19.0-fix39。
+- 修改/新增文件：src/main/java/com/wztwzt/ae2_qof/CommonProxy.java、CHANGELOG.md、
+  README.md、README.en.md、gradle.properties、src/main/resources/mcmod.info、
+  docs/STATIC_AUDIT_ISSUES.md、docs/AGENT_CHECKPOINT.md
+- 遗留问题/给下一个智能体的提示：
+  1) 严禁再次加入 RFB childDelegations 注入，原因见「关键机制结论」；
+  2) fix38 的其余修复保持不变，本次仅回退该注入；
+  3) 部署需用户批准；F15/F10/F5 仍需用户复测反馈。
+- 本次是否编译通过：是（gradlew build --offline → BUILD SUCCESSFUL，产物 AE2-QoL-3.19.0-fix39.jar）
+```
 ```Plain Text
 [2026-09-17 22:45] | 工具平台：Codex | 底层模型：GPT-5
 - 本次完成内容：完成阶段 3 代码整改与文档收尾。共新增 fix22~fix38 共 17 个提交，覆盖：

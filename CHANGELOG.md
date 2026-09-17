@@ -1,3 +1,42 @@
+## 3.19.0-fix39 - 紧急修复：移除 RFB childDelegations 注入（fix38 启动崩溃根因）
+
+> 作者：wztwzt | 更新时间：2026-09-17 | 基于 3.19.0-fix38
+
+### 现象
+
+使用 3.19.0-fix38 启动时在 FML preInit 阶段崩溃：
+
+```
+java.lang.RuntimeException: Enum net.minecraftforge.event.terraingen.PopulateChunkEvent$Populate$EventType
+was not made extensible, add it to lwjgl3ify configs.
+    at me.eigenraven.lwjgl3ify.EnumHelper.addEnum(EnumHelper.java:141)
+    at net.minecraftforge.common.util.EnumHelper.addEnum(EnumHelper.java)
+    at mods.railcraft.common.worldgen.GeodePopulator.<clinit>(GeodePopulator.java:34)
+```
+
+### 根因
+
+- fix12 曾把 F22「加入库存统计终端就崩溃」误判为 RFB 类加载问题，因此往 RFB 系统类加载器的
+  `childDelegations` 集合里加入 `"net.minecraft"`，希望让 RFB 委托给 LaunchClassLoader。
+- 但该代码实际从未生效：`childDelegations` 的真实类型是 `HashSet`，而旧实现只处理
+  `List` 与 `String[]`，因此一直走空分支。fix14 日志中的 `[AE2QoL-RFB] VERIFY FAIL` 即为证据，
+  游戏也因此一直能正常启动。
+- fix32 在清理日志时顺带补上了 `Set` 分支，使这段补丁**第一次真正生效**。
+- 加入 `"net.minecraft"` 前缀后，`net.minecraftforge.*` 同样被委托给子类加载器加载，
+  绕过了 RFB 的 `ExtensibleEnumTransformer`，使 lwjgl3ify 的「可扩展枚举」改写失效，
+  Railcraft 注册枚举时即抛异常并中断启动。
+- F22 崩溃的真实根因（已在 fix30 查明）是 MetaTileEntity ID 32001 与 GT 本体重号，与 RFB 无关。
+  该补丁既无必要，又有害。
+
+### 修复
+
+- 彻底删除 `CommonProxy.preInit` 中的 RFB `childDelegations` 注入代码块，恢复 fix14 的类加载行为。
+- 保留说明性注释，记录误判历史与真实根因，避免后续智能体再次「修好」这段代码。
+
+### 验证
+
+- `gradlew build --offline -x spotlessCheck -x spotlessJavaCheck` → `BUILD SUCCESSFUL`
+- 产物：`build/libs/AE2-QoL-3.19.0-fix39.jar`
 ## 3.19.0-fix38 - 质检整改：功能缺陷修复 + 安全加固 + 生命周期清理（阶段 3）
 
 > 作者：wztwzt | 更新时间：2026-09-17 | 基于 3.19.0-fix14
