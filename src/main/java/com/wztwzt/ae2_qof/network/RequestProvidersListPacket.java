@@ -40,14 +40,18 @@ public class RequestProvidersListPacket implements IMessage {
         final List<Long> ids;
         final List<String> names;
         final List<Integer> emptySlots;
+        final List<Integer> totalSlots;
+        final List<ItemStack> icons;
         final List<ICraftingProvider> providers;
         final long timestamp;
 
-        CachedProviders(List<Long> ids, List<String> names, List<Integer> emptySlots,
-            List<ICraftingProvider> providers) {
+        CachedProviders(List<Long> ids, List<String> names, List<Integer> emptySlots, List<Integer> totalSlots,
+            List<ItemStack> icons, List<ICraftingProvider> providers) {
             this.ids = ids;
             this.names = names;
             this.emptySlots = emptySlots;
+            this.totalSlots = totalSlots;
+            this.icons = icons;
             this.providers = providers;
             this.timestamp = System.currentTimeMillis();
         }
@@ -202,6 +206,8 @@ public class RequestProvidersListPacket implements IMessage {
 
                 // #5：按网格缓存供应器收集结果，1 秒内复用，降低巨网络重复扫描开销
                 List<Long> ids;
+                List<Integer> totalSlots;
+                List<ItemStack> icons;
                 List<String> names;
                 List<Integer> emptySlots;
                 List<ICraftingProvider> providers;
@@ -210,17 +216,21 @@ public class RequestProvidersListPacket implements IMessage {
                     ids = cached.ids;
                     names = cached.names;
                     emptySlots = cached.emptySlots;
+                    totalSlots = cached.totalSlots;
+                    icons = cached.icons;
                     providers = cached.providers;
                 } else {
                     ids = new ArrayList<Long>();
                     names = new ArrayList<String>();
                     emptySlots = new ArrayList<Integer>();
+                    totalSlots = new ArrayList<Integer>();
+                    icons = new ArrayList<ItemStack>();
                     providers = new ArrayList<ICraftingProvider>();
-                    collectProviders(grid, ids, names, emptySlots, providers);
+                    collectProviders(grid, ids, names, emptySlots, totalSlots, icons, providers);
                     if (PROVIDER_CACHE.size() > 64) {
                         PROVIDER_CACHE.clear();
                     }
-                    PROVIDER_CACHE.put(grid, new CachedProviders(ids, names, emptySlots, providers));
+                    PROVIDER_CACHE.put(grid, new CachedProviders(ids, names, emptySlots, totalSlots, icons, providers));
                 }
 
                 // F1: keep only providers that accept this encoded pattern
@@ -236,37 +246,60 @@ public class RequestProvidersListPacket implements IMessage {
                         List<Long> fIds = new ArrayList<Long>(accept.size());
                         List<String> fNames = new ArrayList<String>(accept.size());
                         List<Integer> fEmpty = new ArrayList<Integer>(accept.size());
+                        List<Integer> fTotal = new ArrayList<Integer>(accept.size());
+                        List<ItemStack> fIcons = new ArrayList<ItemStack>(accept.size());
                         for (Integer i : accept) {
                             fIds.add(ids.get(i));
                             fNames.add(names.get(i));
                             fEmpty.add(emptySlots.get(i));
+                            fTotal.add(totalSlots.get(i));
+                            fIcons.add(icons.size() > i ? icons.get(i) : null);
                         }
                         ids = fIds;
                         names = fNames;
                         emptySlots = fEmpty;
+                        totalSlots = fTotal;
+                        icons = fIcons;
                     }
                 }
                 final List<Long> filteredIds = ids;
                 final List<String> filteredNames = names;
                 final List<Integer> filteredEmptySlots = emptySlots;
+                final List<Integer> filteredTotalSlots = totalSlots;
+                final List<ItemStack> filteredIcons = icons;
                 // 尺寸预算（#57）：1.7.10 S3F 自定义负载长度为 short（≤32767 字节），
                 // 超大网络的供应器名列表可能超限 → 编码/发送失败、客户端选择界面静默无响应。
                 // 超限时优先保留「有空槽」的提供器（自动上传才能真正落目标），无空槽的靠后丢弃；
                 // 最终列表维持原顺序便于对照。
                 final byte[] rmBytes = recipeMap != null ? recipeMap.getBytes(java.nio.charset.StandardCharsets.UTF_8)
                     : null;
-                final int baseUsed = 4 + 1 + 1 + (rmBytes != null ? 2 + rmBytes.length : 1);
-
+                // 图标是可选增强：按完整图标估算预算，放不下就整包退化为不带图标发送，
+                // 保证列表本身永远能送达（图标只是显示优化）。
+                final int baseUsedNoIcon = 4 + 1 + 1 + (rmBytes != null ? 2 + rmBytes.length : 1);
+                final int iconBytes = estimateIconBytes(filteredIcons, filteredIds.size());
+                final int baseUsed = baseUsedNoIcon + 4 + iconBytes;
                 int totalUsed = baseUsed;
                 boolean overflow = false;
                 for (int i = 0; i < filteredIds.size(); i++) {
-                    totalUsed += 8 + 2
-                        + filteredNames.get(i)
-                            .getBytes(java.nio.charset.StandardCharsets.UTF_8).length
-                        + 4;
+                    totalUsed += entryBytes(filteredNames.get(i), filteredIcons, i);
                     if (totalUsed > 32000) {
                         overflow = true;
                         break;
+                    }
+                }
+
+                // 图标整体放不下时，去掉图标重算预算（保留全部条目，仅牺牲图标显示）
+                boolean iconsDropped = false;
+                if (overflow && iconBytes > 0) {
+                    iconsDropped = true;
+                    totalUsed = baseUsedNoIcon + 4;
+                    overflow = false;
+                    for (int i = 0; i < filteredIds.size(); i++) {
+                        totalUsed += entryBytesNoIcon(filteredNames.get(i));
+                        if (totalUsed > 32000) {
+                            overflow = true;
+                            break;
+                        }
                     }
                 }
 
@@ -282,16 +315,13 @@ public class RequestProvidersListPacket implements IMessage {
                         idxArr[i] = i;
                     }
                     Arrays.sort(idxArr, (a, b) -> Integer.compare(filteredEmptySlots.get(b), filteredEmptySlots.get(a)));
-                    int budget = baseUsed;
+                    int budget = iconsDropped ? baseUsedNoIcon + 4 : baseUsed;
                     for (Integer i : idxArr) {
-                        int add = 8 + 2
-                            + filteredNames.get(i)
-                                .getBytes(java.nio.charset.StandardCharsets.UTF_8).length
-                            + 4;
+                        int add = iconsDropped ? entryBytesNoIcon(filteredNames.get(i))
+                            : entryBytes(filteredNames.get(i), filteredIcons, i);
                         if (budget + add > 32000) {
                             continue;
                         }
-                        budget += add;
                         keep.add(i);
                     }
                     keep.sort(Integer::compare);
@@ -303,14 +333,20 @@ public class RequestProvidersListPacket implements IMessage {
                 List<Long> outIds = new ArrayList<Long>(keep.size());
                 List<String> outNames = new ArrayList<String>(keep.size());
                 List<Integer> outEmpty = new ArrayList<Integer>(keep.size());
+                List<Integer> outTotal = new ArrayList<Integer>(keep.size());
+                List<ItemStack> outIcons = new ArrayList<ItemStack>(keep.size());
                 for (Integer i : keep) {
                     outIds.add(filteredIds.get(i));
                     outNames.add(filteredNames.get(i));
                     outEmpty.add(filteredEmptySlots.get(i));
+                    outTotal.add(filteredTotalSlots.size() > i ? filteredTotalSlots.get(i) : filteredEmptySlots.get(i));
+                    ItemStack icon = filteredIcons.size() > i ? filteredIcons.get(i) : null;
+                    outIcons.add(iconsDropped ? null : icon);
                 }
 
                 ModNetwork.CHANNEL.sendTo(
-                    new ProvidersListS2CPacket(outIds, outNames, outEmpty, recipeMap, message.forceGui),
+                    new ProvidersListS2CPacket(outIds, outNames, outEmpty, outTotal, outIcons, recipeMap,
+                        message.forceGui),
                     player);
                 MyMod.LOG.info("[Upload] providers list sent: count={}, recipeMap={}", outIds.size(), recipeMap);
             } catch (Throwable t) {
@@ -319,7 +355,8 @@ public class RequestProvidersListPacket implements IMessage {
         }
 
         private static void collectProviders(IGrid grid, List<Long> ids, List<String> names,
-            List<Integer> emptySlots, List<ICraftingProvider> providers) {
+            List<Integer> emptySlots, List<Integer> totalSlots, List<ItemStack> icons,
+            List<ICraftingProvider> providers) {
             for (Class<? extends IGridHost> hostClass : grid.getMachinesClasses()) {
                 if (!ICraftingProvider.class.isAssignableFrom(hostClass)) {
                     continue;
@@ -342,6 +379,8 @@ public class RequestProvidersListPacket implements IMessage {
                     ids.add(id);
                     names.add(name);
                     emptySlots.add(estimateEmptySlots(provider));
+                    totalSlots.add(estimateTotalSlots(provider));
+                    icons.add(resolveProviderIcon(machine));
                     providers.add(provider);
                 }
             }
@@ -428,6 +467,85 @@ public class RequestProvidersListPacket implements IMessage {
             return baseName;
         }
 
+        /**
+         * F1/UI：供应器图标。取不到就返回 null，客户端会退化为纯文字行。
+         * AE 接口取自身物品形态；GT 机器取机器方块；其余机器不强行猜测。
+         */
+        private static ItemStack resolveProviderIcon(Object machine) {
+            try {
+                if (machine instanceof appeng.parts.AEBasePart) {
+                    ItemStack stack = ((appeng.parts.AEBasePart) machine).getItemStack();
+                    if (stack != null) {
+                        ItemStack copy = stack.copy();
+                        copy.stackSize = 1;
+                        return copy;
+                    }
+                }
+                if (machine instanceof gregtech.api.interfaces.tileentity.IGregTechTileEntity) {
+                    gregtech.api.interfaces.metatileentity.IMetaTileEntity mte =
+                        ((gregtech.api.interfaces.tileentity.IGregTechTileEntity) machine).getMetaTileEntity();
+                    if (mte != null) {
+                        ItemStack stack = mte.getStackForm(1L);
+                        if (stack != null) {
+                            ItemStack copy = stack.copy();
+                            copy.stackSize = 1;
+                            return copy;
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {}
+            return null;
+        }
+
+        /** 供应器样板槽总数（空槽 + 已占用），用于界面显示「空闲/总数」。 */
+        private static int estimateTotalSlots(ICraftingProvider provider) {
+            if (provider instanceof IInterfaceViewable viewable) {
+                try {
+                    IInventory patterns = viewable.getPatterns();
+                    if (patterns != null) {
+                        int availableSlots = viewable.rows() * viewable.rowSize();
+                        return Math.min(availableSlots, patterns.getSizeInventory());
+                    }
+                } catch (Throwable ignored) {}
+            }
+            if (provider instanceof IInventory inv) {
+                try {
+                    return inv.getSizeInventory();
+                } catch (Throwable ignored) {}
+            }
+            return 0;
+        }
+
+        /** 估算这批图标在包里的字节占用；含 null（1 字节标记）。 */
+        private static int estimateIconBytes(List<ItemStack> icons, int entryCount) {
+            if (icons == null || icons.isEmpty()) return 0;
+            int total = 0;
+            for (int i = 0; i < entryCount && i < icons.size(); i++) {
+                ItemStack stack = icons.get(i);
+                if (stack == null) {
+                    total += 1;
+                    continue;
+                }
+                // 物品栈序列化：id + size + damage + NBT 粗略按 64 字节估算
+                total += 64 + (stack.stackTagCompound != null ? 256 : 0);
+            }
+            return total;
+        }
+
+        private static int entryBytes(String name, List<ItemStack> icons, int index) {
+            int bytes = entryBytesNoIcon(name);
+            if (icons != null && index < icons.size() && icons.get(index) != null) {
+                ItemStack stack = icons.get(index);
+                bytes += 64 + (stack.stackTagCompound != null ? 256 : 0);
+            } else {
+                bytes += 1;
+            }
+            return bytes;
+        }
+
+        private static int entryBytesNoIcon(String name) {
+            return 8 + 2 + (name == null ? 0 : name.getBytes(java.nio.charset.StandardCharsets.UTF_8).length) + 4;
+        }
         private static int estimateEmptySlots(ICraftingProvider provider) {
             // 与 UploadPatternPacket 一致：优先统计专属样板槽（IInterfaceViewable.getPatterns()），
             // 避免把 GT/PH 机器 IInventory 原料缓存槽误计为样板空位

@@ -202,7 +202,8 @@ public class ClientProxy extends CommonProxy {
                 }
             }
         }
-        GuiProviderSelect gui = new GuiProviderSelect(current, message.ids, message.names, message.emptySlots);
+        GuiProviderSelect gui = new GuiProviderSelect(current, message.ids, message.names, message.emptySlots,
+            message.totalSlots, message.icons, message.recipeMap);
         if (searchKey != null) {
             gui.setPresetSearchKey(searchKey);
         }

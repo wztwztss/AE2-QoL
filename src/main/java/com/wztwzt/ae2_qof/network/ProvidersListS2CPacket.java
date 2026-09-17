@@ -3,8 +3,11 @@ package com.wztwzt.ae2_qof.network;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.minecraft.item.ItemStack;
+
 import com.wztwzt.ae2_qof.MyMod;
 
+import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
@@ -16,6 +19,10 @@ public class ProvidersListS2CPacket implements IMessage {
     public List<Long> ids;
     public List<String> names;
     public List<Integer> emptySlots;
+    /** 供应器样板槽总数（空槽 + 已占用），用于界面显示「空闲/总数」。 */
+    public List<Integer> totalSlots;
+    /** 供应器图标（可选）：服务端尽力提供，超包或取不到时为空列表。 */
+    public List<ItemStack> icons;
     public String recipeMap;
     public boolean forceGui;
 
@@ -23,15 +30,24 @@ public class ProvidersListS2CPacket implements IMessage {
         this.ids = new ArrayList<Long>();
         this.names = new ArrayList<String>();
         this.emptySlots = new ArrayList<Integer>();
+        this.totalSlots = new ArrayList<Integer>();
+        this.icons = new ArrayList<ItemStack>();
         this.recipeMap = null;
         this.forceGui = false;
     }
 
     public ProvidersListS2CPacket(List<Long> ids, List<String> names, List<Integer> emptySlots, String recipeMap,
         boolean forceGui) {
+        this(ids, names, emptySlots, new ArrayList<Integer>(), new ArrayList<ItemStack>(), recipeMap, forceGui);
+    }
+
+    public ProvidersListS2CPacket(List<Long> ids, List<String> names, List<Integer> emptySlots,
+        List<Integer> totalSlots, List<ItemStack> icons, String recipeMap, boolean forceGui) {
         this.ids = ids;
         this.names = names;
         this.emptySlots = emptySlots;
+        this.totalSlots = totalSlots == null ? new ArrayList<Integer>() : totalSlots;
+        this.icons = icons == null ? new ArrayList<ItemStack>() : icons;
         this.recipeMap = recipeMap;
         this.forceGui = forceGui;
     }
@@ -47,11 +63,26 @@ public class ProvidersListS2CPacket implements IMessage {
             ids = new ArrayList<Long>(size);
             names = new ArrayList<String>(size);
             emptySlots = new ArrayList<Integer>(size);
+            totalSlots = new ArrayList<Integer>(size);
 
             for (int i = 0; i < size; i++) {
                 ids.add(buf.readLong());
                 names.add(readString(buf));
                 emptySlots.add(buf.readInt());
+                totalSlots.add(buf.readInt());
+            }
+
+            int iconCount = buf.readInt();
+            if (iconCount < 0 || iconCount > 1024) {
+                iconCount = 0;
+            }
+            icons = new ArrayList<ItemStack>(iconCount);
+            for (int i = 0; i < iconCount; i++) {
+                ItemStack stack = null;
+                try {
+                    stack = ByteBufUtils.readItemStack(buf);
+                } catch (Throwable ignored) {}
+                icons.add(stack);
             }
 
             boolean hasRecipeMap = buf.readBoolean();
@@ -62,6 +93,8 @@ public class ProvidersListS2CPacket implements IMessage {
             ids = new ArrayList<Long>();
             names = new ArrayList<String>();
             emptySlots = new ArrayList<Integer>();
+            totalSlots = new ArrayList<Integer>();
+            icons = new ArrayList<ItemStack>();
             recipeMap = null;
             forceGui = false;
         }
@@ -74,6 +107,13 @@ public class ProvidersListS2CPacket implements IMessage {
             buf.writeLong(ids.get(i));
             writeString(buf, names.get(i));
             buf.writeInt(emptySlots.get(i));
+            buf.writeInt(i < totalSlots.size() ? totalSlots.get(i) : emptySlots.get(i));
+        }
+
+        List<ItemStack> safeIcons = icons == null ? new ArrayList<ItemStack>() : icons;
+        buf.writeInt(safeIcons.size());
+        for (ItemStack stack : safeIcons) {
+            ByteBufUtils.writeItemStack(buf, stack);
         }
 
         buf.writeBoolean(recipeMap != null);
