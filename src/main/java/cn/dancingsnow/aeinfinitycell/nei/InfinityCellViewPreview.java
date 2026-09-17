@@ -131,6 +131,19 @@ public final class InfinityCellViewPreview {
 
     }
 
+    /**
+     * 协议用构造入口（3.19.0-fix24）：专用服下 NEI 预览需要由服务端把分页内容送回客户端，
+     * 客户端不再持有 InfinityCellRecord，必须能直接重建 Page/Entry。
+     */
+    public static Page page(Channel channel, List<? extends Entry<?>> entries, long totalTypes) {
+        return new Page(channel, entries, totalTypes);
+    }
+
+    /** 协议用构造入口，见 {@link #page(Channel, List, long)}。 */
+    public static <K> Entry<K> entry(K key, BigInteger amount) {
+        return new Entry<>(key, amount);
+    }
+
     public static final class Entry<K> {
 
         private final K key;

@@ -76,13 +76,28 @@ public final class InfinityCellViewHandler implements IUsageHandler {
             return null;
         }
 
+        // 3.19.0-fix24：内容存服务端世界存档，专用服下 InfinityCellDataAccess 恒为 null，
+        // U 键原本永远拿不到数据。改为走「本地有存档则直读，否则向服务端请求预览快照」。
         InfinityCellRecord record = InfinityCellDataAccess.getOrCreate(id, null);
-        if (record == null) {
-            return null;
+        if (record != null) {
+            return build(InfinityCellViewPreview.pages(record, Config.neiPreviewEntriesPerChannel));
         }
 
+        java.util.List<Page> cached = com.wztwzt.ae2_qof.client.InfinityCellViewCache.get(id);
+        if (cached == null) {
+            if (com.wztwzt.ae2_qof.client.InfinityCellViewCache.shouldRequest(id)) {
+                com.wztwzt.ae2_qof.network.ModNetwork.CHANNEL
+                    .sendToServer(new com.wztwzt.ae2_qof.network.InfinityCellViewPacket(id));
+            }
+            // 本次拿不到：返回 null 让 NEI 回落到其它处理器；数据到达后再按 U 即可看到
+            return null;
+        }
+        return build(cached);
+    }
+
+    private static InfinityCellViewHandler build(java.util.List<Page> pages) {
         InfinityCellViewHandler handler = new InfinityCellViewHandler();
-        for (Page page : InfinityCellViewPreview.pages(record, Config.neiPreviewEntriesPerChannel)) {
+        for (Page page : pages) {
             handler.addPage(page);
         }
         return handler.pages.isEmpty() ? null : handler;

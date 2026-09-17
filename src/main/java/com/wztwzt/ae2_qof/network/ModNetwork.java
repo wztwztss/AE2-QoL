@@ -160,6 +160,18 @@ public final class ModNetwork {
             Side.CLIENT);
 
         CHANNEL.registerMessage(
+            InfinityCellViewPacket.Handler.class,
+            InfinityCellViewPacket.class,
+            discriminator++,
+            Side.SERVER);
+
+        CHANNEL.registerMessage(
+            InfinityCellViewResponsePacket.Handler.class,
+            InfinityCellViewResponsePacket.class,
+            discriminator++,
+            Side.CLIENT);
+
+        CHANNEL.registerMessage(
             HatchActionPacket.Handler.class,
             HatchActionPacket.class,
             discriminator++,
