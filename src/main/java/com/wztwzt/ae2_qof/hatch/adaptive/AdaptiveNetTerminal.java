@@ -243,6 +243,36 @@ public class AdaptiveNetTerminal extends MTEHatch {
         applySettings();
     }
 
+    /**
+     * P1-014：判断当前玩家是否允许修改本终端配置。
+     * 语义与数据棒/传送一致：终端所有者所属团队的成员可写，其他玩家只能查看。
+     */
+    private boolean canModify(EntityPlayer player) {
+        if (networkOwner == null) return true;
+        if (player == null) return false;
+        try {
+            return AdaptiveTeamHelper.isMemberOf(player.getUniqueID(), networkOwner);
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** P1-014：仓档位写入（团队鉴权 + 范围钳制）。 */
+    private void setHatchTierSafe(PanelSyncManager syncManager, int index, int v) {
+        if (index < 0 || index >= HatchType.COUNT) return;
+        if (!canModify(syncManager.getPlayer())) return;
+        hatchTiers[index] = Math.max(0, Math.min(15, v));
+        applySettings();
+    }
+
+    /** P1-014：仓电流写入（团队鉴权 + 范围钳制）。 */
+    private void setHatchAmpsSafe(PanelSyncManager syncManager, int index, int v) {
+        if (index < 0 || index >= HatchType.COUNT) return;
+        if (!canModify(syncManager.getPlayer())) return;
+        hatchAmps[index] = Math.max(1, v);
+        applySettings();
+    }
+
     public void applySettings() {
         if (networkOwner != null) {
             AdaptiveNetwork network = AdaptiveNetworkManager.getOrCreateNetwork(networkOwner, networkFrequency);
@@ -326,12 +356,17 @@ public class AdaptiveNetTerminal extends MTEHatch {
                                 + StatCollector.translateToLocal("ae2_qof.adaptive.bind.invalid_stick")));
                         return true;
                     }
+                    // P1-013：必须先按「旧 owner + 旧频率」解析并迁移/注销网络，再更新字段，
+                    // 否则注销会按新键查找，旧网络引用与仓室绑定会残留在旧频率上。
+                    java.util.UUID oldOwner = networkOwner;
                     int oldFreq = networkFrequency;
+                    if (oldOwner != null && (oldFreq != stickFreq || !oldOwner.equals(stickOwner))) {
+                        AdaptiveNetworkManager.migrateHatches(oldOwner, oldFreq, stickOwner, stickFreq);
+                        AdaptiveNetworkManager.unregisterTerminal(this);
+                    }
                     networkOwner = stickOwner;
                     networkFrequency = stickFreq;
                     LOG.debug("[AE2QoL] Terminal updated: oldFreq={} -> newFreq={}, owner={}", oldFreq, stickFreq, stickOwner);
-                    AdaptiveNetworkManager.migrateHatches(stickOwner, oldFreq, stickOwner, stickFreq);
-                    AdaptiveNetworkManager.unregisterTerminal(this);
                     AdaptiveNetworkManager.registerTerminal(this, world);
                     applySettings();
                     aPlayer.addChatMessage(new net.minecraft.util.ChatComponentText(
@@ -372,7 +407,8 @@ public class AdaptiveNetTerminal extends MTEHatch {
         if (guiData != null && guiData.getPlayer() != null && networkOwner != null) {
             UUID viewerUUID = guiData.getPlayer().getUniqueID();
             AdaptiveNetwork net = AdaptiveNetworkManager.getNetwork(networkOwner, networkFrequency);
-            if (net != null) {
+            // P1-014：只有团队成员才登记为查看者，未授权玩家无法借由本会话触发高亮/传送。
+            if (net != null && canModify(guiData.getPlayer())) {
                 net.addViewer(viewerUUID);
             }
         }
@@ -380,13 +416,17 @@ public class AdaptiveNetTerminal extends MTEHatch {
         IntSyncValue frequencySync = new IntSyncValue(
             () -> networkFrequency,
             v -> {
+                if (!canModify(syncManager.getPlayer())) return;
                 v = Math.max(0, v);
                 if (v != networkFrequency) {
+                    // P1-013：先按旧频率完成迁移与注销，再写入新频率并重新注册。
                     int oldFreq = networkFrequency;
-                    networkFrequency = v;
                     if (networkOwner != null) {
                         AdaptiveNetworkManager.migrateHatches(networkOwner, oldFreq, networkOwner, v);
                         AdaptiveNetworkManager.unregisterTerminal(this);
+                    }
+                    networkFrequency = v;
+                    if (networkOwner != null) {
                         AdaptiveNetworkManager.registerTerminal(this, world);
                         applySettings();
                     }
@@ -396,17 +436,22 @@ public class AdaptiveNetTerminal extends MTEHatch {
 
         IntSyncValue voltageTierSync = new IntSyncValue(
             () -> currentVoltageTier,
-            v -> { currentVoltageTier = v; applySettings(); }
+            v -> {
+                if (!canModify(syncManager.getPlayer())) return;
+                currentVoltageTier = Math.max(0, Math.min(15, v));
+                applySettings();
+            }
         ).allowC2S();
 
-        IntSyncValue hatchTier0Sync = new IntSyncValue(() -> hatchTiers[0], v -> hatchTiers[0] = v);
-        IntSyncValue hatchTier1Sync = new IntSyncValue(() -> hatchTiers[1], v -> hatchTiers[1] = v);
-        IntSyncValue hatchTier2Sync = new IntSyncValue(() -> hatchTiers[2], v -> hatchTiers[2] = v);
-        IntSyncValue hatchTier3Sync = new IntSyncValue(() -> hatchTiers[3], v -> hatchTiers[3] = v);
-        IntSyncValue hatchAmp0Sync = new IntSyncValue(() -> hatchAmps[0], v -> hatchAmps[0] = v);
-        IntSyncValue hatchAmp1Sync = new IntSyncValue(() -> hatchAmps[1], v -> hatchAmps[1] = v);
-        IntSyncValue hatchAmp2Sync = new IntSyncValue(() -> hatchAmps[2], v -> hatchAmps[2] = v);
-        IntSyncValue hatchAmp3Sync = new IntSyncValue(() -> hatchAmps[3], v -> hatchAmps[3] = v);
+        // P1-014：仓档位/电流写入回调统一做团队鉴权与范围钳制（档位 0..15，电流 1..Integer.MAX_VALUE）。
+        IntSyncValue hatchTier0Sync = new IntSyncValue(() -> hatchTiers[0], v -> setHatchTierSafe(syncManager, 0, v));
+        IntSyncValue hatchTier1Sync = new IntSyncValue(() -> hatchTiers[1], v -> setHatchTierSafe(syncManager, 1, v));
+        IntSyncValue hatchTier2Sync = new IntSyncValue(() -> hatchTiers[2], v -> setHatchTierSafe(syncManager, 2, v));
+        IntSyncValue hatchTier3Sync = new IntSyncValue(() -> hatchTiers[3], v -> setHatchTierSafe(syncManager, 3, v));
+        IntSyncValue hatchAmp0Sync = new IntSyncValue(() -> hatchAmps[0], v -> setHatchAmpsSafe(syncManager, 0, v));
+        IntSyncValue hatchAmp1Sync = new IntSyncValue(() -> hatchAmps[1], v -> setHatchAmpsSafe(syncManager, 1, v));
+        IntSyncValue hatchAmp2Sync = new IntSyncValue(() -> hatchAmps[2], v -> setHatchAmpsSafe(syncManager, 2, v));
+        IntSyncValue hatchAmp3Sync = new IntSyncValue(() -> hatchAmps[3], v -> setHatchAmpsSafe(syncManager, 3, v));
 
         IntSyncValue[] hatchTierSyncs = { hatchTier0Sync, hatchTier1Sync, hatchTier2Sync, hatchTier3Sync };
         IntSyncValue[] hatchAmpSyncs = { hatchAmp0Sync, hatchAmp1Sync, hatchAmp2Sync, hatchAmp3Sync };
