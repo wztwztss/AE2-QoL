@@ -28,9 +28,16 @@ public class InfinityCellStatsPacket implements IMessage {
         this.storageId = id == null ? "" : id.toString();
     }
 
+    /** UUID 字符串最长 36 字符；协议上限收到 64，防止伪造超长字符串（P1-017）。 */
+    private static final int MAX_STORAGE_ID_CHARS = 64;
+
     @Override
     public void fromBytes(ByteBuf buf) {
-        this.storageId = readString(buf);
+        try {
+            this.storageId = readString(buf);
+        } catch (Throwable t) {
+            this.storageId = "";
+        }
     }
 
     @Override
@@ -47,6 +54,9 @@ public class InfinityCellStatsPacket implements IMessage {
 
     static String readString(ByteBuf buf) {
         int len = buf.readUnsignedShort();
+        if (len < 0 || len > MAX_STORAGE_ID_CHARS) {
+            throw new IllegalArgumentException("storageId too long: " + len);
+        }
         StringBuilder sb = new StringBuilder(len);
         for (int i = 0; i < len; i++) {
             sb.append(buf.readChar());
@@ -82,6 +92,13 @@ public class InfinityCellStatsPacket implements IMessage {
                     try {
                         id = UUID.fromString(message.storageId);
                     } catch (IllegalArgumentException bad) {
+                        return;
+                    }
+                    // P1-017：先确认磁盘上真实存在该磁盘存档，再读取；绝不为随机 UUID 创建空记录，
+                    // 否则伪造大量不同 UUID 的请求会让进程内缓存无界增长。
+                    if (!cn.dancingsnow.aeinfinitycell.storage.InfinityCellStorage.getInstance()
+                        .hasCellFile(id)) {
+                        ModNetwork.CHANNEL.sendTo(new InfinityCellStatsResponsePacket(id, null), player);
                         return;
                     }
                     InfinityCellRecord record = InfinityCellDataAccess.getOrCreate(id, ServerWorldAccess.getServerWorld());

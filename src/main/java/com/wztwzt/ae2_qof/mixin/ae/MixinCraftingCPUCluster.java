@@ -155,7 +155,7 @@ public abstract class MixinCraftingCPUCluster {
     @Inject(method = "submitJob", at = @At("RETURN"), remap = false)
     private void ae2qol$captureSubmitJob(IGrid g, ICraftingJob job, BaseActionSource src,
         ICraftingRequester requestingMachine, CallbackInfoReturnable<ICraftingLink> cir) {
-        if (src instanceof PlayerSource ps && cir.getReturnValue() != null && job != null) {
+        if (src instanceof PlayerSource ps && job != null && cir.getReturnValue() != null) {
             // fix23：先无条件记录下单玩家与产物。原实现要求网络里必须存在 ME 安全终端，
             // 否则直接放弃捕获，导致「没有安全终端的网络合成完成后完全没有通知」。
             this.player = ps.player;
@@ -169,7 +169,17 @@ public abstract class MixinCraftingCPUCluster {
                 this.networkKey = ((TileSecurity) iterator.next()
                     .getMachine()).getLocatableSerial();
             }
-        } else {
+            return;
+        }
+        if (cir.getReturnValue() != null) {
+            // 任务确实被接受但不是玩家下单（例如接口自动请求）：清空旧捕获，避免误报。
+            setAsNull();
+            return;
+        }
+        // P1-018：submitJob 返回 null 表示 CPU 正忙、本次订单被拒绝执行。
+        // 此时不能清空现有捕获，否则正在运行的那个任务完成时不会再发通知。
+        // 仅当此前没有待通知任务时，才做一次无害的清理。
+        if (this.player == null) {
             setAsNull();
         }
     }
@@ -1018,8 +1028,12 @@ public abstract class MixinCraftingCPUCluster {
         final long outputObservedAtTick = diagnosticSessionId == null || !this.isCraftingDiagnosticsEnabled() ? 0L
             : ae2qol$getServerTick();
         for (final IAEStack<?> outputItemStack : details.getCondensedAEOutputs()) {
+            final long perOutput = outputItemStack.getStackSize();
+            // P1-019：乘法前做饱和检查，避免极端轮数把等待量记成负数，破坏等待与诊断。
+            final long scaled = perOutput <= 0 ? 0
+                : (perOutput > Long.MAX_VALUE / rounds ? Long.MAX_VALUE : perOutput * (long) rounds);
             final IAEStack<?> total = outputItemStack.copy()
-                .setStackSize(outputItemStack.getStackSize() * (long) rounds);
+                .setStackSize(scaled);
             if (outputObservedAtTick > 0L) {
                 ae2qol$recordExpectedOutput(outputItemStack, outputObservedAtTick, diagnosticSessionId);
             }

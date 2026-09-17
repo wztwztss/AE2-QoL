@@ -78,9 +78,20 @@ public class Config {
                     exIOPortTransferContentsRate,
                     1,
                     Integer.MAX_VALUE);
-                int oldRounds = readLegacyCfgInt(configFile, "smartDoublingMaxRounds", smartDoublingMaxRounds, 1, 4096);
-                writeFile(oldRate, oldRounds, true, pinRowEnabled, stockMonitorPresets);
-                configFile.delete();
+                // P1-009：0 在现行语义中表示“不限”，迁移时必须保留 0，不能被钳到 1。
+                int oldRounds = readLegacyCfgInt(configFile, "smartDoublingMaxRounds", smartDoublingMaxRounds, 0, Integer.MAX_VALUE);
+                // P1-009：只有新 settings.json 确实写入成功，才允许删除旧 cfg，否则保留旧文件供下次重试。
+                boolean migrated = writeFile(oldRate, oldRounds, true, pinRowEnabled, stockMonitorPresets);
+                if (migrated && !Files.exists(SETTINGS_FILE)) {
+                    migrated = false;
+                }
+                if (migrated) {
+                    if (!configFile.delete() && configFile.exists()) {
+                        MyMod.LOG.warn("[AE2QoL] legacy cfg could not be deleted; keeping it: {}", configFile);
+                    }
+                } else {
+                    MyMod.LOG.warn("[AE2QoL] settings.json migration failed; keeping legacy cfg: {}", configFile);
+                }
             }
             reload();
         } catch (Throwable t) {
@@ -149,7 +160,7 @@ public class Config {
      * 热加载检查：每 1 秒最多校验一次文件修改时间，文件被外部修改则重新读取。
      * 在热路径（IO 端口传输、智能倍增计算）调用。
      */
-    public static void ensureFresh() {
+    public static synchronized void ensureFresh() {
         long now = System.currentTimeMillis();
         if (now - lastCheck < FRESH_INTERVAL_MS) {
             return;
@@ -262,7 +273,12 @@ public class Config {
         }
     }
 
-    private static void writeFile(int ioRate, int rounds, boolean overlay, boolean pinRow, String presets) {
+    /**
+     * 写入 settings.json。
+     *
+     * @return 是否写入成功（P1-009：迁移逻辑依赖该返回值决定是否删除旧 cfg）
+     */
+    private static boolean writeFile(int ioRate, int rounds, boolean overlay, boolean pinRow, String presets) {
         try {
             Path parent = SETTINGS_FILE.getParent();
             if (parent != null && !Files.exists(parent)) {
@@ -279,8 +295,10 @@ public class Config {
                 StandardCharsets.UTF_8)) {
                 writer.write(GSON.toJson(root));
             }
+            return true;
         } catch (Throwable t) {
             MyMod.LOG.warn("[AE2QoL] Failed to write settings.json: " + t.getMessage());
+            return false;
         }
     }
 
