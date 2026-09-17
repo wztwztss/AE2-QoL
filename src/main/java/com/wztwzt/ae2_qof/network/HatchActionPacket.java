@@ -13,6 +13,7 @@ import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveHatchHelper;
 import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveNetwork;
 import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveNetworkManager;
+import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveTeamHelper;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -135,6 +136,22 @@ public class HatchActionPacket implements IMessage {
 
                 AdaptiveNetwork network = AdaptiveNetworkManager.getNetwork(uuid, msg.hatchFrequency);
                 if (network == null) return;
+
+                // P1-011 鉴权：本包必须来自「当前正打开该终端 GUI」的玩家，
+                // 否则任意玩家都能凭构造包读取/高亮他人团队的设备坐标。
+                // 该终端在 buildUI 时把打开者登记为 activeViewer，服务端据此确认会话。
+                if (!network.getActiveViewers()
+                    .contains(player.getUniqueID())) {
+                    return;
+                }
+
+                // 高亮与传送同源：团队归属始终是 networkOwner（终端所有者），
+                // 与“谁在查看”无关，因此两条路径用同一套成员校验。
+                if (!AdaptiveTeamHelper.isMemberOf(player.getUniqueID(), uuid)) {
+                    player.addChatMessage(new net.minecraft.util.ChatComponentText(
+                        net.minecraft.util.EnumChatFormatting.RED + "无权限：不属于该电网团队"));
+                    return;
+                }
 
                 java.util.List<AdaptiveHatchHelper> helpers = network.getAllHelpers();
                 if (msg.hatchIndex < 0 || msg.hatchIndex >= helpers.size()) return;
