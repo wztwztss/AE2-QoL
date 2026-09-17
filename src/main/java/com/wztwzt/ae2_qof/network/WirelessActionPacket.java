@@ -1,13 +1,18 @@
 package com.wztwzt.ae2_qof.network;
 
+import java.util.UUID;
+
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.EnumChatFormatting;
 
 import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.wireless.TileWirelessTransceiver;
 import com.wztwzt.ae2_qof.wireless.WirelessData;
 import com.wztwzt.ae2_qof.wireless.WirelessWorldData;
 import com.wztwzt.ae2_qof.wireless.gui.ContainerWireless;
+import com.wztwzt.ae2_qof.wireless.link.WirelessBlockLinkData;
 import com.wztwzt.ae2_qof.wireless.link.WirelessBlockLinkManager;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
@@ -117,13 +122,13 @@ public class WirelessActionPacket implements IMessage {
                         handleRemoveChannel(twt, msg, player);
                         break;
                     case ACTION_SET_MODE:
-                        handleSetMode(twt, msg);
+                        handleSetMode(twt, msg, player);
                         break;
                     case ACTION_DISCONNECT:
                         handleDisconnect(twt);
                         break;
                     case ACTION_SET_FREQUENCY:
-                        handleSetFrequency(twt, msg);
+                        handleSetFrequency(twt, msg, player);
                         break;
                     case ACTION_TOGGLE_HIGHLIGHT:
                         handleToggleHighlight(twt, msg, player);
@@ -159,23 +164,34 @@ public class WirelessActionPacket implements IMessage {
                 .isEmpty()) {
                 freqToRemove = twt.getFrequency();
             }
-
-            if (freqToRemove != null && !freqToRemove.isEmpty()) {
-                TileWirelessTransceiver sender = WirelessData.instance()
-                    .getSender(freqToRemove);
-                if (sender != null) {
-                    WirelessData.instance()
-                        .unregister(freqToRemove, sender.getWorldObj());
-                    sender.destroyWirelessConnection();
-                    sender.setFrequency("");
-                    sender.setMode(false);
-                    sender.setConnected(false);
-                }
-                WirelessWorldData.get(twt.getWorldObj())
-                    .removeChannel(freqToRemove);
-                WirelessBlockLinkManager.instance()
-                    .unregister(freqToRemove);
+            if (freqToRemove == null || freqToRemove.isEmpty()) {
+                syncChannelsToClient(player);
+                return;
             }
+
+            // P1-002 鉴权：频道是全局共享命名空间，删除会摘掉发信器并清空该频道所有方块链接，
+            // 属破坏性操作。除自持资产外一律拒绝；缺少 owner 的历史数据同样按他人资产处理。
+            if (!mayDeleteChannel(player, freqToRemove)) {
+                player.addChatMessage(new ChatComponentText(
+                    EnumChatFormatting.RED + "无权限：该频道上有其他玩家绑定的发信器或方块链接"));
+                syncChannelsToClient(player);
+                return;
+            }
+
+            TileWirelessTransceiver sender = WirelessData.instance()
+                .getSender(freqToRemove);
+            if (sender != null) {
+                WirelessData.instance()
+                    .unregister(freqToRemove, sender.getWorldObj());
+                sender.destroyWirelessConnection();
+                sender.setFrequency("");
+                sender.setMode(false);
+                sender.setConnected(false);
+            }
+            WirelessWorldData.get(twt.getWorldObj())
+                .removeChannel(freqToRemove);
+            WirelessBlockLinkManager.instance()
+                .unregister(freqToRemove);
 
             if (twt.getFrequency() != null && twt.getFrequency()
                 .equals(freqToRemove)) {
@@ -188,9 +204,47 @@ public class WirelessActionPacket implements IMessage {
             syncChannelsToClient(player);
         }
 
-        private void handleSetMode(TileWirelessTransceiver twt, WirelessActionPacket msg) {
+        /**
+         * 频道删除鉴权：仅当频道上没有属于他人的资产时才放行。
+         * 依据发信器 ownerUUID 与各方块链接的 ownerUuid 判定；owner 缺失时宁拒不放。
+         */
+        private boolean mayDeleteChannel(EntityPlayerMP player, String freq) {
+            UUID self = player.getUniqueID();
+            TileWirelessTransceiver sender = WirelessData.instance()
+                .getSender(freq);
+            if (sender != null) {
+                UUID senderOwner = sender.getOwnerUUID();
+                if (senderOwner == null || !senderOwner.equals(self)) {
+                    return false;
+                }
+            }
+            for (WirelessBlockLinkData link : WirelessBlockLinkManager.instance()
+                .getLinks(freq)) {
+                if (link.ownerUuid == null || !link.ownerUuid.equals(self)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private void handleSetMode(TileWirelessTransceiver twt, WirelessActionPacket msg, EntityPlayerMP player) {
             boolean newMode = msg.modeValue;
             String freq = twt.getFrequency();
+
+            // P1-002 同源加固：切换为接收端会注销该频道并清空其全部方块链接，
+            // 若该频道的发信器属于他人则拒绝，避免借切模式破坏别人的频道。
+            if (!newMode && twt.isMode() && freq != null && !freq.isEmpty()) {
+                TileWirelessTransceiver owner = WirelessData.instance()
+                    .getSender(freq);
+                if (owner != null && owner != twt
+                    && (owner.getOwnerUUID() == null
+                        || !owner.getOwnerUUID()
+                            .equals(player.getUniqueID()))) {
+                    player.addChatMessage(new ChatComponentText(
+                        EnumChatFormatting.RED + "该频率的频道由其他玩家持有，无法在此处切换为接收端"));
+                    return;
+                }
+            }
 
             if (newMode && !twt.isMode()) {
                 // Switching to sender: register, clear originalSenderPos
@@ -229,10 +283,25 @@ public class WirelessActionPacket implements IMessage {
             twt.setPaused(true);
         }
 
-        private void handleSetFrequency(TileWirelessTransceiver twt, WirelessActionPacket msg) {
+        private void handleSetFrequency(TileWirelessTransceiver twt, WirelessActionPacket msg, EntityPlayerMP player) {
             if (msg.channelName == null) return;
             String newFreq = msg.channelName.trim();
             String oldFreq = twt.getFrequency();
+
+            // P1-002 同源加固：频道是全局命名空间，不能把发信器改频到他人正在使用的频道名，
+            // 否则会顶掉对方的发信器注册并连带摘掉其方块链接。
+            if (!newFreq.isEmpty() && !newFreq.equals(oldFreq)) {
+                TileWirelessTransceiver occupant = WirelessData.instance()
+                    .getSender(newFreq);
+                if (occupant != null && occupant != twt
+                    && (occupant.getOwnerUUID() == null
+                        || !occupant.getOwnerUUID()
+                            .equals(player.getUniqueID()))) {
+                    player.addChatMessage(new ChatComponentText(
+                        EnumChatFormatting.RED + "该频道已被其他玩家的发信器占用，请换一个名字"));
+                    return;
+                }
+            }
 
             if (twt.isMode() && oldFreq != null && !oldFreq.isEmpty()) {
                 WirelessData.instance()
