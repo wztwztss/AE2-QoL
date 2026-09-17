@@ -36,14 +36,96 @@ public class CoverRegistry extends WorldSavedData {
         this(DATA_ID);
     }
 
-    /** 获取（或创建）全局注册表实例 */
+    /**
+     * 获取（或创建）全局注册表实例。
+     *
+     * P1-007：历史实现使用 world.perWorldStorage，同一存档的不同维度会各存一份，
+     * 导致跨维度终端看不到其他维度的覆盖板。现统一存到主世界（维度 0）的
+     * loadItemData；并从旧 per-dimension NBT 做一次性迁移，避免老存档丢数据。
+     */
     public static CoverRegistry get(net.minecraft.world.World world) {
-        CoverRegistry data = (CoverRegistry) world.perWorldStorage.loadData(CoverRegistry.class, DATA_ID);
+        net.minecraft.world.World overworld = world;
+        if (world != null && world.provider != null && world.provider.dimensionId != 0) {
+            net.minecraft.world.World dim0 = DimensionManager.getWorld(0);
+            if (dim0 != null) overworld = dim0;
+        }
+        if (overworld == null) {
+            return new CoverRegistry();
+        }
+        CoverRegistry data = (CoverRegistry) overworld.loadItemData(CoverRegistry.class, DATA_ID);
+        boolean created = false;
         if (data == null) {
             data = new CoverRegistry();
-            world.perWorldStorage.setData(DATA_ID, data);
+            created = true;
+        }
+        // 旧数据迁移：把各已加载维度的 perWorldStorage 旧注册表合并进来（只做增量，不覆盖已有条目）。
+        if (world != null) {
+            migrateFromLegacy(world, data);
+        }
+        if (created) {
+            overworld.setItemData(DATA_ID, data);
         }
         return data;
+    }
+
+    /** 从旧的 per-dimension 存储合并数据（老存档兼容，幂等）。 */
+    private static void migrateFromLegacy(net.minecraft.world.World world, CoverRegistry target) {
+        try {
+            CoverRegistry legacy = (CoverRegistry) world.perWorldStorage.loadData(CoverRegistry.class, DATA_ID);
+            if (legacy == null || legacy == target) return;
+            boolean changed = false;
+            for (CoverEntry e : legacy.getAll()) {
+                String k = key(e.dim, e.x, e.y, e.z, e.side);
+                if (!target.entries.containsKey(k)) {
+                    target.entries.put(k, e);
+                    changed = true;
+                }
+            }
+            if (changed) target.markDirty();
+        } catch (Throwable ignored) {}
+    }
+
+    /**
+     * P1-008：按世界实际状态刷新在线标记。
+     * 区块未加载 → 标记离线但保留条目；区块已加载且覆盖板已被拆除/机器已毁 → 直接移除条目。
+     * 只统计一个维度，统计终端列出前对所有维度调用一次。
+     */
+    public void refreshOnlineStatus() {
+        boolean changed = false;
+        java.util.Iterator<CoverEntry> it = entries.values().iterator();
+        while (it.hasNext()) {
+            CoverEntry e = it.next();
+            net.minecraft.world.World w = DimensionManager.getWorld(e.dim);
+            if (w == null || !w.blockExists(e.x, e.y, e.z)) {
+                // 区块未加载：只标离线，不删除数据
+                if (e.online) {
+                    e.online = false;
+                    changed = true;
+                }
+                continue;
+            }
+            boolean present = isCoverPresent(w, e);
+            if (!present) {
+                it.remove();
+                changed = true;
+            } else if (!e.online) {
+                e.online = true;
+                changed = true;
+            }
+        }
+        if (changed) markDirty();
+    }
+
+    private static boolean isCoverPresent(net.minecraft.world.World w, CoverEntry e) {
+        try {
+            net.minecraft.tileentity.TileEntity te = w.getTileEntity(e.x, e.y, e.z);
+            if (!(te instanceof gregtech.api.interfaces.tileentity.ICoverable)) return false;
+            net.minecraftforge.common.util.ForgeDirection side =
+                net.minecraftforge.common.util.ForgeDirection.getOrientation(e.side);
+            return ((gregtech.api.interfaces.tileentity.ICoverable) te).getCoverAtSide(side) instanceof StockMonitorCover;
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
     /** 生成唯一键 */

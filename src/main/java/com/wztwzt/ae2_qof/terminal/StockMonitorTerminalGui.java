@@ -239,7 +239,10 @@ public class StockMonitorTerminalGui {
     private static void buildCoverList(Flow column, StockMonitorTerminal terminal,
             EntityPlayer player, PanelSyncManager syncManager, IPanelHandler editPanel) {
         TileEntity te = (TileEntity) terminal.getBaseMetaTileEntity();
-        Collection<CoverEntry> covers = CoverRegistry.get(te.getWorldObj()).getAll();
+        CoverRegistry registry = CoverRegistry.get(te.getWorldObj());
+        // P1-008/P1-032：打开界面时刷新一次在线/存在状态，并列出所有维度（注册表已统一存主世界）。
+        registry.refreshOnlineStatus();
+        Collection<CoverEntry> covers = registry.getAll();
 
         if (covers.isEmpty()) {
             column.child(new TextWidget<>(IKey.lang("ae2_qof.terminal.no_covers"))
