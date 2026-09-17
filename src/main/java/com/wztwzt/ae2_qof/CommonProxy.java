@@ -91,7 +91,15 @@ public class CommonProxy {
                 Object cd = cdField.get(sysCl);
                 System.err.println("[AE2QoL-RFB] childDelegations value=" + cd
                         + " type=" + (cd != null ? cd.getClass().getName() : "null"));
-                if (cd instanceof java.util.List) {
+                if (cd instanceof java.util.Set) {
+                    @SuppressWarnings("unchecked")
+                    java.util.Set<Object> set = (java.util.Set<Object>) cd;
+                    if (set.add("net.minecraft")) {
+                        System.err.println("[AE2QoL-RFB] ADDED net.minecraft to childDelegations (Set)");
+                    } else {
+                        System.err.println("[AE2QoL-RFB] net.minecraft already in childDelegations");
+                    }
+                } else if (cd instanceof java.util.List) {
                     @SuppressWarnings("unchecked")
                     java.util.List<Object> list = (java.util.List<Object>) cd;
                     boolean has = false;
