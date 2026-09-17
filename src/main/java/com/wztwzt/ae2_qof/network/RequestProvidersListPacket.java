@@ -35,6 +35,14 @@ public class RequestProvidersListPacket implements IMessage {
     private static final ConcurrentHashMap<IGrid, CachedProviders> PROVIDER_CACHE = new ConcurrentHashMap<>();
     private static final long PROVIDER_CACHE_TTL_MS = 1000L;
 
+    /**
+     * P2-030：服务器/单机世界停止时清空供应器缓存。
+     * 缓存以 IGrid 为键常驻，若不清空，单机切换存档后静态缓存会短时间持有旧世界的网格对象。
+     */
+    public static void clearCache() {
+        PROVIDER_CACHE.clear();
+    }
+
     private static final class CachedProviders {
 
         final List<Long> ids;
@@ -227,10 +235,19 @@ public class RequestProvidersListPacket implements IMessage {
                     icons = new ArrayList<ItemStack>();
                     providers = new ArrayList<ICraftingProvider>();
                     collectProviders(grid, ids, names, emptySlots, totalSlots, icons, providers);
+                    // P2-030：过期条目不会主动失效，写入前先淘汰已过期项，避免缓存缓慢积累。
                     if (PROVIDER_CACHE.size() > 64) {
                         PROVIDER_CACHE.clear();
+                    } else {
+                        java.util.Iterator<java.util.Map.Entry<IGrid, CachedProviders>> it = PROVIDER_CACHE.entrySet()
+                            .iterator();
+                        while (it.hasNext()) {
+                            if (!it.next()
+                                .getValue().isFresh()) {
+                                it.remove();
+                            }
+                        }
                     }
-                    PROVIDER_CACHE.put(grid, new CachedProviders(ids, names, emptySlots, totalSlots, icons, providers));
                 }
 
                 // F1: keep only providers that accept this encoded pattern

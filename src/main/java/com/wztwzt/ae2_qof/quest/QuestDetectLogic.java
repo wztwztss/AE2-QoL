@@ -64,6 +64,9 @@ public final class QuestDetectLogic {
     }
 
     private static final Map<UUID, Cache> CACHES = new HashMap<>();
+    /** P2-026：离线玩家缓存清理的最小间隔，避免每次检测都全量遍历在线玩家表。 */
+    private static final long PURGE_INTERVAL_MS = 60_000L;
+    private static long lastPurgeAt = 0L;
 
     private QuestDetectLogic() {}
 
@@ -80,6 +83,7 @@ public final class QuestDetectLogic {
      */
     public static void runDetection(IGrid grid, EntityPlayerMP player) {
         try {
+            purgeOfflineCaches();
             IStorageGrid storage = grid.getCache(IStorageGrid.class);
             if (storage == null) return;
             IMEMonitor<IAEItemStack> inv = storage.getItemInventory();
@@ -119,6 +123,28 @@ public final class QuestDetectLogic {
     /** 清理指定玩家缓存（玩家离线时调用点可省略——缓存带过期自愈）。 */
     public static void dropCache(UUID playerId) {
         CACHES.remove(playerId);
+    }
+
+    /**
+     * P2-026：定期清理已离线玩家的需求键缓存。
+     * 历史实现 dropCache 没有调用方，缓存会随历史玩家 UUID 缓慢积累；
+     * 这里在检测热路径上按分钟级频率扫一遍在线玩家表，移除离线条目。
+     */
+    private static void purgeOfflineCaches() {
+        long now = System.currentTimeMillis();
+        if (now - lastPurgeAt < PURGE_INTERVAL_MS) return;
+        lastPurgeAt = now;
+        try {
+            net.minecraft.server.MinecraftServer server = net.minecraft.server.MinecraftServer.getServer();
+            if (server == null || server.getConfigurationManager() == null) return;
+            Set<UUID> online = new HashSet<>();
+            for (Object o : server.getConfigurationManager().playerEntityList) {
+                if (o instanceof EntityPlayerMP p) online.add(p.getUniqueID());
+            }
+            synchronized (CACHES) {
+                CACHES.keySet().removeIf(id -> id != null && !online.contains(id));
+            }
+        } catch (Throwable ignored) {}
     }
 
     private static List<IAEItemStack> cachedKeys(Map<UUID, IQuest> quests, UUID playerId) {

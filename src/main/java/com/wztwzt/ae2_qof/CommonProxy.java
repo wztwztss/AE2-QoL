@@ -484,6 +484,12 @@ public class CommonProxy {
         } catch (Throwable t) {
             MyMod.LOG.warn("[AE2QoL] wireless registry cleanup failed", t);
         }
+        try {
+            // P2-030：清空以 IGrid 为键的供应器列表缓存，避免旧世界网格被静态持有。
+            com.wztwzt.ae2_qof.network.RequestProvidersListPacket.clearCache();
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] provider cache cleanup failed", t);
+        }
     }
 
     // ===== S2C 包客户端处理分发（#74）=====
