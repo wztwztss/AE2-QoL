@@ -12,15 +12,15 @@
 |---|---|
 |工具平台|Codex|
 |底层大模型|GPT-5（Codex 桌面端，Azure 托管推理）|
-|工作分支|master（本地开发，基线 commit `4364e57`；阶段 3 完成至 `a748ec3` fix38）|
-|启动时间|2026-09-17 15:38（阶段 3 收尾于 22:45）|
-|本次会话目标|完成阶段 3 全部可修复缺陷（fix22~fix38），统一版本号与文档，产出 3.19.0-fix38 发布 JAR，并更新交接文档供下一智能体接手实测。|
+|工作分支|master（本地开发，基线 commit `4364e57`；最新提交 `f582b9e` fix41）|
+|启动时间|2026-09-18 09:00（fix39~fix41 收尾于 09:40）|
+|本次会话目标|处理用户实测反馈：修复 fix38 启动崩溃（fix39）、重做样板上传选择界面（fix40）、修复自动上传三项可靠性隐患（fix41），每轮同步版本号、CHANGELOG、README 与本文档。|
 
 ---
 
 ## 二、项目总目标
 
-GTNH 2.9.0-beta-1（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附属功能模组 **AE2 QoL**（modId `ae2_qof`，版本 `3.19.0-fix40`）的交付与质量整改：在兼容原生 AE2（AE2UEL rv3-beta-997-GTNH 量级）与格雷科技本体/GTNL/PH 机制的前提下，完成 F1~F22 全部功能的质量检测、缺陷定位与修复，最终产出一个可稳定运行于单机与专用服的发布版本（含合并终端三形态、NEI 样板自动上传、合成完成通知、智能倍增、自适应电网、库存检测覆盖板等）。当前阶段以「先审计、再修复、逐条提交」为推进方式。
+GTNH 2.9.0-beta-1（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附属功能模组 **AE2 QoL**（modId `ae2_qof`，版本 `3.19.0-fix41`）的交付与质量整改：在兼容原生 AE2（AE2UEL rv3-beta-997-GTNH 量级）与格雷科技本体/GTNL/PH 机制的前提下，完成 F1~F22 全部功能的质量检测、缺陷定位与修复，最终产出一个可稳定运行于单机与专用服的发布版本（含合并终端三形态、NEI 样板自动上传、合成完成通知、智能倍增、自适应电网、库存检测覆盖板等）。当前阶段以「先审计、再修复、逐条提交」为推进方式。
 
 ---
 
@@ -45,15 +45,16 @@ GTNH 2.9.0-beta-1（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 
 ## 四、当前进行中
 
-- 任务标题：阶段 3 —— 按优先级分批修复 `docs/STATIC_AUDIT_ISSUES.md` 中的缺陷，并逐条回填实测结果
-- 整体进度：约 92%（阶段 1 静态审查 100%；阶段 2 脚本与实测回填 100%；阶段 3 代码修复已完成 fix22~fix38 共 17 个提交，32 条审查问题中 31 条已给出修复结论（其中 P2-027、P2-028 为部分处理），仅 P2-029 需 GTNL/PH 裁剪环境实测定级）
+- 任务标题：阶段 4 —— 按用户实机反馈迭代样板上传链路（fix39 启动崩溃 / fix40 界面重做 / fix41 三项可靠性修复），并等待实机复测
+- 整体进度：约 95%（阶段 1 静态审查 100%；阶段 2 脚本与实测回填 100%；阶段 3 修复 fix22~fix38 共 17 个提交；阶段 4 追加 fix39~fix41：启动崩溃已修、上传选择界面已重做、自动上传三项可靠性隐患已修。剩余为实机复测确认与 P2-029 裁剪环境验证）
 - 涉及文件：
   - 审计与实测：`docs/STATIC_AUDIT_ISSUES.md`、`docs/SINGLEPLAYER_TEST_SCRIPT.md`
-  - 本阶段已修改：网络包鉴权（`network/WirelessActionPacket.java`、`network/HatchActionPacket.java`、`network/MergedTerminalScrollReplacePacket.java`、`network/MergedTerminalRenamePacket.java`、`network/InfinityCellStatsPacket.java`、`network/RequestProvidersListPacket.java`、`network/HatchListSyncPacket.java`）、库存统计终端与覆盖板注册表（`CommonProxy.java`、`terminal/StockMonitorTerminal.java`、`terminal/StockMonitorTerminalGui.java`、`terminal/CoverRegistry.java`、`cover/stockmonitor/StockMonitorCover.java`）、合并终端上传 UI（`client/gui/GuiProviderSelect.java`）、智能倍增（`mixin/ae/MixinCraftingCPUCluster.java`）、跨配方并行（`mixin/gt/MixinProcessingLogicSpeed.java`）、自适应电网（`hatch/adaptive/`）、配置（`Config.java`）、生命周期（`MyMod.java`、`ClientProxy.java`）
+  - 阶段 4 新增/修改：`util/ProviderLocator.java`（新增）、`network/UploadFeedbackPacket.java`（新增）、`network/UploadPatternPacket.java`、`network/ProvidersListS2CPacket.java`、`network/RequestProvidersListPacket.java`、`network/ModNetwork.java`、`CommonProxy.java`、`ClientProxy.java`、`client/gui/GuiProviderSelect.java`、`lang/zh_CN.lang`、`lang/en_US.lang`
 - 当前卡点 / 问题：
   1. 测试实例 JAR 尚未部署（约束要求每次部署单独征求用户同意），因此本轮修复全部为「静态审查 + 编译验证 + 逻辑复核」结论，需用户复测确认；
   2. F15 样板回读卡顿、F10 无线连接概率断开、F5/F10 的 UI 观感属实机体验问题，需用户复测反馈后再动手；
   3. P2-029（GTNL/PH 可选依赖裁剪场景）需要专门的裁剪环境启动验证，当前环境无法覆盖。
+  4. fix41 改动了网络协议（`UploadPatternPacket` 增加 `locationKey`、`ProvidersListS2CPacket` 增加 `locationKeys`），客户端与服务端必须同时升级，不能只换一边。
 - 下一步最小动作：请用户批准部署 `build/libs/AE2-QoL-3.19.0-fix41.jar` 并按 `docs/SINGLEPLAYER_TEST_SCRIPT.md` 复测 F1/F4/F6/F14/F22 等条目，同时确认新版样板上传选择界面观感；根据复测结果决定是否继续微调 F15/F10/F5。
 
 ---
@@ -104,8 +105,9 @@ GTNH 2.9.0-beta-1（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 
 - 方案名称：为 F22 库存统计终端在 `init` 阶段用 `try-catch` 防御层 + RFB `childDelegations` 注入绕过启动崩溃
   - 否决原因：已尝试 5 轮（槽位调整、catch 防御、诊断输出、RFB childDelegations 注入、`try-catch` 兜底）均未解决；崩溃本质是 init 阶段 Log4j/RFB 类加载链路二次失败，异常被掩盖，继续加固只会掩盖根因，需先拿到 crash-report。
-- 方案名称：样板上传按「机器中文名」在网络内自动匹配目标供应器
-  - 否决原因：同名机器多台时命中不确定，实测已出现「传错目标」；工作台合成类配方写的是 `crafting` 标记，无法据此反查 GT 配方池，属于设计缺口，不能靠补映射表解决。
+- 方案名称：样板上传**只**按「机器中文名」在网络内自动匹配目标供应器（作为唯一判据）
+  - 否决原因：同名机器多台时命中不确定，实测已出现「传错目标」；工作台合成类配方写的是 `crafting` 标记，无法据此反查 GT 配方池。
+  - 现行做法（fix40/fix41）：机器名只用于「记住玩家上次选过的目标」这一层，目标判据本身改为「维度 + 坐标 + 部件朝向」稳定 key（`util/ProviderLocator`），并配合上传失败回执。若要做到 GTNH-ECO 那种首次即命中，需另做基于配方池反查的配对，见「关键知识笔记」中的对照分析。
 - 方案名称：合并终端 `Shift+滚轮替换` 直接 `slot.putStack(candidate)` 完成替换
   - 否决原因：服务端信任客户端槽号且不从 ME 网络真实扣除，可被伪造包写入玩家真实背包槽，形成刷物漏洞，必须改为槽对象白名单 + 网络扣除。
 
@@ -121,7 +123,7 @@ GTNH 2.9.0-beta-1（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 
 **版本与文档状态**
 
-- 版本号全项目统一为 `3.19.0-fix38`：`gradle.properties`、`src/main/resources/mcmod.info`、`README.md`、`README.en.md`、`CHANGELOG.md` 五处一致。
+- 版本号全项目统一为 `3.19.0-fix41`：`gradle.properties`、`src/main/resources/mcmod.info`、`README.md`、`README.en.md`、`CHANGELOG.md` 五处一致。
 - 根目录 `mixins.ae2_qof.json` 与 `src/main/resources/mixins.ae2_qof.json` SHA256 完全一致（打包实际使用 resources 版本）。
 - 发布产物：`build/libs/AE2-QoL-3.19.0-fix41.jar`（1,104,660 字节）。
 
@@ -129,6 +131,28 @@ GTNH 2.9.0-beta-1（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 - **RFB `childDelegations` 注入已彻底删除（fix39）**：该补丁最初为绕开被误判的 RFB 类加载问题而写，但旧实现只处理 `List`/`String[]`、真实字段是 `HashSet`，因此从未生效。修复类型判断让它真正生效后，`net.minecraftforge.*` 被委托给子类加载器，绕过 RFB 的 `ExtensibleEnumTransformer`，导致 lwjgl3ify 枚举扩展失效、Railcraft `GeodePopulator` 静态初始化抛 `was not made extensible` 崩溃。**任何智能体不得再次加入该注入**；F22 崩溃的真实根因是 MTE ID 重号（见上）。
 
 - F1 上传策略：strategy1 唯一供应器直传 → strategy2 按「记住的机器名（含 `@D维度 x,y,z` 后缀）」匹配 → strategy3 手动选；工作台类配方强制 `apu:recipeMap=crafting` 走独立分支，不再预填「合成」关键词；供应器列表按样板可接纳性过滤，同名机器聚合为一张卡片并固定指向空槽最多的那台。
+
+- **供应器稳定定位（fix41，重要）**：供应器 ID 从 `System.identityHashCode`（内存地址派生值，随区块卸载重载、机器拆装、服务器重启失效）改为「维度 + 坐标 + 部件朝向」稳定 key，由 `util/ProviderLocator` 计算。该 key 随 `ProvidersListS2CPacket.locationKeys` 下发，上传时由 `UploadPatternPacket.locationKey` 回传；服务端 `ProviderLocator.find` 先按 key 匹配、失败再回退旧 ID。改网络包字段时必须客户端与服务端同时升级。
+- **上传失败要有回执（fix41）**：新增 `network/UploadFeedbackPacket`（S2C）与语言键 `ae2_qof.info.upload_target_missing` / `upload_rejected` / `upload_no_permission`。以后新增服务端失败分支时，请一并调用上传处理器的 `notify`，不要只写日志。
+- **样板可接纳性判断（fix41）**：`RequestProvidersListPacket.acceptsPattern` 与服务端实际写入都要遍历全部空槽（用 `isItemValidForSlot` 判断），不能只看第一个空槽——分类型样板槽会导致误判。
+- **GUI 布局约束（fix40）**：`GuiProviderSelect` 采用 标题 / 搜索 / 列表 / 操作按钮 / 配方映射 五区纵向排版，各区域纵坐标由 `computeLayout()` 独立计算。新增控件必须走这套布局，不要再把多个控件放在同一个 Y 上（fix31 的控件互相遮挡即由此产生）。
+
+**GTNH-ECO 配方识别与投递机制（2026-09-18 分析，供对照参考）**
+
+参考源码（只读，禁止复制入库）：E:\wzt\MC\modcreater\GTNH-ECO-1.7.10-main，核心在 crafting/upload/ 下
+PatternUploadTarget.java、PatternRecipeMatcher.java、PatternRouteKey.java、PatternUploadSession.java。
+
+- **识别配方**：不依赖名字与映射表。把样板输入拆成物品/流体列表，逐个调用 GT 配方池的 findRecipeQuery().items(...).fluids(...).filter(输出匹配).find() 反查，命中即确定 recipeMap。
+  关键细节：NEI 生成加工样板时会省略「虚拟电路」，因此先原样查一次，查不到再补电路号；matchesAnyIntegratedCircuit 会把电路号从 0 到上限逐个试，解决带电路配方的识别。
+- **机器能力档案**：每台可收样板的机器都记录它能服务的 RecipeMap 与电路号。ME 接口贴着的机器通过 IInterfaceHost.getTargets() 遍历六面、读相邻 GT 机器的配方池得到；多方块样板输入仓则顺着 processingLogics 反查它服务的多方块。ECO 还会探测 ProgrammingCover（可编程覆盖板）。
+- **匹配与投递**：先按 recipeMap 过滤，再按电路号过滤，再看有无空槽，最后按「是否来自真实机器 → 电路号吻合度 → 空槽数」排序取最优，全程无需玩家选择，首次即可命中。
+- **我们与它的差距**：我们没有做「反查配方池 + 读机器张贴的配方池」这套配对，而是「玩家选一次 →
+  按机器名记住」。因此首次遇到某配方且多台可收时仍会弹窗；选过一次之后可自动命中（fix40 已把
+  记忆 key 对齐修正）。要做到全自动，需要新增机器侧配方池探测，属独立一轮的改动，尚未实施。
+
+- **反面教材（fix31→fix40）**：照抄其它模组的界面外观、但未安排本模组自有控件的布局，会导致
+  控件互相遮挡（fix31 把映射输入框与 添加/删除/刷新/取消 画在同一行）。参考外观可以，但必须
+  按本模组实际功能重新排版并做窗口自适应。
 - F6 通知条件（fix23 后）：`submitJob` 只要拿到返回值就记录下单玩家与产物；完成时若玩家背包没有绑定同网络的无线终端，退化为直接通知本人。`submitJob` 返回 null（CPU 忙）时保留进行中任务的通知状态（fix35）。
 - F14 倍增条件：任务值 > 1、配方非 craftable、宿主实现 `ISmartDoublingMedium` 且开关已启用；`getMaxMultiplier` 有多个提前返回 1 的分支（未启用、craftable、流体接口、假合成、`BlockingMode != NONE`、`hasItemsToSend()`、无 adaptor）。
 - F22 根因（重要）：MTE ID **32001 已被 GT 本体 LegacyUniversalChemicalFuelEngine 占用**，构造期抛 `IllegalArgumentException`，被 Log4j/RFB 二次加载错误掩盖成「类加载崩溃」；现使用空闲 ID **32101**。可用 `docs/dumps/metatileentity.csv`（4488 条）查任意 MTE ID 是否冲突。
@@ -258,7 +282,7 @@ GTNH 2.9.0-beta-1（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 - [x] 已更新「当前进行中」状态
 - [x] 已在「历史会话操作日志」追加完整记录，写明了工具平台和底层模型
 - [x] 已填写给下一个智能体的交接提示
-- [x] 代码已通过编译验证：2026-09-17 22:43 执行 `gradlew.bat build --offline -x spotlessCheck -x spotlessJavaCheck` → `BUILD SUCCESSFUL`，产物 `build/libs/AE2-QoL-3.19.0-fix38.jar`
+- [x] 代码已通过编译验证：2026-09-18 09:40 执行 `gradlew.bat build --offline -x spotlessCheck -x spotlessJavaCheck` → `BUILD SUCCESSFUL`，产物 `build/libs/AE2-QoL-3.19.0-fix41.jar`（1,104,660 字节）
 
 ---
 
