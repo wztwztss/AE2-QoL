@@ -4,13 +4,13 @@
 
 An **AE2 quality-of-life enhancement mod** for GTNH: push NEI recipes into AE pattern terminals with one click, extract AE network items directly from the NEI panel, view each item's stock and craftability in the AE network, wirelessly transmit AE networks, and adaptive GT energy grid system.
 
-Compat: GTNH 2.9.0-beta-1 (Minecraft 1.7.10) | Current version: **3.19.0-fix39** | Author: wztwzt
+Compat: GTNH 2.9.0-beta-1 (Minecraft 1.7.10) | Current version: **3.19.0-fix40** | Author: wztwzt
 
 ---
 
 ## 📦 Installation
 
-1. Put `AE2-QoL-3.19.0-fix39.jar` into `.minecraft/mods/`
+1. Put `AE2-QoL-3.19.0-fix40.jar` into `.minecraft/mods/`
 2. Make sure dependencies are installed: AE2 (`rv3-beta-977-GTNH`), ae2fc (`1.5.88-gtnh`), NotEnoughItems (NEI)
 3. Launch the game. Config is generated under `config/`
 
@@ -44,6 +44,8 @@ Compat: GTNH 2.9.0-beta-1 (Minecraft 1.7.10) | Current version: **3.19.0-fix39**
 In the **AE2 standard/advanced pattern terminal**, 4 buttons appear at the top-right: **↑ Upload** (auto-upload the encoded pattern in the output slot to a network interface/assembler), **← Recall** (fetch the last matching encoded pattern back into the output slot), **⇄ Swap** (swap primary/secondary outputs), **OV** (toggle the AE overlay on NEI recipe pages/bookmarks).
 
 Uploads automatically match providers by recipe (three strategies: unique provider → remembered provider → manual selection GUI). Supports standard encoded patterns, ultimate encoded patterns, and ae2fc fluid encoded patterns.
+
+**Provider selection screen** (redesigned in 3.19.0-fix40): the panel is split into title / search / machine list / action buttons / recipe-mapping sections that never overlap. Each list row shows the machine icon, its name (with a `@D dim x,y,z` suffix) and pattern slots as `free/total`; single-click selects, double-click uploads, the mouse wheel scrolls. The mapping section writes `recipe ID -> target machine name` pairs into `recipe_names.json`, and the "Use selected" button fills in the selected machine name for you.
 
 ### 2. NEI Panel Item Extraction / Crafting
 
@@ -196,7 +198,7 @@ A cover that attaches to any machine/block side, monitors specified item/fluid s
 - **Phantom marker slot**: Shift+left-click to cancel marker, no quantity displayed (pure marker use)
 - **GUI real-time refresh**: stock/channel/work status auto-pushed via MUI2 SyncValue, no need to reopen GUI
 
-### 21. Stock Monitor Terminal (3.19.0-fix39)
+### 21. Stock Monitor Terminal (3.19.0-fix40)
 
 A GT single-block power-free information terminal for centrally viewing and editing AE2 standard Level Emitters (`PartLevelEmitter`) and this mod's Stock Monitor Covers. No need to run to each machine to adjust thresholds.
 
