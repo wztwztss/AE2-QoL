@@ -9,6 +9,7 @@ import net.minecraft.item.ItemStack;
 
 import com.glodblock.github.common.item.ItemFluidEncodedPattern;
 import com.wztwzt.ae2_qof.MyMod;
+import com.wztwzt.ae2_qof.util.ProviderLocator;
 
 import appeng.api.AEApi;
 import appeng.api.config.SecurityPermissions;
@@ -33,25 +34,53 @@ import io.netty.buffer.ByteBuf;
 public class UploadPatternPacket implements IMessage {
 
     private long providerId;
+    /** 目标供应器的稳定位置标识（fix41），形如 D0:-432,63,-2791；为空时退化为只按 ID 匹配。 */
+    private String locationKey;
 
     public UploadPatternPacket() {}
 
     public UploadPatternPacket(long providerId) {
+        this(providerId, null);
+    }
+
+    public UploadPatternPacket(long providerId, String locationKey) {
         this.providerId = providerId;
+        this.locationKey = locationKey;
     }
 
     @Override
     public void fromBytes(ByteBuf buf) {
         try {
             this.providerId = buf.readLong();
+            boolean hasKey = buf.readBoolean();
+            this.locationKey = hasKey ? readString(buf) : null;
         } catch (Throwable t) {
             this.providerId = 0;
+            this.locationKey = null;
         }
     }
 
     @Override
     public void toBytes(ByteBuf buf) {
         buf.writeLong(this.providerId);
+        boolean hasKey = this.locationKey != null && !this.locationKey.isEmpty();
+        buf.writeBoolean(hasKey);
+        if (hasKey) {
+            writeString(buf, this.locationKey);
+        }
+    }
+
+    private void writeString(ByteBuf buf, String str) {
+        byte[] bytes = str.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        buf.writeShort(bytes.length);
+        buf.writeBytes(bytes);
+    }
+
+    private String readString(ByteBuf buf) {
+        int len = buf.readShort();
+        byte[] bytes = new byte[len];
+        buf.readBytes(bytes);
+        return new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
     }
 
     public static class Handler implements IMessageHandler<UploadPatternPacket, IMessage> {
@@ -102,16 +131,32 @@ public class UploadPatternPacket implements IMessage {
                 // 所有权校验：无安全站的网络默认放行，有安全站的共享网络仅允许有注入权限的玩家上传
                 ISecurityGrid security = grid.getCache(ISecurityGrid.class);
                 if (security != null && !security.hasPermission(player, SecurityPermissions.INJECT)) {
+                    notify(player, "ae2_qof.info.upload_no_permission");
                     return;
                 }
 
-                ICraftingProvider target = findProvider(grid, message.providerId);
+                // fix41：优先按稳定位置（维度+坐标）定位，内存地址 ID 只作兜底；
+                // 区块重载 / 服务器重启后 ID 会失效，坐标不会，避免「点了没反应」。
+                ICraftingProvider target = com.wztwzt.ae2_qof.util.ProviderLocator.find(grid,
+                    message.locationKey, message.providerId);
                 if (target == null) {
-                    MyMod.LOG.info("[Upload] server: provider id={} not found in grid", message.providerId);
+                    MyMod.LOG.info(
+                        "[Upload] server: provider not found in grid, id={}, key={}",
+                        message.providerId,
+                        message.locationKey);
+                    notify(player, "ae2_qof.info.upload_target_missing");
                     return;
                 }
 
                 boolean placedInProvider = insertPatternIntoProvider(target, encodedPattern.copy());
+                if (!placedInProvider) {
+                    // fix41：写入失败不再静默，明确告诉玩家原因（槽满 / 该机不收这类样板）
+                    MyMod.LOG.info(
+                        "[Upload] server: insert rejected by {}",
+                        target.getClass()
+                            .getSimpleName());
+                    notify(player, "ae2_qof.info.upload_rejected");
+                }
                 if (placedInProvider) {
                     MyMod.LOG.info(
                         "[Upload] pattern inserted into provider {}",
@@ -130,6 +175,13 @@ public class UploadPatternPacket implements IMessage {
             } catch (Throwable t) {
                 MyMod.LOG.error("Upload pattern failed", t);
             }
+        }
+
+        /** fix41：把失败原因回执给客户端，避免玩家只看到「点了没反应」。 */
+        private void notify(EntityPlayerMP player, String messageKey) {
+            try {
+                ModNetwork.CHANNEL.sendTo(new UploadFeedbackPacket(messageKey), player);
+            } catch (Throwable ignored) {}
         }
 
         private boolean isSupportedPattern(ItemStack stack) {
@@ -177,30 +229,6 @@ public class UploadPatternPacket implements IMessage {
             return null;
         }
 
-        private ICraftingProvider findProvider(IGrid grid, long providerId) {
-            for (Class<? extends IGridHost> hostClass : grid.getMachinesClasses()) {
-                if (!ICraftingProvider.class.isAssignableFrom(hostClass)) {
-                    continue;
-                }
-                IMachineSet machines = grid.getMachines(hostClass);
-                if (machines == null) {
-                    continue;
-                }
-                for (IGridNode machineNode : machines) {
-                    if (machineNode == null) {
-                        continue;
-                    }
-                    Object machine = machineNode.getMachine();
-                    if (!(machine instanceof ICraftingProvider)) {
-                        continue;
-                    }
-                    if (System.identityHashCode(machine) == providerId) {
-                        return (ICraftingProvider) machine;
-                    }
-                }
-            }
-            return null;
-        }
 
         private boolean insertPatternIntoProvider(ICraftingProvider provider, ItemStack pattern) {
             // 优先使用提供器自带的专属样板槽库存：

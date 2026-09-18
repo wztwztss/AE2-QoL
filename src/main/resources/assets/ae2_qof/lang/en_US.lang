@@ -338,3 +338,6 @@ ae2_qof.select_provider.mapping_key_hint=filled automatically, editable
 ae2_qof.select_provider.mapping_value=Target machine name
 ae2_qof.select_provider.mapping_value_hint=select a machine, then click the button on the right
 ae2_qof.select_provider.use_selected=Use selected
+ae2_qof.info.upload_target_missing=Upload failed: the target machine no longer exists (removed or its chunk reloaded). Please pick a provider again.
+ae2_qof.info.upload_rejected=Upload failed: the target machine rejected this pattern (slots full, or it does not accept this pattern type).
+ae2_qof.info.upload_no_permission=Upload failed: you do not have INJECT permission on this AE network.

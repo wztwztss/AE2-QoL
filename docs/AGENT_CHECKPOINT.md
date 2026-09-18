@@ -28,6 +28,7 @@ GTNH 2.9.0-beta-1（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 
 > 按完成时间倒序排列，均标注产出文件路径。
 
+- [x] 2026-09-18 | 工具：Codex | 模型：GPT-5：**自动上传可靠性三项修复**（`fix41`）：① 新增 `util/ProviderLocator`，供应器定位从「内存地址 ID」改为「维度+坐标+朝向」稳定标识，并随列表下发、上传时回传，解决区块重载/服务器重启后 ID 失效导致的静默失败；② 新增 `network/UploadFeedbackPacket`，目标丢失/写入被拒/无权限三种失败在聊天栏明确提示；③ 「能否接收样板」从只看第一个空槽改为遍历全部空槽，修正分类型样板槽的误判。产物 `build/libs/AE2-QoL-3.19.0-fix41.jar`（1,104,660 字节）
 - [x] 2026-09-17 | 工具：Codex | 模型：GPT-5：**重做样板上传选择界面**（`fix40`）：修正 fix31 照抄 GTNH-ECO 时把映射输入框与 添加/删除/刷新/取消 按钮挤在同一行导致的互相遮挡；改为 标题/搜索/列表/操作/配方映射 五区纵向排版 + 窗口自适应（宽 280~400、行数 1~7），补上本模组自己的「配方 -> 目标机器名」映射区，新增「用选中机器」按钮一键填入选中机器名，删除支持按配方 ID 精确删单条，取消不再误改终端搜索框，上传记忆改用与自动上传查询一致的 key。产物 `build/libs/AE2-QoL-3.19.0-fix40.jar`
 - [x] 2026-09-17 | 工具：Codex | 模型：GPT-5：**紧急修复 fix38 启动崩溃**：定位到崩溃由 fix32「修好」的 RFB `childDelegations` 注入引起（该补丁在 fix14 中因类型判断错误实际失效，修复后反而让 `net.minecraftforge.*` 绕过 RFB 的 ExtensibleEnumTransformer，导致 Railcraft 枚举扩展失败）；现已彻底删除该注入，发布 `3.19.0-fix39`
 - [x] 2026-09-17 | 工具：Codex | 模型：GPT-5：完成阶段 3 全部可修复项（fix22~fix38，共 17 个提交）：P0-001、P1-002~P1-024、P2-025、P2-026、P2-030、P1-031、P1-032 已修复或部分处理；统一版本号为 `3.19.0-fix38`，补齐 CHANGELOG/README，同步根目录 mixin 配置；完整构建 `gradlew build --offline` 通过，产物 `build/libs/AE2-QoL-3.19.0-fix38.jar`（1,096,116 字节）
@@ -53,7 +54,7 @@ GTNH 2.9.0-beta-1（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
   1. 测试实例 JAR 尚未部署（约束要求每次部署单独征求用户同意），因此本轮修复全部为「静态审查 + 编译验证 + 逻辑复核」结论，需用户复测确认；
   2. F15 样板回读卡顿、F10 无线连接概率断开、F5/F10 的 UI 观感属实机体验问题，需用户复测反馈后再动手；
   3. P2-029（GTNL/PH 可选依赖裁剪场景）需要专门的裁剪环境启动验证，当前环境无法覆盖。
-- 下一步最小动作：请用户批准部署 `build/libs/AE2-QoL-3.19.0-fix40.jar` 并按 `docs/SINGLEPLAYER_TEST_SCRIPT.md` 复测 F1/F4/F6/F14/F22 等条目，同时确认新版样板上传选择界面观感；根据复测结果决定是否继续微调 F15/F10/F5。
+- 下一步最小动作：请用户批准部署 `build/libs/AE2-QoL-3.19.0-fix41.jar` 并按 `docs/SINGLEPLAYER_TEST_SCRIPT.md` 复测 F1/F4/F6/F14/F22 等条目，同时确认新版样板上传选择界面观感；根据复测结果决定是否继续微调 F15/F10/F5。
 
 ---
 
@@ -116,13 +117,13 @@ GTNH 2.9.0-beta-1（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 
 - 构建命令（PowerShell）：先 `$env:JAVA_HOME='E:\java17'`、`$env:GRADLE_USER_HOME='C:\Users\29357\.gradle'`，再执行 `.\gradlew.bat build -x spotlessJavaCheck -x spotlessCheck --offline`；仅快速编译用 `compileJava`。
 - 历史构建日志 `build_compile.log`/`build_compile4.log`（2026-09-15/16 生成）曾报 `StockMonitorTerminal 未实现 ISidedInventory 的 canInsertItem(int,ItemStack,int) / closeInventory()`。2026-09-17 用当前基线源码复核时，`compileJava` 与 `build` 均 `BUILD SUCCESSFUL`（Gradle 按内容哈希判定已编译成功），说明该历史报错不对应当前源码状态；若后续再次出现同类报错，应以新日志为准重新定位，不要直接套用旧结论。
-- 测试实例只读；部署新 JAR 需单独批准。产物目录 `build/libs/`，最新产物为 `AE2-QoL-3.19.0-fix40.jar`（另有 `-dev`/`-sources` 变体，旧版本 fix13/fix14/fix38/fix39 仍在目录中，勿再部署 fix38）。
+- 测试实例只读；部署新 JAR 需单独批准。产物目录 `build/libs/`，最新产物为 `AE2-QoL-3.19.0-fix41.jar`（另有 `-dev`/`-sources` 变体，旧版本 fix13/fix14/fix38/fix39 仍在目录中，勿再部署 fix38）。
 
 **版本与文档状态**
 
 - 版本号全项目统一为 `3.19.0-fix38`：`gradle.properties`、`src/main/resources/mcmod.info`、`README.md`、`README.en.md`、`CHANGELOG.md` 五处一致。
 - 根目录 `mixins.ae2_qof.json` 与 `src/main/resources/mixins.ae2_qof.json` SHA256 完全一致（打包实际使用 resources 版本）。
-- 发布产物：`build/libs/AE2-QoL-3.19.0-fix40.jar`（1,098,088 字节）。
+- 发布产物：`build/libs/AE2-QoL-3.19.0-fix41.jar`（1,104,660 字节）。
 
 **关键机制结论**
 - **RFB `childDelegations` 注入已彻底删除（fix39）**：该补丁最初为绕开被误判的 RFB 类加载问题而写，但旧实现只处理 `List`/`String[]`、真实字段是 `HashSet`，因此从未生效。修复类型判断让它真正生效后，`net.minecraftforge.*` 被委托给子类加载器，绕过 RFB 的 `ExtensibleEnumTransformer`，导致 lwjgl3ify 枚举扩展失效、Railcraft `GeodePopulator` 静态初始化抛 `was not made extensible` 崩溃。**任何智能体不得再次加入该注入**；F22 崩溃的真实根因是 MTE ID 重号（见上）。
@@ -147,6 +148,28 @@ GTNH 2.9.0-beta-1（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 > 按时间倒序排列。
 
 ```Plain Text
+[2026-09-18 09:20] | 工具平台：Codex | 底层模型：GPT-5
+- 本次完成内容：用户要求修复自动上传的三个隐患，并解释 GTNH-ECO 的配方识别与投递方式。
+  一、稳定定位（fix41 核心）：旧实现用 System.identityHashCode 当供应器 ID，该值在区块卸载重载、
+  机器拆装、服务器重启后都会变化，导致「选好机器放一会儿再点上传」时服务端按旧 ID 找不到目标、
+  静默失败。新增 util/ProviderLocator，改用「维度 + 坐标 + 部件朝向」稳定标识；该标识随
+  ProvidersListS2CPacket 下发到客户端，上传时由 UploadPatternPacket 回传；服务端先按坐标匹配，
+  失败再回退旧 ID 匹配。策略 1/2/3 三条上传路径全部接入。
+  二、失败回执：新增 network/UploadFeedbackPacket（S2C）与三个语言键（upload_target_missing /
+  upload_rejected / upload_no_permission），目标丢失、写入被拒、无权限会在聊天栏提示，
+  不再只写服务端日志让玩家以为「点了没反应」。
+  三、样板槽判断：RequestProvidersListPacket.acceptsPattern 从「只看第一个空槽」改为遍历全部空槽，
+  只要有一个空槽接受该样板即判定可接收，修正分类型样板槽的误判；与 UploadPatternPacket 写入条件一致。
+- 修改/新增文件：src/main/java/com/wztwzt/ae2_qof/util/ProviderLocator.java（新增）、
+  network/UploadFeedbackPacket.java（新增）、network/UploadPatternPacket.java、
+  network/ProvidersListS2CPacket.java、network/ModNetwork.java、network/RequestProvidersListPacket.java、
+  ClientProxy.java、CommonProxy.java、client/gui/GuiProviderSelect.java、
+  assets/ae2_qof/lang/zh_CN.lang、assets/ae2_qof/lang/en_US.lang、CHANGELOG.md、README.md、
+  README.en.md、gradle.properties、src/main/resources/mcmod.info、docs/AGENT_CHECKPOINT.md
+- 验证：gradlew build --offline 通过，产物 build/libs/AE2-QoL-3.19.0-fix41.jar
+- 遗留问题/给下一个智能体的提示：网络包字段有变化（UploadPatternPacket 增加 locationKey、
+  ProvidersListS2CPacket 增加 locationKeys），客户端与服务端必须同时升级，不可只换一边。
+
 [2026-09-17 23:40] | 工具平台：Codex | 底层模型：GPT-5
 - 本次完成内容：处理用户对样板上传选择界面的反馈（附 ECO 与我们界面的对比截图）。
   用户指出：图1(ECO) 是我们模仿的对象，图2(我们) 排版劣质、且本模组自己的「配方映射」框没有被设计进去。

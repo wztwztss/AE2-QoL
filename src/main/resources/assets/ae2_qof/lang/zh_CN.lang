@@ -339,3 +339,6 @@ ae2_qof.select_provider.mapping_key_hint=自动填入，可改写
 ae2_qof.select_provider.mapping_value=目标机器名
 ae2_qof.select_provider.mapping_value_hint=先选中一台机器再点右侧按钮
 ae2_qof.select_provider.use_selected=用选中机器
+ae2_qof.info.upload_target_missing=上传失败：目标机器已不存在（可能被拆除或所在区块重载），请重新选择供应器
+ae2_qof.info.upload_rejected=上传失败：目标机器拒绝了这张样板（样板槽已满，或该机器不接受这类样板）
+ae2_qof.info.upload_no_permission=上传失败：你在该 AE 网络上没有注入权限

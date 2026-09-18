@@ -21,6 +21,7 @@ import com.wztwzt.ae2_qof.merged.MergedGuiHandler;
 import com.wztwzt.ae2_qof.merged.TileMergedTerminal;
 import com.wztwzt.ae2_qof.network.ConfigUpdatePacket;
 import com.wztwzt.ae2_qof.network.CraftingCompletePacket;
+import com.wztwzt.ae2_qof.network.UploadFeedbackPacket;
 import com.wztwzt.ae2_qof.network.CraftingResponsePacket;
 import com.wztwzt.ae2_qof.network.MergedTerminalBlankCountPacket;
 import com.wztwzt.ae2_qof.network.MergedTerminalResultPacket;
@@ -492,6 +493,9 @@ public class CommonProxy {
     public void handleMergedTerminalBlankCount(MergedTerminalBlankCountPacket message) {}
 
     public void handleReplaceCandidates(ReplaceCandidatesPacket message) {}
+
+    /** fix41：样板上传失败原因回执（客户端实现见 ClientProxy）。 */
+    public void handleUploadFeedback(UploadFeedbackPacket message) {}
 
     private void registerRecipes() {
         try {

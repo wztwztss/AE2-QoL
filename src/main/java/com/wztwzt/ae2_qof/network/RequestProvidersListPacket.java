@@ -13,6 +13,7 @@ import net.minecraft.tileentity.TileEntity;
 
 import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.util.ContainerTerminalResolver;
+import com.wztwzt.ae2_qof.util.ProviderLocator;
 import com.wztwzt.ae2_qof.util.RecipeMapDetector;
 
 import appeng.api.networking.IGrid;
@@ -49,16 +50,18 @@ public class RequestProvidersListPacket implements IMessage {
         final List<String> names;
         final List<Integer> emptySlots;
         final List<Integer> totalSlots;
+        final List<String> locationKeys;
         final List<ItemStack> icons;
         final List<ICraftingProvider> providers;
         final long timestamp;
 
         CachedProviders(List<Long> ids, List<String> names, List<Integer> emptySlots, List<Integer> totalSlots,
-            List<ItemStack> icons, List<ICraftingProvider> providers) {
+            List<String> locationKeys, List<ItemStack> icons, List<ICraftingProvider> providers) {
             this.ids = ids;
             this.names = names;
             this.emptySlots = emptySlots;
             this.totalSlots = totalSlots;
+            this.locationKeys = locationKeys;
             this.icons = icons;
             this.providers = providers;
             this.timestamp = System.currentTimeMillis();
@@ -215,6 +218,7 @@ public class RequestProvidersListPacket implements IMessage {
                 // #5：按网格缓存供应器收集结果，1 秒内复用，降低巨网络重复扫描开销
                 List<Long> ids;
                 List<Integer> totalSlots;
+                List<String> locationKeys;
                 List<ItemStack> icons;
                 List<String> names;
                 List<Integer> emptySlots;
@@ -225,6 +229,7 @@ public class RequestProvidersListPacket implements IMessage {
                     names = cached.names;
                     emptySlots = cached.emptySlots;
                     totalSlots = cached.totalSlots;
+                    locationKeys = cached.locationKeys;
                     icons = cached.icons;
                     providers = cached.providers;
                 } else {
@@ -232,9 +237,10 @@ public class RequestProvidersListPacket implements IMessage {
                     names = new ArrayList<String>();
                     emptySlots = new ArrayList<Integer>();
                     totalSlots = new ArrayList<Integer>();
+                    locationKeys = new ArrayList<String>();
                     icons = new ArrayList<ItemStack>();
                     providers = new ArrayList<ICraftingProvider>();
-                    collectProviders(grid, ids, names, emptySlots, totalSlots, icons, providers);
+                    collectProviders(grid, ids, names, emptySlots, totalSlots, locationKeys, icons, providers);
                     // P2-030：过期条目不会主动失效，写入前先淘汰已过期项，避免缓存缓慢积累。
                     if (PROVIDER_CACHE.size() > 64) {
                         PROVIDER_CACHE.clear();
@@ -264,18 +270,21 @@ public class RequestProvidersListPacket implements IMessage {
                         List<String> fNames = new ArrayList<String>(accept.size());
                         List<Integer> fEmpty = new ArrayList<Integer>(accept.size());
                         List<Integer> fTotal = new ArrayList<Integer>(accept.size());
+                        List<String> fKeys = new ArrayList<String>(accept.size());
                         List<ItemStack> fIcons = new ArrayList<ItemStack>(accept.size());
                         for (Integer i : accept) {
                             fIds.add(ids.get(i));
                             fNames.add(names.get(i));
                             fEmpty.add(emptySlots.get(i));
                             fTotal.add(totalSlots.get(i));
+                            fKeys.add(i < locationKeys.size() ? locationKeys.get(i) : null);
                             fIcons.add(icons.size() > i ? icons.get(i) : null);
                         }
                         ids = fIds;
                         names = fNames;
                         emptySlots = fEmpty;
                         totalSlots = fTotal;
+                        locationKeys = fKeys;
                         icons = fIcons;
                     }
                 }
@@ -283,6 +292,7 @@ public class RequestProvidersListPacket implements IMessage {
                 final List<String> filteredNames = names;
                 final List<Integer> filteredEmptySlots = emptySlots;
                 final List<Integer> filteredTotalSlots = totalSlots;
+                final List<String> filteredLocationKeys = locationKeys;
                 final List<ItemStack> filteredIcons = icons;
                 // 尺寸预算（#57）：1.7.10 S3F 自定义负载长度为 short（≤32767 字节），
                 // 超大网络的供应器名列表可能超限 → 编码/发送失败、客户端选择界面静默无响应。
@@ -351,18 +361,20 @@ public class RequestProvidersListPacket implements IMessage {
                 List<String> outNames = new ArrayList<String>(keep.size());
                 List<Integer> outEmpty = new ArrayList<Integer>(keep.size());
                 List<Integer> outTotal = new ArrayList<Integer>(keep.size());
+                List<String> outKeys = new ArrayList<String>(keep.size());
                 List<ItemStack> outIcons = new ArrayList<ItemStack>(keep.size());
                 for (Integer i : keep) {
                     outIds.add(filteredIds.get(i));
                     outNames.add(filteredNames.get(i));
                     outEmpty.add(filteredEmptySlots.get(i));
                     outTotal.add(filteredTotalSlots.size() > i ? filteredTotalSlots.get(i) : filteredEmptySlots.get(i));
+                    outKeys.add(i < filteredLocationKeys.size() ? filteredLocationKeys.get(i) : null);
                     ItemStack icon = filteredIcons.size() > i ? filteredIcons.get(i) : null;
                     outIcons.add(iconsDropped ? null : icon);
                 }
 
                 ModNetwork.CHANNEL.sendTo(
-                    new ProvidersListS2CPacket(outIds, outNames, outEmpty, outTotal, outIcons, recipeMap,
+                    new ProvidersListS2CPacket(outIds, outNames, outEmpty, outTotal, outKeys, outIcons, recipeMap,
                         message.forceGui),
                     player);
                 MyMod.LOG.info("[Upload] providers list sent: count={}, recipeMap={}", outIds.size(), recipeMap);
@@ -372,7 +384,7 @@ public class RequestProvidersListPacket implements IMessage {
         }
 
         private static void collectProviders(IGrid grid, List<Long> ids, List<String> names,
-            List<Integer> emptySlots, List<Integer> totalSlots, List<ItemStack> icons,
+            List<Integer> emptySlots, List<Integer> totalSlots, List<String> locationKeys, List<ItemStack> icons,
             List<ICraftingProvider> providers) {
             for (Class<? extends IGridHost> hostClass : grid.getMachinesClasses()) {
                 if (!ICraftingProvider.class.isAssignableFrom(hostClass)) {
@@ -397,6 +409,8 @@ public class RequestProvidersListPacket implements IMessage {
                     names.add(name);
                     emptySlots.add(estimateEmptySlots(provider));
                     totalSlots.add(estimateTotalSlots(provider));
+                    // fix41：一并记录稳定位置（维度+坐标+朝向），供上传时可靠命中
+                    locationKeys.add(ProviderLocator.locationKey(machineNode, provider));
                     icons.add(resolveProviderIcon(machine));
                     providers.add(provider);
                 }
@@ -457,10 +471,15 @@ public class RequestProvidersListPacket implements IMessage {
                     }
                     int availableSlots = viewable.rows() * viewable.rowSize();
                     int limit = Math.min(availableSlots, patterns.getSizeInventory());
+                    // fix41：逐个空槽判断，只要有一个空槽愿意接收就算「能收」。
+                    // 旧实现只看第一个空槽，遇到分类型样板槽（前段收物品、后段收流体）会把本来放得下的
+                    // 机器误判成「收不下」而从候选里剔掉，玩家看到的就是「明明有空位却不显示」。
                     for (int i = 0; i < limit; i++) {
                         ItemStack slot = patterns.getStackInSlot(i);
                         if (slot == null || slot.stackSize <= 0) {
-                            return patterns.isItemValidForSlot(i, pattern);
+                            if (patterns.isItemValidForSlot(i, pattern)) {
+                                return true;
+                            }
                         }
                     }
                     return false;

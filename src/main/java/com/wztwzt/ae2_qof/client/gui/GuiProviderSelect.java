@@ -68,6 +68,8 @@ public class GuiProviderSelect extends GuiScreen {
     private final List<String> names;
     private final List<Integer> emptySlots;
     private final List<Integer> totalSlots;
+    /** 供应器稳定位置标识（fix41），上传时回传给服务端，避免内存地址过期后传丢。 */
+    private final List<String> locationKeys;
     private final List<ItemStack> icons;
 
     private final List<GroupEntry> groups = new ArrayList<GroupEntry>();
@@ -129,29 +131,32 @@ public class GuiProviderSelect extends GuiScreen {
         int bestEmpty;
         /** 同上，指向那台的样板槽总数。 */
         int bestTotal;
+        /** 同上，指向那台的稳定位置标识（fix41）。 */
+        String bestKey;
     }
 
     public GuiProviderSelect(List<Long> ids, List<String> names, List<Integer> emptySlots) {
-        this(null, ids, names, emptySlots, null, null, null);
+        this(null, ids, names, emptySlots, null, null, null, null);
     }
 
     public GuiProviderSelect(GuiScreen parent, List<Long> ids, List<String> names, List<Integer> emptySlots) {
-        this(parent, ids, names, emptySlots, null, null, null);
+        this(parent, ids, names, emptySlots, null, null, null, null);
     }
 
     public GuiProviderSelect(GuiScreen parent, List<Long> ids, List<String> names, List<Integer> emptySlots,
         List<Integer> totalSlots, List<ItemStack> icons) {
-        this(parent, ids, names, emptySlots, totalSlots, icons, null);
+        this(parent, ids, names, emptySlots, totalSlots, null, icons, null);
     }
 
     public GuiProviderSelect(GuiScreen parent, List<Long> ids, List<String> names, List<Integer> emptySlots,
-        List<Integer> totalSlots, List<ItemStack> icons, String recipeMap) {
+        List<Integer> totalSlots, List<String> locationKeys, List<ItemStack> icons, String recipeMap) {
         this.recipeMap = recipeMap;
         this.parent = parent;
         this.ids = ids == null ? new ArrayList<Long>() : new ArrayList<Long>(ids);
         this.names = names == null ? new ArrayList<String>() : new ArrayList<String>(names);
         this.emptySlots = emptySlots == null ? new ArrayList<Integer>() : new ArrayList<Integer>(emptySlots);
         this.totalSlots = totalSlots == null ? new ArrayList<Integer>() : new ArrayList<Integer>(totalSlots);
+        this.locationKeys = locationKeys == null ? new ArrayList<String>() : new ArrayList<String>(locationKeys);
         this.icons = icons == null ? new ArrayList<ItemStack>() : new ArrayList<ItemStack>(icons);
 
         String recent = RecipeNameUtil.getLastRecipeName();
@@ -239,6 +244,7 @@ public class GuiProviderSelect extends GuiScreen {
             long id = ids.get(i);
             int empty = i < emptySlots.size() ? emptySlots.get(i) : 0;
             int total = i < totalSlots.size() ? totalSlots.get(i) : empty;
+            String key = i < locationKeys.size() ? locationKeys.get(i) : null;
             ItemStack icon = i < icons.size() ? icons.get(i) : null;
 
             GroupEntry entry = map.get(name);
@@ -256,6 +262,7 @@ public class GuiProviderSelect extends GuiScreen {
                 entry.id = id;
                 entry.bestEmpty = Math.max(0, empty);
                 entry.bestTotal = Math.max(0, total);
+                entry.bestKey = key;
             }
             if (entry.icon == null) {
                 entry.icon = icon;
@@ -510,10 +517,10 @@ public class GuiProviderSelect extends GuiScreen {
             sendClientMessage(translate("ae2_qof.select_provider.full"));
             return;
         }
-        handleSelect(entry.id);
+        handleSelect(entry.id, entry.bestKey);
     }
 
-    protected void handleSelect(long providerId) {
+    protected void handleSelect(long providerId, String locationKey) {
         for (int i = 0; i < ids.size(); i++) {
             if (ids.get(i) == providerId) {
                 ClientState.set(names.get(i), providerId);
@@ -521,7 +528,8 @@ public class GuiProviderSelect extends GuiScreen {
                 break;
             }
         }
-        ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(providerId));
+        // fix41：带上稳定位置标识，区块重载 / 重启后服务端仍能正确定位这台机器
+        ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(providerId, locationKey));
         restoreParentScreen();
     }
 

@@ -182,5 +182,12 @@ public final class ModNetwork {
             HatchListSyncPacket.class,
             discriminator++,
             Side.CLIENT);
+
+        // fix41：样板上传失败原因回执，避免「点了没反应」
+        CHANNEL.registerMessage(
+            UploadFeedbackPacket.Handler.class,
+            UploadFeedbackPacket.class,
+            discriminator++,
+            Side.CLIENT);
     }
 }

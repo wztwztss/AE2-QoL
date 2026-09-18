@@ -41,6 +41,7 @@ import com.wztwzt.ae2_qof.network.ProvidersListS2CPacket;
 import com.wztwzt.ae2_qof.network.ReplaceCandidatesPacket;
 import com.wztwzt.ae2_qof.network.RequestProvidersListPacket;
 import com.wztwzt.ae2_qof.network.SwapPatternPacket;
+import com.wztwzt.ae2_qof.network.UploadFeedbackPacket;
 import com.wztwzt.ae2_qof.network.UploadPatternPacket;
 import com.wztwzt.ae2_qof.network.WirelessChannelSyncPacket;
 import com.wztwzt.ae2_qof.network.WirelessHighlightPacket;
@@ -111,15 +112,19 @@ public class ClientProxy extends CommonProxy {
 
                 // 策略1: 只有一个有效供应器时直接上传
                 List<Long> validIds = new ArrayList<Long>();
+                List<String> validKeys = new ArrayList<String>();
                 for (int i = 0; i < message.ids.size(); i++) {
                     if (message.emptySlots.get(i) > 0) {
                         validIds.add(message.ids.get(i));
+                        validKeys.add(
+                            i < message.locationKeys.size() ? message.locationKeys.get(i) : null);
                     }
                 }
                 if (validIds.size() == 1) {
                     MyMod.LOG.info("[Upload] strategy1: single provider, id={}", validIds.get(0));
                     ClientState.set(null, validIds.get(0));
-                    ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(validIds.get(0)));
+                    // fix41：单目标也带上稳定位置，避免该机器被拆装/重载后 ID 失效
+                    ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(validIds.get(0), validKeys.get(0)));
                     return;
                 }
 
@@ -134,11 +139,13 @@ public class ClientProxy extends CommonProxy {
                         message.recipeMap, rememberedName);
                     if (rememberedName != null) {
                         long matchId = 0;
+                        String matchKey = null;
                         int matchCount = 0;
                         for (int i = 0; i < message.ids.size(); i++) {
                             if (message.emptySlots.get(i) > 0 && message.names.get(i)
                                 .equals(rememberedName)) {
-                                matchId = message.ids.get(i);
+                                    matchId = message.ids.get(i);
+                                    matchKey = i < message.locationKeys.size() ? message.locationKeys.get(i) : null;
                                 matchCount++;
                             }
                         }
@@ -153,6 +160,7 @@ public class ClientProxy extends CommonProxy {
                                     && stripLocationSuffix(message.names.get(i))
                                         .equals(base)) {
                                     matchId = message.ids.get(i);
+                                    matchKey = i < message.locationKeys.size() ? message.locationKeys.get(i) : null;
                                     matchCount++;
                                 }
                             }
@@ -161,7 +169,7 @@ public class ClientProxy extends CommonProxy {
                         if (matchCount == 1) {
                             MyMod.LOG.info("[Upload] strategy2: remembered provider '{}', id={}", rememberedName, matchId);
                             ClientState.set(rememberedName, matchId);
-                            ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(matchId));
+                            ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(matchId, matchKey));
                             return;
                         }
                     }
@@ -203,7 +211,7 @@ public class ClientProxy extends CommonProxy {
             }
         }
         GuiProviderSelect gui = new GuiProviderSelect(current, message.ids, message.names, message.emptySlots,
-            message.totalSlots, message.icons, message.recipeMap);
+            message.totalSlots, message.locationKeys, message.icons, message.recipeMap);
         if (searchKey != null) {
             gui.setPresetSearchKey(searchKey);
         }
@@ -436,6 +444,25 @@ public class ClientProxy extends CommonProxy {
             .func_152344_a(() -> {
                 ClientState.replaceCandidates = message.candidates;
                 ClientState.replaceCurrentIndex = message.currentIndex;
+            });
+    }
+
+    /**
+     * fix41：样板上传失败/被拒绝时把原因显示到聊天栏。
+     * 旧实现只写服务端日志，玩家看到的是「点了没反应」，无从判断是目标被拆了、槽位满了还是没权限。
+     */
+    @Override
+    public void handleUploadFeedback(final UploadFeedbackPacket message) {
+        Minecraft.getMinecraft()
+            .func_152344_a(() -> {
+                if (Minecraft.getMinecraft().thePlayer == null || message == null
+                    || message.messageKey == null
+                    || message.messageKey.isEmpty()) {
+                    return;
+                }
+                Minecraft.getMinecraft().thePlayer.addChatMessage(
+                    new net.minecraft.util.ChatComponentText(
+                        net.minecraft.util.EnumChatFormatting.YELLOW + net.minecraft.util.StatCollector.translateToLocal(message.messageKey)));
             });
     }
 

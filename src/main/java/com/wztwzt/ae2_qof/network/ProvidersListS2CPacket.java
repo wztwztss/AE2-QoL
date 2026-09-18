@@ -21,6 +21,8 @@ public class ProvidersListS2CPacket implements IMessage {
     public List<Integer> emptySlots;
     /** 供应器样板槽总数（空槽 + 已占用），用于界面显示「空闲/总数」。 */
     public List<Integer> totalSlots;
+    /** 供应器的稳定位置标识（fix41），用于上传时可靠命中，避免内存地址过期后传丢。 */
+    public List<String> locationKeys;
     /** 供应器图标（可选）：服务端尽力提供，超包或取不到时为空列表。 */
     public List<ItemStack> icons;
     public String recipeMap;
@@ -31,6 +33,7 @@ public class ProvidersListS2CPacket implements IMessage {
         this.names = new ArrayList<String>();
         this.emptySlots = new ArrayList<Integer>();
         this.totalSlots = new ArrayList<Integer>();
+        this.locationKeys = new ArrayList<String>();
         this.icons = new ArrayList<ItemStack>();
         this.recipeMap = null;
         this.forceGui = false;
@@ -38,15 +41,18 @@ public class ProvidersListS2CPacket implements IMessage {
 
     public ProvidersListS2CPacket(List<Long> ids, List<String> names, List<Integer> emptySlots, String recipeMap,
         boolean forceGui) {
-        this(ids, names, emptySlots, new ArrayList<Integer>(), new ArrayList<ItemStack>(), recipeMap, forceGui);
+        this(ids, names, emptySlots, new ArrayList<Integer>(), new ArrayList<String>(), new ArrayList<ItemStack>(),
+            recipeMap, forceGui);
     }
 
     public ProvidersListS2CPacket(List<Long> ids, List<String> names, List<Integer> emptySlots,
-        List<Integer> totalSlots, List<ItemStack> icons, String recipeMap, boolean forceGui) {
+        List<Integer> totalSlots, List<String> locationKeys, List<ItemStack> icons, String recipeMap,
+        boolean forceGui) {
         this.ids = ids;
         this.names = names;
         this.emptySlots = emptySlots;
         this.totalSlots = totalSlots == null ? new ArrayList<Integer>() : totalSlots;
+        this.locationKeys = locationKeys == null ? new ArrayList<String>() : locationKeys;
         this.icons = icons == null ? new ArrayList<ItemStack>() : icons;
         this.recipeMap = recipeMap;
         this.forceGui = forceGui;
@@ -64,12 +70,14 @@ public class ProvidersListS2CPacket implements IMessage {
             names = new ArrayList<String>(size);
             emptySlots = new ArrayList<Integer>(size);
             totalSlots = new ArrayList<Integer>(size);
+            locationKeys = new ArrayList<String>(size);
 
             for (int i = 0; i < size; i++) {
                 ids.add(buf.readLong());
                 names.add(readString(buf));
                 emptySlots.add(buf.readInt());
                 totalSlots.add(buf.readInt());
+                locationKeys.add(readString(buf));
             }
 
             int iconCount = buf.readInt();
@@ -94,6 +102,7 @@ public class ProvidersListS2CPacket implements IMessage {
             names = new ArrayList<String>();
             emptySlots = new ArrayList<Integer>();
             totalSlots = new ArrayList<Integer>();
+            locationKeys = new ArrayList<String>();
             icons = new ArrayList<ItemStack>();
             recipeMap = null;
             forceGui = false;
@@ -108,6 +117,7 @@ public class ProvidersListS2CPacket implements IMessage {
             writeString(buf, names.get(i));
             buf.writeInt(emptySlots.get(i));
             buf.writeInt(i < totalSlots.size() ? totalSlots.get(i) : emptySlots.get(i));
+            writeString(buf, i < locationKeys.size() ? locationKeys.get(i) : "");
         }
 
         List<ItemStack> safeIcons = icons == null ? new ArrayList<ItemStack>() : icons;
