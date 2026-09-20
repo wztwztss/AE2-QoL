@@ -300,8 +300,6 @@ public class TileWirelessTransceiver extends TileEntity implements IGridHost, IA
                 if (frequency != null && !frequency.isEmpty()) {
                     WirelessLinkManager.process(this);
                 }
-                WirelessBlockLinkManager.instance()
-                    .processAll();
             }
         }
     }

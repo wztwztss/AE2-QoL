@@ -35,6 +35,7 @@
 | GuideNH 游戏内指南（Markdown 资源，零代码集成） | `src/main/resources/assets/ae2_qof/guidenh/_zh_cn/*.md` + `_en_us/*.md` |
 | 二合一终端（样板编码/上传） | `src/main/java/com/wztwzt/ae2_qof/merged/PatternContainer.java` |
 | 上传/撤回/交换网络包 | `src/main/java/com/wztwzt/ae2_qof/network/UploadPatternPacket.java` / `RecallPatternPacket.java` / `SwapPatternPacket.java` |
+| NEI Tooltip 文字（fix42 单入口） | `src/main/java/com/wztwzt/ae2_qof/client/nei/NetworkTooltipHandler.java` → `handleItemTooltip`；`handleTooltip` 透传；在 `ClientProxy.init` 注册 |
 | NEI 叠加层（缓存） | `src/main/java/com/wztwzt/ae2_qof/client/NetworkInventoryCache.java` |
 | NEI 叠加层（渲染） | `src/main/java/com/wztwzt/ae2_qof/client/NetworkInventoryDrawHandler.java` |
 | 合成通知覆盖层 | `src/main/java/com/wztwzt/ae2_qof/client/render/CraftingNotificationOverlay.java` |
@@ -45,10 +46,12 @@
 | 配方池检测工具 | `src/main/java/com/wztwzt/ae2_qof/util/RecipeMapDetector.java` |
 | 终端容器解析工具 | `src/main/java/com/wztwzt/ae2_qof/util/ContainerTerminalResolver.java` |
 | 重规划 | `src/main/java/com/wztwzt/ae2_qof/util/Replanner.java` |
+| v7 机器贴图工具（方案 P：GT 图标队列 + 资源包 PNG；`forceMode` 三态开关） | `src/main/java/com/wztwzt/ae2_qof/util/ModTextures.java` — 8 机器面级 `getTexture` 均以其 `isReady()` 门控；`forceMode` 由 `Config.v7Textures`（`v7_textures`）驱动 |
+| v7 贴图启用判定时机（postInit 钩子） | `src/main/java/com/wztwzt/ae2_qof/CommonProxy.java` → `postInit()` 调 `ModTextures.allowResourceCheck()`；**不可提前到 init**——init 阶段资源可能处于 reload 中间态会误判为可用 |
 | 万能维护仓（主类） | `src/main/java/com/wztwzt/ae2_qof/hatch/AE2MaintenanceHatchUniversal.java` |
 | 万能维护仓（Mixin） | `src/main/java/com/wztwzt/ae2_qof/mixin/gt/MixinMTEMultiBlockBase.java` |
 | 万能维护仓（注册） | `src/main/java/com/wztwzt/ae2_qof/CommonProxy.java` → `init()` — **必须在init阶段注册**，preInit时GT的sPreloadStarted为false会抛IllegalAccessError |
-| 自适应电网终端（ID 32100，4-tab PagedWidget UI） | `src/main/java/com/wztwzt/ae2_qof/hatch/adaptive/AdaptiveNetTerminal.java` |
+| 自适应电网终端（ID 32100，5-tab PagedWidget UI） | `src/main/java/com/wztwzt/ae2_qof/hatch/adaptive/AdaptiveNetTerminal.java` |
 | 自适应电网输入仓（ID 32102） | `src/main/java/com/wztwzt/ae2_qof/hatch/adaptive/AdaptiveNetHatch.java` |
 | 自适应电网激光源仓（ID 32103） | `src/main/java/com/wztwzt/ae2_qof/hatch/adaptive/AdaptiveNetLaserHatch.java` |
 | 自适应电网动力仓（ID 32104） | `src/main/java/com/wztwzt/ae2_qof/hatch/adaptive/AdaptiveNetDynamoHatch.java` |
@@ -68,11 +71,12 @@
 | 智能倍增（GTNL 超级样板输入总成 GUI 开关） | `mixins.ae2_qof.json` | `mixin/gt/MixinSuperCraftingInputHatchMEGui.java` | `com.science.gtnl.common.gui.modularui.SuperCraftingInputHatchMEGui` | 3.9.0；createBottomLeftCornerFlow RETURN 追加 ToggleButton；GTNL 缺失静默跳过 |
 | 智能倍增（PH 仓开关） | `mixins.ae2_qof.json` | `mixin/gt/MixinDualInputHatchUI.java` | — | PH 仓 GUI 添加倍增开关按钮 |
 | 强化 IO 端口 | `mixins.ae2_qof.json` | `mixin/ae/MixinTileIOPort.java` | `appeng.tile.misc.TileIOPort` | @ModifyVariable 倍率 |
+| 世界中键取物下单兜底 | `mixins.ae2_qof.json` | `mixin/ae/MixinPacketPickBlock.java` | `appeng.core.sync.packets.PacketPickBlock` | HEAD+cancellable；仅「无存量+有样板」接管，其余放行原版；开界面逻辑与 `RequestCraftingPacket` 共用 `ServerTerminalHelper.openCraftAmountIfCraftable` |
 | 合成提交/完成 | `mixins.ae2_qof.json` | `mixin/ae/MixinGuiCraftConfirm.java` | `appeng.client.gui.crafting.GuiCraftConfirm` | submitJob/completeJob |
 | DualityInterface NBT | `mixins.ae2_qof.json` | `mixin/ae/MixinDualityInterface.java` | `appeng.helpers.DualityInterface` | writeToNBT/readFromNBT |
 | ContainerInterface 初始化 | `mixins.ae2_qof.json` | `mixin/ae/MixinContainerInterface.java` | `appeng.container.AEBaseContainer` | @GuiSync(30) |
 | NEI 叠加层按钮 | `mixins.ae2_qof.json` | `mixin/nei/MixinGuiOverlayButton.java` | — | NEI 叠加层开关 |
 | NEI 样板点击上传 | `mixins.ae2_qof.json` | `mixin/nei/MixinPanelWidgetClick.java` | — | PanelWidget 点击拦截 |
 | NEI 叠加层渲染 | `mixins.ae2_qof.json` | `mixin/nei/MixinPanelWidgetDraw.java` | — | 书签数量叠加 |
-| NEI tooltip 存量 | `mixins.ae2_qof.json` | `mixin/nei/MixinNEIRecipeWidget.java` | — | tooltip 显示网络存量 |
+| NEI 配方页数量角标 | `mixins.ae2_qof.json` | `mixin/nei/MixinNEIRecipeWidget.java` | — | 绘制库存/可合成角标；不追加 Tooltip 文字 |
 | 万能维护仓（维护绕过） | `mixins.ae2_qof.json` | `mixin/gt/MixinMTEMultiBlockBase.java` | `gregtech.api.metatileentity.implementations.MTEMultiBlockBase` | @Overwrite shouldCheckMaintenance 返回 false |

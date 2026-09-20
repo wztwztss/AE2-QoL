@@ -48,9 +48,7 @@ public abstract class MixinGuiMEMonitorable {
                     net.minecraft.item.ItemStack mcStack = itemStack.getItemStack();
                     if (mcStack != null) {
                         NetworkInventoryCache.put(
-                            net.minecraft.item.Item.getIdFromItem(mcStack.getItem()),
-                            mcStack.getItemDamage(),
-                            (int) Math.min(itemStack.getStackSize(), Integer.MAX_VALUE),
+                            mcStack,
                             itemStack.isCraftable(),
                             itemStack.getStackSize());
                     }

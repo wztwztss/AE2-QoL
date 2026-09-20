@@ -47,6 +47,12 @@ public class Config {
      */
     public static volatile String stockMonitorPresets = "1万=10000;100万=1000000;10亿=1000000000;清零=0";
 
+    /**
+     * v7 机器贴图开关（热加载字段）。
+     * auto=自动（默认，25 张 PNG 齐全才启用）、on=强制启用、off=强制关闭（必定回 GT 默认外观）。
+     */
+    public static volatile String v7Textures = "auto";
+
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting()
         .disableHtmlEscaping()
         .create();
@@ -81,7 +87,13 @@ public class Config {
                 // P1-009：0 在现行语义中表示“不限”，迁移时必须保留 0，不能被钳到 1。
                 int oldRounds = readLegacyCfgInt(configFile, "smartDoublingMaxRounds", smartDoublingMaxRounds, 0, Integer.MAX_VALUE);
                 // P1-009：只有新 settings.json 确实写入成功，才允许删除旧 cfg，否则保留旧文件供下次重试。
-                boolean migrated = writeFile(oldRate, oldRounds, true, pinRowEnabled, stockMonitorPresets);
+                boolean migrated = writeFile(
+                    oldRate,
+                    oldRounds,
+                    true,
+                    pinRowEnabled,
+                    stockMonitorPresets,
+                    v7Textures);
                 if (migrated && !Files.exists(SETTINGS_FILE)) {
                     migrated = false;
                 }
@@ -111,9 +123,10 @@ public class Config {
         boolean overlay = neiOverlayEnabled;
         boolean pinRow = pinRowEnabled;
         String presets = stockMonitorPresets;
+        String v7 = v7Textures;
         try {
             if (!Files.exists(SETTINGS_FILE)) {
-                writeFile(io, rounds, overlay, pinRow, presets);
+                writeFile(io, rounds, overlay, pinRow, presets, v7);
                 return;
             }
             try (InputStreamReader reader = new InputStreamReader(
@@ -143,6 +156,13 @@ public class Config {
                     if (value != null && value.isJsonPrimitive()) {
                         presets = value.getAsString();
                     }
+                    value = obj.get("v7_textures");
+                    if (value != null && value.isJsonPrimitive()) {
+                        String raw = value.getAsString();
+                        if ("auto".equals(raw) || "on".equals(raw) || "off".equals(raw)) {
+                            v7 = raw;
+                        }
+                    }
                 }
             }
         } catch (Throwable t) {
@@ -153,6 +173,9 @@ public class Config {
         neiOverlayEnabled = overlay;
         pinRowEnabled = pinRow;
         stockMonitorPresets = presets;
+        v7Textures = v7;
+        // 同步到贴图工具：auto/on → 0/1 自动判定与强制开，off → -1 强制关闭
+        com.wztwzt.ae2_qof.util.ModTextures.forceMode = "off".equals(v7) ? -1 : ("on".equals(v7) ? 1 : 0);
         lastLoadedMtime = currentMtime();
     }
 
@@ -184,7 +207,13 @@ public class Config {
         if (SETTINGS_FILE == null) {
             return;
         }
-        writeFile(exIOPortTransferContentsRate, smartDoublingMaxRounds, enabled, pinRowEnabled, stockMonitorPresets);
+        writeFile(
+            exIOPortTransferContentsRate,
+            smartDoublingMaxRounds,
+            enabled,
+            pinRowEnabled,
+            stockMonitorPresets,
+            v7Textures);
         lastLoadedMtime = currentMtime();
     }
 
@@ -229,7 +258,13 @@ public class Config {
             return false;
         }
         if (SETTINGS_FILE != null) {
-            writeFile(exIOPortTransferContentsRate, smartDoublingMaxRounds, neiOverlayEnabled, pinRowEnabled, stockMonitorPresets);
+            writeFile(
+                exIOPortTransferContentsRate,
+                smartDoublingMaxRounds,
+                neiOverlayEnabled,
+                pinRowEnabled,
+                stockMonitorPresets,
+                v7Textures);
             lastLoadedMtime = currentMtime();
         }
         return true;
@@ -246,7 +281,13 @@ public class Config {
         exIOPortTransferContentsRate = clamp(io, 1, Integer.MAX_VALUE, exIOPortTransferContentsRate);
         smartDoublingMaxRounds = clamp(rounds, 0, Integer.MAX_VALUE, smartDoublingMaxRounds);
         if (SETTINGS_FILE != null) {
-            writeFile(exIOPortTransferContentsRate, smartDoublingMaxRounds, neiOverlayEnabled, pinRowEnabled, stockMonitorPresets);
+            writeFile(
+                exIOPortTransferContentsRate,
+                smartDoublingMaxRounds,
+                neiOverlayEnabled,
+                pinRowEnabled,
+                stockMonitorPresets,
+                v7Textures);
             lastLoadedMtime = currentMtime();
         }
     }
@@ -278,7 +319,8 @@ public class Config {
      *
      * @return 是否写入成功（P1-009：迁移逻辑依赖该返回值决定是否删除旧 cfg）
      */
-    private static boolean writeFile(int ioRate, int rounds, boolean overlay, boolean pinRow, String presets) {
+    private static boolean writeFile(int ioRate, int rounds, boolean overlay, boolean pinRow, String presets,
+        String v7) {
         try {
             Path parent = SETTINGS_FILE.getParent();
             if (parent != null && !Files.exists(parent)) {
@@ -290,6 +332,7 @@ public class Config {
             root.addProperty("nei_overlay_enabled", overlay);
             root.addProperty("pin_row_enabled", pinRow);
             root.addProperty("stock_monitor_presets", presets);
+            root.addProperty("v7_textures", v7);
             try (OutputStreamWriter writer = new OutputStreamWriter(
                 Files.newOutputStream(SETTINGS_FILE),
                 StandardCharsets.UTF_8)) {

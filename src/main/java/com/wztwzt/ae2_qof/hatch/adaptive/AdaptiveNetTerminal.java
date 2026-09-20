@@ -1172,6 +1172,27 @@ public class AdaptiveNetTerminal extends MTEHatch {
     public ITexture[][][] getTextureSet(ITexture[] aTextures) {
         return new ITexture[0][][];
     }
+    @Override
+    public ITexture[] getTexture(gregtech.api.interfaces.tileentity.IGregTechTileEntity aBaseMetaTileEntity,
+                                 net.minecraftforge.common.util.ForgeDirection side,
+                                 net.minecraftforge.common.util.ForgeDirection facing,
+                                 int aColorIndex,
+                                 boolean aActive,
+                                 boolean aRedstone) {
+        if (com.wztwzt.ae2_qof.util.ModTextures.isReady()) {
+            if (side == facing) {
+                return new ITexture[] { com.wztwzt.ae2_qof.util.ModTextures.front("adaptive_net_terminal") };
+            }
+            if (side == net.minecraftforge.common.util.ForgeDirection.UP) {
+                return new ITexture[] { com.wztwzt.ae2_qof.util.ModTextures.top("adaptive_net_terminal") };
+            }
+            if (side == net.minecraftforge.common.util.ForgeDirection.DOWN) {
+                return new ITexture[] { com.wztwzt.ae2_qof.util.ModTextures.bottom() };
+            }
+            return new ITexture[] { com.wztwzt.ae2_qof.util.ModTextures.side("adaptive_net_terminal") };
+        }
+        return super.getTexture(aBaseMetaTileEntity, side, facing, aColorIndex, aActive, aRedstone);
+    }
 
     @Override
     public ITexture[] getTexturesActive(ITexture aBaseTexture) {

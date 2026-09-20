@@ -16,6 +16,9 @@ import io.netty.buffer.ByteBuf;
 
 public class ProvidersListS2CPacket implements IMessage {
 
+    private static final int MAX_ENTRIES = 1024;
+    private static final int MAX_BYTES = 32000;
+
     public List<Long> ids;
     public List<String> names;
     public List<Integer> emptySlots;
@@ -56,6 +59,67 @@ public class ProvidersListS2CPacket implements IMessage {
         this.icons = icons == null ? new ArrayList<ItemStack>() : icons;
         this.recipeMap = recipeMap;
         this.forceGui = forceGui;
+        fitToBudget();
+    }
+
+    /** Measure the actual wire representation, including keys, counts and compressed icon NBT. */
+    private void fitToBudget() {
+        if (ids == null) ids = new ArrayList<>();
+        if (names == null) names = new ArrayList<>();
+        if (emptySlots == null) emptySlots = new ArrayList<>();
+        if (totalSlots == null) totalSlots = new ArrayList<>();
+        if (locationKeys == null) locationKeys = new ArrayList<>();
+        if (recipeMap != null && utf8Length(recipeMap) > MAX_BYTES - 12) {
+            recipeMap = null;
+            forceGui = true;
+        }
+        int used = 4 + 4 + 1 + 1 + (recipeMap == null ? 0 : 2 + utf8Length(recipeMap));
+        List<Long> nextIds = new ArrayList<>();
+        List<String> nextNames = new ArrayList<>();
+        List<Integer> nextEmpty = new ArrayList<>();
+        List<Integer> nextTotal = new ArrayList<>();
+        List<String> nextKeys = new ArrayList<>();
+        List<ItemStack> nextIcons = new ArrayList<>();
+        int count = Math.min(ids.size(), Math.min(names.size(), emptySlots.size()));
+        for (int i = 0; i < count && nextIds.size() < MAX_ENTRIES; i++) {
+            String name = names.get(i) == null ? "" : names.get(i);
+            String key = i < locationKeys.size() && locationKeys.get(i) != null ? locationKeys.get(i) : "";
+            int size = 8 + 2 + utf8Length(name) + 4 + 4 + 2 + utf8Length(key);
+            if (size > MAX_BYTES - used || ids.get(i) == null || emptySlots.get(i) == null) continue;
+            used += size;
+            nextIds.add(ids.get(i));
+            nextNames.add(name);
+            nextEmpty.add(emptySlots.get(i));
+            nextTotal.add(i < totalSlots.size() && totalSlots.get(i) != null ? totalSlots.get(i) : emptySlots.get(i));
+            nextKeys.add(key);
+            nextIcons.add(icons != null && i < icons.size() ? icons.get(i) : null);
+        }
+        if (nextIds.size() < ids.size()) forceGui = true;
+        // Optional icons must never crowd out the actual provider list.
+        ByteBuf encodedIcons = io.netty.buffer.Unpooled.buffer();
+        try {
+            for (ItemStack icon : nextIcons) {
+                ByteBufUtils.writeItemStack(encodedIcons, icon);
+                if (encodedIcons.readableBytes() > MAX_BYTES - used) {
+                    nextIcons.clear();
+                    break;
+                }
+            }
+        } catch (RuntimeException e) {
+            nextIcons.clear();
+        } finally {
+            encodedIcons.release();
+        }
+        ids = nextIds;
+        names = nextNames;
+        emptySlots = nextEmpty;
+        totalSlots = nextTotal;
+        locationKeys = nextKeys;
+        icons = nextIcons;
+    }
+
+    private static int utf8Length(String text) {
+        return text.getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
     }
 
     @Override
@@ -63,9 +127,7 @@ public class ProvidersListS2CPacket implements IMessage {
         try {
             int size = buf.readInt();
             // 恶意包防护：预分配容量钳制，防止 new ArrayList<>(巨量) OOM（#45），超界按空列表处理
-            if (size < 0 || size > 1024) {
-                size = 0;
-            }
+            if (size < 0 || size > MAX_ENTRIES) throw new IllegalArgumentException("provider count");
             ids = new ArrayList<Long>(size);
             names = new ArrayList<String>(size);
             emptySlots = new ArrayList<Integer>(size);
@@ -81,16 +143,10 @@ public class ProvidersListS2CPacket implements IMessage {
             }
 
             int iconCount = buf.readInt();
-            if (iconCount < 0 || iconCount > 1024) {
-                iconCount = 0;
-            }
+            if (iconCount != 0 && iconCount != size) throw new IllegalArgumentException("icon count");
             icons = new ArrayList<ItemStack>(iconCount);
             for (int i = 0; i < iconCount; i++) {
-                ItemStack stack = null;
-                try {
-                    stack = ByteBufUtils.readItemStack(buf);
-                } catch (Throwable ignored) {}
-                icons.add(stack);
+                icons.add(ByteBufUtils.readItemStack(buf));
             }
 
             boolean hasRecipeMap = buf.readBoolean();
@@ -111,6 +167,7 @@ public class ProvidersListS2CPacket implements IMessage {
 
     @Override
     public void toBytes(ByteBuf buf) {
+        fitToBudget();
         buf.writeInt(ids.size());
         for (int i = 0; i < ids.size(); i++) {
             buf.writeLong(ids.get(i));
@@ -134,13 +191,15 @@ public class ProvidersListS2CPacket implements IMessage {
     }
 
     private void writeString(ByteBuf buf, String str) {
-        byte[] bytes = str.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        byte[] bytes = (str == null ? "" : str).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        if (bytes.length > 32767) throw new IllegalArgumentException("string too long");
         buf.writeShort(bytes.length);
         buf.writeBytes(bytes);
     }
 
     private String readString(ByteBuf buf) {
-        int len = buf.readShort();
+        int len = buf.readUnsignedShort();
+        if (len > 32767 || len > buf.readableBytes()) throw new IllegalArgumentException("string length");
         byte[] bytes = new byte[len];
         buf.readBytes(bytes);
         return new String(bytes, java.nio.charset.StandardCharsets.UTF_8);

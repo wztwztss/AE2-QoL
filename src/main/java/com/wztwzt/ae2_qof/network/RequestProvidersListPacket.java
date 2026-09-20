@@ -3,7 +3,6 @@ package com.wztwzt.ae2_qof.network;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
@@ -32,45 +31,8 @@ import io.netty.buffer.ByteBuf;
 
 public class RequestProvidersListPacket implements IMessage {
 
-    // 供应器列表缓存（#5）：按网格缓存收集结果，短时间窗口内复用，降低巨网络重复扫描开销
-    private static final ConcurrentHashMap<IGrid, CachedProviders> PROVIDER_CACHE = new ConcurrentHashMap<>();
-    private static final long PROVIDER_CACHE_TTL_MS = 1000L;
-
-    /**
-     * P2-030：服务器/单机世界停止时清空供应器缓存。
-     * 缓存以 IGrid 为键常驻，若不清空，单机切换存档后静态缓存会短时间持有旧世界的网格对象。
-     */
-    public static void clearCache() {
-        PROVIDER_CACHE.clear();
-    }
-
-    private static final class CachedProviders {
-
-        final List<Long> ids;
-        final List<String> names;
-        final List<Integer> emptySlots;
-        final List<Integer> totalSlots;
-        final List<String> locationKeys;
-        final List<ItemStack> icons;
-        final List<ICraftingProvider> providers;
-        final long timestamp;
-
-        CachedProviders(List<Long> ids, List<String> names, List<Integer> emptySlots, List<Integer> totalSlots,
-            List<String> locationKeys, List<ItemStack> icons, List<ICraftingProvider> providers) {
-            this.ids = ids;
-            this.names = names;
-            this.emptySlots = emptySlots;
-            this.totalSlots = totalSlots;
-            this.locationKeys = locationKeys;
-            this.icons = icons;
-            this.providers = providers;
-            this.timestamp = System.currentTimeMillis();
-        }
-
-        boolean isFresh() {
-            return System.currentTimeMillis() - timestamp < PROVIDER_CACHE_TTL_MS;
-        }
-    }
+    /** Kept for the shutdown hook; provider slots/acceptance are sampled per request. */
+    public static void clearCache() {}
 
     private ItemStack[] recipeInputs;
     private ItemStack[] recipeOutputs;
@@ -215,46 +177,15 @@ public class RequestProvidersListPacket implements IMessage {
                             .toString());
                 }
 
-                // #5：按网格缓存供应器收集结果，1 秒内复用，降低巨网络重复扫描开销
-                List<Long> ids;
-                List<Integer> totalSlots;
-                List<String> locationKeys;
-                List<ItemStack> icons;
-                List<String> names;
-                List<Integer> emptySlots;
-                List<ICraftingProvider> providers;
-                CachedProviders cached = PROVIDER_CACHE.get(grid);
-                if (cached != null && cached.isFresh()) {
-                    ids = cached.ids;
-                    names = cached.names;
-                    emptySlots = cached.emptySlots;
-                    totalSlots = cached.totalSlots;
-                    locationKeys = cached.locationKeys;
-                    icons = cached.icons;
-                    providers = cached.providers;
-                } else {
-                    ids = new ArrayList<Long>();
-                    names = new ArrayList<String>();
-                    emptySlots = new ArrayList<Integer>();
-                    totalSlots = new ArrayList<Integer>();
-                    locationKeys = new ArrayList<String>();
-                    icons = new ArrayList<ItemStack>();
-                    providers = new ArrayList<ICraftingProvider>();
-                    collectProviders(grid, ids, names, emptySlots, totalSlots, locationKeys, icons, providers);
-                    // P2-030：过期条目不会主动失效，写入前先淘汰已过期项，避免缓存缓慢积累。
-                    if (PROVIDER_CACHE.size() > 64) {
-                        PROVIDER_CACHE.clear();
-                    } else {
-                        java.util.Iterator<java.util.Map.Entry<IGrid, CachedProviders>> it = PROVIDER_CACHE.entrySet()
-                            .iterator();
-                        while (it.hasNext()) {
-                            if (!it.next()
-                                .getValue().isFresh()) {
-                                it.remove();
-                            }
-                        }
-                    }
-                }
+                // Never cache permissions or empty-slot/acceptance state across requests.
+                List<Long> ids = new ArrayList<>();
+                List<Integer> totalSlots = new ArrayList<>();
+                List<String> locationKeys = new ArrayList<>();
+                List<ItemStack> icons = new ArrayList<>();
+                List<String> names = new ArrayList<>();
+                List<Integer> emptySlots = new ArrayList<>();
+                List<ICraftingProvider> providers = new ArrayList<>();
+                collectProviders(grid, ids, names, emptySlots, totalSlots, locationKeys, icons, providers);
 
                 // F1: keep only providers that accept this encoded pattern
                 ItemStack encodedForFilter = readEncodedPattern(container);
@@ -265,7 +196,7 @@ public class RequestProvidersListPacket implements IMessage {
                             accept.add(i);
                         }
                     }
-                    if (!accept.isEmpty()) {
+                    { // Empty acceptance means no candidate, never the original unfiltered list.
                         List<Long> fIds = new ArrayList<Long>(accept.size());
                         List<String> fNames = new ArrayList<String>(accept.size());
                         List<Integer> fEmpty = new ArrayList<Integer>(accept.size());
@@ -288,96 +219,15 @@ public class RequestProvidersListPacket implements IMessage {
                         icons = fIcons;
                     }
                 }
-                final List<Long> filteredIds = ids;
-                final List<String> filteredNames = names;
-                final List<Integer> filteredEmptySlots = emptySlots;
-                final List<Integer> filteredTotalSlots = totalSlots;
-                final List<String> filteredLocationKeys = locationKeys;
-                final List<ItemStack> filteredIcons = icons;
-                // 尺寸预算（#57）：1.7.10 S3F 自定义负载长度为 short（≤32767 字节），
-                // 超大网络的供应器名列表可能超限 → 编码/发送失败、客户端选择界面静默无响应。
-                // 超限时优先保留「有空槽」的提供器（自动上传才能真正落目标），无空槽的靠后丢弃；
-                // 最终列表维持原顺序便于对照。
-                final byte[] rmBytes = recipeMap != null ? recipeMap.getBytes(java.nio.charset.StandardCharsets.UTF_8)
-                    : null;
-                // 图标是可选增强：按完整图标估算预算，放不下就整包退化为不带图标发送，
-                // 保证列表本身永远能送达（图标只是显示优化）。
-                final int baseUsedNoIcon = 4 + 1 + 1 + (rmBytes != null ? 2 + rmBytes.length : 1);
-                final int iconBytes = estimateIconBytes(filteredIcons, filteredIds.size());
-                final int baseUsed = baseUsedNoIcon + 4 + iconBytes;
-                int totalUsed = baseUsed;
-                boolean overflow = false;
-                for (int i = 0; i < filteredIds.size(); i++) {
-                    totalUsed += entryBytes(filteredNames.get(i), filteredIcons, i);
-                    if (totalUsed > 32000) {
-                        overflow = true;
-                        break;
-                    }
+                ProvidersListS2CPacket response = new ProvidersListS2CPacket(
+                    ids, names, emptySlots, totalSlots, locationKeys, icons, recipeMap, message.forceGui);
+                if (response.ids.size() < ids.size()) {
+                    player.addChatMessage(new net.minecraft.util.ChatComponentText(
+                        "[AE2 QoL] Provider list limited to " + response.ids.size() + "/" + ids.size()
+                            + " entries by packet budget; automatic selection disabled."));
                 }
-
-                // 图标整体放不下时，去掉图标重算预算（保留全部条目，仅牺牲图标显示）
-                boolean iconsDropped = false;
-                if (overflow && iconBytes > 0) {
-                    iconsDropped = true;
-                    totalUsed = baseUsedNoIcon + 4;
-                    overflow = false;
-                    for (int i = 0; i < filteredIds.size(); i++) {
-                        totalUsed += entryBytesNoIcon(filteredNames.get(i));
-                        if (totalUsed > 32000) {
-                            overflow = true;
-                            break;
-                        }
-                    }
-                }
-
-                List<Integer> keep = new ArrayList<Integer>();
-                if (!overflow) {
-                    for (int i = 0; i < filteredIds.size(); i++) {
-                        keep.add(i);
-                    }
-                } else {
-                    // 优先保留有空槽的提供器：按空槽数降序稳定排序后贪心选取，最后还原原顺序
-                    Integer[] idxArr = new Integer[filteredIds.size()];
-                    for (int i = 0; i < filteredIds.size(); i++) {
-                        idxArr[i] = i;
-                    }
-                    Arrays.sort(idxArr, (a, b) -> Integer.compare(filteredEmptySlots.get(b), filteredEmptySlots.get(a)));
-                    int budget = iconsDropped ? baseUsedNoIcon + 4 : baseUsed;
-                    for (Integer i : idxArr) {
-                        int add = iconsDropped ? entryBytesNoIcon(filteredNames.get(i))
-                            : entryBytes(filteredNames.get(i), filteredIcons, i);
-                        if (budget + add > 32000) {
-                            continue;
-                        }
-                        keep.add(i);
-                    }
-                    keep.sort(Integer::compare);
-                    MyMod.LOG.warn(
-                        "[Upload] providers list truncated to fit packet budget (kept {} with empty-slot priority): {} -> {}",
-                        keep.size(), filteredIds.size(), keep.size());
-                }
-
-                List<Long> outIds = new ArrayList<Long>(keep.size());
-                List<String> outNames = new ArrayList<String>(keep.size());
-                List<Integer> outEmpty = new ArrayList<Integer>(keep.size());
-                List<Integer> outTotal = new ArrayList<Integer>(keep.size());
-                List<String> outKeys = new ArrayList<String>(keep.size());
-                List<ItemStack> outIcons = new ArrayList<ItemStack>(keep.size());
-                for (Integer i : keep) {
-                    outIds.add(filteredIds.get(i));
-                    outNames.add(filteredNames.get(i));
-                    outEmpty.add(filteredEmptySlots.get(i));
-                    outTotal.add(filteredTotalSlots.size() > i ? filteredTotalSlots.get(i) : filteredEmptySlots.get(i));
-                    outKeys.add(i < filteredLocationKeys.size() ? filteredLocationKeys.get(i) : null);
-                    ItemStack icon = filteredIcons.size() > i ? filteredIcons.get(i) : null;
-                    outIcons.add(iconsDropped ? null : icon);
-                }
-
-                ModNetwork.CHANNEL.sendTo(
-                    new ProvidersListS2CPacket(outIds, outNames, outEmpty, outTotal, outKeys, outIcons, recipeMap,
-                        message.forceGui),
-                    player);
-                MyMod.LOG.info("[Upload] providers list sent: count={}, recipeMap={}", outIds.size(), recipeMap);
+                ModNetwork.CHANNEL.sendTo(response, player);
+                MyMod.LOG.debug("[Upload] providers list sent: count={}, recipeMap={}", response.ids.size(), recipeMap);
             } catch (Throwable t) {
                 MyMod.LOG.error("Providers list request failed", t);
             }
@@ -553,35 +403,6 @@ public class RequestProvidersListPacket implements IMessage {
         }
 
         /** 估算这批图标在包里的字节占用；含 null（1 字节标记）。 */
-        private static int estimateIconBytes(List<ItemStack> icons, int entryCount) {
-            if (icons == null || icons.isEmpty()) return 0;
-            int total = 0;
-            for (int i = 0; i < entryCount && i < icons.size(); i++) {
-                ItemStack stack = icons.get(i);
-                if (stack == null) {
-                    total += 1;
-                    continue;
-                }
-                // 物品栈序列化：id + size + damage + NBT 粗略按 64 字节估算
-                total += 64 + (stack.stackTagCompound != null ? 256 : 0);
-            }
-            return total;
-        }
-
-        private static int entryBytes(String name, List<ItemStack> icons, int index) {
-            int bytes = entryBytesNoIcon(name);
-            if (icons != null && index < icons.size() && icons.get(index) != null) {
-                ItemStack stack = icons.get(index);
-                bytes += 64 + (stack.stackTagCompound != null ? 256 : 0);
-            } else {
-                bytes += 1;
-            }
-            return bytes;
-        }
-
-        private static int entryBytesNoIcon(String name) {
-            return 8 + 2 + (name == null ? 0 : name.getBytes(java.nio.charset.StandardCharsets.UTF_8).length) + 4;
-        }
         private static int estimateEmptySlots(ICraftingProvider provider) {
             // 与 UploadPatternPacket 一致：优先统计专属样板槽（IInterfaceViewable.getPatterns()），
             // 避免把 GT/PH 机器 IInventory 原料缓存槽误计为样板空位

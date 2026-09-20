@@ -68,6 +68,7 @@ public class MergedTerminalScrollReplacePacket implements IMessage {
                 try {
                     Container container = player.openContainer;
                     if (!(container instanceof ContainerMergedTerminal cmt)) return;
+                    if (message.direction == 0) return;
                     if (message.slotNumber < 0 || message.slotNumber >= container.inventorySlots.size()) return;
 
                     Slot slot = container.inventorySlots.get(message.slotNumber);
@@ -86,7 +87,7 @@ public class MergedTerminalScrollReplacePacket implements IMessage {
                     int cur = -1;
                     for (int i = 0; i < alternatives.size(); i++) {
                         ItemStack a = alternatives.get(i);
-                        if (ItemStack.areItemStacksEqual(a, current)) {
+                        if (com.wztwzt.ae2_qof.util.ItemIdentity.same(a, current)) {
                             cur = i;
                             break;
                         }
@@ -113,7 +114,7 @@ public class MergedTerminalScrollReplacePacket implements IMessage {
 
     /**
      * 查询 ME 网络中与指定槽位物品同 OreDict 的候选列表。
-     * 供滚轮替换与候选预览共用；返回副本，不含当前物品本身。
+     * 供滚轮替换与候选预览共用；返回稳定排序副本，包含当前类型（忽略数量、保留 NBT 身份）。
      * <p>
      * 候选全部取自当前终端 ME 网络的库存列表，因此换入的必定是网络里已存在的物品；
      * 面板虚拟格只是样板的「表示」，本身不持有真实物品，故不存在凭空生成物品的路径。
@@ -140,11 +141,11 @@ public class MergedTerminalScrollReplacePacket implements IMessage {
             int[] currentOreIds = OreDictionary.getOreIDs(current);
             if (currentOreIds.length == 0) return result;
 
+            java.util.Set<com.wztwzt.ae2_qof.util.ItemIdentity> seen = new java.util.HashSet<>();
             for (IAEItemStack aeStack : items) {
-                if (aeStack == null) continue;
+                if (aeStack == null || aeStack.getStackSize() <= 0) continue;
                 ItemStack is = aeStack.getItemStack();
                 if (is == null || is.getItem() == null) continue;
-                if (ItemStack.areItemStacksEqual(is, current)) continue;
 
                 int[] otherOreIds = OreDictionary.getOreIDs(is);
                 if (otherOreIds.length == 0) continue;
@@ -159,8 +160,14 @@ public class MergedTerminalScrollReplacePacket implements IMessage {
                     }
                     if (match) break;
                 }
-                if (match) result.add(is.copy());
+                if (match && seen.add(com.wztwzt.ae2_qof.util.ItemIdentity.of(is))) result.add(is.copy());
             }
+            // Include the current ghost type even if its physical stock just reached zero.
+            if (seen.add(com.wztwzt.ae2_qof.util.ItemIdentity.of(current))) result.add(current.copy());
+            result.sort(java.util.Comparator
+                .comparingInt((ItemStack stack) -> net.minecraft.item.Item.getIdFromItem(stack.getItem()))
+                .thenComparingInt(ItemStack::getItemDamage)
+                .thenComparing(stack -> cn.dancingsnow.aeinfinitycell.storage.NbtKey.of(stack.getTagCompound()).toString()));
         } catch (Throwable ignored) {}
         return result;
     }

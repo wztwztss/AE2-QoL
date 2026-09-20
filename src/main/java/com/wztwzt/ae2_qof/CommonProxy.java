@@ -204,10 +204,18 @@ public class CommonProxy {
     }
 
     public void init(FMLInitializationEvent event) {
+        // v7 贴图（客户端，方案 B）：MixinTextureMap 在 TextureMap.registerIcons 阶段把 25 张贴图
+        // 混入方块图集的注册列表，资源包正常参与解析；ModTextures.init() 只负责预创建容器。
+        // 是否启用 v7 外观仍由 ModTextures.isReady()（v7_textures=auto/on/off）决定。
+        if (cpw.mods.fml.common.FMLCommonHandler.instance().getEffectiveSide().isClient()) {
+            com.wztwzt.ae2_qof.util.ModTextures.init();
+        }
         NetworkRegistry.INSTANCE.registerGuiHandler(MyMod.instance, new MergedGuiHandler());
         cpw.mods.fml.common.FMLCommonHandler.instance()
             .bus()
             .register(new WirelessBlockEventListener());
+        cpw.mods.fml.common.FMLCommonHandler.instance().bus().register(
+            com.wztwzt.ae2_qof.wireless.link.WirelessBlockLinkManager.instance());
 
         try {
             maintenanceHatchUniversal = new AE2MaintenanceHatchUniversal(
@@ -435,6 +443,15 @@ public class CommonProxy {
     }
 
     public void postInit(FMLPostInitializationEvent event) {
+        // v7 贴图：postInit 时资源已全部加载完成，此后才允许做「25 张 PNG 是否齐全」的自动判定。
+        // 放在这里而非 init，是因为 init 阶段资源可能仍处于 reload 中间态，会导致误判为可用。
+        if (cpw.mods.fml.common.FMLCommonHandler.instance().getEffectiveSide().isClient()) {
+            try {
+                com.wztwzt.ae2_qof.util.ModTextures.allowResourceCheck();
+            } catch (Throwable t) {
+                MyMod.LOG.warn("[AE2QoL] v7 texture resource check init failed", t);
+            }
+        }
     }
 
     public void serverStarting(FMLServerStartingEvent event) {

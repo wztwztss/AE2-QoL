@@ -17,52 +17,57 @@ import cn.dancingsnow.aeinfinitycell.AEInfinityCell;
 public final class InfinityCellStorage {
 
     private static final String DIR_NAME = "AEInfinityCell";
-    private static final InfinityCellStorage INSTANCE = new InfinityCellStorage();
+    // Failed writes must not be carried into another integrated-server world.
+    private static final Map<File, InfinityCellStorage> STORES = new LinkedHashMap<>();
+    private final File directory;
 
     private final Map<UUID, InfinityCellRecord> cache = new LinkedHashMap<UUID, InfinityCellRecord>();
     private final Set<UUID> dirty = new LinkedHashSet<UUID>();
 
-    private InfinityCellStorage() {}
-
-    public static InfinityCellStorage getInstance() {
-        return INSTANCE;
+    InfinityCellStorage(File directory) {
+        this.directory = directory;
     }
 
-    public InfinityCellRecord getOrCreate(UUID id) {
+    public static synchronized InfinityCellStorage getInstance() {
+        File root = DimensionManager.getCurrentSaveRootDirectory();
+        if (root == null) {
+            throw new IllegalStateException("Infinity cell access without a server save directory");
+        }
+        File dir = new File(root, "data/" + DIR_NAME).getAbsoluteFile();
+        return STORES.computeIfAbsent(dir, InfinityCellStorage::new);
+    }
+
+    public synchronized InfinityCellRecord getOrCreate(UUID id) {
         InfinityCellRecord cached = cache.get(id);
         if (cached != null) {
             return cached;
         }
         InfinityCellRecord record = loadFromDisk(id);
-        cache.put(id, record);
+        // Read failures are unavailable, never new empty writable cells.
+        if (record != null) cache.put(id, record);
         return record;
     }
 
-    public void markDirty(UUID id) {
+    public synchronized void markDirty(UUID id) {
         if (cache.containsKey(id)) {
             dirty.add(id);
         }
     }
 
-    public void saveAll() {
-        if (dirty.isEmpty()) {
-            return;
+    /** Returns false while any record still requires a successful durable write. */
+    public synchronized boolean saveAll() {
+        if (dirty.isEmpty()) return true;
+        if (!directory.isDirectory() && !directory.mkdirs()) {
+            AEInfinityCell.LOG.error("Cannot create infinity cell directory: {}", directory);
+            return false;
         }
-        File dir = dataDir();
-        if (dir == null) {
-            return;
-        }
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-        Set<UUID> toSave = new LinkedHashSet<UUID>(dirty);
-        dirty.clear();
-        for (UUID id : toSave) {
+        for (UUID id : new LinkedHashSet<>(dirty)) {
             InfinityCellRecord record = cache.get(id);
-            if (record != null) {
-                saveToDisk(id, record, dir);
+            if (record != null && saveToDisk(id, record, directory)) {
+                dirty.remove(id);
             }
         }
+        return dirty.isEmpty();
     }
 
     public boolean hasCellFile(UUID id) {
@@ -70,9 +75,13 @@ public final class InfinityCellStorage {
         return file != null && file.exists();
     }
 
-    public void clear() {
+    public synchronized void clear() {
+        if (!dirty.isEmpty()) {
+            AEInfinityCell.LOG.error("Retaining {} unsaved infinity cells for {}. Fix disk access before shutdown!",
+                dirty.size(), directory);
+            return;
+        }
         cache.clear();
-        dirty.clear();
     }
 
     private InfinityCellRecord loadFromDisk(UUID id) {
@@ -83,31 +92,27 @@ public final class InfinityCellStorage {
         }
         try {
             NBTTagCompound tag = CompressedStreamTools.read(file);
-            if (tag != null) {
-                record.readFromNBT(tag);
-            }
-        } catch (IOException e) {
-            AEInfinityCell.LOG.error("Failed to load cell data for {}: {}", id, e.getMessage());
+            if (tag == null) throw new IOException("Missing root NBT in existing cell file");
+            record.readFromNBT(tag);
+        } catch (IOException | RuntimeException e) {
+            AEInfinityCell.LOG.error("Infinity cell {} unavailable; original file left untouched: {}", id, file, e);
+            return null;
         }
         return record;
     }
 
-    private void saveToDisk(UUID id, InfinityCellRecord record, File dir) {
+    private boolean saveToDisk(UUID id, InfinityCellRecord record, File dir) {
         File file = new File(dir, id.toString() + ".dat");
         try {
             CompressedStreamTools.safeWrite(record.writeToNBT(), file);
-        } catch (IOException e) {
-            AEInfinityCell.LOG.error("Failed to save cell data for {}: {}", id, e.getMessage());
+            return true;
+        } catch (IOException | RuntimeException e) {
+            AEInfinityCell.LOG.error("Failed to save cell {}; kept dirty for retry: {}", id, file, e);
+            return false;
         }
     }
 
     private File cellFile(UUID id) {
-        File dir = dataDir();
-        return dir == null ? null : new File(dir, id.toString() + ".dat");
-    }
-
-    private static File dataDir() {
-        File saveRoot = DimensionManager.getCurrentSaveRootDirectory();
-        return saveRoot == null ? null : new File(saveRoot, "data/" + DIR_NAME);
+        return new File(directory, id.toString() + ".dat");
     }
 }

@@ -210,7 +210,7 @@ public final class QuestDetectLogic {
     /** 按候选键从网络收集实际存在的物品（PERCENT_99 近似忽略 NBT，多给无害由任务侧过滤）。 */
     private static List<ItemStack> gatherAvailable(IItemList<IAEItemStack> all, List<IAEItemStack> keys) {
         List<ItemStack> available = new ArrayList<>();
-        Set<String> dedupe = new HashSet<>();
+        Set<com.wztwzt.ae2_qof.util.ItemIdentity> dedupe = new HashSet<>();
         for (IAEItemStack key : keys) {
             if (available.size() >= MAX_AVAILABLE) break;
             try {
@@ -218,7 +218,7 @@ public final class QuestDetectLogic {
                     if (found == null || found.getStackSize() <= 0) continue;
                     ItemStack stack = found.getItemStack();
                     if (stack == null || stack.stackSize <= 0) continue;
-                    if (!dedupe.add(stack.getItem() + "|" + stack.getItemDamage())) continue;
+                    if (!dedupe.add(com.wztwzt.ae2_qof.util.ItemIdentity.of(stack))) continue;
                     available.add(stack);
                     if (available.size() >= MAX_AVAILABLE) break;
                 }

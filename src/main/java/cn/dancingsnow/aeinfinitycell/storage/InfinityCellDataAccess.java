@@ -48,7 +48,6 @@ public final class InfinityCellDataAccess {
         }
 
         InfinityCellStorage storage = InfinityCellStorage.getInstance();
-        int migrated = 0;
         for (Map.Entry<UUID, InfinityCellRecord> entry : legacy.getRecords()
             .entrySet()) {
             UUID id = entry.getKey();
@@ -56,27 +55,44 @@ public final class InfinityCellDataAccess {
                 continue;
             }
             InfinityCellRecord dest = storage.getOrCreate(id);
+            if (dest == null) {
+                AEInfinityCell.LOG.error("Legacy migration stopped: unreadable cell {}", id);
+                return;
+            }
             dest.readFromNBT(
                 entry.getValue()
                     .writeToNBT());
             storage.markDirty(id);
-            migrated++;
         }
 
-        if (migrated > 0) {
-            storage.saveAll();
-            deleteLegacyFile();
+        if (!storage.saveAll()) {
+            AEInfinityCell.LOG.error("Legacy infinity cell migration incomplete; original file retained");
+            return;
         }
+        for (UUID id : legacy.getRecords().keySet()) {
+            if (!storage.hasCellFile(id) || storage.getOrCreate(id) == null) {
+                AEInfinityCell.LOG.error("Legacy migration verification failed for {}; original retained", id);
+                return;
+            }
+        }
+        archiveLegacyFile();
     }
 
-    private static void deleteLegacyFile() {
+    private static void archiveLegacyFile() {
         File saveRoot = DimensionManager.getCurrentSaveRootDirectory();
         if (saveRoot == null) {
             return;
         }
         File legacyFile = new File(saveRoot, "data/" + InfinityCellLegacySavedData.DATA_NAME + ".dat");
-        if (legacyFile.exists() && !legacyFile.delete()) {
-            AEInfinityCell.LOG.warn("Could not delete legacy cell data file: {}", legacyFile.getPath());
+        if (!legacyFile.isFile()) return;
+        File backup = new File(legacyFile.getParentFile(), legacyFile.getName() + ".migrated-"
+            + System.currentTimeMillis() + ".bak");
+        try {
+            // Never replace an existing backup or delete the only legacy copy.
+            java.nio.file.Files.move(legacyFile.toPath(), backup.toPath());
+            AEInfinityCell.LOG.info("Legacy infinity cell data archived to {}", backup);
+        } catch (java.io.IOException e) {
+            AEInfinityCell.LOG.error("Could not archive legacy cell data; original retained: {}", legacyFile, e);
         }
     }
 

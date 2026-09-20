@@ -153,12 +153,19 @@ public class WirelessBlockLinkManager {
         }
     }
 
+    @cpw.mods.fml.common.eventhandler.SubscribeEvent
+    public void onServerTick(cpw.mods.fml.common.gameevent.TickEvent.ServerTickEvent event) {
+        if (event.phase == cpw.mods.fml.common.gameevent.TickEvent.Phase.END) processAll();
+    }
+
     public void processAll() {
         tickCounter++;
-        if (tickCounter < 5) return;
+        if (tickCounter < 25) return;
         tickCounter = 0;
 
-        for (Map.Entry<String, List<WirelessBlockLinkData>> entry : blockLinks.entrySet()) {
+        Iterator<Map.Entry<String, List<WirelessBlockLinkData>>> channels = blockLinks.entrySet().iterator();
+        while (channels.hasNext()) {
+            Map.Entry<String, List<WirelessBlockLinkData>> entry = channels.next();
             String freq = entry.getKey();
             List<WirelessBlockLinkData> links = entry.getValue();
 
@@ -181,9 +188,10 @@ public class WirelessBlockLinkManager {
                 String connKey = freq + ":" + data.getPositionKey();
 
                 World targetWorld = getWorld(data.dimension);
-                if (targetWorld == null) {
+                if (targetWorld == null || !targetWorld.getChunkProvider()
+                    .chunkExists(data.x >> 4, data.z >> 4)) {
+                    // Temporary unload disconnects only the live edge, not its binding.
                     disconnect(connKey);
-                    linkIt.remove();
                     continue;
                 }
 
@@ -194,15 +202,9 @@ public class WirelessBlockLinkManager {
                     continue;
                 }
 
-                if (!targetWorld.getChunkProvider()
-                    .chunkExists(data.x >> 4, data.z >> 4)) {
-                    continue;
-                }
-
                 IGridNode targetNode = getGridNode(te, data.direction);
                 if (targetNode == null) {
                     disconnect(connKey);
-                    linkIt.remove();
                     continue;
                 }
 
@@ -237,7 +239,7 @@ public class WirelessBlockLinkManager {
             }
 
             if (links.isEmpty()) {
-                blockLinks.remove(freq);
+                channels.remove();
             }
         }
     }
@@ -286,5 +288,6 @@ public class WirelessBlockLinkManager {
         }
         blockLinks.clear();
         activeConnections.clear();
+        tickCounter = 0;
     }
 }

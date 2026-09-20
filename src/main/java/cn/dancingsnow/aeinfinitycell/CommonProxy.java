@@ -62,16 +62,18 @@ public class CommonProxy {
 
     public void serverStopping(FMLServerStoppingEvent event) {
         com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveNetworkManager.saveAllStats();
-        InfinityCellStorage.getInstance()
-            .saveAll();
-        InfinityCellStorage.getInstance()
-            .clear();
+        InfinityCellStorage storage = InfinityCellStorage.getInstance();
+        if (!storage.saveAll()) {
+            AEInfinityCell.LOG.error("SERVER STOP: infinity cell save failed. Unsaved records retained in memory; "
+                + "do not terminate the JVM before recovering disk access and retrying the save.");
+        }
+        storage.clear();
         ServerWorldAccess.clear();
     }
 
     @SubscribeEvent
     public void onWorldSave(WorldEvent.Save event) {
-        if (event.world.provider.dimensionId == 0) {
+        if (!event.world.isRemote && event.world.provider.dimensionId == 0) {
             InfinityCellStorage.getInstance()
                 .saveAll();
         }

@@ -3,17 +3,9 @@ package com.wztwzt.ae2_qof.network;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 
-import com.google.common.collect.ImmutableCollection;
-
-import appeng.api.networking.IGrid;
-import appeng.api.networking.crafting.ICraftingGrid;
-import appeng.api.networking.crafting.ICraftingPatternDetails;
 import appeng.api.storage.data.IAEItemStack;
-import appeng.container.implementations.ContainerCraftAmount;
 import appeng.core.AELog;
-import appeng.core.sync.GuiBridge;
 import appeng.helpers.WirelessTerminalGuiObject;
-import appeng.util.Platform;
 import appeng.util.item.AEItemStack;
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
@@ -76,42 +68,15 @@ public class RequestCraftingPacket implements IMessage {
                 return;
             }
 
-            IGrid grid = terminal.getGrid();
-            if (grid == null) {
-                sendResponse(player, CraftingResponsePacket.RESULT_NOT_CRAFTABLE, itemName(message.targetStack));
-                return;
-            }
-
-            ICraftingGrid cg = grid.getCache(ICraftingGrid.class);
-            if (cg == null) {
-                sendResponse(player, CraftingResponsePacket.RESULT_NOT_CRAFTABLE, itemName(message.targetStack));
-                return;
-            }
-
             IAEItemStack target = AEItemStack.create(message.targetStack);
             if (target == null) {
                 sendResponse(player, CraftingResponsePacket.RESULT_NOT_CRAFTABLE, itemName(message.targetStack));
                 return;
             }
 
-            // 检查是否有 pattern 可以合成该物品
-            ImmutableCollection<ICraftingPatternDetails> patterns = cg.getCraftingFor(target, null, 0, player.worldObj);
-            if (patterns == null || patterns.isEmpty()) {
-                sendResponse(player, CraftingResponsePacket.RESULT_NOT_CRAFTABLE, itemName(message.targetStack));
-                return;
-            }
-
-            int slotIndex = ServerTerminalHelper.findTerminalSlot(player);
-            if (slotIndex < 0) {
-                sendResponse(player, CraftingResponsePacket.RESULT_NOT_CRAFTABLE, itemName(message.targetStack));
-                return;
-            }
-
-            Platform.openGUI(player, null, null, GuiBridge.GUI_CRAFTING_AMOUNT, slotIndex);
-
-            if (player.openContainer instanceof ContainerCraftAmount cca) {
-                cca.setItemToCraft(target);
-                cca.detectAndSendChanges();
+            // 与「世界中键取物」共用同一段开界面逻辑：内部会再校验样板是否存在，
+            // 有样板才会打开 gui.craftAmount，否则返回 false。
+            if (ServerTerminalHelper.openCraftAmountIfCraftable(player, terminal, target)) {
                 sendResponse(player, CraftingResponsePacket.RESULT_SUCCESS, itemName(message.targetStack));
                 return;
             }

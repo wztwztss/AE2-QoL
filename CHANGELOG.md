@@ -1,3 +1,708 @@
+## 工作区决策记录 2026-09-20 (9) - fix47：世界中键取物的「可合成即打开下单页」
+
+> 未提交、未推送；产物 `build/libs/AE2-QoL-3.19.0-fix47.jar`。
+
+### 需求
+
+对着**世界里的方块**按鼠标中键（AE2 原生 pick-block）时：
+
+| 情况 | 改动前 | 改动后 |
+|---|---|---|
+| 背包里已有该物品 | 原版切槽 / 从 ME 补齐 | 不变 |
+| 网络有存量 | 取到手上 | 不变 |
+| 网络没存量、**有合成样板** | 完全没反应 | **打开「要合成多少个」界面** |
+| 网络没存量、也没样板 | 完全没反应 | 不变 |
+
+只打开数量输入界面，不会代为下单；玩家仍需自己填数量并点确认。
+
+### 实现
+
+- 新增 `mixin/ae/MixinPacketPickBlock.java`，注入 AE2 `PacketPickBlock.serverPacketData` 的 `HEAD`
+  （`remap = false`，方法名按生产字节码写成完整描述符形式）。
+- 判定顺序刻意做成「能不管就不管」，除目标情况外一律放行给原版：
+  解析不出物品 → 放行；背包已有同物品 → 放行；没有可用无线终端 → 放行（保留原版「未找到终端」提示）；
+  网络还有存量 → 放行；剩下「没存量 + 有样板」才接管并 `cancel()`。
+- 被点物品取自 `PacketPickBlock.pickedBlock` 私有字段，用反射读取（取不到就放行原版），
+  避免字段改名导致 Mixin 应用期硬失败。
+- 开界面逻辑抽到 `ServerTerminalHelper.openCraftAmountIfCraftable(...)`，与既有 NEI 中键下单
+  `RequestCraftingPacket` 共用同一段代码，消除重复实现。
+- 新增 `ServerTerminalHelper.hasNetworkStock(...)`：只做 `SIMULATE` 读取、不经耗电判定，
+  避免「终端没电」被误判成「网络没存量」而弹出合成界面。
+- 终端查找顺序对齐 AE2 原版（先饰品栏 Baubles、再主背包），并把饰品栏槽位换算为 AE2 的
+  虚拟索引 `100012 + i`；开界面用的槽位直接取「已解析终端自身的槽位」。
+  这两点确保「校验样板的网络」与「界面里实际操作的网络」始终是同一个终端——
+  玩家同时带两个绑定不同网络的终端时才不会错判。
+- 已在 `gui.craftAmount` 中时直接返回成功、不重复打开：界面弹出有延迟，点击过快可能在
+  界面出现前连发包，重复打开会清空玩家已填的数量。
+- 整个注入体用 try/catch 包裹，任何异常都退化为「放行原版」，不会冒泡到网络线程。
+
+### 不改动的部分
+
+- 不改材质相关代码；不改 NEI 面板中键那条链路（`MixinPanelWidgetClick`）。
+- 不自动替玩家点「开始合成」。
+
+### 验证
+
+- `gradlew compileJava` + `gradlew build`（Java 17、`--offline`）均 `BUILD SUCCESSFUL`。
+- 已解包产物核对：新 Mixin class 已入包；反编译确认 Minecraft 成员引用已重混淆为
+  `field_71071_by` / `field_70462_a` / `func_77969_a` / `func_77970_a`，运行期不会静默失效。
+- 版本号、`mcmod.info`、README 同步 `3.19.0-fix47`。
+
+### 线程说明（复核结论）
+
+已查 FML 1.7.10 字节码：`FMLEventChannel.fireRead` → `EventBus.post(ServerCustomPacketEvent)`，
+与 AE2 原版取物在同一调用上下文；本注入做的又是原版逻辑的子集（读背包、模拟取物、查样板、开界面），
+因此不额外归队线程，行为与原版一致。
+
+---
+
+## 工作区决策记录 2026-09-19 (8) - fix46：修复方案 B「装包后机器变透明」
+
+> 未提交、未推送；产物 `build/libs/AE2-QoL-3.19.0-fix46.jar`。
+
+### 现象
+
+用户部署 fix45 并启用完整 25 张资源包后，机器方块**变成透明（渲染不出来）**；
+不装资源包时正常显示 GT 原版外观。
+
+### 根因（实据）
+
+用户 14:46 那次游戏日志中 25 张贴图全部输出：
+
+```
+[AE2QoL-TEX] getIcon HIT gregtech:blocks/ae2qol/universal_maintenance_hatch/TOP UV=[0.0,0.0]-[0.0,0.0]
+```
+
+UV 宽度与高度都是 0，说明拿到的是**从未被装订进图集**的空 sprite（尺寸 0×0），
+渲染出来即为透明。资源包本身无问题：25 张 PNG 均为 16×16、全不透明、路径正确。
+
+代码根因：`MixinTextureMap` 里用了「只注册一次」的静态开关。而 `TextureMap.registerIcons()`
+开头会 `mapRegisteredSprites.clear()` 清空整张清单，且方块图集在启动期会经历多次
+`registerIcons()`（构造器一次、首次 `loadTextureAtlas` 一次且 `skipFirst` 跳过装载、
+之后每次 `refreshResources()` 再一次）。只注册一次 ⇒ 真正装载的那一轮清单里没有这 25 条 ⇒
+sprite 永远是 0×0。
+
+### 修复
+
+- 删除 `ae2qol$v7Registered` 开关，改为**每次 `registerIcons()` 都补注册**，与
+  `registerIcons()` 自身的 clear/重建语义对齐。
+- `ModTextures` 增加退化 UV 兜底：`getMaxU()/getMaxV()` 均为 0 时判定 sprite 未装订，
+  回退 GT 机箱而非返回空 sprite（避免再次出现透明）。
+- 兜底图标改为多级安全取值（机箱 → 固体钢机箱 → 原版石头），保证任何情况下都不返回 null；
+  1.7.10 的 GT 渲染器拿到 null icon 会提前 return 且不关闭 Tessellator，
+  下一帧抛 `Already tesselating!` 崩溃。
+- 版本号、`mcmod.info`、README 同步 `3.19.0-fix46`。
+
+### 验证
+
+- 完整离线构建 `BUILD SUCCESSFUL`。
+- 待用户在游戏内实测：装完整资源包后 8 台机器应正常显示分面贴图；
+  日志中 `getIcon HIT` 的 UV 应互不相同且非 0。
+
+---
+
+## 工作区决策记录 2026-09-19 (7) - fix45：材质方案 B 落地 + NEI 捕获修复
+
+> 未提交、未推送；产物 `build/libs/AE2-QoL-3.19.0-fix45.jar`（1,119,638 B，14:32 构建）。
+
+### 用户决策
+
+- 材质选定方案 B：Mixin 注入原版方块图集，保留 FRONT/TOP/SIDE 分面。
+- NEI 配方捕获挂空补丁必须修复。
+- 维护仓因 R2 覆层丢发光层、开关无效，回归 GT 原有状态逻辑。
+
+### 本轮改动
+
+- 新增 `client/MixinTextureMap`：在方块图集 `registerIcons()` 尾部补注册 25 张 v7 路径；
+  注册成功的图集图标回填到 `ModTextures.registerBaked(...)`。
+- `ModTextures` 渲染端改为优先读取 Mixin 回填图标；旧 stitch 事件通道保留但不再使用。
+- `AE2MaintenanceHatchUniversal` 删除无条件覆层，恢复 GT 发光/启用状态贴图；
+  `v7_textures` 开启时使用自有分面贴图，关闭或资源不可达时完全回到 GT 默认。
+- `MixinGuiRecipe` 同时注入 MCP 名 `updateScreen` 与运行时名 `func_73876_c`，
+  修复生产环境 NEI 当前配方捕获注入挂空。
+- 版本号与 `mcmod.info` 同步为 `3.19.0-fix45`。
+
+### 预期行为
+
+- 使用 `AE2QoL-v7-resourcepack.zip` 并置顶：8 台机器按三面分色渲染。
+- 不使用该包：自动模式回退 GT 默认外观；`v7_textures=off` 强制回退。
+- 不再覆盖 GT 原版维护仓共用覆层。
+
+### 待用户实测
+
+- 加包/不加包、`auto/on/off` 三种开关组合；
+- 观察日志 `[AE2QoL-TEX] getIcon HIT` 的 UV 是否互不相同；
+- 确认维护仓发光与启用状态是否恢复。
+
+---
+
+## 工作区决策记录 2026-09-19 (6) - 方案 R2：覆层同名覆盖（首次成功渲染 v7 图案，面位待修正）
+
+> 未发布、未提交、未推送。用户选定：先只跑通万能维护仓一台。
+
+### 实测结果（用户反馈）
+
+- **装 `AE2QoL-v7-overlay-test.zip` 后，万能维护仓的图案变了** —— 这是 8 轮排查以来 **v7 素材首次真正渲染到机器上**，证明「覆层同名覆盖」机制**确实可行**。
+- 问题：**只有正面变了，而且出现的面位不对（用户描述「这个正面应该是底面」）**。
+
+### 根因（对照 GT 源码确认）
+
+反编译 `MTEHatchMaintenance.getTexturesActive/Inactive`，GT 自己的写法是：
+
+```java
+TextureFactory.builder()
+    .addIcon(Textures.BlockIcons.OVERLAY_AUTOMAINTENANCE)
+    .extFacing()          // ← 关键：负责覆层的朝向/面位分配
+    .build()
+```
+
+而本 mod 之前写的是 `TextureFactory.of(OVERLAY_AUTOMAINTENANCE)` —— **漏了 `.extFacing()`**，覆层朝向信息丢失 → 被贴到默认面（即用户看到的错误面位）。此外还**叠了三张覆层**（FRONT/TOP/SIDE），实际是三个覆层叠加。
+
+### 本轮改动
+
+- `hatch/AE2MaintenanceHatchUniversal.java`：
+  - `getTexture(...)` 改为直接 `return super.getTexture(...)`（不注册任何新图标）。
+  - 新增 `v7Overlays(aBaseTexture)`，按 GT 原写法构建：`builder().addIcon(OVERLAY_AUTOMAINTENANCE).extFacing().build()`，**只用一张图**。
+  - `getTexturesActive`/`getTexturesInactive` 均委托 `v7Overlays`。
+- `util/ModTextures.java` / `client/render/V7TextureStitchHandler.java`：本轮未再改动（方案 R 版保留，8 台机器的 `front/top/side/bottom` 调用仍在，但**对万能维护仓已不生效**）。
+- 资源包新增 `AE2QoL-v7-overlay-test.zip`：覆盖 GT 覆层路径 `assets/gregtech/textures/blocks/iconsets/OVERLAY_AUTOMAINTENANCE{,_IDLE,_GLOW}.png`。
+
+### 产物与部署
+
+- `build/libs/AE2-QoL-3.19.0-fix44.jar`（1,117,273 B，11:00 构建），`BUILD SUCCESSFUL`；字节码核对 `builder→addIcon→extFacing→build` 调用链完整。
+- `AE2QoL-v7-overlay-test.zip`（2,733 B，零反斜杠）。
+- 两者均已部署到 GTNH 实例。
+
+### ⚠️ 方案层面的重要结论（影响后续所有决策）
+
+**GT 覆层机制不支持「分面」。** `OVERLAY_*` 是整体贴附、由 `extFacing()` 决定朝向，
+不存在「这个覆层只管正面、那个只管顶面」的概念。
+
+因此 v7 的 **FRONT / TOP / SIDE 三张不同设计，在覆层方案下无法分别呈现**。可选路径：
+
+| 方案 | 效果 | 代价 |
+|---|---|---|
+| **A. 每台机器挑 1 张 v7 图做整机覆层** | 整机统一图案，最贴近 Modernity | 放弃 v7 的分面设计 |
+| **B. Mixin 注入图集** | 保留分面 + 不影响 GT 其他机器 | 改动更深，需对 GTNH 2.9 + Angelica 调；这是之前提过的「方案 2」 |
+
+### 已知副作用（用户此前已确认接受）
+
+`OVERLAY_AUTOMAINTENANCE` 是 **GT 原版维护仓也在用**的覆层 —— 装包后
+**GT 原版维护仓外观也会一起变成 v7**。不装包时两者都是 GT 原样，无差异。
+
+### 下次进游戏判读
+
+- **不装 overlay-test 包** → 万能维护仓应为 GT 原版外观（验证「不加包无影响」）。
+- **装包 + 列表置顶** → 图案应贴在**正确的面**（对比上次的错误面位）。
+- 需回报：**图案出现在哪一面？整机统一还是只有一面？** 据此决定走 A 还是 B。
+
+---
+
+
+## 工作区决策记录 2026-09-19 (5) - 方案 R：改挂 gregtech 命名空间 + ae2qol 子目录（对标 Modernity 做法）
+
+> 未发布、未提交、未推送。用户选定方案 R：贴图放 `assets/gregtech/textures/blocks/ae2qol/<机器名>/`，代码用 gt 命名空间引用，只影响本 mod 这 8 台机器。
+
+### 决策依据：对比其他材质包（用户建议「看看别的材质包怎么搞的」直接破案）
+
+实测对比 Modernity-GTNH-2026-09-07（同环境正常显示）：
+
+| | Modernity | 改前的我们 |
+|---|---|---|
+| 贴图位置 | `assets/**gregtech**/textures/blocks/basicmachines/<机器>/OVERLAY_*.png` | `assets/**ae2_qof**/textures/blocks/machine/*.png` |
+| 覆盖对象 | **GT 已有、代码已引用的路径** | 全新路径，需注册 |
+| 是否注册 | **不注册**，纯文件同名覆盖 | 需注册 → 撞 sBlockIcons 时序 → missingno |
+
+已排除的三个候选原因（均有实测数据）：**不是图太多**（Modernity 有 4433 张 PNG、每机器 34 张）；**不是「一张图含六面」**（它同样每面独立 16×16）；**不是色彩格式**（它含 932 张 RGBA 真彩 16×16，同样正常）。
+
+### 本轮改动
+
+- `util/ModTextures.java`：
+  - `BASE` 由 `ae2_qof:blocks/machine/` → **`gregtech:blocks/ae2qol/`**；新增 `F_FRONT/F_TOP/F_SIDE`（`/FRONT`、`/TOP`、`/SIDE`）与 `SHARED_BOTTOM`（`gregtech:blocks/ae2qol/_shared/BOTTOM`）。
+  - **弃用 GT 队列通道**：移除 `GTCustomBlockIconContainer` 调用；`GtFallbackContainer` → **`StitchedContainer`**（只认当前 atlas 注册结果，取不到则兜底 GT 机箱图标，保证非 null）。
+  - `init()` 改为仅预创建容器（不再入队）；面级方法改为 `front(name)/top(name)/side(name)/bottom()`；`firstMissing`/`checkAllResourcesReachable` 同步改到新路径结构。
+- `client/render/V7TextureStitchHandler.java`：注册路径同步改为 `<机器名>/FRONT|TOP|SIDE` + `_shared/BOTTOM`。
+- **8 个机器类**统一改调新 API（32 处替换 + 清理 8 行无用 `base` 变量）：改用 `ModTextures.front/top/side/bottom`，零 `ModTextures.tex(` 残留。
+
+### 资源包结构（重建）
+
+```
+pack.mcmeta
+assets/gregtech/textures/blocks/ae2qol/<8 个机器名>/FRONT.png | TOP.png | SIDE.png
+assets/gregtech/textures/blocks/ae2qol/_shared/BOTTOM.png
+```
+
+- 产物：`AE2QoL-v7-resourcepack.zip`（17,887 B，已生成于交付目录），**zip 条目零反斜杠**（逐条解析中央目录核实），8×FRONT + 8×TOP + 8×SIDE + 1×BOTTOM + pack.mcmeta。
+- mod jar：`build/libs/AE2-QoL-3.19.0-fix44.jar`（1,116,067 B，09:55），`BUILD SUCCESSFUL`；反编译确认常量已是 `gregtech:blocks/ae2qol/`、`StitchedContainer` 已取代 `GtFallbackContainer`。
+- 部署：jar → 实例 `mods/`；资源包 → 实例 `resourcepacks/`（均 09:55）。
+
+### 下次进游戏判读（本方案成否的判定点）
+
+- `stitch(Pre) done: registered=25 failed=0` → 当前 atlas 注册成功（**前提：资源包已启用并拖到列表顶部**）。
+- `getIcon STITCHED <path> UV=[...]` 且**各贴图 UV 互不相同** → **成功**（此前 25 张 UV 完全相同 = missingno 的紫黑症状应消失）。
+- 若仍 `NOT-STITCHED` → 当前 atlas 上注册失败，需查资源包启用状态与事件触发。
+
+---
+
+
+## 工作区决策记录 2026-09-19 (4) - UV 实锤：GT 的 sBlockIcons atlas 早于资源包，改用当前活动 atlas
+
+> 未发布、未提交、未推送。用户实测：`isReady()=true`、图标名/尺寸全对，但**仍紫黑**；UV 诊断给出决定性证据。
+
+### 决定性证据（UV 全部相同）
+
+```
+casing_side                       UV=[0.17187744,0.5273462]-[0.1757788,0.53124756]
+universal_maintenance_hatch       UV=[0.17187744,0.5273462]-[0.1757788,0.53124756]
+universal_maintenance_hatch_top   UV=[0.17187744,0.5273462]-[0.1757788,0.53124756]
+wireless_energy_input_top         UV=[0.17187744,0.5273462]-[0.1757788,0.53124756]
+adaptive_net_terminal[_top|_side] UV=[0.17187744,0.5273462]-[0.1757788,0.53124756]
+```
+
+- **25 张不同的贴图，UV 完全相同** → 全部指向 atlas 中同一个格子。
+- UV 宽度 `0.1757788 - 0.17187744 = 0.0039 ≈ 1/256`，为 16px / 4096px atlas 的单格尺寸。
+- 即：`registerIcon` 返回的是 **missingno 占位 sprite**（缺失纹理），而非我们的贴图 → 渲染即紫黑。
+
+### 根因（终于定位）
+
+`GTCustomBlockIconContainer.run()` 注册进的是 `GregTechAPI.sBlockIcons`——**GT 在 `registerBlockIcons` 阶段绑定的那个 atlas 实例**，该阶段**早于资源包参与 atlas 重建**。本 mod 的 PNG 来自资源包，在那个旧 map 中不存在，`registerIcon` 一律返回 missingno。
+
+这也解释了「GT++ 正常而本 mod 不行」：GT++ 的贴图在 mod jar 内、在 `registerBlockIcons` 之前已加载，走的同一个 map 且能找到；而资源包贴图晚于该阶段。
+
+**同时解释了此前所有现象**：icon 非 null（拿到的是 missingno，非 null）、名字正确（注册名回填）、尺寸 16x16（missingno 也是 16x16）——所以此前「icon 正常」的判断是被 missingno 误导的。
+
+### 本轮改动（最终修复）
+
+- **新增** `client/render/V7TextureStitchHandler.java`：监听 `TextureStitchEvent.Pre`（方块图集，textureType==0），用**当前活动 atlas**（`event.map`）注册全部 25 张，写入 `ModTextures.STITCHED`。该 map 已纳入资源包，能拿到带正确 UV 的 sprite。
+- `util/ModTextures.java`：
+  - 新增 `STITCHED` map 与 `registerStitched`/`hasStitched`。
+  - `GtFallbackContainer.getIcon()` 改为三段优先：**STITCHED（正确 UV）→ GT mIcon（保底非 null）→ GT 机箱图标**；诊断标签相应改为 `getIcon STITCHED` / `GT-ONLY` / `NULL`。
+  - 类注释更新，写明「GT 队列单通道不可用」的原因。
+- `CommonProxy.init()`：接入 `V7TextureStitchHandler.init()`。
+
+### 产物与部署
+
+- 产物：`build/libs/AE2-QoL-3.19.0-fix44.jar`（1,117,991 B，2026-09-19 09:40 构建）。
+- 验证：`gradlew build` → **BUILD SUCCESSFUL**（16s），无 error；jar 内确认含 `V7TextureStitchHandler.class`。
+- 部署：已覆盖复制到 GTNH 实例 `mods/`（1,117,991 B，09:40）。
+
+### 下次进游戏判读
+
+- `stitch(Pre) done: registered=25 failed=0` → 当前 atlas 注册成功（前提：资源包已启用）。
+- `getIcon STITCHED <path> -> ... UV=[...]` 且**各贴图 UV 互不相同** → 修复成功，材质应正常显示。
+- 若仍出现 `getIcon GT-ONLY ...` → 说明 STITCHED 为空（当前 atlas 上注册失败），需查资源包是否启用 / 事件是否触发。
+
+---
+
+
+## 工作区决策记录 2026-09-19 (3) - 资源包链路全通，紫黑收敛到 UV 层（UV 诊断）
+
+> 未发布、未提交、未推送。用户实测：`isReady()=true`、25 张全可读、`getIcon HIT` 全部正常，**但仍紫黑**。
+
+### 实测日志（决定性证据）
+
+```
+[09:25:51] resource check enabled (postInit reached)
+[09:27:53] isReady()=true (25 png all reachable)                  ← 资源层完全通过
+[09:27:53] getIcon HIT ae2_qof:blocks/machine/casing_side
+             -> name=ae2_qof:blocks/machine/casing_side size=16x16 ← 图标名正确、尺寸正常
+[09:27:55] getIcon HIT ae2_qof:blocks/machine/wireless_energy_input ...
+[09:27:58] getIcon HIT ae2_qof:blocks/machine/universal_maintenance_hatch[_top|_side] ...
+```
+
+### 结论：三个前置环节全部排除
+
+1. **资源可达性** —— `isReady()=true`，25 张 PNG 全部读到（含 PNG 魔数校验通过）。
+2. **GT 队列注册** —— `GTCustomBlockIconContainer.run()` 字节码确认执行 `sBlockIcons.registerIcon(mIconName)` 并写入 `mIcon`；日志显示 `mIcon` **非 null**、`getIconName()` 返回正确路径、尺寸 **16x16**（非 0x0、非 missingno）。
+3. **渲染取用** —— `getIcon HIT` 由 `Chunk Render Task Executor` 打印，说明 GT 渲染器确实取到了我们的 IIcon。
+
+三项全通过而仍紫黑 → **问题只剩 UV 分配层**：IIcon 对象存在且数据正常，但其 `getMinU/getMaxU/getMinV/getMaxV` 未能指向 atlas 中的有效区域，渲染取到 atlas 空白/错误位置。这与第 4 轮「resource OK + getIcon HIT 16x16 仍紫黑」的观测一致，当时未能证实，现在链条已补齐。
+
+### 本轮改动（纯诊断，未改逻辑）
+
+- `util/ModTextures.java`：`getIcon()` 的命中日志增加 **UV 坐标输出**（`getMinU/getMaxU/getMinV/getMaxV`），用于证实/证伪 UV 未分配；新增 `HIT_LOGED` 去重集合。
+- 产物：`build/libs/AE2-QoL-3.19.0-fix44.jar`（1,115,909 B，09:31 构建），`BUILD SUCCESSFUL`，已部署实例。
+
+### 下次判读（决定最终修复方向）
+
+- 若 UV 为 `0.0,0.0-0.0,0.0` 或全 0 区域 → **实锤 UV 未分配**。修复方向：不再依赖 `sBlockIcons`（GT 在 registerBlockIcons 阶段的 atlas bound），改为在 `TextureStitchEvent.Post` 之后注册，或直接用 `TextureAtlasSprite`/自持 `TextureMap`。
+- 若 UV 是合理非零值（如 `0.125,0.25-0.1875,0.3125`）→ UV 正常，紫黑另有原因（需查 GT 渲染时的 GL 状态 / `renderFaceYNeg` 的 Tessellator 与纹理绑定），方向转向渲染管线。
+
+---
+
+
+## 工作区决策记录 2026-09-19 (2) - 实测：回退通过；「装包无变化」= isReady 缓存 false（fix44 二次修复）
+
+> 未发布、未提交、未推送。用户实测：**不装包已恢复 GT 默认外观（回退验收通过）**；但启用资源包后机器外观无变化。
+
+### 实测日志（`fml-client-latest.log`，修复前）
+
+```
+[09:02:52] init(): forceMode=auto, containers queued        ← 25 个 GT 容器全部入队
+[09:03:20] resource check enabled (postInit reached)        ← postInit 钩子生效
+[09:04:46] isReady()=false (all 25 png checked)             ← 进世界时判定为不可用
+```
+
+- `options.txt` 中 `resourcePacks` 已包含 `AE2QoL-v7-resourcepack.zip`（列于**最末位**）。
+- 实例内该 zip 内容完好：`pack.mcmeta` 在、27 张 PNG 在。
+
+### 根因
+
+1. **`isReady()` 永久缓存 false（主因）**：旧实现用 `if (ready == null)` 判定后即永久缓存，**false 也被锁死**。资源包在**进入世界时会再次 reload**，而首次判定发生在资源尚未就绪的时刻（09:03:20 允许判定，09:04:46 进世界时才首次询问），一旦判成 false 就再不会重算 → 表现为「装了材质包也没变化」。
+2. **资源包优先级最低（次要，待用户操作）**：`AE2QoL-v7-resourcepack.zip` 位于 `resourcePacks` 列表末尾，Minecraft 1.7.10 中列表越靠后优先级越低，会被 `Modernity-GTNH-*` 等包覆盖。
+
+### 本轮改动
+
+- `util/ModTextures.java`：
+  - `isReady()` 改为 **只缓存 true**（`if (ready != null && ready)` 提前返回）；false 每次重查，代价三次 `getResource` 调用，可忽略。
+  - 新增 `firstMissing()`：返回第一个不可读贴图路径，`isReady()=false` 时打印该路径，便于下次直接定位是「哪张读不到」还是「全都读不到」。
+  - 更新 `isReady` javadoc，写明「只缓存 true」的原因。
+
+### 产物与部署
+
+- 产物：`build/libs/AE2-QoL-3.19.0-fix44.jar`（1,115,402 B，2026-09-19 09:08 构建）。
+- 验证：`gradlew build --rerun-tasks` → **BUILD SUCCESSFUL**（31s），无 error。
+- 部署：已覆盖复制到 GTNH 实例 `mods/`（1,115,402 B，09:08）。
+
+### 下次进游戏判读
+
+- **务必先把 `AE2QoL-v7-resourcepack.zip` 在 Resource Packs 界面拖到列表最顶部**（最高优先级），这步不做则大概率仍无变化。
+- `isReady()=true (25 png all reachable)` → 判定成功，v7 应显示。
+- `isReady()=false, first missing: ae2_qof:blocks/machine/xxx` → 按打印的路径定位是包未生效还是个别缺失。
+- 若全部可读（true）但仍显示默认外观，则问题收敛到 **GT 图标队列入队时机**（`ModTextures.init()` 位于 FMLInitialization，`sGTBlockIconload` 可能已 flush），下一步把入队前移到 `preInit()` 末尾。
+
+---
+
+
+
+> 未发布、未提交、未推送。用户实测：**不加材质包紫黑，加了也紫黑**——即「回退到改材质之前」根本没生效。
+
+### 根因（代码实锤 + 实例核对）
+
+1. **`isReady()` 误判为 true（主因）**：旧实现只探 `MACHINES[0]`（universal_maintenance_hatch）一张 PNG，且在 `init()` 阶段探一次就永久缓存（`if (ready == null)`）。资源管理器处于 reload 中间态时可能拿到兜底资源而不抛异常，判定成「可达」→ 8 台机器全部走 v7 分支 → 实际 PNG 不可读 → **不论加不加材质包都紫黑**。
+2. **实测核对结果**：
+   - GTNH 实例 `resourcepacks` 内 `AE2QoL-v7-resourcepack.zip` **存在且完全正常**——25 张 PNG 路径正斜杠、`pack.mcmeta` 齐全，**此前「zip 反斜杠」的根因在本包上已不复现**；
+   - 部署 jar 内 **0 张 machine PNG**（符合方案 P 设计）；
+   - `config/ae2_qof/settings.json` 中并无 v7 相关开关，无法手动回退。
+
+### 本轮改动
+
+- `util/ModTextures.java`：
+  - 新增 `forceMode`（0=auto / 1=强制开 / -1=强制关），`isReady()` 首先响应它；**强制关时必定返回 false，不依赖任何资源探测**——这是「彻底回到改材质之前」的可靠回退手段。
+  - `isReady()` 自动模式改为**全部 25 张全可读才 true**（原：只探第 1 张）。
+  - `checkResourceReachable()` 增加 **PNG 魔数校验**（前 4 字节须为 89 50 4E 47），杜绝读到兜底资源被判为可达。
+  - 新增 `allowResourceCheck()`：判定时机推迟到 postInit 之后；**postInit 前一律返回 false 且不缓存**，避免把 reload 中间态锁死成错误结论。
+  - 删除死字段 `ICONS`、死方法 `putIcon`/`iconCount`，`GtFallbackContainer` 简化为「GT mIcon → GT 机箱」单一兜底；`ServerSafeContainer.getIcon()` 返回 null。
+- `CommonProxy.java`：`postInit()`（原空实现）接入 `ModTextures.allowResourceCheck()`；`init()` 移除对已删类的调用。
+- `Config.java`：新增 `v7_textures` 配置项（auto/on/off，默认 auto，热加载），`reload()` 中同步到 `ModTextures.forceMode`；`writeFile` 增加 v7 参数并更新全部 4 个调用点。
+- **删除死代码** `client/render/ClientTextureRegistry.java`（用户已确认）——`TextureStitchEvent` 通道早已不被 `ModTextures` 使用，仅剩诊断用途。
+
+### 产物与部署
+
+- 产物：`build/libs/AE2-QoL-3.19.0-fix44.jar`（1,115,207 B，2026-09-19 08:52 构建，version=3.19.0-fix44）。
+- 验证：`gradlew compileJava --rerun-tasks` 与 `build --rerun-tasks` 均 **BUILD SUCCESSFUL**，无 error/warning；jar 内已无 `ClientTextureRegistry`。
+- 部署：已复制到 GTNH 实例 `...\.minecraft\mods\`，**先删旧 jar 再复制，新旧不共存**（实例内现仅 `AE2-QoL-3.19.0-fix44.jar` 一个 AE2-QoL jar）。
+
+### 待实测（下次进游戏判读 `[AE2QoL-TEX]`）
+
+- **回退验证（优先）**：不启用任何 v7 资源包进游戏 → 8 台机器应恢复 GT 默认外观（这是「彻底改回去」的验收点）。
+- `isReady()=true (all 25 png checked)` → 25 张齐全，启用 v7 分支。
+- `isReady()=false` → 走 GT 默认外观（预期）。
+- `resource check enabled (postInit reached)` → postInit 钩子生效。
+- 若强制关：配置 `v7_textures` 改 `off`（或 `/ae2qof reload`）→ 必定回默认外观，不再紫黑。
+
+### 仍未定位
+
+- 若「强制开 + 资源包启用」下仍紫黑，则问题收敛到 **GT 图标队列注册时机**（`ModTextures.init()` 位于 FMLInitialization，此时 `sGTBlockIconload` 可能已 flush，入队等于白排）——下一步需把入队时机前移到 preInit 末尾。
+
+---
+## 工作区决策记录 2026-09-18 - 方案 P 终版：条件化贴图（装包才变、不装包原样）（fix44）
+
+
+
+> 未发布、未提交、未推送。用户要求：彻底变回改材质之前；**加材质包才变，不加材质包维持原样**。
+
+### 本轮改动（实现"资源包开关"语义）
+
+- ModTextures 新增 isReady()：FMLInitialization 阶段用资源管理器检测 e2_qof:textures/blocks/machine/universal_maintenance_hatch.png 是否可达（缓存一次）；init() 仅在 ready 时预创建 GT 队列容器。
+- 8 个机器 getTexture override 改为条件化：isReady() ? v7 贴图 : super.getTexture(...)——**未装资源包时走 MTEHatch 基类默认渲染（GT 机箱+覆层，与改材质前完全一致，不紫黑）**；装资源包时走 v7（GT 队列 + 资源包 PNG）。
+- 2 个物品保持 AE2 原贴图（v7 前状态，git diff 为空）；物品无"缺贴图安全兜底"机制，不参与资源包切换（资源包内物品 PNG 暂不引用）。
+- 资源包：AE2QoL-v7-resourcepack.zip（正斜杠路径、英文名，jar 工具打包；修复 Compress-Archive 反斜杠导致 resource MISSING 的根因），已部署游戏 resourcepacks。
+- 产物：uild\libs\AE2-QoL-3.19.0-fix44.jar（1,117,548 B，21:21 构建，0 张 machine PNG，version=3.19.0-fix44），已覆盖复制到游戏 mods。
+
+### 行为矩阵（最终语义）
+
+| 状态 | 8 机器外观 | 崩溃风险 |
+|---|---|---|
+| 未启用资源包 | GT 默认外观（改材质前原样） | 无 |
+| 启用资源包 | v7 材质（GT 队列 + 资源包 PNG） | 无（mIcon null 兜底机箱） |
+
+### 日志判读（logs\fml-client-latest.log [AE2QoL-TEX]）
+
+- isReady()=true + 	ex() created GT-queue container（启动阶段，非渲染线程）→ 装包生效，v7 显示。
+- isReady()=false + init() skipped → 资源包未启用，机器原样（符合预期）。
+
+---
+## 工作区决策记录 2026-09-18 - 方案 P 实施：GT 队列引用恢复 + 资源包提供 PNG（fix44）
+
+> 未发布、未提交、未推送。用户选定方案 P：恢复 8 机器面级 getTexture 引用（ae2_qof 路径），PNG 全部由资源包提供（优先级高于 mod jar）。
+
+### 本轮改动
+
+- 重建 util/ModTextures.java（修复#5 版）：客户端 	ex() 走 **GTCustomBlockIconContainer**（GT 官方图标队列，注册于 TextureStitchEvent.Pre 之前的 registerBlockIcons 阶段，sprite 正常参与 stitch/UV 分配，GT++ 同路径）；GtFallbackContainer 兜底（GT mIcon → Pre ICONS → GT 机箱图标）；服务端 ServerSafeContainer 安全。
+- 重建 client/render/ClientTextureRegistry.java（实例注册 + 资源层可达性检查 + 全链路 [AE2QoL-TEX] 诊断）。
+- 8 个机器类恢复面级 getTexture(IGregTechTileEntity, ...) override（ae2_qof:blocks/machine/<机器名>[,_top,_side] + casing_side 底面）；CommonProxy.init() 恢复客户端注册调用。
+- **jar 不含 v7 PNG（0 张 machine 贴图）**——PNG 由资源包 AE2-QoL-v7-材质包.zip（已在游戏 resourcepacks 目录）提供。
+- 产物：uild\libs\AE2-QoL-3.19.0-fix44.jar（1,116,169 B，21:01 构建，version=3.19.0-fix44），已覆盖复制到游戏 mods。
+
+### 测试前提（重要）
+
+**必须在游戏主菜单 Options → Resource Packs 启用 AE2-QoL-v7-材质包**（jar 内无 PNG，未启用资源包则贴图不可达 → 渲染兜底 GT 机箱、不紫黑不崩）。
+
+### 重测判读（logs\fml-client-latest.log 的 [AE2QoL-TEX]）
+
+- esource OK ae2_qof:textures/blocks/machine/xxx.png + 	ex() created GT-queue container + 方块显示 v7 → 方案 P 成功。
+- esource MISSING → 资源包未启用/未生效，检查 Resource Packs 列表。
+- getIcon MISS ... fallback GT casing → GT 队列 mIcon null 且 ICONS 空（注册未命中），游戏显示机箱贴图（安全），继续查注册时机。
+- 仍紫黑且 getIcon HIT size=16x16 → UV/stitch 层问题与资源来源无关（代码方案终局失败），维持回退版。
+
+---
+## 工作区决策记录 2026-09-18 - v7 材质彻底回退 + 材质包方案落地（fix44 收尾）
+
+> 未发布、未提交、未推送。用户拍板：放弃代码贴图方案，代码彻底改回，v7 材质改为资源包形式。
+
+### 决策背景
+
+修复 #1-#5 历程：v7 贴图在 GTNH 2.9 + Angelica 环境下经 5 轮代码方案均未显示成功——GTCustomBlockIconContainer 队列（#1/#5）、vanilla TextureStitchEvent 静态/实例注册（#2/#3/#4）。最终实测证据（#4 日志）：资源层可达（resource OK）、注册成功（iconCount=25）、渲染图标命中且数据正常（getIcon HIT size=16x16），但仍紫黑——sprite 疑似未被 GTNH 2.9 atlas stitch 纳入 UV 分配（Pre 事件注册时机晚于 stitch，GT 图标因注册于 registerBlockIcons 阶段而正常）。用户按预定后备方案拍板：**代码彻底改回 + 材质包**。
+
+### 本轮改动（代码回退，git 精确还原）
+
+- 8 个机器类 git checkout 还原（v7 面级 getTexture override 移除）：AE2MaintenanceHatchUniversal、AdaptiveNetTerminal/Hatch/LaserHatch/DynamoHatch/LaserTargetHatch、WirelessEnergyInput/OutputTerminal → 恢复 GT 默认渲染（机箱 aBaseTexture + OVERLAY 系）。
+- 2 个物品 git checkout 还原：ItemWirelessMergedTerminal → setTextureName("appliedenergistics2:ToolWirelessTerminal")；ItemPartMergedTerminal → setTextureName("appliedenergistics2:ItemPart.Terminal")。
+- 删除 util/ModTextures.java、client/render/ClientTextureRegistry.java；CommonProxy.init() 移除 v7 注册调用。
+- 移除 src/main/resources 中 v7 新增贴图（blocks/machine 25 张 + items 2 张）——jar 内不再含 v7 PNG。
+- 产物：uild\libs\AE2-QoL-3.19.0-fix44.jar（1,106,452 B，20:47 构建，验证无 ModTextures/ClientTextureRegistry/machine PNG、version=3.19.0-fix44），已覆盖复制到游戏 mods。
+
+### 材质包交付
+
+- AE2-QoL-v7-材质包.zip（16,356 B，27 张 PNG + pack.mcmeta pack_format=1）：ssets/ae2_qof/textures/blocks/machine/（25 张）+ items/merged_terminal_part.png、merged_terminal_wireless.png。
+- 已复制到游戏 esourcepacks\ 目录 + 项目根目录。**注意**：当前回退代码不引用 ae2_qof 路径（GT 机器渲染走 GT 内置图标），资源包启用后不会立即改变 8 机器外观；其价值是**贴图资源与 mod 解耦**——如需恢复 v7 专属外观，恢复 8 机器面级 getTexture 引用（ae2_qof 路径）即可，PNG 全由资源包提供、无需重打包 mod。
+
+### 后续可选路径（未执行，待用户决定）
+
+- 方案 P：最小恢复——恢复 8 机器面级 getTexture（ae2_qof 路径）+ 保留资源包提供 PNG，利用资源包优先级高于 mod jar 的机制；若紫黑根因确在 jar 内 PNG 的 stitch 层而资源包 PNG 可正常加载，则可能成功（未验证）。
+- 方案 Q：保持现状（GT 默认外观 + 资源包待命）。
+
+---
+## 工作区决策记录 2026-09-18 - v7 材质修复 #5：改走 GT 官方图标队列（UV/stitch 层定位）
+
+> 未发布、未提交、未推送。修复 #4 实测：资源可达、注册成功、图标数据正常，但仍紫黑。
+
+### 修复 #4 实测结果（用户 fml-client-latest.log，20:18-20:21）
+
+- **资源层完全可达**：25 条 esource OK ae2_qof:textures/blocks/machine/xxx.png（getResource 读取成功）。
+- **注册成功**：25 张 registered，iconCount=25。
+- **渲染图标命中且数据正常**：getIcon HIT ... -> ae2_qof:... size=16x16（全部命中、尺寸 16x16 = sprite 数据正常，非 missingno 数据）。
+- **结论（决定性）**：sprite 条目存在、PNG 数据加载正常，但渲染仍紫黑 → **sprite 未被 GTNH 2.9 的 atlas stitch 阶段纳入 UV 分配**（TextureStitchEvent.Pre 注册时机晚于 stitch，或 mixin 改写后 Pre 注册的 sprite 被跳过 stitch），渲染时取到 atlas 错误区域（左上角 missingno 附近）→ 紫黑。
+
+### 本轮改动（修复 #5：GT 官方图标队列）
+
+- util/ModTextures.java：客户端 	ex() 改用 **GTCustomBlockIconContainer.create(path)**（gregtech.client.iconContainers.blocks）——构造即入队 GregTechAPI.sGTBlockIconload，在 GT egisterBlockIcons 阶段（**TextureStitchEvent.Pre 之前**）由 sBlockIcons.registerIcon 注册，与 GT++（GTNH 2.9 正常显示）同路径；外层包 GtFallbackContainer：GT mIcon 为 null 时兜底到 Pre 注册 ICONS → GT 机箱图标，渲染永不为 null。
+- 服务端：ServerSafeContainer（纯接口实现，无 gregtech.client 依赖，服务端安全）。
+- 保留 ClientTextureRegistry Pre 事件双通道注册（幂等不冲突）+ 诊断日志。
+- 产物：uild\libs\AE2-QoL-3.19.0-fix44.jar（1,132,722 B，20:28 构建），已覆盖复制到游戏 mods。
+
+### 判读与后备
+
+- 重启进游戏：	ex() created GT-queue container 出现 + 方块显示 v7 材质 → 修复成功。
+- 若仍紫黑且 getIcon fallback ICONS/MISS 出现 → GT 队列也失败（sBlockIcons 注册后 sprite 仍 UV 坏），**执行用户定下的后备方案**：代码改回 GT 默认贴图（去 v7 override），v7 材质做成资源包覆盖同名路径。
+
+---
+## 工作区决策记录 2026-09-18 - v7 材质修复 #4：资源层可达性诊断（注册已成功但数据 missingno）
+
+> 未发布、未提交、未推送。修复 #3 实测：不再崩溃（兜底生效），但仍全紫黑。
+
+### 修复 #3 实测结果（用户上传 fml-client-latest.log，20:01-20:04）
+
+- **实例注册生效**：TextureStitchEvent.Pre fired, textureType=0 + 25 行全部 egistered ae2_qof:blocks/machine/xxx -> ae2_qof:...（图标名正确、非 missingno 字符串）+ stitch complete, iconCount=25；Mipmap 生成与 blocks atlas 重载正常完成（6.165s）。
+- **渲染图标命中**：getIcon MISS 0 条（无兜底触发）；4 台基地机器（adaptive_net_terminal、wireless_energy_input、universal_maintenance_hatch、casing_side 底面）的 	ex() created container 说明面级 getTexture override 确实被调用。
+- **结论**：注册条目成功、getIcon 命中，但纹理数据仍紫黑 = **sprite 数据是 missingno（PNG 数据加载失败但 1.7.10/MCPatcher 静默不报错）**。PNG 源文件与 jar 内字节完全一致（377 B 逐字节比对）、16x16 RGBA 标准格式，构建未破坏。
+
+### 本轮改动（修复 #4：定位资源层）
+
+- ClientTextureRegistry.register()：注册前用 Minecraft.getMinecraft().getResourceManager().getResource(new ResourceLocation(domain, "textures/.../x.png")) 直接读 PNG 前 16 字节，打印 esource OK head=89504E47... 或 esource MISSING——一锤定音区分「资源层不可达」（TX Loader/资源包）与「atlas 解码层问题」；注册后打印 icon 尺寸（16x16 为正常数据，0x0/异常为 missingno）。
+- ModTextures.IconContainer.getIcon()：命中时一次性打印 getIcon HIT <path> -> <iconName> size=WxH，确认渲染实际拿到的图标与数据。
+- 产物：uild\libs\AE2-QoL-3.19.0-fix44.jar（1,131,708 B，20:13 构建），已覆盖复制到游戏 mods。
+
+### 重测判读
+
+- esource OK ... 89504E47 + getIcon HIT ... size=16x16 → 资源可读、图标正常，紫黑来自其他渲染层（查 GTRendererBlock/atlas 绑定），下一步换渲染通道（GT 队列 / 直接 TextureAtlasSprite）。
+- esource MISSING → ae2_qof 资源在运行时不可达，换资源投放方式（复制进 GT 命名空间 / 资源包 / 改 TX Loader 配置）。
+
+---
+## 工作区决策记录 2026-09-18 - v7 材质修复 #3：实例注册 + GT 图标兜底 + 全链路诊断日志
+
+> 未发布、未提交、未推送。修复 #2（vanilla TextureStitchEvent 静态类注册）实测仍全紫黑且崩溃，此轮改为实例注册 + 兜底。
+
+### 决定性根因（实证，崩溃报告 + fml-client-latest.log 98756-98762 行）
+
+- Caused by: NullPointerException: Cannot invoke "IIcon.func_94215_i()" because "this.baseIcon" is null at GTIconFlipped.getIconName:89 ← GTRenderedTexture.renderFaceYNeg:244 ← enderYNeg:152（Waila 触发渲染）。
+- 即：8 机器面级 getTexture 返回的 ITexture 内部 IIconContainer.getIcon() 为 **null**，GT 渲染器对 null icon 提前 return 留下未关闭 Tessellator → 下一帧 enderSky 抛 IllegalStateException: Already tesselating! 崩溃。
+- [AE2QoL-TEX] 注册诊断 **0 条输出**：修复 #2 用 MinecraftForge.EVENT_BUS.register(ClientTextureRegistry.class) 静态类注册，GTNH 2.9 + Angelica 环境下事件未命中（静态 @SubscribeEvent 注册不可靠）。
+- 同时确认：CommonProxy.init() 的 isClient 分支正确编译进 jar（javap 反编译验证）；FMLInitializationEvent 正常发送（日志 29107/29109 行）；ae2_qof mod 正常加载；STDOUT 捕获机制正常（其他 mod 的 System.out 可见于日志）；GregTech.log 2744-2749 行 GT 自身图标注册流程（Setting up Icon Register → Block Icon Load Phase）执行正常。
+
+### 本轮改动
+
+- client/render/ClientTextureRegistry.java：静态类注册 → **单例实例注册**（MinecraftForge.EVENT_BUS.register(INSTANCE)，实例方法 @SubscribeEvent，1.7.10 最可靠路径）；注册失败 try/catch 不吞；补 [AE2QoL-TEX] 全链路日志（init 注册、事件触发、每图标注册、stitch 完成计数）。
+- util/ModTextures.java：IconContainer.getIcon() 增加 **GT 机箱兜底**——ICONS 未命中时返回 Textures.BlockIcons.MACHINE_LV_SIDE.getIcon()（非 null），杜绝 null icon 渲染崩溃；首次未命中打印一次性诊断行；	ex() 首次创建容器打印诊断。
+- 产物：uild\libs\AE2-QoL-3.19.0-fix44.jar（1,130,471 B，19:55 构建），验证 25 张贴图齐全、mcmod.info version=3.19.0-fix44、新 class 入包；已覆盖复制到游戏 mods（19:55:43，唯一 AE2-QoL jar）。
+
+### 重测与判读指引
+
+覆盖安装后进游戏，看 logs\fml-client-latest.log：
+- 有 [AE2QoL-TEX] TextureStitchEvent.Pre fired + 25 行 egistered ae2_qof:blocks/machine/xxx -> ae2_qof:... → 注册成功、getIcon 命中、v7 材质正常显示。
+- 有 Pre fired 但 egistered ... -> missingno → PNG 加载失败（资源层问题，查 TX Loader/MCPatcher）。
+- 无 Pre fired、有 getIcon MISS ... -> fallback GT casing → 事件未命中，但游戏不再紫黑/崩溃（兜底显示 GT 机箱贴图），继续查事件注册时机。
+- 无 Pre fired 也无 MISS → 8 机器 getTexture override 未被调用（渲染链路问题），查 GTRendererBlock 纹理数组来源。
+
+---
+## 工作区决策记录 2026-09-18 - v7 材质修复 #2：弃用 GTCustomBlockIconContainer，改 vanilla TextureStitchEvent 注册
+
+> 未发布、未提交、未推送。用户两次实测均紫黑/粉黑缺失纹理（missingno），修复 #1（init 预创建 + 缓存）后仍全紫黑，此轮换注册通道并加诊断日志。
+
+### 已排除项（实证）
+
+- 贴图未进 jar / PNG 损坏：排除（25 张 machine + 2 张 items PNG 签名 PNG-OK、jar 内齐全）。
+- 旧版/重复 jar 冲突：排除（mods 仅 AE2-QoL-3.19.0-fix44.jar，1,127,037 B = 修复版）。
+- 图标加载队列 flush 异常：排除（fml-client-latest.log 19:15:54 Starting/Finished Block Icon Load Phase 无堆栈）。
+- 渲染链路：已 javap 确认 BlockMachines.getIcon(IBlockAccess) 固定返回 MACHINE_LV_SIDE（兜底，非渲染主路径）；真实渲染走 GTRendererBlock（getRenderType=RENDER_ID）→ TE ITexturedTileEntity.getTexture(Block, ForgeDirection) → 转调 MTE 面级 getTexture（签名与我们的 override 一致）。
+
+### 本轮改动
+
+- util/ModTextures.java 重写：不再用 GTCustomBlockIconContainer（其 getTextureFile 返回具体资源而非 blocks atlas，路径语义在 GTNH 2.9 + Angelica/MCPatcher 环境下不可靠）；改为自实现 IIconContainer（getIcon 从注册表取、getTextureFile 返回 blocks atlas 位置，与 GT++ CustomIcon 一致）。
+- 新增 client/render/ClientTextureRegistry.java（@SideOnly CLIENT）：监听 TextureStitchEvent.Pre（type 0 blocks atlas），注册 25 张贴图并打印 [AE2QoL-TEX] registered <path> -> <iconName> 诊断行；服务端安全（CommonProxy.init 仅客户端分支注册）。
+- CommonProxy.init()：ModTextures.init() 预创建调用 → 改为客户端注册 ClientTextureRegistry。
+- 产物：uild\libs\AE2-QoL-3.19.0-fix44.jar（1,129,369 B，19:34 构建），反编译确认无 GTCustomBlockIconContainer 依赖、25 PNG 在 jar 内。
+
+### 重测指引
+
+覆盖安装后进游戏：正常 → 8 机器六面显示 v7 材质；仍紫黑 → 看 logs\fml-client-latest.log 中 [AE2QoL-TEX] 行：
+- 25 行均 -> ae2_qof:blocks/machine/xxx（注册成功）→ 问题在渲染/atlas 层，继续查 GTRendererBlock 纹理数组来源；
+- 出现 -> missingno → PNG 未加载（TX Loader/MCPatcher 资源层问题），需换资源注入通道。
+
+---
+
+## 工作区决策记录 2026-09-18 - v7 材质包接入：8 GT 机器方块 + 2 AE 物品切到自定义贴图
+
+> 未发布、未提交、未推送。按用户要求「根据这个更换吧」将项目从借用 GT 内置 BlockIcons / AE2 原版贴图切换为使用 v7 材质包。
+
+### 改动
+
+- 贴图复制：`docs\AE2-QoL-textures-v7 (1)\assets\ae2_qof\textures` 的 25 张 `blocks\machine` PNG（8 机器 × {主体,_side,_top} + casing_side）+ 2 张 `items` PNG → `src\main\resources\assets\ae2_qof\textures\` 对应目录。
+- 新增 `util/ModTextures.java`：`tex/front/top/side/bottom` 便捷方法，基于 `GTCustomBlockIconContainer.create(String)` + `TextureFactory.of`（GTNH 官方自定义贴图姿势，javap 确认签名）。
+- 8 个机器类新增**面级** `getTexture(IGregTechTileEntity, ForgeDirection side, ForgeDirection facing, int, boolean, boolean)` override（优先于原 getTexturesActive/Inactive）：正面=机器名主体图、UP=_top 图、DOWN=casing_side、四侧面=_side 图；原 getTexturesActive/Inactive 保留未动。
+  - `AE2MaintenanceHatchUniversal` → universal_maintenance_hatch；`AdaptiveNetTerminal` → adaptive_net_terminal；`AdaptiveNetHatch` → adaptive_net_hatch；`AdaptiveNetLaserHatch` → adaptive_net_laser_hatch；`AdaptiveNetDynamoHatch` → adaptive_net_dynamo_hatch；`AdaptiveNetLaserTargetHatch` → adaptive_net_laser_target；`WirelessEnergyInputTerminal` → wireless_energy_input；`WirelessEnergyOutputTerminal` → wireless_energy_output。
+- 2 个物品 `setTextureName` 切换：`ItemWirelessMergedTerminal` → `ae2_qof:items/merged_terminal_wireless`；`ItemPartMergedTerminal` → `ae2_qof:items/merged_terminal_part`（脱离 AE2 原版贴图）。
+
+### 验证
+
+- JDK21 `gradlew compileJava` → `BUILD SUCCESSFUL`；`processResources` 后 build 产物含全部 25+2 张新贴图；8 机器 + 2 物品改动类的 .class 均已生成。
+- **未做游戏内渲染验证**（材质包 README 亦声明未做游戏内验证）：需启动客户端确认 8 方块六面贴图与 2 物品图标实际显示、GTCustomBlockIconContainer 图标注册正常；注意面级 getTexture 返回单层贴图后**不再叠加** GT 内置 OVERLAY（OVERLAY_SCREEN / OVERLAY_AUTOMAINTENANCE / OVERLAYS_ENERGY_*_WIRELESS），新贴图自带部件区，如有意保留叠加需后续调整。
+
+---
+
+## 工作区决策记录 2026-09-18 - 无线EU输入侧恢复「镜像实时共享」语义（方案A）
+
+> 未发布、未提交、未推送。记录 A04(P1) 审计建议与用户真实需求冲突的取舍，供后续接续。
+
+### 背景与冲突
+
+- fix41 全功能审计 `docs/mcp-full-function-audit-fix41.md` A04(P1) 指出：无线输入侧「镜像余额」模式不守恒——本地缓冲免费镜像电网余额、只在消耗后补扣，多舱室可同时持有同一份未扣余额（双重花费），且 `addEUToGlobalEnergyMap(uuid, 负数)` 余额不足返回 false 被忽略，没有守恒保证。
+- A04 建议改为「成功从全局扣款后才充入本地」的预付所有权模型（工作区曾据此实施：`WirelessEnergyTransfer.fill()` 先扣款再充本地，缓冲上限 4×V×A，拆除/改绑 `deposit()` 退还）。
+- **冲突**：用户明确要求「所有舱室共享无线电网的全部能量，实时从电网扣除消耗的能量」——即 3.18.0 已提交版语义，与预付模型直接冲突。指南文档 `wireless_eu_grid.md` 亦写明「电网本身不储能、EU 实时传输」。
+
+### 决策
+
+按用户要求执行方案 A：恢复 3.18.0 镜像实时语义；**A04(P1) 缺陷保持开放**（用户需求优先，不关闭）。后续如需同时满足「全共享」与守恒，走方案 B：机器实际取电时直接从电网实时扣款（重写取电路径），而非恢复预付缓存。
+
+### 改动
+
+- `WirelessEnergyInputTerminal`：`onPreTick` 恢复镜像余额 + 消耗后实时补扣；移除 `prepaidBuffer`、`onRemoval`、改绑/解绑 `deposit()`。
+- `AdaptiveNetHatch` / `AdaptiveNetLaserHatch`：`onPreTick` 恢复 3.18.0 镜像逻辑（现与已提交版零差异）。
+- `WirelessEnergyTransfer`：移除预付 `fill()` / `bufferTarget()`，仅保留输出侧 `deposit()`。
+- 保留绑定持久化修复（`bindingInitialized` / `markDirty` / NBT `removeTag`）与输出侧 deposit 安全回滚。
+
+### 验证
+
+- JDK21（`D:\zulu21.38.21-ca-jdk21.0.5-win_x64`）`gradlew compileJava` → `BUILD SUCCESSFUL in 1m`，27 条已知 mixin mapping 警告与基线一致；改动类的 .class 均已重新生成。
+- 未做游戏实测、未提交/推送。
+
+---
+
+## 3.19.0-fix44 - v7 材质包接入 + 版本号发布
+
+> 作者：wztwzt | 更新时间：2026-09-18 | 基于 fix43 工作区
+
+- 8 个 GT 机器方块（万能维护仓、五个 AdaptiveNet 系列、无线EU输入/输出终端）从借用 GT 内置 BlockIcons 切换为 v7 材质包自定义贴图：新增 `util/ModTextures.java` + 各机器类面级 `getTexture` override（正/顶/底/侧分面），2 个 AE 物品（合并无线终端、合并终端部件）`setTextureName` 切到自有贴图，详见上方「工作区决策记录 2026-09-18 - v7 材质包接入」。
+- 版本号两处同步提升：`gradle.properties` `modVersion` 与 `src\main\resources\mcmod.info` `version` → `3.19.0-fix44`。
+- 验证：JDK21 `gradlew build -x spotlessCheck -x spotlessJavaCheck` 成功；产物 `build/libs/AE2-QoL-3.19.0-fix44.jar`（1,126,435 字节），jar 内 mcmod.info 版本为 fix44、含全部 25 张 blocks\machine 新贴图 + 2 张 items 贴图 + `ModTextures.class` + 8 个机器改动类。
+- 未做游戏实测、未提交/推送；Spotless 全项目格式检查（76 个历史文件）与本次改动无关，构建时按惯例跳过。
+- **19:07 首版实测崩溃修复**：Already tesselating!（Tessellator 未关闭）+ 材质缺失。根因：ModTextures.tex() 在渲染期才首次 GTCustomBlockIconContainer.create()，错过 GT 图标加载队列 flush（纹理拼接阶段），getIcon() 返回 null → 渲染成缺失纹理，且 GT 渲染器对 null icon 在 startDrawing 后提前 return 不 draw()，Tessellator 残留打开，下一帧渲染天空即崩。修复：ModTextures 改为静态预创建全部 25 张贴图容器 + 缓存，CommonProxy.init() 开头调用 ModTextures.init()（早于纹理拼接）；19:12 重建 AE2-QoL-3.19.0-fix44.jar（1,127,037 字节），反编译确认 init()/CACHE 已编译入包。待用户重测。
+- 独立问题（非崩溃根因，后续处理）：mixins.ae2_qof.json 中 
+ei.MixinGuiRecipe.captureCurrentRecipe 注入 GuiRecipe.updateScreen 失败（InvalidInjectionException，UniMixins WARN 容忍不崩），NEI 自动上传相关功能可能失效，需核对 NEI 2.8.101 的方法签名。
+
+---
+
+## 3.19.0-fix43 - 库存检测覆盖板堆叠上限 64
+
+> 作者：wztwzt | 更新时间：2026-09-18 | 基于 fix42 工作区
+
+- `ItemStockMonitorCover`：`setMaxStackSize(1)` → `setMaxStackSize(64)`。
+- 仅调整物品堆叠上限，不改库存检测阈值、覆盖板配置 NBT、安装/拆卸或绑定逻辑；不同 NBT 配置仍不能混堆。
+- 保留 fix42 Tooltip 修复，同步主版本、双语 README 和交接状态。
+- 验证：Java17 离线 `build --offline -x spotlessJavaCheck -x spotlessCheck` 成功，退出码 0；发布 JAR 构造器字节码确认堆叠上限 64，元数据为 fix43。Spotless 跳过，Gradle test 为 NO-SOURCE；未部署、未游戏实测、未提交/推送。
+- 产物：`build/libs/AE2-QoL-3.19.0-fix43.jar`；SHA256：`be4d6490698d4d4e931f6b93394e1d607e8d6a2d723aacdfebe1efd9c7ac2869`；日志 `build_cover_stack64_fix43.log`。堆叠/安装/拆卸待游戏验证，详见交接第十一节。
+
+---
+
+## 3.19.0-fix42 - NEI / Chromatic Tooltip 单入口修复与文档更新
+
+> 作者：wztwzt | 更新时间：2026-09-18 | 基于 fix41 工作区 | 实施：Arena.ai Agent Mode / ShunCode MCP
+
+### 原因与版本范围
+
+已安装的 Chromatic Compat 1.0.31 先收集通用 `handleTooltip`，随后 Core 1.0.29 的 `ContextInfoEnricher` 经 Compat `NEIHandler` 在另一列表中调用 `handleItemTooltip`，最后合并两份列表。fix41 两条路径都追加网络行，因而重复。对照 NEI 为 2.8.101-GTNH；编译依赖仍为 2.8.19-GTNH。
+
+原生 NEI 的非空通用列表会跳过正常物品提示路径，不能把“有两个回调”泛化成原生 NEI 必然重复。精确字节码和流体桥接依据见 [调查报告](docs/mcp-tooltip-duplicate-investigation.md)。
+
+### 修复内容
+
+1. `NetworkTooltipHandler.handleTooltip` 原样返回输入列表；只有 `handleItemTooltip` 追加网络信息。
+2. 替换接手前已有但未部署的“一秒相同文本抑制”修改，移除时间戳、共享文本、Chromatic 存在标志和无用导入；不再跨物品抑制同样数量。
+3. 保留 `buildNetworkLine`、缓存查询、开关、有效期、数量与 Craft 格式。当前 Compat 流体上下文转换为 GT 展示物品，继续由原缓存识别；真实桶/单元仍按物品库存计数。
+4. 只改一个业务类；没有改 Mixin、依赖、网络协议、服务端逻辑或存档格式。主版本更新为 `3.19.0-fix42`，内置 aeinfinitycell 仍为 `1.0.4-ae2qol`。
+
+### 文档与验证
+
+- 完整刷新中英文 README：对齐 F1–F22、依赖版本、配置范围、流体/容器语义、开放审查项、构建限制和来源署名；修正英文错误日志链接及 IO 贴图归属。
+- 更新 `docs/MOD_MAP.md` 的 Tooltip/角标入口与五页电网 UI；交接结果已写入 `docs/AGENT_CHECKPOINT.md`。
+- 新增 `docs/tooltip-fix42-regression.sh`，用真实 handler / CountFormatter 与依赖桩运行 **59 项隔离断言，全部通过**。覆盖单入口、同数量快速切换、状态组合、流体文本格式、开关/无效缓存门控及列表合并模型；**不是 MC/NEI/Chromatic 集成测试**。
+- Java **17.0.19** 离线构建：`./gradlew build --offline -x spotlessJavaCheck -x spotlessCheck` → `BUILD SUCCESSFUL`。首次实际编译 56s；命令管道后退出码取值出错，外层返回 2，随后无管道命令复核 3s 成功、退出码 **0**。
+- `checkstyleMain` 通过；Spotless 显式跳过；Gradle `test` 为 `NO-SOURCE`。首次编译保留 27 条 Mixin mapping 警告及弃用/unchecked 提示，未顺带整改。
+- 打包检查：`mcmod.info` 为 fix42；handler major version 52；通用回调字节码只返回列表；无旧去重字段。`git diff --check` 无差异格式错误。
+
+### 制品与交付边界
+
+- 发布 JAR：`build/libs/AE2-QoL-3.19.0-fix42.jar`（**1,104,409 字节**）。
+- SHA256：`75961bacd0e6085dcc78fff7476757c1a5926b41cccb7bebad1f6f37d6850739`。
+- 日志：根目录 `build_tooltip_fix42.log`、`build_tooltip_fix42_verify.log`、`build_tooltip_fix42_regression.log`；既有四份 build_compile 日志保留。
+- **未部署、未启动游戏、未做单人/专用服真实 GUI 验收，未提交/推送。** 当前实例仍需另行授权升级；不要把构建/隔离断言当作实机通过。
+- 待验收：原生/Chromatic、各终端/配方/书签、GT/ae2fc 流体、容器计数、快速切换及真实缓存过期。逐项预期见 [交接第十节](docs/AGENT_CHECKPOINT.md)。
+- 不关闭 [fix41 全功能审查](docs/mcp-full-function-audit-fix41.md) 的 A01–A19；原有删除、未跟踪资料和工作区修改不批量清理。
+- 回退必须另行确认：保留原 JAR/完整存档备份，精确撤销本轮变更，不整仓 reset，不恢复旧的一秒文本去重作为兼容方案。
+
+---
+
 ## 3.19.0-fix41 - 自动上传可靠性：稳定定位目标 + 失败回执 + 样板槽逐个判断
 
 > 作者：wztwzt | 更新时间：2026-09-18 | 基于 3.19.0-fix40

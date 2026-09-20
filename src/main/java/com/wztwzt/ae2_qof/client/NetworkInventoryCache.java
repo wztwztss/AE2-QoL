@@ -3,6 +3,8 @@ package com.wztwzt.ae2_qof.client;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.wztwzt.ae2_qof.util.ItemIdentity;
+
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -21,7 +23,7 @@ import net.minecraftforge.fluids.FluidStack;
  */
 public final class NetworkInventoryCache {
 
-    private static final Map<Long, CacheEntry> cache = new HashMap<Long, CacheEntry>();
+    private static final Map<ItemIdentity, CacheEntry> cache = new HashMap<>();
     private static final Map<String, CacheEntry> fluidCache = new HashMap<String, CacheEntry>();
     private static final Map<Long, String> fluidItemMap = new HashMap<Long, String>();
     private static long lastUpdateTick = 0;
@@ -50,8 +52,9 @@ public final class NetworkInventoryCache {
      * 必须保留（count=0），否则 NEI 面板中键下单（isCraftable）永远拦截（3.10.0 修复）。
      * 仅 stackSize<=0 且不可合成才真正移除。
      */
-    public static void put(int itemId, int damage, int count, boolean craftable, long stackSize) {
-        long key = key(itemId, damage);
+    public static void put(ItemStack stack, boolean craftable, long stackSize) {
+        ItemIdentity key = ItemIdentity.of(stack);
+        if (key == null) return;
         if (stackSize <= 0 && !craftable) {
             cache.remove(key);
         } else {
@@ -93,7 +96,7 @@ public final class NetworkInventoryCache {
             CacheEntry entry = fluidCache.get(stackFluid.getName());
             return entry != null ? entry.count : -1;
         }
-        CacheEntry entry = cache.get(key(stack));
+        CacheEntry entry = cache.get(ItemIdentity.of(stack));
         return entry != null ? entry.count : -1;
     }
 
@@ -115,7 +118,7 @@ public final class NetworkInventoryCache {
             CacheEntry entry = fluidCache.get(stackFluid.getName());
             return entry != null && entry.craftable;
         }
-        CacheEntry entry = cache.get(key(stack));
+        CacheEntry entry = cache.get(ItemIdentity.of(stack));
         return entry != null && entry.craftable;
     }
 
@@ -131,7 +134,7 @@ public final class NetworkInventoryCache {
             CacheEntry entry = fluidCache.get(f.getName());
             return new QueryResult(entry != null ? entry.count : -1, entry != null && entry.craftable, f);
         }
-        CacheEntry entry = stack == null ? null : cache.get(key(stack));
+        CacheEntry entry = stack == null ? null : cache.get(ItemIdentity.of(stack));
         return new QueryResult(entry != null ? entry.count : -1, entry != null && entry.craftable, null);
     }
 

@@ -12,8 +12,6 @@ import com.wztwzt.ae2_qof.client.OverlayConfig;
 import com.wztwzt.ae2_qof.util.CountFormatter;
 
 import codechicken.nei.guihook.IContainerTooltipHandler;
-import codechicken.nei.guihook.GuiContainerManager;
-import cpw.mods.fml.common.Loader;
 
 /**
  * NEI 物品悬浮提示：在 tooltip 中追加该物品在 AE2 网络中的存量与可合成状态。
@@ -21,26 +19,10 @@ import cpw.mods.fml.common.Loader;
  */
 public class NetworkTooltipHandler implements IContainerTooltipHandler {
 
-    /**
-     * 3.19.0-fix24：chromatictooltips(compat) 会在 GuiContainerManager.renderToolTips 的 HEAD
-     * 注入并 cancel 掉原流程，只遍历 handleTooltip 回调，之后自行渲染物品 tooltip。
-     * 原生 NEI 的 handleItemTooltip 通道在该 mod 存在时完全不执行，本模组的存量提示因此整体失效。
-     */
-    private static final boolean CHROMATIC_TOOLTIPS_COMPAT = Loader.isModLoaded("chromatictooltipscompat");
-
     @Override
     public List<String> handleTooltip(GuiContainer gui, int mousex, int mousey, List<String> currentTip) {
-        // 仅在 chromatictooltips(compat) 接管渲染时走这条通道：
-        // 原生 NEI 中 handleTooltip 的返回值非空会跳过物品名渲染，绝不能无条件写入。
-        if (!CHROMATIC_TOOLTIPS_COMPAT) {
-            return currentTip;
-        }
-        try {
-            if (gui == null || !GuiContainerManager.shouldShowTooltip(gui)) {
-                return currentTip;
-            }
-            appendNetworkLine(GuiContainerManager.getStackMouseOver(gui), currentTip);
-        } catch (Throwable ignored) {}
+        // fix42：Chromatic Compat 会通过 ContextInfoEnricher 再调用 handleItemTooltip。
+        // 此处不追加，统一由物品回调处理，避免两份独立列表合并后出现重复行。
         return currentTip;
     }
 
@@ -53,24 +35,28 @@ public class NetworkTooltipHandler implements IContainerTooltipHandler {
     public List<String> handleItemTooltip(GuiContainer gui, ItemStack itemstack, int mousex, int mousey,
         List<String> currentTip) {
         try {
-            appendNetworkLine(itemstack, currentTip);
+            String line = buildNetworkLine(itemstack);
+            if (line == null) {
+                return currentTip;
+            }
+            currentTip.add(line);
         } catch (Throwable ignored) {}
         return currentTip;
     }
 
     /**
      * 单次合并查询（#52）：count/craftable/fluid 一并返回，避免 3 遍流体识别。
-     * 追加一行「存量 / 可合成」描述；无数据或开关关闭时不产生任何行。
+     * 生成一行「存量 / 可合成」描述；无数据、开关关闭或两者皆无时返回 null。
      */
-    private static void appendNetworkLine(ItemStack itemstack, List<String> currentTip) {
+    private static String buildNetworkLine(ItemStack itemstack) {
         if (!OverlayConfig.isEnabled() || itemstack == null || !NetworkInventoryCache.hasData()) {
-            return;
+            return null;
         }
         NetworkInventoryCache.QueryResult r = NetworkInventoryCache.query(itemstack);
         long count = r.count;
         boolean craftable = r.craftable;
         if (count <= 0 && !craftable) {
-            return;
+            return null;
         }
         FluidStack fluid = r.fluid != null
             ? new FluidStack(r.fluid, net.minecraftforge.fluids.FluidContainerRegistry.BUCKET_VOLUME)
@@ -95,7 +81,7 @@ public class NetworkTooltipHandler implements IContainerTooltipHandler {
             sb.append("\u00a72\u00a7l+")
                 .append("\u00a77\u00a7r \u00a77Craft");
         }
-        currentTip.add(sb.toString());
+        return sb.toString();
     }
 
     @Override

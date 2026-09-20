@@ -2,261 +2,235 @@
 
 > **English** | [简体中文](README.md)
 
-An **AE2 quality-of-life enhancement mod** for GTNH: push NEI recipes into AE pattern terminals with one click, extract AE network items directly from the NEI panel, view each item's stock and craftability in the AE network, wirelessly transmit AE networks, and adaptive GT energy grid system.
+An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
-Compat: GTNH 2.9.0-beta-1 (Minecraft 1.7.10) | Current version: **3.19.0-fix41** | Author: wztwzt
+**Author: wztwzt · Current source version: 3.19.0-fix47 · Reference pack: GTNH 2.9.0-beta-1**
 
----
+This repository is for personal archival and is not currently offered for distribution. See [CREDITS.md](CREDITS.md) for attribution and licensing records. Feature descriptions are not a claim that every integration has passed in-game testing.
 
-## 📦 Installation
+## What's new in fix43
 
-1. Put `AE2-QoL-3.19.0-fix41.jar` into `.minecraft/mods/`
-2. Make sure dependencies are installed: AE2 (`rv3-beta-977-GTNH`), ae2fc (`1.5.88-gtnh`), NotEnoughItems (NEI)
-3. Launch the game. Config is generated under `config/`
+- Stock Monitor Cover items now stack to **64 instead of 1**. Thresholds, configuration NBT and installation logic are unchanged. Covers with different NBT configurations still cannot merge.
+- Retains the fix42 tooltip change; see the handover for current build and testing status.
 
-> ⚠️ **Server update**: In 3.8.0 and earlier, using parts of the Merged Terminal on a dedicated server kicks the player (#74). Update **both** server and client to 3.8.1+.
+### Previous fix42: tooltip change
 
-**Config files** (all in `config/ae2_qof/`, **hot-reloadable**: edits take effect within ~1 second without a restart):
+- Prevent duplicate AE stock / `Craft` lines in the inspected Chromatic Tooltips callback chain: generic `handleTooltip` now passes the list through; only `handleItemTooltip` adds the network line.
+- Remove the pre-existing working-tree attempt to suppress identical text for one second. Different items with the same count must not suppress each other's tooltips during rapid hovering.
+- **No changes to stock queries, fluid identification, cache expiry, number formatting, network packets, Mixins, or dependencies.** Native NEI and the inspected Chromatic bridge share the item callback.
+- Inspected versions: **Chromatic Tooltips 1.0.29 / Compat 1.0.31 / NEI 2.8.101-GTNH**. This is not a universal compatibility guarantee for other versions or every GUI path.
+
+See the [investigation](docs/mcp-tooltip-duplicate-investigation.md) for evidence and the [handover](docs/AGENT_CHECKPOINT.md) for actual build, artifact, verification, and outstanding test results. **A successful build is not an in-game pass; this change does not automatically deploy the JAR.**
+
+## Installation and upgrades
+
+1. Stop the game/server and back up the **complete world and configuration**, retaining the previous JAR for rollback. Infinity Cell contents live in the world save; backing up item NBT alone is insufficient.
+2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-3.19.0-fix47.jar`. Do not retain multiple versions.
+3. **Use the same version on client and server.** fix41 changed upload-related packets; upgrading only one side is unsupported.
+4. This JAR includes `aeinfinitycell` (bundled metadata remains `1.0.4-ae2qol`). Do not also install the standalone AE2 Infinity Cell JAR. Test old cells in a copied world before migrating.
+5. Check startup logs, generated configuration and Mixin loading, then exercise the features you use in a test world. Deployment to the development test instance requires separate approval.
+
+### Environment and dependencies
+
+The mod uses **GTNH fork APIs**, not arbitrary Forge 1.7.10/AE2/NEI combinations. See [dependencies.gradle](dependencies.gradle) and [gradle.properties](gradle.properties) for the full build declarations. A `compileOnly` declaration does not prove that startup without that integration has been tested.
+
+| Component | Build reference | Inspected instance |
+|---|---|---|
+| Minecraft / Forge | 1.7.10 / 10.13.4.1614; MCP stable 12 | GTNH 2.9.0-beta-1 |
+| AE2 Unofficial | rv3-beta-977-GTNH | Same |
+| AE2FluidCraft-Rework | 1.5.88-gtnh | Same |
+| GregTech | 5.09.52.594 | Same |
+| ModularUI2 | 2.3.73-1.7.10 | Same |
+| NEI | 2.8.19-GTNH | **2.8.101-GTNH** |
+| NotEnoughEnergistics | 1.7.14 | **1.7.30** |
+| GT Not Leisure | 0.2.7-pre1-dev-290 | **0.2.7-pre2** |
+| Programmable Hatches / Wireless Nexus | 0.2.0p8 / 1.0.2 | Same |
+| BetterQuesting | 3.8.70-GTNH | Quest API reviewed against this version |
+
+Other integrations involve CodeChickenLib, StructureLib, Thaumic Energistics, Thaumcraft, Avaritia, Eternal Singularity and GuideNH. Chromatic Tooltips is not a new dependency introduced by this fix. The build uses Java 17 / Jabel and targets JVM 8 bytecode; use the game Java version required by your pack's lwjgl3ify/launcher setup.
+
+## Configuration and administration
+
+Main directory: `config/ae2_qof/`.
 
 | File | Purpose |
 |---|---|
-| `settings.json` | Unified config: `io_port_rate` (Enhanced IO Port transfer multiplier, default 1024), `smart_doubling_max_rounds` (Smart Doubling max rounds, default 0 = unlimited, range 0–2147483647), `nei_overlay_enabled` (NEI overlay toggle) |
-| `remembered_providers.json` | Remembered "recipe → provider" mappings for auto-upload (editable, format: recipe name → provider name) |
-| `recipe_names.json` | User recipe mapping table (bundles 47+ default GTNH mappings in the jar) |
+| `settings.json` | IO rate, smart-doubling limit, NEI display, pin defaults and stock-cover presets |
+| `remembered_providers.json` | Remembered recipe → provider associations |
+| `recipe_names.json` | User recipe-name/target mappings, used alongside bundled defaults |
 
-**Admin commands (require OP)**:
+Current `settings.json` fields:
 
-- `/ae2qof reload` — immediately hot-reloads `settings.json` + `recipe_names.json` (no need to wait the 1s auto-reload)
-- `/ae2qof status` — shows the currently active config values
-- On a dedicated server these require **OP** (permission level 2); in single-player / LAN the host is OP by default and can use them directly
-- `/apu-overlay` still toggles the NEI overlay (no OP required)
-- ⚠️ `/apu-overlay` is registered client-side and only exists in single-player / LAN; **on a dedicated server use the OV button inside the terminal GUI instead**
-- The NEI overlay toggle is a **purely local client setting** (independent per player on multiplayer, never overwritten by server config sync)
+| Key | Default | Meaning |
+|---|---|---|
+| `io_port_rate` | `1024` | Enhanced IO multiplier, 1–2147483647; high rates still have a tick cost |
+| `smart_doubling_max_rounds` | `0` | No configured cap; material, energy and medium limits still apply |
+| `nei_overlay_enabled` | `true` | Local client preference for NEI network information |
+| `pin_row_enabled` | `true` | Default pin behavior; native terminal Pins Rows settings still apply |
+| `stock_monitor_presets` | `1万=10000;100万=1000000;10亿=1000000000;清零=0` | Cover buttons; semicolon-separated `label=nonnegative value` entries |
 
-**In-game config GUI**: pause menu → Mods → AE2 QoL → **Config**. Edit `io_port_rate` / `smart_doubling_max_rounds` (0 = unlimited) / `nei_overlay_enabled` and apply immediately (requires OP on multiplayer; changes sync to all clients and are written to the server's `settings.json`).
+- Relevant code paths check `settings.json` timestamps at intervals of at least one second. This is **not** a guarantee that every JSON file updates every client one second after saving.
+- `/ae2qof reload` reloads settings and recipe-name mappings; `/ae2qof status` displays settings. Server administration commands require permission level 2. Not every single-player/LAN participant automatically has it.
+- In-game: Mods → AE2 QoL → Config. Gameplay settings undergo server permission checks; the NEI display toggle is local. Do not assume all fields share the same synchronization policy.
+- Prefer the terminal **OV** button for NEI display; `/apu-overlay` remains available as an alternative entry point. Use OV in dedicated-server scenarios.
+- Confirm changes through the status command, UI and logs. Saving a file alone is not proof of a successful reload.
 
----
+## Features and usage
 
-## ✨ Feature Overview
+The numbering below matches the historical [F1–F22 test script](docs/SINGLEPLAYER_TEST_SCRIPT.md). These are capabilities and usage notes, not a test-pass table.
 
-### 1. NEI Pattern Upload / Recall / Swap (4 buttons in pattern terminal GUI)
+### F1 · Pattern upload, recall and output swap
 
-In the **AE2 standard/advanced pattern terminal**, 4 buttons appear at the top-right: **↑ Upload** (auto-upload the encoded pattern in the output slot to a network interface/assembler), **← Recall** (fetch the last matching encoded pattern back into the output slot), **⇄ Swap** (swap primary/secondary outputs), **OV** (toggle the AE overlay on NEI recipe pages/bookmarks).
+Standard/extended pattern terminals provide **↑ Upload, ← Recall, ⇄ Swap and OV**. Standard, GT ultimate and ae2fc fluid encoded patterns are supported.
 
-Uploads automatically match providers by recipe (three strategies: unique provider → remembered provider → manual selection GUI). Supports standard encoded patterns, ultimate encoded patterns, and ae2fc fluid encoded patterns.
+Provider selection uses a sole candidate, remembered mapping, or manual selection. It does **not** promise first-use automatic recipe-map detection for every GT machine. The selector separates search/paging, machine rows, action buttons and mapping controls; rows include location/free slots, with double-click upload and a selected-machine mapping shortcut.
 
-**Upload reliability** (3.19.0-fix41): providers are now located by a stable "dimension + coordinates + part side" key instead of an in-memory address, so chunk reloads, machine re-placement, and server restarts no longer cause silent upload failures; failures (target gone / target rejected the pattern / no INJECT permission) are reported in chat; and "can this machine accept the pattern" now scans every free slot instead of only the first one.
+fix41 introduced dimension/position/part-side locators, failure feedback and checking all available pattern slots. A locator does not guarantee that a replacement block is the original machine. Bundled mappings and NEI names assist searching; historical mapping counts are not a coverage guarantee.
 
-**Provider selection screen** (redesigned in 3.19.0-fix41): the panel is split into title / search / machine list / action buttons / recipe-mapping sections that never overlap. Each list row shows the machine icon, its name (with a `@D dim x,y,z` suffix) and pattern slots as `free/total`; single-click selects, double-click uploads, the mouse wheel scrolls. The mapping section writes `recipe ID -> target machine name` pairs into `recipe_names.json`, and the "Use selected" button fills in the selected machine name for you.
+### F2 · NEI extraction and crafting requests
 
-### 2. NEI Panel Item Extraction / Crafting
+In supported terminal/wireless contexts, **Shift+left-click** attempts to extract a stack to the inventory; **middle-click** opens crafting amount confirmation. A craftable item can be requested with zero stored stock. Server-side permissions, network access and inventory capacity still apply.
 
-- **Shift + Left-click** on an NEI item: extract one stack from the AE network into your inventory (auto-placed); if no stock but craftable, jumps to crafting
-- **Middle-click** on an NEI item: open the AE2 craft amount confirmation GUI (requires a crafting recipe for that item in the network)
+### F3 · Crafting-output pin rows
 
-Results are announced in chat: success / not found / not craftable / inventory full.
+Crafting outputs are pinned in separate rows above the terminal grid, showing total network stock. The current design expands up to three rows. Use native **Pins Rows** settings to adjust/disable them; `pin_row_enabled` controls default behavior. This is not the former overlay drawn over the item grid.
 
-### 2.5 Crafted Output Pin Row (redone in 3.14.0)
+### F4 · NEI network tooltips
 
-After ordering, the job's outputs are automatically **pinned to a dedicated top row** of the terminal — the item grid shifts down and nothing is covered:
+Cyan counts show cached network stock with K/M/G/T/P/E suffixes; green `+` and `Craft` indicate craftability. Craftability can appear without stored stock.
 
-- Pinned entries show the item's **full network storage** (not just the crafted amount)
-- Rows **auto-extend** when outputs exceed one row (up to 3; e.g. 18 kinds = 2 rows) and shrink back automatically
-- Standard ME Terminal / native Wireless Terminal / terminal parts have 1 row enabled by default; terminal settings (gear → Pins Rows) adjust row count or **disable entirely** (switch fixed in 3.15.0); plus a global `pin_row_enabled` switch in settings.json
-- The top-right crafting-completion banner is unchanged
+- Ordinary items use item stock and the `AE` label. **GT fluid-display stacks and ae2fc pure-fluid representations** use the existing fluid lookup and show `mB` plus the fluid name.
+- **Real buckets/cells remain container items for stock queries**, rather than universally being converted to their contents.
+- The inspected Chromatic Compat converts a fluid-only context to a GT fluid-display stack before calling the same item handler. fix42 adds no fluid adapter.
+- Data comes from the terminal-fed client cache, not a fresh server query on each hover. Disabled display, expired/missing cache, or neither stock nor craftability produces no added line.
 
-### 3. NEI Item Tooltip
+### F5 · NEI count overlays
 
-- **Cyan count**: the item's stock in the AE network (supports K/M/G/T/P/E scientific notation)
-- **Green +Craft**: the item is currently craftable via the AE network
-- **Fluid direct display**: fluid containers (buckets, cells, etc.) show the fluid amount itself (e.g. `4.5P mB Distilled Water`) instead of container count
+Network counts/craftability badges are drawn on relevant NEI item, bookmark and recipe displays. They share the cache with F4 but are a separate rendering path. fix42 changes only the tooltip text entry point.
 
-### 4. NEI Bookmark Panel Count Overlay
+### F6 · Crafting-completion notifications
 
-Items in the NEI bookmark panel on the left show a network stock / craftable marker at their bottom-right.
+AE2-style banners show the output and elapsed time to the recorded requesting player, with sound and queued display. Manual CPU following is not required for every order. Cancellation, offline players and fluid outputs still need scenario-specific testing.
 
-### 5. Crafting Completion Notification (native style since 3.15.0)
+### F7 · Replan
 
-When an AE crafting CPU finishes an order, a banner in the **native AE2 style** (vanilla achievement texture + slide animation) slides in at the top-right:
+The crafting-confirmation **Replan** button recalculates the current job. It does not change the machine's recipe or forcibly complete an order.
 
-- Shows the result icon + localized title + `N item, elapsed HH:mm:ss` (actual job duration)
-- Plays a level-up sound; queued orders display one by one
-- **Pushed automatically to the ordering player** — no need to follow the CPU like the vanilla notification requires
+### F8 · Enhanced IO Port
 
-### 6. Crafting Replan
+`ex_io_port` reuses AE2's IO mechanism, scaling transfers by `io_port_rate` (default 1024). Back up large transfers and monitor server tick cost.
 
-A **Replan** button in the AE2 **craft confirm GUI**: re-allocates the current simulated crafting task's process with one click.
+### F9 · Infinite Water and Lava Cell
 
-### 7. Enhanced IO Port (`ex_io_port`)
+In an ME Drive, the cell supplies water/lava using a creative-cell-style mechanism with a very large finite displayed amount. Check the instance's NEI for the recipe; the display is not ordinary persisted cell inventory.
 
-Same appearance as the native AE2 IO port, but **transfers 1024× more items per operation** (adjustable via `io_port_rate` in `config/ae2_qof/settings.json`, hot-reloaded automatically). 
+### F10 · Wireless AE transceivers and connector
 
-### 8. Infinite Water & Lava Cell
+Sender/receiver transceivers on a matching channel link ME networks. **Sneak-right-click a sender** with the connector to bind its channel; right-click supported ME devices to link/unlink. Includes channel management, cross-dimension links and block highlighting. Endpoint loading, network state and permissions still matter; cross-dimension support is not automatic chunk loading.
 
-Provides **nearly infinite water and lava** (each ≈ 4.5×10^15) when placed in an ME drive. Recipe: water bucket + lava bucket placed side by side, middle and side slots empty.
+### F11 · Quartz Knife name copying
 
-### 9. Wireless Transceiver + Wireless Connector
+Hold a Quartz Knife and **sneak-right-click** a supported block, AE part or GT machine to write its name onto the knife and copy it to the clipboard. Name resolution and inventory-synchronization edge cases are noted in the audit.
 
-- **Wireless Transceiver** (block): connects an ME network's items/fluids to a wireless channel; right-click to open the GUI for channel & mode setup (sender/receiver)
-- **Wireless Connector** (tool): binds ME devices (interfaces, terminals, machines, etc.) to a wireless channel for remote wireless connection
+### F12 · F-key search filling
 
-**Usage**: place two transceivers (one sender, one receiver, same channel) → both networks connect wirelessly; **Shift+right-click** the sender with a connector to bind the channel; **right-click** any ME device to join the network, right-click again to unbind. Supports **cross-dimension** connections. The transceiver GUI supports adding/removing channels, switching modes, and highlighting connected blocks (red outline).
+In supported AE2/ae2fc screens, hover an item and press **F** to fill the search field. Typing into an already-focused search field should not be intercepted.
 
-### 10. Quartz Knife Name Copy
+### F13 · NEI display toggle
 
-Hold a **Quartz Knife** and **Shift+right-click** a block/AE part/GT machine in the naming screen → automatically writes the target name into the knife's name and copies it to the clipboard.
+The terminal **OV** button controls network information and saves a local preference. It is separate from server gameplay multipliers; players choose their own display setting.
 
-### 11. F-Key Search Fill
+### F14 · Smart Doubling
 
-In AE2 / ae2fc terminal GUIs, hover over an item and press **F** → automatically fills that item's name into the search box.
+Enabled supported ME interfaces, GT/GTNL pattern hatches and Programmable Hatches media attempt to push multiple processing rounds at once. A zero configuration cap still respects available material, energy, buffers and simulated medium capacity.
 
-### 12. NEI Overlay Toggle
+Fallback conditions include fake crafting, blocking and pending items. **Bulk material pushing is not machine parallelism or overclocking.** Cross-medium buffering/accounting has open static-review findings; there is no blanket no-loss/no-overproduction guarantee.
 
-- Command: `/apu-overlay` (toggle the AE overlay on NEI recipe pages/bookmarks; single-player / LAN only — on dedicated servers use the OV button)
-- Or the **OV** button in pattern terminal GUIs
-- Persisted to `config/ae2_qof/settings.json` (`nei_overlay_enabled`, purely local client setting, independent per player)
+### F15 · Pattern & Interface Merged Terminal
 
-### 13. Smart Doubling
+Block, cable-part and wireless-handheld forms combine pattern editing with the interface list:
 
-A new **Smart Doubling** checkbox (cycle-arrow icon) on the left of the **ME Interface** GUI. When enabled, the crafting CPU pushes **N rounds** of a pattern's inputs to the interface at once, so the machine processes N rounds before refilling — no more one-round-at-a-time refills, greatly speeding up GT pipelines.
+- Crafting 3×3 / paged processing grids; encode, clear, multiply, substitute/backup substitute and invert.
+- Upload, recall, primary-output swap, OV, and a conditional GTNL assembly-matrix AM entry point.
+- Pattern read-back, editing snapshots, GT/ae2fc fluid representations and PH Programming Toolkit integration.
+- Middle-click amount editing, Shift+middle-click naming and other shortcuts. Limits depend on slots and encoding; not every quantity is unbounded.
+- Wireless binding through an ME Security Terminal, cross-dimension access, and binding/permission checks.
 
-- **N is determined by**: `N = min(remaining craft rounds, smart_doubling_max_rounds, extractable per input slot / per round, power-payable rounds, max rounds the machine can accept)`; GT/PH hatches are probed CPU-side, ProgrammableHatches dual-input hatches self-limit by internal buffer space (`pushPatternMulti`)
-- **Applicable media**: ME Interface, GT Crafting Input Hatch/Bus (ME) (2714/2715), GTNL Super Crafting Input Hatch (ME) (21504/21505, since 3.9.0), ProgrammableHatches dual-input hatch, GTNL Super Dual ME Interface
-- **Default cap**: 0 = unlimited (dispatch all remaining rounds at once; `smart_doubling_max_rounds` in `config/ae2_qof/settings.json`, range 0–2147483647, hot-reloaded automatically or editable via the in-game Config page)
-- **Safety boundaries** (falls back to one-round behavior, identical to vanilla): fake crafting, fluid interfaces, blocking/conditional blocking mode, interface with pending un-pushed items, GT machines that accept plans directly (`acceptsPlans`); when materials/power are short, N is **clamped to the extractable rounds** instead of abandoning the push
-- **Energy**: charged once for the actually-pushed rounds; outputs and remaining rounds are accounted for the actual count — no overproduction or item loss
----
+### F16 · ME Quest Detector
 
-### 14. Pattern + Interface all-in-one terminal (standalone block "Pattern & Interface Terminal")
+Checks ME stock for the bound player's/team's BetterQuesting non-consuming retrieval tasks. Consuming submissions are skipped: visibility is not consumption. Network/offline conditions apply; NBT variants and persistent owner binding have review findings.
 
-A new wired block that merges the **pattern encoding panel** with the **interface management list** in one GUI — manage interface patterns and encode patterns in the same screen, no need to open a separate Pattern Terminal. Place the block and right-click to open (requires an AE network).
+### F17 · Infinity Storage Cell
 
-- **Panel style**: native AE2Things style — Crafting/Processing tabs, native icon buttons (Encode/Clear/x2/Substitute/Be-Substitute/Invert), and a 4×4×2-page grid in Processing mode (scrollbar pages; the Invert button flips the input/output column direction); Crafting mode shows a 3×3 grid + result slot
-- **Top buttons**: `↑` (Upload — auto-upload the encoded pattern to an interface/assembler on the network; Shift+click forces the provider selection screen) / `←` (Recall — take back the last matching pattern) / `⇄` (Swap — rotate primary/secondary outputs) / `AM` (upload to a GTNL Assembler Matrix; shown in Crafting mode when GTNL is installed) / `OV` (NEI overlay toggle)
-- **Usage**: put items directly into the panel to form a recipe, then press Encode; Clear empties the panel; x2 doubles the output ratio; Processing recipes support Substitute and Be-Substitute
-- **Pattern read-back** (3.6.0): put an encoded pattern back into the OUT slot to auto-decode it into the panel — inputs/outputs/mode/substitution all restored; supports GT ultimate patterns and fluids (restored as GT display items); provider mapping is preserved for re-editing
-- **Editing snapshot** (3.6.0): closing the terminal automatically saves all panel slots and the mode into the block NBT; reopening restores everything
-- **PH Programming Toolkit MK.II support** (3.6.0): with the toolkit in your inventory, NEI recipe transfers automatically replace non-consumed catalysts with programming circuits (zero-circuit fallback in fallback mode); zero impact when PH is not installed
-- **Middle-click amount editor**: middle-click a panel slot to open an amount editor (+1/+10/+100/+1000 and ×2/×8/×64/×512, toggled with Shift; no upper limit); Shift+middle-click renames items; output slots cannot be edited
-- **Interaction**: panel slot clicks and drag-place behave like the native AE2 terminal; the scrollbar supports click and wheel paging; clicks inside the panel take priority over the interface list
-- **Cable part form** (3.7.0): a new item, "Pattern & Interface Merged Terminal Part", can be mounted on any face of an AE2 cable (looks like the native ME terminal part; requires a channel and idle power); its GUI is identical to the block form. Craft: iron ingot + merged terminal block
-- **Wireless handheld form** (3.7.0): a new item, "Wireless Merged Terminal", opens the full all-in-one GUI anywhere, **across dimensions**; binding works like the vanilla wireless terminal — put it into the ME Security Station encode slot; if the station is removed the terminal stops working; power-free by design; network access permissions are still enforced by the security station's biometric cards; craft: diamond block + redstone + iron ingots etc.
+Integrates dancing snow's AE2 Infinity Cell for items, fluids and essentia. **Items hold a UUID; contents live in the world save. Copies share the same backend inventory.**
 
-### 15. ME Quest Detector (BetterQuesting integration, 3.11.0)
+NEI `U` opens paged contents; tooltips show statistics and Ctrl switches scientific notation. AppEU energy is not included. Save-failure/migration findings remain open: back up before upgrades and bulk migration rather than assuming risk-free compatibility.
 
-A new block, the **ME Quest Detector**: once attached to an ME network, items stored in the network automatically complete BetterQuesting **retrieval-type tasks** (non-consuming) — quest items stored in the network count as submitted; no manual pulling or submit stations needed.
+### F18 · Universal Maintenance Hatch
 
-- **Binds to the placer**: progress is tracked for the placing player and automatically supports BQ party-shared progress; break and re-place to rebind
-- **Zero-consumption guarantee**: only BQ's official read-only detection hook is used; nothing is ever extracted from the network; consuming tasks are completely unaffected
-- Checks once per second; pauses without power/channel; skipped when the bound player is offline
-- WAILA/JADE shows the bound player and network status; no effect when BetterQuesting is absent
+Provides wireless EU, maintenance behavior and circuit-board parallel mapping. **Maintenance bypass currently applies through a global Mixin, not only to machines fitted with this hatch.** Wireless EU requires an already-funded account. Circuit mapping, cross-recipe consumption and output merging need focused regression testing.
 
-### 16. Infinity Storage Cell (merged AE2InfinityCell, 3.12.0)
+### F19 · GT wireless EU
 
-The standalone mod **AE2 Infinity Cell** (by dancing snow, MIT) is now fully merged into this jar: a new item, the **Infinity Storage Cell** — near-limitless storage for items, fluids and essentia; contents live in the world save (the cell only holds a UUID reference), and copies of a cell share one backend inventory.
+Wireless Output Hatch **32110** contributes to the wireless EU account; Wireless Input Hatch **32111** draws from it. This is separate from wireless AE item/fluid networking, does not generate free power, and is not Tesla Tower behavior.
 
-- Drop it into an ME Drive/ME Chest and use; in NEI press `U` on the cell to browse everything via "Infinity Cell View" pages
-- ⚠️ This jar is **mutually exclusive** with the standalone aeinfinitycell mod: remove the original jar before installing; existing cells and save data migrate seamlessly with zero action
-- **Hover stats** (3.13.0): hovering the cell shows total/items/fluids/essentia breakdown with byte estimates; letter units by default (12.34M), hold Ctrl for scientific notation
-- AppEU energy channel is not included
+### F20 · Adaptive energy grid
 
-### 17. Universal Maintenance Hatch (3.16.0)
+Terminal **32100** has five pages: status, settings, frequency, monitoring and hatch list. Companion hatches: input **32102**, laser source **32103**, dynamo **32104**, laser target **32105**.
 
-A new GT hatch item, the **Universal Maintenance Hatch**: place it in a multiblock's maintenance slot for three capabilities:
+**Sneak-right-click the terminal** with a Network Data Stick to write configuration → right-click hatches to bind → right-click the terminal to read. Includes team networks, highlighting/permission-controlled teleportation, controller names and statistics. Sampled monitoring data is not proof of correct resource accounting.
 
-- **Maintenance bypass**: all multiblocks never have maintenance issues (Mixin globally injects `shouldCheckMaintenance()` to return false)
-- **Wireless energy**: binds to the placer's UUID on placement, periodically pulls EU from the global wireless energy network to local storage (EU must be injected into the wireless network first via other means)
-- **Circuit board parallel mapping**: insert a GT circuit board to set parallel count, formula is 4^level (LV=4, MV=16, HV=64, EV=256, ...)
+### F21 · Stock Monitor Cover
 
-Recipe: Iron Ingot ×4 + Glass ×2 + Redstone ×2 + LV Circuit Board (3×3)
+Queries items/fluids through adjacent AE or Nexus wireless binding and outputs control signals according to threshold/mode. Includes a marker slot, quantity presets and synchronized status UI. Mounting, machine behavior and wireless state depend on the actual environment.
 
-### 18. GT Wireless EU Grid (3.17.0)
+### F22 · Stock Statistics Terminal
 
-GT hatch-based EU wireless energy transmission, unrelated to AE networks — purely for GT machine power:
+GT information terminal, ID **32101**, designed to centrally inspect/edit standard AE level emitters and this mod's stock covers, including thresholds, status and location. **Client/server UI construction, emitter enumeration and remote-edit authorization have open review findings.** Registration or compilation alone does not demonstrate complete functionality.
 
-- **Wireless Input Hatch** (ID 32111): binds to placer UUID on placement, periodically pulls EU from the wireless energy network
-- **Wireless Output Hatch** (ID 32110): injects local EU into the wireless energy network
+## Known issues and verification scope
 
-### 19. Adaptive GT Energy Grid System (3.18.0)
+A01–A19 in the [fix41 full-function audit](docs/mcp-full-function-audit-fix41.md) are static-review findings, not a claim that every issue was reproduced in-game. They are **not closed by fix42**. Priorities include Infinity Cell saving/migration, cross-recipe conservation, wireless EU, smart doubling, stock-terminal behavior, provider-list budgets and NBT identity.
 
-New GT hatch-based adaptive energy grid system. Multiple hatches share a configuration via **Data Stick**:
+For reports, include both sides' JAR versions, pack/integration versions, GUI and item/fluid, reproduction steps, expected/actual behavior, logs and screenshots. Tooltip regression should cover stock/craftability combinations, rapid switching, fluid displays, real containers, and both native NEI and Chromatic paths.
 
-- **Adaptive Terminal** (ID 32100): right-click to open GUI with 3 tabs (Status / Adaptive Settings / Frequency Settings)
-- **Adaptive Input Hatch** (ID 32102): auto-matches voltage tier and amperage from terminal
-- **Adaptive Laser Source Hatch** (ID 32103): laser output, auto-matches tier
-- **Adaptive Dynamo Hatch** (ID 32104): power output, auto-matches tier
-- **Adaptive Laser Target Hatch** (ID 32105): laser receiver, auto-matches tier
-- **Network Data Stick**: Shift+right-click terminal to write config, right-click hatch to bind, right-click terminal to read
+## Building and development
 
-**Usage**: Place Adaptive Terminal → Shift+right-click Data Stick to write → right-click hatches to bind → right-click terminal to read → hatches auto-adapt tier
+Use matching dependencies, repository-local `libs/`, and a populated Gradle cache. Missing offline dependencies should be restored at their exact versions, not upgraded merely to make the build pass.
 
-### 20. Stock Monitor Cover (3.19.0)
+```powershell
+$env:JAVA_HOME = 'E:\java17'
+$env:GRADLE_USER_HOME = 'C:\Users\29357\.gradle'
+.\gradlew.bat build --offline -x spotlessJavaCheck -x spotlessCheck
+```
 
-A cover that attaches to any machine/block side, monitors specified item/fluid stock in the AE2 network, and automatically controls machine on/off (redstone signal output) based on thresholds.
+The fix42 round passed the Java17 build and 59 assertions in [tooltip-fix42-regression.sh](docs/tooltip-fix42-regression.sh), using dependency stubs rather than game integration. Re-run with `JAVA_HOME=/e/java17 bash docs/tooltip-fix42-regression.sh`. Gradle `test` itself reported `NO-SOURCE`.
 
-- **Dual-mode networking**: adjacent AE2 cable direct connection, or Nexus wireless network binding (native `WirelessSelectionPanel` for network selection)
-- **Item/Fluid dual support**: correctly recognizes AE2 native fluids (fixed `AEFluidStack.equals` reference comparison bug, switched to `getFluid().getID()` traversal matching)
-- **Threshold + mode**: Below N power-on / Above N power-on, threshold modified in real-time and synced to server
-- **Phantom marker slot**: Shift+left-click to cancel marker, no quantity displayed (pure marker use)
-- **GUI real-time refresh**: stock/channel/work status auto-pushed via MUI2 SyncValue, no need to reopen GUI
+Adjust paths and use `./gradlew` on other environments. This is the current Java17 verification command and **explicitly skips Spotless**; it does not establish a formatting-check pass. Jabel permits modern syntax while emitting JVM 8 bytecode. Artifacts are in `build/libs/`; actual test execution and checksums are recorded in the handover.
 
-### 21. Stock Monitor Terminal (3.19.0-fix41)
+Before changes, read the [handover](docs/AGENT_CHECKPOINT.md), [development guide](docs/GTNH-开发指南.md), [build/reference guide](docs/GTNH-构建与代码参考.md), and [code style](docs/GTNH-代码风格.md). Do not substitute modern Minecraft APIs or reintroduce RFB `childDelegations` interference.
 
-A GT single-block power-free information terminal for centrally viewing and editing AE2 standard Level Emitters (`PartLevelEmitter`) and this mod's Stock Monitor Covers. No need to run to each machine to adjust thresholds.
+## Documentation
 
-- **Emitter central management**: automatically enumerates all standard level emitters in the current AE2 network, displays monitor target/threshold/type (Item/Fluid/Energy), click to edit threshold (Energy type read-only)
-- **Cover central management**: global registry (WorldSavedData) discovers all covers cross-dimensionally, displays threshold/mode/online status, click to edit threshold and mode, auto-removal on dismantle
-- **Nexus wireless connection**: same binding mechanism as covers, click "Connect AE" to open Nexus native network selection panel, no wireless channel consumption
-- **Dual-mode enumeration**: prefer Nexus wireless network for emitter enumeration, fallback to adjacent AE2 network when not bound
-- **Permission interception**: emitter modification requires AE2 network BUILD permission
-- **Power-free**: `isElectric()=false`, consumes no energy
-
----
-
-## 🕐 Planned
-
-- ~~**21504 SuperDualInputHatchME as a CPU crafting medium research**~~ → Done in 3.9.0 (correct name: GTNL `SuperCraftingInputHatchME`, Super Crafting Input Hatch ME, meta 21504/21505; the originally named SuperDualInputHatchME is actually a restock-type machine at 22620 and cannot be a crafting medium).
-
----
-
-## 📄 Other Docs
-
-| Doc |描述|
+| Document | Purpose |
 |---|---|
-| [Changelog](docs/CHANGELOG.md) | User-facing changelog (by version) |
-| [CHANGELOG.md](CHANGELOG.md) | Developer changelog, known issues, rollback guide |
-| [CREDITS.md](CREDITS.md) | Code & texture sources, license review |
+| [CHANGELOG.md](CHANGELOG.md) | Root version log and historical fixes |
+| [AGENT_CHECKPOINT.md](docs/AGENT_CHECKPOINT.md) | Current implementation, artifacts, untested cases and handover actions |
+| [Tooltip investigation](docs/mcp-tooltip-duplicate-investigation.md) | Pre-fix42 callback/version evidence and proposal |
+| [Full-function audit](docs/mcp-full-function-audit-fix41.md) | F1–F22 mapping, A01–A19 and priorities |
+| [MOD_MAP.md](docs/MOD_MAP.md) | Feature entry points; verify historical mappings against code |
+| [Single-player test script](docs/SINGLEPLAYER_TEST_SCRIPT.md) | Historical F1–F22 cases, not proof of this version passing |
+| [Mixin notes](docs/mixin_notes.md) | Injection/compatibility notes |
+| [CREDITS.md](CREDITS.md) | Code, texture and licensing records |
 
----
+## Credits and licensing
 
-## 🙏 Credits
+Adapted from **GaLicn's [AE2-Auto-Pattern-Upload](https://github.com/GaLicn/AE2-Auto-Pattern-Upload/)**, with thanks for the original upload and F-key search implementations.
 
-This mod is adapted from [**AE2-Auto-Pattern-Upload**](https://github.com/GaLicn/AE2-Auto-Pattern-Upload/) (by GaLicn). The original upload and F-key search features were taken directly from the original project and adapted for GTNH 2.9.0. Many thanks to the original author.
+- **GTNH / Applied Energistics 2, NEI and AE2FluidCraft**: core APIs, terminals, fluid and recipe ecosystem.
+- **小飘 (mynamexiaopiao)**: AE-Wireless-Transceiver code; **麦淇淋 (@麦淇淋)**: wireless blocks, connectors and GUI artwork. Permission records are in CREDITS.
+- **dancing snow (DancingSnow0517)**: AE2 Infinity Cell; the original MIT license is retained in the JAR.
+- **asdflj / AE2Things**: conceptual references. Enhanced IO textures come from **AE2's original BlockIOPort**, not AE2Things.
+- **Waila, GT5-Unofficial, GT-Not-Leisure, GTLCore, Programmable-Hatches, ExtendedAE_Plus, ExampleMod1.7.10**, and the other referenced projects.
 
-During development, code and textures from many other mods were referenced. Main sources are listed below (full details and license review in **`CREDITS.md`**):
-
-### Code References
-- **Applied Energistics 2 GTNH** (`Applied-Energistics-2-Unofficial`) — AE network, storage, grid, and crafting logic almost entirely call its API and internal classes; the infinite water/lava cell extends `AEBaseInfiniteCell` and reuses the `CreativeCellInventory` mechanism
-- **AE-Wireless-Transceiver** (by 小飘 / mynamexiaopiao) — the entire wireless transceiver block/terminal/connector implementation (permission confirmed via Bilibili)
-- **AE2FluidCraft-Rework** (ae2fc) — fluid patterns (`ItemFluidEncodedPattern`), pure fluid identification
-- **AE2Things** (asdflj) — reference for enhanced IO port, infinite fluid cell, creative cell concepts
-- **NotEnoughItems** (NEI) — NEI recipe-page AE badges, tooltip injection
-- **Waila** — highlight support for blocks such as the wireless transceiver
-- Others referenced: `GT-Not-Leisure`, `GT5-Unofficial`, `GTLCore`, `Programmable-Hatches`, `ExtendedAE_Plus`, `ExampleMod1.7.10` (GTNH template), etc.
-
-### Texture References
-- **AE-Wireless-Transceiver** (by 小飘 / mynamexiaopiao; textures by 麦淇淋 / @麦淇淋) — wireless transceiver block textures, `de.png` / `de1.png` / `widgets.png`, wireless connector textures (permission granted by the authors)
-- **Applied Energistics 2** — `guis/states.png`, `gui/wireless.png`, etc. (CC BY-NC-SA 3.0, non-commercial use)
-- **AE2Things** — `ex_io_port*.png` enhanced IO port textures, infinite fluid cell concept
-- **Minecraft vanilla** — `textures/gui/widgets.png` (runtime reference)
-- `logo.png` is self-drawn
-
-### Copyright & Compliance
-This repository is **for personal archival only, not for public distribution**. Using referenced code and textures for personal backup purposes greatly reduces copyright risk. Before any public distribution, please re-check the latest LICENSE of the original repositories (see the license review table in `CREDITS.md`).
-
----
-
-## 🛠 Developer Info
-
-- Build: `./gradlew build -x spotlessJavaCheck -x spotlessCheck`
-- Developer changelog, known issues, and rollback guide: see **`CHANGELOG.md`**
+AE2-sourced textures include non-commercial, attribution and share-alike requirements. Personal archival does not replace third-party permission. Any public release requires renewed review of code, artwork, author permissions and licenses; this README grants no blanket redistribution license.

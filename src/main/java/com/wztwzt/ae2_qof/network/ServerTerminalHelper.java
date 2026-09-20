@@ -3,6 +3,8 @@ package com.wztwzt.ae2_qof.network;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+import com.google.common.collect.ImmutableCollection;
+
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.IInventory;
@@ -13,11 +15,16 @@ import com.gtnewhorizon.gtnhlib.util.ServerThreadUtil;
 import appeng.api.AEApi;
 import appeng.api.config.Actionable;
 import appeng.api.features.IWirelessTermHandler;
+import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
+import appeng.api.networking.crafting.ICraftingGrid;
+import appeng.api.networking.crafting.ICraftingPatternDetails;
 import appeng.api.networking.security.IActionHost;
 import appeng.api.networking.security.PlayerSource;
 import appeng.api.storage.IMEMonitor;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.container.implementations.ContainerCraftAmount;
+import appeng.core.sync.GuiBridge;
 import appeng.helpers.WirelessTerminalGuiObject;
 import appeng.util.Platform;
 
@@ -55,17 +62,15 @@ public final class ServerTerminalHelper {
 
     /**
      * 在玩家背包中查找可用的无线终端，构造 WirelessTerminalGuiObject。
+     * <p>
+     * 查找顺序与 AE2 世界取物（{@code PlayerInventoryUtil.getFirstWirelessTerminal}）一致：
+     * **先饰品栏、再主背包**。顺序必须对齐，否则玩家同时携带两个绑定不同网络的终端时，
+     * 本工具选中的终端可能与原版取物用的不是同一个（世界里键取物的存量判定会因此错判）。
      */
     public static WirelessTerminalGuiObject resolveTerminal(EntityPlayerMP player) {
-        for (int i = 0; i < player.inventory.getSizeInventory(); i++) {
-            ItemStack stack = player.inventory.getStackInSlot(i);
-            if (stack == null) continue;
+        if (player == null) return null;
 
-            WirelessTerminalGuiObject terminal = tryCreateTerminal(player, stack, i);
-            if (terminal != null) return terminal;
-        }
-
-        // 搜索 Baubles（通过反射避免硬依赖）
+        // 先搜 Baubles（通过反射避免硬依赖），与 AE2 原版取物顺序一致
         try {
             IInventory baubles = getBaublesInventory(player);
             if (baubles != null) {
@@ -73,11 +78,24 @@ public final class ServerTerminalHelper {
                     ItemStack stack = baubles.getStackInSlot(i);
                     if (stack == null) continue;
 
-                    WirelessTerminalGuiObject terminal = tryCreateTerminal(player, stack, i);
+                    // 饰品栏槽位要换算成 AE2 的虚拟索引，否则打开 GUI 时
+                    // Platform.getItemFromPlayerInventoryBySlotIndex 会解析到错误的物品。
+                    WirelessTerminalGuiObject terminal = tryCreateTerminal(
+                        player,
+                        stack,
+                        Platform.baublesSlotsOffset + i);
                     if (terminal != null) return terminal;
                 }
             }
         } catch (Throwable ignored) {}
+
+        for (int i = 0; i < player.inventory.getSizeInventory(); i++) {
+            ItemStack stack = player.inventory.getStackInSlot(i);
+            if (stack == null) continue;
+
+            WirelessTerminalGuiObject terminal = tryCreateTerminal(player, stack, i);
+            if (terminal != null) return terminal;
+        }
 
         return null;
     }
@@ -241,22 +259,130 @@ public final class ServerTerminalHelper {
 
     /**
      * 在玩家背包中查找无线终端的物品栏索引。
-     * 
+     * <p>
+     * 返回的是 AE2 {@code Platform.getItemFromPlayerInventoryBySlotIndex} 能直接解析的「槽位索引」：
+     * 主背包 → 原样索引；Baubles 饰品栏 → {@code 100012 + 饰品索引}。
+     * 查找顺序与 AE2 世界取物的 {@code PlayerInventoryUtil.getFirstWirelessTerminal} 一致
+     * （先 Baubles 再主背包），保证打开下单界面时用的正是原版会用的那个终端。
+     *
      * @return 物品栏索引，-1 表示未找到
      */
     public static int findTerminalSlot(EntityPlayerMP player) {
+        if (player == null) return -1;
+
+        // Baubles 优先，与 AE2 PlayerInventoryUtil.getFirstWirelessTerminal 顺序一致
+        try {
+            IInventory baubles = getBaublesInventory(player);
+            if (baubles != null) {
+                for (int i = 0; i < baubles.getSizeInventory(); i++) {
+                    ItemStack stack = baubles.getStackInSlot(i);
+                    if (stack == null) continue;
+                    if (isWirelessTerminal(stack)) {
+                        return Platform.baublesSlotsOffset + i;
+                    }
+                }
+            }
+        } catch (Throwable ignored) {}
+
         for (int i = 0; i < player.inventory.getSizeInventory(); i++) {
             ItemStack stack = player.inventory.getStackInSlot(i);
             if (stack == null) continue;
 
-            IWirelessTermHandler wh = AEApi.instance()
-                .registries()
-                .wireless()
-                .getWirelessTerminalHandler(stack);
-            if (wh != null && wh.canHandle(stack)) {
+            if (isWirelessTerminal(stack)) {
                 return i;
             }
         }
         return -1;
+    }
+
+    /** 是否为 AE2 可识别的无线终端物品。 */
+    private static boolean isWirelessTerminal(ItemStack stack) {
+        try {
+            IWirelessTermHandler wh = AEApi.instance()
+                .registries()
+                .wireless()
+                .getWirelessTerminalHandler(stack);
+            return wh != null && wh.canHandle(stack);
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    /**
+     * 网络中既没有该物品的存量、又存在可用的合成样板时，为玩家打开 AE2 原生的
+     * 「要合成多少个」输入界面（gui.craftAmount）。玩家仍需自己填数量并点确认，
+     * 这里只是把入口打开，不会代为下单。
+     * <p>
+     * 调用方必须先确认「网络无存量」；本方法会再次校验样板是否真的存在，
+     * 不存在时返回 false 且不做任何界面操作（调用方按原逻辑静默放行）。
+     *
+     * @param player   目标玩家（服务端实体）
+     * @param terminal 已解析出的、在范围内的无线终端
+     * @param target   想合成的物品
+     * @return true 表示界面已成功打开，调用方应拦截后续原版逻辑
+     */
+    public static boolean openCraftAmountIfCraftable(EntityPlayerMP player, WirelessTerminalGuiObject terminal,
+        IAEItemStack target) {
+        if (player == null || terminal == null || target == null) return false;
+
+        // 已经在该界面里时不重复打开：界面弹出有网络延迟，点击过快可能在界面出现前
+        // 连发几个包，重复打开会把玩家已经填好的数量清空。
+        if (player.openContainer instanceof ContainerCraftAmount) return true;
+
+        IGrid grid = terminal.getGrid();
+        if (grid == null) return false;
+
+        ICraftingGrid craftingGrid = grid.getCache(ICraftingGrid.class);
+        if (craftingGrid == null) return false;
+
+        ImmutableCollection<ICraftingPatternDetails> patterns = craftingGrid
+            .getCraftingFor(target, null, 0, player.worldObj);
+        if (patterns == null || patterns.isEmpty()) return false;
+
+        // 用已解析终端自身的槽位，保证「校验样板的网络」与「打开界面后玩家操作的网络」是同一个终端；
+        // 若玩家身上有多个绑定不同网络的终端，各自查找可能选出不同对象。
+        int slotIndex = terminal.getInventorySlot();
+        if (slotIndex < 0) {
+            slotIndex = findTerminalSlot(player);
+        }
+        if (slotIndex < 0) return false;
+
+        Platform.openGUI(player, null, null, GuiBridge.GUI_CRAFTING_AMOUNT, slotIndex);
+
+        if (player.openContainer instanceof ContainerCraftAmount cca) {
+            cca.setItemToCraft(target);
+            cca.detectAndSendChanges();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 判断 ME 网络中当前是否还有该物品可提取（只做 SIMULATE，不扣减）。
+     * 用于「世界中键取物」在交给原版前先确认原版确实能取到东西，
+     * 避免把该由原版处理的取物流程抢走。
+     *
+     * @return true 表示网络里至少还能取出 1 个
+     */
+    public static boolean hasNetworkStock(WirelessTerminalGuiObject terminal, IAEItemStack target) {
+        if (terminal == null || target == null) return false;
+        try {
+            IMEMonitor<IAEItemStack> itemInv = terminal.getItemInventory();
+            if (itemInv == null) return false;
+
+            IAEItemStack request = target.copy();
+            request.setStackSize(1);
+
+            EntityPlayer player = getPlayer(terminal);
+            if (player == null) return false;
+
+            // 与 AE2 世界取物同口径：只做模拟读取，不经过耗电判定，
+            // 避免「终端没电」被误判成「网络没存量」而弹出合成界面。
+            IAEItemStack simulated = itemInv.extractItems(request, Actionable.SIMULATE, new PlayerSource(player, null));
+            return simulated != null && simulated.getStackSize() > 0;
+        } catch (Throwable ignored) {
+            // 判定失败时按「有存量」处理，把流程让回原版，最坏结果与改动前一致
+            return true;
+        }
     }
 }

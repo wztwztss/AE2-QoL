@@ -20,12 +20,10 @@ import com.cleanroommc.modularui.widgets.slot.ItemSlot;
 import com.cleanroommc.modularui.widgets.slot.ModularSlot;
 import com.cleanroommc.modularui.widgets.textfield.TextFieldWidget;
 
-import gregtech.api.enums.Textures;
 import gregtech.api.interfaces.ITexture;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.implementations.MTEHatchMaintenance;
-import gregtech.api.render.TextureFactory;
 
 public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
 
@@ -65,17 +63,28 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
             EnumChatFormatting.DARK_GRAY + "ae2qof"
         };
     }
-
+    // v7 方案 B：外观走 ModTextures.front/top/side（TextureMap Mixin 注入的自有路径），
+    // 不再占用 GT 的 OVERLAY_AUTOMAINTENANCE；未启用时完全回退 GT 原版渲染（含发光/手动模式）。
     @Override
-    public ITexture[] getTexturesActive(ITexture aBaseTexture) {
-        return new ITexture[] { aBaseTexture,
-            TextureFactory.of(Textures.BlockIcons.OVERLAY_AUTOMAINTENANCE) };
-    }
-
-    @Override
-    public ITexture[] getTexturesInactive(ITexture aBaseTexture) {
-        return new ITexture[] { aBaseTexture,
-            TextureFactory.of(Textures.BlockIcons.OVERLAY_AUTOMAINTENANCE) };
+    public ITexture[] getTexture(gregtech.api.interfaces.tileentity.IGregTechTileEntity aBaseMetaTileEntity,
+                                 net.minecraftforge.common.util.ForgeDirection side,
+                                 net.minecraftforge.common.util.ForgeDirection facing,
+                                 int aColorIndex,
+                                 boolean aActive,
+                                 boolean aRedstone) {
+        if (com.wztwzt.ae2_qof.util.ModTextures.isReady()) {
+            if (side == facing) {
+                return new ITexture[] { com.wztwzt.ae2_qof.util.ModTextures.front("universal_maintenance_hatch") };
+            }
+            if (side == net.minecraftforge.common.util.ForgeDirection.UP) {
+                return new ITexture[] { com.wztwzt.ae2_qof.util.ModTextures.top("universal_maintenance_hatch") };
+            }
+            if (side == net.minecraftforge.common.util.ForgeDirection.DOWN) {
+                return new ITexture[] { com.wztwzt.ae2_qof.util.ModTextures.bottom() };
+            }
+            return new ITexture[] { com.wztwzt.ae2_qof.util.ModTextures.side("universal_maintenance_hatch") };
+        }
+        return super.getTexture(aBaseMetaTileEntity, side, facing, aColorIndex, aActive, aRedstone);
     }
 
     private static Item[] getCircuitItems() {

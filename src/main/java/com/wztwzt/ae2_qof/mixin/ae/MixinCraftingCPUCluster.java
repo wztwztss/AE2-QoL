@@ -522,11 +522,15 @@ public abstract class MixinCraftingCPUCluster {
             return;
         }
         if (smart) {
+            // Once this path may mutate inputs, vanilla must never run a second time.
+            ci.cancel();
             try {
                 ae2qol$executeCraftingSmart(eg, cc);
             } catch (Throwable t) {
-                // 兜底：倍增路径异常时不 cancel，让原版 executeCrafting 接管本 tick，避免拖死整个 CPU。
-                MyMod.LOG.warn("[AE2QoL] Smart doubling crashed, falling back to vanilla path: " + t, t);
+                this.suspended = true;
+                this.markDirty();
+                MyMod.LOG.error("[AE2QoL] Smart doubling failed after execution started; CPU suspended. "
+                    + "Inspect inputs/medium before resuming; unsafe vanilla replay was prevented.", t);
                 return;
             }
             ci.cancel();
@@ -654,6 +658,12 @@ public abstract class MixinCraftingCPUCluster {
                         continue;
                     }
 
+                    // Each medium owns its plan (buffer, multiplier, energy and push contract).
+                    // Return a rejected medium's buffer before recalculating for another medium.
+                    if (craftingInventory != null) {
+                        returnItems(craftingInventory);
+                        craftingInventory = null;
+                    }
                     // Find a valid craftingInventory for this craft.
                     double sum = 0;
                     int effectiveN = 1;

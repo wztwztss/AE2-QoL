@@ -21,7 +21,7 @@ public class ItemStockMonitorCover extends Item {
     public ItemStockMonitorCover() {
         setUnlocalizedName("ae2_qof.stock_monitor_cover");
         setCreativeTab(AE2QoLCreativeTab.INSTANCE);
-        setMaxStackSize(1);
+        setMaxStackSize(64);
     }
 
     /**

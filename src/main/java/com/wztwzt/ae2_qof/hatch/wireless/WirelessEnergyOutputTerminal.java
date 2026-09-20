@@ -53,6 +53,27 @@ public class WirelessEnergyOutputTerminal extends MTEHatchEnergy {
             EnumChatFormatting.DARK_GRAY + "ae2qof"
         };
     }
+    @Override
+    public ITexture[] getTexture(gregtech.api.interfaces.tileentity.IGregTechTileEntity aBaseMetaTileEntity,
+                                 net.minecraftforge.common.util.ForgeDirection side,
+                                 net.minecraftforge.common.util.ForgeDirection facing,
+                                 int aColorIndex,
+                                 boolean aActive,
+                                 boolean aRedstone) {
+        if (com.wztwzt.ae2_qof.util.ModTextures.isReady()) {
+            if (side == facing) {
+                return new ITexture[] { com.wztwzt.ae2_qof.util.ModTextures.front("wireless_energy_output") };
+            }
+            if (side == net.minecraftforge.common.util.ForgeDirection.UP) {
+                return new ITexture[] { com.wztwzt.ae2_qof.util.ModTextures.top("wireless_energy_output") };
+            }
+            if (side == net.minecraftforge.common.util.ForgeDirection.DOWN) {
+                return new ITexture[] { com.wztwzt.ae2_qof.util.ModTextures.bottom() };
+            }
+            return new ITexture[] { com.wztwzt.ae2_qof.util.ModTextures.side("wireless_energy_output") };
+        }
+        return super.getTexture(aBaseMetaTileEntity, side, facing, aColorIndex, aActive, aRedstone);
+    }
 
     @Override
     public ITexture[] getTexturesActive(ITexture aBaseTexture) {

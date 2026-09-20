@@ -11,11 +11,13 @@
     "ae.MixinDualityInterface",
     "ae.MixinContainerInterface",
     "ae.MixinPinsHolder",
+    "ae.MixinPacketPickBlock",
     "gt.MixinMTEHatchInputBus",
     "gt.MixinMTEMultiBlockBase",
     "gt.MixinCommonBaseMetaTileEntityMultiblockRegistry",
     "gt.MixinProcessingLogicSpeed",
-    "TileDriveMixin"
+    "TileDriveMixin",
+    "client.MixinTextureMap"
   ],
   "client": [
     "nei.MixinRecipeHandlerRef",
