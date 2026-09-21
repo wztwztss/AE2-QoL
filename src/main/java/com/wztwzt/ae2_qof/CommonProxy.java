@@ -241,15 +241,17 @@ public class CommonProxy {
             t.printStackTrace(System.err);
         }
 
-        // ===== fix30: StockMonitorTerminal 恢复注册（F22）=====
+        // ===== fix48: StockMonitorTerminal 恢复注册（F22）=====
         // fix13 曾因“启动崩溃”禁用本终端。真正根因不是 RFB：MetaTileEntity ID 32001
         // 已被 GT 本体 LegacyUniversalChemicalFuelEngine（通用化学燃料引擎）占用。
         // CommonMetaTileEntity 构造器发现 ID 重复会抛 IllegalArgumentException，
         // 该异常在 FML init 阶段被 Log4j 记录时又触发 RFB 二次加载错误（NoClassDefFoundError），
-        // 把真正的“ID 占用”异常掩盖成了类加载问题。改用空闲 ID 32101 后注册恢复正常。
+        // 把真正的“ID 占用”异常掩盖成了类加载问题。
+        // fix48：32101 随后被 fissionevolved 的终极宇宙毁灭发电机控制器占用
+        // （其 Config 默认值即 32101），改用 290b3 全表核对过的空闲 ID 32107。
         try {
             stockMonitorTerminal = new StockMonitorTerminal(
-                32101,
+                32107,
                 "stock_monitor_terminal",
                 "Stock Monitor Terminal",
                 1);
@@ -273,7 +275,7 @@ public class CommonProxy {
 
         try {
             adaptiveNetTerminal = new AdaptiveNetTerminal(
-                32100,
+                32106,
                 "adaptive_net_terminal",
                 "Adaptive Net Terminal",
                 5);

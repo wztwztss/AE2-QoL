@@ -1,0 +1,553 @@
+UID,Name,Allele0,Allele1,isSecret,baseChance,conditions
+forestry.speciesCommon,寻常,forestry.speciesForest,forestry.speciesMeadows,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesForest,forestry.speciesModest,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesForest,forestry.speciesTropical,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesForest,forestry.speciesWintry,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesForest,forestry.speciesMarshy,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesMeadows,forestry.speciesModest,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesMeadows,forestry.speciesTropical,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesMeadows,forestry.speciesWintry,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesMeadows,forestry.speciesMarshy,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesModest,forestry.speciesTropical,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesModest,forestry.speciesWintry,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesModest,forestry.speciesMarshy,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesTropical,forestry.speciesWintry,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesTropical,forestry.speciesMarshy,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesWintry,forestry.speciesMarshy,false,15.0,
+forestry.speciesCultivated,田野,forestry.speciesCommon,forestry.speciesForest,false,12.0,
+forestry.speciesCultivated,田野,forestry.speciesCommon,forestry.speciesMeadows,false,12.0,
+forestry.speciesCultivated,田野,forestry.speciesCommon,forestry.speciesModest,false,12.0,
+forestry.speciesCultivated,田野,forestry.speciesCommon,forestry.speciesTropical,false,12.0,
+forestry.speciesCultivated,田野,forestry.speciesCommon,forestry.speciesWintry,false,12.0,
+forestry.speciesCultivated,田野,forestry.speciesCommon,forestry.speciesMarshy,false,12.0,
+forestry.speciesNoble,高尚,forestry.speciesCommon,forestry.speciesCultivated,false,10.0,
+forestry.speciesMajestic,庄严,forestry.speciesNoble,forestry.speciesCultivated,false,8.0,
+forestry.speciesImperial,帝皇,forestry.speciesNoble,forestry.speciesMajestic,false,8.0,
+forestry.speciesDiligent,勤奋,forestry.speciesCommon,forestry.speciesCultivated,false,10.0,
+forestry.speciesUnweary,不倦,forestry.speciesDiligent,forestry.speciesCultivated,false,8.0,
+forestry.speciesIndustrious,敬业,forestry.speciesDiligent,forestry.speciesUnweary,false,8.0,
+forestry.speciesHeroic,英雄,forestry.speciesSteadfast,forestry.speciesValiant,false,6.0,该突变只可能在forest生物群系中发生。
+forestry.speciesSinister,邪恶,forestry.speciesCultivated,forestry.speciesModest,false,60.0,该突变只可能在nether生物群系中发生。
+forestry.speciesSinister,邪恶,forestry.speciesCultivated,forestry.speciesTropical,false,60.0,该突变只可能在nether生物群系中发生。
+forestry.speciesFiendish,残忍,forestry.speciesSinister,forestry.speciesCultivated,false,40.0,该突变只可能在nether生物群系中发生。
+forestry.speciesFiendish,残忍,forestry.speciesSinister,forestry.speciesModest,false,40.0,该突变只可能在nether生物群系中发生。
+forestry.speciesFiendish,残忍,forestry.speciesSinister,forestry.speciesTropical,false,40.0,该突变只可能在nether生物群系中发生。
+forestry.speciesDemonic,恶魔,forestry.speciesSinister,forestry.speciesFiendish,false,25.0,该突变只可能在nether生物群系中发生。
+forestry.speciesFrugal,节俭,forestry.speciesModest,forestry.speciesSinister,false,16.0,该突变会在温度处于炙热和地狱之间时发生。|该突变仅在湿度为干旱时发生。
+forestry.speciesFrugal,节俭,forestry.speciesModest,forestry.speciesFiendish,false,10.0,该突变会在温度处于炙热和地狱之间时发生。|该突变仅在湿度为干旱时发生。
+forestry.speciesAustere,苦行,forestry.speciesModest,forestry.speciesFrugal,false,8.0,该突变会在温度处于炙热和地狱之间时发生。|该突变仅在湿度为干旱时发生。
+forestry.speciesExotic,异国,forestry.speciesAustere,forestry.speciesTropical,false,12.0,
+forestry.speciesEdenic,伊甸,forestry.speciesExotic,forestry.speciesTropical,false,8.0,
+forestry.speciesSpectral,幽灵,forestry.speciesHermitic,forestry.speciesEnded,false,4.0,
+forestry.speciesPhantasmal,幻影,forestry.speciesSpectral,forestry.speciesEnded,false,2.0,
+forestry.speciesIcy,严寒,forestry.speciesIndustrious,forestry.speciesWintry,false,12.0,该突变会在温度处于严寒和寒冷之间时发生。
+forestry.speciesGlacial,冰河,forestry.speciesIcy,forestry.speciesWintry,false,8.0,该突变会在温度处于严寒和寒冷之间时发生。
+forestry.speciesVindictive,记恨,forestry.speciesMonastic,forestry.speciesDemonic,true,4.0,
+forestry.speciesVengeful,报仇,forestry.speciesDemonic,forestry.speciesVindictive,true,8.0,
+forestry.speciesVengeful,报仇,forestry.speciesMonastic,forestry.speciesVindictive,true,8.0,
+forestry.speciesAvenging,复仇,forestry.speciesVengeful,forestry.speciesVindictive,false,4.0,
+forestry.speciesLeporine,野兔,forestry.speciesMeadows,forestry.speciesForest,true,10.0,该突变只在March 29到April 15这段时间内发生。
+forestry.speciesMerry,欢乐,forestry.speciesWintry,forestry.speciesForest,true,10.0,该突变只在December 21到December 27这段时间内发生。
+forestry.speciesTipsy,微醺,forestry.speciesWintry,forestry.speciesMeadows,true,10.0,该突变只在December 27到January 2这段时间内发生。
+forestry.speciesTricky,捣蛋,forestry.speciesSinister,forestry.speciesCommon,true,10.0,该突变只在October 15到November 3这段时间内发生。
+forestry.speciesRural,田园,forestry.speciesMeadows,forestry.speciesDiligent,false,12.0,该突变只可能在plains生物群系中发生。
+forestry.speciesFarmerly,稼穑,forestry.speciesRural,forestry.speciesUnweary,false,10.0,该突变只可能在plains生物群系中发生。
+forestry.speciesAgrarian,农耕,forestry.speciesFarmerly,forestry.speciesIndustrious,false,6.0,该突变只可能在plains生物群系中发生。
+forestry.speciesMiry,泥泞,forestry.speciesMarshy,forestry.speciesNoble,false,15.0,该突变仅在温度为温暖时发生。|该突变仅在湿度为潮湿时发生。
+forestry.speciesBoggy,泥沼,forestry.speciesMarshy,forestry.speciesMiry,false,9.0,该突变仅在温度为温暖时发生。|该突变仅在湿度为潮湿时发生。
+forestry.speciesSecluded,归隐,forestry.speciesMonastic,forestry.speciesAustere,false,12.0,
+forestry.speciesHermitic,遁世,forestry.speciesMonastic,forestry.speciesSecluded,false,8.0,
+extrabees.species.arid,干旱,forestry.speciesMeadows,forestry.speciesFrugal,false,10.0,
+extrabees.species.arid,干旱,forestry.speciesForest,forestry.speciesFrugal,false,10.0,
+extrabees.species.barren,荒芜,forestry.speciesCommon,extrabees.species.arid,false,10.0,
+extrabees.species.desolate,荒凉,extrabees.species.arid,extrabees.species.barren,false,10.0,
+extrabees.species.decomposing,分解,forestry.speciesMarshy,extrabees.species.barren,false,15.0,
+extrabees.species.gnawing,痛苦,forestry.speciesForest,extrabees.species.barren,false,15.0,
+extrabees.species.rotten,衰败,forestry.speciesMeadows,extrabees.species.desolate,false,15.0,
+extrabees.species.bone,骷髅,forestry.speciesForest,extrabees.species.desolate,false,15.0,
+extrabees.species.creeper,苦力怕,forestry.speciesModest,extrabees.species.desolate,false,15.0,
+extrabees.species.stone,忍耐,forestry.speciesDiligent,extrabees.species.rock,false,12.0,
+extrabees.species.granite,坚毅,forestry.speciesUnweary,extrabees.species.stone,false,10.0,
+extrabees.species.mineral,弹性,forestry.speciesIndustrious,extrabees.species.granite,false,6.0,
+extrabees.species.copper,铜绿,forestry.speciesWintry,extrabees.species.mineral,false,5.0,
+extrabees.species.copper,铜绿,forestry.speciesModest,extrabees.species.mineral,false,5.0,
+extrabees.species.tin,锡灰,forestry.speciesMarshy,extrabees.species.mineral,false,5.0,
+extrabees.species.tin,锡灰,forestry.speciesTropical,extrabees.species.mineral,false,5.0,
+extrabees.species.iron,铁锈,forestry.speciesMeadows,extrabees.species.mineral,false,5.0,
+extrabees.species.iron,铁锈,forestry.speciesForest,extrabees.species.mineral,false,5.0,
+extrabees.species.lead,铅质,forestry.speciesMeadows,extrabees.species.mineral,false,5.0,
+extrabees.species.lead,铅质,forestry.speciesModest,extrabees.species.mineral,false,5.0,
+extrabees.species.zinc,镀锌,forestry.speciesWintry,extrabees.species.mineral,false,5.0,
+extrabees.species.zinc,镀锌,forestry.speciesTropical,extrabees.species.mineral,false,5.0,
+extrabees.species.nickel,含镍,forestry.speciesForest,extrabees.species.mineral,false,5.0,
+extrabees.species.nickel,含镍,forestry.speciesMarshy,extrabees.species.mineral,false,5.0,
+extrabees.species.gold,金闪,forestry.speciesMajestic,extrabees.species.iron,false,2.0,
+extrabees.species.gold,金闪,forestry.speciesMajestic,extrabees.species.copper,false,2.0,
+extrabees.species.gold,金闪,forestry.speciesMajestic,extrabees.species.nickel,false,2.0,
+extrabees.species.silver,银辉,forestry.speciesMajestic,extrabees.species.zinc,false,2.0,
+extrabees.species.silver,银辉,forestry.speciesMajestic,extrabees.species.tin,false,2.0,
+extrabees.species.silver,银辉,forestry.speciesMajestic,extrabees.species.lead,false,2.0,
+extrabees.species.platinum,铂金,extrabees.species.gold,extrabees.species.silver,false,2.0,
+extrabees.species.lapis,青晶,forestry.speciesImperial,extrabees.species.mineral,false,5.0,
+extrabees.species.emerald,绿宝石,forestry.speciesForest,extrabees.species.lapis,false,5.0,
+extrabees.species.ruby,红宝石,forestry.speciesModest,extrabees.species.lapis,false,5.0,
+extrabees.species.sapphire,蓝宝石,extrabees.species.water,extrabees.species.lapis,false,5.0,
+extrabees.species.diamond,金刚石,forestry.speciesCultivated,extrabees.species.lapis,false,5.0,
+extrabees.species.unstable,不稳,extrabees.species.prehistoric,extrabees.species.mineral,false,5.0,
+extrabees.species.nuclear,核能,extrabees.species.unstable,extrabees.species.iron,false,5.0,
+extrabees.species.nuclear,核能,extrabees.species.unstable,extrabees.species.copper,false,5.0,
+extrabees.species.nuclear,核能,extrabees.species.unstable,extrabees.species.tin,false,5.0,
+extrabees.species.nuclear,核能,extrabees.species.unstable,extrabees.species.zinc,false,5.0,
+extrabees.species.nuclear,核能,extrabees.species.unstable,extrabees.species.nickel,false,5.0,
+extrabees.species.nuclear,核能,extrabees.species.unstable,extrabees.species.lead,false,5.0,
+extrabees.species.yellorium,黄铀,forestry.speciesFrugal,extrabees.species.nuclear,false,5.0,
+extrabees.species.cyanite,蓝晶,extrabees.species.nuclear,extrabees.species.yellorium,false,5.0,
+extrabees.species.blutonium,蓝钚,extrabees.species.cyanite,extrabees.species.yellorium,false,5.0,
+extrabees.species.ancient,古代,forestry.speciesNoble,forestry.speciesDiligent,false,10.0,
+extrabees.species.primeval,原始,forestry.speciesSecluded,extrabees.species.ancient,false,8.0,
+extrabees.species.prehistoric,史前,extrabees.species.primeval,extrabees.species.ancient,false,8.0,
+extrabees.species.relic,遗迹,forestry.speciesImperial,extrabees.species.prehistoric,false,8.0,
+extrabees.species.coal,化石,extrabees.species.primeval,extrabees.species.growing,false,8.0,
+extrabees.species.coal,化石,forestry.speciesRural,extrabees.species.primeval,false,8.0,
+extrabees.species.resin,树脂,forestry.speciesMiry,extrabees.species.primeval,false,8.0,
+extrabees.species.oil,含油,extrabees.species.ocean,extrabees.species.primeval,false,8.0,
+extrabees.species.oil,含油,forestry.speciesFrugal,extrabees.species.primeval,false,8.0,
+extrabees.species.distilled,分馏,forestry.speciesIndustrious,extrabees.species.oil,false,8.0,
+extrabees.species.fuel,精炼,extrabees.species.distilled,extrabees.species.oil,false,8.0,
+extrabees.species.creosote,柏油,extrabees.species.distilled,extrabees.species.coal,false,8.0,
+extrabees.species.latex,橡胶,extrabees.species.distilled,extrabees.species.resin,false,8.0,
+extrabees.species.river,河流,forestry.speciesDiligent,extrabees.species.water,false,10.0,该突变只可能在river生物群系中发生。
+extrabees.species.ocean,海洋,forestry.speciesDiligent,extrabees.species.water,false,10.0,该突变只可能在ocean生物群系中发生。
+extrabees.species.ink,墨污,extrabees.species.black,extrabees.species.ocean,false,8.0,
+extrabees.species.growing,生长,forestry.speciesForest,forestry.speciesDiligent,false,10.0,
+extrabees.species.farm,农庄,forestry.speciesFarmerly,forestry.speciesMeadows,false,10.0,
+extrabees.species.thriving,兴旺,forestry.speciesUnweary,extrabees.species.growing,false,10.0,
+extrabees.species.blooming,盛开,forestry.speciesIndustrious,extrabees.species.thriving,false,8.0,
+extrabees.species.sweet,甜美,forestry.speciesValiant,forestry.speciesDiligent,false,15.0,
+extrabees.species.sugar,含糖,forestry.speciesRural,extrabees.species.sweet,false,15.0,
+extrabees.species.ripening,成熟,extrabees.species.sweet,extrabees.species.growing,false,5.0,
+extrabees.species.fruit,水果,extrabees.species.sweet,extrabees.species.thriving,false,5.0,
+extrabees.species.alcohol,发酵,forestry.speciesFarmerly,forestry.speciesMeadows,false,10.0,
+extrabees.species.milk,牛奶,forestry.speciesFarmerly,extrabees.species.water,false,10.0,
+extrabees.species.coffee,咖啡,forestry.speciesFarmerly,forestry.speciesTropical,false,10.0,
+extrabees.species.swamp,潮湿,forestry.speciesMiry,extrabees.species.water,false,10.0,
+extrabees.species.boggy,泥淖,forestry.speciesBoggy,extrabees.species.swamp,false,8.0,
+extrabees.species.fungal,菌类,forestry.speciesBoggy,forestry.speciesMiry,false,8.0,
+extrabees.species.fungal,菌类,forestry.speciesBoggy,extrabees.species.fungal,false,8.0,
+extrabees.species.tempered,愤怒,forestry.speciesFiendish,extrabees.species.basalt,false,30.0,该突变只可能在nether生物群系中发生。
+extrabees.species.volcanic,火山,forestry.speciesDemonic,extrabees.species.tempered,false,20.0,该突变只可能在nether生物群系中发生。
+extrabees.species.glowstone,怒视,extrabees.species.tempered,extrabees.species.excited,false,5.0,
+extrabees.species.malicious,恶意,forestry.speciesSinister,forestry.speciesTropical,false,10.0,
+extrabees.species.infectious,传染,forestry.speciesTropical,extrabees.species.malicious,false,8.0,
+extrabees.species.virulent,剧毒,extrabees.species.malicious,extrabees.species.infectious,false,8.0,
+extrabees.species.viscous,黏性,forestry.speciesExotic,extrabees.species.water,false,10.0,
+extrabees.species.glutinous,胶质,forestry.speciesExotic,extrabees.species.viscous,false,8.0,
+extrabees.species.sticky,黏液,extrabees.species.viscous,extrabees.species.glutinous,false,8.0,
+extrabees.species.corrosive,腐蚀,extrabees.species.malicious,extrabees.species.viscous,false,10.0,
+extrabees.species.caustic,苛性,forestry.speciesFiendish,extrabees.species.corrosive,false,8.0,
+extrabees.species.acidic,酸化,extrabees.species.corrosive,extrabees.species.caustic,false,4.0,
+extrabees.species.excited,激动,forestry.speciesValiant,forestry.speciesCultivated,false,10.0,
+extrabees.species.energetic,活力十足,forestry.speciesDiligent,extrabees.species.excited,false,8.0,
+extrabees.species.ecstatic,狂喜,extrabees.species.excited,extrabees.species.energetic,false,8.0,
+extrabees.species.artic,冻结,forestry.speciesWintry,forestry.speciesDiligent,false,10.0,
+extrabees.species.freezing,冰封,extrabees.species.ocean,extrabees.species.artic,false,10.0,
+extrabees.species.shadow,阴影,forestry.speciesSinister,extrabees.species.rock,false,10.0,
+extrabees.species.darkened,黑暗,extrabees.species.shadow,extrabees.species.rock,false,8.0,
+extrabees.species.abyss,深渊,extrabees.species.shadow,extrabees.species.darkened,false,8.0,
+extrabees.species.red,朱红,forestry.speciesForest,forestry.speciesValiant,false,5.0,
+extrabees.species.yellow,藏黄,forestry.speciesMeadows,forestry.speciesValiant,false,5.0,
+extrabees.species.blue,绀蓝,forestry.speciesValiant,extrabees.species.water,false,5.0,
+extrabees.species.green,翠绿,forestry.speciesTropical,forestry.speciesValiant,false,5.0,
+extrabees.species.black,乌黑,forestry.speciesValiant,extrabees.species.rock,false,5.0,
+extrabees.species.white,素白,forestry.speciesWintry,forestry.speciesValiant,false,5.0,
+extrabees.species.brown,墨棕,forestry.speciesMarshy,forestry.speciesValiant,false,5.0,
+extrabees.species.orange,琥橙,extrabees.species.red,extrabees.species.yellow,false,5.0,
+extrabees.species.cyan,碧青,extrabees.species.green,extrabees.species.blue,false,5.0,
+extrabees.species.purple,靛紫,extrabees.species.red,extrabees.species.blue,false,5.0,
+extrabees.species.gray,岩灰,extrabees.species.black,extrabees.species.white,false,5.0,
+extrabees.species.lightblue,天蓝,extrabees.species.blue,extrabees.species.white,false,5.0,
+extrabees.species.pink,薰粉,extrabees.species.red,extrabees.species.white,false,5.0,
+extrabees.species.limegreen,柳黄,extrabees.species.green,extrabees.species.white,false,5.0,
+extrabees.species.magenta,芍红,extrabees.species.purple,extrabees.species.pink,false,5.0,
+extrabees.species.lightgray,尘灰,extrabees.species.gray,extrabees.species.white,false,5.0,
+extrabees.species.celebratory,普天同庆,forestry.speciesAustere,extrabees.species.excited,false,5.0,
+extrabees.species.jaded,翡翠,forestry.speciesEnded,extrabees.species.relic,false,2.0,灵感来自于 [jadedcat§r]
+extrabees.species.chad,Chad,forestry.speciesCultivated,extrabees.species.celebratory,false,5.0,"该突变只在February 29到February 29这段时间内发生。|该突变仅在白天时发生。|灵感来自于 |[§4§lR§c§lu§6§ln§e§la§2§lk§a§la§b§li§r, boubou_19§r, Alastors_Game§r, | BlueWeabo§r, Lewis_Saber§r, True_Aurastorm§r, | mitchej123§r, minecraft7771§r, _Timbo§r, | kuba6000§r, Alrightsc§r, YeetYeetDatBoi§r, | DreamMasterXXL§r, Colen§r, OrderedSet§r]"
+extrabees.species.hazardous,冒险,forestry.speciesAustere,extrabees.species.desolate,false,5.0,
+extrabees.species.quantum,微光量子,forestry.speciesSpectral,extrabees.species.spatial,false,5.0,
+extrabees.species.unusual,异常,forestry.speciesSecluded,forestry.speciesEnded,false,5.0,
+extrabees.species.spatial,空间,forestry.speciesHermitic,extrabees.species.unusual,false,5.0,
+extrabees.species.mystical,神秘,forestry.speciesNoble,forestry.speciesMonastic,false,5.0,
+forestry.speciesCommon,寻常,forestry.speciesForest,extrabees.species.water,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesMeadows,extrabees.species.water,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesModest,extrabees.species.water,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesTropical,extrabees.species.water,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesMarshy,extrabees.species.water,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesWintry,extrabees.species.water,false,15.0,
+forestry.speciesCommon,寻常,extrabees.species.rock,extrabees.species.water,false,15.0,
+forestry.speciesCommon,寻常,extrabees.species.basalt,extrabees.species.water,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesForest,extrabees.species.rock,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesMeadows,extrabees.species.rock,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesModest,extrabees.species.rock,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesTropical,extrabees.species.rock,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesMarshy,extrabees.species.rock,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesWintry,extrabees.species.rock,false,15.0,
+forestry.speciesCommon,寻常,extrabees.species.basalt,extrabees.species.rock,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesForest,extrabees.species.basalt,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesMeadows,extrabees.species.basalt,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesModest,extrabees.species.basalt,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesTropical,extrabees.species.basalt,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesMarshy,extrabees.species.basalt,false,15.0,
+forestry.speciesCommon,寻常,forestry.speciesWintry,extrabees.species.basalt,false,15.0,
+forestry.speciesCultivated,田野,forestry.speciesCommon,extrabees.species.water,false,12.0,
+forestry.speciesCultivated,田野,forestry.speciesCommon,extrabees.species.rock,false,12.0,
+forestry.speciesCultivated,田野,forestry.speciesCommon,extrabees.species.basalt,false,12.0,
+forestry.speciesSinister,邪恶,forestry.speciesCultivated,extrabees.species.basalt,false,60.0,该突变只可能在nether生物群系中发生。
+forestry.speciesFiendish,残忍,forestry.speciesSinister,extrabees.species.basalt,false,40.0,该突变只可能在nether生物群系中发生。
+computronics.speciesScummy,浮渣,forestry.speciesAgrarian,forestry.speciesExotic,true,2.0,"该突变需要蜂蜜酒作为蜂箱的基石才可发生。|该突变会在和[ocean, hot]类似的生物群系中。|该突变会在和[ocean, wet]类似的生物群系中。|该突变仅在夜晚时发生。|该突变会在温度处于温暖和地狱之间时发生。"
+computronics.speciesScummy,浮渣,forestry.speciesTipsy,forestry.speciesExotic,true,10.0,该突变仅在夜晚时发生。
+gregtech.bee.speciesClay,黏土,forestry.speciesIndustrious,forestry.speciesDiligent,false,10.0,该突变需要黏土块作为蜂箱的基石才可发生。
+gregtech.bee.speciesSlimeball,黏液球,forestry.speciesMarshy,gregtech.bee.speciesClay,false,7.0,该突变需要绿色凝固史莱姆块作为蜂箱的基石才可发生。
+gregtech.bee.speciesPeat,泥炭,forestry.speciesRural,gregtech.bee.speciesClay,false,10.0,
+gregtech.bee.speciesStickyresin,黏性树脂,gregtech.bee.speciesSlimeball,gregtech.bee.speciesPeat,false,15.0,该突变需要橡胶树原木作为蜂箱的基石才可发生。
+gregtech.bee.speciesCoal,煤,forestry.speciesIndustrious,gregtech.bee.speciesPeat,false,9.0,该突变需要煤炭块作为蜂箱的基石才可发生。
+gregtech.bee.speciesOil,石油,gregtech.bee.speciesCoal,gregtech.bee.speciesStickyresin,false,4.0,
+gregtech.bee.speciesSandwich,三明治,forestry.speciesAgrarian,magicbees.speciesTCBatty,false,10.0,
+gregtech.bee.speciesAsh,灰烬,gregtech.bee.speciesCoal,gregtech.bee.speciesClay,false,10.0,该突变仅在温度为地狱时发生。
+gregtech.bee.speciesApatite,磷灰石,gregtech.bee.speciesAsh,gregtech.bee.speciesCoal,false,10.0,该突变需要磷灰石块作为蜂箱的基石才可发生。
+gregtech.bee.speciesFertilizer,肥料,gregtech.bee.speciesAsh,gregtech.bee.speciesApatite,false,8.0,
+gregtech.bee.speciesPhosphorus,磷,gregtech.bee.speciesApatite,gregtech.bee.speciesAsh,false,12.0,该突变仅在温度为炙热时发生。|该突变需要磷酸三钙块作为蜂箱的基石才可发生。
+gregtech.bee.speciesTea,茶,gregtech.bee.speciesFertilizer,gregtech.bee.speciesAsh,false,10.0,
+gregtech.bee.speciesMica,云母,gregtech.bee.speciesPeat,magicbees.speciesSilicon,false,15.0,该突变需要白铜线圈方块作为蜂箱的基石才可发生。
+gregtech.bee.speciesRedstone,红石,forestry.speciesIndustrious,forestry.speciesDemonic,false,10.0,该突变需要红石块作为蜂箱的基石才可发生。
+gregtech.bee.speciesLapis,青金石,forestry.speciesDemonic,forestry.speciesImperial,false,10.0,该突变需要青金石块作为蜂箱的基石才可发生。
+gregtech.bee.speciesCertus,赛特斯,forestry.speciesHermitic,gregtech.bee.speciesLapis,false,10.0,该突变需要赛特斯石英块作为蜂箱的基石才可发生。
+gregtech.bee.speciesFluix,福鲁伊克斯,gregtech.bee.speciesRedstone,gregtech.bee.speciesLapis,false,7.0,该突变需要福鲁伊克斯块作为蜂箱的基石才可发生。
+gregtech.bee.speciesDiamond,钻石,gregtech.bee.speciesCertus,gregtech.bee.speciesCoal,false,3.0,该突变需要钻石块作为蜂箱的基石才可发生。
+gregtech.bee.speciesRuby,红宝石矿,gregtech.bee.speciesRedstone,gregtech.bee.speciesDiamond,false,5.0,该突变需要红宝石块作为蜂箱的基石才可发生。
+gregtech.bee.speciesSapphire,蓝宝石矿,gregtech.bee.speciesCertus,gregtech.bee.speciesLapis,false,5.0,该突变需要蓝宝石块作为蜂箱的基石才可发生。
+gregtech.bee.speciesOlivine,橄榄石,gregtech.bee.speciesCertus,forestry.speciesEnded,false,5.0,
+gregtech.bee.speciesEmerald,绿宝石矿,gregtech.bee.speciesOlivine,gregtech.bee.speciesDiamond,false,4.0,该突变需要绿宝石块作为蜂箱的基石才可发生。
+gregtech.bee.speciesRedgarnet,红石榴石,gregtech.bee.speciesDiamond,gregtech.bee.speciesRuby,false,4.0,该突变需要红石榴石块作为蜂箱的基石才可发生。
+gregtech.bee.speciesYellowgarnet,黄石榴石,gregtech.bee.speciesEmerald,gregtech.bee.speciesRedgarnet,false,3.0,该突变需要黄石榴石块作为蜂箱的基石才可发生。
+gregtech.bee.speciesFirestone,火石,gregtech.bee.speciesRedstone,gregtech.bee.speciesRuby,false,4.0,该突变需要火石块作为蜂箱的基石才可发生。
+gregtech.bee.speciesPrismatic,海晶,gregtech.bee.speciesCertus,extrabees.species.ocean,false,10.0,该突变仅在湿度为潮湿时发生。|该突变需要海晶石作为蜂箱的基石才可发生。
+gregtech.bee.speciesCopper,铜,forestry.speciesMajestic,gregtech.bee.speciesClay,false,13.0,该突变需要铜块作为蜂箱的基石才可发生。
+gregtech.bee.speciesTin,锡,gregtech.bee.speciesClay,forestry.speciesDiligent,false,13.0,该突变需要锡块作为蜂箱的基石才可发生。
+gregtech.bee.speciesLead,铅,gregtech.bee.speciesCoal,gregtech.bee.speciesCopper,false,13.0,该突变需要铅块作为蜂箱的基石才可发生。
+gregtech.bee.speciesIron,铁,gregtech.bee.speciesTin,gregtech.bee.speciesCopper,false,13.0,该突变需要铁块作为蜂箱的基石才可发生。
+gregtech.bee.speciesSteel,钢铁,gregtech.bee.speciesIron,gregtech.bee.speciesCoal,false,10.0,该突变需要钢块作为蜂箱的基石才可发生。
+gregtech.bee.speciesNickel,镍,gregtech.bee.speciesIron,gregtech.bee.speciesCopper,false,13.0,该突变需要镍块作为蜂箱的基石才可发生。
+gregtech.bee.speciesZinc,锌,gregtech.bee.speciesIron,gregtech.bee.speciesTin,false,13.0,该突变需要锌块作为蜂箱的基石才可发生。
+gregtech.bee.speciesSilver,银,gregtech.bee.speciesLead,gregtech.bee.speciesTin,false,10.0,该突变需要银块作为蜂箱的基石才可发生。
+gregtech.bee.speciesCryolite,冰晶石,gregtech.bee.speciesLead,gregtech.bee.speciesSilver,false,9.0,该突变需要冰晶石块作为蜂箱的基石才可发生。
+gregtech.bee.speciesGold,金,gregtech.bee.speciesLead,gregtech.bee.speciesCopper,false,13.0,该突变需要金块作为蜂箱的基石才可发生。|该突变仅在温度为炙热时发生。
+gregtech.bee.speciesArsenic,砷,gregtech.bee.speciesZinc,gregtech.bee.speciesSilver,false,10.0,该突变需要砷块作为蜂箱的基石才可发生。
+gregtech.bee.speciesAluminium,铝,gregtech.bee.speciesNickel,gregtech.bee.speciesZinc,false,9.0,该突变需要铝块作为蜂箱的基石才可发生。
+gregtech.bee.speciesTitanium,钛,gregtech.bee.speciesRedstone,gregtech.bee.speciesAluminium,false,5.0,该突变需要钛块作为蜂箱的基石才可发生。
+gregtech.bee.speciesGlowstone,荧石,gregtech.bee.speciesRedstone,gregtech.bee.speciesGold,false,10.0,
+gregtech.bee.speciesSunnarium,阳光化合物,gregtech.bee.speciesGlowstone,gregtech.bee.speciesGold,false,5.0,该突变需要超导线圈方块作为蜂箱的基石才可发生。
+gregtech.bee.speciesChrome,铬,gregtech.bee.speciesTitanium,gregtech.bee.speciesRuby,false,5.0,该突变需要铬块作为蜂箱的基石才可发生。
+gregtech.bee.speciesManganese,锰,gregtech.bee.speciesTitanium,gregtech.bee.speciesAluminium,false,5.0,该突变需要锰块作为蜂箱的基石才可发生。
+gregtech.bee.speciesTungsten,钨,forestry.speciesHeroic,gregtech.bee.speciesManganese,false,5.0,该突变需要钨块作为蜂箱的基石才可发生。
+gregtech.bee.speciesPlatinum,铂,gregtech.bee.speciesDiamond,gregtech.bee.speciesChrome,false,5.0,该突变需要铂块作为蜂箱的基石才可发生。
+gregtech.bee.speciesIridium,铱,gregtech.bee.speciesTungsten,gregtech.bee.speciesPlatinum,false,5.0,该突变需要铱块作为蜂箱的基石才可发生。
+gregtech.bee.speciesOsmium,锇,gregtech.bee.speciesTungsten,gregtech.bee.speciesPlatinum,false,5.0,该突变需要锇块作为蜂箱的基石才可发生。
+gregtech.bee.speciesSalty,盐,gregtech.bee.speciesClay,gregtech.bee.speciesAluminium,false,5.0,该突变需要盐块作为蜂箱的基石才可发生。
+gregtech.bee.speciesLithium,锂,gregtech.bee.speciesSalty,gregtech.bee.speciesAluminium,false,5.0,该突变需要锂框架作为蜂箱的基石才可发生。
+gregtech.bee.speciesElectrotine,蓝石,gregtech.bee.speciesRedstone,gregtech.bee.speciesGold,false,5.0,该突变需要蓝石块作为蜂箱的基石才可发生。
+gregtech.bee.speciesSulfur,硫,gregtech.bee.speciesAsh,gregtech.bee.speciesPeat,false,15.0,
+gregtech.bee.speciesIndium,铟,gregtech.bee.speciesLead,gregtech.bee.speciesOsmium,false,1.0,该突变需要铟块作为蜂箱的基石才可发生。|需要维度 Venus
+gregtech.bee.speciesIndium,铟,gregtech.bee.speciesSilver,gregtech.bee.speciesOsmium,false,1.0,该突变需要奥金块作为蜂箱的基石才可发生。|需要维度 Bedrock
+gregtech.bee.speciesNetherite,下界合金,forestry.speciesDemonic,gregtech.bee.speciesDiamond,false,3.0,该突变仅在温度为地狱时发生。|该突变需要地狱金属块作为蜂箱的基石才可发生。
+gregtech.bee.speciesCoolant,冷却液,forestry.speciesIcy,forestry.speciesGlacial,false,10.0,该突变需要冷却液作为蜂箱的基石才可发生。|该突变仅在温度为严寒时发生。
+gregtech.bee.speciesEnergy,能量,forestry.speciesDemonic,extrabees.species.volcanic,false,10.0,该突变需要热冷却液作为蜂箱的基石才可发生。|需要生物群系 Boneyard Biome
+gregtech.bee.speciesLapotron,兰波顿,gregtech.bee.speciesLapis,gregtech.bee.speciesEnergy,false,6.0,该突变需要青金石块作为蜂箱的基石才可发生。|该突变仅在温度为严寒时发生。|需要维度 Moon
+gregtech.bee.speciesPyrotheum,烈焰之炽焱,gregtech.bee.speciesRedstone,gregtech.bee.speciesEnergy,false,4.0,该突变仅在温度为地狱时发生。
+gregtech.bee.speciesCryotheum,极寒之凛冰,gregtech.bee.speciesRedstone,gregtech.bee.speciesCoolant,false,4.0,该突变仅在温度为严寒时发生。
+gregtech.bee.speciesExplosive,炸药,gregtech.bee.speciesFirestone,gregtech.bee.speciesCoal,false,4.0,该突变需要工业TNT作为蜂箱的基石才可发生。
+gregtech.bee.speciesRedalloy,红色合金,gregtech.bee.speciesCopper,gregtech.bee.speciesRedstone,false,10.0,该突变需要红色合金块作为蜂箱的基石才可发生。
+gregtech.bee.speciesRedstonealloy,红石合金,gregtech.bee.speciesRedstone,gregtech.bee.speciesRedalloy,false,8.0,该突变需要红石合金块作为蜂箱的基石才可发生。
+gregtech.bee.speciesConductiveiron,导电铁,gregtech.bee.speciesRedstonealloy,gregtech.bee.speciesIron,false,8.0,该突变需要导电铁块作为蜂箱的基石才可发生。
+gregtech.bee.speciesEnergeticalloy,充能合金,gregtech.bee.speciesRedstonealloy,forestry.speciesDemonic,false,9.0,该突变需要充能合金块作为蜂箱的基石才可发生。
+gregtech.bee.speciesVibrantalloy,脉冲合金,gregtech.bee.speciesEnergeticalloy,forestry.speciesPhantasmal,false,6.0,该突变需要脉冲合金块作为蜂箱的基石才可发生。|该突变会在温度处于炙热和地狱之间时发生。
+gregtech.bee.speciesElectricalsteel,磁钢,gregtech.bee.speciesSteel,forestry.speciesDemonic,false,9.0,该突变需要磁钢块作为蜂箱的基石才可发生。
+gregtech.bee.speciesDarksteel,玄钢,gregtech.bee.speciesElectricalsteel,forestry.speciesDemonic,false,7.0,该突变需要玄钢块作为蜂箱的基石才可发生。
+gregtech.bee.speciesPulsatingiron,脉冲铁,gregtech.bee.speciesRedalloy,forestry.speciesEnded,false,9.0,该突变需要脉冲铁块作为蜂箱的基石才可发生。
+gregtech.bee.speciesStainlesssteel,不锈钢,gregtech.bee.speciesChrome,gregtech.bee.speciesSteel,false,9.0,该突变需要不锈钢块作为蜂箱的基石才可发生。
+gregtech.bee.speciesEnderium,末影（te）,gregtech.bee.speciesPlatinum,forestry.speciesPhantasmal,false,3.0,该突变需要末影（te）块作为蜂箱的基石才可发生。
+gregtech.bee.speciesBedrockium,基岩,gregtech.bee.speciesExplosive,gregtech.bee.speciesDiamond,false,2.0,该突变需要基岩块作为蜂箱的基石才可发生。
+gregtech.bee.speciesThaumiumdust,神秘尘,magicbees.speciesTCFire,forestry.speciesEdenic,false,10.0,该突变需要神秘块作为蜂箱的基石才可发生。|需要生物群系 Magical Forest
+gregtech.bee.speciesThaumiumshard,神秘碎片,gregtech.bee.speciesThaumiumdust,magicbees.speciesTCWater,false,10.0,需要生物群系 Magical Forest
+gregtech.bee.speciesAmber,琥珀,gregtech.bee.speciesThaumiumdust,gregtech.bee.speciesStickyresin,false,10.0,该突变需要琥珀块作为蜂箱的基石才可发生。
+gregtech.bee.speciesQuicksilver,水银,gregtech.bee.speciesThaumiumdust,gregtech.bee.speciesSilver,false,10.0,
+gregtech.bee.speciesSalismundus,世界盐,gregtech.bee.speciesThaumiumdust,gregtech.bee.speciesThaumiumshard,false,8.0,需要生物群系 Magical Forest
+gregtech.bee.speciesTainted,腐化,gregtech.bee.speciesThaumiumdust,gregtech.bee.speciesThaumiumshard,false,7.0,需要生物群系 Tainted Land
+gregtech.bee.speciesMithril,秘银,gregtech.bee.speciesIo,gregtech.bee.speciesPlatinum,false,7.0,该突变需要秘银块作为蜂箱的基石才可发生。|需要维度 IO
+gregtech.bee.speciesAstralsilver,星辰银,gregtech.bee.speciesSilver,gregtech.bee.speciesIron,false,3.0,该突变需要星辰银块作为蜂箱的基石才可发生。
+gregtech.bee.speciesThauminite,秘晶,magicbees.speciesTCOrder,gregtech.bee.speciesThaumiumdust,false,8.0,该突变需要秘晶块作为蜂箱的基石才可发生。
+gregtech.bee.speciesShadowmetal,暗影金属,magicbees.speciesTCChaos,magicbees.speciesTCVoid,false,6.0,该突变需要暗影金属块作为蜂箱的基石才可发生。
+gregtech.bee.speciesDivided,不稳定金属,gregtech.bee.speciesDiamond,gregtech.bee.speciesIron,false,3.0,该突变需要不稳定金属方块作为蜂箱的基石才可发生。
+gregtech.bee.speciesCaelestis,纯色,gregtech.bee.speciesDiamond,gregtech.bee.speciesDivided,false,10.0,
+gregtech.bee.speciesSparkeling,凋灵,magicbees.speciesWithering,magicbees.speciesDraconic,false,1.0,该突变需要下界之星块作为蜂箱的基石才可发生。|需要生物群系 END Biome
+gregtech.bee.speciesEssentia,还魂,gregtech.bee.speciesShadowmetal,gregtech.bee.speciesSparkeling,false,5.0,该突变需要复相魔晶作为蜂箱的基石才可发生。
+gregtech.bee.speciesDrake,龙,gregtech.bee.speciesEssentia,gregtech.bee.speciesThauminite,false,5.0,该突变需要觉醒龙线圈方块作为蜂箱的基石才可发生。
+gregtech.bee.speciesUranium,铀,forestry.speciesAvenging,gregtech.bee.speciesPlatinum,false,3.0,该突变需要铀-238块作为蜂箱的基石才可发生。
+gregtech.bee.speciesPlutonium,钚,gregtech.bee.speciesUranium,gregtech.bee.speciesEmerald,false,3.0,该突变需要钚-239块作为蜂箱的基石才可发生。
+gregtech.bee.speciesNaquadah,硅岩,gregtech.bee.speciesPlutonium,gregtech.bee.speciesIridium,false,3.0,该突变需要硅岩块作为蜂箱的基石才可发生。
+gregtech.bee.speciesNaquadria,超能硅岩,gregtech.bee.speciesPlutonium,gregtech.bee.speciesIridium,false,0.8,该突变需要超能硅岩块作为蜂箱的基石才可发生。
+gregtech.bee.speciesDob,魔晶,gregtech.bee.speciesNaquadah,gregtech.bee.speciesThaumiumshard,false,2.0,该突变需要进阶太阳能板 II作为蜂箱的基石才可发生。|需要生物群系 END Biome
+gregtech.bee.speciesThorium,钍,gregtech.bee.speciesCoal,gregtech.bee.speciesUranium,true,3.0,该突变需要钍块作为蜂箱的基石才可发生。
+gregtech.bee.speciesLutetium,镥,gregtech.bee.speciesThorium,extrabees.species.rotten,true,1.0,该突变需要镥块作为蜂箱的基石才可发生。
+gregtech.bee.speciesAmericium,镅,gregtech.bee.speciesLutetium,gregtech.bee.speciesChrome,true,1.3,该突变需要镅块作为蜂箱的基石才可发生。
+gregtech.bee.speciesNeutronium,中子,gregtech.bee.speciesNaquadria,gregtech.bee.speciesAmericium,true,1.0,该突变需要中子块作为蜂箱的基石才可发生。
+gregtech.bee.speciesNaga,娜迦,magicbees.speciesEldritch,forestry.speciesImperial,false,8.0,该突变仅在湿度为潮湿时发生。
+gregtech.bee.speciesLich,巫妖,magicbees.speciesSupernatural,gregtech.bee.speciesNaga,false,7.0,该突变仅在湿度为干旱时发生。
+gregtech.bee.speciesHydra,九头蛇,gregtech.bee.speciesLich,magicbees.speciesTCFire,false,6.0,需要生物群系 Undergarden
+gregtech.bee.speciesUrghast,暮色恶魂,gregtech.bee.speciesHydra,gregtech.bee.speciesThaumiumdust,false,5.0,该突变需要神秘块作为蜂箱的基石才可发生。|该突变仅在温度为地狱时发生。
+gregtech.bee.speciesSnowqueen,冰雪女王,gregtech.bee.speciesUrghast,gregtech.bee.speciesSalismundus,false,4.0,该突变需要世界盐块作为蜂箱的基石才可发生。|该突变仅在温度为严寒时发生。
+gregtech.bee.speciesEnddust,末影粉末,forestry.speciesEnded,gregtech.bee.speciesStainlesssteel,false,8.0,该突变仅在湿度为干旱时发生。|该突变需要末影粉末矿石作为蜂箱的基石才可发生。|需要维度 End
+gregtech.bee.speciesEndium,终末,forestry.speciesEnded,gregtech.bee.speciesThaumiumdust,false,8.0,该突变仅在湿度为干旱时发生。|该突变需要终末块作为蜂箱的基石才可发生。|需要维度 End
+gregtech.bee.speciesStardust,星尘,forestry.speciesEnded,gregtech.bee.speciesZinc,false,8.0,该突变仅在湿度为干旱时发生。|该突变需要星尘矿石作为蜂箱的基石才可发生。|需要维度 End
+gregtech.bee.speciesEctoplasma,外质,forestry.speciesEnded,gregtech.bee.speciesEnddust,false,5.0,该突变仅在湿度为干旱时发生。|该突变需要幽灵树原木作为蜂箱的基石才可发生。|需要维度 End
+gregtech.bee.speciesArcaneshards,奥术碎片,gregtech.bee.speciesThaumiumshard,gregtech.bee.speciesEnddust,false,5.0,该突变仅在湿度为干旱时发生。|该突变需要实验台阶作为蜂箱的基石才可发生。|需要维度 End
+gregtech.bee.speciesDragonessence,龙之精华,gregtech.bee.speciesEctoplasma,gregtech.bee.speciesArcaneshards,false,4.0,该突变仅在湿度为干旱时发生。|该突变需要基础精华祭坛作为蜂箱的基石才可发生。|需要维度 End
+gregtech.bee.speciesFireessence,火焰精华,gregtech.bee.speciesFirestone,gregtech.bee.speciesArcaneshards,false,4.0,该突变仅在湿度为干旱时发生。|该突变需要炎之精华祭坛作为蜂箱的基石才可发生。|需要维度 End
+gregtech.bee.speciesEndermanhead,末影人头,gregtech.bee.speciesEnderium,gregtech.bee.speciesStardust,false,4.0,该突变仅在湿度为干旱时发生。|该突变需要末影黏浆作为蜂箱的基石才可发生。|需要维度 End
+gregtech.bee.speciesSilverfish,蠹虫,gregtech.bee.speciesEctoplasma,gregtech.bee.speciesStardust,false,5.0,该突变仅在湿度为干旱时发生。|该突变需要末影黏浆作为蜂箱的基石才可发生。|需要维度 End
+gregtech.bee.speciesRune,符文,gregtech.bee.speciesDragonessence,gregtech.bee.speciesStardust,true,2.0,该突变仅在湿度为干旱时发生。|该突变需要高级末影箱子作为蜂箱的基石才可发生。|需要维度 End
+gregtech.bee.speciesWalrus,海象,magicbees.speciesWatery,magicbees.speciesCatty,false,22.5,
+gregtech.bee.speciesMachinist,机械师,forestry.speciesIndustrious,forestry.speciesImperial,false,1.0,Needs a running GT Machine below to breed
+gregtech.bee.speciesSpace,宇宙,forestry.speciesIndustrious,forestry.speciesHeroic,false,10.0,该突变仅在温度为严寒时发生。
+gregtech.bee.speciesMeteoriciron,陨铁,gregtech.bee.speciesSpace,gregtech.bee.speciesIron,false,9.0,该突变需要陨铁块作为蜂箱的基石才可发生。|需要维度 Moon
+gregtech.bee.speciesDesh,戴斯,gregtech.bee.speciesMars,gregtech.bee.speciesTitanium,false,9.0,该突变需要戴斯块作为蜂箱的基石才可发生。|需要维度 Mars
+gregtech.bee.speciesLedox,深铅,gregtech.bee.speciesCallisto,gregtech.bee.speciesLead,false,7.0,该突变需要深铅块作为蜂箱的基石才可发生。|需要维度 Europa
+gregtech.bee.speciesCallistoice,木卫四冰,gregtech.bee.speciesCallisto,extrabees.species.freezing,false,7.0,该突变需要木卫四玄冰块作为蜂箱的基石才可发生。|需要维度 Callisto
+gregtech.bee.speciesMytryl,深空秘银,gregtech.bee.speciesIo,gregtech.bee.speciesMithril,false,6.0,该突变需要深空秘银块作为蜂箱的基石才可发生。|需要维度 IO
+gregtech.bee.speciesQuantium,量子,gregtech.bee.speciesVenus,gregtech.bee.speciesOsmium,false,6.0,该突变需要量子块作为蜂箱的基石才可发生。|需要维度 Venus
+gregtech.bee.speciesOriharukon,奥利哈钢,gregtech.bee.speciesLead,gregtech.bee.speciesOberon,false,5.0,该突变需要装饰奥利哈钢块作为蜂箱的基石才可发生。|需要维度 Oberon
+gregtech.bee.speciesInfusedgold,注魔金,gregtech.bee.speciesGold,gregtech.bee.speciesHaumea,false,5.0,该突变需要注魔金块作为蜂箱的基石才可发生。|需要维度 Haumea
+gregtech.bee.speciesMysteriouscrystal,神秘水晶,gregtech.bee.speciesEnceladus,gregtech.bee.speciesEmerald,false,3.0,该突变需要神秘水晶块作为蜂箱的基石才可发生。|需要维度 Enceladus
+gregtech.bee.speciesBlackplutonium,黑钚,gregtech.bee.speciesPluto,gregtech.bee.speciesPlutonium,false,2.0,该突变需要黑钚块作为蜂箱的基石才可发生。|需要维度 Pluto
+gregtech.bee.speciesTrinium,三元金属,gregtech.bee.speciesEnceladus,gregtech.bee.speciesIridium,false,4.0,该突变需要三元金属块作为蜂箱的基石才可发生。|需要维度 Enceladus
+gregtech.bee.speciesMoon,月球,gregtech.bee.speciesSpace,gregtech.bee.speciesClay,false,25.0,该突变需要月球石头作为蜂箱的基石才可发生。|需要维度 Moon
+gregtech.bee.speciesMars,火星,gregtech.bee.speciesMoon,gregtech.bee.speciesIron,false,20.0,该突变需要火星地表岩石作为蜂箱的基石才可发生。|需要维度 Mars
+gregtech.bee.speciesPhobos,火卫一,gregtech.bee.speciesMars,gregtech.bee.speciesMoon,false,20.0,该突变需要火卫一石头作为蜂箱的基石才可发生。|需要维度 Phobos
+gregtech.bee.speciesDeimos,火卫二,gregtech.bee.speciesMars,gregtech.bee.speciesSpace,false,20.0,该突变需要火卫二地底岩石作为蜂箱的基石才可发生。|需要维度 Deimos
+gregtech.bee.speciesCeres,谷神星,gregtech.bee.speciesMars,gregtech.bee.speciesMeteoriciron,false,20.0,该突变需要谷神星地底岩石作为蜂箱的基石才可发生。|需要维度 Ceres
+gregtech.bee.speciesJupiter,木星,gregtech.bee.speciesMars,gregtech.bee.speciesDesh,false,15.0,该突变需要深铅块作为蜂箱的基石才可发生。|需要维度 Asteroids
+gregtech.bee.speciesIo,木卫一,gregtech.bee.speciesJupiter,extrabees.species.volcanic,false,15.0,该突变仅在温度为地狱时发生。|该突变需要木卫一地表岩石作为蜂箱的基石才可发生。|需要维度 IO
+gregtech.bee.speciesEuropa,木卫二,gregtech.bee.speciesJupiter,gregtech.bee.speciesIron,false,15.0,该突变仅在温度为严寒时发生。|该突变需要木卫二地表岩石作为蜂箱的基石才可发生。|需要维度 Europa
+gregtech.bee.speciesGanymede,木卫三,gregtech.bee.speciesJupiter,gregtech.bee.speciesTitanium,false,15.0,该突变需要木卫三地表岩石作为蜂箱的基石才可发生。|需要维度 Ganymede
+gregtech.bee.speciesCallisto,木卫四,gregtech.bee.speciesJupiter,extrabees.species.artic,false,15.0,该突变需要木卫四地表岩石作为蜂箱的基石才可发生。|需要维度 Callisto
+gregtech.bee.speciesSaturn,土星,gregtech.bee.speciesJupiter,gregtech.bee.speciesLedox,false,12.5,该突变需要量子块作为蜂箱的基石才可发生。|需要维度 Asteriods
+gregtech.bee.speciesEnceladus,土卫二,gregtech.bee.speciesSaturn,gregtech.bee.speciesChrome,false,12.5,该突变需要土卫二雪作为蜂箱的基石才可发生。|需要维度 Enceladus
+gregtech.bee.speciesTitan,土卫六,gregtech.bee.speciesSaturn,gregtech.bee.speciesNickel,false,12.5,该突变需要土卫六地表岩石作为蜂箱的基石才可发生。|需要维度 Titan
+gregtech.bee.speciesUranus,天王星,gregtech.bee.speciesSaturn,gregtech.bee.speciesTrinium,false,10.0,该突变需要装饰奥利哈钢块作为蜂箱的基石才可发生。|需要维度 Asteroids
+gregtech.bee.speciesMiranda,天卫五,gregtech.bee.speciesUranus,gregtech.bee.speciesTin,false,10.0,该突变需要天卫五地表岩石作为蜂箱的基石才可发生。|需要维度 Miranda
+gregtech.bee.speciesOberon,天卫四,gregtech.bee.speciesUranus,gregtech.bee.speciesIridium,false,10.0,该突变需要天卫四地表岩石作为蜂箱的基石才可发生。|需要维度 Oberon
+gregtech.bee.speciesNeptune,海王星,gregtech.bee.speciesUranus,gregtech.bee.speciesOriharukon,false,7.0,该突变需要神秘水晶块作为蜂箱的基石才可发生。|需要维度 Asteroids
+gregtech.bee.speciesProteus,海卫八,gregtech.bee.speciesNeptune,gregtech.bee.speciesCopper,false,7.0,该突变需要海卫八地表岩石作为蜂箱的基石才可发生。|需要维度 Proteus
+gregtech.bee.speciesTriton,海卫一,gregtech.bee.speciesNeptune,gregtech.bee.speciesGold,false,7.0,该突变需要海卫一地表岩石作为蜂箱的基石才可发生。|需要维度 Triton
+gregtech.bee.speciesPluto,冥王星,gregtech.bee.speciesNeptune,gregtech.bee.speciesPlutonium,false,5.0,该突变需要冥王星地表冰作为蜂箱的基石才可发生。|需要维度 Pluto
+gregtech.bee.speciesHaumea,妊神星,gregtech.bee.speciesPluto,gregtech.bee.speciesNaquadah,false,3.5,该突变需要妊神星地表岩石作为蜂箱的基石才可发生。|需要维度 Haumea
+gregtech.bee.speciesMakemake,鸟神星,gregtech.bee.speciesPluto,gregtech.bee.speciesNaquadria,false,3.5,该突变需要鸟神星地表岩石作为蜂箱的基石才可发生。|需要维度 MakeMake
+gregtech.bee.speciesCentauri,半人马,gregtech.bee.speciesMakemake,gregtech.bee.speciesDesh,false,3.0,该突变需要半人马座α星Bb地表岩石作为蜂箱的基石才可发生。|需要维度 Kuiper Belt
+gregtech.bee.speciesAcentauri,半人马α,gregtech.bee.speciesCentauri,gregtech.bee.speciesInfinitycatalyst,false,3.0,该突变需要半人马座α星Bb地表岩石作为蜂箱的基石才可发生。|需要维度 aCentauri
+gregtech.bee.speciesTceti,鲸鱼座T星,gregtech.bee.speciesMakemake,gregtech.bee.speciesHaumea,false,2.5,该突变需要鲸鱼座T星E地表岩石作为蜂箱的基石才可发生。|需要维度 Kuiper Belt
+gregtech.bee.speciesTcetie,鲸鱼座T星E,gregtech.bee.speciesTceti,magicbees.speciesTCWater,false,2.5,该突变需要鲸鱼座T星E地表岩石作为蜂箱的基石才可发生。|需要维度 tCeti E
+gregtech.bee.speciesSeaweed,海藻,gregtech.bee.speciesTceti,gregtech.bee.speciesTcetie,false,2.5,该突变需要鲸鱼座T星E地表岩石作为蜂箱的基石才可发生。|需要维度 tCeti E
+gregtech.bee.speciesBarnarda,巴纳德,gregtech.bee.speciesMakemake,gregtech.bee.speciesThorium,false,1.5,该突变需要巴纳德E地表岩石作为蜂箱的基石才可发生。|需要维度 Kuiper Belt
+gregtech.bee.speciesBarnardac,巴纳德C,gregtech.bee.speciesBarnarda,gregtech.bee.speciesAmericium,false,1.5,该突变需要巴纳德E地表岩石作为蜂箱的基石才可发生。|需要维度 Barnarda C
+gregtech.bee.speciesBarnardae,巴纳德E,gregtech.bee.speciesBarnarda,gregtech.bee.speciesDivided,false,1.5,该突变需要巴纳德E地表岩石作为蜂箱的基石才可发生。|需要维度 Barnard E
+gregtech.bee.speciesBarnardaf,巴纳德F,gregtech.bee.speciesBarnarda,gregtech.bee.speciesNeutronium,false,1.5,该突变需要巴纳德F地表岩石作为蜂箱的基石才可发生。|需要维度 Barnard F
+gregtech.bee.speciesVega,织女一,gregtech.bee.speciesMakemake,gregtech.bee.speciesNaquadah,false,2.0,该突变需要织女一B地表岩石作为蜂箱的基石才可发生。|需要维度 Kuiper Belt
+gregtech.bee.speciesVegab,织女一B,gregtech.bee.speciesVega,gregtech.bee.speciesNaquadria,false,2.0,该突变需要织女一B地表岩石作为蜂箱的基石才可发生。|需要维度 VegaB
+gregtech.bee.speciesMercury,水星,gregtech.bee.speciesJupiter,gregtech.bee.speciesTungsten,false,12.5,该突变需要水星地表岩石作为蜂箱的基石才可发生。|需要维度 Mercury
+gregtech.bee.speciesVenus,金星,gregtech.bee.speciesJupiter,gregtech.bee.speciesMithril,false,12.5,该突变需要金星地表岩石作为蜂箱的基石才可发生。|需要维度 Venus
+gregtech.bee.speciesCosmicneutronium,宇宙中子态素,gregtech.bee.speciesNeutronium,gregtech.bee.speciesBarnardaf,false,0.7,该突变需要宇宙中子态素块作为蜂箱的基石才可发生。
+gregtech.bee.speciesInfinitycatalyst,无尽催化剂,gregtech.bee.speciesDob,gregtech.bee.speciesCosmicneutronium,true,0.3,该突变需要无尽之块作为蜂箱的基石才可发生。
+gregtech.bee.speciesInfinity,无尽,gregtech.bee.speciesInfinitycatalyst,gregtech.bee.speciesCosmicneutronium,false,0.1,该突变需要无尽箱子作为蜂箱的基石才可发生。
+gregtech.bee.speciesKevlar,凯芙拉,gregtech.bee.speciesOil,gregtech.bee.speciesInfinitycatalyst,false,4.0,该突变需要史诗元素聚合者作为蜂箱的基石才可发生。
+gregtech.bee.speciesHelium,氦,magicbees.speciesWatery,gregtech.bee.speciesEnddust,false,10.0,该突变仅在温度为严寒时发生。
+gregtech.bee.speciesArgon,氩,gregtech.bee.speciesHelium,gregtech.bee.speciesLich,false,8.0,该突变仅在温度为严寒时发生。
+gregtech.bee.speciesNeon,氖,gregtech.bee.speciesArgon,gregtech.bee.speciesHydra,false,6.0,该突变仅在温度为严寒时发生。
+gregtech.bee.speciesKrypton,氪,gregtech.bee.speciesNeon,gregtech.bee.speciesUrghast,false,4.0,该突变仅在温度为严寒时发生。
+gregtech.bee.speciesXenon,氙,gregtech.bee.speciesKrypton,gregtech.bee.speciesSnowqueen,false,2.0,该突变仅在温度为严寒时发生。
+gregtech.bee.speciesOxygen,氧,gregtech.bee.speciesHelium,gregtech.bee.speciesDragonessence,false,15.0,该突变仅在温度为严寒时发生。
+gregtech.bee.speciesHydrogen,氢,gregtech.bee.speciesOxygen,magicbees.speciesWatery,false,15.0,该突变仅在温度为严寒时发生。
+gregtech.bee.speciesNitrogen,氮,gregtech.bee.speciesOxygen,gregtech.bee.speciesHydrogen,false,15.0,该突变仅在温度为严寒时发生。
+gregtech.bee.speciesFluorine,氟,gregtech.bee.speciesNitrogen,gregtech.bee.speciesHydrogen,false,15.0,该突变仅在温度为严寒时发生。
+gregtech.bee.speciesRareearth,稀土,gregtech.bee.speciesFluorine,gregtech.bee.speciesRedstone,false,10.0,
+gregtech.bee.speciesNeodymium,钕,gregtech.bee.speciesRareearth,gregtech.bee.speciesIron,false,10.0,该突变需要钕块作为蜂箱的基石才可发生。
+gregtech.bee.speciesEuropium,铕,gregtech.bee.speciesNeodymium,gregtech.bee.speciesHydrogen,false,1.3,该突变需要铕块作为蜂箱的基石才可发生。
+gregtech.bee.speciesAir,风之碎片,magicbees.speciesSupernatural,magicbees.speciesWindy,false,15.0,该突变仅在温度为炙热时发生。|该突变需要风之魔晶作为蜂箱的基石才可发生。
+gregtech.bee.speciesFire,火之碎片,magicbees.speciesSupernatural,gregtech.bee.speciesAir,false,15.0,该突变仅在温度为地狱时发生。|该突变需要火之魔晶作为蜂箱的基石才可发生。
+gregtech.bee.speciesWater,水之碎片,gregtech.bee.speciesFire,gregtech.bee.speciesAir,false,15.0,该突变仅在温度为严寒时发生。|该突变需要水之魔晶作为蜂箱的基石才可发生。
+gregtech.bee.speciesEarth,地之碎片,gregtech.bee.speciesWater,gregtech.bee.speciesFire,false,15.0,该突变仅在温度为温暖时发生。|该突变需要地之魔晶作为蜂箱的基石才可发生。
+gregtech.bee.speciesOrder,秩序,gregtech.bee.speciesEarth,gregtech.bee.speciesFire,false,15.0,该突变仅在温度为严寒时发生。|该突变需要秩序魔晶作为蜂箱的基石才可发生。
+gregtech.bee.speciesChaos,混沌,gregtech.bee.speciesOrder,gregtech.bee.speciesFire,false,15.0,该突变仅在温度为严寒时发生。|该突变需要混沌魔晶作为蜂箱的基石才可发生。
+gregtech.bee.speciesNethershard,下界碎片,gregtech.bee.speciesChaos,gregtech.bee.speciesFire,false,15.0,该突变需要下界之星块作为蜂箱的基石才可发生。
+gregtech.bee.speciesEndshard,末影碎片,gregtech.bee.speciesNethershard,gregtech.bee.speciesEnddust,false,15.0,该突变仅在温度为严寒时发生。|该突变需要末影之眼块作为蜂箱的基石才可发生。
+gregtech.bee.speciesUnknownwater,不明液体,gregtech.bee.speciesInfinitycatalyst,gregtech.bee.speciesMysteriouscrystal,false,5.0,
+gregtech.bee.speciesManasteel,魔力钢,magicbees.speciesBotAlfheim,gregtech.bee.speciesSteel,false,15.0,该突变需要魔力钢块作为蜂箱的基石才可发生。
+gregtech.bee.speciesMmm,M-M-M,gregtech.bee.speciesManasteel,gregtech.bee.speciesMachinist,false,1.0,该突变需要魔力钻石块作为蜂箱的基石才可发生。
+gregtech.bee.speciesElven,源质,gregtech.bee.speciesManasteel,magicbees.speciesTCVoid,false,5.0,该突变需要源质钢块作为蜂箱的基石才可发生。
+gregtech.bee.speciesTerrasteel,泰拉钢,gregtech.bee.speciesElven,gregtech.bee.speciesShadowmetal,false,5.0,该突变需要泰拉钢块作为蜂箱的基石才可发生。
+gregtech.bee.speciesGaiaspirit,盖亚之魂,gregtech.bee.speciesNaquadah,gregtech.bee.speciesTerrasteel,false,0.3,该突变需要盖亚之魂框架作为蜂箱的基石才可发生。
+gregtech.bee.speciesJaegermeister,野格,gregtech.bee.speciesInfinitycatalyst,gregtech.bee.speciesNaquadria,false,5.0,该突变需要gt.oreprefix.时空框架作为蜂箱的基石才可发生。|需要维度 Deep Dark
+forestry.speciesCommon,寻常,magicbees.speciesMystical,forestry.speciesForest,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesMystical,forestry.speciesMeadows,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesMystical,forestry.speciesModest,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesMystical,forestry.speciesWintry,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesMystical,forestry.speciesTropical,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesMystical,forestry.speciesMarshy,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesMystical,extrabees.species.rock,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesMystical,extrabees.species.water,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesMystical,extrabees.species.basalt,false,15.0,
+forestry.speciesCultivated,田野,magicbees.speciesMystical,forestry.speciesCommon,false,12.0,
+magicbees.speciesEldritch,怪异,magicbees.speciesMystical,forestry.speciesCultivated,false,12.0,
+forestry.speciesCommon,寻常,magicbees.speciesSorcerous,forestry.speciesForest,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesSorcerous,forestry.speciesMeadows,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesSorcerous,forestry.speciesModest,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesSorcerous,forestry.speciesWintry,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesSorcerous,forestry.speciesTropical,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesSorcerous,forestry.speciesMarshy,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesSorcerous,extrabees.species.rock,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesSorcerous,extrabees.species.water,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesSorcerous,extrabees.species.basalt,false,15.0,
+forestry.speciesCultivated,田野,magicbees.speciesSorcerous,forestry.speciesCommon,false,12.0,
+magicbees.speciesEldritch,怪异,magicbees.speciesSorcerous,forestry.speciesCultivated,false,12.0,
+forestry.speciesCommon,寻常,magicbees.speciesUnusual,forestry.speciesForest,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesUnusual,forestry.speciesMeadows,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesUnusual,forestry.speciesModest,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesUnusual,forestry.speciesWintry,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesUnusual,forestry.speciesTropical,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesUnusual,forestry.speciesMarshy,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesUnusual,extrabees.species.rock,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesUnusual,extrabees.species.water,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesUnusual,extrabees.species.basalt,false,15.0,
+forestry.speciesCultivated,田野,magicbees.speciesUnusual,forestry.speciesCommon,false,12.0,
+magicbees.speciesEldritch,怪异,magicbees.speciesUnusual,forestry.speciesCultivated,false,12.0,
+forestry.speciesCommon,寻常,magicbees.speciesAttuned,forestry.speciesForest,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesAttuned,forestry.speciesMeadows,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesAttuned,forestry.speciesModest,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesAttuned,forestry.speciesWintry,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesAttuned,forestry.speciesTropical,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesAttuned,forestry.speciesMarshy,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesAttuned,extrabees.species.rock,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesAttuned,extrabees.species.water,false,15.0,
+forestry.speciesCommon,寻常,magicbees.speciesAttuned,extrabees.species.basalt,false,15.0,
+forestry.speciesCultivated,田野,magicbees.speciesAttuned,forestry.speciesCommon,false,12.0,
+magicbees.speciesEldritch,怪异,magicbees.speciesAttuned,forestry.speciesCultivated,false,12.0,
+magicbees.speciesEsoteric,玄奥,forestry.speciesCultivated,magicbees.speciesEldritch,false,10.0,
+magicbees.speciesMysterious,奥秘,magicbees.speciesEldritch,magicbees.speciesEsoteric,false,8.0,
+magicbees.speciesArcane,奥能,magicbees.speciesEsoteric,magicbees.speciesMysterious,false,8.0,在 凸娥眉月 和 盈凸月 之间更容易成功.
+magicbees.speciesCharmed,魅惑,forestry.speciesCultivated,magicbees.speciesEldritch,false,10.0,
+magicbees.speciesEnchanted,蕴魔,magicbees.speciesEldritch,magicbees.speciesCharmed,false,8.0,
+magicbees.speciesSupernatural,超能,magicbees.speciesCharmed,magicbees.speciesEnchanted,false,8.0,在 亏凸月 和 亏蛾眉月 之间更容易成功.
+magicbees.speciesEthereal,以太,magicbees.speciesArcane,magicbees.speciesSupernatural,false,7.0,
+magicbees.speciesWindy,疾风,magicbees.speciesSupernatural,magicbees.speciesEthereal,false,14.0,该突变需要橡树树叶作为蜂箱的基石才可发生。
+magicbees.speciesWatery,潮涌,magicbees.speciesSupernatural,magicbees.speciesEthereal,false,14.0,该突变需要水作为蜂箱的基石才可发生。
+magicbees.speciesEarthen,陶土,magicbees.speciesSupernatural,magicbees.speciesEthereal,false,14.0,该突变需要砖块作为蜂箱的基石才可发生。
+magicbees.speciesFirey,烈焰,magicbees.speciesSupernatural,magicbees.speciesEthereal,false,14.0,该突变需要岩浆作为蜂箱的基石才可发生。
+magicbees.speciesAware,感知,magicbees.speciesEthereal,magicbees.speciesAttuned,false,10.0,
+magicbees.speciesSpirit,精神,magicbees.speciesEthereal,magicbees.speciesAware,false,8.0,
+magicbees.speciesSpirit,精神,magicbees.speciesAttuned,magicbees.speciesAware,false,8.0,
+magicbees.speciesSoul,魂魄,magicbees.speciesAware,magicbees.speciesSpirit,false,7.0,
+magicbees.speciesPupil,学徒,forestry.speciesMonastic,magicbees.speciesArcane,false,10.0,
+magicbees.speciesScholarly,博学,magicbees.speciesArcane,magicbees.speciesPupil,false,8.0,
+magicbees.speciesSavant,专家,magicbees.speciesPupil,magicbees.speciesScholarly,false,6.0,
+magicbees.speciesTimely,瞬息,forestry.speciesImperial,magicbees.speciesEthereal,false,8.0,
+magicbees.speciesLordly,贵族,forestry.speciesImperial,magicbees.speciesTimely,false,8.0,
+magicbees.speciesDoctoral,博士,magicbees.speciesTimely,magicbees.speciesLordly,false,7.0,
+magicbees.speciesHateful,憎恶,magicbees.speciesInfernal,magicbees.speciesEldritch,false,9.0,该突变只可能在nether生物群系中发生。
+magicbees.speciesSpiteful,恶毒,magicbees.speciesInfernal,magicbees.speciesHateful,false,7.0,该突变只可能在nether生物群系中发生。
+magicbees.speciesWithering,凋零,forestry.speciesDemonic,magicbees.speciesSpiteful,false,6.0,该突变只可能在nether生物群系中发生。
+magicbees.speciesSkulking,诡隐,forestry.speciesModest,magicbees.speciesEldritch,false,12.0,
+magicbees.speciesSpidery,蜘蛛,forestry.speciesTropical,magicbees.speciesSkulking,false,10.0,
+magicbees.speciesGhastly,幽魂,magicbees.speciesTCBatty,magicbees.speciesEthereal,false,9.0,
+magicbees.speciesSmouldering,闷烧,magicbees.speciesGhastly,magicbees.speciesHateful,false,7.0,该突变只可能在nether生物群系中发生。
+magicbees.speciesBigBad,大坏蛋,magicbees.speciesSkulking,magicbees.speciesMysterious,false,7.0,月相为满月
+magicbees.speciesTCChicken,家禽,forestry.speciesCommon,magicbees.speciesSkulking,false,12.0,该突变只可能在forest生物群系中发生。
+magicbees.speciesTCBeef,壮牛,forestry.speciesCommon,magicbees.speciesSkulking,false,12.0,该突变只可能在plains生物群系中发生。
+magicbees.speciesTCPork,猪猡,forestry.speciesCommon,magicbees.speciesSkulking,false,12.0,该突变只可能在mountain生物群系中发生。
+magicbees.speciesSheepish,肥羊,magicbees.speciesTCPork,magicbees.speciesSkulking,false,13.0,该突变只可能在plains生物群系中发生。
+magicbees.speciesHorse,骏马,magicbees.speciesTCBeef,magicbees.speciesSheepish,false,12.0,该突变只可能在plains生物群系中发生。
+magicbees.speciesCatty,野猫,magicbees.speciesTCChicken,magicbees.speciesSpidery,false,15.0,该突变只可能在jungle生物群系中发生。
+magicbees.speciesTCBatty,火蝠,magicbees.speciesSkulking,magicbees.speciesWindy,false,9.0,
+magicbees.speciesTCBrainy,怒尸,magicbees.speciesSkulking,magicbees.speciesPupil,false,9.0,
+magicbees.speciesNameless,无名,magicbees.speciesEthereal,magicbees.speciesOblivion,false,10.0,
+magicbees.speciesAbandoned,遗忘,magicbees.speciesOblivion,magicbees.speciesNameless,false,8.0,
+magicbees.speciesForlorn,绝望,magicbees.speciesNameless,magicbees.speciesAbandoned,false,6.0,
+magicbees.speciesDraconic,恶龙,forestry.speciesImperial,magicbees.speciesAbandoned,false,6.0,该突变只可能在end生物群系中发生。
+magicbees.speciesMutable,善变,magicbees.speciesUnusual,magicbees.speciesEldritch,false,12.0,
+magicbees.speciesTransmuting,蜕变,magicbees.speciesUnusual,magicbees.speciesMutable,false,9.0,
+magicbees.speciesCrumbling,崩溃,magicbees.speciesUnusual,magicbees.speciesMutable,false,9.0,
+magicbees.speciesInvisible,隐形,magicbees.speciesMystical,magicbees.speciesMutable,false,15.0,
+magicbees.speciesCopper,紫铜,forestry.speciesIndustrious,forestry.speciesMeadows,false,12.0,该突变需要铜块作为蜂箱的基石才可发生。
+magicbees.speciesTin,白锡,forestry.speciesIndustrious,forestry.speciesForest,false,12.0,该突变需要锡块作为蜂箱的基石才可发生。
+magicbees.speciesIron,灰铁,forestry.speciesCommon,forestry.speciesIndustrious,false,12.0,该突变需要铁块作为蜂箱的基石才可发生。
+magicbees.speciesLead,黑铅,magicbees.speciesTin,forestry.speciesCommon,false,10.0,该突变需要铅块作为蜂箱的基石才可发生。
+magicbees.speciesSilver,白银,forestry.speciesImperial,forestry.speciesModest,false,8.0,该突变需要银块作为蜂箱的基石才可发生。
+magicbees.speciesGold,黄金,forestry.speciesImperial,magicbees.speciesLead,false,8.0,该突变需要金块作为蜂箱的基石才可发生。
+magicbees.speciesAluminum,亮铝,forestry.speciesIndustrious,forestry.speciesCultivated,false,10.0,该突变需要铝块作为蜂箱的基石才可发生。
+magicbees.speciesArdite,阿迪特,forestry.speciesIndustrious,magicbees.speciesInfernal,false,9.0,该突变需要阿迪特块作为蜂箱的基石才可发生。
+magicbees.speciesCobalt,辉钴,forestry.speciesImperial,magicbees.speciesInfernal,false,11.0,该突变需要钴块作为蜂箱的基石才可发生。
+magicbees.speciesManyullyn,玛玉灵,magicbees.speciesArdite,magicbees.speciesCobalt,false,9.0,该突变需要玛玉灵块作为蜂箱的基石才可发生。
+magicbees.speciesDiamond,碎片钻石,forestry.speciesAustere,magicbees.speciesGold,false,7.0,该突变需要钻石块作为蜂箱的基石才可发生。
+magicbees.speciesEmerald,宝石,forestry.speciesAustere,magicbees.speciesSilver,false,6.0,该突变需要绿宝石块作为蜂箱的基石才可发生。
+magicbees.speciesApatite,磷化,forestry.speciesRural,magicbees.speciesCopper,false,12.0,该突变需要磷灰石块作为蜂箱的基石才可发生。
+magicbees.speciesSilicon,硅晶,magicbees.speciesAESkystone,magicbees.speciesIron,false,17.0,
+magicbees.speciesCertus,定型,magicbees.speciesSilicon,magicbees.speciesAESkystone,false,13.0,
+magicbees.speciesFluix,福鲁伊克斯水晶,magicbees.speciesCertus,magicbees.speciesAESkystone,false,17.0,
+magicbees.speciesTCAir,灵气,magicbees.speciesWindy,magicbees.speciesWindy,false,8.0,该突变需要风之魔晶作为蜂箱的基石才可发生。
+magicbees.speciesTCFire,灼热,magicbees.speciesFirey,magicbees.speciesFirey,false,8.0,该突变需要火之魔晶作为蜂箱的基石才可发生。
+magicbees.speciesTCWater,流水,magicbees.speciesWatery,magicbees.speciesWatery,false,8.0,该突变需要水之魔晶作为蜂箱的基石才可发生。
+magicbees.speciesTCEarth,泥土,magicbees.speciesEarthen,magicbees.speciesEarthen,false,8.0,该突变需要地之魔晶作为蜂箱的基石才可发生。
+magicbees.speciesTCOrder,奇术,magicbees.speciesEthereal,magicbees.speciesArcane,false,8.0,该突变需要秩序魔晶作为蜂箱的基石才可发生。
+magicbees.speciesTCChaos,朴实,magicbees.speciesEthereal,magicbees.speciesSupernatural,false,8.0,该突变需要混沌魔晶作为蜂箱的基石才可发生。
+magicbees.speciesTCEssentia,源质,magicbees.speciesTCOrder,magicbees.speciesTCChaos,false,8.0,该突变需要混沌魔晶作为蜂箱的基石才可发生。
+magicbees.speciesTCVis,魔力,magicbees.speciesEthereal,magicbees.speciesInfernal,false,9.0,月相处于上弦月与下弦月之间时
+magicbees.speciesTCRejuvenating,复兴,magicbees.speciesAttuned,magicbees.speciesTCVis,false,8.0,
+magicbees.speciesTCEmpowering,充能,magicbees.speciesTCVis,magicbees.speciesTCRejuvenating,false,6.0,在 满月 时更容易成功.
+magicbees.speciesTCNexus,联结,magicbees.speciesTCRejuvenating,magicbees.speciesTCEmpowering,false,10.0,该突变只可能在magical生物群系中发生。|该突变需要灵气节点作为蜂箱的基石才可发生。
+magicbees.speciesTCFlux,咒波,magicbees.speciesTransmuting,magicbees.speciesTCEmpowering,false,11.0,月相为新月
+magicbees.speciesTCPure,纯净,magicbees.speciesTransmuting,magicbees.speciesTCRejuvenating,false,8.0,该突变只可能在magical生物群系中发生。|月相为新月
+magicbees.speciesTCHungry,饕餮,magicbees.speciesBigBad,magicbees.speciesTCVis,false,20.0,
+magicbees.speciesTCWispy,轻灵,magicbees.speciesEthereal,magicbees.speciesGhastly,false,9.0,月相处于亏蛾眉月与凸娥眉月之间时
+magicbees.speciesTCVoid,虚空,magicbees.speciesIron,magicbees.speciesTCFlux,false,5.0,该突变只可能在magical生物群系中发生。|该突变仅在夜晚时发生。
+magicbees.speciesBotRooted,生根,magicbees.speciesEldritch,forestry.speciesForest,false,15.0,该突变需要活木作为蜂箱的基石才可发生。
+magicbees.speciesBotSomnolent,催眠,magicbees.speciesBotRooted,magicbees.speciesWatery,false,16.0,该突变仅在夜晚时发生。
+magicbees.speciesBotDreaming,梦境,magicbees.speciesWindy,magicbees.speciesBotSomnolent,false,8.0,该突变仅在夜晚时发生。
+magicbees.speciesBotBlossom,花开,magicbees.speciesBotBotanic,magicbees.speciesEarthen,false,12.0,
+magicbees.speciesBotFloral,花海,magicbees.speciesBotBotanic,magicbees.speciesBotBlossom,false,8.0,
+magicbees.speciesAESkystone,天石,magicbees.speciesEarthen,magicbees.speciesWindy,false,20.0,该突变需要陨石作为蜂箱的基石才可发生。
+gendustry.bee.derpious,逗逼,forestry.speciesMarshy,forestry.speciesCultivated,false,10.0,
+gendustry.bee.magenta,品红色,gendustry.bee.blue,gendustry.bee.pink,false,10.0,
+gendustry.bee.lime,黄绿,gendustry.bee.white,gendustry.bee.green,false,10.0,
+gendustry.bee.lightblue,淡蓝色,gendustry.bee.white,gendustry.bee.blue,false,10.0,
+gendustry.bee.pink,粉色,gendustry.bee.white,gendustry.bee.red,false,10.0,
+gendustry.bee.cyan,青色,gendustry.bee.blue,gendustry.bee.green,false,10.0,
+gendustry.bee.silver,淡灰,gendustry.bee.gray,gendustry.bee.white,false,10.0,
+gendustry.bee.gray,灰色,gendustry.bee.black,gendustry.bee.white,false,10.0,
+gendustry.bee.green,绿色,gendustry.bee.blue,gendustry.bee.yellow,false,10.0,
+gendustry.bee.orange,橙色,gendustry.bee.yellow,gendustry.bee.red,false,10.0,
+gendustry.bee.purple,紫色,gendustry.bee.red,gendustry.bee.blue,false,10.0,
+gendustry.bee.black,黑色,gendustry.bee.white,forestry.speciesDiligent,false,10.0,
+gendustry.bee.white,白色,forestry.speciesWintry,forestry.speciesDiligent,false,10.0,
+gendustry.bee.brown,棕色,forestry.speciesTropical,forestry.speciesDiligent,false,10.0,
+gendustry.bee.yellow,黄色,forestry.speciesModest,forestry.speciesDiligent,false,10.0,
+gendustry.bee.red,红色,forestry.speciesCommon,forestry.speciesDiligent,false,10.0,
+gendustry.bee.blue,蓝色,forestry.speciesForest,forestry.speciesDiligent,false,10.0,
+gtpp.bee.speciesDragon Blood,龙血,gregtech.bee.speciesDragonessence,gregtech.bee.speciesNeutronium,false,2.0,该突变仅在湿度为干旱时发生。|该突变需要龙血块作为蜂箱的基石才可发生。|需要维度 End
+gtpp.bee.speciesForce,力量,gregtech.bee.speciesSteel,gregtech.bee.speciesGold,false,10.0,该突变仅在湿度为干旱时发生。|该突变只可能在hot生物群系中发生。
+gregtech.bee.speciesWeiwei,§c§m维维豆奶,extrabees.species.chad,gregtech.bee.speciesWalrus,false,2.0,该突变需要终极压缩巨型加工厂作为蜂箱的基石才可发生。
+gregtech.bee.speciesGate,§b§m星门,gregtech.bee.speciesWeiwei,gregtech.bee.speciesMachinist,false,1.0,"该突变需要1,048,576安MAX无线能源仓作为蜂箱的基石才可发生。"
+gregtech.bee.speciesHyp,§4海珀珍,gregtech.bee.speciesInfinity,gregtech.bee.speciesDragonessence,false,1.0,该突变需要部件装配线外壳（UIV）作为蜂箱的基石才可发生。
+gregtech.bee.speciesGlas,玻璃,gregtech.bee.speciesClay,forestry.speciesRural,false,90.0,该突变需要通透玻璃作为蜂箱的基石才可发生。
+gregtech.bee.speciesChg,§a彩§b色§e玻§c璃,gregtech.bee.speciesGlas,gregtech.bee.speciesInfinity,false,1.0,该突变需要彩色玻璃块作为蜂箱的基石才可发生。
+gregtech.bee.speciesJiucai,韭菜盒子,gregtech.bee.speciesCoal,gregtech.bee.speciesSalty,false,12.0,该突变需要避雷针作为蜂箱的基石才可发生。
+gregtech.bee.speciesEnqing,§4§l恩情,gregtech.bee.speciesJiucai,gregtech.bee.speciesWeiwei,false,1.0,该突变需要红日之将军恩情配件厂作为蜂箱的基石才可发生。
+gregtech.bee.speciesIronoth,铁块,gregtech.bee.speciesIron,gregtech.bee.speciesClay,false,100.0,该突变需要铁矿石作为蜂箱的基石才可发生。
+gregtech.bee.speciesShengxi,§d§n§l§o生息,gregtech.bee.speciesWeiwei,gregtech.bee.speciesGate,false,100.0,该突变需要泥土作为蜂箱的基石才可发生。

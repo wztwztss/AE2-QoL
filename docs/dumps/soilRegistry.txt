@@ -1,0 +1,79 @@
+brick
+- minecraft:brick_block
+- ExtraUtilities:color_brick
+- thaumicbases:oldBrick
+
+dirt
+- minecraft:grass
+- minecraft:dirt
+- chisel:dirt
+
+end
+- Botania:endStoneBrick
+- etfuturum:end_bricks
+- chisel:end_Stone
+- minecraft:end_stone
+
+farmland
+- MagicBees:magicbees.enchantedEarth
+- Ztones:cleanDirt
+- RandomThings:fertilizedDirt_tilled
+- minecraft:farmland
+
+gravel
+- minecraft:gravel
+
+graveyard
+- TConstruct:CraftedSoil:3
+
+mycelium
+- minecraft:mycelium
+
+netherrack
+- chisel:netherrack
+- TConstruct:decoration.multibrickfancy:2
+- TConstruct:decoration.multibrick:2
+- minecraft:netherrack
+
+oilSands
+- gregtech:gt.blockores2:2878
+- gregtech:gt.blockores2:1878
+- gregtech:gt.blockores2:878
+
+sand
+- minecraft:sand
+
+slimy
+- TConstruct:slime.grass:0
+- TConstruct:CraftedSoil:0
+- TConstruct:CraftedSoil:5
+- TConstruct:CraftedSoil:2
+
+soulsand
+- minecraft:soul_sand
+
+stone
+- minecraft:stone
+- minecraft:cobblestone
+- ExtraUtilities:color_stone
+- TConstruct:decoration.multibrickfancy:3
+- TConstruct:decoration.multibrickfancy:14
+- TConstruct:decoration.multibrickfancy:15
+- thaumicbases:oldCobbleMossy
+- minecraft:mossy_cobblestone
+- TConstruct:decoration.multibrick:3
+- chisel:stone_snakestone
+- minecraft:stonebrick
+- chisel:cobblestone
+- thaumicbases:oldCobble
+- chisel:mossy_cobblestone
+- ExtraUtilities:color_stonebrick
+- chisel:stonebricksmooth
+
+thaumLogs
+- Thaumcraft:blockMagicalLog:0
+- Thaumcraft:blockMagicalLog:5
+- Thaumcraft:blockMagicalLog:1
+- Thaumcraft:blockMagicalLog:9
+- Thaumcraft:blockMagicalLog:8
+- Thaumcraft:blockMagicalLog:4

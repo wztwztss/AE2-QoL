@@ -4,7 +4,7 @@
 
 An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
-**Author: wztwzt · Current source version: 3.19.0-fix47 · Reference pack: GTNH 2.9.0-beta-1**
+**Author: wztwzt · Current source version: 3.19.0-fix48 · Reference pack: GTNH 2.9.0-beta-3**
 
 This repository is for personal archival and is not currently offered for distribution. See [CREDITS.md](CREDITS.md) for attribution and licensing records. Feature descriptions are not a claim that every integration has passed in-game testing.
 
@@ -25,7 +25,7 @@ See the [investigation](docs/mcp-tooltip-duplicate-investigation.md) for evidenc
 ## Installation and upgrades
 
 1. Stop the game/server and back up the **complete world and configuration**, retaining the previous JAR for rollback. Infinity Cell contents live in the world save; backing up item NBT alone is insufficient.
-2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-3.19.0-fix47.jar`. Do not retain multiple versions.
+2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-3.19.0-fix48.jar`. Do not retain multiple versions.
 3. **Use the same version on client and server.** fix41 changed upload-related packets; upgrading only one side is unsupported.
 4. This JAR includes `aeinfinitycell` (bundled metadata remains `1.0.4-ae2qol`). Do not also install the standalone AE2 Infinity Cell JAR. Test old cells in a copied world before migrating.
 5. Check startup logs, generated configuration and Mixin loading, then exercise the features you use in a test world. Deployment to the development test instance requires separate approval.
@@ -36,7 +36,7 @@ The mod uses **GTNH fork APIs**, not arbitrary Forge 1.7.10/AE2/NEI combinations
 
 | Component | Build reference | Inspected instance |
 |---|---|---|
-| Minecraft / Forge | 1.7.10 / 10.13.4.1614; MCP stable 12 | GTNH 2.9.0-beta-1 |
+| Minecraft / Forge | 1.7.10 / 10.13.4.1614; MCP stable 12 | GTNH 2.9.0-beta-3 |
 | AE2 Unofficial | rv3-beta-977-GTNH | Same |
 | AE2FluidCraft-Rework | 1.5.88-gtnh | Same |
 | GregTech | 5.09.52.594 | Same |
@@ -176,7 +176,7 @@ Wireless Output Hatch **32110** contributes to the wireless EU account; Wireless
 
 ### F20 · Adaptive energy grid
 
-Terminal **32100** has five pages: status, settings, frequency, monitoring and hatch list. Companion hatches: input **32102**, laser source **32103**, dynamo **32104**, laser target **32105**.
+Terminal **32106** has five pages: status, settings, frequency, monitoring and hatch list. Companion hatches: input **32102**, laser source **32103**, dynamo **32104**, laser target **32105**.
 
 **Sneak-right-click the terminal** with a Network Data Stick to write configuration → right-click hatches to bind → right-click the terminal to read. Includes team networks, highlighting/permission-controlled teleportation, controller names and statistics. Sampled monitoring data is not proof of correct resource accounting.
 
@@ -186,7 +186,7 @@ Queries items/fluids through adjacent AE or Nexus wireless binding and outputs c
 
 ### F22 · Stock Statistics Terminal
 
-GT information terminal, ID **32101**, designed to centrally inspect/edit standard AE level emitters and this mod's stock covers, including thresholds, status and location. **Client/server UI construction, emitter enumeration and remote-edit authorization have open review findings.** Registration or compilation alone does not demonstrate complete functionality.
+GT information terminal, ID **32107**, designed to centrally inspect/edit standard AE level emitters and this mod's stock covers, including thresholds, status and location. **Client/server UI construction, emitter enumeration and remote-edit authorization have open review findings.** Registration or compilation alone does not demonstrate complete functionality.
 
 ## Known issues and verification scope
 

@@ -1,3 +1,70 @@
+## 工作区决策记录 2026-09-20 (10) - fix48：MTE ID 让位 fissionevolved + 旧存档自动迁移 + 适配 290b3
+
+> 未提交、未推送；产物 `build/libs/AE2-QoL-3.19.0-fix48.jar`。
+> 基线由 GTNH `2.9.0-beta-1` 切换为 **`2.9.0-beta-3`**。
+
+### 问题（b3 日志实据）
+
+```
+[AE2QoL] StockMonitorTerminal registration FAILED: MetaTileEntity id 32101 is already occupied!
+         Existing MTE is fissionevolved.colossal_fission_reactor_controller(com.shenfnx.fissionevolved.MTEColossalFissionReactor).
+[AE2QoL] AdaptiveNetTerminal registration FAILED: MetaTileEntity id 32100 is already occupied!
+         Existing MTE is fissionevolved.fission_reactor_controller(com.shenfnx.fissionevolved.MTEFissionReactor).
+```
+
+fissionevolved 0.1.1 的 `Config.java` 默认值即 `32100`/`32101`，属稳定占用。
+两个终端因此完全无法注册（b3 `metatileentity.csv` 4606 条记录中查无此二者）。
+
+### 处理：AE2-QoL 退让号段
+
+| 用途 | 旧 ID | 新 ID |
+|---|---|---|
+| 自适应电网终端 AdaptiveNetTerminal | 32100 | **32106** |
+| 库存统计终端 StockMonitorTerminal | 32101 | **32107** |
+
+依据 b3 `docs/dumps/metatileentity.csv` 全表核对，32106/32107 均无占用；
+并与既有 32102～32105、32110/32111 连成整块，同时避开 GTNL 写死的 32301~32331、32350~32377。
+
+### 旧存档自动迁移（本次关键）
+
+GT 存档只记录 MTE 数字 ID（NBT `mID`），不记类名。直接换号会让旧存档里已摆放的终端
+被当成 fission 的机器加载，其配置（`ae2qolNF` 频率 / `ae2qolVT` 电压 / `ae2qolHT*`+`ae2qolHA*` 配对表）
+将在下次保存时丢失——即「终端消失、频率丢失、全基地子仓解绑」。
+
+新增 `mixin/gt/MixinBaseMetaTileEntityIdMigration.java`：
+
+- 注入 `BaseMetaTileEntity.setInitialValuesAsNBT(NBTTagCompound, short)` 的 `HEAD`（`remap = false`）；
+- 判定：`mID` 为 32100/32101 **且** NBT 含本模组专属键（`ae2qolNO`/`ae2qolNF`/`ae2qolVT`）；
+- 动作：改写 `mID` 为新号后交回原逻辑，配置原样保留，对玩家无感。
+
+fissionevolved 的 NBT 键为 `Fission*` 前缀，与本模组 `ae2qol*` 互不相交，不会误迁移。
+
+### 存档影响面核实（逐区块解析 NBT）
+
+| 存档 | 32100 | 32101 | 终端物品 |
+|---|---|---|---|
+| b3 `World` | 1 台（主世界 49,29,44） | 0 | 无 |
+| b3 `新的世界` | 0 | 0 | 无 |
+| b1 `world(1)` | 1 台 | 0 | 无 |
+
+两存档均无携带旧 ID 的物品，故无需处理物品栏/箱子/AE 存储残留。
+
+### 文档同步
+
+- `docs/MTE_ID冲突说明.md` 重写为「已解决 + 新号段 + 迁移说明 + 影响面核实」；
+- `README.md`/`README.en.md`：版本 fix48、基线 beta-3、终端 ID 32106/32107；
+- `guidenh` 中英 `adaptive_grid.md` 的终端 ID 同步；
+- 根目录与 `src/main/resources` 的 `mixins.ae2_qof.json` 同步注册新 Mixin。
+
+### 验证
+
+- `gradlew compileJava` + `build`（Java 17、offline）均 `BUILD SUCCESSFUL`；
+- 解包产物核对：新 Mixin class 已入包，且 Minecraft 成员引用已重混淆
+  （`func_74762_e`/`func_74768_a`/`func_74764_b`），运行期不会静默失效。
+- 迁移前已备份存档至 `World_bak_before_id_migration`（445 MB）。
+
+---
+
 ## 工作区决策记录 2026-09-20 (9) - fix47：世界中键取物的「可合成即打开下单页」
 
 > 未提交、未推送；产物 `build/libs/AE2-QoL-3.19.0-fix47.jar`。

@@ -53,7 +53,6 @@ ID,Provider ID,Provider Class Name
 100,100,com.rwtema.extrautils.worldgen.Underdark.WorldProviderUnderdark
 112,112,com.rwtema.extrautils.worldgen.endoftime.WorldProviderEndOfTime
 173,173,makeo.gadomancy.common.utils.world.WorldProviderTCEldrich
-180,180,me.eigenraven.personalspace.world.PersonalWorldProvider
 227,227,toxiceverglades.world.WorldProviderMod
 12321,12321,com.newmaa.othtech.common.dimensions.antimonia.WorldProviderAntimonia
 12322,12322,com.newmaa.othtech.common.dimensions.ross123b.WorldProviderRoss123b

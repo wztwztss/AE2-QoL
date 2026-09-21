@@ -13,14 +13,14 @@ acetaldehyde,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaite
 aceticacid,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30670,乙酸单元,gregtech:gt.metaitem.01
 acetone,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30672,丙酮单元,gregtech:gt.metaitem.01
 acetylene,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30781,乙炔单元,gregtech:gt.metaitem.01
-acid,1000,1xitem.misc@8,玻璃罐,Genetics:misc,1xitem.containerCylinder@64,酸液玻璃罐,BinnieCore:containerCylinder
-acid,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@12,酸魔力胶囊,MagicBees:capsule.magic
-acid,1000,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.containerGlass@64,酸液瓶,BinnieCore:containerGlass
 acid,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@12,酸虚空胶囊,MagicBees:capsule.void
 acid,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.containerBucket@64,酸液桶,BinnieCore:containerBucket
-acid,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.containerRefractory@64,酸液耐火胶囊,BinnieCore:containerRefractory
-acid,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.containerCapsule@64,酸液胶囊,BinnieCore:containerCapsule
+acid,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@12,酸魔力胶囊,MagicBees:capsule.magic
+acid,1000,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.containerGlass@64,酸液瓶,BinnieCore:containerGlass
 acid,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.containerCan@64,酸液胶囊,BinnieCore:containerCan
+acid,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.containerCapsule@64,酸液胶囊,BinnieCore:containerCapsule
+acid,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.containerRefractory@64,酸液耐火胶囊,BinnieCore:containerRefractory
+acid,1000,1xitem.misc@8,玻璃罐,Genetics:misc,1xitem.containerCylinder@64,酸液玻璃罐,BinnieCore:containerCylinder
 acid naquadah emulsion,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10036,酸性硅岩乳液单元,bartworks:gt.bwMetaGeneratedcell
 acidic iridium solution,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@75,酸性铱溶液单元,bartworks:gt.bwMetaGeneratedcell
 acidic osmium solution,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@72,酸性锇溶液单元,bartworks:gt.bwMetaGeneratedcell
@@ -30,12 +30,12 @@ advancedglue,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaite
 agitatingslurry,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30184,搅拌泥浆单元,gregtech:gt.metaitem.01
 air,2000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xic2.itemCellEmpty@5,压缩空气单元,IC2:itemCellEmpty
 allylchloride,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30682,烯丙基氯单元,gregtech:gt.metaitem.01
-aluminum.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@4,桶装熔融铝,TConstruct:buckets
-aluminum.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@4,黏土桶(熔融铝),IguanaTweaksTConstruct:clayBucketsTinkers
-aluminumbrass.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@8,桶装熔融铝黄铜,TConstruct:buckets
-aluminumbrass.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@8,黏土桶(熔融黄铜),IguanaTweaksTConstruct:clayBucketsTinkers
-alumite.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@10,桶装熔融锌曜钢,TConstruct:buckets
-alumite.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@10,黏土桶(熔融耐酸铝),IguanaTweaksTConstruct:clayBucketsTinkers
+aluminum.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@4,熔融铝桶,TConstruct:buckets
+aluminum.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@4,熔融铝黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
+aluminumbrass.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@8,熔融铝黄铜桶,TConstruct:buckets
+aluminumbrass.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@8,熔融黄铜黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
+alumite.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@10,熔融锌曜钢桶,TConstruct:buckets
+alumite.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@10,熔融锌曜钢黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
 ammonia,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30659,氨单元,gregtech:gt.metaitem.01
 ammonium bisulfate,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25129,硫酸氢铵单元,bartworks:gt.bwMetaGeneratedcell
 ammonium chloride,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@50,氯化铵单元,bartworks:gt.bwMetaGeneratedcell
@@ -50,11 +50,11 @@ antimony pentafluoride solution,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCel
 antimony trichloride solution,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10030,三氯化锑溶液单元,bartworks:gt.bwMetaGeneratedcell
 antimony trifluoride,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25098,三氟化锑单元,bartworks:gt.bwMetaGeneratedcell
 aqua regia,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@48,王水单元,bartworks:gt.bwMetaGeneratedcell
-ardite.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@6,桶装熔融阿迪特,TConstruct:buckets
-ardite.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@6,黏土桶(熔融阿迪特),IguanaTweaksTConstruct:clayBucketsTinkers
+ardite.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@6,熔融阿迪特桶,TConstruct:buckets
+ardite.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@6,熔融阿迪特黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
 argon,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30024,氩单元,gregtech:gt.metaitem.01
-bacterialsludge,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@1,菌泥 Cell,gregtech:gt.metaitem.98
 bacterialsludge,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketSludge@0,菌泥桶,GalacticraftMars:item.bucketSludge
+bacterialsludge,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@1,菌泥单元,gregtech:gt.metaitem.98
 barnarda c sappy,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25054,巴纳德C树汁单元,bartworks:gt.bwMetaGeneratedcell
 bastnasite rarer earth oxide suspension,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11115,氟碳镧铈罕土氧化物悬浊液单元,bartworks:gt.bwMetaGeneratedcell
 bauxiteslurry,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30409,铝土泥浆单元,gregtech:gt.metaitem.01
@@ -63,45 +63,45 @@ benzene,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@
 benzenediazonium tetrafluoroborate,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25096,四氟硼酸重氮苯单元,bartworks:gt.bwMetaGeneratedcell
 benzyl chloride,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25037,氯化苄单元,bartworks:gt.bwMetaGeneratedcell
 benzylamine,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25032,苄胺单元,bartworks:gt.bwMetaGeneratedcell
-binnie.bacteria,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@15,细菌 Cell,gregtech:gt.metaitem.98
 binnie.bacteria,1000,1xitem.misc@8,玻璃罐,Genetics:misc,1xitem.containerCylinder@769,细菌玻璃罐,BinnieCore:containerCylinder
+binnie.bacteria,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@15,细菌单元,gregtech:gt.metaitem.98
 binnie.bacteriapoly,1000,1xitem.misc@8,玻璃罐,Genetics:misc,1xitem.containerCylinder@770,聚合菌玻璃罐,BinnieCore:containerCylinder
 binnie.bacteriavector,1000,1xitem.misc@8,玻璃罐,Genetics:misc,1xitem.containerCylinder@772,细菌质粒玻璃罐,BinnieCore:containerCylinder
 binnie.dna.raw,1000,1xitem.misc@8,玻璃罐,Genetics:misc,1xitem.containerCylinder@771,DNA 液体玻璃罐,BinnieCore:containerCylinder
-binnie.growthmedium,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.containerRefractory@768,binniecore.item.container.refractory.binnie.growthmedium,BinnieCore:containerRefractory
 binnie.growthmedium,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.containerCan@768,binniecore.item.container.can.binnie.growthmedium,BinnieCore:containerCan
-binnie.growthmedium,1000,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.containerGlass@768,binniecore.item.container.glass.binnie.growthmedium,BinnieCore:containerGlass
-binnie.growthmedium,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.containerCapsule@768,binniecore.item.container.capsule.binnie.growthmedium,BinnieCore:containerCapsule
 binnie.growthmedium,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.containerBucket@768,binniecore.item.container.bucket.binnie.growthmedium,BinnieCore:containerBucket
+binnie.growthmedium,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.containerRefractory@768,binniecore.item.container.refractory.binnie.growthmedium,BinnieCore:containerRefractory
+binnie.growthmedium,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.containerCapsule@768,binniecore.item.container.capsule.binnie.growthmedium,BinnieCore:containerCapsule
 binnie.growthmedium,1000,1xitem.misc@8,玻璃罐,Genetics:misc,1xitem.containerCylinder@768,培养基玻璃罐,BinnieCore:containerCylinder
+binnie.growthmedium,1000,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.containerGlass@768,binniecore.item.container.glass.binnie.growthmedium,BinnieCore:containerGlass
 biocatalyzedpropulsionfluid,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30166,生物催化推进液单元,gregtech:gt.metaitem.01
 biodiesel,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30627,生物柴油单元,gregtech:gt.metaitem.01
-bioethanol,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.for.waxCapsuleEthanol@0,耐火乙醇胶囊,Forestry:waxCapsuleEthanol
-bioethanol,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.for.refractoryEthanol@0,耐火乙醇胶囊,Forestry:refractoryEthanol
-bioethanol,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.for.bucketEthanol@0,乙醇桶,Forestry:bucketEthanol
-bioethanol,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@4,乙醇魔力胶囊,MagicBees:capsule.magic
-bioethanol,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.for.canEthanol@0,乙醇罐,Forestry:canEthanol
 bioethanol,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@4,乙醇虚空胶囊,MagicBees:capsule.void
 bioethanol,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30706,乙醇单元,gregtech:gt.metaitem.01
+bioethanol,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.for.waxCapsuleEthanol@0,耐火乙醇胶囊,Forestry:waxCapsuleEthanol
+bioethanol,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@4,乙醇魔力胶囊,MagicBees:capsule.magic
+bioethanol,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.for.bucketEthanol@0,乙醇桶,Forestry:bucketEthanol
+bioethanol,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.for.canEthanol@0,乙醇罐,Forestry:canEthanol
+bioethanol,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.for.refractoryEthanol@0,耐火乙醇胶囊,Forestry:refractoryEthanol
 biofuel,1000,1xitem.ItemBioFuelCanister@1001,空罐,GalaxySpace:item.ItemBioFuelCanister,1xitem.ItemBioFuelCanister@1,生物燃料罐,GalaxySpace:item.ItemBioFuelCanister
 biohmediumsterilized,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30604,灭菌生物培养基单元,gregtech:gt.metaitem.01
-biomass,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.for.waxCapsuleBiomass@0,耐火生物质胶囊,Forestry:waxCapsuleBiomass
-biomass,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.for.bucketBiomass@0,生物质桶,Forestry:bucketBiomass
+biomass,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@3,生物质虚空胶囊,MagicBees:capsule.void
+biomass,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30704,林业生物质单元,gregtech:gt.metaitem.01
 biomass,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.for.canBiomass@0,生物质罐,Forestry:canBiomass
 biomass,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@3,生物质魔力胶囊,MagicBees:capsule.magic
-biomass,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@3,生物质虚空胶囊,MagicBees:capsule.void
-biomass,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30704,生物质单元,gregtech:gt.metaitem.01
+biomass,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.for.waxCapsuleBiomass@0,耐火生物质胶囊,Forestry:waxCapsuleBiomass
 biomass,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.for.refractoryBiomass@0,耐火生物质胶囊,Forestry:refractoryBiomass
+biomass,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.for.bucketBiomass@0,生物质桶,Forestry:bucketBiomass
 biomediumraw,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30603,生物培养基原液单元,gregtech:gt.metaitem.01
 blood,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@16,血桶,TConstruct:buckets
-blood,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@16,黏土桶(血),IguanaTweaksTConstruct:clayBucketsTinkers
+blood,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@16,血黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
 boricacid,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.boricacid@0,硼酸单元,miscutils:boricacid
 boron fluoride,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25011,氟化硼单元,bartworks:gt.bwMetaGeneratedcell
 boron trichloride,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11357,三氯化硼单元,bartworks:gt.bwMetaGeneratedcell
 boundlesscosmicsolder,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30115,无界寰宇焊料单元,gregtech:gt.metaitem.01
 brightlumipodextract,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30165,明亮卢米坡德提取物单元,gregtech:gt.metaitem.01
-bronze.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@7,桶装熔融青铜,TConstruct:buckets
-bronze.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@7,黏土桶(熔融青铜),IguanaTweaksTConstruct:clayBucketsTinkers
+bronze.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@7,熔融青铜桶,TConstruct:buckets
+bronze.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@7,熔融青铜黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
 butadiene,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30646,丁二烯单元,gregtech:gt.metaitem.01
 butane,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30644,丁烷单元,gregtech:gt.metaitem.01
 butanol,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.butanol@0,丁醇单元,miscutils:butanol
@@ -127,35 +127,37 @@ chloroform,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.
 chloromethane,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30664,氯甲烷单元,gregtech:gt.metaitem.01
 chlorosulfonicacid,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30188,氯磺酸单元,gregtech:gt.metaitem.01
 chrono-dimensionally annihilative entropic fluid,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@20012,时空湮灭维度熵流体单元,bartworks:gt.bwMetaGeneratedcell
-cloud_seed,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketCloud_seed@0,桶装云之精华,EnderIO:bucketCloud_seed
-cloud_seed_concentrated,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketCloud_seed_concentrated@0,桶装浓缩云之精华,EnderIO:bucketCloud_seed_concentrated
-cobalt.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@5,桶装熔融钴,TConstruct:buckets
-cobalt.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@5,黏土桶(熔融钴),IguanaTweaksTConstruct:clayBucketsTinkers
+cloud_seed,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketCloud_seed@0,云之精华桶,EnderIO:bucketCloud_seed
+cloud_seed_concentrated,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketCloud_seed_concentrated@0,浓缩云之精华桶,EnderIO:bucketCloud_seed_concentrated
+cobalt.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@5,熔融钴桶,TConstruct:buckets
+cobalt.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@5,熔融钴黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
 combustionpromotor,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@14,助燃剂单元,gregtech:gt.metaitem.98
 complexitycatalyst,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30897,复杂度催化剂单元,gregtech:gt.metaitem.01
+computationbase,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30116,算力基底单元,gregtech:gt.metaitem.01
 concentrated uu-matter,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@20010,浓缩UU物质单元,bartworks:gt.bwMetaGeneratedcell
 concrete,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.Concrete_bucket@0,桶装混凝土,dreamcraft:dreamcraft_Concrete_bucket
-concrete,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.clayBucketConcrete@0,黏土桶(混凝土),dreamcraft:clayBucketConcrete
+concrete,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.clayBucketConcrete@0,混凝土黏土桶,dreamcraft:clayBucketConcrete
 conditioned bastnasite mud,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11104,调制氟碳镧铈泥浆单元,bartworks:gt.bwMetaGeneratedcell
-copper.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@2,桶装熔融铜,TConstruct:buckets
-copper.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@2,黏土桶(熔融铜),IguanaTweaksTConstruct:clayBucketsTinkers
+copper.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@2,熔融铜桶,TConstruct:buckets
+copper.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@2,熔融铜黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
 crackedradox,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@30,裂化拉多X单元,gregtech:gt.metaitem.98
-creosote,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.railcraft.fluid.creosote.cell@0,杂酚油单元,Railcraft:fluid.creosote.cell
-creosote,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket.creosote@0,黏土桶(杂酚油),IguanaTweaksTConstruct:clayBucketCreosote
-creosote,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.railcraft.fluid.creosote.can@0,杂酚油罐,Railcraft:fluid.creosote.can
-creosote,1000,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.railcraft.fluid.creosote.bottle@0,杂酚油瓶,Railcraft:fluid.creosote.bottle
-creosote,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.railcraft.fluid.creosote.bucket@0,杂酚油桶,Railcraft:fluid.creosote.bucket
-creosote,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@16,木榴油魔力胶囊,MagicBees:capsule.magic
 creosote,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@16,木榴油虚空胶囊,MagicBees:capsule.void
-creosote,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.railcraft.fluid.creosote.wax@0,杂酚油蜡胶囊,Railcraft:fluid.creosote.wax
-creosote,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.railcraft.fluid.creosote.refactory@0,杂酚油耐火胶囊,Railcraft:fluid.creosote.refactory
+creosote,1000,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.railcraft.fluid.creosote.bottle@0,杂酚油瓶,Railcraft:fluid.creosote.bottle
 creosote,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30712,杂酚油单元,gregtech:gt.metaitem.01
+creosote,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.railcraft.fluid.creosote.can@0,杂酚油罐,Railcraft:fluid.creosote.can
+creosote,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@16,木榴油魔力胶囊,MagicBees:capsule.magic
+creosote,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.railcraft.fluid.creosote.wax@0,杂酚油蜡胶囊,Railcraft:fluid.creosote.wax
+creosote,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket.creosote@0,杂酚油黏土桶,IguanaTweaksTConstruct:clayBucketCreosote
+creosote,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.railcraft.fluid.creosote.refactory@0,杂酚油耐火胶囊,Railcraft:fluid.creosote.refactory
+creosote,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.railcraft.fluid.creosote.cell@0,杂酚油单元,Railcraft:fluid.creosote.cell
+creosote,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.railcraft.fluid.creosote.bucket@0,杂酚油桶,Railcraft:fluid.creosote.bucket
 cropsnh.enrichedfertilizer,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.enrichedFertilizerCell@0,富集肥料单元,cropsnh:enrichedFertilizerCell
 cropsnh.fertilizer,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.fertilizerCell@0,肥料单元,cropsnh:fertilizerCell
+cryotheum,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@22,极寒之凛冰虚空胶囊,MagicBees:capsule.void
 cryotheum,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.cryotheum@0,极寒之凛冰单元,miscutils:cryotheum
 cryotheum,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@22,极寒之凛冰魔力胶囊,MagicBees:capsule.magic
 cryotheum,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.MiscUtils.bucket@2,极寒之凛冰桶,miscutils:bucket
-cryotheum,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@22,极寒之凛冰虚空胶囊,MagicBees:capsule.void
+cryotheum_solution,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.cryotheum_solution_bucket@0,桶装凛冰溶液,neoecoae:cryotheum_solution_bucket
 cyclohexane,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.cyclohexane@0,环己烷单元,miscutils:cyclohexane
 cyclohexanone,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.cyclohexanone@0,环己酮单元,miscutils:cyclohexanone
 cyclopentadiene,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10087,环戊二烯单元,bartworks:gt.bwMetaGeneratedcell
@@ -210,21 +212,21 @@ dye.chemical.dyewhite,2304,1xgt.metaitem.01@32402,空喷漆罐,gregtech:gt.metai
 dye.chemical.dyeyellow,2304,1xgt.metaitem.01@32402,空喷漆罐,gregtech:gt.metaitem.01,1xgt.metaitem.01@32452,喷漆罐（Yellow）,gregtech:gt.metaitem.01
 dysprosium chloride concentrate,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11440,氯化镝浓缩液单元,bartworks:gt.bwMetaGeneratedcell
 dysprosium extracting nano resin,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11419,镝萃取纳米树脂单元,bartworks:gt.bwMetaGeneratedcell
-electrum.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@22,桶装熔融琥珀金,TConstruct:buckets
-electrum.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@22,黏土桶(熔融琥珀金),IguanaTweaksTConstruct:clayBucketsTinkers
-emerald.liquid,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@15,桶装熔融绿宝石,TConstruct:buckets
-emerald.liquid,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@15,黏土桶(熔融绿宝石),IguanaTweaksTConstruct:clayBucketsTinkers
-ender,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@23,桶装熔融末影珍珠,TConstruct:buckets
-ender,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@23,黏土桶(液态末影),IguanaTweaksTConstruct:clayBucketsTinkers
+electrum.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@22,熔融琥珀金桶,TConstruct:buckets
+electrum.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@22,熔融琥珀金黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
+emerald.liquid,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@15,熔融绿宝石桶,TConstruct:buckets
+emerald.liquid,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@15,熔融绿宝石黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
+ender,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@20,谐振熔融末影珍珠虚空胶囊,MagicBees:capsule.void
 ender,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@20,谐振熔融末影珍珠魔力胶囊,MagicBees:capsule.magic
+ender,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@23,熔融末影珍珠桶,TConstruct:buckets
+ender,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@23,液态末影黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
 ender,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.MiscUtils.bucket@3,谐振熔融末影珍珠桶,miscutils:bucket
 ender,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@3,液态末影单元,gregtech:gt.metaitem.98
-ender,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@20,谐振熔融末影珍珠虚空胶囊,MagicBees:capsule.void
 ender air,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25120,末地空气单元,bartworks:gt.bwMetaGeneratedcell
-ender_distillation,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketEnder_distillation@0,桶装深渊露水,EnderIO:bucketEnder_distillation
-endergoo,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@4,末影黏浆单元,gregtech:gt.metaitem.98
+ender_distillation,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketEnder_distillation@0,深渊露水桶,EnderIO:bucketEnder_distillation
 endergoo,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketEnderGoo@0,末影黏浆桶,HardcoreEnderExpansion:bucket_ender_goo
-enderium.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@30,桶装熔融末影,TConstruct:buckets
+endergoo,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@4,末影黏浆单元,gregtech:gt.metaitem.98
+enderium.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@30,熔融末影（te）桶,TConstruct:buckets
 enriched naquadah goo,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10080,富集硅岩黏浆单元,bartworks:gt.bwMetaGeneratedcell
 enriched naquadah waste,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25104,富集硅岩废液单元,bartworks:gt.bwMetaGeneratedcell
 enriched-naquadah-rich solution,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10069,高纯富集硅岩溶液单元,bartworks:gt.bwMetaGeneratedcell
@@ -239,11 +241,13 @@ entangled_eternity,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem
 entangled_hypogen,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.gt.cell.entangled_hypogen@0,纠缠玻色-爱因斯坦凝聚态海珀珍单元,gregtech:gt.cell.entangled_hypogen
 entangled_infinity,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.gt.cell.entangled_infinity@0,纠缠玻色-爱因斯坦凝聚态无尽单元,gregtech:gt.cell.entangled_infinity
 entangled_magmatter,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.gt.cell.entangled_magmatter@0,纠缠玻色-爱因斯坦凝聚态磁物质单元,gregtech:gt.cell.entangled_magmatter
-entangled_mhdcsm,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.gt.cell.entangled_mhdcsm@0,纠缠玻色-爱因斯坦凝聚态蓝框岩浆单元,gregtech:gt.cell.entangled_mhdcsm
+entangled_mhdcsm,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.gt.cell.entangled_mhdcsm@0,纠缠玻色-爱因斯坦凝聚态磁流体约束恒星物质单元,gregtech:gt.cell.entangled_mhdcsm
 entangled_neutronium,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.gt.cell.entangled_neutronium@0,纠缠玻色-爱因斯坦凝聚态中子单元,gregtech:gt.cell.entangled_neutronium
-entangled_space,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.gt.cell.entangled_space@0,纠缠玻色-爱因斯坦凝聚态扩大化空间单元,gregtech:gt.cell.entangled_space
+entangled_phononmedium,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.gt.cell.entangled_phononmedium@0,纠缠玻色-爱因斯坦凝聚态无损声子传输介质单元,gregtech:gt.cell.entangled_phononmedium
+entangled_quarkgluonplasma,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.gt.cell.entangled_quarkgluonplasma@0,纠缠玻色-爱因斯坦凝聚态简并夸克胶子等离子体单元,gregtech:gt.cell.entangled_quarkgluonplasma
+entangled_space,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.gt.cell.entangled_space@0,纠缠玻色-爱因斯坦凝聚态扩大化空间流体单元,gregtech:gt.cell.entangled_space
 entangled_spacetime,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.gt.cell.entangled_spacetime@0,纠缠玻色-爱因斯坦凝聚态时空单元,gregtech:gt.cell.entangled_spacetime
-entangled_time,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.gt.cell.entangled_time@0,纠缠玻色-爱因斯坦凝聚态富快子单元,gregtech:gt.cell.entangled_time
+entangled_time,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.gt.cell.entangled_time@0,纠缠玻色-爱因斯坦凝聚态富快子时间流体单元,gregtech:gt.cell.entangled_time
 entangled_transcendentmetal,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.gt.cell.entangled_transcendentmetal@0,纠缠玻色-爱因斯坦凝聚态超时空金属单元,gregtech:gt.cell.entangled_transcendentmetal
 entangled_universium,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.gt.cell.entangled_universium@0,纠缠玻色-爱因斯坦凝聚态宇宙素单元,gregtech:gt.cell.entangled_universium
 entropiccatalyst,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30899,混沌催化剂单元,gregtech:gt.metaitem.01
@@ -294,13 +298,13 @@ filled terbium extracting nano resin,1000,1xic2.itemCellEmpty@0,空单元,IC2:it
 filled thulium extracting nano resin,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11426,满溢的铥萃取纳米树脂单元,bartworks:gt.bwMetaGeneratedcell
 filled ytterbium extracting nano resin,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11428,满溢的镱萃取纳米树脂单元,bartworks:gt.bwMetaGeneratedcell
 filtered bastnasite mud,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11106,过滤氟碳镧铈泥浆单元,bartworks:gt.bwMetaGeneratedcell
-fire_water,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketFire_water@0,桶装火焰水,EnderIO:bucketFire_water
+fire_water,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketFire_water@0,火焰水桶,EnderIO:bucketFire_water
 fishoil,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30711,鱼油单元,gregtech:gt.metaitem.01
 flocculationwasteliquid,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30562,絮凝废液单元,gregtech:gt.metaitem.01
 fluid mana,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25048,液态魔力单元,bartworks:gt.bwMetaGeneratedcell
 fluid.2ethylanthrahydroquinone,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.2Ethylanthrahydroquinone@0,2-乙基蒽氢醌单元,miscutils:2Ethylanthrahydroquinone
 fluid.2ethylanthraquinone,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.2Ethylanthraquinone@0,2-乙基蒽醌单元,miscutils:2Ethylanthraquinone
-fluid.ammoniumnitrateslurry,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.AmmoniumNitrateSlurry@0,水合硝酸铵浆单元,miscutils:AmmoniumNitrateSlurry
+fluid.ammoniumnitrateslurry,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.AmmoniumNitrateSlurry@0,水合硝酸铵浆液单元,miscutils:AmmoniumNitrateSlurry
 fluid.anthracene,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.Anthracene@0,蒽单元,miscutils:Anthracene
 fluid.burntlifbef2thf4uf4,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.BurntLiFBeF2ThF4UF4@0,枯竭铀钍复合氟化物熔盐单元,miscutils:BurntLiFBeF2ThF4UF4
 fluid.burntlifbef2zrf4u235,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.BurntLiFBeF2ZrF4U235@0,枯竭铀235复合氟化物熔盐单元,miscutils:BurntLiFBeF2ZrF4U235
@@ -325,7 +329,7 @@ fluid.rocketfuelmixa,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xit
 fluid.rocketfuelmixb,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.RocketFuelMixB@0,RP-1火箭燃料单元,miscutils:RocketFuelMixB
 fluid.rocketfuelmixc,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.RocketFuelMixC@0,CN3H7O3火箭燃料单元,miscutils:RocketFuelMixC
 fluid.rocketfuelmixd,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.RocketFuelMixD@0,浓缩肼火箭燃料单元,miscutils:RocketFuelMixD
-fluid.rp1fuel,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.RP1Fuel@0,RP-1燃料单元,miscutils:RP1Fuel
+fluid.rp1fuel,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.RP1Fuel@0,RP-1单元,miscutils:RP1Fuel
 fluid.sulfuriccoaltaroil,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.SulfuricCoalTarOil@0,含硫煤焦油单元,miscutils:SulfuricCoalTarOil
 fluiddeath,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.ItemBucketDeath@0,桶装死亡之水,Thaumcraft:ItemBucketDeath
 fluidgalaxy,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@12303,FluidGalaxy单元,bartworks:gt.bwMetaGeneratedcell
@@ -342,11 +346,11 @@ fluoroantimonic acid,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt
 fluoroboric acid,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25007,氟硼酸单元,bartworks:gt.bwMetaGeneratedcell
 fluoroform,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11354,氟仿单元,bartworks:gt.bwMetaGeneratedcell
 fluorotoluene,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25099,氟甲苯单元,bartworks:gt.bwMetaGeneratedcell
-for.honey,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.for.refractoryHoney@0,蜂蜜胶囊,Forestry:refractoryHoney
 for.honey,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.for.bucketHoney@0,蜂蜜桶,Forestry:bucketHoney
 for.honey,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30725,蜂蜜单元,gregtech:gt.metaitem.01
 for.honey,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.for.canHoney@0,蜜罐,Forestry:canHoney
 for.honey,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.for.waxCapsuleHoney@0,蜂蜜胶囊,Forestry:waxCapsuleHoney
+for.honey,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.for.refractoryHoney@0,蜂蜜胶囊,Forestry:refractoryHoney
 formic acid,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@58,甲酸单元,bartworks:gt.bwMetaGeneratedcell
 froth.almandineflotation,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.FrothAlmandineflotation@0,铁铝榴石泡沫单元,miscutils:FrothAlmandineflotation
 froth.copperflotation,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.FrothCopperflotation@0,黄铜泡沫单元,miscutils:FrothCopperflotation
@@ -361,17 +365,17 @@ froth.pyropeflotation,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xi
 froth.redstoneflotation,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.FrothRedstoneflotation@0,红石泡沫单元,miscutils:FrothRedstoneflotation
 froth.spessartineflotation,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.FrothSpessartineflotation@0,锰铝榴石泡沫单元,miscutils:FrothSpessartineflotation
 froth.zincflotation,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.FrothZincflotation@0,闪锌泡沫单元,miscutils:FrothZincflotation
+fuel,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@6,燃油虚空胶囊,MagicBees:capsule.void
+fuel,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30708,柴油单元,gregtech:gt.metaitem.01
+fuel,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@6,燃油魔力胶囊,MagicBees:capsule.magic
+fuel,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.for.refractoryFuel@0,耐火燃料胶囊,Forestry:refractoryFuel
+fuel,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.for.canFuel@0,燃料罐,Forestry:canFuel
+fuel,1000,1xitem.oilCanisterPartial@1001,空罐,GalacticraftCore:item.oilCanisterPartial,1xitem.fuelCanisterPartial@1,燃料罐（满）,GalacticraftCore:item.fuelCanisterPartial
+fuel,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketFuel@0,燃油桶,BuildCraft|Energy:bucketFuel
 fuel,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.for.waxCapsuleFuel@0,耐火燃料胶囊,Forestry:waxCapsuleFuel
 fuel,1000,1xgt.metaitem.01@32477,铂打火机（空）,gregtech:gt.metaitem.01,1xgt.metaitem.01@32479,铂打火机（满）,gregtech:gt.metaitem.01
 fuel,100,1xgt.metaitem.01@32474,打火机（空）,gregtech:gt.metaitem.01,1xgt.metaitem.01@32476,打火机（满）,gregtech:gt.metaitem.01
-fuel,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@6,燃油魔力胶囊,MagicBees:capsule.magic
-fuel,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketFuel@0,燃油桶,BuildCraft|Energy:bucketFuel
 fuel,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketFuel@0,燃油桶,GalacticraftCore:item.bucketFuel
-fuel,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.for.canFuel@0,燃料罐,Forestry:canFuel
-fuel,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@6,燃油虚空胶囊,MagicBees:capsule.void
-fuel,1000,1xitem.oilCanisterPartial@1001,空罐,GalacticraftCore:item.oilCanisterPartial,1xitem.fuelCanisterPartial@1,燃料罐(满),GalacticraftCore:item.fuelCanisterPartial
-fuel,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.for.refractoryFuel@0,耐火燃料胶囊,Forestry:refractoryFuel
-fuel,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30708,柴油单元,gregtech:gt.metaitem.01
 fuela,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@12308,FUELA单元,bartworks:gt.bwMetaGeneratedcell
 fuela_de,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@12309,FUELA_DE单元,bartworks:gt.bwMetaGeneratedcell
 fulvic acid,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@37,黄腐酸单元,gregtech:gt.metaitem.98
@@ -382,27 +386,27 @@ gas_gas,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@
 gas_natural_gas,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30733,天然气单元,gregtech:gt.metaitem.01
 gas_sulfuricgas,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30734,含硫炼油气单元,gregtech:gt.metaitem.01
 gasoline,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30997,汽油单元,gregtech:gt.metaitem.01
-gelatinmixture,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@32,Gelatin Mixture Cell,gregtech:gt.metaitem.98
+gelatinmixture,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@32,明胶混合物单元,gregtech:gt.metaitem.98
 gem sluice,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25119,宝石泥浆单元,bartworks:gt.bwMetaGeneratedcell
 glass,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.for.bucketGlass@0,液态玻璃桶,Forestry:bucketGlass
-glass.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@13,桶装熔融玻璃,TConstruct:buckets
-glass.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@13,黏土桶(熔融玻璃),IguanaTweaksTConstruct:clayBucketsTinkers
+glass.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@13,熔融玻璃桶,TConstruct:buckets
+glass.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@13,熔融玻璃黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
 glow thorium,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25126,荧光钍燃料单元,bartworks:gt.bwMetaGeneratedcell
-glue,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@25,桶装黏性凝胶,TConstruct:buckets
-glue,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@25,黏土桶(凝胶),IguanaTweaksTConstruct:clayBucketsTinkers
+glue,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@25,黏性凝胶桶,TConstruct:buckets
+glue,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@25,凝胶黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
 glycerol,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30629,甘油单元,gregtech:gt.metaitem.01
 glyceryl,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30714,硝化甘油单元,gregtech:gt.metaitem.01
 glyoxal,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25033,乙二醛单元,bartworks:gt.bwMetaGeneratedcell
-gold.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@1,桶装熔融金,TConstruct:buckets
-gold.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@1,黏土桶(熔融金),IguanaTweaksTConstruct:clayBucketsTinkers
-grade1purifiedwater,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30554,过滤澄清水(一级净化水)单元,gregtech:gt.metaitem.01
-grade2purifiedwater,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30555,臭氧处理水(二级净化水)单元,gregtech:gt.metaitem.01
-grade3purifiedwater,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30556,絮凝沉降水(三级净化水)单元,gregtech:gt.metaitem.01
-grade4purifiedwater,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30557,酸碱中和水(四级净化水)单元,gregtech:gt.metaitem.01
-grade5purifiedwater,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30558,极温净化水(五级净化水)单元,gregtech:gt.metaitem.01
-grade6purifiedwater,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30559,紫外辐照水(六级净化水)单元,gregtech:gt.metaitem.01
-grade7purifiedwater,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30560,去杂脱气水(七级净化水)单元,gregtech:gt.metaitem.01
-grade8purifiedwater,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30561,理想微粒水(八级净化水)单元,gregtech:gt.metaitem.01
+gold.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@1,熔融金桶,TConstruct:buckets
+gold.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@1,熔融金黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
+grade1purifiedwater,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30554,过滤澄清水（一级净化水）单元,gregtech:gt.metaitem.01
+grade2purifiedwater,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30555,臭氧处理水（二级净化水）单元,gregtech:gt.metaitem.01
+grade3purifiedwater,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30556,絮凝沉降水（三级净化水）单元,gregtech:gt.metaitem.01
+grade4purifiedwater,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30557,酸碱中和水（四级净化水）单元,gregtech:gt.metaitem.01
+grade5purifiedwater,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30558,极温净化水（五级净化水）单元,gregtech:gt.metaitem.01
+grade6purifiedwater,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30559,紫外辐照水（六级净化水）单元,gregtech:gt.metaitem.01
+grade7purifiedwater,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30560,去杂脱气水（七级净化水）单元,gregtech:gt.metaitem.01
+grade8purifiedwater,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30561,理想微粒水（八级净化水）单元,gregtech:gt.metaitem.01
 gravel sluice,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25116,沙砾泥浆单元,bartworks:gt.bwMetaGeneratedcell
 greensapphirejuice,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30415,绿色蓝宝石汁单元,gregtech:gt.metaitem.01
 growthmediumraw,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30608,培养基原液单元,gregtech:gt.metaitem.01
@@ -419,19 +423,19 @@ heavy naquadah fuel,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.
 heavyradox,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@29,重拉多X单元,gregtech:gt.metaitem.98
 helium,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30004,氦单元,gregtech:gt.metaitem.01
 helium-3,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30005,氦-3单元,gregtech:gt.metaitem.01
-hell_blood,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket.blood@0,黏土桶(血),IguanaTweaksTConstruct:clayBucketBlood
+hell_blood,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket.blood@0,血黏土桶,IguanaTweaksTConstruct:clayBucketBlood
 hexachlorodisilane,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30973,六氯乙硅烷单元,gregtech:gt.metaitem.01
 hexafluorosilicic acid,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@98,氟硅酸单元,bartworks:gt.bwMetaGeneratedcell
 highly energetic dimensional entropic fluid,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@20011,高能维度熵流体单元,bartworks:gt.bwMetaGeneratedcell
 highoctanegasoline,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30998,高辛烷值汽油单元,gregtech:gt.metaitem.01
 holmium chloride concentrate,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11441,氯化钬浓缩液单元,bartworks:gt.bwMetaGeneratedcell
 holmium extracting nano resin,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11421,钬萃取纳米树脂单元,bartworks:gt.bwMetaGeneratedcell
-holywater,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xgt.metaitem.02@32137,圣水,gregtech:gt.metaitem.02
 holywater,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30729,圣水单元,gregtech:gt.metaitem.01
-honey,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.HoneyBucket@0,蜂蜜桶,sciencenotleisure:HoneyBucket
-honey,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@8,蜂蜜魔力胶囊,MagicBees:capsule.magic
+holywater,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xgt.metaitem.02@32137,圣水,gregtech:gt.metaitem.02
 honey,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@8,蜂蜜虚空胶囊,MagicBees:capsule.void
-hootch,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketHootch@0,桶装烈酒,EnderIO:bucketHootch
+honey,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@8,蜂蜜魔力胶囊,MagicBees:capsule.magic
+honey,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.gtnl.honey_bucket@0,蜂蜜桶,sciencenotleisure:honey_bucket
+hootch,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketHootch@0,烈酒桶,EnderIO:bucketHootch
 hot ruthenium tetroxide solution,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@67,热四氧化钌溶液单元,bartworks:gt.bwMetaGeneratedcell
 hot super coolant,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11361,热超级冷却液单元,bartworks:gt.bwMetaGeneratedcell
 hotfryingoil,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30727,热煎炸油单元,gregtech:gt.metaitem.01
@@ -455,33 +459,33 @@ ic2pahoehoelava,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xic2.ite
 ic2steam,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xic2.itemCellEmpty@14,蒸汽单元,IC2:itemCellEmpty
 ic2superheatedsteam,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xic2.itemCellEmpty@13,过热蒸汽单元,IC2:itemCellEmpty
 ic2uumatter,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xic2.itemCellEmpty@3,UU物质单元,IC2:itemCellEmpty
-ice,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.for.canIce@0,冰罐,Forestry:canIce
-ice,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@10,冰魔力胶囊,MagicBees:capsule.magic
 ice,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@10,冰虚空胶囊,MagicBees:capsule.void
-ice,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.for.bucketIce@0,碎冰桶,Forestry:bucketIce
 ice,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30702,冰单元,gregtech:gt.metaitem.01
-ice,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.for.waxCapsuleIce@0,耐火冰胶囊,Forestry:waxCapsuleIce
+ice,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@10,冰魔力胶囊,MagicBees:capsule.magic
+ice,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.for.canIce@0,冰罐,Forestry:canIce
 ice,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.for.refractoryIce@0,耐火冰胶囊,Forestry:refractoryIce
+ice,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.for.waxCapsuleIce@0,耐火冰胶囊,Forestry:waxCapsuleIce
+ice,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.for.bucketIce@0,碎冰桶,Forestry:bucketIce
 impure ferrocene mixture,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10090,含杂二茂铁混合物单元,bartworks:gt.bwMetaGeneratedcell
 inactivecosmicsolder,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30114,惰性寰宇焊料单元,gregtech:gt.metaitem.01
 indiumconcentrate,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@25,铟富集溶液单元,gregtech:gt.metaitem.98
-invar.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@21,桶装熔融殷钢,TConstruct:buckets
-invar.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@21,黏土桶(熔融殷钢),IguanaTweaksTConstruct:clayBucketsTinkers
+invar.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@21,熔融殷钢桶,TConstruct:buckets
+invar.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@21,熔融殷钢黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
 iodine,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11012,碘单元,bartworks:gt.bwMetaGeneratedcell
 iron ii chloride,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10088,氯化亚铁单元,bartworks:gt.bwMetaGeneratedcell
-iron.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@0,桶装熔融铁,TConstruct:buckets
-iron.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@0,黏土桶(熔融铁),IguanaTweaksTConstruct:clayBucketsTinkers
+iron.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@0,熔融铁桶,TConstruct:buckets
+iron.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@0,熔融铁黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
 ironiiichloride,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30693,三氯化铁单元,gregtech:gt.metaitem.01
 isobutyraldehyde,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30792,异丁醛单元,gregtech:gt.metaitem.01
 isoprene,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30638,异戊二烯单元,gregtech:gt.metaitem.01
 isopropylbenzene,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30688,异丙苯单元,gregtech:gt.metaitem.01
 jet fuel a,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10095,航空煤油A单元,bartworks:gt.bwMetaGeneratedcell
 jet fuel no.3,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10094,航空煤油#3单元,bartworks:gt.bwMetaGeneratedcell
-juice,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.for.refractoryJuice@0,耐火果汁胶囊,Forestry:refractoryJuice
-juice,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.for.bucketJuice@0,果汁桶,Forestry:bucketJuice
-juice,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.for.canJuice@0,果汁罐,Forestry:canJuice
-juice,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@9,果汁魔力胶囊,MagicBees:capsule.magic
 juice,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@9,果汁虚空胶囊,MagicBees:capsule.void
+juice,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.for.bucketJuice@0,果汁桶,Forestry:bucketJuice
+juice,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@9,果汁魔力胶囊,MagicBees:capsule.magic
+juice,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.for.refractoryJuice@0,耐火果汁胶囊,Forestry:refractoryJuice
+juice,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.for.canJuice@0,果汁罐,Forestry:canJuice
 juice,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.for.waxCapsuleJuice@0,耐火果汁胶囊,Forestry:waxCapsuleJuice
 kerogen,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@39,油母质单元,gregtech:gt.metaitem.98
 krypton,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellKrypton@0,氪单元,miscutils:itemCellKrypton
@@ -491,24 +495,24 @@ landoxides solution,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.
 lanthanum chloride concentrate,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11431,氯化镧浓缩液单元,bartworks:gt.bwMetaGeneratedcell
 lanthanum extracting nano resin,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11401,镧萃取纳米树脂单元,bartworks:gt.bwMetaGeneratedcell
 large baka,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25108,𫟼苯氮单元,bartworks:gt.bwMetaGeneratedcell
-latex,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.containerCan@130,乳胶胶囊,BinnieCore:containerCan
-latex,1000,1xitem.misc@8,玻璃罐,Genetics:misc,1xitem.containerCylinder@130,乳胶玻璃罐,BinnieCore:containerCylinder
 latex,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.containerBucket@130,乳胶桶,BinnieCore:containerBucket
 latex,1000,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.containerGlass@130,乳胶瓶,BinnieCore:containerGlass
-latex,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.containerRefractory@130,乳胶耐火胶囊,BinnieCore:containerRefractory
+latex,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.containerCan@130,乳胶胶囊,BinnieCore:containerCan
 latex,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.containerCapsule@130,乳胶胶囊,BinnieCore:containerCapsule
-lava,1000,0xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket.Lava@0,黏土桶(岩浆),IguanaTweaksTConstruct:clayBucketLava
+latex,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.containerRefractory@130,乳胶耐火胶囊,BinnieCore:containerRefractory
+latex,1000,1xitem.misc@8,玻璃罐,Genetics:misc,1xitem.containerCylinder@130,乳胶玻璃罐,BinnieCore:containerCylinder
 lava,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xic2.itemCellEmpty@2,岩浆单元,IC2:itemCellEmpty
+lava,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@2,岩浆虚空胶囊,MagicBees:capsule.void
 lava,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.for.refractoryLava@0,耐火岩浆胶囊,Forestry:refractoryLava
 lava,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@2,岩浆魔力胶囊,MagicBees:capsule.magic
-lava,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.for.canLava@0,岩浆罐,Forestry:canLava
-lava,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@2,岩浆虚空胶囊,MagicBees:capsule.void
+lava,1000,0xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket.Lava@0,岩浆黏土桶,IguanaTweaksTConstruct:clayBucketLava
 lava,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketLava@0,岩浆桶,minecraft:lava_bucket
-lead.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@18,桶装熔融铅,TConstruct:buckets
-lead.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@18,黏土桶(熔融铅),IguanaTweaksTConstruct:clayBucketsTinkers
+lava,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.for.canLava@0,岩浆罐,Forestry:canLava
+lead.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@18,熔融铅桶,TConstruct:buckets
+lead.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@18,熔融铅黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
 leadzincsolution,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@26,铅锌溶液单元,gregtech:gt.metaitem.98
-lifeessence,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30694,生命本质单元,gregtech:gt.metaitem.01
 lifeessence,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketLife@0,生命之桶,AWWayofTime:bucketLife
+lifeessence,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30694,生命本质单元,gregtech:gt.metaitem.01
 light naquadah fuel,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10025,轻质硅岩燃料单元,bartworks:gt.bwMetaGeneratedcell
 lightlyhydrocracked.butadiene,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@10646,轻度加氢裂化丁二烯单元,gregtech:gt.metaitem.99
 lightlyhydrocracked.butane,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@10644,轻度加氢裂化丁烷单元,gregtech:gt.metaitem.99
@@ -553,62 +557,62 @@ liquid_sodium,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metait
 liquid_sufluriclight_fuel,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30737,含硫轻燃油单元,gregtech:gt.metaitem.01
 liquid_sulfuricheavy_fuel,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30738,含硫重燃油单元,gregtech:gt.metaitem.01
 liquid_sulfuricnaphtha,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30736,含硫石脑油单元,gregtech:gt.metaitem.01
-liquid_sunshine,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketLiquid_sunshine@0,桶装液态阳光,EnderIO:bucketLiquid_sunshine
+liquid_sunshine,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketLiquid_sunshine@0,液态阳光桶,EnderIO:bucketLiquid_sunshine
 liquid_toluene,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30647,甲苯单元,gregtech:gt.metaitem.01
 liquidair,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30495,液态空气单元,gregtech:gt.metaitem.01
 liquidcrystalkevlar,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30774,液晶凯芙拉单元,gregtech:gt.metaitem.01
-liquiddna,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.gendustry.liquiddna.bucket@0,液态DNA桶,gendustry:LiquidDNABucket
+liquiddna,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@15,液态DNA虚空胶囊,MagicBees:capsule.void
 liquiddna,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.gendustry.liquiddna.can@0,液态DNA罐,gendustry:LiquidDNACan
 liquiddna,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@15,液态DNA魔力胶囊,MagicBees:capsule.magic
+liquiddna,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.gendustry.liquiddna.bucket@0,液态DNA桶,gendustry:LiquidDNABucket
 liquiddna,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@16,液态DNA单元,gregtech:gt.metaitem.98
-liquiddna,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@15,液态DNA虚空胶囊,MagicBees:capsule.void
 liquidmethane,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.MethaneBucket@0,液态甲烷桶,GalaxySpace:item.MethaneBucket
-liquidnitrogen,1000,1xitem.misc@8,玻璃罐,Genetics:misc,1xitem.containerCylinder@66,液氮玻璃罐,BinnieCore:containerCylinder
+liquidnitrogen,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@14,液氮虚空胶囊,MagicBees:capsule.void
+liquidnitrogen,1000,1xitem.oilCanisterPartial@1001,空罐,GalacticraftCore:item.oilCanisterPartial,1xitem.canisterPartialLN2@1,灌装液态氮（满）,GalacticraftMars:item.canisterPartialLN2
+liquidnitrogen,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30494,液氮单元,gregtech:gt.metaitem.01
+liquidnitrogen,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.containerBucket@66,液氮桶,BinnieCore:containerBucket
 liquidnitrogen,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@14,液氮魔力胶囊,MagicBees:capsule.magic
 liquidnitrogen,1000,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.containerGlass@66,液氮瓶,BinnieCore:containerGlass
-liquidnitrogen,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@14,液氮虚空胶囊,MagicBees:capsule.void
-liquidnitrogen,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.containerBucket@66,液氮桶,BinnieCore:containerBucket
-liquidnitrogen,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.containerRefractory@66,液氮耐火胶囊,BinnieCore:containerRefractory
-liquidnitrogen,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.containerCapsule@66,液氮胶囊,BinnieCore:containerCapsule
-liquidnitrogen,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30494,液氮单元,gregtech:gt.metaitem.01
 liquidnitrogen,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.containerCan@66,液氮胶囊,BinnieCore:containerCan
-liquidnitrogen,1000,1xitem.oilCanisterPartial@1001,空罐,GalacticraftCore:item.oilCanisterPartial,1xitem.canisterPartialLN2@1,灌装液态氮(满),GalacticraftMars:item.canisterPartialLN2
-liquidoxygen,1000,1xitem.oilCanisterPartial@1001,空罐,GalacticraftCore:item.oilCanisterPartial,1xitem.canisterPartialLOX@1,罐装液态氧(满),GalacticraftMars:item.canisterPartialLOX
+liquidnitrogen,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.containerCapsule@66,液氮胶囊,BinnieCore:containerCapsule
+liquidnitrogen,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.containerRefractory@66,液氮耐火胶囊,BinnieCore:containerRefractory
+liquidnitrogen,1000,1xitem.misc@8,玻璃罐,Genetics:misc,1xitem.containerCylinder@66,液氮玻璃罐,BinnieCore:containerCylinder
 liquidoxygen,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30493,液氧单元,gregtech:gt.metaitem.01
+liquidoxygen,1000,1xitem.oilCanisterPartial@1001,空罐,GalacticraftCore:item.oilCanisterPartial,1xitem.canisterPartialLOX@1,罐装液态氧（满）,GalacticraftMars:item.canisterPartialLOX
 liquidresin,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.liquidresin@0,液态树脂单元,miscutils:liquidresin
 lithiumhydroxide,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xic2.itemCellEmpty@20,氢氧化锂单元,IC2:itemCellEmpty
 low quality naquadah emulsion,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10056,低纯硅岩乳液单元,bartworks:gt.bwMetaGeneratedcell
 low quality naquadah solution,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10058,低纯硅岩溶液单元,bartworks:gt.bwMetaGeneratedcell
 low quality naquadria sulphate,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10077,低纯硫酸超能硅岩单元,bartworks:gt.bwMetaGeneratedcell
 lubricant,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30724,润滑油单元,gregtech:gt.metaitem.01
-lumium.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@27,桶装熔融流明,TConstruct:buckets
+lumium.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@27,熔融流明桶,TConstruct:buckets
 lutetium chloride concentrate,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11445,氯化镥浓缩液单元,bartworks:gt.bwMetaGeneratedcell
 lutetium extracting nano resin,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11429,镥萃取纳米树脂单元,bartworks:gt.bwMetaGeneratedcell
 maleic anhydride,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25039,顺丁烯二酸酐单元,bartworks:gt.bwMetaGeneratedcell
-manyullyn.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@9,桶装熔融玛玉灵,TConstruct:buckets
-manyullyn.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@9,黏土桶(熔融玛玉灵),IguanaTweaksTConstruct:clayBucketsTinkers
-mcguffium,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xgt.metaitem.01@32765,麦高芬239,gregtech:gt.metaitem.01
+manyullyn.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@9,熔融玛玉灵桶,TConstruct:buckets
+manyullyn.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@9,熔融玛玉灵黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
 mcguffium,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30999,麦高芬239单元,gregtech:gt.metaitem.01
+mcguffium,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xgt.metaitem.01@32765,麦高芬239,gregtech:gt.metaitem.01
+mead,1000,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.for.beverage@2,蜂蜜陈酿,Forestry:beverage
+mead,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.for.waxCapsuleMead@0,蜂蜜陈酿胶囊,Forestry:waxCapsuleMead
 mead,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.for.canMead@0,蜂蜜陈酿罐,Forestry:canMead
 mead,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.for.bucketMead@0,蜂蜜陈酿桶,Forestry:bucketMead
-mead,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.for.waxCapsuleMead@0,蜂蜜陈酿胶囊,Forestry:waxCapsuleMead
 mead,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.for.refractoryMead@0,蜂蜜陈酿胶囊,Forestry:refractoryMead
-mead,1000,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.for.beverage@2,蜂蜜陈酿,Forestry:beverage
-meatextract,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@33,Meat Extract Cell,gregtech:gt.metaitem.98
+meatextract,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@33,肉类提取物单元,gregtech:gt.metaitem.98
 melonjuice,1000,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.adventurebackpack:melonJuiceBottle@0,西瓜汁,adventurebackpack:melonJuiceBottle
 mercury,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30087,汞单元,gregtech:gt.metaitem.01
-methane,1000,1xitem.oilCanisterPartial@1001,空罐,GalacticraftCore:item.oilCanisterPartial,1xitem.methaneCanisterPartial@1,甲烷气体罐(满),GalacticraftMars:item.methaneCanisterPartial
 methane,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30715,甲烷单元,gregtech:gt.metaitem.01
+methane,1000,1xitem.oilCanisterPartial@1001,空罐,GalacticraftCore:item.oilCanisterPartial,1xitem.methaneCanisterPartial@1,甲烷气体罐（满）,GalacticraftMars:item.methaneCanisterPartial
 methanol,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30673,甲醇单元,gregtech:gt.metaitem.01
 methylacetate,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30681,乙酸甲酯单元,gregtech:gt.metaitem.01
 methylamine,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30778,甲胺单元,gregtech:gt.metaitem.01
-milk,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.milk@0,牛奶桶,minecraft:milk_bucket
-milk,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@11,牛奶魔力胶囊,MagicBees:capsule.magic
-milk,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30885,牛奶单元,gregtech:gt.metaitem.01
 milk,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@11,牛奶虚空胶囊,MagicBees:capsule.void
+milk,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30885,牛奶单元,gregtech:gt.metaitem.01
+milk,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@11,牛奶魔力胶囊,MagicBees:capsule.magic
+milk,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket.Milk@0,牛奶黏土桶,IguanaTweaksTConstruct:clayBucketMilk
+milk,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.milk@0,牛奶,minecraft:milk_bucket
 milk,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xgt.metaitem.02@32136,牛奶,gregtech:gt.metaitem.02
-milk,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket.Milk@0,黏土桶(牛奶),IguanaTweaksTConstruct:clayBucketMilk
-mithril.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@29,桶装熔融蕴魔金属,TConstruct:buckets
+mithril.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@29,熔融蕴魔金属桶,TConstruct:buckets
 mixed uranium fuel,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25127,混合铀燃料单元,bartworks:gt.bwMetaGeneratedcell
 mixture pineoil,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25122,松油混合物单元,bartworks:gt.bwMetaGeneratedcell
 mobessence,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.mobessence@0,怪物精华液单元,miscutils:mobessence
@@ -710,7 +714,7 @@ molten.chromaticglass,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xi
 molten.chrome,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@30,熔融铬单元,gregtech:gt.metaitem.99
 molten.chromiumdioxide,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@361,熔融二氧化铬单元,gregtech:gt.metaitem.99
 molten.chrysotile,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@912,熔融白石棉单元,gregtech:gt.metaitem.99
-molten.churitsu,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@190,熔融中立单元,gregtech:gt.metaitem.99
+molten.churitsu,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@190,熔融中立合金单元,gregtech:gt.metaitem.99
 molten.cinobitea243,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellCinobiteA243@0,西诺柏A243单元,miscutils:itemCellCinobiteA243
 molten.cobalt,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@33,熔融钴单元,gregtech:gt.metaitem.99
 molten.cobaltbrass,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@343,熔融钴黄铜单元,gregtech:gt.metaitem.99
@@ -749,7 +753,7 @@ molten.electrotine,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.me
 molten.electrum,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@303,熔融琥珀金单元,gregtech:gt.metaitem.99
 molten.electrumflux,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@320,熔融通流琥珀金单元,gregtech:gt.metaitem.99
 molten.elvenelementium,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@203,熔融源质钢单元,gregtech:gt.metaitem.99
-molten.enderium,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@321,熔融末影(te)单元,gregtech:gt.metaitem.99
+molten.enderium,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@321,熔融末影（te）单元,gregtech:gt.metaitem.99
 molten.enderiumbase,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@380,熔融末影粗胚单元,gregtech:gt.metaitem.99
 molten.endsteel,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@401,熔融末影钢单元,gregtech:gt.metaitem.99
 molten.energeticalloy,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@366,熔融充能合金单元,gregtech:gt.metaitem.99
@@ -763,12 +767,12 @@ molten.epoxidfiberreinforced,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmp
 molten.erbium,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@75,熔融铒单元,gregtech:gt.metaitem.99
 molten.eternity,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@141,熔融永恒单元,gregtech:gt.metaitem.99
 molten.ethylcyanoacetate,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellEthylCyanoacetate@0,氰乙酸乙酯单元,miscutils:itemCellEthylCyanoacetate
-molten.ethylcyanoacrylatesuperglue,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellEthylCyanoacrylateSuperGlue@0,氰基丙烯酸乙酯(502胶水)单元,miscutils:itemCellEthylCyanoacrylateSuperGlue
+molten.ethylcyanoacrylatesuperglue,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellEthylCyanoacrylateSuperGlue@0,氰基丙烯酸乙酯（502胶水）单元,miscutils:itemCellEthylCyanoacrylateSuperGlue
 molten.europium,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@70,熔融铕单元,gregtech:gt.metaitem.99
 molten.extremely unstable naquadah,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcellMolten@10024,熔融极不稳定硅岩单元,bartworks:gt.bwMetaGeneratedcellMolten
 molten.fermium,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellFermium@0,镄单元,miscutils:itemCellFermium
 molten.flerovium_gt5u,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@984,熔融单元,gregtech:gt.metaitem.99
-molten.fluorinateduraniumhexafluoridefuf6,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellFluorinatedUraniumHexafluorideFUF6@0,氟化六氟化铀(F-UF6)单元,miscutils:itemCellFluorinatedUraniumHexafluorideFUF6
+molten.fluorinateduraniumhexafluoridefuf6,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellFluorinatedUraniumHexafluorideFUF6@0,氟化六氟化铀（F-UF6）单元,miscutils:itemCellFluorinatedUraniumHexafluorideFUF6
 molten.fluorinespargedtbsalt,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellFluorineSpargedTBSalt@0,氟涤枯竭钍铍熔盐单元,miscutils:itemCellFluorineSpargedTBSalt
 molten.fluorinespargedtsalt,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellFluorineSpargedTSalt@0,氟涤枯竭钍熔盐单元,miscutils:itemCellFluorineSpargedTSalt
 molten.force,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@521,熔融力量单元,gregtech:gt.metaitem.99
@@ -826,7 +830,7 @@ molten.iridium,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metait
 molten.iron,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@32,熔融铁单元,gregtech:gt.metaitem.99
 molten.ironwood,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@338,熔融铁木单元,gregtech:gt.metaitem.99
 molten.irossm,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcellMolten@12320,熔融IrOsSm单元,bartworks:gt.bwMetaGeneratedcellMolten
-molten.kanthal,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@312,熔融坎塔尔单元,gregtech:gt.metaitem.99
+molten.kanthal,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@312,熔融坎塔尔合金单元,gregtech:gt.metaitem.99
 molten.kevlar,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@765,熔融凯芙拉单元,gregtech:gt.metaitem.99
 molten.knightmetal,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@362,熔融骑士金属单元,gregtech:gt.metaitem.99
 molten.koboldite,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellKoboldite@0,妖金单元,miscutils:itemCellKoboldite
@@ -843,7 +847,7 @@ molten.lftrfuelbase,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xite
 molten.lithium,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@6,熔融锂单元,gregtech:gt.metaitem.99
 molten.lithium chloride,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcellMolten@10098,熔融氯化锂单元,bartworks:gt.bwMetaGeneratedcellMolten
 molten.lithiumfluoride,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellLithiumFluoride@0,氟化锂单元,miscutils:itemCellLithiumFluoride
-molten.lithiumtetrafluoroberyllatelftb,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellLithiumTetrafluoroberyllateLFTB@0,四氟铍酸锂(LTFB)单元,miscutils:itemCellLithiumTetrafluoroberyllateLFTB
+molten.lithiumtetrafluoroberyllatelftb,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellLithiumTetrafluoroberyllateLFTB@0,四氟铍酸锂（LTFB）单元,miscutils:itemCellLithiumTetrafluoroberyllateLFTB
 molten.livermorium,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcellMolten@25085,熔融𫟷单元,bartworks:gt.bwMetaGeneratedcellMolten
 molten.longasssuperconductornameforuhvwire,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@985,熔融UHV超导粗胚单元,gregtech:gt.metaitem.99
 molten.longasssuperconductornameforuvwire,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@986,熔融UV超导粗胚单元,gregtech:gt.metaitem.99
@@ -904,7 +908,7 @@ molten.osmium,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaite
 molten.palladium,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@52,熔融钯单元,gregtech:gt.metaitem.99
 molten.pentacadmiummagnesiumhexaoxid,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@987,熔融MV超导粗胚单元,gregtech:gt.metaitem.99
 molten.periodicium,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcellMolten@25200,熔融錭錤錶单元,bartworks:gt.bwMetaGeneratedcellMolten
-molten.phosphorousuraniumhexafluoridepuf6,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellPhosphorousUraniumHexafluoridePUF6@0,磷化六氟化铀(P-UF6)单元,miscutils:itemCellPhosphorousUraniumHexafluoridePUF6
+molten.phosphorousuraniumhexafluoridepuf6,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellPhosphorousUraniumHexafluoridePUF6@0,磷化六氟化铀（P-UF6）单元,miscutils:itemCellPhosphorousUraniumHexafluoridePUF6
 molten.pigiron,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@307,熔融生铁单元,gregtech:gt.metaitem.99
 molten.pikyonium64b,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellPikyonium64B@0,皮卡优合金64B单元,miscutils:itemCellPikyonium64B
 molten.plastic,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@874,熔融聚乙烯（PE）单元,gregtech:gt.metaitem.99
@@ -924,7 +928,7 @@ molten.polyvinylchloride,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1
 molten.potassium,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@25,熔融钾单元,gregtech:gt.metaitem.99
 molten.potassium chlorate,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcellMolten@11314,熔融氯酸钾单元,bartworks:gt.bwMetaGeneratedcellMolten
 molten.potassium disulfate,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcellMolten@59,熔融焦硫酸钾单元,bartworks:gt.bwMetaGeneratedcellMolten
-molten.potin,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellPotin@0,粗青铜合金单元,miscutils:itemCellPotin
+molten.potin,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellPotin@0,铅青铜单元,miscutils:itemCellPotin
 molten.praseodymium,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@66,熔融镨单元,gregtech:gt.metaitem.99
 molten.precious metals alloy,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcellMolten@10109,熔融稀有金属合金单元,bartworks:gt.bwMetaGeneratedcellMolten
 molten.prismaticnaquadah,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@163,熔融海晶硅岩单元,gregtech:gt.metaitem.99
@@ -943,8 +947,8 @@ molten.redstonealloy,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.
 molten.reinforced,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@383,熔融强化单元,gregtech:gt.metaitem.99
 molten.reinforcedglass,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@602,熔融防爆玻璃单元,gregtech:gt.metaitem.99
 molten.rhenium,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellRhenium@0,铼单元,miscutils:itemCellRhenium
-molten.rhodium,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellRhodium@0,铑单元,miscutils:itemCellRhodium
 molten.rhodium,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcellMolten@78,熔融铑单元,bartworks:gt.bwMetaGeneratedcellMolten
+molten.rhodium,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellRhodium@0,铑单元,miscutils:itemCellRhodium
 molten.rhodium-plated palladium,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcellMolten@88,熔融镀铑钯单元,bartworks:gt.bwMetaGeneratedcellMolten
 molten.rhugnor,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellRhugnor@0,鲁格诺单元,miscutils:itemCellRhugnor
 molten.roentgenium,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcellMolten@25082,熔融𬬭单元,bartworks:gt.bwMetaGeneratedcellMolten
@@ -958,7 +962,7 @@ molten.ruthenium,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.i
 molten.ruthenium,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcellMolten@64,熔融钌单元,bartworks:gt.bwMetaGeneratedcellMolten
 molten.rutherfordium,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcellMolten@25074,熔融𬬻单元,bartworks:gt.bwMetaGeneratedcellMolten
 molten.samarium,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@69,熔融钐单元,gregtech:gt.metaitem.99
-molten.samarium(iii)-chloride,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcellMolten@11465,熔融氯化钐(III)单元,bartworks:gt.bwMetaGeneratedcellMolten
+molten.samarium(iii)-chloride,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcellMolten@11465,熔融氯化钐（III）单元,bartworks:gt.bwMetaGeneratedcellMolten
 molten.scandium,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@27,熔融钪单元,gregtech:gt.metaitem.99
 molten.seaborgium,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcellMolten@25076,熔融𬭳单元,bartworks:gt.bwMetaGeneratedcellMolten
 molten.seleniousacid,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellSeleniousAcid@0,亚硒酸单元,miscutils:itemCellSeleniousAcid
@@ -967,13 +971,13 @@ molten.seleniumdioxide,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1x
 molten.shadow,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@368,熔融暗影金属单元,gregtech:gt.metaitem.99
 molten.shadowiron,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@336,熔融暗影铁单元,gregtech:gt.metaitem.99
 molten.shadowsteel,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@337,熔融暗影钢单元,gregtech:gt.metaitem.99
-molten.shijima,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@189,熔融静寂单元,gregtech:gt.metaitem.99
+molten.shijima,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@189,熔融静寂合金单元,gregtech:gt.metaitem.99
 molten.shirabon,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcellMolten@10112,熔融调律源金单元,bartworks:gt.bwMetaGeneratedcellMolten
 molten.signalium,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcellMolten@10099,熔融信素单元,bartworks:gt.bwMetaGeneratedcellMolten
 molten.silicon,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@20,熔融生硅单元,gregtech:gt.metaitem.99
 molten.siliconcarbide,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellSiliconCarbide@0,碳化硅单元,miscutils:itemCellSiliconCarbide
 molten.silicone,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@471,熔融硅橡胶单元,gregtech:gt.metaitem.99
-molten.siliconsolargrade,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@856,熔融太阳能级硅(多晶硅)单元,gregtech:gt.metaitem.99
+molten.siliconsolargrade,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@856,熔融太阳能级硅（多晶硅）单元,gregtech:gt.metaitem.99
 molten.silver,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@54,熔融银单元,gregtech:gt.metaitem.99
 molten.sixphasedcopper,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@147,熔融六相铜单元,gregtech:gt.metaitem.99
 molten.sodiumfluoride,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellSodiumFluoride@0,氟化钠单元,miscutils:itemCellSodiumFluoride
@@ -1079,8 +1083,8 @@ molten.zirconiumcarbide,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1
 molten.zn-th alloy,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcellMolten@10053,熔融锌钍合金单元,bartworks:gt.bwMetaGeneratedcellMolten
 moltenexohalkonitebase,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30155,熔融超然恒坚钢配制基底单元,gregtech:gt.metaitem.01
 moltenstar,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@12305,MoltenStar单元,bartworks:gt.bwMetaGeneratedcell
-mtbereactionmixture(butane),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30425,MTBE反应混合物(丁烷)单元,gregtech:gt.metaitem.01
-mtbereactionmixture(butene),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30983,MTBE反应混合物(丁烯)单元,gregtech:gt.metaitem.01
+mtbereactionmixture(butane),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30425,MTBE反应混合物（丁烷）单元,gregtech:gt.metaitem.01
+mtbereactionmixture(butene),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30983,MTBE反应混合物（丁烯）单元,gregtech:gt.metaitem.01
 mud.red.slurry,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.MudRedSlurry@0,赤泥浆单元,miscutils:MudRedSlurry
 muddy bastnasite rare earth solution,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11100,氟碳镧铈稀土浊溶液单元,bartworks:gt.bwMetaGeneratedcell
 muddy monazite rare earth solution,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11014,独居石稀土浊溶液单元,bartworks:gt.bwMetaGeneratedcell
@@ -1091,18 +1095,18 @@ mutagen,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.gendustry.mutagen.bu
 mutagen,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@2,诱变剂单元,gregtech:gt.metaitem.98
 naphthenicacid,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30760,环烷酸单元,gregtech:gt.metaitem.01
 naquadah asphalt,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10028,硅岩沥青单元,bartworks:gt.bwMetaGeneratedcell
-naquadah based liquid fuel mki,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10039,硅岩基流体燃料-MkI单元,bartworks:gt.bwMetaGeneratedcell
-naquadah based liquid fuel mki (depleted),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10040,硅岩基流体燃料-MkI(枯竭的)单元,bartworks:gt.bwMetaGeneratedcell
-naquadah based liquid fuel mkii,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10041,硅岩基流体燃料-MkII单元,bartworks:gt.bwMetaGeneratedcell
-naquadah based liquid fuel mkii (depleted),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10042,硅岩基流体燃料-MkII(枯竭的)单元,bartworks:gt.bwMetaGeneratedcell
-naquadah based liquid fuel mkiii,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10046,硅岩基流体燃料-MkIII单元,bartworks:gt.bwMetaGeneratedcell
-naquadah based liquid fuel mkiii (depleted),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10047,硅岩基流体燃料-MkIII(枯竭的)单元,bartworks:gt.bwMetaGeneratedcell
-naquadah based liquid fuel mkiv,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10048,硅岩基流体燃料-MkIV单元,bartworks:gt.bwMetaGeneratedcell
-naquadah based liquid fuel mkiv (depleted),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10049,硅岩基流体燃料-MkIV(枯竭的)单元,bartworks:gt.bwMetaGeneratedcell
-naquadah based liquid fuel mkv,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10050,硅岩基流体燃料-MkV单元,bartworks:gt.bwMetaGeneratedcell
-naquadah based liquid fuel mkv (depleted),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10051,硅岩基流体燃料-MkV(枯竭的)单元,bartworks:gt.bwMetaGeneratedcell
-naquadah based liquid fuel mkvi,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10116,硅岩基流体燃料-MkVI单元,bartworks:gt.bwMetaGeneratedcell
-naquadah based liquid fuel mkvi (depleted),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10117,硅岩基流体燃料-MkVI(枯竭的)单元,bartworks:gt.bwMetaGeneratedcell
+naquadah based liquid fuel mki,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10039,硅岩基流体燃料 Mk-I单元,bartworks:gt.bwMetaGeneratedcell
+naquadah based liquid fuel mki (depleted),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10040,硅岩基流体燃料 Mk-I（枯竭的）单元,bartworks:gt.bwMetaGeneratedcell
+naquadah based liquid fuel mkii,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10041,硅岩基流体燃料 Mk-II单元,bartworks:gt.bwMetaGeneratedcell
+naquadah based liquid fuel mkii (depleted),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10042,硅岩基流体燃料 Mk-II（枯竭的）单元,bartworks:gt.bwMetaGeneratedcell
+naquadah based liquid fuel mkiii,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10046,硅岩基流体燃料 Mk-III单元,bartworks:gt.bwMetaGeneratedcell
+naquadah based liquid fuel mkiii (depleted),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10047,硅岩基流体燃料 Mk-III（枯竭的）单元,bartworks:gt.bwMetaGeneratedcell
+naquadah based liquid fuel mkiv,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10048,硅岩基流体燃料 Mk-IV单元,bartworks:gt.bwMetaGeneratedcell
+naquadah based liquid fuel mkiv (depleted),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10049,硅岩基流体燃料 Mk-IV（枯竭的）单元,bartworks:gt.bwMetaGeneratedcell
+naquadah based liquid fuel mkv,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10050,硅岩基流体燃料 Mk-V单元,bartworks:gt.bwMetaGeneratedcell
+naquadah based liquid fuel mkv (depleted),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10051,硅岩基流体燃料 Mk-V（枯竭的）单元,bartworks:gt.bwMetaGeneratedcell
+naquadah based liquid fuel mkvi,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10116,硅岩基流体燃料 Mk-VI单元,bartworks:gt.bwMetaGeneratedcell
+naquadah based liquid fuel mkvi (depleted),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10117,硅岩基流体燃料 Mk-VI（枯竭的）单元,bartworks:gt.bwMetaGeneratedcell
 naquadah emulsion,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10037,硅岩乳液单元,bartworks:gt.bwMetaGeneratedcell
 naquadah gas,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10027,硅岩气单元,bartworks:gt.bwMetaGeneratedcell
 naquadah goo,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10079,硅岩黏浆单元,bartworks:gt.bwMetaGeneratedcell
@@ -1116,14 +1120,14 @@ nefariousgas,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaite
 nefariousoil,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30122,邪恶原油单元,gregtech:gt.metaitem.01
 neodymium chloride concentrate,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11434,氯化钕浓缩液单元,bartworks:gt.bwMetaGeneratedcell
 neodymium extracting nano resin,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11407,钕萃取纳米树脂单元,bartworks:gt.bwMetaGeneratedcell
-neon,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellNeon@0,氖单元,miscutils:itemCellNeon
 neon,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@41,氖单元,bartworks:gt.bwMetaGeneratedcell
+neon,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellNeon@0,氖单元,miscutils:itemCellNeon
 neptuniumhexafluoride,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellNeptuniumHexafluoride@0,六氟化镎单元,miscutils:itemCellNeptuniumHexafluoride
 netherair,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30118,下界空气单元,gregtech:gt.metaitem.01
 nethersemifluid,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30119,半流质下界空气单元,gregtech:gt.metaitem.01
 neutralised red mud,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25055,中和赤泥单元,bartworks:gt.bwMetaGeneratedcell
-nickel.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@17,桶装熔融镍,TConstruct:buckets
-nickel.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@17,黏土桶(熔融镍),IguanaTweaksTConstruct:clayBucketsTinkers
+nickel.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@17,熔融镍桶,TConstruct:buckets
+nickel.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@17,熔融镍黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
 nickeltetracarbonyl,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30791,四羰基镍单元,gregtech:gt.metaitem.01
 nitric monazite leached concentrate,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11018,浓缩硝酸独居石浸出溶液单元,bartworks:gt.bwMetaGeneratedcell
 nitric-leached monazite mixture,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11046,硝酸独居石浸出混合物单元,bartworks:gt.bwMetaGeneratedcell
@@ -1141,22 +1145,22 @@ nitrousoxide,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaite
 nmethylpyrolidone,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30783,N-甲基吡咯烷酮单元,gregtech:gt.metaitem.01
 noblegases,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30496,稀有气体单元,gregtech:gt.metaitem.01
 nuclear.waste,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.NuclearWaste@0,核废水单元,miscutils:NuclearWaste
-nutrient_distillation,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketNutrient_distillation@0,桶装营养精华液,EnderIO:bucketNutrient_distillation
+nutrient_distillation,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketNutrient_distillation@0,营养精华液桶,EnderIO:bucketNutrient_distillation
 obsidian sluice,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25118,黑曜石泥浆单元,bartworks:gt.bwMetaGeneratedcell
-obsidian.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@11,桶装熔融黑曜石,TConstruct:buckets
-obsidian.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@11,黏土桶(熔融黑曜石),IguanaTweaksTConstruct:clayBucketsTinkers
+obsidian.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@11,熔融黑曜石桶,TConstruct:buckets
+obsidian.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@11,熔融黑曜石黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
 octane,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30995,辛烷单元,gregtech:gt.metaitem.01
 oganesson,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@38,鿫单元,bartworks:gt.bwMetaGeneratedcell
-oil,1000,1xitem.oilCanisterPartial@1001,空罐,GalacticraftCore:item.oilCanisterPartial,1xitem.oilCanisterPartial@1,油罐(满),GalacticraftCore:item.oilCanisterPartial
-oil,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketOil@0,石油桶,GalacticraftCore:item.bucketOil
-oil,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.for.waxCapsuleOil@0,石油胶囊,Forestry:waxCapsuleOil
-oil,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketOil@0,石油桶,BuildCraft|Energy:bucketOil
-oil,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@5,石油魔力胶囊,MagicBees:capsule.magic
-oil,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket.oil@0,黏土桶(石油),IguanaTweaksTConstruct:clayBucketOil
 oil,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@5,石油虚空胶囊,MagicBees:capsule.void
-oil,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.for.refractoryOil@0,石油胶囊,Forestry:refractoryOil
-oil,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.for.canOil@0,石油罐,Forestry:canOil
+oil,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket.oil@0,石油黏土桶,IguanaTweaksTConstruct:clayBucketOil
+oil,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.for.waxCapsuleOil@0,石油胶囊,Forestry:waxCapsuleOil
 oil,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30707,石油单元,gregtech:gt.metaitem.01
+oil,1000,1xitem.oilCanisterPartial@1001,空罐,GalacticraftCore:item.oilCanisterPartial,1xitem.oilCanisterPartial@1,油罐（满）,GalacticraftCore:item.oilCanisterPartial
+oil,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.for.refractoryOil@0,石油胶囊,Forestry:refractoryOil
+oil,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@5,石油魔力胶囊,MagicBees:capsule.magic
+oil,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.for.canOil@0,石油罐,Forestry:canOil
+oil,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketOil@0,石油桶,BuildCraft|Energy:bucketOil
+oil,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketOil@0,石油桶,GalacticraftCore:item.bucketOil
 osmium solution,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@74,锇溶液单元,bartworks:gt.bwMetaGeneratedcell
 oxalic acid,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10013,草酸单元,bartworks:gt.bwMetaGeneratedcell
 oxydianiline,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25043,二氨基二苯醚单元,bartworks:gt.bwMetaGeneratedcell
@@ -1174,8 +1178,8 @@ phosphoruschlorinemixture,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty
 phosphoruspentachloride,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30180,五氯化磷单元,gregtech:gt.metaitem.01
 phosphorustrichloride,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30752,三氯化磷单元,gregtech:gt.metaitem.01
 phtalicacid,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30595,邻苯二甲酸单元,gregtech:gt.metaitem.01
-pigiron.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@26,桶装熔融生铁,TConstruct:buckets
-pigiron.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@26,黏土桶(熔融生铁),IguanaTweaksTConstruct:clayBucketsTinkers
+pigiron.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@26,熔融生铁黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
+pigiron.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@26,熔融生铁桶,TConstruct:buckets
 pineoil,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.pineoil@0,松油单元,miscutils:pineoil
 plasma.advancednitinol,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellPlasmaAdvancedNitinol@0,高级镍钛诺等离子体单元,miscutils:itemCellPlasmaAdvancedNitinol
 plasma.aluminium,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@31019,铝等离子体单元,gregtech:gt.metaitem.01
@@ -1302,22 +1306,22 @@ plasma.yttrium,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metait
 plasma.zinc,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@31036,锌等离子体单元,gregtech:gt.metaitem.01
 plasma.zirconium,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellPlasmaZirconium@0,锆等离子体单元,miscutils:itemCellPlasmaZirconium
 platinum concentrate,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@44,浓缩铂单元,bartworks:gt.bwMetaGeneratedcell
-platinum.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@20,桶装熔融铂金,TConstruct:buckets
-platinum.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@20,黏土桶(熔融铂),IguanaTweaksTConstruct:clayBucketsTinkers
+platinum.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@20,熔融铂金桶,TConstruct:buckets
+platinum.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@20,熔融铂黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
 ployamic acid,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25042,聚酰胺酸（PAA）单元,bartworks:gt.bwMetaGeneratedcell
 plutonium based liquid fuel,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10010,钚基流体燃料单元,bartworks:gt.bwMetaGeneratedcell
-plutonium based liquid fuel (depleted),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10012,钚基流体燃料(枯竭的)单元,bartworks:gt.bwMetaGeneratedcell
-plutonium based liquid fuel (excited state),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10011,钚基流体燃料(激发态)单元,bartworks:gt.bwMetaGeneratedcell
-poison,1000,1xitem.misc@8,玻璃罐,Genetics:misc,1xitem.containerCylinder@65,毒液玻璃罐,BinnieCore:containerCylinder
-poison,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@13,毒液魔力胶囊,MagicBees:capsule.magic
-poison,1000,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.containerGlass@65,毒液瓶,BinnieCore:containerGlass
+plutonium based liquid fuel (depleted),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10012,钚基流体燃料（枯竭的）单元,bartworks:gt.bwMetaGeneratedcell
+plutonium based liquid fuel (excited state),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10011,钚基流体燃料（激发态）单元,bartworks:gt.bwMetaGeneratedcell
+poison,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket.poison@0,毒液黏土桶,IguanaTweaksTConstruct:clayBucketPoison
 poison,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@13,毒液虚空胶囊,MagicBees:capsule.void
 poison,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.containerBucket@65,毒液桶,BinnieCore:containerBucket
-poison,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.containerRefractory@65,毒液耐火胶囊,BinnieCore:containerRefractory
-poison,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.containerCapsule@65,毒液胶囊,BinnieCore:containerCapsule
+poison,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@13,毒液魔力胶囊,MagicBees:capsule.magic
+poison,1000,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.containerGlass@65,毒液瓶,BinnieCore:containerGlass
 poison,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.containerCan@65,毒液胶囊,BinnieCore:containerCan
-poison,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket.poison@0,黏土桶(毒液),IguanaTweaksTConstruct:clayBucketPoison
-poisonousslurry,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30191,毒性泥浆单元,gregtech:gt.metaitem.01
+poison,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.containerCapsule@65,毒液胶囊,BinnieCore:containerCapsule
+poison,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.containerRefractory@65,毒液耐火胶囊,BinnieCore:containerRefractory
+poison,1000,1xitem.misc@8,玻璃罐,Genetics:misc,1xitem.containerCylinder@65,毒液玻璃罐,BinnieCore:containerCylinder
+poisonousslurry,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30191,有毒泥浆单元,gregtech:gt.metaitem.01
 pollution,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@21,污染单元,gregtech:gt.metaitem.98
 polyaluminiumchloride,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30566,聚氯化铝单元,gregtech:gt.metaitem.01
 polymerase,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@17,聚合酶单元,gregtech:gt.metaitem.98
@@ -1335,8 +1339,8 @@ potion.cavejohnsonsgrenadejuice,250,1xitem.glassBottle@0,玻璃瓶,minecraft:gla
 potion.chillysauce,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xgt.metaitem.02@32120,辣酱,gregtech:gt.metaitem.02
 potion.chocolatemilk,250,1xgt.metaitem.01@32404,空保温瓶,gregtech:gt.metaitem.01,1xgt.metaitem.02@32006,巧克力牛奶,gregtech:gt.metaitem.02
 potion.cider,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xgt.metaitem.02@32126,苹果酒,gregtech:gt.metaitem.02
-potion.coffee,500,1xitem.cropsnh:mug@0,石杯,cropsnh:mug,1xitem.cropsnh:mug@2,深度烘焙咖啡,cropsnh:mug
 potion.coffee,250,1xgt.metaitem.01@32404,空保温瓶,gregtech:gt.metaitem.01,1xgt.metaitem.02@32000,咖啡,gregtech:gt.metaitem.02
+potion.coffee,500,1xitem.cropsnh:mug@0,石杯,cropsnh:mug,1xitem.cropsnh:mug@2,深度烘焙咖啡,cropsnh:mug
 potion.damage,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.potion@8204,伤害药水,minecraft:potion
 potion.damage.splash,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.potion@16396,喷溅型 伤害药水,minecraft:potion
 potion.damage.strong,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.potion@8236,伤害药水,minecraft:potion
@@ -1367,9 +1371,9 @@ potion.invisibility,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1x
 potion.invisibility.long,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.potion@8270,隐身药水,minecraft:potion
 potion.invisibility.long.splash,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.potion@16462,喷溅型 隐身药水,minecraft:potion
 potion.invisibility.splash,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.potion@16398,喷溅型 隐身药水,minecraft:potion
-potion.latte,500,1xitem.cropsnh:mug@0,石杯,cropsnh:mug,1xitem.cropsnh:mug@3,咖啡,cropsnh:mug
 potion.latte,250,1xgt.metaitem.01@32404,空保温瓶,gregtech:gt.metaitem.01,1xgt.metaitem.02@32002,拿铁,gregtech:gt.metaitem.02
-potion.lemonade,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xgt.metaitem.02@32133,柠檬汽水,gregtech:gt.metaitem.02
+potion.latte,500,1xitem.cropsnh:mug@0,石杯,cropsnh:mug,1xitem.cropsnh:mug@3,咖啡,cropsnh:mug
+potion.lemonade,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xgt.metaitem.02@32133,柠檬水,gregtech:gt.metaitem.02
 potion.lemonjuice,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xgt.metaitem.02@32131,柠檬汁,gregtech:gt.metaitem.02
 potion.leninade,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xgt.metaitem.02@32106,列宁柠檬汁,gregtech:gt.metaitem.02
 potion.limoncello,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xgt.metaitem.02@32132,意大利柠檬甜酒,gregtech:gt.metaitem.02
@@ -1385,8 +1389,8 @@ potion.poison,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.p
 potion.poison.long,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.potion@8260,剧毒药水,minecraft:potion
 potion.poison.long.splash,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.potion@16452,喷溅型 剧毒药水,minecraft:potion
 potion.poison.splash,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.potion@16388,喷溅型 剧毒药水,minecraft:potion
-potion.poison.strong,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.potion@8228,剧毒药水,minecraft:potion
 potion.poison.strong,750,1xgt.metaitem.01@32402,空喷漆罐,gregtech:gt.metaitem.01,1xitem.cropsnh:weedEX@0,除草剂,cropsnh:weedEX
+potion.poison.strong,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.potion@8228,剧毒药水,minecraft:potion
 potion.poison.strong.splash,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.potion@16420,喷溅型 剧毒药水,minecraft:potion
 potion.potatojuice,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xgt.metaitem.02@32104,土豆汁,gregtech:gt.metaitem.02
 potion.purpledrink,250,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xgt.metaitem.02@32100,紫色饮料,gregtech:gt.metaitem.02
@@ -1458,10 +1462,10 @@ protomatter,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem
 pure mana,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@20005,至纯魔力单元,bartworks:gt.bwMetaGeneratedcell
 purified mana,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@20007,纯净魔力单元,bartworks:gt.bwMetaGeneratedcell
 putrescine,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.putrescine@0,腐胺单元,miscutils:putrescine
-pyrotheum,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.pyrotheum@0,烈焰之炽焱单元,miscutils:pyrotheum
-pyrotheum,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@21,烈焰之炽焱魔力胶囊,MagicBees:capsule.magic
-pyrotheum,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.MiscUtils.bucket@1,烈焰之炽焱桶,miscutils:bucket
 pyrotheum,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@21,烈焰之炽焱虚空胶囊,MagicBees:capsule.void
+pyrotheum,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@21,烈焰之炽焱魔力胶囊,MagicBees:capsule.magic
+pyrotheum,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.pyrotheum@0,烈焰之炽焱单元,miscutils:pyrotheum
+pyrotheum,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.MiscUtils.bucket@1,烈焰之炽焱桶,miscutils:bucket
 quantum infusion,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25125,量子灌输液单元,bartworks:gt.bwMetaGeneratedcell
 quarkgluonplasma,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30144,简并夸克胶子等离子体单元,gregtech:gt.metaitem.01
 quartz.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@31,熔融下界石英桶,TConstruct:buckets
@@ -1476,19 +1480,19 @@ rawstarmatter,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metait
 reactive-ion etching mixture,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11355,反应性离子刻蚀混合物单元,bartworks:gt.bwMetaGeneratedcell
 redmud,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30743,赤泥单元,gregtech:gt.metaitem.01
 refinedglue,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30726,精制胶水单元,gregtech:gt.metaitem.01
-resin,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.containerCan@129,树脂胶囊,BinnieCore:containerCan
-resin,1000,1xitem.misc@8,玻璃罐,Genetics:misc,1xitem.containerCylinder@129,树脂玻璃罐,BinnieCore:containerCylinder
 resin,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.containerBucket@129,树脂桶,BinnieCore:containerBucket
 resin,1000,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.containerGlass@129,树脂瓶,BinnieCore:containerGlass
-resin,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.containerRefractory@129,树脂耐火胶囊,BinnieCore:containerRefractory
+resin,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.containerCan@129,树脂胶囊,BinnieCore:containerCan
 resin,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.containerCapsule@129,树脂胶囊,BinnieCore:containerCapsule
+resin,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.containerRefractory@129,树脂耐火胶囊,BinnieCore:containerRefractory
+resin,1000,1xitem.misc@8,玻璃罐,Genetics:misc,1xitem.containerCylinder@129,树脂玻璃罐,BinnieCore:containerCylinder
 resorcinol,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25100,间苯二酚单元,bartworks:gt.bwMetaGeneratedcell
 rhodium filter cake solution,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@86,铑滤饼溶液单元,bartworks:gt.bwMetaGeneratedcell
 rhodium salt solution,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@81,铑盐溶液单元,bartworks:gt.bwMetaGeneratedcell
 rhodium sulfate,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@61,硫酸铑单元,bartworks:gt.bwMetaGeneratedcell
 rhodium sulfate solution,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@62,硫酸铑溶液单元,bartworks:gt.bwMetaGeneratedcell
 richnetherwaste,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30124,富集下界废水单元,gregtech:gt.metaitem.01
-rocket_fuel,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketRocket_fuel@0,桶装火箭燃料,EnderIO:bucketRocket_fuel
+rocket_fuel,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketRocket_fuel@0,火箭燃料桶,EnderIO:bucketRocket_fuel
 rubyjuice,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30417,红宝石汁单元,gregtech:gt.metaitem.01
 ruthenium tetroxide,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@66,四氧化钌单元,bartworks:gt.bwMetaGeneratedcell
 ruthenium tetroxide solution,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@68,四氧化钌溶液单元,bartworks:gt.bwMetaGeneratedcell
@@ -1497,22 +1501,22 @@ samarium chloride concentrate,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellE
 samarium extracting nano resin,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11411,钐萃取纳米树脂单元,bartworks:gt.bwMetaGeneratedcell
 samarium rare earth mud,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11462,钐稀土泥浆单元,bartworks:gt.bwMetaGeneratedcell
 sand sluice,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25117,沙子泥浆单元,bartworks:gt.bwMetaGeneratedcell
-sap,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.containerCan@128,树液胶囊,BinnieCore:containerCan
-sap,1000,1xitem.misc@8,玻璃罐,Genetics:misc,1xitem.containerCylinder@128,树液玻璃罐,BinnieCore:containerCylinder
 sap,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.containerBucket@128,树液桶,BinnieCore:containerBucket
 sap,1000,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.containerGlass@128,树液瓶,BinnieCore:containerGlass
-sap,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.containerRefractory@128,树液耐火胶囊,BinnieCore:containerRefractory
+sap,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.containerCan@128,树液胶囊,BinnieCore:containerCan
 sap,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.containerCapsule@128,树液胶囊,BinnieCore:containerCapsule
+sap,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.containerRefractory@128,树液耐火胶囊,BinnieCore:containerRefractory
+sap,1000,1xitem.misc@8,玻璃罐,Genetics:misc,1xitem.containerCylinder@128,树液玻璃罐,BinnieCore:containerCylinder
 sapphirejuice,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30416,蓝宝石汁单元,gregtech:gt.metaitem.01
 seaweed byproducts,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11045,海藻副产单元,bartworks:gt.bwMetaGeneratedcell
 seaweed concentrate,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11042,浓缩海藻溶液单元,bartworks:gt.bwMetaGeneratedcell
-seaweedbroth,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@8,Seaweed Broth Cell,gregtech:gt.metaitem.98
-seedoil,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.for.refractorySeedOil@0,种子油胶囊,Forestry:refractorySeedOil
+seaweedbroth,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@8,海藻基质单元,gregtech:gt.metaitem.98
 seedoil,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.for.canSeedOil@0,种子油罐,Forestry:canSeedOil
-seedoil,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@7,种子油魔力胶囊,MagicBees:capsule.magic
 seedoil,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@7,种子油虚空胶囊,MagicBees:capsule.void
 seedoil,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30713,种子油单元,gregtech:gt.metaitem.01
+seedoil,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@7,种子油魔力胶囊,MagicBees:capsule.magic
 seedoil,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.for.bucketSeedOil@0,种子油桶,Forestry:bucketSeedOil
+seedoil,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.for.refractorySeedOil@0,种子油胶囊,Forestry:refractorySeedOil
 seedoil,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.for.waxCapsuleSeedOil@0,种子油胶囊,Forestry:waxCapsuleSeedOil
 seleniumhexafluoride,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.itemCellSeleniumHexafluoride@0,六氟化硒单元,miscutils:itemCellSeleniumHexafluoride
 severelyhydrocracked.butadiene,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@12646,重度加氢裂化丁二烯单元,gregtech:gt.metaitem.99
@@ -1538,25 +1542,25 @@ severelysteamcracked.naphtha,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEm
 severelysteamcracked.propane,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@15643,重度蒸汽裂化丙烷单元,gregtech:gt.metaitem.99
 severelysteamcracked.propene,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@15678,重度蒸汽裂化丙烯单元,gregtech:gt.metaitem.99
 sgcrystalslurry,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30160,星门水晶浆液单元,gregtech:gt.metaitem.01
-shimmer,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.ShimmerBucket@0,微光桶,sciencenotleisure:ShimmerBucket
 shimmer,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25202,微光单元,bartworks:gt.bwMetaGeneratedcell
+shimmer,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.gtnl.shimmer_bucket@0,微光桶,sciencenotleisure:shimmer_bucket
+short.mead,1000,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.for.beverage@0,蜂蜜酒,Forestry:beverage
 short.mead,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.for.canShortMead@0,蜂蜜酒罐,Forestry:canShortMead
+short.mead,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.for.waxCapsuleShortMead@0,蜂蜜酒胶囊,Forestry:waxCapsuleShortMead
 short.mead,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.for.bucketShortMead@0,蜂蜜酒桶,Forestry:bucketShortMead
 short.mead,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.for.refractoryShortMead@0,蜂蜜酒胶囊,Forestry:refractoryShortMead
-short.mead,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.for.waxCapsuleShortMead@0,蜂蜜酒胶囊,Forestry:waxCapsuleShortMead
-short.mead,1000,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.for.beverage@0,蜂蜜酒,Forestry:beverage
-signalum.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@28,桶装熔融信素,TConstruct:buckets
+signalum.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@28,熔融信素桶,TConstruct:buckets
 silane,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30798,硅烷单元,gregtech:gt.metaitem.01
 silane-nitrogen plasma mixture,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11360,硅烷-氮等离子混合物单元,bartworks:gt.bwMetaGeneratedcell
 silica gel base,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25006,硅胶基质单元,bartworks:gt.bwMetaGeneratedcell
 siliconoil,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30788,硅油单元,gregtech:gt.metaitem.01
 silicontetrachloride,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30968,四氯化硅单元,gregtech:gt.metaitem.01
 silicontetrafluoride,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30967,四氟化硅单元,gregtech:gt.metaitem.01
-silver.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@19,桶装熔融银,TConstruct:buckets
-silver.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@19,黏土桶(熔融银),IguanaTweaksTConstruct:clayBucketsTinkers
-slime.blue,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@24,桶装史莱姆黏液,TConstruct:buckets
-slime.blue,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@24,黏土桶(史莱姆黏液),IguanaTweaksTConstruct:clayBucketsTinkers
-sluicejuice,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30411,废液单元,gregtech:gt.metaitem.01
+silver.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@19,熔融银桶,TConstruct:buckets
+silver.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@19,熔融银黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
+slime.blue,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@24,史莱姆黏液桶,TConstruct:buckets
+slime.blue,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@24,史莱姆黏液黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
+sluicejuice,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30411,铝土卤水单元,gregtech:gt.metaitem.01
 small baka,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25107,硝苯氮单元,bartworks:gt.bwMetaGeneratedcell
 smgdoxides solution,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25058,钐-钆氧化物单元,bartworks:gt.bwMetaGeneratedcell
 sodium formate,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@56,甲酸钠单元,bartworks:gt.bwMetaGeneratedcell
@@ -1574,15 +1578,15 @@ squidink,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@
 stabilise void matter,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@20008,稳定虚空物质单元,bartworks:gt.bwMetaGeneratedcell
 stablebaryonicmatter,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30569,稳定重子物质单元,gregtech:gt.metaitem.01
 stagnantwastewater,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30186,不流动的废水单元,gregtech:gt.metaitem.01
+steam,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@17,蒸汽虚空胶囊,MagicBees:capsule.void
 steam,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@17,蒸汽魔力胶囊,MagicBees:capsule.magic
 steam,1000,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.railcraft.fluid.steam.bottle@0,蒸汽瓶,Railcraft:fluid.steam.bottle
 steam,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@0,蒸汽单元,gregtech:gt.metaitem.98
-steam,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@17,蒸汽虚空胶囊,MagicBees:capsule.void
 steam-cracked bastnasite mud,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11103,蒸汽裂化氟碳镧铈泥浆单元,bartworks:gt.bwMetaGeneratedcell
-steel.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@12,桶装熔融钢,TConstruct:buckets
-steel.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@12,黏土桶(熔融钢),IguanaTweaksTConstruct:clayBucketsTinkers
-stone.seared,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@14,桶装熔融石头,TConstruct:buckets
-stone.seared,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@14,黏土桶(熔融焦石),IguanaTweaksTConstruct:clayBucketsTinkers
+steel.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@12,熔融钢桶,TConstruct:buckets
+steel.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@12,熔融钢黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
+stone.seared,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@14,熔融石头桶,TConstruct:buckets
+stone.seared,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@14,熔融焦石黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
 styrene,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30637,苯乙烯单元,gregtech:gt.metaitem.01
 sulfurdichloride,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30767,二氯化硫单元,gregtech:gt.metaitem.01
 sulfurdioxide,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30651,二氧化硫单元,gregtech:gt.metaitem.01
@@ -1605,16 +1609,16 @@ tetrafluoroethylene,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.
 tetranitromethane,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30639,四硝基甲烷单元,gregtech:gt.metaitem.01
 thionylchloride,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30768,氯化亚砜单元,gregtech:gt.metaitem.01
 thorium based liquid fuel,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10006,钍基流体燃料单元,bartworks:gt.bwMetaGeneratedcell
-thorium based liquid fuel (depleted),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10008,钍基流体燃料(枯竭的)单元,bartworks:gt.bwMetaGeneratedcell
-thorium based liquid fuel (excited state),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10007,钍基流体燃料(激发态)单元,bartworks:gt.bwMetaGeneratedcell
+thorium based liquid fuel (depleted),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10008,钍基流体燃料（枯竭的）单元,bartworks:gt.bwMetaGeneratedcell
+thorium based liquid fuel (excited state),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10007,钍基流体燃料（激发态）单元,bartworks:gt.bwMetaGeneratedcell
 thorium nitrate,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10015,硝酸钍单元,bartworks:gt.bwMetaGeneratedcell
 thorium tetrachloride,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10019,四氯化钍单元,bartworks:gt.bwMetaGeneratedcell
 thorium-232 tetrafluoride,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10021,四氟化钍-232单元,bartworks:gt.bwMetaGeneratedcell
 thoriumelutionadsorbent,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30178,钍洗脱吸附剂单元,gregtech:gt.metaitem.01
 thulium chloride concentrate,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11443,氯化铥浓缩液单元,bartworks:gt.bwMetaGeneratedcell
 thulium extracting nano resin,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@11425,铥萃取纳米树脂单元,bartworks:gt.bwMetaGeneratedcell
-tin.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@3,桶装熔融锡,TConstruct:buckets
-tin.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@3,黏土桶(熔融锡),IguanaTweaksTConstruct:clayBucketsTinkers
+tin.molten,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.tconstruct.bucket@3,熔融锡桶,TConstruct:buckets
+tin.molten,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket@3,熔融锡黏土桶,IguanaTweaksTConstruct:clayBucketsTinkers
 titaniumtetrachloride,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30376,四氯化钛单元,gregtech:gt.metaitem.01
 toxic mercury sludge,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25123,剧毒水银污泥单元,bartworks:gt.bwMetaGeneratedcell
 toxicair,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30181,毒性空气单元,gregtech:gt.metaitem.01
@@ -1623,36 +1627,36 @@ trichlorosilane,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.meta
 trimethylamine,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30777,三甲胺单元,gregtech:gt.metaitem.01
 trimethylborate,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30750,硼酸三甲酯单元,gregtech:gt.metaitem.01
 tritium,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30003,氚单元,gregtech:gt.metaitem.01
-turpentine,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.containerCan@131,松节油胶囊,BinnieCore:containerCan
-turpentine,1000,1xitem.misc@8,玻璃罐,Genetics:misc,1xitem.containerCylinder@131,松节油玻璃罐,BinnieCore:containerCylinder
 turpentine,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.containerBucket@131,松节油桶,BinnieCore:containerBucket
 turpentine,1000,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.containerGlass@131,松节油瓶,BinnieCore:containerGlass
-turpentine,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.containerRefractory@131,松节油耐火胶囊,BinnieCore:containerRefractory
+turpentine,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.containerCan@131,松节油胶囊,BinnieCore:containerCan
 turpentine,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.containerCapsule@131,松节油胶囊,BinnieCore:containerCapsule
+turpentine,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.containerRefractory@131,松节油耐火胶囊,BinnieCore:containerRefractory
+turpentine,1000,1xitem.misc@8,玻璃罐,Genetics:misc,1xitem.containerCylinder@131,松节油玻璃罐,BinnieCore:containerCylinder
 twilight sluice,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25131,暮色泥浆单元,bartworks:gt.bwMetaGeneratedcell
 ultracontaminatedgas,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30185,超重度污染气体单元,gregtech:gt.metaitem.01
 unformed fluorophlogopite,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@103,未定型氟金云母单元,bartworks:gt.bwMetaGeneratedcell
 unformed hexanite,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30173,未成形的咒源玄晶单元,gregtech:gt.metaitem.01
-unknownnutrientagar,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@7,Unknown Nutrient Agar Cell,gregtech:gt.metaitem.98
-unknowwater,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.UnknowWaterBucket@0,不明液体桶,GalaxySpace:item.UnknowWaterBucket
+unknownnutrientagar,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.98@7,未知营养琼脂单元,gregtech:gt.metaitem.98
+unknowwater,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.UnknowWaterBucket@0,桶装不明液体,GalaxySpace:item.UnknowWaterBucket
 uranium based liquid fuel,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10002,铀基流体燃料单元,bartworks:gt.bwMetaGeneratedcell
-uranium based liquid fuel (depleted),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10004,铀基流体燃料(枯竭的)单元,bartworks:gt.bwMetaGeneratedcell
-uranium based liquid fuel (excited state),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10003,铀基流体燃料(激发态)单元,bartworks:gt.bwMetaGeneratedcell
+uranium based liquid fuel (depleted),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10004,铀基流体燃料（枯竭的）单元,bartworks:gt.bwMetaGeneratedcell
+uranium based liquid fuel (excited state),1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10003,铀基流体燃料（激发态）单元,bartworks:gt.bwMetaGeneratedcell
 uranium waste,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@25128,铀废料单元,bartworks:gt.bwMetaGeneratedcell
 ureamix,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xitem.ureamix@0,尿素混合物单元,miscutils:ureamix
 uuamplifier,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30721,UU增幅液体单元,gregtech:gt.metaitem.01
-vapor_of_levity,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketVapor_of_levity@0,桶装轻盈之气,EnderIO:bucketVapor_of_levity
+vapor_of_levity,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketVapor_of_levity@0,轻盈之气桶,EnderIO:bucketVapor_of_levity
 vinylacetate,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30679,乙酸乙烯酯单元,gregtech:gt.metaitem.01
 vinylchloride,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.01@30650,氯乙烯单元,gregtech:gt.metaitem.01
 waste liquid,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.bwMetaGeneratedcell@10065,废液单元,bartworks:gt.bwMetaGeneratedcell
-water,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.for.canWater@0,水罐,Forestry:canWater
-water,0,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.potion@0,水瓶,minecraft:potion
 water,1000,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xic2.itemCellEmpty@1,水单元,IC2:itemCellEmpty
-water,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.for.waxCapsuleWater@0,耐火水胶囊,Forestry:waxCapsuleWater
-water,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@1,水魔力胶囊,MagicBees:capsule.magic
-water,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.for.refractoryWater@0,耐火水胶囊,Forestry:refractoryWater
 water,8000,1xitem.capsule.void@0,空虚空胶囊,MagicBees:capsule.void,1xitem.capsule.void@1,水虚空胶囊,MagicBees:capsule.void
-water,1000,1xitem.iguana.tcon.clayBucketFired@0,黏土桶(烤制),IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket.Water@0,黏土桶(水),IguanaTweaksTConstruct:clayBucketWater
+water,1000,1xitem.for.refractoryEmpty@0,耐火胶囊,Forestry:refractoryEmpty,1xitem.for.refractoryWater@0,耐火水胶囊,Forestry:refractoryWater
+water,1000,1xitem.for.canEmpty@0,罐,Forestry:canEmpty,1xitem.for.canWater@0,水罐,Forestry:canWater
+water,1000,1xitem.iguana.tcon.clayBucketFired@0,烤制的黏土桶,IguanaTweaksTConstruct:clayBucketFired,1xitem.iguana.tcon.clayBucket.Water@0,水黏土桶,IguanaTweaksTConstruct:clayBucketWater
+water,2000,1xitem.capsule.magic@0,空魔力胶囊,MagicBees:capsule.magic,1xitem.capsule.magic@1,水魔力胶囊,MagicBees:capsule.magic
+water,0,1xitem.glassBottle@0,玻璃瓶,minecraft:glass_bottle,1xitem.potion@0,水瓶,minecraft:potion
+water,1000,1xitem.for.waxCapsule@0,蜂蜡胶囊,Forestry:waxCapsule,1xitem.for.waxCapsuleWater@0,耐火水胶囊,Forestry:waxCapsuleWater
 water,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.bucketWater@0,水桶,minecraft:water_bucket
 wet.concrete,144,1xic2.itemCellEmpty@0,空单元,IC2:itemCellEmpty,1xgt.metaitem.99@947,熔融混凝土单元,gregtech:gt.metaitem.99
 witchery:brew,1000,1xitem.bucket@0,铁桶,minecraft:bucket,1xitem.witchery:bucketbrew@0,酿造,witchery:bucketbrew

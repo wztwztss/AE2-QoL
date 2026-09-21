@@ -16,6 +16,7 @@
     "gt.MixinMTEMultiBlockBase",
     "gt.MixinCommonBaseMetaTileEntityMultiblockRegistry",
     "gt.MixinProcessingLogicSpeed",
+    "gt.MixinBaseMetaTileEntityIdMigration",
     "TileDriveMixin",
     "client.MixinTextureMap"
   ],

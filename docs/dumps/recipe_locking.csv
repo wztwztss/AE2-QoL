@@ -1,10 +1,4 @@
 className
-gregtech.common.tileentities.machines.multi.MTEOilDrill2
-gregtech.common.tileentities.machines.multi.MTEOilDrill3
-gregtech.common.tileentities.machines.multi.MTEConcreteBackfiller1
-gregtech.common.tileentities.machines.multi.MTEConcreteBackfiller2
-gregtech.common.tileentities.machines.multi.MTEOilDrillInfiniteLegacy
-gregtech.common.tileentities.machines.multi.MTEOilDrill4
 gregtech.common.tileentities.machines.multi.MTESolarFactory
 gtPlusPlus.xmod.gregtech.common.tileentities.machines.multi.storage.MTEPowerSubStation
 gtPlusPlus.xmod.gregtech.common.tileentities.machines.multi.production.MTETreeFarmLegacy
@@ -26,14 +20,9 @@ gregtech.common.tileentities.machines.multi.MTELargeTurbineHPSteamLegacy
 gregtech.common.tileentities.machines.multi.MTELargeTurbinePlasmaLegacy
 gregtech.common.tileentities.machines.multi.MTEHeatExchanger
 gregtech.common.tileentities.machines.multi.MTECharcoalPit
-gregtech.common.tileentities.machines.multi.MTEOilDrill1
-gregtech.common.tileentities.machines.multi.MTEOreDrillingPlant1
 gregtech.common.tileentities.machines.multi.MTEAssemblyLine
 gregtech.common.tileentities.machines.multi.MTEDieselEngineLegacy
 gregtech.common.tileentities.machines.multi.MTECleanroom
-gregtech.common.tileentities.machines.multi.MTEOreDrillingPlant2
-gregtech.common.tileentities.machines.multi.MTEOreDrillingPlant3
-gregtech.common.tileentities.machines.multi.MTEOreDrillingPlant4
 gregtech.common.tileentities.machines.multi.MTEExtremeDieselEngineLegacy
 gregtech.common.tileentities.machines.multi.drone.MTEDroneCentre
 gregtech.common.tileentities.machines.multi.purification.MTEPurificationPlant
@@ -55,7 +44,6 @@ gregtech.common.tileentities.machines.multi.MTEAirFilter3
 bartworks.common.tileentities.multis.MTELESU
 bartworks.common.tileentities.multis.MTEManualTrafo
 bartworks.common.tileentities.multis.MTEWindmill
-bartworks.common.tileentities.multis.MTEDeepEarthHeatingPump
 goodgenerator.blocks.tileEntity.MTEMultiNqGeneratorLegacy
 bartworks.common.tileentities.multis.MTEThoriumHighTempReactor
 bartworks.common.tileentities.multis.MTEElectricImplosionCompressorLegacy
@@ -110,7 +98,6 @@ gregtech.common.tileentities.machines.multi.MTEAlgaePond
 kubatech.tileentity.gregtech.multiblock.MTEIndustrialArcFurnace
 gregtech.common.tileentities.machines.multi.MTEIndustrialChisel
 gregtech.common.tileentities.machines.multi.MTEIntegratedOreFactory
-gregtech.common.tileentities.machines.multi.MTEOilDrillInfinite
 gregtech.common.tileentities.machines.multi.drone.MTEDroneCentre
 gregtech.common.tileentities.machines.multi.MTEDecayWarehouse
 com.Nxer.TwistSpaceTechnology.system.DysonSphereProgram.machines.TST_DSPReceiver
@@ -159,3 +146,6 @@ goodgenerator.blocks.tileEntity.MTELargeEssentiaSmeltery
 goodgenerator.blocks.tileEntity.MTECoolantTower
 goodgenerator.blocks.tileEntity.AntimatterForge
 goodgenerator.blocks.tileEntity.AntimatterGenerator
+com.MessTech.common.machine.module.SpaceModulePumpInfinity
+com.MessTech.common.machine.module.SpaceModuleMinerInfinity
+com.MessTech.common.machine.module.SpaceModuleAssemblerInfinity

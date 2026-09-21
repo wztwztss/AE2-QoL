@@ -21,7 +21,7 @@ A GT hatch-based **adaptive energy network**. Configure a network ID via the Dat
 
 | Component | ID | Function |
 |---|---|---|
-| Adaptive Terminal | 32100 | Network controller; right-click to open GUI |
+| Adaptive Terminal | 32106 | Network controller; right-click to open GUI |
 | Adaptive Input Hatch | 32102 | Energy input, auto-matches voltage tier & amperage |
 | Adaptive Laser Source Hatch | 32103 | Laser output, auto-matches tier |
 | Adaptive Dynamo Hatch | 32104 | Power output (EU output), auto-matches tier |

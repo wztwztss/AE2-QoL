@@ -2,7 +2,7 @@
 
 > 
 > 用途：替代完整 RepositoryGuidelines.md，大幅降低token占用；保留全部硬性强制规则，删减解释性长文本，推理思考全程中文。
-> 目标环境：GTNH 2.9.0‑beta‑1，Minecraft 1.7.10。
+> 目标环境：GTNH 2.9.0‑beta‑3，Minecraft 1.7.10。
 
 ---
 
@@ -11,7 +11,7 @@
 1. 思考过程全部中文，仅代码、注解、专业术语可用英文；**修改方案必须先确认，禁止直接提交改动**。
 2. 拿不准AE2/GTNH/Mixin行为直接提问，不要猜测；多实现路径要全部列出并对比利弊；信息不足立刻停止等待确认。**提问必须使用question工具**。
 3. 权衡优先级：**稳定性 > 兼容性 > 可回退 > 开发速度**。简单任务可自行判断。
-4. 参考源码只读外部目录 `E:\wzt\MC\modcreater\reference_src`，禁止直接复制源码到项目。
+4. 参考源码只读外部目录 `E:\wzt\MC\modcreater\reference_src_290b3`（旧的 `reference_src_290b1_已过期` 已废弃），禁止直接复制源码到项目。
 5. 拒绝过度封装、多余功能、不必要配置；允许一次性专用补丁代码。
 
 ## 🔧构建环境
@@ -34,7 +34,7 @@
 
 ## 🔬Mixin专项强制
 
-1. 核对目标类、方法、SRG签名，适配GTNH 2.9.0‑beta‑1；AE2类已被GTNH修改，不能照搬原版AE2 Mixin。
+1. 核对目标类、方法、SRG签名，适配GTNH 2.9.0‑beta‑3；AE2类已被GTNH修改，不能照搬原版AE2 Mixin。
 2. 尽量少用`@Overwrite`；必须使用时记录风险到`docs/mixin_notes.md`。
 3. 修改后必须查看`mixin.log`，无报错、无警告；Mixin目标写错会静默失效，不以游戏是否崩溃作为唯一判断。
 
@@ -69,7 +69,7 @@
 ## 📤任务输出模板（任务结束固定输出）
 
 ```
-版本：GTNH 2.9.0‑beta‑1 | MC1.7.10
+版本：GTNH 2.9.0‑beta‑3 | MC1.7.10
 时间戳：yyyy‑MM‑dd
 修改文件：[文件列表]
 Git 回退方案：git revert <commitHash> / git checkout <commitHash> -- 文件路径
@@ -84,7 +84,7 @@ Git 回退方案：git revert <commitHash> / git checkout <commitHash> -- 文件
 
 ## ✅编码前快速检查要点
 
-- 确认目标版本 GTNH 2.9.0‑beta‑1 / MC1.7.10
+- 确认目标版本 GTNH 2.9.0‑beta‑3 / MC1.7.10
 - 查阅`docs/MOD_MAP.md`定位类，输出修改方案等待确认
 - Mixin核对SRG签名
 - 不注释代码，无用代码直接删除

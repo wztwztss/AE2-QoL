@@ -1,0 +1,183 @@
+ID,Name,Unlocalised Name,Flavour Text,Unlocalized Flavour Text,Creator,Color 1,Color 2,Seed Shape,Render Shape,Soil Type,Tier,Min Seed Bed Tier,Liked Biomes,Growth Duration,Breeding Threshold,Crossing Threshold,Starts Spreading Weeds If Growth Above,Growth Requirements,Drop Count Multiplier,Drop Table,Alternate Seeds
+cropsnh:allium,绒球葱,tile.flower2.allium.name,,,Notch,0xFF6B2166,0xFFDB7AD5,flower,Hash,dirt,2,-1,"SANDY, SPARSE, DRY",600,0.8,0.8,24,,0.9025,1 x 品红色染料 @ 100.0%,绒球葱
+cropsnh:aluminiumOreBerry,铝矿莓,cropsnh_crops.aluminiumOreBerry,,,bartimaeusnek,0xFF5687A3,0xFF80C8F0,oreberry,Hash,stone,5,-1,"COLD, DRY",6000,0.8,0.8,24,需要在其下方放置铝块才能生长 | 需要亮度等级为 10 以下,0.77378094,6 x 铝矿莓 @ 100.0%,铝矿莓
+cropsnh:andesiteLily,安山莲,cropsnh_crops.andesiteLily,,,bartimaeusnek,0xFF6B6B6A,0xFF989896,vanilla,X,stone,1,-1,"MOUNTAIN, HILLS",600,0.8,0.8,24,需要在其下方放置安山岩才能生长,0.95,1 x 安山岩 @ 100.0%,
+cropsnh:arditeOreBerry,阿迪特矿莓,cropsnh_crops.arditeOreBerry,,,bartimaeusnek,0xFFAD5A00,0xFFFA8100,oreberry,Hash,stone,5,-1,"HOT, NETHER",6000,0.8,0.8,24,需要在其下方放置阿迪特才能生长 | 需要亮度等级为 10 以下,0.77378094,1 x 阿迪特粒 @ 100.0%,
+cropsnh:argentia,银叶草,cropsnh_crops.argentia,,,Eloraam,0xFFB2BEC9,0xFFFDFEFE,vanilla,Hash,stone,7,-1,"HOT, MOUNTAIN",1400,0.8,0.8,24,需要在其下方放置银块才能生长,0.6983373,1 x 银叶 @ 100.0%,
+cropsnh:auronia,金叶草,cropsnh_crops.auronia,,,CropsNH Team,0xFFABA600,0xFFEFE913,vanilla,Hash,stone,8,-1,"MESA, SANDY",3700,0.8,0.8,24,需要在其下方放置金块才能生长,0.66342044,1 x 金叶 @ 100.0%,
+cropsnh:azureBluet,茜草花,tile.flower2.houstonia.name,,,Notch,0xFF3D3D4C,0xFFE4EAF2,flower,Hash,dirt,2,-1,"LUSH, HILLS, FOREST",600,0.8,0.8,24,,0.9025,1 x 淡灰色染料 @ 100.0%,茜草花
+cropsnh:bamboo,竹笋,cropsnh_crops.bamboo,,,Minepolz320,0xFF83A81A,0xFFC7DB72,bonsai,Hash,dirt,2,-1,"LUSH, DENSE, JUNGLE, FOREST",250,0.8,0.8,24,,0.9025,2 x 竹子 @ 100.0%,竹笋
+cropsnh:barley,大麦,cropsnh_crops.barley,,,bartimaeusnek,0xFF285221,0xFF84C63D,vanilla,Hash,farmland,2,-1,"PLAINS, DRY",675,0.8,0.8,24,需要亮度等级为 9 以上,0.9025,1 x 大麦 @ 100.0%,大麦种子 | 大麦种子
+cropsnh:basaltLily,玄武莲,cropsnh_crops.basaltLily,,,bartimaeusnek,0xFF080808,0xFF181818,vanilla,X,stone,1,-1,"MOUNTAIN, HILLS",600,0.8,0.8,24,需要在其下方放置玄武岩才能生长,0.95,9 x 玄武岩粉 @ 100.0%,
+cropsnh:bauxia,铝土草,cropsnh_crops.bauxia,,,CropsNH Team,0xFF460D00,0xFFC88E76,vanilla,Hash,stone,6,-1,"COLD, DRY",1200,0.8,0.8,24,需要在其下方放置铝块或铝土矿才能生长,0.73509187,1 x 铝土叶 @ 100.0%,
+cropsnh:belladonna,颠茄,tile.witchery:belladonna.name,,,bartimaeusnek,0xFF000000,0xFF947999,magic,Hash,farmland,4,-1,"SPOOKY, WET",1100,0.8,0.8,24,,0.81450623,1 x 颠茄花 @ 100.0%,颠茄种子
+cropsnh:blackGraniteLily,黑花岗莲,cropsnh_crops.blackGraniteLily,,,bartimaeusnek,0xFF000000,0xFF0A0A0A,vanilla,X,stone,1,-1,"MOUNTAIN, HILLS",600,0.8,0.8,24,需要在其下方放置黑花岗岩才能生长,0.95,9 x 黑花岗岩粉 @ 100.0%,
+cropsnh:blackberry,黑莓,cropsnh_crops.blackberry,,,bartimaeusnek,0xFF141C22,0xFF4D5A66,vanilla,Hash,farmland,2,-1,"LUSH, DENSE, WET",200,0.8,0.8,24,需要亮度等级为 9 以上,0.9025,3 x 黑莓 @ 100.0%,黑莓 | 黑莓 | 黑莓 | 黑莓种子
+cropsnh:blazereed,烈焰甘蔗,cropsnh_crops.blazereed,,,Mr. Brain,0xFFB38C00,0xFFFFC800,grains,X,netherrack,6,-1,"HOT, NETHER",3600,0.8,0.8,24,,0.73509187,1 x 烈焰棒 @ 25.0% | 1 x 烈焰粉 @ 75.0%,
+cropsnh:blightberry,枯萎莓,cropsnh_crops.blightberry,,,bartimaeusnek,0xFF3BC956,0xFFA3F2A0,vanilla,Hash,netherrack,4,-1,"DRY, NETHER",300,0.8,0.8,24,,0.81450623,2 x 枯萎莓 @ 100.0%,枯萎莓
+cropsnh:blueGlowshroom,蓝色荧光菇,cropsnh_crops.blueGlowshroom,,,bartimaeusnek,0xFF2A3DC8,0xFF4759E1,spore,Hash,stone+dirt+mycelium+netherrack,3,-1,"MAGICAL, MUSHROOM, NETHER",600,0.8,0.8,24,,0.857375,1 x 蓝色荧光菇 @ 100.0%,蓝色荧光菇
+cropsnh:blueOrchid,兰花,tile.flower2.blueOrchid.name,,,Notch,0xFF2F5488,0xFF8FB9F4,flower,X,dirt,2,-1,"SWAMP, WET",600,0.8,0.8,24,,0.9025,1 x 淡蓝色染料 @ 100.0%,兰花
+cropsnh:blueberry,蓝莓,cropsnh_crops.blueberry,,,bartimaeusnek,0xFF354085,0xFF5262B5,vanilla,Hash,farmland,2,-1,"LUSH, HILLS, FOREST",200,0.8,0.8,24,需要亮度等级为 9 以上,0.9025,3 x 蓝莓 @ 100.0%,蓝莓 | 蓝莓 | 蓝莓 | 蓝莓种子
+cropsnh:bobsYerUncleRanks,鸿运浆果丛,cropsnh_crops.bobsYerUncleRanks,,,GenerikB,0xFF009529,0xFF41F384,vanilla,Hash,stone,6,-1,"MOUNTAIN, HILLS",3000,0.8,0.8,24,需要在其下方放置绿宝石块才能生长,0.73509187,1 x 绿宝石 @ 25.0% | 1 x 鸿运浆果 @ 75.0%,
+cropsnh:bonsaiAcacia,盆栽金合欢,cropsnh_crops.bonsaiAcacia,,,Notch,0xFF795A0D,0xFF71881B,bonsai,X,dirt,1,-1,"SAVANNA, HOT, PLAINS, SPARSE",1200,0.8,0.8,24,,0.95,1 x 金合欢树苗 @ 30.0% | 10 x 金合欢原木 @ 60.0%,金合欢树苗
+cropsnh:bonsaiBirch,盆栽白桦,cropsnh_crops.bonsaiBirch,,,Notch,0xFFCFE3BA,0xFF648D38,bonsai,X,dirt,1,-1,"HILLS, FOREST",1200,0.8,0.8,24,,0.95,1 x 白桦树苗 @ 30.0% | 10 x 白桦原木 @ 60.0%,白桦树苗
+cropsnh:bonsaiDarkOak,盆栽深色橡树,cropsnh_crops.bonsaiDarkOak,,,Notch,0xFF684C29,0xFF459633,bonsai,X,dirt,1,-1,"SPOOKY, DENSE, FOREST",1200,0.8,0.8,24,,0.95,2 x 苹果 @ 5.0% | 1 x 深色橡树树苗 @ 30.0% | 10 x 深色橡木原木 @ 60.0%,深色橡树树苗
+cropsnh:bonsaiJungle,盆栽丛林树,cropsnh_crops.bonsaiJungle,,,Notch,0xFF393D0D,0xFF378020,bonsai,X,dirt,1,-1,"HOT, DENSE, JUNGLE, WET",1200,0.8,0.8,24,,0.95,1 x 丛林树苗 @ 30.0% | 10 x 丛林原木 @ 60.0%,丛林树苗
+cropsnh:bonsaiOak,盆栽橡树,cropsnh_crops.bonsaiOak,,,Notch,0xFF7F6139,0xFF57AD3F,bonsai,X,dirt,1,-1,"PLAINS, HILLS, FOREST",1200,0.8,0.8,24,,0.95,2 x 苹果 @ 5.0% | 1 x 橡树树苗 @ 30.0% | 10 x 橡木原木 @ 60.0%,橡树树苗
+cropsnh:bonsaiRubber,盆栽橡胶树,cropsnh_crops.bonsaiRubber,,,Alblaka,0xFF50361A,0xFF6C815D,bonsai,X,dirt,1,-1,"CONIFEROUS, FOREST",1200,0.8,0.8,24,,0.95,2 x 粘性树脂 @ 5.0% | 1 x 橡胶树树苗 @ 30.0% | 10 x 橡胶树原木 @ 60.0%,橡胶树树苗
+cropsnh:bonsaiSlimy,盆栽史莱姆树,cropsnh_crops.bonsaiSlimy,,,C0bra5,0xFF27C74D,0xFF96EEED,bonsai,X,dirt+slimy,1,-1,"SWAMP, WET",1200,0.8,0.8,24,,0.95,1 x 史莱姆树苗 @ 30.0% | 4 x 绿色凝固史莱姆块 @ 60.0%,史莱姆树苗
+cropsnh:bonsaiSpruce,盆栽云杉,cropsnh_crops.bonsaiSpruce,,,Notch,0xFF50361A,0xFF395A39,bonsai,X,dirt,1,-1,"MOUNTAIN, CONIFEROUS, FOREST",1200,0.8,0.8,24,,0.95,1 x 云杉树苗 @ 30.0% | 10 x 云杉原木 @ 60.0%,云杉树苗
+cropsnh:bopBerry,浆果,cropsnh_crops.bopBerry,,,bartimaeusnek,0xFFB33636,0xFFFF4C4C,vanilla,Hash,farmland,2,-1,"DENSE, FOREST",200,0.8,0.8,24,需要亮度等级为 9 以上,0.9025,3 x 浆果 @ 100.0%,浆果
+cropsnh:brownMushroom,棕色蘑菇,cropsnh_crops.brownMushroom,,,Notch,0xFF8F4E1B,0xFFCC9978,spore,Hash,stone+dirt+mycelium,1,-1,"MUSHROOM, SWAMP, WET",400,0.8,0.8,24,需要亮度等级为 9 以下,0.95,1 x 蘑菇 @ 100.0%,蘑菇
+cropsnh:cactus,仙人掌,tile.cactus.name,,,Notch,0xFF094210,0xFF117F20,grains,Hash,sand,3,-1,"HOT, SANDY, DRY",450,0.8,0.8,24,,0.857375,1 x 仙人掌 @ 100.0%,仙人掌
+cropsnh:canola,油菜,cropsnh_crops.canola,,,CropsNH Team,0xFF627F40,0xFF6E8E48,vanilla,Hash,farmland,4,-1,"PLAINS, COLD",450,0.8,0.8,24,,0.81450623,1 x 油菜花 @ 100.0%,
+cropsnh:carrot,胡萝卜,item.carrots.name,,,Notch,0xFFE58700,0xFFEEAE7D,vanilla,Hash,farmland,2,-1,"PLAINS, HOT, SANDY",800,0.8,0.8,24,需要亮度等级为 9 以上,0.9025,1 x 胡萝卜 @ 100.0%,胡萝卜
+cropsnh:cassitine,锡粉草,cropsnh_crops.cassitine,,,CropsNH Team,0xFF6C6C6C,0xFF7F7F7F,vanilla,Hash,stone,6,-1,"COLD, SPARSE, DRY",2800,0.8,0.8,24,需要在其下方放置锡块才能生长,0.73509187,1 x 小撮锡粉 @ 100.0%,
+cropsnh:chilly,辣椒,cropsnh_crops.chilly,,,CropsNH Team,0xFF83090B,0xFFC8462A,vanilla,Hash,farmland,4,-1,"HOT, LUSH",800,0.8,0.8,24,需要亮度等级为 9 以上,0.81450623,1 x 辣椒 @ 100.0%,辣椒 | 辣椒 | 辣椒种子
+cropsnh:cinderpearl,火焰草,cropsnh_crops.cinderpearl,,,bartimaeusnek and mitchej123,0xFFFF9611,0xFFFFD86F,magic,Hash,dirt,5,-1,"HOT, MAGICAL, DRY",4000,0.8,0.8,24,需要在其下方放置烈焰块才能生长,0.77378094,1 x 火焰草 @ 100.0%,火焰草
+cropsnh:clayLily,黏土莲,cropsnh_crops.clayLily,,,C0bra5,0xFF666B7F,0xFFA5A9B9,vanilla,X,stone,1,-1,"SWAMP, RIVER, WET",850,0.8,0.8,24,需要在其下方放置黏土块或陶瓦才能生长,0.95,1 x 黏土 @ 100.0%,
+cropsnh:cobaltOreBerry,钴矿莓,cropsnh_crops.cobaltOreBerry,,,bartimaeusnek,0xFF3737AD,0xFF5050FA,oreberry,Hash,stone,5,-1,"DRY, NETHER",6000,0.8,0.8,24,需要在其下方放置钴才能生长 | 需要亮度等级为 10 以下,0.77378094,1 x 钴粒 @ 100.0%,
+cropsnh:cocoa,可可果,tile.cocoa.name,,,Notch,0xFF734120,0xFF976746,vanilla,Hash,farmland,3,-1,"LUSH, DENSE, JUNGLE, WET",1700,0.8,0.8,24,需要亮度等级为 9 以上,0.857375,1 x 可可豆 @ 100.0%,可可豆
+cropsnh:coffee,咖啡,cropsnh_crops.coffee,,,CropsNH Team,0xFF3D1E00,0xFF964F05,grains,Hash,farmland,7,-1,"HOT, LUSH, WET",2800,0.8,0.8,24,需要亮度等级为 9 以上,0.6983373,1 x 咖啡 @ 100.0%,咖啡豆 | 咖啡
+cropsnh:copperOreBerry,铜矿莓,cropsnh_crops.copperOreBerry,,,bartimaeusnek,0xFFA84D11,0xFFF26F18,oreberry,Hash,stone,5,-1,"SAVANNA, HOT, SANDY",6000,0.8,0.8,24,需要在其下方放置铜块才能生长 | 需要亮度等级为 10 以下,0.77378094,6 x 铜矿莓 @ 100.0%,铜矿莓
+cropsnh:coppon,铜线草,cropsnh_crops.coppon,,,Mr. Brain,0xFFBE7000,0xFFD88000,vanilla,Hash,stone,6,-1,"SAVANNA, HOT, SANDY",1200,0.8,0.8,24,需要在其下方放置铜块才能生长,0.73509187,1 x 铜纤维 @ 100.0%,
+cropsnh:corium,皮革叶,cropsnh_crops.corium,,,Gregorius Techneticies,0xFF542716,0xFFC65C35,vanilla,Hash,farmland,6,-1,"PLAINS, FOREST",800,0.8,0.8,24,,0.73509187,1 x 皮革 @ 100.0%,
+cropsnh:corpseplant,尸骨草,cropsnh_crops.corpseplant,,,Mr. Kenny,0xFF551515,0xFFE32F2F,vanilla,Hash,graveyard,5,-1,"SPOOKY, DEAD",800,0.8,0.8,24,,0.77378094,1 x 骨头 @ 12.50% | 1 x 腐肉 @ 25.0% | 1 x 骨粉 @ 62.50%,
+cropsnh:cotton,棉花,cropsnh_crops.cotton,,,bartimaeusnek,0xFFE366F5,0xFFFFC9FF,vanilla,X,farmland,3,-1,"HOT, DRY",900,0.8,0.8,24,需要亮度等级为 9 以上,0.857375,1 x 棉花 @ 100.0%,棉花 | 棉花 | 棉花种子 | 棉花种子
+cropsnh:creeperweed,苦力怕草,cropsnh_crops.creeperweed,,,General Spaz,0xFF396B37,0xFF51984D,vanilla,Hash,farmland,7,-1,"SPOOKY, DEAD",1000,0.8,0.8,24,,0.6983373,1 x 火药 @ 100.0%,
+cropsnh:cucumber,黄瓜,cropsnh_crops.cucumber,,,CropsNH Team,0xFF13260D,0xFF259038,vanilla,Hash,farmland,4,-1,"HOT, LUSH",800,0.8,0.8,24,需要亮度等级为 9 以上,0.81450623,1 x 黄瓜 @ 100.0%,黄瓜种子 | 黄瓜
+cropsnh:dandelion,蒲公英,tile.flower1.dandelion.name,,,Notch,0xFF8E6B13,0xFFE7E769,flower,Hash,dirt,2,-1,"PLAINS, FOREST",600,0.8,0.8,24,,0.9025,1 x 蒲公英黄 @ 100.0%,蒲公英
+cropsnh:dayflower,雏菊,cropsnh_crops.dayflower,,,CropsNH Team,0xFF236F8F,0xFF3C8EB0,flower,Hash,dirt,2,-1,"COLD, HILLS, SPARSE",600,0.8,0.8,24,,0.9025,1 x 青色染料 @ 100.0%,
+cropsnh:deepslateLily,深板莲,cropsnh_crops.deepslateLily,,,bartimaeusnek,0xFF393939,0xFF575757,vanilla,X,stone,1,-1,"MOUNTAIN, HILLS",600,0.8,0.8,24,需要在其下方放置深板岩才能生长,0.95,9 x 深板岩粉 @ 100.0%,
+cropsnh:diareed,钻石甘蔗,cropsnh_crops.diareed,,,Direwolf20,0xFF34BFA8,0xFF8CF4E2,grains,X,stone,12,-1,"COLD, SPARSE",7200,0.8,0.8,24,需要在其下方放置钻石块才能生长,0.5403601,1 x 钻石粉 @ 25.0% | 1 x 钻石 @ 75.0%,
+cropsnh:dioriteLily,闪长莲,cropsnh_crops.dioriteLily,,,bartimaeusnek,0xFF909091,0xFFCECED0,vanilla,X,stone,1,-1,"MOUNTAIN, HILLS",600,0.8,0.8,24,需要在其下方放置闪长岩才能生长,0.95,1 x 闪长岩 @ 100.0%,
+cropsnh:duskberry,黄昏莓,cropsnh_crops.duskberry,,,bartimaeusnek,0xFF595959,0xFFB4B4B4,vanilla,Hash,netherrack,4,-1,"HOT, NETHER",300,0.8,0.8,24,,0.81450623,2 x 黄昏莓 @ 100.0%,黄昏莓
+cropsnh:eggPlant,鸡蛋草,cropsnh_crops.eggPlant,不要和茄子 (Eggplants) 搞混了。,cropsnh_crops.eggPlant.flavour,Link,0xFFB3A57D,0xFFDFCE9B,vanilla,Hash,farmland,6,-1,"PLAINS, FOREST",1200,0.8,0.8,24,需要亮度等级为 9 以上,0.73509187,1 x 生鸡肉 @ 10.0% | 1 x 羽毛 @ 30.0% | 1 x 鸡蛋 @ 60.0%,鸡蛋
+cropsnh:emberMoss,余烬苔藓,tile.witchery:embermoss.name,,,bartimaeusnek,0xFF9C4D2C,0xFFE06F3F,magic,X,farmland,7,-1,"HOT, DRY",1100,0.8,0.8,24,,0.6983373,1 x 余烬苔藓 @ 100.0%,余烬苔藓
+cropsnh:endStoneLily,末地石莲,cropsnh_crops.endStoneLily,,,bartimaeusnek,0xFFABA67E,0xFFDFD9A5,vanilla,X,stone,1,-1,"END, COLD, DRY",850,0.8,0.8,24,需要在其下方放置末地石才能生长,0.95,2 x 末地石粉 @ 100.0%,
+cropsnh:enderbloom,末影花,cropsnh_crops.enderbloom,,,RichardG,0xFF085245,0xFF1B7B6B,vanilla,Hash,farmland,10,-1,"END, COLD",3000,0.8,0.8,24,需要在其下方放置末地石才能生长,0.59873694,1 x 末影珍珠 @ 37.50% | 1 x 末影珍珠粉 @ 62.50%,
+cropsnh:essenceOreBerry,精华莓,cropsnh_crops.essenceOreBerry,,,bartimaeusnek,0xFF6BB324,0xFF99FF33,oreberry,Hash,stone,5,-1,"MAGICAL, DEAD",6000,0.8,0.8,24,需要在其下方放置头颅才能生长,0.77378094,6 x 浓缩精华莓 @ 100.0%,浓缩精华莓
+cropsnh:evilOre,恶魔之矿,cropsnh_crops.evilOre,,,CropsNH Team,0xFF897B73,0xFFEFEBE7,vanilla,Hash,netherrack,8,-1,"HOT, DRY, NETHER",1600,0.8,0.8,24,,0.66342044,1 x 下界石英 @ 16.67% | 1 x 赛特斯石英粉 @ 16.67% | 1 x 下界石英粉 @ 66.66%,
+cropsnh:eyebulb,眼球花,cropsnh_crops.eyebulb,,,bartimaeusnek,0xFF552323,0xFF875D5D,flower,Hash,netherrack,1,-1,"SPOOKY, NETHER",450,0.8,0.8,24,,0.95,1 x 眼球花 @ 100.0%,眼球花
+cropsnh:ferrofern,铁齿蕨,cropsnh_crops.ferrofern,,,CropsNH Team,0xFFA1A1A1,0xFFE6E6E6,vanilla,Hash,stone,6,-1,"MOUNTAIN, HILLS",2800,0.8,0.8,24,需要在其下方放置铁块才能生长,0.73509187,1 x 铁齿叶 @ 100.0%,
+cropsnh:fertilia,肥料草,cropsnh_crops.fertilia,,,CropsNH Team,0xFF554516,0xFF6E6038,vanilla,Hash,farmland,3,-1,"HOT, SWAMP, WET",1800,0.8,0.8,24,,0.857375,1 x 肥料 @ 12.50% | 1 x 磷灰石粉 @ 12.50% | 1 x 磷酸盐粉 @ 12.50% | 1 x 方解石粉 @ 62.50%,
+cropsnh:flax,亚麻,cropsnh_crops.flax,,,Eloraam,0xFF804D3E,0xFFB76E5A,vanilla,Hash,farmland,2,-1,"BEACH, SANDY, RIVER, WET",1200,0.8,0.8,24,,0.9025,1 x 线 @ 100.0%,亚麻
+cropsnh:floweringVine,开花藤蔓,cropsnh_crops.floweringVine,,,bartimaeusnek,0xFF2F7D4C,0xFFC6C6C6,flower,Hash,farmland,3,-1,"DENSE, JUNGLE",675,0.8,0.8,24,,0.857375,2 x 开花藤蔓 @ 100.0%,开花藤蔓
+cropsnh:gaiaWart,大地疣,item.cropsnh:gaiaWart.name,,,CropsNH Team,0xFF0F213A,0xFF2664A1,spore,Hash,soulsand,5,-1,"COLD, SNOWY",1000,0.8,0.8,24,需要在其下方放置雪块才能生长,0.8,1 x 大地疣 @ 100.0%,大地疣
+cropsnh:galvania,锌叶草,cropsnh_crops.galvania,,,CropsNH Team,0xFF6FDC5C,0xFF9BE78D,vanilla,Hash,stone,6,-1,"HOT, DRY",1200,0.8,0.8,24,需要在其下方放置锌块或闪锌矿矿石才能生长,0.73509187,1 x 镀锌叶 @ 100.0%,
+cropsnh:garlic,大蒜,tile.witchery:garlicplant.name,,,bartimaeusnek,0xFFA88F7B,0xFFF3E7DC,magic,Hash,farmland,3,-1,"PLAINS, DRY",450,0.8,0.8,24,需要亮度等级为 9 以上,0.857375,1 x 大蒜 @ 100.0%,大蒜 | 大蒜
+cropsnh:garnydinia,石榴石草,cropsnh_crops.garnydinia,,,moronwmachinegun,0xFFA24141,0xFFA3A341,vanilla,X,stone,7,-1,"SAVANNA, SANDY, MESA",850,0.8,0.8,24,需要在其下方放置红石榴石、黄石榴石或石榴石矿砂才能生长,0.6983373,1 x 精致的红石榴石 @ 2.50% | 1 x 精致的黄石榴石 @ 2.50% | 1 x 洗净的红石榴石矿石 @ 2.50% | 1 x 洗净的黄石榴石矿石 @ 2.50% | 1 x 红石榴石粉 @ 22.50% | 1 x 红石榴石 @ 22.50% | 1 x 黄石榴石 @ 22.50% | 1 x 黄石榴石粉 @ 22.50%,
+cropsnh:glintWeed,闪烁草,tile.witchery:glintweed.name,,,bartimaeusnek,0xFFB3890B,0xFFB3890B,magic,X,farmland,4,-1,"PLAINS, SANDY, MAGICAL",1100,0.8,0.8,24,,0.81450623,1 x 闪烁草 @ 100.0%,闪烁草
+cropsnh:glowflower,夜光花,cropsnh_crops.glowflower,,,bartimaeusnek,0xFF004D4C,0xFF12A4A2,flower,Hash,dirt,3,-1,"LUSH, MAGICAL, FOREST, WET",2000,0.8,0.8,24,,0.857375,2 x 夜光花 @ 100.0%,夜光花
+cropsnh:glowheat,荧石小麦,cropsnh_crops.glowheat,,,CropsNH Team,0xFFABAB00,0xFFD2D200,vanilla,Hash,netherrack,4,-1,"PLAINS, HOT, NETHER",1500,0.8,0.8,24,需要在其下方放置荧石才能生长,1.5,1 x 荧石粉 @ 100.0%,
+cropsnh:glowingCoral,夜光珊瑚,cropsnh_crops.glowingCoral,,,bartimaeusnek,0xFF7832DC,0xFFD6A1FF,magic,Hash,farmland,5,-1,"OCEAN, RIVER",450,0.8,0.8,24,需要在其下方放置荧石才能生长,0.77378094,2 x 夜光珊瑚 @ 100.0%,夜光珊瑚
+cropsnh:glowshroom,荧光菇,cropsnh_crops.glowshroom,,,bartimaeusnek,0xFF45AD32,0xFF63FA48,spore,X,stone+dirt+mycelium+netherrack,3,-1,"MAGICAL, MUSHROOM, NETHER",600,0.8,0.8,24,,0.857375,1 x 夜光菇 @ 100.0%,夜光菇
+cropsnh:godOfThunder,天罚之雷,cropsnh_crops.godOfThunder,,,CropsNH Team,0xFF001E00,0xFF0C290C,vanilla,Hash,stone,9,3,"SPARSE, WASTELAND",3600,0.8,0.8,24,需要在其下方放置钍块或方钍矿矿石才能生长 | 只能在工业农场中收获,0.6302494,1 x 雷鸣花 @ 100.0%,
+cropsnh:goldOreBerry,金矿莓,cropsnh_crops.goldOreBerry,,,bartimaeusnek,0xFFB3B315,0xFFFFFF1E,oreberry,Hash,stone,5,-1,"MESA, SANDY",6000,0.8,0.8,24,需要在其下方放置金块才能生长 | 需要亮度等级为 10 以下,0.77378094,6 x 金矿莓 @ 100.0%,金矿莓
+cropsnh:goldfish,金鱼草,cropsnh_crops.goldfish,尖叫。,cropsnh_crops.goldfish.flavour,bartimaeusnek,0xFFF8910F,0xFFFAC815,vanilla,Hash,farmland,4,-1,"SPOOKY, RIVER, WET",450,0.8,0.8,24,,0.81450623,1 x 金鱼草 @ 60.0%,
+cropsnh:graniteLily,花岗莲,cropsnh_crops.graniteLily,,,bartimaeusnek,0xFF82675B,0xFFBA9583,vanilla,X,stone,1,-1,"MOUNTAIN, HILLS",600,0.8,0.8,24,需要在其下方放置花岗岩才能生长,0.95,1 x 花岗岩 @ 100.0%,
+cropsnh:grape,葡萄,cropsnh_crops.grape,,,CropsNH Team,0xFF4A1041,0xFF5D1451,vanilla,Hash,farmland,4,-1,"HOT, SPARSE, DRY",800,0.8,0.8,24,需要亮度等级为 9 以上,0.81450623,1 x 葡萄 @ 100.0%,葡萄种子 | 葡萄
+cropsnh:greenGlowshroom,绿色荧光菇,cropsnh_crops.greenGlowshroom,,,bartimaeusnek,0xFF7CFF1B,0xFFC6FF50,spore,Hash,stone+dirt+mycelium+netherrack,3,-1,"MAGICAL, MUSHROOM, NETHER",600,0.8,0.8,24,,0.857375,1 x 绿色荧光菇 @ 100.0%,绿色荧光菇
+cropsnh:hemp,汉麻,cropsnh_crops.hemp,,,C0bra5,0xFF275600,0xFFBBB49D,vanilla,Hash,farmland,5,-1,"SANDY, DRY",800,0.8,0.8,24,,0.77378094,1 x 汉麻茎 @ 100.0%,
+cropsnh:hops,啤酒花,cropsnh_crops.hops,,,CropsNH Team,0xFF6B5C0E,0xFF86BB00,vanilla,Hash,farmland,5,-1,"PLAINS, LUSH",2400,0.8,0.8,24,需要亮度等级为 9 以上,0.77378094,1 x 啤酒花 @ 100.0%,啤酒花
+cropsnh:huckleberry,黑木果,cropsnh_crops.huckleberry,,,bartimaeusnek,0xFF0E0116,0xFF2A1736,vanilla,Hash,farmland,2,-1,"PLAINS, COLD, MOUNTAIN, HILLS",200,0.8,0.8,24,需要亮度等级为 9 以上,0.9025,1 x 黑木果 @ 100.0%,黑木果
+cropsnh:indigo,靛蓝草,cropsnh_crops.indigo,,,Eloraam,0xFF6446BD,0xFFA285EF,flower,Hash,dirt,2,-1,"LUSH, WET",1200,0.8,0.8,24,,0.9025,1 x 靛蓝花 @ 100.0%,靛蓝花
+cropsnh:inkbloom,染墨花,cropsnh_crops.inkbloom,,,CropsNH Team,0xFF000000,0xFF2E1F27,vanilla,Hash,dirt,4,-1,"OCEAN, WET",600,0.8,0.8,24,,0.81450623,1 x 墨囊 @ 100.0%,
+cropsnh:iridine,铱叶草,cropsnh_crops.iridine,,,CropsNH Team,0xFFB3B3B3,0xFFE8E8E8,flower,X,stone,12,5,"COLD, SNOWY",7200,0.8,0.8,24,需要在其下方放铱块才能生长 | 只能在工业农场中收获,0.5403601,1 x 铱系叶 @ 75.0%,
+cropsnh:ironOreBerry,铁矿莓,cropsnh_crops.ironOreBerry,,,bartimaeusnek,0xFF7D7D7D,0xFFC8C8C8,oreberry,Hash,stone,5,-1,"MOUNTAIN, HILLS",6000,0.8,0.8,24,需要在其下方放置铁块才能生长 | 需要亮度等级为 10 以下,0.77378094,6 x 铁矿莓 @ 100.0%,铁矿莓
+cropsnh:ivy,常春藤,cropsnh_crops.ivy,,,bartimaeusnek,0xFF1B4509,0xFF338011,flower,Hash,farmland,2,-1,"MAGICAL, DENSE, JUNGLE, NETHER",450,0.8,0.8,24,,0.9025,2 x 常春藤 @ 100.0%,常春藤
+cropsnh:knightmetalOreBerry,骑士金属矿莓,cropsnh_crops.knightmetalOreBerry,,,bartimaeusnek,0xFF90A68A,0xFFD2F0C8,oreberry,Hash,stone,8,-1,"SPOOKY, DEAD",5500,0.8,0.8,24,需要在其下方放置骑士金属块才能生长 | 需要亮度等级为 10 以下,0.66342044,4 x 装甲碎片 @ 100.0%,
+cropsnh:lazulia,青金石草,cropsnh_crops.lazulia,,,CropsNH Team,0xFF142EAF,0xFF7497EA,vanilla,Hash,stone,7,-1,"HOT, SANDY",2800,0.8,0.8,24,需要在其下方放置青金石块才能生长,0.6983373,1 x 青金石 @ 33.33% | 1 x 青金石粉 @ 66.67%,
+cropsnh:lemon,柠檬,cropsnh_crops.lemon,,,CropsNH Team,0xFFD8950C,0xFFFFEF83,vanilla,X,dirt,4,-1,"HOT, PLAINS, DRY",800,0.8,0.8,24,,0.81450623,1 x 柠檬 @ 100.0%,柠檬 | 柠檬 | 柠檬树苗
+cropsnh:liveroot,活根,cropsnh_crops.liveroot,,,Benimatic,0xFF877B00,0xFFB9DA49,vanilla,Hash,farmland,8,-1,"SPOOKY, DENSE",4800,0.8,0.8,24,,0.66342044,1 x 活根粉 @ 75.0% | 1 x 活根 @ 75.0%,
+cropsnh:magicalNightshade,魔力夜颠茄,cropsnh_crops.magicalNightshade,,,bartimaeusnek,0xFF20001B,0xFFB4009C,magic,Hash,farmland,13,3,"COLD, MAGICAL",23436,0.8,0.8,24,需要在其下方放置暗影金属才能生长 | 只能在工业农场中收获,0.38500655,1 x 源质 @ 100.0%,源质
+cropsnh:malaxia,铜粉草,cropsnh_crops.malaxia,,,CropsNH Team,0xFFB26003,0xFFD77106,vanilla,Hash,stone,6,-1,"PLAINS, LUSH",2800,0.8,0.8,24,需要在其下方放置铜块才能生长,0.73509187,1 x 小撮铜粉 @ 100.0%,
+cropsnh:maloberry,桑葚,cropsnh_crops.maloberry,,,bartimaeusnek,0xFFCE5939,0xFFE8B064,vanilla,Hash,farmland,2,-1,"LUSH, COLD, WET",200,0.8,0.8,24,需要亮度等级为 9 以上,0.9025,3 x 桑葚 @ 100.0%,桑葚 | 醋栗 | 醋栗 | 桑葚
+cropsnh:manaBean,魔豆,cropsnh_crops.manaBean,,,kuba6000,0xFF135C43,0xFF2AAF83,magic,X,thaumLogs,5,-1,"MAGICAL, FOREST",2000,0.8,0.8,24,需要在其下方放置复相魔晶才能生长,0.77378094,"1 x 魔豆{Aspects:[0:{amount:1,key:""ignis""}]} @ 16.66% | 1 x 魔豆{Aspects:[0:{amount:1,key:""terra""}]} @ 16.66% | 1 x 魔豆{Aspects:[0:{amount:1,key:""perditio""}]} @ 16.66% | 1 x 魔豆{Aspects:[0:{amount:1,key:""ordo""}]} @ 16.66% | 1 x 魔豆{Aspects:[0:{amount:1,key:""aqua""}]} @ 16.66% | 1 x 魔豆{Aspects:[0:{amount:1,key:""aer""}]} @ 16.66%",
+cropsnh:mandrake,曼德拉草,tile.witchery:mandrake.name,,,bartimaeusnek,0xFF755239,0xFFBD9A61,magic,Hash,farmland,4,-1,"SPOOKY, MAGICAL",1100,0.8,0.8,24,,0.40725312,1 x 曼德拉草根 @ 100.0%,曼德拉种子
+cropsnh:marbleLily,大理莲,cropsnh_crops.marbleLily,,,bartimaeusnek,0xFFC8C8C8,0xFFF0F0F0,vanilla,X,stone,1,-1,"MOUNTAIN, HILLS",600,0.8,0.8,24,需要在其下方放置大理石才能生长,0.95,9 x 大理石粉 @ 100.0%,
+cropsnh:meatrose,肉玫瑰,cropsnh_crops.meatrose,,,VintageBeef,0xFFDD3830,0xFFEF7070,flower,Hash,dirt,7,-1,"PLAINS, MAGICAL",4200,0.8,0.8,24,需要亮度等级为 9 以上,0.6983373,1 x 生鸡肉 @ 10.0% | 1 x 生牛肉 @ 10.0% | 1 x 生鳕鱼 @ 10.0% | 1 x 生猪排 @ 10.0% | 1 x 粉红色染料 @ 60.0%,
+cropsnh:melon,西瓜,tile.melon.name,,,Notch,0xFF2A220B,0xFF615535,grains,Hash,farmland,2,-1,"LUSH, WET",1200,0.8,0.8,24,需要亮度等级为 9 以上,0.9025,1 x 西瓜 @ 33.33% | 4 x 西瓜片 @ 66.66%,西瓜种子
+cropsnh:micadia,云母草,cropsnh_crops.micadia,,,bartimaeusnek,0xFFD5CCC3,0xFFF4F2EF,vanilla,Hash,stone,9,-1,"HILLS, SPARSE",1800,0.8,0.8,24,需要在其下方放置云母矿石或白铜线圈方块才能生长,0.6302494,1 x 云母花 @ 100.0%,
+cropsnh:migrator,cropsnh_crops.migrator,cropsnh_crops.migrator,,,C0bra5,0xFFFF00FF,0xFF8A028A,vanilla,Hash,global,1,-1,,1,-1.0,-1.0,32,无效的土壤！破坏作物来获得种子！,0.95,,
+cropsnh:milkWart,牛奶疣,cropsnh_crops.milkWart,,,Mr. Brain,0xFFA8A8A8,0xFFECECEC,spore,Hash,farmland,6,-1,"PLAINS, LUSH",2400,0.8,0.8,24,,0.73509187,1 x 牛奶疣 @ 100.0%,
+cropsnh:moss,苔藓,tile.moss.name,,,bartimaeusnek,0xFF256319,0xFF3A9126,vanilla,Hash,farmland,4,-1,"LUSH, SWAMP, WET",450,0.8,0.8,24,,0.81450623,1 x 苔藓 @ 5.0% | 1 x 苔藓 @ 30.0% | 1 x 树藓 @ 65.0%,苔藓 | 苔藓 | 树藓
+cropsnh:necrobloom,死灵花,cropsnh_crops.necrobloom,,,CropsNH Team,0xFF440F69,0xFF8921CC,flower,Hash,farmland,3,-1,"DEAD, WASTELAND",1800,0.8,0.8,8,,0.857375,1 x 紫色染料 @ 5.0% | 1 x 含毒粉末 @ 95.0%,
+cropsnh:netherStoneLily,地狱岩莲,cropsnh_crops.netherStoneLily,,,bartimaeusnek,0xFF911717,0xFFC21F1F,vanilla,X,stone,1,-1,"HOT, DRY, NETHER",600,0.8,0.8,24,需要在其下方放置地狱岩才能生长,0.95,9 x 地狱岩粉 @ 100.0%,
+cropsnh:netherwart,地狱疣,item.netherStalkSeeds.name,,,Notch,0xFF4D1115,0xFFBE3F4A,spore,Hash,soulsand,5,-1,"HOT, NETHER",2000,0.8,0.8,24,,2.0,1 x 地狱疣 @ 100.0%,地狱疣
+cropsnh:nickelback,镍叶草,cropsnh_crops.nickelback,在风中发出悦耳的嗡鸣声,cropsnh_crops.nickelback.flavour,CropsNH Team,0xFF7E81AD,0xFFB7B8E9,vanilla,Hash,stone,5,-1,"PLAINS, LUSH",1000,0.8,0.8,24,需要在其下方放置镍块才能生长,0.77378094,1 x 镍叶 @ 100.0%,
+cropsnh:oilBerry,石油浆果丛,cropsnh_crops.oilBerry,,,Spacetoad,0xFF0A0A0A,0xFF333333,vanilla,Hash,sand+gravel+soulsand+oilSands,4,-1,"HOT, WASTELAND",1200,0.8,0.8,24,,0.81450623,2 x 石油浆果 @ 100.0%,
+cropsnh:olivia,橄榄石草,cropsnh_crops.olivia,,,CropsNH Team,0xFF79CD79,0xFF96FF96,vanilla,Hash,stone,2,-1,"HILLS, DRY",400,0.8,0.8,24,需要在其下方放置橄榄石才能生长,0.9025,1 x 橄榄石 @ 25.0% | 1 x 橄榄石粉 @ 75.0%,
+cropsnh:onion,洋葱,cropsnh_crops.onion,,,CropsNH Team,0xFF4E1B3F,0xFF753C64,vanilla,X,farmland,4,-1,"SANDY, SPARSE, DRY",800,0.8,0.8,24,需要亮度等级为 9 以上,0.81450623,1 x 洋葱 @ 100.0%,洋葱种子 | 洋葱
+cropsnh:orangeTulip,橙色郁金香,tile.flower2.tulipOrange.name,,,Notch,0xFF92460C,0xFFF4B33F,flower,Hash,dirt,2,-1,"PLAINS, WET",600,0.8,0.8,24,,0.9025,1 x 橙色染料 @ 100.0%,橙色郁金香
+cropsnh:osmianth,锇叶草,cropsnh_crops.osmianth,,,CropsNH Team,0xFF2525BC,0xFF2E2EEC,flower,X,stone,12,5,"OCEAN, RIVER",7200,0.8,0.8,24,需要在其下方放置锇块才能生长 | 只能在工业农场中收获,0.5403601,1 x 锇花 @ 25.0%,
+cropsnh:oxeyeDaisy,滨菊,tile.flower2.oxeyeDaisy.name,,,Notch,0xFF3D3D4C,0xFFC8C8C8,flower,Hash,dirt,2,-1,"PLAINS, FOREST",600,0.8,0.8,24,,0.9025,1 x 淡灰色染料 @ 100.0%,滨菊
+cropsnh:papyrus,纸莎草,cropsnh_crops.papyrus,,,bartimaeusnek,0xFFA3A3A3,0xFFEAEAEA,vanilla,X,farmland,5,-1,"JUNGLE, SWAMP, WET",450,0.8,0.8,24,,0.77378094,1 x 纸 @ 100.0%,
+cropsnh:pinkTulip,粉红色郁金香,tile.flower2.tulipPink.name,,,Notch,0xFF80365C,0xFFF7B4D6,flower,Hash,dirt,2,-1,"PLAINS, WET",600,0.8,0.8,24,,0.9025,1 x 粉红色染料 @ 100.0%,粉红色郁金香
+cropsnh:platina,铂叶草,cropsnh_crops.platina,,,CropsNH Team,0xFFDADAAB,0xFFF7F7C7,vanilla,Hash,stone,11,3,"HOT, SANDY",6600,0.8,0.8,24,需要在其下方放置铂块才能生长 | 只能在工业农场中收获,0.5688001,1 x 铂族叶 @ 100.0%,
+cropsnh:plumbilia,铅叶草,cropsnh_crops.plumbilia,,,KingLemming,0xFF503950,0xFF6D4E6D,vanilla,Hash,stone,6,-1,"SAVANNA, PLAINS",1200,0.8,0.8,24,需要在其下方放置铅块或方铅矿矿石才能生长,0.73509187,1 x 铅叶 @ 100.0%,
+cropsnh:plumbshade,铅粉草,cropsnh_crops.plumbshade,,,CropsNH Team,0xFF523B52,0xFF6D4E6D,vanilla,Hash,stone,6,-1,"HOT, WET",2800,0.8,0.8,24,需要在其下方放置铅块或方铅矿矿石才能生长,0.73509187,1 x 小撮铅粉 @ 100.0%,
+cropsnh:poppy,虞美人,tile.flower2.poppy.name,,,Notch,0xFF3A0102,0xFFBA050B,flower,Hash,dirt,2,-1,"PLAINS, HILLS",600,0.8,0.8,24,,0.9025,1 x 玫瑰红 @ 100.0%,虞美人
+cropsnh:potato,马铃薯,item.potato.name,,,Notch,0xFFC0A51B,0xFFFBE6BC,vanilla,Hash,farmland,1,-1,"PLAINS, COLD",800,0.8,0.8,24,需要亮度等级为 9 以上,0.95,1 x 马铃薯 @ 100.0%,马铃薯
+cropsnh:primordialBerry,元始浆果,cropsnh_crops.primordialBerry,,,bartimaeusnek and ForTheHorde01,0xFF652150,0xFFA1D3A9,magic,X,farmland,16,-1,"END, MAGICAL",375000,-1.0,-1.0,24,,0.5,1 x 元始珍珠 @ 100.0%,元始珍珠
+cropsnh:pumpkin,南瓜,tile.pumpkin.name,,,Notch,0xFFCAB16E,0xFFC8D4AA,vanilla,Hash,farmland,2,-1,"PLAINS, WET",1000,0.8,0.8,24,需要亮度等级为 9 以上,0.9025,1 x 南瓜 @ 100.0%,南瓜种子
+cropsnh:purpleGlowshroom,紫色荧光菇,cropsnh_crops.purpleGlowshroom,,,bartimaeusnek,0xFF511FB6,0xFF8B2CD2,spore,Hash,stone+dirt+mycelium+netherrack,3,-1,"MAGICAL, MUSHROOM, NETHER",600,0.8,0.8,24,,0.857375,1 x 紫色荧光菇 @ 100.0%,紫色荧光菇
+cropsnh:purpleMagnolia,紫玉兰,cropsnh_crops.purpleMagnolia,,,The_Flames,0xFFFFAFAF,0xFFFFFFFF,magic,X,thaumLogs,5,-1,,2000,0.8,0.8,24,,0.77378094,1 x 紫玉兰花瓣 @ 100.0%,紫玉兰树苗
+cropsnh:purpleTulip,紫色郁金香,cropsnh_crops.purpleTulip,,,CropsNH Team,0xFF8230B2,0xFFA453CE,flower,Hash,dirt,2,-1,"PLAINS, WET",600,0.8,0.8,24,,0.9025,1 x 紫色染料 @ 100.0%,
+cropsnh:pyrolusium,锰叶草,cropsnh_crops.pyrolusium,它尽力了,cropsnh_crops.pyrolusium.flavour,CropsNH Team,0xFFB51900,0xFFCF1E11,vanilla,Hash,stone,12,-1,"HOT, NETHER",2400,0.8,0.8,24,需要在其下方放置镁块或软锰矿矿石才能生长,0.5403601,1 x 软锰叶 @ 100.0%,
+cropsnh:raspberry,树莓,cropsnh_crops.raspberry,,,bartimaeusnek,0xFFA23131,0xFFC54F4F,vanilla,Hash,farmland,2,-1,"PLAINS, DRY",200,0.8,0.8,24,需要亮度等级为 9 以上,0.9025,3 x 树莓 @ 100.0%,树莓种子 | 树莓 | 树莓 | 树莓
+cropsnh:reactoria,核能草,cropsnh_crops.reactoria,,,CropsNH Team,0xFF565301,0xFF989309,grains,Hash,stone,12,4,"HOT, COLD",4800,0.8,0.8,24,需要在其下方放置铀块、晶质铀矿矿石或沥青铀矿才能生长 | 只能在工业农场中收获,0.5403601,1 x 核能茎 @ 25.0% | 1 x 核能叶 @ 75.0%,
+cropsnh:redGraniteLily,红花岗莲,cropsnh_crops.redGraniteLily,,,bartimaeusnek,0xFF871C52,0xFFD42C80,vanilla,X,stone,1,-1,"MOUNTAIN, HILLS",600,0.8,0.8,24,需要在其下方放置红花岗岩才能生长,0.95,9 x 红花岗岩粉 @ 100.0%,
+cropsnh:redMushroom,红蘑菇,cropsnh_crops.redMushroom,,,Notch,0xFFA61313,0xFFE21212,spore,Hash,stone+dirt+mycelium,1,-1,"MUSHROOM, SWAMP, WET",400,0.8,0.8,24,需要亮度等级为 9 以下,0.95,1 x 蘑菇 @ 100.0%,蘑菇
+cropsnh:redTulip,红色郁金香,tile.flower2.tulipRed.name,,,Notch,0xFF7A0707,0xFFD24343,flower,Hash,dirt,2,-1,"PLAINS, HOT",600,0.8,0.8,24,,0.9025,1 x 玫瑰红 @ 100.0%,红色郁金香
+cropsnh:redstraw,红石草,cropsnh_crops.redstraw,,,raa1337,0xFF6C4B17,0xFFD45555,vanilla,Hash,farmland,6,-1,"PLAINS, HOT",1500,0.8,0.8,24,需要亮度等级为 5 以上 | 需要亮度等级为 12 以下 | 需要在其下方放置红石块才能生长,0.85,1 x 红石粉 @ 100.0%,
+cropsnh:rubyne,红宝石草,cropsnh_crops.rubyne,,,CropsNH Team,0xFF931212,0xFFA64747,vanilla,X,stone,4,-1,"MOUNTAIN, RIVER",800,0.8,0.8,24,需要在其下方放置红宝石才能生长,0.81450623,1 x 红宝石 @ 25.0% | 1 x 红宝石粉 @ 75.0%,
+cropsnh:saguaroCactus,巨型仙人掌,cropsnh_crops.saguaroCactus,,,bartimaeusnek,0xFF3D401B,0xFF828839,grains,Hash,sand,4,-1,"HOT, SANDY, DRY",450,0.8,0.8,24,需要亮度等级为 9 以上,0.81450623,2 x 巨型仙人掌 @ 50.0% | 3 x 仙人掌果 @ 50.0%,巨型仙人掌 | 仙人掌果
+cropsnh:saltyRoot,盐根,cropsnh_crops.saltyRoot,不可食用。,cropsnh_crops.saltyRoot.flavour,GlodBlock,0xFF707070,0xFFC7C7C1,vanilla,Hash,farmland,4,-1,"SANDY, DEAD, DRY",1600,0.8,0.8,24,,4.0,1 x 盐根 @ 100.0%,
+cropsnh:sandLily,沙莲,cropsnh_crops.sandLily,,,bartimaeusnek,0xFF87836B,0xFFC4BD97,vanilla,X,stone,1,-1,"HOT, SANDY, DRY",600,0.8,0.8,24,需要在其下方放置沙子或沙石才能生长,0.95,4 x 沙子 @ 100.0%,
+cropsnh:sapphirum,蓝宝石草,cropsnh_crops.sapphirum,,,CropsNH Team,0xFF47478F,0xFF5959B3,vanilla,Hash,stone,4,-1,"COLD, OCEAN, WET",800,0.8,0.8,24,需要在其下方放置蓝宝石才能生长,0.81450623,1 x 蓝宝石 @ 25.0% | 1 x 蓝宝石粉 @ 75.0%,
+cropsnh:scheelinium,钨叶草,cropsnh_crops.scheelinium,,,CropsNH Team,0xFF313CA3,0xFF232C9E,vanilla,Hash,stone,12,4,"COLD, OCEAN, WET",2400,0.8,0.8,24,需要在其下方放置钨块、白钨矿矿石或钨酸锂矿石才能生长 | 只能在工业农场中收获,0.5403601,1 x 白钨叶 @ 100.0%,
+cropsnh:shimmerleaf,水银花,cropsnh_crops.shimmerleaf,,,bartimaeusnek and DreamMasterXXL,0xFF78A59C,0xFFA9C6C1,magic,Hash,dirt,5,-1,"LUSH, MAGICAL",4000,0.8,0.8,24,需要在其下方放置水银块才能生长,0.77378094,1 x 水银花 @ 100.0%,水银花
+cropsnh:silviscus,银粉草,cropsnh_crops.silviscus,,,CropsNH Team,0xFFB3B3D0,0xFFD0D0F1,vanilla,Hash,stone,8,-1,"COLD, SNOWY, SPOOKY",3700,0.8,0.8,24,需要在其下方放置银块才能生长,0.66342044,1 x 小撮银粉 @ 100.0%,
+cropsnh:skyberry,天莓,cropsnh_crops.skyberry,,,bartimaeusnek,0xFF2E8BA7,0xFF45E0FF,vanilla,Hash,netherrack,4,-1,"DRY, NETHER",300,0.8,0.8,24,,0.81450623,2 x 天莓 @ 100.0%,天莓
+cropsnh:slimeplant,粘液草,cropsnh_crops.slimeplant,,,Neowulf,0xFF5A3F1E,0xFF9DF28A,bonsai,Hash,dirt,6,-1,"SWAMP, WET",1200,0.8,0.8,24,,0.73509187,1 x 黏液球 @ 100.0%,
+cropsnh:snowbell,雪铃花,tile.witchery:snowbell.name,,,bartimaeusnek,0xFF33A9FF,0xFFA5D9FF,magic,X,farmland,4,-1,"COLD, SNOWY",1100,0.8,0.8,24,,0.81450623,1 x 冰晶石粉 @ 2.50% | 1 x 雪球 @ 10.0% | 1 x 冰针 @ 89.0%,雪铃花种子
+cropsnh:soulSandLily,灵魂沙莲,cropsnh_crops.soulSandLily,,,C0bra5,0xFF281A12,0xFF534034,vanilla,X,stone,2,-1,"SPOOKY, SANDY, NETHER",2000,0.8,0.8,24,需要在其下方放置灵魂沙才能生长,0.9025,1 x 灵魂沙 @ 25.0%,
+cropsnh:spaceFlower,空间之花,cropsnh_crops.spaceFlower,,,bartimaeusnek,0xFFFF0000,0xFFFFC200,flower,X,farmland,13,5,"COLD, DEAD, DRY",15000,0.8,0.8,24,需要在其下方放置太空方块才能生长 | 只能在工业农场中收获,0.5133421,1 x 空间之花 @ 100.0%,
+cropsnh:spanishMoss,寄生藤,tile.witchery:spanishmoss.name,,,bartimaeusnek,0xFF3F5227,0xFFC1CEBB,magic,Hash,farmland,7,-1,"LUSH, SWAMP, FOREST, WET",675,0.8,0.8,24,,0.6983373,1 x 寄生藤 @ 100.0%,寄生藤
+cropsnh:spidernip,蜘蛛咬,cropsnh_crops.spidernip,,,Mr. Kenny,0xFFBFBFBF,0xFFF7F7F7,vanilla,Hash,farmland,4,-1,"LUSH, WET",2400,0.8,0.8,24,,0.81450623,1 x 蜘蛛眼 @ 16.67% | 1 x 蜘蛛网 @ 16.67% | 1 x 线 @ 66.66%,
+cropsnh:starWart,星疣,cropsnh_crops.starWart,,,CropsNH Team,0xFF8985BE,0xFFFFFFFF,spore,Hash,stone,12,4,"DEAD, NETHER",7200,0.8,0.8,24,需要在其下方放置下界之星块才能生长 | 只能在工业农场中收获,0.5403601,1 x 星疣 @ 100.0%,
+cropsnh:stargatium,星际之草,cropsnh_crops.stargatium,,,CropsNH Team,0xFF333333,0xFF555555,vanilla,Hash,stone,12,5,"LUSH, WASTELAND",7200,0.8,0.8,24,需要在其下方放置硅岩块才能生长 | 只能在工业农场中收获,0.5403601,1 x 末地石粉 @ 25.0% | 1 x 星际之叶 @ 75.0%,
+cropsnh:steeleafranks,钢叶草,cropsnh_crops.steeleafranks,,,Benimatic,0xFF163916,0xFF327F32,vanilla,Hash,stone,10,-1,"SPOOKY, DEAD",6000,0.8,0.8,24,需要在其下方放置钢叶块才能生长,0.59873694,1 x 钢叶 @ 25.0% | 1 x 钢叶粉 @ 25.0%,
+cropsnh:stickyCane,黏性甘蔗,cropsnh_crops.stickyCane,,,CropsNH Team,0xFF8DB560,0xFFD9D891,grains,X,sand+dirt,4,-1,"HOT, SANDY, WET",200,0.8,0.8,24,,0.81450623,1 x 粘性树脂 @ 100.0%,
+cropsnh:stingberry,刺莓,cropsnh_crops.stingberry,,,bartimaeusnek,0xFF727F3D,0xFF8BDC3C,vanilla,Hash,netherrack,4,-1,"HOT, NETHER",300,0.8,0.8,24,,0.81450623,2 x 刺莓 @ 100.0%,刺莓
+cropsnh:stoneLily,石莲,cropsnh_crops.stoneLily,,,bartimaeusnek,0xFF919191,0xFFCDCDCD,vanilla,X,stone,1,-1,"MOUNTAIN, HILLS",600,0.8,0.8,24,需要在其下方放置石制方块才能生长,0.95,9 x 石头粉 @ 100.0%,
+cropsnh:strawberry,草莓,cropsnh_crops.strawberry,,,bartimaeusnek,0xFF8F0205,0xFFCE0609,vanilla,Hash,farmland,2,-1,"PLAINS, LUSH",200,0.8,0.8,24,需要亮度等级为 9 以上,0.9025,1 x 草莓 @ 100.0%,草莓种子 | 草莓
+cropsnh:sugarBeet,甜菜,cropsnh_crops.sugarBeet,,,bartimaeusnek,0xFFB3B3B3,0xFFFEFEFE,vanilla,Hash,farmland,4,-1,"COLD, WET",450,0.8,0.8,24,,0.81450623,1 x 甜菜 @ 100.0%,甜菜
+cropsnh:sugarCane,甘蔗,cropsnh_crops.sugarCane,,,Notch,0xFF698747,0xFFAADB74,grains,X,sand+dirt,2,-1,"HOT, WET",400,0.8,0.8,24,,0.9025,2 x 甘蔗 @ 100.0%,甘蔗
+cropsnh:tea,茶,cropsnh_crops.tea,,,CropsNH Team,0xFF7C8C58,0xFFD8C97D,vanilla,Hash,farmland,4,-1,"HOT, HILLS, WET",2400,0.8,0.8,24,,0.81450623,1 x 茶叶 @ 100.0%,茶种子
+cropsnh:tearstalks,泪之语,cropsnh_crops.tearstalks,,,Neowulf,0xFFBFBFBF,0xFFF7F7F7,grains,Hash,farmland,8,-1,"DEAD, NETHER",4800,0.8,0.8,24,,0.66342044,1 x 恶魂之泪 @ 66.66%,
+cropsnh:thauminiteOreBerry,秘晶锭矿莓,cropsnh_crops.thauminiteOreBerry,,,bartimaeusnek,0xFF515A9C,0xFF7581E0,oreberry,Hash,stone,7,-1,"MAGICAL, FOREST",4500,0.8,0.8,24,需要在其下方放置秘晶块才能生长 | 需要亮度等级为 10 以下,0.6983373,1 x 秘晶粒 @ 100.0%,
+cropsnh:thaumiumOreBerry,神秘矿莓,cropsnh_crops.thaumiumOreBerry,,,bartimaeusnek,0xFF67458A,0xFF9664C8,oreberry,Hash,stone,7,-1,"SPOOKY, MAGICAL",3000,0.8,0.8,24,需要在其下方放置神秘方块才能生长 | 需要亮度等级为 10 以下,0.6983373,1 x 神秘粒 @ 100.0%,
+cropsnh:thiosulfine,硫质草,cropsnh_crops.thiosulfine,,,CropsNH Team,0xFFA49035,0xFFE1B33D,vanilla,Hash,stone,6,-1,"HOT, NETHER",1200,0.8,0.8,24,需要在其下方放置硫块或闪锌矿矿石才能生长,0.73509187,1 x 硫质花 @ 100.0%,
+cropsnh:thornvine,荊藤,cropsnh_crops.thornvine,,,bartimaeusnek,0xFF987005,0xFFDFE485,vanilla,Hash,netherrack,3,-1,"DRY, NETHER",450,0.8,0.8,24,,0.857375,2 x 荊藤 @ 100.0%,荊藤
+cropsnh:tinOreBerry,锡矿莓,cropsnh_crops.tinOreBerry,,,bartimaeusnek,0xFF8F8F8F,0xFFDCDCDC,oreberry,Hash,stone,4,-1,"MOUNTAIN, HILLS",6000,0.8,0.8,24,需要在其下方放置锡块才能生长 | 需要亮度等级为 10 以下,0.81450623,6 x 锡矿莓 @ 100.0%,锡矿莓
+cropsnh:tine,锡芽草,cropsnh_crops.tine,,,Gregorius Techneticies,0xFF7D7D7D,0xFFACACAC,vanilla,Hash,stone,5,-1,"MOUNTAIN, HILLS",1000,0.8,0.8,24,需要在其下方放置锡块才能生长,0.77378094,1 x 锡芽 @ 100.0%,
+cropsnh:titania,钛叶草,cropsnh_crops.titania,作物之女皇。,cropsnh_crops.titania.flavour,CropsNH Team,0xFF815E8D,0xFFDCA0F0,vanilla,Hash,stone,9,4,"SAVANNA, HOT",1800,0.8,0.8,24,需要在其下方放置钛块、钛铁矿矿石或金红石矿石才能生长 | 只能在工业农场中收获,0.6302494,1 x 钛叶 @ 100.0%,
+cropsnh:tomato,番茄,cropsnh_crops.tomato,,,CropsNH Team,0xFF91101F,0xFFE3321F,vanilla,Hash,farmland,4,-1,"HOT, WET",800,0.8,0.8,24,需要亮度等级为 9 以上,0.81450623,1 x 大型番茄 @ 25.0% | 1 x 番茄 @ 75.0%,番茄种子 | 番茄
+cropsnh:torchberry,火炬浆果,cropsnh_crops.torchberry,,,Minepolz320,0xFFAB934D,0xFFF5D36E,vanilla,X,farmland,2,-1,"HILLS, FOREST",150,0.8,0.8,24,需要亮度等级为 10 以下,0.9025,1 x 火炬浆果 @ 100.0%,火炬浆果
+cropsnh:transformium,化生浆果,cropsnh_crops.transformium,,,CropsNH Team,0xFF2A0040,0xFF6D1566,vanilla,Hash,farmland,12,4,"END, COLD",7200,0.8,0.8,24,只能在工业农场中收获,0.5403601,1 x UUM浆果 @ 10.0% | 1 x UUA浆果 @ 90.0%,
+cropsnh:trollplant,恶作剧藤,cropsnh_crops.trollplant,"Trololololol, lololol, lololol!",cropsnh_crops.trollplant.flavour,CropsNH Team,0xFF000000,0xFFFFFFFF,troll,Hash,brick,6,-1,"SPOOKY, SWAMP",4800,0.8,0.8,24,,0.73509187,1 x 植物球 @ 12.50% | 1 x 废料 @ 12.50% | 1 x 钚-241粉 @ 12.50% | 1 x 尖晶石 @ 62.50%,
+cropsnh:tuffLily,凝灰莲,cropsnh_crops.tuffLily,,,bartimaeusnek,0xFF57574D,0xFF95978D,vanilla,X,stone,1,-1,"MOUNTAIN, HILLS",600,0.8,0.8,24,需要在其下方放置凝灰岩才能生长,0.95,9 x 凝灰岩粉 @ 100.0%,
+cropsnh:turnip,芜菁,cropsnh_crops.turnip,,,bartimaeusnek,0xFF321F1C,0xFF6C3E32,vanilla,Hash,farmland,2,-1,"PLAINS, COLD, WET",450,0.8,0.8,24,需要亮度等级为 9 以上,0.9025,1 x 芜菁 @ 100.0%,芜菁种子 | 芜菁种子 | 芜菁 | 芜菁
+cropsnh:vine,藤蔓,cropsnh_crops.vine,,,jeb_,0xFF173A0A,0xFF2C7310,flower,Hash,farmland,2,-1,"LUSH, JUNGLE, WET",450,0.8,0.8,24,,0.9025,2 x 藤蔓 @ 100.0%,藤蔓
+cropsnh:voidOreBerry,虚空金属矿莓,cropsnh_crops.voidOreBerry,,,bartimaeusnek,0xFF130426,0xFF1C0639,oreberry,Hash,stone,7,-1,"MAGICAL, WASTELAND",4500,0.8,0.8,24,需要在其下方放置虚空金属块才能生长 | 需要亮度等级为 10 以下,0.6983373,1 x 虚空金属粒 @ 100.0%,虚空种子
+cropsnh:waterArtichoke,水洋蓟,tile.witchery:artichoke.name,,,bartimaeusnek,0xFF6F644E,0xFF968C74,magic,X,farmland,4,-1,"OCEAN, RIVER, WET",1100,0.8,0.8,24,需要亮度等级为 9 以上,0.81450623,1 x 水洋蓟球茎 @ 100.0%,水洋蓟种子
+cropsnh:waterLily,睡莲,cropsnh_crops.waterLily,,,moronwmachinegun,0xFF3E89D8,0xFFD497D8,flower,Hash,farmland,2,-1,"SWAMP, RIVER, WET",450,0.8,0.8,24,,0.9025,2 x 粉红色染料 @ 200.0% | 2 x 睡莲 @ 800.0%,睡莲
+cropsnh:weed,杂草,cropsnh_crops.weed,,,The Evil One,0xFF00FF00,0xFF00FF00,vanilla,Hash,global,1,-1,,600,0.8,0.8,0,,0.95,,
+cropsnh:wheat,小麦,item.wheat.name,,,Notch,0xFFB7BB3F,0xFF00E210,vanilla,Hash,farmland,1,-1,"PLAINS, LUSH",1000,0.8,0.8,24,需要亮度等级为 9 以上,0.95,1 x 小麦 @ 100.0%,小麦种子
+cropsnh:whiteTulip,白色郁金香,tile.flower2.tulipWhite.name,,,Notch,0xFF3D3D4C,0xFFD9D9D9,flower,Hash,dirt,2,-1,"PLAINS, COLD",600,0.8,0.8,24,,0.9025,1 x 淡灰色染料 @ 100.0%,白色郁金香
+cropsnh:wildCarrot,野萝卜,cropsnh_crops.wildCarrot,,,bartimaeusnek,0xFF96927E,0xFFD9D2B7,vanilla,Hash,farmland,2,-1,"PLAINS, HOT, SANDY",450,0.8,0.8,24,需要亮度等级为 9 以上,0.9025,1 x 野萝卜 @ 100.0%,野萝卜
+cropsnh:withereed,凋灵甘蔗,cropsnh_crops.withereed,,,CovertJaguar,0xFF161616,0xFF2C2C2C,vanilla,X,stone,8,-1,"SPOOKY, DEAD",4800,0.8,0.8,24,需要在其下方放置煤炭块才能生长,0.66342044,1 x 凋灵骷髅头颅 @ 1.29% | 1 x 骷髅头颅 @ 2.58% | 1 x 煤炭 @ 33.33% | 1 x 煤粉 @ 66.67%,
+cropsnh:wolfsbane,狼毒草,tile.witchery:wolfsbane.name,,,bartimaeusnek,0xFF76716E,0xFFDAD0CE,magic,X,farmland,4,-1,"SPOOKY, MAGICAL, FOREST",1100,0.8,0.8,24,,0.81450623,1 x 狼毒草 @ 100.0%,狼毒草种子
+cropsnh:zomplant,僵尸草,cropsnh_crops.zomplant,,,CropsNH Team,0xFF3A6529,0xFF679056,vanilla,X,graveyard,3,-1,"DEAD, WASTELAND",1800,0.8,0.8,24,,0.857375,1 x 僵尸的头 @ 0.50% | 1 x 僵尸之脑 @ 1.50% | 1 x 腐肉 @ 98.0%,

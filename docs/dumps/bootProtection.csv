@@ -1,0 +1,34 @@
+Item,Handler Type,Parameters
+宇航鞋,Type: Constant,Protection: 1.00
+元始靴子,Type: Constant,Protection: 1.00
+皮革靴子,Type: item damage,Protection: 0.75,Item damage: 1,Item damage chance: 100
+纳米彗星之靴,Type: Constant,Protection: 1.00
+高级防化靴子,Type: item damage,Protection: 1.00,Item damage: 1,Item damage chance: 100
+风`欧米伽之靴,Type: Constant,Protection: 1.00
+约束靴子,Type: Constant,Protection: 1.00
+电子虚空旅行者之靴,Type: Constant,Protection: 1.00
+纳米虚空旅行者之靴,Type: Constant,Protection: 1.00
+量子流星之靴,Type: Constant,Protection: 1.00
+地平线盾牌之靴,Type: Constant,Protection: 1.00
+量子虚空旅行者之靴,Type: Constant,Protection: 1.00
+无尽靴子,Type: Constant,Protection: 1.00
+龙之靴,Type: Constant,Protection: 1.00
+纳米流星之靴,Type: Constant,Protection: 1.00
+末影钢靴子,Type: item damage,Protection: 1.00,Item damage: 1,Item damage chance: 100
+量子旅行者之靴,Type: Constant,Protection: 1.00
+水`欧米伽之靴,Type: Constant,Protection: 1.00
+邪术彗星之靴,Type: Constant,Protection: 1.00
+硬化皮革靴子,Type: item damage,Protection: 0.75,Item damage: 1,Item damage chance: 100
+恒星合金靴子,Type: Constant,Protection: 1.00
+量子彗星之靴,Type: Constant,Protection: 1.00
+双足飞龙靴,Type: Constant,Protection: 1.00
+土`欧米伽之靴,Type: Constant,Protection: 1.00
+纳米靴子,Type: Constant,Protection: 1.00
+量子靴子,Type: Constant,Protection: 1.00
+恶魔皮靴子,Type: item damage,Protection: 0.75,Item damage: 1,Item damage chance: 100
+火`欧米伽之靴,Type: Constant,Protection: 1.00
+纳米旅行者之靴,Type: Constant,Protection: 1.00
+虚空旅行者之靴,Type: Constant,Protection: 1.00
+流星之虚空旅行者之靴,Type: Constant,Protection: 1.00
+宇航服重力靴子,Type: Constant,Protection: 1.00
+橡胶靴,Type: item damage,Protection: 1.00,Item damage: 1,Item damage chance: 100

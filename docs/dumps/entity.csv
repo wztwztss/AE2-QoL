@@ -378,6 +378,7 @@ IC2,5,IC2.BoatCarbon,ic2.core.item.EntityBoatCarbon
 IC2,6,IC2.BoatRubber,ic2.core.item.EntityBoatRubber
 IC2,7,IC2.BoatElectric,ic2.core.item.EntityBoatElectric
 IC2,8,IC2.Particle,ic2.core.item.tool.EntityParticle
+MessTech,0,MessTech.MTEntityPiggy,com.MessTech.common.entity.MTEntityPiggy
 NHUtilities,0,NHUtilities.Accelerator,com.xir.NHUtilities.common.entity.EntityTimeAccelerator
 Natura,0,Natura.Imp,mods.natura.entity.ImpEntity
 Natura,1,Natura.FlameSpider,mods.natura.entity.HeatscarSpider
@@ -771,6 +772,7 @@ gadomancy,37,gadomancy.EntityAuraCore,makeo.gadomancy.common.entities.EntityAura
 gadomancy,38,gadomancy.FakePlayerEntity,makeo.gadomancy.common.entities.player.FakePlayerEntity
 gadomancy,39,gadomancy.EntityItemElement,makeo.gadomancy.common.entities.EntityItemElement
 gregtech,0,gregtech.PowderBarrelPrimed,gregtech.common.entity.EntityPowderBarrelPrimed
+gregtech,1,gregtech.GTDrone,gregtech.common.entity.EntityDrone
 ironchestminecarts,0,ironchestminecarts.minecart_chest_iron,ganymedes01.ironchestminecarts.minecarts.types.EntityMinecartIronChest
 ironchestminecarts,1,ironchestminecarts.minecart_chest_gold,ganymedes01.ironchestminecarts.minecarts.types.EntityMinecartGoldChest
 ironchestminecarts,2,ironchestminecarts.minecart_chest_diamond,ganymedes01.ironchestminecarts.minecarts.types.EntityMinecartDiamondChest

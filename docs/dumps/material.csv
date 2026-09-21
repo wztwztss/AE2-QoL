@@ -88,6 +88,7 @@ id,name
 113,ExcitedDTPC
 114,InactiveCosmicSolder
 115,BoundlessCosmicSolder
+116,Computation Base
 118,netherair
 119,nethersemifluid
 120,nefariousgas
@@ -161,6 +162,7 @@ id,name
 189,Shijima
 190,Churitsu
 191,PoisonousSlurry
+192,Amalgatite
 201,Manasteel
 202,Terrasteel
 203,ElvenElementium
