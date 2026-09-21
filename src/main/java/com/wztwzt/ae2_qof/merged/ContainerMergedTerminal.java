@@ -18,6 +18,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.IChatComponent;
 import net.minecraftforge.common.util.ForgeDirection;
 
 import com.google.common.primitives.Ints;
@@ -413,7 +414,7 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
                     if (this.tracked.containsKey(viewable)) {
                         InvTracker tracker = this.tracked.get(viewable);
                         String rawName = viewable.getRawName();
-                        String suffix = viewable.getNameSuffix();
+                        String suffix = serializeSuffix(viewable.getNameSuffix());
                         if (!Objects.equals(tracker.name, rawName) || !Objects.equals(tracker.suffix, suffix)) {
                             if (p == null) p = new PacketInterfaceTerminalUpdate();
                             p.addRenamedEntry(tracker.id, rawName, suffix);
@@ -711,6 +712,18 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
         patternContainer.getAndUpdateOutput();
     }
 
+    /**
+     * AE2 1050 起 {@code IInterfaceViewable.getNameSuffix()} 的返回类型由 {@code String} 改为
+     * {@link IChatComponent}（为在客户端按本地语言翻译后缀）。而本模组的合并终端仍沿用
+     * {@code PacketInterfaceTerminalUpdate} 的字符串后缀协议（{@code addRenamedEntry}/{@code setSuffix}
+     * 在 1050 中签名未变），故在此按 AE2 官方做法序列化为 JSON 字符串后传递。
+     * <p>
+     * 与 AE2 {@code ContainerInterfaceTerminal.serializeSuffix} 行为一致：null 保持 null。
+     */
+    private static String serializeSuffix(IChatComponent suffix) {
+        return suffix == null ? null : IChatComponent.Serializer.func_150696_a(suffix);
+    }
+
     // ===== InvTracker =====
 
     private static final class InvTracker {
@@ -735,7 +748,7 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
             this.id = id;
             this.shouldDisplay = getTerminalVisibility(viewable);
             this.name = viewable.getRawName();
-            this.suffix = viewable.getNameSuffix();
+            this.suffix = serializeSuffix(viewable.getNameSuffix());
             this.patterns = viewable.getPatterns();
             this.rowSize = viewable.rowSize();
             this.rows = viewable.rows();

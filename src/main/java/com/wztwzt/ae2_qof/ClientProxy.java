@@ -287,18 +287,18 @@ public class ClientProxy extends CommonProxy {
             return;
         }
 
-        IAEStack<?>[] outputSlots = null;
         IAEStackInventory clientOutputs = null;
 
         if (container instanceof ContainerPatternTerm pt) {
-            outputSlots = pt.outputSlotsClient;
+            // AE2 1050 移除了 `outputSlotsClient` 数组字段，改为统一的
+            // `outputsSync`（AEStackInventorySyncHandler）；仍可通过反射读取私有
+            // `outputs` 拿到底层库存。此处只取库存本体，槽位展示由 AE2 自身负责。
             try {
                 Field outputsField = ContainerPatternTerm.class.getDeclaredField("outputs");
                 outputsField.setAccessible(true);
                 clientOutputs = (IAEStackInventory) outputsField.get(pt);
             } catch (Throwable ignored) {}
         } else if (container instanceof ContainerPatternTermEx pte) {
-            outputSlots = pte.outputSlotsClient;
             try {
                 Field outputsField = ContainerPatternTermEx.class.getDeclaredField("outputs");
                 outputsField.setAccessible(true);
@@ -306,16 +306,14 @@ public class ClientProxy extends CommonProxy {
             } catch (Throwable ignored) {}
         }
 
-        if (outputSlots == null) {
+        if (clientOutputs == null) {
             return;
         }
 
-        for (int i = 0; i < Math.min(message.slotStacks.size(), outputSlots.length); i++) {
+        int outputSize = clientOutputs.getSizeInventory();
+        for (int i = 0; i < Math.min(message.slotStacks.size(), outputSize); i++) {
             IAEStack<?> aeStack = message.slotStacks.get(i);
-            outputSlots[i] = aeStack;
-            if (clientOutputs != null) {
-                clientOutputs.putAEStackInSlot(i, aeStack);
-            }
+            clientOutputs.putAEStackInSlot(i, aeStack);
         }
     }
 

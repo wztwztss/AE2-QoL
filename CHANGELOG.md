@@ -1,3 +1,67 @@
+## 工作区决策记录 2026-09-21 (11) - fix49：依赖全量对齐 GTNH 2.9.0-beta-3 实机版本
+
+> 未提交、未推送；产物 `build/libs/AE2-QoL-3.19.0-fix49.jar`。
+
+### 背景
+
+fix48 已把文档基线切到 290b3，但**编译依赖仍停留在 beta-1 时代**——
+此前只是"能跑"，并未真正对齐 b3 的 API。本轮把全部依赖升到 b3 实机版本，
+让编译期就能暴露 API 断裂（而非等到游戏里才炸）。
+
+### 依赖升级对照（13 项，12 项有变化）
+
+| 依赖 | 原（b1 时代） | 现（b3 实机） |
+|---|---|---|
+| AE2 | rv3-beta-977 | **rv3-beta-1050** |
+| AE2FluidCraft | 1.5.88-gtnh | **1.5.106-gtnh** |
+| NEI | 2.8.19-GTNH | **2.8.130-GTNH** |
+| GT 本体 | 5.09.52.594 | **5.09.54.133** |
+| BetterQuesting | 3.8.70-GTNH | **3.8.84-GTNH** |
+| ThaumicEnergistics | 1.7.53-GTNH | **1.7.60-GTNH** |
+| Avaritia | 1.97 | **1.99** |
+| GuideNH | 1.3.5 | **1.3.29** |
+| NotEnoughEnergistics | 1.7.14 | **1.7.41** |
+| GTNotLeisure | 0.2.7-pre1 | **0.2.7-pre3** |
+| ModularUI2 | 2.3.73 | **2.3.88** |
+| ProgrammableHatches | 0.2.0p8 | **0.2.0p24** |
+| StructureLib | 1.4.42 | 1.4.42（本就一致） |
+
+本地 jar 依赖已放入 `libs/` 并更新 `dependencies.gradle`；
+Maven 依赖直接用缓存中的 b3 版本坐标。
+
+### 升级后暴露并修复的 API 断裂（6 处，4 个文件）
+
+这正是本轮升级的价值——这些断裂在旧依赖下是隐性的。
+
+1. **`RenderBlockExIOPort` / `RenderBlockQuestDetector`**
+   AE2 1050 把 `BlockIOPort.getRenderer()` 的返回类型由 `BaseBlockRender<?,?>` 收窄为
+   具体的 `RenderIOPort`，原继承 `BaseBlockRender` 的写法不再合法。
+   改为继承 `RenderIOPort`，但**渲染仍走 `BaseBlockRender` 通用路径**以保持既有外观。
+   注意 `TileQuestDetector` 继承 `AENetworkTile` 而非 `TileIOPort`，
+   不能套用 `RenderIOPort` 的 IO 端口专用逻辑（其内部会取 `TileIOPort.getUp()`）。
+
+2. **`ClientProxy.applyClientSwap`**
+   AE2 1050 移除了 `ContainerPatternTerm.outputSlotsClient` 数组字段，
+   改由 `outputsSync`（`AEStackInventorySyncHandler`）统一同步。
+   现改为：仍通过反射读取私有 `outputs` 拿到底层 `IAEStackInventory`，
+   然后直接用 `putAEStackInSlot` 写入，槽位长度取自 `getSizeInventory()`。
+
+3. **`ContainerMergedTerminal`（2 处）**
+   AE2 1050 把 `IInterfaceViewable.getNameSuffix()` 的返回类型由 `String` 改为
+   `IChatComponent`（为在客户端按本地语言翻译后缀）。
+   新增私有 `serializeSuffix(IChatComponent)`，与 AE2 `ContainerInterfaceTerminal.serializeSuffix`
+   行为一致（null 保持 null），序列化后再交给签名未变的
+   `PacketInterfaceTerminalUpdate.addRenamedEntry/setSuffix`。
+
+### 验证
+
+- `gradlew compileJava` 与 `build`（Java 17、offline）均 `BUILD SUCCESSFUL`；
+- `gradlew dependencies` 确认实际解析到 rv3-beta-1050 / 5.09.54.133 / 2.8.130 / 1.5.106 / 2.3.88 等 b3 版本；
+- 与升级前成功构建日志比对，`Unable to locate obfuscation mapping` 警告数量一致（27 条），
+  属于既有现象，非本轮引入。
+
+---
+
 ## 工作区决策记录 2026-09-20 (10) - fix48：MTE ID 让位 fissionevolved + 旧存档自动迁移 + 适配 290b3
 
 > 未提交、未推送；产物 `build/libs/AE2-QoL-3.19.0-fix48.jar`。

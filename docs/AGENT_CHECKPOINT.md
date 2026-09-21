@@ -13,8 +13,8 @@
 |工具平台|Codex Desktop|
 |模型信息|Codex | GPT-5|
 |工作分支|master；本轮起点 `ffe946ae18b8287731f27863dc9018991a1d8ef1`，已有脏状态保留|
-|启动时间|2026-09-20（Asia/Shanghai，fix48 MTE ID 让位 + 适配 290b3）|
-|本次会话目标|解决 b3 下 32100/32101 被 fissionevolved 占用导致的两个终端注册失败：AE2-QoL 退让至空闲号段 32106/32107，并新增旧存档自动迁移保证玩家既有终端配置（频率/电压/子仓配对表）零丢失；同时把项目基线从 beta-1 切换到 beta-3。实例只读，不自动部署。|
+|启动时间|2026-09-21（Asia/Shanghai，fix49 依赖对齐 290b3）|
+|本次会话目标|把编译依赖由 beta-1 时代全量升级到 290b3 实机版本（AE2 977→1050、GT 5.09.52→5.09.54 等 12 项），修复升级后暴露的 6 处 API 断裂，实现真正意义上的 b3 适配。实例只读，不自动部署。|
 
 ---
 
@@ -29,6 +29,25 @@ GTNH 2.9.0-beta-1（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 > 按完成时间倒序排列，均标注产出文件路径。历史结论保留原貌，不等于本版验证结果。
 
 - [x] 2026-09-20 | 工具：Codex | 模型：GPT-5：**fix48 MTE ID 让位 fissionevolved + 旧存档自动迁移 + 基线切 290b3**。
+- [x] 2026-09-21 | 工具：Codex | 模型：GPT-5：**fix49 依赖全量对齐 290b3 实机版本**。
+  背景：fix48 只切了文档基线，编译依赖仍是 beta-1 时代（AE2 977、GT 5.09.52、NEI 2.8.19 等），
+  属"能跑但未对齐"。本轮将 13 项依赖全部升到 b3 实机版本（AE2→1050、GT→5.09.54.133、
+  NEI→2.8.130、AE2FC→1.5.106、ModularUI2→2.3.88、GTNL→pre3、ProgrammableHatches→p24、
+  GuideNH→1.3.29、NotEnoughEnergistics→1.7.41、BetterQuesting→3.8.84、ThaumicEnergistics→1.7.60、Avaritia→1.99；
+  StructureLib 本就一致），本地 jar 放入 `libs/` 并更新 `dependencies.gradle`。
+  **升级后编译期暴露 6 处真实 API 断裂并全部修复**：
+  ① AE2 1050 将 `BlockIOPort.getRenderer()` 返回类型收窄为 `RenderIOPort` →
+  `RenderBlockExIOPort`/`RenderBlockQuestDetector` 改继承 `RenderIOPort`，
+  但渲染仍走 `BaseBlockRender` 通用路径保持既有外观（注意 `TileQuestDetector` 继承
+  `AENetworkTile` 而非 `TileIOPort`，不可套用 IO 端口专用逻辑）；
+  ② AE2 1050 移除 `ContainerPatternTerm.outputSlotsClient` →
+  `ClientProxy.applyClientSwap` 改为反射取私有 `outputs` 后直接 `putAEStackInSlot`；
+  ③ AE2 1050 将 `IInterfaceViewable.getNameSuffix()` 由 `String` 改为 `IChatComponent` →
+  `ContainerMergedTerminal` 新增 `serializeSuffix`（对齐 AE2 `ContainerInterfaceTerminal` 做法）。
+  验证：compileJava/build（Java17、offline）均 SUCCESS；`gradlew dependencies` 确认解析到 b3 版本；
+  `Unable to locate obfuscation mapping` 警告数与升级前一致（27 条，既有现象）。
+  版本同步 `3.19.0-fix49`。
+
   b3 日志实据：`MetaTileEntity id 32101/32100 is already occupied!`，占用者为 fissionevolved
   的裂变反应堆控制器/终极宇宙毁灭发电机控制器（其 `Config.java` 默认值即 32100/32101）。
   两个终端在 b3 的 `metatileentity.csv`（4606 条）中查无，即从未注册成功。
