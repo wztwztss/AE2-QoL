@@ -278,6 +278,8 @@ public abstract class MixinTileIOPort {
             if (this.ae2qol$lastInv != inventory) return;
             final ItemStack cell = this.ae2qol$lastCell;
             if (cell == null || !(cell.getItem() instanceof ItemInfinityStorageCell)) return;
+            // 先去重门控再算详情：下面两次全通道枚举在热路径上很贵，不能每 tick 白算
+            if (!ServerTerminalHelper.diagNeeded("IO-MOVE")) return;
             ServerTerminalHelper.diagOnce(
                 "IO-MOVE",
                 "是否把该元件搬到输出半区：OperationMode=" + om

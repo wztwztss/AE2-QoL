@@ -61,6 +61,21 @@ public final class ServerTerminalHelper {
         } catch (Throwable ignored) {}
     }
 
+    /**
+     * fix53-diag：该分支是否**尚未**记录过。
+     * <p>
+     * 用途：诊断详情有时很贵（例如枚举无限磁盘各通道的内容）。若直接把详情写进
+     * {@code diagOnce(...)} 的实参里，即使日志被去重，**实参每 tick 都会被求值**——
+     * 那是纯浪费（热路径上还会制造大量临时对象）。所以先问这里，再决定要不要算详情。
+     */
+    public static boolean diagNeeded(String branch) {
+        try {
+            return !diagLogged.contains(branch);
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
     static {
         try {
             myPlayerField = WirelessTerminalGuiObject.class.getDeclaredField("myPlayer");
