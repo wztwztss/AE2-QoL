@@ -4,28 +4,55 @@
 
 An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
-**Author: wztwzt · Current source version: 3.19.0-fix49 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.19.0-fix50 · Reference pack: GTNH 2.9.0-beta-3**
 
 This repository is for personal archival and is not currently offered for distribution. See [CREDITS.md](CREDITS.md) for attribution and licensing records. Feature descriptions are not a claim that every integration has passed in-game testing.
 
-## What's new in fix43
+## What's new in fix50
 
-- Stock Monitor Cover items now stack to **64 instead of 1**. Thresholds, configuration NBT and installation logic are unchanged. Covers with different NBT configurations still cannot merge.
-- Retains the fix42 tooltip change; see the handover for current build and testing status.
+- **Fixed the Universal Maintenance Hatch circuit slot rejecting every item.** GT 5.09.54 wired up a new
+  MTE item-validation chain (`MTEItemStackHandler.isItemValid` → `MTEHatchMaintenance.func_94041_b` →
+  `IsAutoMaintenanceInput(...)`); because our hatch is always constructed with `aAuto=false`, that chain
+  returns `false` for slot 0, so the MUI2 slot widget refused everything. On 5.09.52 the chain did not exist,
+  which is why it worked on b1. The fix allows only the tiered circuit boards into that slot and leaves
+  everything else untouched. **Needs in-game confirmation**: insert/eject each tier's circuit board, `max`
+  values in the GUI follow the tier, contents survive a save/load, and non-circuit items are still rejected.
 
-### Previous fix42: tooltip change
+### Previous fix49
+
+- **All build dependencies realigned to the GTNH 2.9.0-beta-3 live versions**: AE2 `rv3-beta-1050`,
+  GregTech `5.09.54.133`, NEI `2.8.130`, AE2FC `1.5.106`, ModularUI2 `2.3.88`, GTNL `0.2.7-pre3`,
+  ProgrammableHatches `0.2.0p24`, GuideNH `1.3.29`, NotEnoughEnergistics `1.7.41`,
+  BetterQuesting `3.8.84`, Thaumic Energistics `1.7.60`, Avaritia `1.99`.
+  The upgrade exposed and fixed 6 real API breaks at compile time (IO/quest-detector render base class,
+  pattern-terminal output-slot sync, interface suffix type). **Compiling against the old set was not the same as being aligned.**
+- **fix48 · MTE ID handover + automatic save migration**: b3's fissionevolved occupies 32100/32101, so our
+  terminals moved to Adaptive Grid **32106** and Stock Monitor **32107**. A read-time migration rewrites the
+  old IDs only for NBT carrying our own keys, so placed terminals keep frequency, voltage tier and hatch bindings.
+- **fix47 · Middle-click in the world**: with the item neither in the inventory nor in the network, but a
+  crafting pattern available, middle-clicking a block opens the "how many to craft" screen; with network stock
+  the native pick-up is unchanged; with neither, nothing happens as before.
+- **fix46 · Fix transparent machines after enabling the resource pack**: the atlas "register once" switch
+  conflicted with `registerIcons()` clearing and rebuilding its list; it now re-registers every call and adds a
+  degenerate-UV fallback.
+- **fix45/fix44 · v7 textures (option B)**: a Mixin appends the 25 v7 paths to the vanilla block-atlas
+  `registerIcons()`, keeping per-face FRONT/TOP/SIDE art; without the pack the machines fall back to stock GT looks.
+- **fix43 · Stock Monitor Cover stack limit 1 → 64**, with no change to thresholds, config NBT or installation logic.
+
+### Earlier: fix42 tooltip change
 
 - Prevent duplicate AE stock / `Craft` lines in the inspected Chromatic Tooltips callback chain: generic `handleTooltip` now passes the list through; only `handleItemTooltip` adds the network line.
 - Remove the pre-existing working-tree attempt to suppress identical text for one second. Different items with the same count must not suppress each other's tooltips during rapid hovering.
 - **No changes to stock queries, fluid identification, cache expiry, number formatting, network packets, Mixins, or dependencies.** Native NEI and the inspected Chromatic bridge share the item callback.
-- Inspected versions: **Chromatic Tooltips 1.0.29 / Compat 1.0.31 / NEI 2.8.101-GTNH**. This is not a universal compatibility guarantee for other versions or every GUI path.
+- Since fix41, **client and server must run the same version** (upload-related packet fields changed).
+- Inspected bridge versions: **Chromatic Tooltips 1.0.29 / Compat 1.0.31 / NEI 2.8.101-GTNH**. This is not a universal compatibility guarantee for other versions or every GUI path.
 
 See the [investigation](docs/mcp-tooltip-duplicate-investigation.md) for evidence and the [handover](docs/AGENT_CHECKPOINT.md) for actual build, artifact, verification, and outstanding test results. **A successful build is not an in-game pass; this change does not automatically deploy the JAR.**
 
 ## Installation and upgrades
 
 1. Stop the game/server and back up the **complete world and configuration**, retaining the previous JAR for rollback. Infinity Cell contents live in the world save; backing up item NBT alone is insufficient.
-2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-3.19.0-fix49.jar`. Do not retain multiple versions.
+2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-3.19.0-fix50.jar`. Do not retain multiple versions.
 3. **Use the same version on client and server.** fix41 changed upload-related packets; upgrading only one side is unsupported.
 4. This JAR includes `aeinfinitycell` (bundled metadata remains `1.0.4-ae2qol`). Do not also install the standalone AE2 Infinity Cell JAR. Test old cells in a copied world before migrating.
 5. Check startup logs, generated configuration and Mixin loading, then exercise the features you use in a test world. Deployment to the development test instance requires separate approval.
@@ -34,20 +61,31 @@ See the [investigation](docs/mcp-tooltip-duplicate-investigation.md) for evidenc
 
 The mod uses **GTNH fork APIs**, not arbitrary Forge 1.7.10/AE2/NEI combinations. See [dependencies.gradle](dependencies.gradle) and [gradle.properties](gradle.properties) for the full build declarations. A `compileOnly` declaration does not prove that startup without that integration has been tested.
 
-| Component | Build reference | Inspected instance |
+| Component | Build reference (fix49) | Compared instance |
 |---|---|---|
 | Minecraft / Forge | 1.7.10 / 10.13.4.1614; MCP stable 12 | GTNH 2.9.0-beta-3 |
-| AE2 Unofficial | rv3-beta-977-GTNH | Same |
-| AE2FluidCraft-Rework | 1.5.88-gtnh | Same |
-| GregTech | 5.09.52.594 | Same |
-| ModularUI2 | 2.3.73-1.7.10 | Same |
-| NEI | 2.8.19-GTNH | **2.8.101-GTNH** |
-| NotEnoughEnergistics | 1.7.14 | **1.7.30** |
-| GT Not Leisure | 0.2.7-pre1-dev-290 | **0.2.7-pre2** |
-| Programmable Hatches / Wireless Nexus | 0.2.0p8 / 1.0.2 | Same |
-| BetterQuesting | 3.8.70-GTNH | Quest API reviewed against this version |
+| AE2 Unofficial | rv3-beta-1050-GTNH | Same |
+| AE2FluidCraft-Rework | 1.5.106-gtnh | Same |
+| GregTech | 5.09.54.133 | Same |
+| ModularUI2 | 2.3.88-1.7.10 | Same |
+| NEI | 2.8.130-GTNH | Same |
+| NotEnoughEnergistics | 1.7.41 | Same |
+| GT Not Leisure | 0.2.7-pre3-dev-290 | Same |
+| Programmable Hatches / Wireless Nexus | 0.2.0p24 / 1.0.2 | Same |
+| BetterQuesting | 3.8.84-GTNH | Quest API reviewed against 3.8.70; built against 3.8.84 |
+| GuideNH | 1.3.29 | Same |
+| Thaumic Energistics | 1.7.60-GTNH | Same |
+| Avaritia | 1.99 | Same |
+| StructureLib | 1.4.42 | Same |
 
-Other integrations involve CodeChickenLib, StructureLib, Thaumic Energistics, Thaumcraft, Avaritia, Eternal Singularity and GuideNH. Chromatic Tooltips is not a new dependency introduced by this fix. The build uses Java 17 / Jabel and targets JVM 8 bytecode; use the game Java version required by your pack's lwjgl3ify/launcher setup.
+Before fix49 this table still listed beta-1-era versions (AE2 977 / GT 5.09.52.594 / NEI 2.8.19 /
+MUI2 2.3.73 / NEE 1.7.14 / GTNL pre1 / PH 0.2.0p8 / BQ 3.8.70) — compile-capable but not aligned with b3.
+The upgrade exposed and fixed 6 API breaks.
+
+Other integrations involve CodeChickenLib, Thaumcraft and Eternal Singularity. Chromatic Tooltips is not a
+dependency of this mod but the comparison environment for F4/F5 (fix42 inspected Chromatic 1.0.29 /
+Compat 1.0.31 / NEI 2.8.101). The build uses Java 17 / Jabel and targets JVM 8 bytecode; use the game Java
+version required by your pack's lwjgl3ify/launcher setup.
 
 ## Configuration and administration
 
@@ -190,7 +228,9 @@ GT information terminal, ID **32107**, designed to centrally inspect/edit standa
 
 ## Known issues and verification scope
 
-A01–A19 in the [fix41 full-function audit](docs/mcp-full-function-audit-fix41.md) are static-review findings, not a claim that every issue was reproduced in-game. They are **not closed by fix42**. Priorities include Infinity Cell saving/migration, cross-recipe conservation, wireless EU, smart doubling, stock-terminal behavior, provider-list budgets and NBT identity.
+A01–A19 in the [fix41 full-function audit](docs/mcp-full-function-audit-fix41.md) are static-review findings, not a claim that every issue was reproduced in-game. They are **not closed by any later round**. Priorities include Infinity Cell saving/migration, cross-recipe conservation, wireless EU, smart doubling, stock-terminal behavior, provider-list budgets and NBT identity.
+
+Every change after fix44 (v7 textures, in-world middle-click pick, MTE ID migration, the b3 dependency upgrade) has **only a successful build and artifact inspection behind it — no in-game acceptance run**. Untested items are not passes. For A13/A14/A15 the code direction has landed (`util/ItemIdentity`), but the audit status column is not back-filled and nothing has been re-tested.
 
 For reports, include both sides' JAR versions, pack/integration versions, GUI and item/fluid, reproduction steps, expected/actual behavior, logs and screenshots. Tooltip regression should cover stock/craftability combinations, rapid switching, fluid displays, real containers, and both native NEI and Chromatic paths.
 
@@ -204,7 +244,7 @@ $env:GRADLE_USER_HOME = 'C:\Users\29357\.gradle'
 .\gradlew.bat build --offline -x spotlessJavaCheck -x spotlessCheck
 ```
 
-The fix42 round passed the Java17 build and 59 assertions in [tooltip-fix42-regression.sh](docs/tooltip-fix42-regression.sh), using dependency stubs rather than game integration. Re-run with `JAVA_HOME=/e/java17 bash docs/tooltip-fix42-regression.sh`. Gradle `test` itself reported `NO-SOURCE`.
+The fix49 round passed an offline Java17 build (`compileJava` and `build` both `BUILD SUCCESSFUL`, with the produced JAR unpacked to confirm the new Mixins are present and their members reobfuscated). The fix42 script [tooltip-fix42-regression.sh](docs/tooltip-fix42-regression.sh) passes 59 assertions using dependency stubs rather than game integration; re-run with `JAVA_HOME=/e/java17 bash docs/tooltip-fix42-regression.sh`. Gradle `test` itself reported `NO-SOURCE`.
 
 Adjust paths and use `./gradlew` on other environments. This is the current Java17 verification command and **explicitly skips Spotless**; it does not establish a formatting-check pass. Jabel permits modern syntax while emitting JVM 8 bytecode. Artifacts are in `build/libs/`; actual test execution and checksums are recorded in the handover.
 

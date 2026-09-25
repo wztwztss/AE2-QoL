@@ -97,15 +97,22 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
         return CIRCUIT_ITEMS;
     }
 
-    private int getCircuitLevel() {
-        ItemStack stack = mInventory[CIRCUIT_SLOT];
-        if (stack == null) return -1;
+    /**
+     * 判定给定物品是否为 dreamcraft 的各电压电路板，并返回其电压档位（-1 表示不是电路板）。
+     * 抽出为静态方法是为了让「槽位校验」与「档位读取」共用同一份判据，避免两处判据漂移。
+     */
+    private static int circuitLevelOf(ItemStack stack) {
+        if (stack == null || stack.getItem() == null) return -1;
         Item item = stack.getItem();
         Item[] items = getCircuitItems();
         for (int i = 0; i < items.length; i++) {
             if (items[i] != null && item == items[i]) return i;
         }
         return -1;
+    }
+
+    private int getCircuitLevel() {
+        return circuitLevelOf(mInventory[CIRCUIT_SLOT]);
     }
 
     public int getCircuitLevelPublic() { return getCircuitLevel(); }
@@ -227,6 +234,31 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
 
     @Override public boolean allowPullStack(IGregTechTileEntity a, int i, ForgeDirection s, ItemStack stack) { return false; }
     @Override public boolean allowPutStack(IGregTechTileEntity a, int i, ForgeDirection s, ItemStack stack) { return false; }
+
+    /**
+     * 电路板槽的物品校验。
+     * <p>
+     * 背景（fix50 修复的回归）：GT 5.09.54 起新接通了一条 MTE 物品校验链——
+     * {@code MTEItemStackHandler.isItemValid}（该类 5.09.52 时没有这个方法）→
+     * {@code MetaTileEntity.func_94041_b} → {@code MTEHatchMaintenance.func_94041_b}
+     * （该覆写同样是 5.09.54 新增）= {@code IsAutoMaintenanceInput(stack) && super}；
+     * 而 {@code super}（{@code CommonMetaTileEntity.func_94041_b}）返回
+     * {@code getBaseMetaTileEntity().isValidSlot(index)}，即 {@code mAuto && GTMod.proxy.mAMHInteraction}。
+     * 本仓构造函数恒传 aAuto=false，于是该链对槽位 0 恒为 false，MUI2 槽位控件因此拒绝一切物品
+     * （5.09.52 的 {@code MTEItemStackHandler} 没有 isItemValid 覆写，继承 MUI2 默认 true，故当时可放）。
+     * <p>
+     * 这里只对电路板槽放行本模组认得的各电压电路板，其余索引与物品一律交回 {@code super}，
+     * 因此 GT 原版自动维护仓语义与其它槽位行为完全不变。
+     * <p>
+     * 注意方法名：{@code func_94041_b} 是 {@code IInventory.isItemValidForSlot} 的 SRG 名。
+     * 本项目编译依赖 {@code libs/gregtech-*.jar} 是**未反混淆**的 GT 产物，MC 接口成员在其中保留 SRG 名，
+     * 因此覆写必须使用 SRG 名（写成 MCP 名会编译失败：找不到可覆写的方法）。
+     */
+    @Override
+    public boolean func_94041_b(int aIndex, ItemStack aStack) {
+        if (aIndex == CIRCUIT_SLOT && circuitLevelOf(aStack) >= 0) return true;
+        return super.func_94041_b(aIndex, aStack);
+    }
 
     @Override
     public void getWailaBody(ItemStack itemStack, java.util.List<String> currenttip,

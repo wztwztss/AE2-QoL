@@ -4,28 +4,48 @@
 
 为 **Minecraft 1.7.10 / GT New Horizons** 开发的 AE2 效率增强模组：NEI 样板上传、库存与合成状态提示、二合一终端、无线 AE 连接，以及 GT 仓室、电网与库存监控工具。
 
-**作者：wztwzt · 当前源码版本：3.19.0-fix49 · 对照整合包：GTNH 2.9.0-beta-3**
+**作者：wztwzt · 当前源码版本：3.19.0-fix50 · 对照整合包：GTNH 2.9.0-beta-3**
 
 本仓库用于个人存档，暂不开放分发。来源、署名与许可记录见 [CREDITS.md](CREDITS.md)。功能说明不代表所有兼容组合均已通过实机测试。
 
-## 本版变化：fix43
+## 本版变化：fix50
 
-- 库存检测覆盖板物品堆叠上限由 **1 改为 64**；不改检测阈值、配置 NBT 或安装逻辑。带不同 NBT 配置的覆盖板仍不能混堆。
-- 保留 fix42 的 Tooltip 修复；构建与验收状态见交接文档。
+- **修复万能维护仓「电路板槽放不进任何物品」**：GT 5.09.54 起为 MTE 新接通了一条物品校验链
+  （`MTEItemStackHandler.isItemValid` → `MTEHatchMaintenance.func_94041_b` → `IsAutoMaintenanceInput(...)`），
+  本仓因为恒以 `aAuto=false` 构造，该链对槽位 0 恒为 `false`，于是 MUI2 槽位控件拒绝一切物品
+  （5.09.52 时该链尚未接通，所以 b1 上能放）。现只对电路板槽放行各电压电路板，其余行为不变。
+  **需要实测确认**：各电压电路板可放入/取出、GUI 中 `max` 随电压变化、存读档保留、非电路板物品仍被拒。
 
-### 上一版 fix42：Tooltip 修复
+### 上一版 fix49
+
+- **依赖全量对齐 GTNH 2.9.0-beta-3 实机版本**：AE2 `rv3-beta-1050`、GT `5.09.54.133`、NEI `2.8.130`、
+  AE2FC `1.5.106`、ModularUI2 `2.3.88`、GTNL `0.2.7-pre3`、ProgrammableHatches `0.2.0p24`、
+  GuideNH `1.3.29`、NotEnoughEnergistics `1.7.41`、BetterQuesting `3.8.84`、ThaumicEnergistics `1.7.60`、Avaritia `1.99`。
+  升级在编译期暴露并修复了 6 处 API 断裂（IO/检测器渲染基类、样板终端输出槽同步、接口后缀类型）。
+  **旧依赖下"能跑"不等于已对齐，本轮才是真正的 b3 适配。**
+- **fix48 · MTE ID 让位 + 旧存档自动迁移**：b3 新增的 fissionevolved 占用 32100/32101，本模组终端
+  改为自适应电网 **32106**、库存统计 **32107**；新增存档读取期自动迁移，已摆放终端的频率/电压/子仓配对不丢失。
+- **fix47 · 世界中键取物**：对着世界方块按中键时，背包与网络都没有该物品、但存在合成样板 → 直接打开
+  「要合成多少个」界面；网络有存量仍按原生取物，两者都没有则维持原生无反应。
+- **fix46 · 修复装材质包后机器透明**：根因是图集"只注册一次"开关与 `registerIcons()` 的 clear/重建语义冲突，
+  已改为每次补注册并增加退化 UV 兜底。
+- **fix45/fix44 · v7 材质接入（方案 B）**：用 Mixin 在原版方块图集 `registerIcons()` 尾部补注册 25 张 v7 路径，
+  保留 8 台机器的 FRONT/TOP/SIDE 分面；不装材质包时完全回退 GT 默认外观。
+- **fix43 · 库存检测覆盖板堆叠上限 1 → 64**，不改检测阈值、配置 NBT 或安装逻辑。
+
+### 更早：fix42 Tooltip 修复
 
 - 修复针对当前 Chromatic Tooltips 调用链的 AE 数量 / `Craft` 重复追加：通用 `handleTooltip` 透传，只由 `handleItemTooltip` 生成网络信息行。
 - 移除工作区原有的“一秒内相同文本不再显示”方案，避免不同物品数量相同、快速切换时被跨提示抑制。
 - **不改库存查询、流体识别、缓存有效期、数量格式、网络协议、Mixin 和依赖。** 原生 NEI 与当前 Chromatic 桥接共用同一入口。
-- 已核对的桥接版本：**Chromatic Tooltips 1.0.29 / Compat 1.0.31 / NEI 2.8.101-GTNH**。不据此承诺其他版本或所有 GUI 路径。
+- fix41 起客户端与服务端**必须同版本**（上传相关网络包字段有变化）。
 
-原因、版本证据见 [调查方案](docs/mcp-tooltip-duplicate-investigation.md)；本轮构建、制品、验证范围及待实测项见 [交接文档](docs/AGENT_CHECKPOINT.md)。**构建成功不等于游戏实测通过；本轮不自动部署。**
+原因、版本证据见 [调查方案](docs/mcp-tooltip-duplicate-investigation.md)；各轮构建、制品、验证范围及待实测项见 [交接文档](docs/AGENT_CHECKPOINT.md)。**构建成功不等于游戏实测通过；本轮不自动部署。**
 
 ## 安装与升级
 
 1. 关闭游戏/服务器，备份**完整世界存档和配置**，保留可回退的旧 JAR。无限存储元件的数据在世界存档内，不能只备份物品 NBT。
-2. 在与本项目匹配的 GTNH 环境中，用 `AE2-QoL-3.19.0-fix49.jar` 替换旧的 AE2 QoL JAR，不要同时保留多个版本。
+2. 在与本项目匹配的 GTNH 环境中，用 `AE2-QoL-3.19.0-fix50.jar` 替换旧的 AE2 QoL JAR，不要同时保留多个版本。
 3. **客户端与服务端使用同一版本**。fix41 改过上传相关网络包，不能只升级一端。
 4. 本 JAR 已并入 `aeinfinitycell`（内置元数据版本仍为 `1.0.4-ae2qol`）；不要与原独立 AE2 Infinity Cell JAR 同时安装。迁移前备份，在副本存档中验证旧元件。
 5. 首次启动后检查日志、配置生成与 Mixin 加载，再在测试存档中验证所用功能。开发协作中，向测试实例部署仍须单独授权。
@@ -34,20 +54,27 @@
 
 本项目使用 **GTNH 分支 API**，不是任意 Forge 1.7.10 装上 AE2/NEI 就能保证运行。完整声明见 [dependencies.gradle](dependencies.gradle) 与 [gradle.properties](gradle.properties)；`compileOnly` 不等于相关集成已经过缺模组启动验证。
 
-| 组件 | 当前编译依据 | 本轮对照实例 |
+| 组件 | 当前编译依据（fix49） | 对照实例 |
 |---|---|---|
 | Minecraft / Forge | 1.7.10 / 10.13.4.1614；MCP stable 12 | GTNH 2.9.0-beta-3 |
-| AE2 Unofficial | rv3-beta-977-GTNH | 同左 |
-| AE2FluidCraft-Rework | 1.5.88-gtnh | 同左 |
-| GregTech | 5.09.52.594 | 同左 |
-| ModularUI2 | 2.3.73-1.7.10 | 同左 |
-| NEI | 2.8.19-GTNH | **2.8.101-GTNH** |
-| NotEnoughEnergistics | 1.7.14 | **1.7.30** |
-| GT Not Leisure | 0.2.7-pre1-dev-290 | **0.2.7-pre2** |
-| Programmable Hatches / Wireless Nexus | 0.2.0p8 / 1.0.2 | 同左 |
-| BetterQuesting | 3.8.70-GTNH | 任务检测接口按此版本审查 |
+| AE2 Unofficial | rv3-beta-1050-GTNH | 同左 |
+| AE2FluidCraft-Rework | 1.5.106-gtnh | 同左 |
+| GregTech | 5.09.54.133 | 同左 |
+| ModularUI2 | 2.3.88-1.7.10 | 同左 |
+| NEI | 2.8.130-GTNH | 同左 |
+| NotEnoughEnergistics | 1.7.41 | 同左 |
+| GT Not Leisure | 0.2.7-pre3-dev-290 | 同左 |
+| Programmable Hatches / Wireless Nexus | 0.2.0p24 / 1.0.2 | 同左 |
+| BetterQuesting | 3.8.84-GTNH | 任务检测接口按 3.8.70 审查，编译用 3.8.84 |
+| GuideNH | 1.3.29 | 同左 |
+| Thaumic Energistics | 1.7.60-GTNH | 同左 |
+| Avaritia | 1.99 | 同左 |
+| StructureLib | 1.4.42 | 同左 |
 
-另涉及 CodeChickenLib、StructureLib、Thaumic Energistics、Thaumcraft、Avaritia、Eternal Singularity、GuideNH 等。Chromatic Tooltips 不是本次新增依赖。构建使用 Java 17 / Jabel，目标字节码为 JVM 8；实际游戏 Java 要遵循所用整合包的 lwjgl3ify/启动器配置。
+fix49 之前本表停留在 beta-1 时代（AE2 977 / GT 5.09.52.594 / NEI 2.8.19 / MUI2 2.3.73 / NEE 1.7.14 / GTNL pre1 / PH 0.2.0p8 / BQ 3.8.70），
+属"能编译但未对齐 b3"；现已全量升级，升级过程暴露并修复了 6 处 API 断裂。
+
+另涉及 CodeChickenLib、Thaumcraft、Eternal Singularity 等。Chromatic Tooltips 不是本模组依赖，而是 F4/F5 的对照环境（fix42 核对版本为 Chromatic 1.0.29 / Compat 1.0.31 / NEI 2.8.101）。构建使用 Java 17 / Jabel，目标字节码为 JVM 8；实际游戏 Java 要遵循所用整合包的 lwjgl3ify/启动器配置。
 
 ## 配置与管理
 
@@ -193,7 +220,9 @@ GT 单方块信息终端（ID **32107**），设计用于集中查看/编辑 AE 
 
 ## 已知问题与验证边界
 
-[fix41 全功能审查](docs/mcp-full-function-audit-fix41.md) 的 A01–A19 是静态审查结论，不等于每项已在游戏复现，也**没有因 fix42 Tooltip 修复而关闭**。重点包括无限元件保存/迁移、跨配方守恒、无线 EU、智能倍增、库存终端、供应器列表预算与 NBT 身份等。
+[fix41 全功能审查](docs/mcp-full-function-audit-fix41.md) 的 A01–A19 是静态审查结论，不等于每项已在游戏复现，也**没有因后续任何一轮修复而关闭**。重点包括无限元件保存/迁移、跨配方守恒、无线 EU、智能倍增、库存终端、供应器列表预算与 NBT 身份等。
+
+fix44 之后的所有改动（v7 材质、世界中键取物、MTE ID 迁移、b3 依赖升级）**都只有"编译通过 + 制品核对"，没有游戏内验收记录**，未测项一律不视为通过。其中 A13/A14/A15 相关的代码方向已落地（`util/ItemIdentity` 精确物品身份），但审查报告状态列未回填，也未经实测。
 
 反馈请附：两端 JAR 版本、整合包与相关模组版本、GUI/物品或流体、操作步骤、预期/实际结果、日志与截图。Tooltip 回归需覆盖库存/可合成组合、快速切换、流体展示、普通容器以及原生 NEI/Chromatic 两条路径。
 
@@ -207,7 +236,8 @@ $env:GRADLE_USER_HOME = 'C:\Users\29357\.gradle'
 .\gradlew.bat build --offline -x spotlessJavaCheck -x spotlessCheck
 ```
 
-fix42 轮次 Java17 构建成功；独立脚本 [tooltip-fix42-regression.sh](docs/tooltip-fix42-regression.sh) 的 59 项断言通过（依赖桩，不是游戏集成测试）。可用 `JAVA_HOME=/e/java17 bash docs/tooltip-fix42-regression.sh` 复跑；Gradle `test` 本身为 `NO-SOURCE`。
+fix49 轮次 Java17 离线构建成功（`compileJava` 与 `build` 均 `BUILD SUCCESSFUL`，并已解包核对新 Mixin 入包与成员重混淆）；
+fix42 的独立脚本 [tooltip-fix42-regression.sh](docs/tooltip-fix42-regression.sh) 59 项断言通过（依赖桩，不是游戏集成测试），可用 `JAVA_HOME=/e/java17 bash docs/tooltip-fix42-regression.sh` 复跑；Gradle `test` 本身为 `NO-SOURCE`。
 
 其他环境调整路径后使用 `./gradlew`。这是本项目当前 Java17 验证命令，**显式跳过 Spotless，不代表格式检查已通过**。Jabel 允许现代语法并输出 JVM 8 字节码。构建输出在 `build/libs/`；测试是否实际执行及制品校验值以交接记录为准。
 

@@ -1,3 +1,155 @@
+## 工作区决策记录 2026-09-25 (13) - fix50：万能维护仓电路板槽因 GT 5.09.54 新增校验链而全拒（回归修复）
+
+> 未提交；产物 `build/libs/AE2-QoL-3.19.0-fix50.jar`。
+
+### 现象
+
+b3 实例上，万能维护仓（MTE 32000）的**电路板槽**放进不去东西：各电压电路板全部被拒；
+槽位仍正常显示，**之前放进去的物品仍在槽内**；**新放置的万能维护仓同样放不进**（与存档无关）；
+无任何异常日志。同一物品在 b1 实例（GT 5.09.52.594 + 本模组 fix47）上可以放入。
+
+### 根因：GT 5.09.52 → 5.09.54 之间为 MTE 接通了一条新的物品校验链
+
+用 `javap` 对比两版 GT 的字节码（**注意：jar 中的方法名是 SRG 名**，
+`IInventory.isItemValidForSlot` 在 GT 产物里叫 `func_94041_b`，第一次比对时用 MCP 名去 grep 是无效的，
+下表为修正后的结果）：
+
+| 方法（jar 中的真实名字） | 5.09.52.594 | 5.09.54.133 |
+|---|---|---|
+| `MTEItemStackHandler.isItemValid(int,ItemStack)` | **不存在**（继承 MUI2 默认 `true`） | **新增** |
+| `MTEHatchMaintenance.func_94041_b(int,ItemStack)` | **不存在** | **新增**（`IsAutoMaintenanceInput(stack) && super`） |
+| `CommonMetaTileEntity.func_94041_b(int,ItemStack)` | 存在 | 存在 |
+
+5.09.52 时 `MTEItemStackHandler` 只有 `getSlotLimit`，其 `isItemValid` 继承 MUI2 默认的 `true`，
+因此 MUI2 槽位控件接受任何物品；5.09.54 起这条链被接通，末端对我们恒为 `false`：
+
+1. 槽位控件：`AE2MaintenanceHatchUniversal.buildUI()` 用
+   `new ModularSlot(inventoryHandler, CIRCUIT_SLOT)`（`CIRCUIT_SLOT = 0`）；
+2. MUI2：`ItemSlotSH.isItemValid` → `ModularSlot.isItemValid` → `SlotItemHandler.isItemValid`
+   → `ItemStackHandler.isItemValid`；
+3. GT：`MetaTileEntity` 构造里 `inventoryHandler = new MTEItemStackHandler(mInventory, this)`，
+   其 `isItemValid` = `mte.func_94041_b(...) || mte.isItemValidForPhantomSlot(...)`；
+4. `MTEHatchMaintenance.func_94041_b`（5.09.54 新增）= `IsAutoMaintenanceInput(stack) && super...`；
+   各电压电路板不是自动维护输入 → 前半段即 `false`；
+5. `super`（`CommonMetaTileEntity.func_94041_b`）= `getBaseMetaTileEntity().isValidSlot(index)`，
+   而 `MTEHatchMaintenance.isValidSlot` = `mAuto && GTMod.proxy.mAMHInteraction`；
+   本仓两个构造函数都传 `aAuto = false` → 恒 `false`。
+
+所以是**与物品类型无关的全拒**，与"任意物品都放不进、旧内容仍在、无异常日志"完全吻合。
+
+### 修复
+
+只改一个文件 `src/main/java/com/wztwzt/ae2_qof/hatch/AE2MaintenanceHatchUniversal.java`：
+
+- 把 `getCircuitLevel()` 的物品判据抽成静态 `circuitLevelOf(ItemStack)`，让"槽位校验"与"档位读取"
+  共用同一份判据，避免两处漂移；
+- 新增 **`func_94041_b(int, ItemStack)`** 覆写（这是 `IInventory.isItemValidForSlot` 的 SRG 名）：
+  **只对电路板槽放行本模组认得的各电压电路板**（`CIRCUIT_KEYS` 对应的 dreamcraft 电路物品），
+  其余索引与物品一律交回 `super`。
+
+> **方法名为什么是 SRG 名**：本项目编译依赖的 `libs/gregtech-*.jar` 是**未反混淆**的 GT 产物，
+> MC 接口成员在其中保留 SRG 名。第一次按参考源码写成 MCP 名 `isItemValidForSlot` 时
+> `compileJava` 直接报"找不到符号"（找不到可覆写的方法）——属**显式失败**，不会静默失效。
+> 仓库里已有同类先例：`merged/GuiMergedTerminal.java:219` 的 `func_146977_a(Slot)`。
+
+### 实施中纠正的一处判断（如实登记）
+
+方案阶段曾用 MCP 名 `isItemValidForSlot` 去 `javap` 比对两版 GT，得出"5.09.54 新增
+`CommonMetaTileEntity.isItemValidForSlot`"——**该结论错误**：jar 里该成员名为 `func_94041_b`，
+且两版都有。修正后结论不变（新增的是 `MTEHatchMaintenance.func_94041_b` 与
+`MTEItemStackHandler.isItemValid`），但**方法名与归属必须按 jar 字节码为准**，
+不能拿 `reference_src` 的源码当作编译基线的真身。
+
+### 为什么这样改能解决根因
+
+被拒绝的位置正是第 4 步那条链的末端方法。在 `CIRCUIT_SLOT` 上返回 `true`，
+等价于把该槽恢复到 5.09.52 的可用状态；其余索引仍走 `super`，GT 的自动维护仓语义、
+其它槽位、以及管道自动化（本仓 `allowPutStack`/`allowPullStack` 恒 `false`）都不受影响。
+该修复**与 MUI2 版本无关**（失效发生在 `isItemValid` 的返回值，不在 MUI2 控件行为）。
+
+### 影响面与风险
+
+- 只影响本模组这一个仓的槽位 0；GT 原版维护仓与其它机器完全不变。
+- 代价：本覆写与 GT ≥ 5.09.54 的编译基线绑定（当前基线即 5.09.54.133）。若将来回退 GT 版本，
+  会**编译失败**而不是静默失效。
+- 若下游 `dreamcraft` 电路物品改名，`circuitLevelOf()` 与档位读取会同时失效（共用判据），
+  不会出现"只坏一半"。
+
+### 验证（已完成）
+
+- 构建：`$env:JAVA_HOME='E:\java17'` + `.\gradlew.bat build --offline -x spotlessJavaCheck -x spotlessCheck`
+  → `BUILD SUCCESSFUL`；**无管道复核进程退出码 0**（本项目的管道命令退出码不可信，按交接文档要求另跑一次）。
+- 产物：`build/libs/AE2-QoL-3.19.0-fix50.jar`，1,124,645 字节。
+- 解包核对：产物中 `com.wztwzt.ae2_qof.hatch.AE2MaintenanceHatchUniversal` 确实声明
+  `public boolean func_94041_b(int, net.minecraft.item.ItemStack)`，**SRG 名未被重混淆改名**，
+  运行期会正确覆盖 `MTEHatchMaintenance.func_94041_b`；同类的静态 `circuitLevelOf(ItemStack)` 亦已入包。
+- 元数据：`gradle.properties` 与 `src/main/resources/mcmod.info` 主版本均为 `3.19.0-fix50`（内置 aeinfinitycell 仍为 `1.0.4-ae2qol`）。
+
+### 待用户实测（未实测前不标通过）
+
+1. 各电压电路板逐个放入 → 能放入；取出 → 能取出；
+2. 放入后 GUI 里 `max` 值随电压变化（证明档位真的读到了）；
+3. 存读档后槽内内容保留；
+4. 放入**非**电路板物品 → 仍被拒绝（本次刻意保留的语义）；
+5. 其它机器与 GT 原版维护仓无变化，无异常日志。
+
+---
+
+## 工作区决策记录 2026-09-25 (12) - 文档与仓库真实状态对齐（无代码变更）
+
+> 未提交；本轮只改文档，未触碰任何 `.java`、资源或依赖。产物仍为 `build/libs/AE2-QoL-3.19.0-fix49.jar`。
+
+### 为什么做这一轮
+
+fix47 / fix48 / fix49 已经提交并推送（`63153ed` / `d783448` / `223c8c5`，`master` 与 `origin/master` 同步、工作树干净），
+但文档层长期停在 fix49 开工前：交接文档写着"未提交、未推送"、起点 `ffe946a`、基线 beta-1，
+README 的"本版变化"停在 fix43、依赖对照表还是 beta-1 时代。
+下一个接手的智能体若照着这些文档干活，会得到错误的起点与错误的依赖认知。故本轮做一次纯文档对齐。
+
+### 核实到的事实（据此改写文档）
+
+| 项目 | 文档原写法 | 实测 |
+|---|---|---|
+| git 状态 | 未提交、未推送；HEAD `ffe946a` | `63153ed`/`d783448`/`223c8c5` 已提交并推送，工作树干净 |
+| 产物 | `AE2-QoL-3.19.0-fix45/47.jar` 等 | `build/libs/` 只有 fix49 三件（含 `-dev`/`-sources`） |
+| 依赖 | AE2 977 / GT 5.09.52.594 / NEI 2.8.19 / MUI2 2.3.73 / NEE 1.7.14 / GTNL pre1 / PH p2.0p8 / BQ 3.8.70 | 已全部升到 b3（AE2 1050 / GT 5.09.54.133 / NEI 2.8.130 / AE2FC 1.5.106 / MUI2 2.3.88 / NEE 1.7.41 / GTNL 0.2.7-pre3 / PH 0.2.0p24 / BQ 3.8.84 / TE 1.7.60 / Avaritia 1.99 / GuideNH 1.3.29） |
+| Mixin 数量 | MOD_MAP 列 15 条、mixin_notes 列 22 条 | `mixins.ae2_qof.json` 实为 **29 条** |
+| v7 材质 | "方案 P：GT 图标队列" | 实为**方案 B**：`MixinTextureMap` 在 `registerIcons()` 尾部补注册 |
+| 历史日志 | 根目录 4 个 `build_compile*.log` 为保留项 | 已随 `63153ed` 清理并入库，不再存在 |
+
+### 如实登记：fix42~fix46 没有独立 commit
+
+fix42（Tooltip 单入口）、fix43（覆盖板堆叠 64）、fix44/fix45（v7 材质方案 B）、fix46（机器透明修复）
+的业务改动**没有各自成 commit**，而是与 fix47 一起并入 `63153ed`。
+这与项目约定"一个功能/bug 一个 commit、代码与文档与版本号放同一个 commit"不符。
+本轮只做记录，**不重写历史、不拆分既有提交**；后续每轮请严格一次修复一个 commit。
+
+### 本轮修改的文档
+
+- `docs/AGENT_CHECKPOINT.md`：会话元数据（改为当前平台/模型、起点 `223c8c5`）、项目基线改 b3/fix49、
+  新增本轮完成条目、第四节提交状态、第五节待办与实测项、第六节约束第 2/8 条、
+  第七节 v7"现行做法"注记、第八节版本状态/F22 根因/协作环境、第九节本轮日志、第十/十一节后置说明、使用说明。
+- `README.md` / `README.en.md`：`本版变化` 由 fix43 改为 fix49（并压缩列出 fix43~fix48 累积变更）；
+  依赖对照表全量更新为 b3 版本；验证边界补充"fix44 之后无游戏内验收记录"。
+- `docs/MOD_MAP.md`：v7 描述改方案 B；Mixin 表补全为 29 条；新增 `ItemIdentity`、
+  `WirelessEnergyTransfer`、F22 终端、F16 任务检测器、F11 石英刀、F17 无限元件等定位行；
+  修正 F12 的入口描述（`client/event/KeyInputHandler`，不是 `MixinGuiRecipe`）；外部参考目录改 `reference_src_290b3`。
+- `docs/mixin_notes.md`：基线改 b3/rv3-beta-1050；新增"上传取物/材质/GT 注册与迁移"6 条清单；
+  已知风险补充 API 变动、MTE 数字 ID 独占、图集"sprite 0×0 = 透明"三条；汇总表对齐 29 条。
+- `docs/GTNH-构建与代码参考.md`：第五节"本项目配置"由模板占位值改为真实取值。
+- `docs/GTNH-迁移移植指南.md`：Mixin 适配基线改 b3。
+- `docs/v7-材质方案结论档案.md`：第十节加注——实例路径与基线已变（b3 实例），其余结论仍有效。
+
+### 未做的事（明确边界）
+
+- 未编译、未运行游戏、未部署、未提交、未推送；未改任何 `.java`/资源/依赖。
+- **不改** fix41 全功能审查 A01–A19 的状态列：A13/A14/A15 虽有代码落地（`util/ItemIdentity`），
+  但既未回填报告、也未实测，不得据此宣称已修复。
+- 历史文档（`docs/mcp-full-function-audit-fix41.md`、`docs/mcp-tooltip-duplicate-investigation.md`、
+  `docs/SINGLEPLAYER_TEST_SCRIPT.md`、`docs/v7-材质任务全程记录-2026-09-18.md`）按其记录的时点保留原貌。
+
+---
+
 ## 工作区决策记录 2026-09-21 (11) - fix49：依赖全量对齐 GTNH 2.9.0-beta-3 实机版本
 
 > 未提交、未推送；产物 `build/libs/AE2-QoL-3.19.0-fix49.jar`。
