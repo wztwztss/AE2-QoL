@@ -131,6 +131,14 @@ $env:GRADLE_USER_HOME = 'C:\Users\29357\.gradle'
   此时 `Move-Item` 会失败，导致"旧 jar 没移走 + 新 jar 已复制进来" ⇒ **mods 里同时存在两份同名 mod（重复 modId）**。
   2026-09-25 已实际踩到一次。**一旦发生，立刻把新 jar 移出 mods 恢复一致状态**，再让用户退游戏后重做。
 - 顺序固定为：**① 确认进程已退出 → ② 移出旧 jar（不删除）→ ③ 复制新 jar → ④ 比对 SHA256 → ⑤ 确认 mods 里只有一份**；
+- ⚠️ **"游戏是否在跑"的判据必须精准**：Gradle 守护进程同样是 `java.exe`，**不能**用"存在 java 进程"当判据
+  （2026-09-25 因此误拦一次）。正确判据是命令行含**实例路径**或 `launchwrapper` / `net.minecraft`：
+  ```powershell
+  Get-CimInstance Win32_Process -Filter "Name='java.exe' OR Name='javaw.exe'" |
+    Where-Object { $_.CommandLine -like "*$inst*" -or $_.CommandLine -like '*launchwrapper*' }
+  ```
+- 替换脚本应把该判据写成**前置中止条件**（命中就 exit，不动 mods），并在最后打印
+  「mods 内 AE2-QoL 数量」（必须为 1）与实例/本地 SHA256 比对结果；
 - 若游戏仍在运行：**不要动手**，先请用户完全退出；并告知重启后才会加载新 jar（mods 仅在启动时加载）；
 - 测试实例始终**只读**，除部署 jar 外不改动实例文件。
 
