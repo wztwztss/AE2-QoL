@@ -1,3 +1,80 @@
+## 工作区决策记录 2026-09-25 (16) - fix53-diag：实测结果回填 + 诊断构建（仅取证，不发布）
+
+> **非发布版本**。产物 `build/libs/AE2-QoL-3.19.0-fix53-diag.jar`，用途只有一个：把两个仍未修好的问题
+> 从「静默失败」变成「日志可判读」。本版**不改变任何行为**。
+
+### 一、实测结果回填（fix50 / fix51 / fix52）
+
+| 问题 | 修复 | 结论 |
+|---|---|---|
+| 3. 万能维护仓电路板槽 | fix50 | **通过**——用户实测"完全修好了"。SRG 名覆写路线得到验证 |
+| 1. IO 端口搬不出无限磁盘流体 | fix51 | **未达成**：元件被端口**自动**从输入半区搬到输出半区；流体只搬了一点点就停；对照的普通流体元件正常 |
+| 2. 世界里键无存量+有样板不弹下单页 | fix52 | **未通过**：完全无动静；背包确定没有该物品；终端内该条目数量为 0 |
+
+日志证据（用户测试会话 `fml-client-3.log`，启动于 19:54）：
+`ae2_qof(AE2 QoL:3.19.0-fix52)` 已加载；`MixinPacketPickBlock` 与 `MixinTileIOPort` **均注入成功**；
+本模组三条新增警告**计数全部为 0** ⇒ 我们的代码**没有抛异常**，是**静默**走掉的。
+
+> 推论（重要）：NEI 面板中键那条路径同样靠 `scheduleServerTask` 归队、且实测可用，
+> 因此**若世界中键真的走到了"排任务"那一行，界面本应弹出**。它没弹 ⇒ 命中了更早的**静默分支**。
+> 而源码无法区分运行期命中哪一条——这正是本轮要做诊断构建的原因。
+
+### 二、问题 1 的根因（**源码级证据**，fix51 的介入点错了）
+
+读 AE2 rv3-beta-1050 `appeng/tile/storage/TileIOPort.java` 得到：
+
+- IO 端口只有**一个** `cells` 库存，另有 `input[]` / `output[]` 索引数组与
+  `INPUT_SLOT_INDEX_*` / `OUTPUT_SLOT_INDEX_*` 常量；GUI 里左右两组 6 格是**同一库存的两个半区**。
+- `moveSlot(int x)`（586-597 行）用 `WrapperInventoryRange(this, this.output, true)` 把槽 `x` 的物品
+  搬进**输出半区**再清空 —— 即用户看到的「从左边一下跑到右边」。
+- 是否搬走由 `shouldMove(...)`（572-584 行）决定，其主体是 `matches(...)`（599-625 行）：
+  - `FullnessMode.HALF` → **直接 `return true`（总是搬）**；
+  - `FullnessMode.EMPTY` + `OperationMode.EMPTY` → **`getAvailableStacks(src).isEmpty()` 就搬**；
+  - 其中 `src` 是 `getInv` 选中的**那一个**通道（多通道元件只取第一个匹配，见 CHANGELOG (14)）。
+- 另外 `shouldMove` 在 `inventory == null` 时也**直接返回 true**。
+
+⇒ **根因确认**：我们的无限磁盘只装流体时，端口选中的**物品通道为空**，
+`matches` 由此判定"元件已空/已完成" → 立刻 `moveSlot` 搬进输出半区 → 该槽位不再被循环处理
+（循环只遍历输入半区），于是**流体只搬了一点点就被打断**。
+这也解释了对照实验：普通流体元件只有一个通道，"唯一匹配"恰好就是流体，判定正确、能被抽干。
+
+**结论：fix51 的介入点（在循环结束后补搬）形状错误——判定发生在补搬之前，补搬救不回来。**
+
+### 三、本轮新增的诊断埋点（仅日志，不改判定）
+
+`network/ServerTerminalHelper.java`
+- 新增 `diagOnce(branch, detail)`：每个分支只记一次；
+- `scheduleServerTask` 原本**完全静默**的 `catch` 改为记录（分支 `F`）；
+- `openCraftAmountIfCraftable` 的每个出口加标记：`G0` 参数为空 / `G1` grid 为空 / `G2` craftingGrid 为空 /
+  `G3` 样板集合为空 / `G4` 槽位非法 / `G5` openGUI 后容器类型不符 / `G6` 已在下单界面 / `G7` 界面已打开。
+
+`mixin/ae/MixinPacketPickBlock.java`
+- 四条静默放行分支加标记：`A` 解析不出被点物品 / `B` 背包已有 / `C` 未解析到可用无线终端 /
+  `D` 判定为有存量；另加 `A2`（AEItemStack 创建失败）与 `E`（已排入开界面任务）。
+
+`mixin/ae/MixinTileIOPort.java`
+- `getInv` RETURN 记录"端口为该磁盘选中的通道"（`IO-PICK`）；
+- `shouldMove` HEAD 记录该次判定（`IO-MOVE`）：`OperationMode`、`FullnessMode`、`didWork`、
+  被选通道是否还有内容、**其余通道是否还有内容**；
+- 新增两个同口径辅助：`ae2qol$availableStacks`、`ae2qol$otherChannelsHaveContent`。
+
+### 四、验证
+
+- 构建：`JAVA_HOME=E:\java17` + 离线 build → `BUILD SUCCESSFUL`，**无管道复核进程退出码 0**；
+- 产物 `AE2-QoL-3.19.0-fix53-diag.jar`（1,131,588 字节）；解包核对：`diagOnce`、
+  `ae2qol$diagRememberChannel`、`ae2qol$diagShouldMove`、`ae2qol$availableStacks`、
+  `ae2qol$otherChannelsHaveContent` 与两个诊断字段均已入包。
+
+### 五、用法与期望输出
+
+1. 部署本诊断版并**完全重启游戏**（mods 仅启动时加载）；
+2. 复现一次「世界里中键无存量+有样板的方块」→ 日志中应出现 `[AE2QoL][diag] branch X:`（X 为 A~G 之一）；
+3. 复现一次「无限磁盘接 IO 端口、操作模式设为 EMPTY 抽流体」→ 日志中应出现 `IO-PICK` 与 `IO-MOVE`
+   两行，其中 `IO-MOVE` 会直接给出"其余通道还有内容=…"；
+4. 把 `fml-client-*.log` 回填后即可定案，随后删除埋点、交正式修复。
+
+---
+
 ## 工作区决策记录 2026-09-25 (15) - fix52：世界里键下单在网络线程上开界面，静默无效
 
 > 未提交；产物 `build/libs/AE2-QoL-3.19.0-fix52.jar`。

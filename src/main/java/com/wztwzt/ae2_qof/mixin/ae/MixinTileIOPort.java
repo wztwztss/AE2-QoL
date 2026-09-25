@@ -15,10 +15,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.wztwzt.ae2_qof.Config;
 import com.wztwzt.ae2_qof.MyMod;
+import com.wztwzt.ae2_qof.network.ServerTerminalHelper;
 import com.wztwzt.ae2_qof.tile.TileExIOPort;
 import cn.dancingsnow.aeinfinitycell.item.ItemInfinityStorageCell;
 
 import appeng.api.AEApi;
+import appeng.api.config.FullnessMode;
 import appeng.api.config.OperationMode;
 import appeng.api.config.Settings;
 import appeng.api.config.Upgrades;
@@ -27,9 +29,13 @@ import appeng.api.networking.energy.IEnergySource;
 import appeng.api.networking.storage.IStorageGrid;
 import appeng.api.networking.ticking.TickRateModulation;
 import appeng.api.storage.IMEInventory;
+import appeng.api.storage.IMEMonitor;
 import appeng.api.storage.data.AEStackTypeRegistry;
+import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IAEStackType;
+import appeng.api.storage.data.IItemList;
 import appeng.tile.storage.TileIOPort;
+import appeng.util.IterationCounter;
 
 /**
  * 强化版 IO 端口传输倍率：对 ExIOPort 放大每次传输的物品数量。
@@ -238,5 +244,69 @@ public abstract class MixinTileIOPort {
             }
         }
         return ae2qol$transferContentsHandle;
+    }
+
+    // ===== fix53-diag：IO 端口「通道选择 / 搬走判定」诊断（**仅记录，不改变任何判定**） =====
+
+    /**
+     * 最近一次 {@code getInv} 返回的通道库存，以及它对应的元件。
+     * 用途：把 {@code shouldMove} 的诊断绑定到紧邻的那一次 {@code getInv}（循环内两者同槽位、无交错）。
+     */
+    private ItemStack ae2qol$lastCell;
+    private IMEInventory<?> ae2qol$lastInv;
+
+    @Inject(method = "getInv", at = @At("RETURN"), remap = false)
+    private void ae2qol$diagRememberChannel(ItemStack is, CallbackInfoReturnable<IMEInventory<?>> cir) {
+        final IMEInventory<?> inv = cir.getReturnValue();
+        this.ae2qol$lastCell = inv == null ? null : is;
+        this.ae2qol$lastInv = inv;
+        try {
+            if (is != null && is.getItem() instanceof ItemInfinityStorageCell && inv != null) {
+                ServerTerminalHelper.diagOnce(
+                    "IO-PICK",
+                    "端口为该无限磁盘选中的通道 = " + inv.getStackType()
+                        .getId() + "（本模组补搬会跳过该通道、只处理其余通道）");
+            }
+        } catch (Throwable ignored) {}
+    }
+
+    @Inject(method = "shouldMove", at = @At("HEAD"), remap = false)
+    private void ae2qol$diagShouldMove(IMEInventory<?> inventory, boolean sourceEmptyAfterTransfer,
+        boolean destinationFull, boolean didWork, boolean moveOnEmptyWhileFilling, OperationMode om, FullnessMode fm,
+        CallbackInfoReturnable<Boolean> cir) {
+        try {
+            if (this.ae2qol$lastInv != inventory) return;
+            final ItemStack cell = this.ae2qol$lastCell;
+            if (cell == null || !(cell.getItem() instanceof ItemInfinityStorageCell)) return;
+            ServerTerminalHelper.diagOnce(
+                "IO-MOVE",
+                "是否把该元件搬到输出半区：OperationMode=" + om
+                    + ", FullnessMode=" + fm
+                    + ", didWork=" + didWork
+                    + ", 被选中通道还有内容=" + !ae2qol$availableStacks(inventory).isEmpty()
+                    + ", 其余通道还有内容=" + ae2qol$otherChannelsHaveContent(cell, inventory));
+        } catch (Throwable ignored) {}
+    }
+
+    /** 与 AE2 的 {@code TileIOPort.getAvailableStacks} 同口径（上游用原始类型，此处同样如此）。 */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private static IItemList<? extends IAEStack> ae2qol$availableStacks(IMEInventory<?> inventory) {
+        if (inventory instanceof IMEMonitor<?> monitor) return monitor.getStorageList();
+        final IMEInventory raw = inventory;
+        return raw.getAvailableItems(raw.getStackType().createList(), IterationCounter.fetchNewId());
+    }
+
+    /** 该元件除「端口已选中的那个通道」之外，是否还有其它通道仍存有内容。 */
+    private static boolean ae2qol$otherChannelsHaveContent(ItemStack cell, IMEInventory<?> chosen) {
+        for (IAEStackType<?> type : AEStackTypeRegistry.getAllTypes()) {
+            IMEInventory<?> inv = AEApi.instance()
+                .registries()
+                .cell()
+                .getCellInventory(cell, null, type);
+            if (inv == null) continue;
+            if (inv.getStackType() == chosen.getStackType()) continue;
+            if (!ae2qol$availableStacks(inv).isEmpty()) return true;
+        }
+        return false;
     }
 }

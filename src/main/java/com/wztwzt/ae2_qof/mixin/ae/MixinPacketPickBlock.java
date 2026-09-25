@@ -67,23 +67,42 @@ public abstract class MixinPacketPickBlock {
             if (!(player instanceof EntityPlayerMP playerMP)) return;
 
             ItemStack picked = ae2qol$readPickedBlock(this);
-            if (picked == null || picked.getItem() == null) return;
+            if (picked == null || picked.getItem() == null) {
+                // fix53-diag：本条原本静默放行
+                ServerTerminalHelper.diagOnce("A", "解析不出被点物品（反射读取 pickedBlock 失败或为空）");
+                return;
+            }
 
             // 背包里已经有这个物品 → 原版会切槽或补齐，交给它
-            if (ae2qol$inventoryContains(playerMP, picked)) return;
+            if (ae2qol$inventoryContains(playerMP, picked)) {
+                ServerTerminalHelper.diagOnce(
+                    "B",
+                    "背包已有该物品: " + picked.getItem()
+                        .getUnlocalizedName());
+                return;
+            }
 
             // 没有可用无线终端（未携带/未绑定/不在范围）→ 交给原版（原版会提示未找到终端）
             WirelessTerminalGuiObject terminal = ServerTerminalHelper.resolveTerminal(playerMP);
-            if (terminal == null) return;
+            if (terminal == null) {
+                ServerTerminalHelper.diagOnce("C", "未解析到可用无线终端（未携带/未绑定/不在范围）");
+                return;
+            }
 
             IAEItemStack target = AEItemStack.create(picked.copy());
-            if (target == null) return;
+            if (target == null) {
+                ServerTerminalHelper.diagOnce("A2", "AEItemStack.create 返回空");
+                return;
+            }
             if (target.getStackSize() <= 0) {
                 target.setStackSize(1);
             }
 
             // 网络里还有存量 → 交给原版取物
-            if (ServerTerminalHelper.hasNetworkStock(terminal, target)) return;
+            if (ServerTerminalHelper.hasNetworkStock(terminal, target)) {
+                ServerTerminalHelper.diagOnce("D", "判定为有存量，放行原版");
+                return;
+            }
 
             // 没存量：有样板就打开「要合成多少个」，没有就仍由原版静默处理。
             // fix52：开界面必须归队到服务端 tick 线程。AE2 的包处理器走的是 FML
@@ -101,6 +120,12 @@ public abstract class MixinPacketPickBlock {
                     MyMod.LOG.warn("[AE2QoL] pick-block craft-amount task failed: {}", taskError.toString());
                 }
             });
+            ServerTerminalHelper.diagOnce(
+                "E",
+                "已排入开界面任务；终端槽位=" + terminal.getInventorySlot()
+                    + "，物品="
+                    + picked.getItem()
+                        .getUnlocalizedName());
         } catch (Throwable t) {
             MyMod.LOG.warn("[AE2QoL] pick-block craft fallback skipped: {}", t.toString());
         }
