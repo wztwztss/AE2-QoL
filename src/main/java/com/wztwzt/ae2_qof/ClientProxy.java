@@ -20,6 +20,7 @@ import appeng.container.implementations.ContainerPatternTerm;
 import appeng.container.implementations.ContainerPatternTermEx;
 
 import com.wztwzt.ae2_qof.client.ClientState;
+import com.wztwzt.ae2_qof.client.PickBlockCompatHandler;
 import com.wztwzt.ae2_qof.common.RecipeMapNameConfig;
 import com.wztwzt.ae2_qof.client.CommandOverlay;
 import com.wztwzt.ae2_qof.client.event.GuiUploadButtonHandler;
@@ -67,6 +68,10 @@ public class ClientProxy extends CommonProxy {
         KeyInputHandler.register();
         KnifeNameCopyHandler.register();
         GuideNHIntegration.register();
+        // fix54：整合包内 sciencenotleisure 会在中键取物例程的 HEAD 取消原版流程，
+        // 导致 GTNHLib 的 PickBlockEvent 不发出、AE2 永不发送 PacketPickBlock。
+        // 本钩子在客户端另取触发点补发该包，把 AE2 的中键取物行为还回来。
+        PickBlockCompatHandler.register();
         MinecraftForge.EVENT_BUS.register(WirelessHighlightRenderer.INSTANCE);
         MinecraftForge.EVENT_BUS.register(new ClientRenderEventHandler());
         try {

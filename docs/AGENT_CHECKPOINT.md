@@ -176,16 +176,25 @@ GTNH 2.9.0-beta-3（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
   ⚠️ **边界**：`FullnessMode=HALF` 时 `matches()` 无条件搬走元件，本修复不成立；若要支持 HALF，
   需追加"对本模组多通道元件改为全通道完成才搬"的 `shouldMove` 覆写（设计已备，未实施）。
   仍待补测：`FILL` 转入方向、普通流体元件对照行为。
-- **fix52 —— 根因不在服务端，在客户端键位**（commit `47654ce`）。
+- **fix52 —— 根因在客户端，且最终定位到整合包模组冲突**（commit `47654ce`）。
   诊断版在服务端包处理器埋了 A~G 全分支日志，**整场会话一条都没有** ⇒
   `PacketPickBlock.serverPacketData` 从未被调用 ⇒ **客户端根本没发包**。
-  定位：AE2 `ActionKey.PICK_BLOCK` 默认 **`Keyboard.KEY_NONE`（未绑定）**；两条互补路径分别要求
-  「该键被按下」或「该键 == 原版 `key.pickItem`」，用户 `options.txt` 为
-  `key_key.pick_block.desc:0` / `key_key.pickItem:-98` ⇒ **两条都失效**。
-  **处理（用户侧配置，非代码）**：改为 `key_key.pick_block.desc:-98`
-  （已备份 `options.txt.bak-before-pickblock-key`，比对仅 1 行不同、行数不变）。
-  **待复测**：① AE2 原生取物是否恢复；② 场景 A 是否出现 `branch X` 日志。
-- 实例产物：`build/libs/AE2-QoL-3.19.0-fix53-diag.jar`（诊断版，仅埋点）。
+  **第一层**：AE2 `ActionKey.PICK_BLOCK` 默认 `Keyboard.KEY_NONE`（未绑定）；两条互补路径分别要求
+  「该键被按下」或「该键 == 原版 `key.pickItem`」。已把 `options.txt` 的
+  `key_key.pick_block.desc` 由 `0` 改为 `-98`（备份 `options.txt.bak-before-pickblock-key`）。
+  **第二层（最终根因，纯字节码取证）**：即便如此 `CLIENT-EVENT`（GTNHLib `PickBlockEvent` 到达 AE2）
+  仍然一次都不出现，而用户的对照组证明"中键有反应"。查证：整合包内
+  **`sciencenotleisure`（SNL 0.2.7-pre3）** 在 `Minecraft.middleClickMouse()`（SRG `func_147112_ai`）
+  的 HEAD 注入并 `ci.cancel()`——`ClientUtils.onBeforePickBlock` 在"准星没瞄到实体"时执行完自己的
+  1000 格远程取物后**无条件 return true** ⇒ 原版取物例程被整个取消 ⇒
+  **`PickBlockEvent` 不会发出** ⇒ AE2 永不发 `PacketPickBlock` ⇒ fix52 永不执行。
+  SNL 无配置开关；用户对照组看到的"快捷栏跳格"是 **SNL 的**行为而非原版。
+  **修复（fix54，方案 A，已实施待验证）**：新增 `client/PickBlockCompatHandler`，监听 Forge
+  `InputEvent.MouseInputEvent`（FML 总线，与 SNL/原版方法无关），条件对齐 AE2
+  `handlePickBlock()` 并**额外预检"身上有无线终端"**（否则服务端会刷 `PickBlockTerminalNotFound`），
+  自行补发 `PacketPickBlock`，交由 fix52 的服务端兜底接管。**待一次性验证**：
+  生存模式下对"网络无存量 + 有样板"的方块按中键应弹出「要合成多少个」。
+- 实例产物：`build/libs/AE2-QoL-3.19.0-fix54-diag.jar`（`666B7AE1…`，埋点仍在，验证通过后剥离为正式版）。
 - **另查明两件与本模组无关的事**：① "进不去存档/新建世界也不行" = **内存不足**
   （实例 `-Xms8192m -Xmx9192m`，15.6 GB 机器上只剩 0.79 GB 可用 → 换页；用户重启电脑后正常进入世界）；
   ② 21:18:44 的 `StackOverflowError` = 纯原版 `TileEntityChest` ↔ 区块加载递归（跨区块边界的箱子）。

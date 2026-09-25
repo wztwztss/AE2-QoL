@@ -1,3 +1,47 @@
+## 工作区决策记录 2026-09-25 (20) - fix54：为问题 2 增加**客户端触发补丁**（方案 A，已部署待验证）
+
+> 产物 `build/libs/AE2-QoL-3.19.0-fix54-diag.jar`（SHA256 `666B7AE1…`），已部署到 b3 实例。
+> 本版 = fix53-diag 的全部埋点 **+ fix54 的实际修复**（埋点留到验证通过后再剥离）。
+
+### 一、背景（见 (19) 的根因）
+
+整合包内的 `sciencenotleisure` 在原版 `Minecraft.middleClickMouse()`（SRG `func_147112_ai`）的
+HEAD 注入并 `ci.cancel()`，导致 GTNHLib 的 `PickBlockEvent` 不会发出、**AE2 永不发送
+`PacketPickBlock`** ⇒ `MixinPacketPickBlock`（fix52）永远不执行。
+
+### 二、实现：新增 `client/PickBlockCompatHandler`（客户端，非 Mixin）
+
+- 监听 **Forge 的 `InputEvent.MouseInputEvent`**（FML 总线，与 AE2 自身
+  `KeyBindHandler` 同一条总线、同一个事件类型）——**与 SNL、与原版方法完全无关**，
+  因此不会受 SNL 的 `ci.cancel()` 影响；
+- 中键按下的**边沿检测**（`Mouse.isButtonDown(2)` 状态变化），不依赖事件投递粒度；
+- 前置条件逐条对齐 AE2 的 `KeyBindHandler.handlePickBlock()`：
+  开着 GUI 不动作、创造模式交给原版、准星必须是方块、空气 / `getPickBlock` 为空都不发；
+- **额外增加一条 AE2 没有的前置检查**：`PlayerInventoryUtil.getFirstWirelessTerminal(player) != null`。
+  原因：AE2 服务端在没有终端时会 `addChatMessage(PlayerMessages.PickBlockTerminalNotFound)`
+  （见 `PacketPickBlock.serverPacketData`），若不预检，没有终端的玩家**每次中键都会被刷一条提示**。
+  这里直接复用 AE2 自己的方法，与其服务端口径（含饰品栏）完全一致；
+- 通过 `NetworkHandler.instance.sendToServer(new PacketPickBlock(picked))` 补发，
+  之后由已有的服务端兜底（fix52 → `ServerTerminalHelper.openCraftAmountIfCraftable`）接管；
+- 任何异常只记一次 warn 并放弃本次，绝不影响原版与其它模组。
+
+**为什么不会重复发包**：AE2 客户端只有两条发包路径——① GTNHLib 事件路径（被 SNL 挡死）；
+② 鼠标事件路径，但要求"AE2 的 Pick Block 与原版选取方块**不相等**"。本模组推荐并采用的"两键相等"配置下，
+②对**方块**永不触发，故方块取物包只可能来自本补丁。
+
+### 三、注册位置
+
+`ClientProxy.init()` 中紧接 `GuideNHIntegration.register()` 之后 `PickBlockCompatHandler.register()`。
+
+### 四、验证状态
+
+构建通过（`BUILD SUCCESSFUL`，checkstyle 通过），产物内含 `PickBlockCompatHandler.class`，
+`mcmod.info` 版本为 `3.19.0-fix54-diag`；部署后实例与本地 SHA256 一致、mods 内仅一份。
+**待用户一次性验证**：生存模式下对"网络无存量 + 有合成样板"的方块按中键 → 应弹出「要合成多少个」，
+并在日志中看到 fix52 的服务端分支行（`branch E` 或 D/C/B）。
+
+---
+
 ## 工作区决策记录 2026-09-25 (19) - 问题 2 最终根因：**SNL 在 `middleClickMouse()` HEAD 取消原版取物**，AE2 链路整条不执行
 
 > 纯代码/字节码取证结论（用户已表示不再进游戏测试）。**尚未实施修复。**

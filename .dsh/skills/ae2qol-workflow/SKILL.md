@@ -233,6 +233,11 @@ $env:GRADLE_USER_HOME = 'C:\Users\29357\.gradle'
     - 查"谁拦了原版方法"的正解：`javap -v` 逐个看相关模组 jar 里 `@Mixin(Minecraft)` 类的
       `@Inject(method=[...], cancellable=...)` 注解常量池，比读日志猜靠得住。
     - **SNL 无配置开关**（`MainConfig` 里没有取物相关项），只能代码层绕开或改触发点。
+    - **绕开方式（fix54 已采用）**：另取一条**与被害人无关**的触发点——AE2 自己就有第二条路径
+      （Forge `InputEvent.MouseInputEvent`，走 FML 总线）。补触发时要注意两个坑：
+      ① **必须预检前置条件**，否则会把副作用放大（本例：AE2 服务端在没有无线终端时会
+      `addChatMessage(PickBlockTerminalNotFound)`，无脑补发包会让没终端的玩家每次中键被刷提示）；
+      ② **确认不会与原路径重复触发**（本例"两键相等"配置下 AE2 对方块永不自行发包，故不重复）。
 
 ---
 
