@@ -60,7 +60,7 @@
 | Mixin 类路径 | 目标类 | 注入点 | 风险/说明 |
 |---|---|---|---|
 | `mixin/TileDriveMixin.java` | `appeng.tile.storage.TileDrive` (remap=false) | `updateState` RETURN | 为AE2 Infinity Cell提供兼容。在Drive更新状态后，遍历所有槽位，对ItemInfinityStorageCell实例将其handler附加到cellsMap。 |
-| `mixin/ae/MixinTileIOPort.java` | `appeng.tile.storage.TileIOPort` | `transferContents` HEAD (ModifyVariable) | 强化版IO端口(TileExIOPort)的传输倍率。当目标为TileExIOPort实例时，根据配置将每次传输物品数量乘以配置倍率，带溢出保护。 |
+| `mixin/ae/MixinTileIOPort.java` | `appeng.tile.storage.TileIOPort` | `transferContents` HEAD (ModifyVariable)；**`tickingRequest` RETURN (Inject)** | ①强化版IO端口(TileExIOPort)的传输倍率：当目标为TileExIOPort实例时，根据配置将每次传输物品数量乘以配置倍率，带溢出保护。②**fix51** 逐通道补搬：AE2 的 `getInv` 每元件只取第一个匹配存储通道就 `break`，多通道元件（本模组无限磁盘）因此只搬一个通道；RETURN 注入按相同顺序枚举该元件支持的通道、跳过索引 0，对剩余通道用**反射**调用 AE2 自身的 `transferContents` 补搬（该方法返回私有内部类 `TileIOPort$TransferResult`，`@Shadow`/`@Invoker` 均不可行）。仅放行 `ItemInfinityStorageCell`，单通道元件立即跳过；`getProxy().isActive()` 前置；能源/存储/预算懒求值；异常只记一条警告。 |
 | `mixin/ae/MixinPinsHolder.java` | `appeng.items.contents.PinsHolder` (remap=false) | `getCraftingPinsRows` (Redirect) | 合成产物pin行默认开启。原版对"从未设置过的玩家"默认返回DISABLED，此处改为ONE（当配置pinRowEnabled开启时）。 |
 
 ### Accessor - 1个Mixin
@@ -105,6 +105,14 @@
 6. **MTE 数字 ID 是独占资源**：ID 只写数字、不写类名，重号会让注册直接失败（启动期抛 `IllegalArgumentException`，且常被别的类加载错误掩盖）。新增/改号前必须查 `docs/dumps/metatileentity.csv`（b3 全表），且**换号必须配套 `MixinBaseMetaTileEntityIdMigration` 之类的存档迁移**，否则旧存档终端配置丢失。历史教训：32001（GT 本体占用）→ 32101（b3 fissionevolved 占用）→ 32107。
 
 7. **图集"sprite 尺寸 0×0"= 没进图集**：`TextureMap` 的 `registerIcons()` 会先 clear 清单，且启动期会执行多次；任何"只注册一次"的开关都会让真正装载的那一轮清单缺失，渲染结果不是紫黑而是**透明**（UV 全 0），不要误判为资源包问题。
+
+8. **IO 端口只认一个存储通道（AE2 上游行为，fix51 踩到）**：`TileIOPort.getInv(ItemStack)` 在
+   `AEStackTypeRegistry.getAllTypes()` 里取到**第一个**能返回非空 inventory 的通道就 `break`，
+   而 `tickingRequest` 对每个元件每 tick 只搬运这一个通道。注意 `getAllTypes()` 返回的是
+   `registry.values()`，即 **HashMap 顺序**（确定顺序的是 `getSortedTypes()`：ITEM→FLUID→其它），两者不要混用。
+   后果：**任何多通道元件**在 IO 端口里都会静默丢掉其余通道；单通道元件不受影响，
+   于是"普通流体元件能搬、多通道元件只搬物品"这种不对称很容易被误判成元件自身的问题。
+   本模组用 fix51 的 `tickingRequest` RETURN 注入为无限磁盘补搬其余通道。
 
 ---
 

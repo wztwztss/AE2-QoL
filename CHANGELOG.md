@@ -1,3 +1,101 @@
+## 工作区决策记录 2026-09-25 (14) - fix51：IO 端口搬不出无限磁盘的流体（AE2 每元件只取一个存储通道）
+
+> 未提交；产物 `build/libs/AE2-QoL-3.19.0-fix51.jar`。
+
+### 现象
+
+无限磁盘（本模组内置的 AE2 Infinity Cell，**物品 + 流体 + 源质多通道**）里存有流体，接进 IO 端口后搬不出去：
+**物品能搬、只有流体搬不动**；**强化 IO 端口与 AE2 原生 IO 端口都试过、都失败**；
+同一时刻该磁盘的流体在 ME 网络里**可见且数量正确**；**对照**：普通的单通道流体元件放进
+**原生** IO 端口，流体**能正常搬**。
+
+### 根因（AE2 rv3-beta-1050 上游代码）
+
+`appeng/tile/storage/TileIOPort.java` 第 488–502 行：
+
+```java
+private IMEInventory<?> getInv(final ItemStack is) {
+    if (this.currentCell != is) {
+        this.currentCell = is;
+        this.cachedInventory = null;
+        for (IAEStackType<?> type : AEStackTypeRegistry.getAllTypes()) {
+            IMEInventory<?> inventory = AEApi.instance().registries().cell().getCellInventory(is, null, type);
+            if (inventory != null) {
+                this.cachedInventory = inventory;
+                break;                    // ← 只取「第一个匹配的通道」
+            }
+        }
+    }
+    return this.cachedInventory;
+}
+```
+
+调用它的 `tickingRequest(IGridNode,int)`（第 357 行起）在 6 个槽位的循环里（393–428 行）
+**对每个元件每 tick 只调用一次 `getInv`、只搬运一个通道**。
+再叠加 `AEStackTypeRegistry.getAllTypes()` 返回的是 `registry.values()`（**HashMap 顺序**），
+于是无限磁盘只会被选中一个通道（实机表现为物品），**流体通道从不进入搬运循环**。
+
+### 证据链（与全部实测一一对应）
+
+| 观测 | 解释 |
+|---|---|
+| 流体在 ME 网络可见、数量正确 | 元件注册进电网存储与「IO 端口直接读驱动器元件」是两套路径，前者正常 |
+| 普通流体元件在**原生**端口能搬 | 单通道元件的「唯一匹配」恰好就是流体 → 该路径本身支持流体 |
+| 无限磁盘物品能搬、流体不能 | 多通道元件只被选中一个通道 |
+| 强化端口与原生端口都失败 | 失效点在被两者共用的 `TileIOPort.getInv`；本模组的 `MixinTileIOPort` 原先只放大了 `transferContents` 的 `itemsToMove`，没有改通道选择 |
+| `TileExIOPort` 只是 `extends TileIOPort` 加供电渲染 | 强化端口不改变通道语义 |
+
+### 修复
+
+只改一个文件 `src/main/java/com/wztwzt/ae2_qof/mixin/ae/MixinTileIOPort.java`，
+新增对 `tickingRequest` 的 `@At("RETURN")` 注入 `ae2qol$fanOutExtraChannels`：
+
+1. 只在端口已上线（`getProxy().isActive()`）时继续——因为 `RETURN` 会在每个 return 前触发，
+   包含「未供电 → IDLE」那条，此时取能源/存储会抛 `GridAccessException`；
+2. 只处理插入的元件是 `ItemInfinityStorageCell`（本模组无限磁盘）的槽位，**单通道元件立即跳过**；
+3. 按**与 `getInv` 完全相同的枚举顺序**取出该元件支持的通道列表，**跳过索引 0**
+   （即原版已经处理过的那个通道），只补搬其余通道；
+4. 每个剩余通道用 AE2 自己的 `transferContents` 搬运一次，方向沿用端口的
+   `OperationMode`（`EMPTY` = 元件 → 网络，`FILL` = 网络 → 元件），预算沿用主循环口径；
+5. 取能源/存储与预算计算**懒求值**，未插无限磁盘的普通 IO 端口每 tick 只多做几次廉价判断。
+
+`transferContents` 用**反射**调用：它的返回类型是私有内部类 `TileIOPort$TransferResult`，
+`@Shadow` / `@Invoker` 都必须声明完整签名，而源码无法引用那个私有内部类（方案阶段原写的
+「用 @Shadow」经实施确认不可行，故改用反射；返回值不需要）。
+
+### 影响面与风险
+
+| 项 | 结论 |
+|---|---|
+| 普通物品元件 / ae2fc 流体元件 / 其它模组元件 | **完全不受影响**（单通道，走原路径） |
+| 原生 IO 端口对其它模组的多通道元件 | 不受影响（闸门只放行本模组无限磁盘，符合用户确认的边界①） |
+| 账目守恒 | 补搬仍走 AE2 自身的 `transferContents`（内部 `poweredInsert` / `extractItems` / 失败回注），未新增记账路径 |
+| 已知差异 | 补搬不参与原版「搬空后把元件弹到输出口」（`shouldMove`）判定；每个剩余通道按与主循环相同的**初始**预算处理，不递减原循环配额 |
+| 热路径日志 | 异常只记一条警告（静态去重），避免每 tick 刷屏 |
+| 风险 | 反射靠方法名 + 描述符，写错会**运行期静默不生效**（不崩溃），已用实例 AE2 jar `javap` 核对签名为 `(IEnergySource, IMEInventory, IMEInventory, long)`；解析失败时会记录一条明确警告 |
+
+### 验证（已完成）
+
+- 构建：`$env:JAVA_HOME='E:\java17'` + `.\gradlew.bat build --offline -x spotlessJavaCheck -x spotlessCheck`
+  → `BUILD SUCCESSFUL`，**进程退出码 0**（无管道复核）。
+- 产物：`build/libs/AE2-QoL-3.19.0-fix51.jar`，1,127,880 字节。
+- 解包核对：`MixinTileIOPort` 中 `ae2qol$fanOutExtraChannels`、`ae2qol$tickBudget`、
+  `ae2qol$resolveTransferContents` 与两个静态缓存字段均已入包，名称未被重混淆改动。
+- 签名依据：对**实例正在运行的** `appliedenergistics2-rv3-beta-1050-GTNH.jar` 执行 `javap`，
+  确认 `TileIOPort.transferContents(IEnergySource, IMEInventory, IMEInventory, long)`、
+  `IStorageMonitorable.getMEMonitor(IAEStackType)`、`AEStackTypeRegistry.getAllTypes()`、
+  `IAEStackType.getAmountPerUnit()`、`OperationMode.EMPTY/FILL`、`Upgrades.SPEED/SUPERSPEED/SUPERLUMINALSPEED` 均存在。
+
+### 待用户实测（未实测前不标通过）
+
+1. 驱动器内**只插**该无限磁盘（同时存有物品与流体），IO 端口另一侧接储存元件；
+2. **转出**：流体被搬出；**转入**：流体能被搬回（此前只测过转出，本轮必须双向都测）；
+3. 同一批测试中**物品通道仍正常**，`io_port_rate` 倍率语义不变；
+4. **对照**：普通流体元件行为与改动前完全一致；
+5. 搬运前后两侧总数守恒，无丢物/刷物；日志无 `[AE2QoL] IO port multi-channel fan-out skipped`。
+
+---
+
 ## 工作区决策记录 2026-09-25 (13) - fix50：万能维护仓电路板槽因 GT 5.09.54 新增校验链而全拒（回归修复）
 
 > 未提交；产物 `build/libs/AE2-QoL-3.19.0-fix50.jar`。
