@@ -165,15 +165,27 @@ public class Config {
 
 ## 五、本项目配置
 
-AE2-QoL-1.7.10-GTNH 项目 `gradle.properties` 关键配置：
+AE2-QoL-1.7.10-GTNH 项目 `gradle.properties` 实际取值（2026-09-25 核对，`3.19.0-fix49`）：
 
 ```properties
-modName = AE2-QoL
-modId = ae2qol
-modGroup = com.example.ae2qol
+modName = AE2 QoL
+modId = ae2_qof
+modGroup = com.wztwzt.ae2_qof
+modVersion = 3.19.0-fix49
 minecraftVersion = 1.7.10
 forgeVersion = 10.13.4.1614
-enableModernJavaSyntax = jabel
+channel = stable
+mappingsVersion = 12
+enableModernJavaSyntax = true      # Jabel，输出 JVM 8 字节码
+enableGenericInjection = true
 usesMixins = true
-mixinsPackage = com.example.ae2qol.mixin
+mixinsPackage = mixin              # 即 com.wztwzt.ae2_qof.mixin
+generateGradleTokenClass = com.wztwzt.ae2_qof.Tags
+customArchiveBaseName = AE2-QoL
+autoUpdateBuildScript = false
+usesMavenPublishing = true
 ```
+
+> 注意：Mixin 配置**不放在 `gradle.properties`**，而是独立文件 `src/main/resources/mixins.ae2_qof.json`
+> （根目录另有一份同内容副本，SHA256 一致）。`coreModClass`、`mixinPlugin`、`accessTransformersFile`、
+> `separateMixinSourceSet` 在本项目均为空。历史文档此处曾填写 `com.example.ae2qol` 等模板占位值，已纠正。

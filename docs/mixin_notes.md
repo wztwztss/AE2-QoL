@@ -6,7 +6,10 @@
 > 重要提醒
 > 1. MC1.7.10 SRG名称容易变动，修改前核对方法签名。
 > 2. 修改后jar放入测试环境，查看mixin.log确认注入状态。
-> 3. 参考其他模组Mixin实现：`E:\wzt\MC\modcreater\reference_src`
+> 3. 参考其他模组Mixin实现：`E:\wzt\MC\modcreater\reference_src_290b3`（旧的 `reference_src_290b1_已过期` 已废弃）。
+
+> 当前基线：GTNH **2.9.0-beta-3** / MC 1.7.10 / 版本 `3.19.0-fix49`。
+> 清单与 `src/main/resources/mixins.ae2_qof.json` 逐条对齐（通用 13 条 + client 16 条 = 29 条）。
 
 ---
 
@@ -72,6 +75,17 @@
 |---|---|---|---|
 | `mixin/gt/MixinMTEMultiBlockBase.java` | `gregtech.api.metatileentity.implementations.MTEMultiBlockBase` | `@Overwrite shouldCheckMaintenance()` | **风险：@Overwrite**。重写整个方法返回 false，使所有多方块机器永远无维护问题。非 SRG 方法（`remap = false`），GTNH 环境下方法名稳定。若其他模组也 @Overwrite 此方法会冲突（目前未发现）。构造函数与 loadNBTData 中 `if (!shouldCheckMaintenance()) fixAllIssues()` 自动修复所有标志位。 |
 
+### 上传取物 / 材质 / GT 注册与迁移 - 6个Mixin
+
+| Mixin 类路径 | 目标类 | 注入点 | 风险/说明 |
+|---|---|---|---|
+| `mixin/ae/MixinPacketPickBlock.java` | `appeng.core.sync.packets.PacketPickBlock` | `serverPacketData` HEAD (cancellable)，`remap = false` | fix47：世界里中键取物的兜底。判定顺序刻意做成"能不管就不管"——解析不出物品 / 背包已有 / 无可用无线终端 / 网络还有存量 一律放行原版，仅「无存量 + 有样板」才接管并 `cancel()`。被点物品经反射读私有 `pickedBlock`，取不到就放行。整个注入体 try/catch 包裹，异常一律退化为放行。 |
+| `mixin/client/MixinTextureMap.java` | `net.minecraft.client.renderer.texture.TextureMap` | `registerIcons` / `func_110573_f` TAIL，`remap = false` | fix45/fix46 v7 材质方案 B：**每次**调用都补注册 25 张 v7 路径，仅 `textureType == 0` 生效；图标回填 `ModTextures.registerBaked`。**不可改成"只注册一次"**——`registerIcons()` 开头会 `mapRegisteredSprites.clear()`，启动期会多次执行，只注册一次会让真正装载的那一轮没有这些路径，sprite 尺寸 0×0 → 机器透明。反射解析 MCP/SRG 两套成员名。 |
+| `mixin/gt/MixinBaseMetaTileEntityIdMigration.java` | `gregtech.api.metatileentity.BaseMetaTileEntity` | `setInitialValuesAsNBT(Lnet/minecraft/nbt/NBTTagCompound;S)V` HEAD，`remap = false` | fix48：旧存档 MTE ID 迁移。仅当 `mID` 为 32100/32101 **且** NBT 含本模组专属键（`ae2qolNO`/`ae2qolNF`/`ae2qolVT`）时改写为 32106/32107；fissionevolved 的 `Fission*` 键不会误判。方法名按完整描述符写，避免重载歧义。 |
+| `mixin/gt/MixinProcessingLogicSpeed.java` | `gregtech.api.recipe.ProcessingLogic` | `process` HEAD (cancellable)，`remap = false` | 仅当 `machine instanceof MTEMultiBlockBase` 时接管；跨配方并行与 EU/时长/输出合并的饱和判界。**风险点见审查 A02/A03/A19**：绕过了原生 `validateRecipe`/`applyRecipe` 链，降回 1 或拆仓后 supplier 覆盖未显式恢复。 |
+| `mixin/gt/MixinCommonBaseMetaTileEntityMultiblockRegistry.java` | `gregtech.api.metatileentity.CommonBaseMetaTileEntity` | `handleFirstTick` TAIL，`remap = false` | 多方块主机识别注册表：首 tick 登记，供上传目标识别多方块主机（fix14 起）。仅对 `IGregTechTileEntity` 生效。 |
+| `mixin/ae/MixinGuiCraftConfirm.java` | `appeng.client.gui.crafting.GuiCraftConfirm` | `initGui` TAIL、`actionPerformed` HEAD(cancellable)、`drawFG` HEAD | 合成确认界面的提交/产物捕获与按钮；`drawFG` 分支用 try/catch 兜底（见 P2-027 的静默捕获策略）。 |
+
 ---
 
 ## 已知风险
@@ -82,15 +96,21 @@
 
 2. **Mixin target 静默失效**：Mixin target 写错会静默失效，不崩溃但功能无效，必须以 mixin.log 为准。
 
-3. **AE2部分类被GTNH修改**：不能直接照搬原版AE2的Mixin，需核对GTNH 2.9.0-beta-1的实际类结构。
+3. **AE2部分类被GTNH修改**：不能直接照搬原版AE2的Mixin，需核对GTNH 2.9.0-beta-3（rv3-beta-1050）的实际类结构。已知 API 变动例：`BlockIOPort.getRenderer()` 返回类型收窄为 `RenderIOPort`、`ContainerPatternTerm.outputSlotsClient` 字段移除、`IInterfaceViewable.getNameSuffix()` 由 `String` 改为 `IChatComponent`（均在 fix49 处理）。
 
-4. **可选依赖的Mixin**：GTNL、ProgrammableHatches 等为运行时可选依赖，目标类缺失时需静默跳过。
+4. **可选依赖的Mixin**：GTNL、ProgrammableHatches 等为运行时可选依赖，目标类缺失时需静默跳过（resources 配置 `required:false`，但**没有** `IMixinConfigPlugin`，裁剪环境未验证，见 P2-029）。
 
-5. **反射访问私有字段**：MixinCraftingCPUCluster 通过反射访问私有内部类（TaskProgress、finalOutput、CraftingCpuDiagnostics），需注意混淆映射。
+5. **反射访问私有字段**：MixinCraftingCPUCluster 通过反射访问私有内部类（TaskProgress、finalOutput、CraftingCpuDiagnostics），需注意混淆映射。同类做法还有 `MixinPacketPickBlock` 读 `pickedBlock`、`MixinTextureMap` 解析图集成员、`ClientProxy.applyClientSwap` 反射读样板终端的私有 `outputs`。
+
+6. **MTE 数字 ID 是独占资源**：ID 只写数字、不写类名，重号会让注册直接失败（启动期抛 `IllegalArgumentException`，且常被别的类加载错误掩盖）。新增/改号前必须查 `docs/dumps/metatileentity.csv`（b3 全表），且**换号必须配套 `MixinBaseMetaTileEntityIdMigration` 之类的存档迁移**，否则旧存档终端配置丢失。历史教训：32001（GT 本体占用）→ 32101（b3 fissionevolved 占用）→ 32107。
+
+7. **图集"sprite 尺寸 0×0"= 没进图集**：`TextureMap` 的 `registerIcons()` 会先 clear 清单，且启动期会执行多次；任何"只注册一次"的开关都会让真正装载的那一轮清单缺失，渲染结果不是紫黑而是**透明**（UV 全 0），不要误判为资源包问题。
 
 ---
 
 ## 按功能域汇总
+
+> 与 `mixins.ae2_qof.json` 对齐，共 **29 条**（部分类跨域复用，故分域计数之和大于 29）。
 
 | 功能域 | 文件数 | 涉及文件 |
 |--------|--------|----------|
@@ -101,3 +121,4 @@
 | 其他 QoL | 3 | TileDriveMixin, MixinTileIOPort, MixinPinsHolder |
 | Accessor | 1 | GuiContainerAccessor |
 | 万能维护仓 | 1 | MixinMTEMultiBlockBase |
+| 上传取物/材质/GT 注册与迁移 | 6 | MixinPacketPickBlock, MixinTextureMap, MixinBaseMetaTileEntityIdMigration, MixinProcessingLogicSpeed, MixinCommonBaseMetaTileEntityMultiblockRegistry, MixinGuiCraftConfirm |

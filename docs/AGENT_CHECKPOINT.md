@@ -1,7 +1,7 @@
 # AGENT_CHECKPOINT 跨智能体接力状态文档
 
-**放置位置**：`docs/AGENT_CHECKPOINT.md`（原模板要求放根目录，应项目方归类要求改放 `docs/`，根目录副本保留）
-**适用范围**：OpenCode / Codex / ShunCode 等所有 AI 编程智能体
+**放置位置**：`docs/AGENT_CHECKPOINT.md`（原模板要求放根目录，应项目方归类要求改放 `docs/`；**根目录不存在副本**——2026-09-25 核实，以 `docs/` 下这一份为唯一来源）
+**适用范围**：DeepSeek Harness（DSH）/ OpenCode / Codex / ShunCode 等所有 AI 编程智能体
 **强制铁则**：任何智能体启动工作，第一步必须读取本文档；任务中断、切换智能体、阶段性完成时，必须记录自身使用的工具平台与底层模型，并更新全部进度信息。
 
 ---
@@ -10,23 +10,37 @@
 
 |项目|填写内容|
 |---|---|
-|工具平台|Codex Desktop|
-|模型信息|Codex | GPT-5|
-|工作分支|master；本轮起点 `ffe946ae18b8287731f27863dc9018991a1d8ef1`，已有脏状态保留|
-|启动时间|2026-09-21（Asia/Shanghai，fix49 依赖对齐 290b3）|
-|本次会话目标|把编译依赖由 beta-1 时代全量升级到 290b3 实机版本（AE2 977→1050、GT 5.09.52→5.09.54 等 12 项），修复升级后暴露的 6 处 API 断裂，实现真正意义上的 b3 适配。实例只读，不自动部署。|
+|工具平台|DeepSeek Harness（DSH Web GUI）|
+|模型信息|DeepSeek-V4.1-Flash|
+|工作分支|master；本轮起点 `223c8c5`（fix49），工作树干净、与 origin/master 同步|
+|启动时间|2026-09-25（Asia/Shanghai，文档对齐轮）|
+|本次会话目标|核对仓库真实状态与本文档的偏差并同步修正：更正 fix47~fix49 的提交状态（原写"未提交、未推送"，实际已提交并推送）、把基线统一为 GTNH 2.9.0-beta-3 / `3.19.0-fix49`、补齐 README 双语依赖对照表与"本版变化"、补全 MOD_MAP 与 mixin_notes 的 Mixin 清单。**只改文档，不动业务代码，不部署、不提交。**|
+|上一轮（历史）|工具：Codex Desktop｜模型：GPT-5：fix49 依赖全量对齐 290b3 实机版本，修复升级暴露的 6 处 API 断裂。|
 
 ---
 
 ## 二、项目总目标
 
-GTNH 2.9.0-beta-1（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附属功能模组 **AE2 QoL**（modId `ae2_qof`，版本 `3.19.0-fix43`）的交付与质量整改：在兼容原生 AE2（本次已核对的 rv3-beta-977-GTNH）与格雷科技本体/GTNL/PH 机制的前提下，完成 F1~F22 全部功能的质量检测、缺陷定位与修复，最终产出一个可稳定运行于单机与专用服的发布版本（含合并终端三形态、NEI 样板自动上传、合成完成通知、智能倍增、自适应电网、库存检测覆盖板等）。当前阶段以「先审计、再修复、逐条提交」为推进方式。
+GTNH 2.9.0-beta-3（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附属功能模组 **AE2 QoL**（modId `ae2_qof`，版本 `3.19.0-fix49`）的交付与质量整改：在兼容原生 AE2（本次已核对的 rv3-beta-1050-GTNH）与格雷科技本体（5.09.54.133）/GTNL/PH 机制的前提下，完成 F1~F22 全部功能的质量检测、缺陷定位与修复，最终产出一个可稳定运行于单机与专用服的发布版本（含合并终端三形态、NEI 样板自动上传、合成完成通知、智能倍增、自适应电网、库存检测覆盖板等）。当前阶段以「先审计、再修复、逐条提交」为推进方式。
 
 ---
 
 ## 三、全局已完成清单
 
 > 按完成时间倒序排列，均标注产出文件路径。历史结论保留原貌，不等于本版验证结果。
+
+- [x] 2026-09-25 | 工具：DeepSeek Harness | 模型：DeepSeek-V4.1-Flash：**接力文档与仓库真实状态对齐（仅文档，未动业务代码）**。
+  背景：本文档长期停留在 fix49 开工前——写"未提交、未推送"、起点 `ffe946a`、基线 beta-1；
+  实测 `git log` 显示 `63153ed fix47`、`d783448 fix48`、`223c8c5 fix49` **均已提交且与 origin/master 同步**，
+  工作树干净，`build/libs/AE2-QoL-3.19.0-fix49.jar` 已产出，`libs/` 与 `dependencies.gradle` 均已是 b3 版本。
+  更正项：①第一节元数据改为 DSH / DeepSeek-V4.1-Flash、起点 `223c8c5`；
+  ②第二节基线改 `2.9.0-beta-3` / `3.19.0-fix49`；③第四节把 fix47/48/49 从"未提交"改为"已提交"，只保留真实未完成的实测项；
+  ④第六节第 8 条的 `build_compile*.log` 约束按"已随 fix47 清理"的事实改写；
+  ⑤第六节第 2 条的测试实例路径补上 b3 实例 `GT_New_Horizons_2.9.0-beta-3_Java_17-26`（fix48 后的基线实例），旧 b1 实例保留原样。
+  同步修正的其它文档见本文档第九节末尾清单。
+  **重要事实（如实登记，不重写历史）**：fix42~fix46 的各项改动（Tooltip 单入口、覆盖板堆叠 64、
+  v7 材质方案 B、fix46 透明修复）**没有各自独立 commit**，而是与 fix47 一起并入 `63153ed`，
+  与"一个功能/bug 一个 commit、代码与文档与版本号同 commit"的约定不符；本轮不拆分既有提交。
 
 - [x] 2026-09-20 | 工具：Codex | 模型：GPT-5：**fix48 MTE ID 让位 fissionevolved + 旧存档自动迁移 + 基线切 290b3**。
 - [x] 2026-09-21 | 工具：Codex | 模型：GPT-5：**fix49 依赖全量对齐 290b3 实机版本**。
@@ -126,7 +140,11 @@ GTNH 2.9.0-beta-1（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 
 ## 四、当前进行中
 
-### 4.-1 MTE ID 让位与旧存档迁移（2026-09-20，fix48，**代码完成，待用户实测**）
+> 状态说明（2026-09-25 核对）：fix47、fix48、fix49 的代码**均已提交并推送**
+> （`63153ed` / `d783448` / `223c8c5`），工作树干净。本节条目保留"待用户实测"性质——
+> **提交不等于游戏内验收通过**。
+
+### 4.-1 MTE ID 让位与旧存档迁移（fix48，**代码已提交 `d783448`，待用户实测**）
 
 - 背景：b3 引入 fissionevolved 后占用 32100/32101，本模组两个终端注册失败。
 - 决策（用户选定）：**保留 fission，AE2-QoL 退让号段**。
@@ -137,9 +155,9 @@ GTNH 2.9.0-beta-1（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 - 实测要点：进入该存档后确认终端仍在原位、网络频率与电压等级保持、四个子仓仍处于绑定状态；
   日志应出现 `[AE2QoL] migrated legacy terminal in save data: MTE id 32100 -> 32106`。
 - 备份：`saves/World_bak_before_id_migration`（445 MB），异常时可整体回滚。
-- **未提交、未推送；未部署。部署前必须单独征得用户同意。**
+- **已提交并推送（`d783448`）；未部署。部署前必须单独征得用户同意。**
 
-### 4.0 世界中键取物「可合成即打开下单页」（2026-09-20，**代码完成，待用户实测**）
+### 4.0 世界中键取物「可合成即打开下单页」（fix47，**代码已提交 `63153ed`，待用户实测**）
 
 - 需求（用户已确认方案）：世界里对着方块按中键时——
   背包已有该物品 / 网络有存量 → 保持 AE2 原生；**网络没存量但有合成样板 → 打开「要合成多少个」界面**；
@@ -149,56 +167,67 @@ GTNH 2.9.0-beta-1（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
   `openCraftAmountIfCraftable(...)` / `hasNetworkStock(...)`；`RequestCraftingPacket` 改为共用前者。
 - 判定顺序「能不管就不管」，异常一律退化为放行原版；被点物品经反射读 `pickedBlock` 私有字段。
 - 已核对 FML `FMLEventChannel.fireRead` 直接 post 事件，与原版取物同上下文，故不额外归队线程。
-- 当前版本 `3.19.0-fix47`；产物 `build/libs/AE2-QoL-3.19.0-fix47.jar`。
-- 待用户实测与 4.1 的材质项一起跑：分别验证「网络有存量（原版取物）」「无存量+有样板（弹下单页）」
+- 当前版本 `3.19.0-fix49`；产物 `build/libs/AE2-QoL-3.19.0-fix49.jar`。
+- 待用户实测（与 4.1 的材质项一起跑）：分别验证「网络有存量（原版取物）」「无存量+有样板（弹下单页）」
   「都没有（无反应）」三种情况，并确认终端放背包/饰品栏都可用。
-- **未提交、未推送；未部署。部署前必须单独征得用户同意。**
+- **已提交并推送（`63153ed`）；未部署。部署前必须单独征得用户同意。**
 
-### 4.1 v7 材质接入（2026-09-19，**代码实现已完成，待用户实测**）
+### 4.1 v7 材质接入（fix45/fix46，**代码已提交 `63153ed`，待用户实测**）
 
 - 任务：给 8 台机器（万能维护仓 + 自适应电网 5 仓 + 无线 EU 两终端）换 v7 材质。
-- **用户已选定方案 B；fix45 已完成代码实现与完整构建。**
-  - `MixinTextureMap` 在原版方块图集 `registerIcons()` 尾部补注册 25 张 v7 路径；
+- **用户已选定方案 B；fix45 完成实现，fix46 修掉"装包后机器透明"。**
+  - `MixinTextureMap` 在**每次**原版方块图集 `registerIcons()` 尾部补注册 25 张 v7 路径
+    （fix46 删除"只注册一次"静态开关——`registerIcons()` 开头会 clear 清单，且启动期会多次执行）；
   - 注册成功后把图集图标回填到 `ModTextures.registerBaked(...)`，渲染端优先读取；
+    `getMaxU()/getMaxV()` 全 0（sprite 未装订）时回退 GT 机箱，兜底图标多级取值保证非 null；
   - 万能维护仓已删除 R2 无条件覆层，恢复 GT 发光/启用状态逻辑；
   - `v7_textures=off` 或资源不可达时强制回退 GT 默认外观。
-- **必读档案**：`docs/v7-材质方案结论档案.md` —— 已补方案 B 实施章节与行为矩阵。
-- 当前版本 `3.19.0-fix45`；产物 `build/libs/AE2-QoL-3.19.0-fix45.jar`（1,119,638 B，14:32）。
+- **必读档案**：`docs/v7-材质方案结论档案.md` —— 含方案 B 实施章节、fix46 透明根因与行为矩阵。
 - 用户应使用完整 25 张资源包 `AE2QoL-v7-resourcepack.zip` 并置顶；旧 overlay-test 包不再是判断依据。
-- **未提交、未推送；本轮产物未部署，部署前必须单独征得用户同意。**
+- 判读要点：`[AE2QoL-TEX] getIcon HIT` 的 UV 应**互不相同且非 0**；全 0 = 未进图集，全部相同 = missingno。
+- **已提交并推送（`63153ed`）；本轮产物未部署，部署前必须单独征得用户同意。**
 
 ### 4.2 稳定性整改（2026-09-18 起，暂停中）
 
 - 2026-09-18 用户已明确授权全面整改此前审查的问题；旧日志中“只授权 Tooltip/堆叠，不处理 A01–A19”是历史边界，已被本轮新授权取代。
-- 基线 fix43，HEAD `ffe946ae18b8287731f27863dc9018991a1d8ef1`；先前两项业务修改及所有既有脏状态保留。
+- 基线 `223c8c5`（fix49），工作树干净、与 origin/master 同步。
 - 顺序：存档/资源安全 → 专用服同步与权限 → 无线生命周期 → 协议与 NBT/统计；每批修改后验证，最终回填真实结果。
 - 当前在核对调用契约、编写修复；**尚未完成，不是已验收稳定版**。
-- 测试实例仍只读；未部署、未游戏实测、未提交/推送。修复与测试状态以本轮收尾记录为准。
+- 测试实例仍只读；未部署、未游戏实测。
+- 补充（2026-09-25 核实）：`util/ItemIdentity` 已落地并用于 `NetworkInventoryCache`（A14）、
+  `QuestDetectLogic` 候选去重（A15）与 `MergedTerminalScrollReplacePacket` 候选环（A13），
+  方向与审查报告 A13/A14/A15 的建议一致；但 `docs/mcp-full-function-audit-fix41.md` 的状态列**尚未回填、也未实测**，
+  不得据代码改动宣称已关闭。
 
-> 说明：4.1 已进入用户实测阶段；4.2 未推进。两者均未提交。
+> 说明：4.-1 / 4.0 / 4.1 三项代码均已提交，进入用户实测阶段；4.2 未推进。
 
 ---
 
 ## 五、待办任务队列（优先级从高到低）
 
-### ★ 当前主线：v7 材质接入（2026-09-19）
+### ★ 当前主线：v7 材质接入（fix45/fix46，已提交，待实测）
 
 **已完成**
 - [x] 定位 8 轮紫黑根因：`registerIcon` 对新路径恒返回 missingno（UV 证据）。
 - [x] 用户选定方案 B；实现 `MixinTextureMap` 图集尾部补注册，并打通 `ModTextures.registerBaked` 渲染链。
 - [x] 万能维护仓从方案 R2 回归 GT 状态贴图；v7 生效时使用自有分面贴图。
 - [x] 产出并更新 `docs/v7-材质方案结论档案.md`（8 条已证伪路径 + 方案 B 实施档案 + 行为矩阵）。
-- [x] fix45 完整离线构建通过，版本号同步 `3.19.0-fix45`。
+- [x] fix46 修掉"装包后机器透明"：删除"只注册一次"开关 + 退化 UV 兜底 + 非 null 兜底图标。
+- [x] fix45/fix46 完整离线构建通过，版本号已随 fix47~fix49 迭代到 `3.19.0-fix49` 并提交（`63153ed`）。
 
 **待办（按优先级）**
-- [ ] **P0 用户实测方案 B**：部署 fix45 后，先不装完整包确认 8 台全为 GT 原样；再置顶完整包确认 FRONT/TOP/SIDE 分面正确。
+- [ ] **P0 用户实测方案 B**：部署 fix49 后，先不装完整包确认 8 台全为 GT 原样；再置顶完整包确认 FRONT/TOP/SIDE 分面正确。
 - [ ] **P0 用户实测开关**：`v7_textures=auto/on/off` 三态分别重启验证，`off` 必须完全回退。
 - [ ] **P0 用户实测维护仓**：确认发光层、启用/停用状态恢复；GT 原版维护仓不再被连带改外观。
-- [ ] **P1 日志判读**：`[AE2QoL-TEX] getIcon HIT` 的 UV 互不相同为成功；完全相同仍是 missingno。
+- [ ] **P0 用户实测 fix47/fix48/fix49**：世界中键取物三态（见 4.0）；旧存档终端迁移（见 4.-1）；
+      b3 依赖升级后 6 处 API 断裂（`RenderBlockExIOPort`/`RenderQuestDetector`、`applyClientSwap`、`getNameSuffix`）的实际表现。
+- [ ] **P1 日志判读**：`[AE2QoL-TEX] getIcon HIT` 的 UV 互不相同且非 0 为成功；全 0 = 未进图集，完全相同 = missingno。
 - [ ] **P1 方案 B 异常处理**：若 Angelica 或资源重载导致不生效，按日志决定是否需要追加 reload 后重注册逻辑。
 - [ ] **P2 清理无效路径代码**：用户实测通过后移除 `V7TextureStitchHandler` 死代码，并把 `STITCHED` 旧通道降级或删除。
 - [ ] **P2 诊断日志清理**：`ModTextures` 中的 `HIT_LOGED`/`MISS_LOGED`/`[AE2QoL-TEX]` 输出待收尾时移除或降级。
-- [ ] **P2 文档收尾**：实测通过后更新 `docs/MOD_MAP.md`，并在必要时同步 `README.md`。
+- [x] **P2 文档收尾（2026-09-25 完成）**：已更新 `docs/MOD_MAP.md`、`docs/mixin_notes.md`、
+      `README.md`/`README.en.md`（本版变化 + 依赖对照表）、`docs/GTNH-构建与代码参考.md`、`docs/GTNH-迁移移植指南.md`。
+      剩余可选：用户实测通过后再把 `MOD_MAP` 中"方案 P 遗留"字样与实测结论对齐。
 
 **已知约束（勿重复踩坑）**
 - 构建必须 `JAVA_HOME=E:\java17`（系统默认 Java 25 会失败）。
@@ -250,13 +279,13 @@ GTNH 2.9.0-beta-1（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 ## 六、项目固定约束（所有智能体必须遵守，不得修改）
 
 1. 运行环境：Minecraft 1.7.10 Forge（本工程实际使用 Java 17 工具链 + Jabel 现代语法，编译目标仍为 Java 8 字节码）
-2. 权限边界：仅允许读写本项目目录内文件；`reference_src` 为只读参考，禁止复制其源码入库；测试实例 `E:\wzt\MC\PL genmulu\GT_New_Horizons_2.9.0-beta-1_Java_17-25(1)` 严格只读
+2. 权限边界：仅允许读写本项目目录内文件；`reference_src` 为只读参考（当前有效目录 `E:\wzt\MC\modcreater\reference_src_290b3`，旧的 `reference_src_290b1_已过期` 已废弃），禁止复制其源码入库；测试实例严格只读——当前基线实例 `E:\wzt\MC\PL genmulu\GT_New_Horizons_2.9.0-beta-3_Java_17-26`（fix48 起），历史实例 `E:\wzt\MC\PL genmulu\GT_New_Horizons_2.9.0-beta-1_Java_17-25(1)`
 3. 代码规范：遵循原有代码风格，不擅自大规模重构旧代码
 4. 兼容要求：不破坏 GTNH 原版机制，兼容对应版本的 AE2、格雷科技本体
 5. 安全规则：禁止自动执行删除文件操作，删除操作必须人工确认；部署 JAR 到测试实例前必须单独征得用户同意
 6. 构建要求：修改代码后必须通过 gradle 编译验证，无报错（构建方式见第八节）
 7. 版本对齐：所有配方、参数、数值与 GTNH 官方设定保持一致
-8. 提交约束：一个修复一个 commit；代码、文档、版本号变更放在同一 commit；不得删除 4 个未跟踪的 `build_compile*.log` 历史日志
+8. 提交约束：一个修复一个 commit；代码、文档、版本号变更放在同一 commit。历史遗留的 `build_compile*.log` 已于 fix47（`63153ed`）随"清理确认无用的残留文件"一并移除并入库，**不再作为保留项**；如需重新生成构建日志，按需放临时目录，不要入库。
 
 ---
 
@@ -275,7 +304,9 @@ GTNH 2.9.0-beta-1（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
   - 否决原因：GT `registerIcon` 对运行时新造路径**恒返回 missingno 占位贴图**，游戏内必紫黑。
   - 已证伪的 8 条路：① `GTCustomBlockIconContainer`（GT 队列）② vanilla `TextureStitchEvent.Pre` 静态注册 ③ 实例注册+机箱兜底 ④ 资源可达性检查 ⑤ 换命名空间 `gregtech:blocks/ae2qol/` ⑥ 换时机到当前 atlas ⑦ 条件开关 `isReady()` ⑧ 覆层漏写 `.extFacing()`。
   - 决定性证据：25 张不同贴图注册后 **UV 完全相同**（`[0.17187744,0.5273462]-[0.1757788,0.53124756]`，宽 0.0039 ≈ 16px@4096）= 同一个 missingno 格子；且 missingno **非 null、名字正确、16×16**，极具欺骗性。
-  - **现行做法**：复用 GT 已有路径 + 资源包**同名覆盖**（对标 Modernity-GTNH，它不注册、零时序问题）。详见 `docs/v7-材质方案结论档案.md`。
+  - **当时的现行做法**：复用 GT 已有路径 + 资源包**同名覆盖**（对标 Modernity-GTNH，它不注册、零时序问题）。
+    注意：该结论随后被**方案 B 取代**——fix45/fix46 证明「在方块图集 `registerIcons()` 阶段补注册自定义路径」可行，
+    与原结论的"直接调 `registerIcon` 对新路径恒 missingno"并不矛盾（是注册时机不同）。详见 `docs/v7-材质方案结论档案.md` 第一、六节。
 - 方案名称：把 v7 的 FRONT/TOP/SIDE 三张图分别塞进 `getTexturesActive` 返回的 `ITexture[]` 三个元素
   - 否决原因：GT 的 `getTexturesActive` 返回值是**叠加在同一批面上的多层覆层**，不是「第 1 个给正面、第 2 个给顶面」；三张叠在一起显示错误。
   - 现行做法：覆层**不分面**，一张图由 `extFacing()` 决定朝向，整机统一。
@@ -289,7 +320,7 @@ GTNH 2.9.0-beta-1（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 
 ## 八、关键知识笔记
 
-**当前 fix42 回调约定**
+**回调约定（fix42 起，当前仍有效）**
 
 - `handleTooltip` 原样返回；`handleItemTooltip` 是唯一追加入口；无时间/文本全局状态，无 Chromatic 存在标志。
 - 当前 Compat 1.0.31 的流体上下文转换为 GT 展示物品，进入已有 `NetworkInventoryCache.query`。真实桶/单元仍按物品计数，不能为了“支持流体”改此语义。
@@ -300,13 +331,15 @@ GTNH 2.9.0-beta-1（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 - 当前 MCP/Git Bash 命令：`env JAVA_HOME=/e/java17 GRADLE_USER_HOME=C:/Users/29357/.gradle ./gradlew build --offline -x spotlessJavaCheck -x spotlessCheck`。新构建结果见第十节。
 - 构建命令（PowerShell）：先 `$env:JAVA_HOME='E:\java17'`、`$env:GRADLE_USER_HOME='C:\Users\29357\.gradle'`，再执行 `.\gradlew.bat build -x spotlessJavaCheck -x spotlessCheck --offline`；仅快速编译用 `compileJava`。
 - 历史构建日志 `build_compile.log`/`build_compile4.log`（2026-09-15/16 生成）曾报 `StockMonitorTerminal 未实现 ISidedInventory 的 canInsertItem(int,ItemStack,int) / closeInventory()`。2026-09-17 用当前基线源码复核时，`compileJava` 与 `build` 均 `BUILD SUCCESSFUL`（Gradle 按内容哈希判定已编译成功），说明该历史报错不对应当前源码状态；若后续再次出现同类报错，应以新日志为准重新定位，不要直接套用旧结论。
-- 测试实例只读；部署新 JAR 需单独批准。产物目录 `build/libs/`，上一轮产物为 `AE2-QoL-3.19.0-fix41.jar`（另有 `-dev`/`-sources` 变体，旧版本 fix13/fix14/fix38/fix39 仍在目录中，勿再部署 fix38）。
+- 测试实例只读；部署新 JAR 需单独批准。产物目录 `build/libs/`，当前产物为 `AE2-QoL-3.19.0-fix49.jar`（另有 `-dev`/`-sources` 变体，**不要部署**）。历史上 fix13/fix14/fix38/fix39 等旧产物已不在目录中，不要再引用旧产物名。
 
-**版本与文档状态（以下为 fix41 历史记录；当前 fix42 结果见第四/十节）**
+**版本与文档状态（2026-09-25 核实）**
 
-- 版本号全项目统一为 `3.19.0-fix41`：`gradle.properties`、`src/main/resources/mcmod.info`、`README.md`、`README.en.md`、`CHANGELOG.md` 五处一致。
+- 版本号全项目统一为 `3.19.0-fix49`：`gradle.properties`、`src/main/resources/mcmod.info`、`README.md`、`README.en.md`、`CHANGELOG.md` 一致。
 - 根目录 `mixins.ae2_qof.json` 与 `src/main/resources/mixins.ae2_qof.json` SHA256 完全一致（打包实际使用 resources 版本）。
-- 发布产物：`build/libs/AE2-QoL-3.19.0-fix41.jar`（1,104,660 字节）。
+- 发布产物：`build/libs/AE2-QoL-3.19.0-fix49.jar`。
+- 当前源码规模：`src/main/java` 下 **210 个 Java 文件**（fix41 审查快照为 203）。
+- 当前 Mixin 清单（`mixins.ae2_qof.json` 共 **29 条**）：通用 13 条（含 `ae.MixinPacketPickBlock`、`gt.MixinBaseMetaTileEntityIdMigration`、`client.MixinTextureMap`）、client 16 条；详见 `docs/MOD_MAP.md` 与 `docs/mixin_notes.md`。
 
 **关键机制结论**
 - **RFB `childDelegations` 注入已彻底删除（fix39）**：该补丁最初为绕开被误判的 RFB 类加载问题而写，但旧实现只处理 `List`/`String[]`、真实字段是 `HashSet`，因此从未生效。修复类型判断让它真正生效后，`net.minecraftforge.*` 被委托给子类加载器，绕过 RFB 的 `ExtensibleEnumTransformer`，导致 lwjgl3ify 枚举扩展失效、Railcraft `GeodePopulator` 静态初始化抛 `was not made extensible` 崩溃。**任何智能体不得再次加入该注入**；F22 崩溃的真实根因是 MTE ID 重号（见上）。
@@ -336,19 +369,49 @@ PatternUploadTarget.java、PatternRecipeMatcher.java、PatternRouteKey.java、Pa
   按本模组实际功能重新排版并做窗口自适应。
 - F6 通知条件（fix23 后）：`submitJob` 只要拿到返回值就记录下单玩家与产物；完成时若玩家背包没有绑定同网络的无线终端，退化为直接通知本人。`submitJob` 返回 null（CPU 忙）时保留进行中任务的通知状态（fix35）。
 - F14 倍增条件：任务值 > 1、配方非 craftable、宿主实现 `ISmartDoublingMedium` 且开关已启用；`getMaxMultiplier` 有多个提前返回 1 的分支（未启用、craftable、流体接口、假合成、`BlockingMode != NONE`、`hasItemsToSend()`、无 adaptor）。
-- F22 根因（重要）：MTE ID **32001 已被 GT 本体 LegacyUniversalChemicalFuelEngine 占用**，构造期抛 `IllegalArgumentException`，被 Log4j/RFB 二次加载错误掩盖成「类加载崩溃」；现使用空闲 ID **32101**。可用 `docs/dumps/metatileentity.csv`（4488 条）查任意 MTE ID 是否冲突。
+- F22 根因（重要，含 fix48 更新）：MTE ID **32001 曾被 GT 本体 LegacyUniversalChemicalFuelEngine 占用**（fix30 先改到 32101）；**b3 起 32101 又被 fissionevolved 占用**，故 fix48 再让位到 **32107**（配套自适应电网终端 32106）。可用 `docs/dumps/metatileentity.csv` 查任意 MTE ID 是否冲突。换号必须配套存档迁移（`MixinBaseMetaTileEntityIdMigration`），否则旧存档终端配置丢失。
 - CoverRegistry：已统一存主世界 `loadItemData`（P1-007），旧 per-dimension 数据做一次性合并迁移；打开统计终端时刷新在线/存在状态（P1-008）。
 - 线程与平台判定用 `Platform.isServer()/isClient()`；网络包统一走 `ModNetwork.CHANNEL`，服务端任务通过 `ServerTerminalHelper.scheduleServerTask` 回主线程。
 - 生命周期：`MyMod.serverStopping` → `CommonProxy.serverStopping`，统一保存并清空自适应电网、无线频道/方块链接、供应器缓存；客户端 `WorldEvent.Unload` 清空高亮与 NEI 库存缓存。
 **协作与环境注意**
 
-- 当前 ShunCode MCP 终端为 Windows PortableGit Bash，路径使用 `/e/...`；旧 PowerShell 指令只有显式调用 PowerShell 后才能使用。
-- 当前通过 MCP `read_files` 后用 `apply_patch` 修改，带上 `expected_versions`；不要沿用旧 Codex 专用补丁入口。
-- fix41 审查快照为 203 个 Java 文件，按功能域审查，未做逐分支形式化证明。
+- 当前（2026-09-25）会话平台为 **DeepSeek Harness（DSH）**，工具链为原生文件读写（read/edit/write）+ PowerShell；下一位接手者请按自己的平台重写本节，不要把旧平台的专用入口（PortableGit Bash、MCP `apply_patch`、`expected_versions`）当成必需步骤。
+- 构建统一以 PowerShell 命令为准（见上），不再依赖 Git Bash 的 `env JAVA_HOME=...` 写法。
+- fix41 审查快照为 203 个 Java 文件，按功能域审查，未做逐分支形式化证明；当前源码 210 个文件，新增部分（`ItemIdentity`、`WirelessEnergyTransfer`、`MixinTextureMap`、`MixinPacketPickBlock`、`MixinBaseMetaTileEntityIdMigration`）在 fix41 审查范围内**未被覆盖**。
 
 ---
 
 ## 九、历史会话操作日志
+
+### 2026-09-25 · 接力文档与仓库真实状态对齐（仅文档）
+
+- 工具平台：DeepSeek Harness（DSH Web GUI）｜底层模型：DeepSeek-V4.1-Flash｜工作分支：master，起点 `223c8c5`，工作树干净
+- 会话目标：人工核对"文档写的"与"仓库实际是的"之间的偏差，并一次性修正文档，不改业务代码。
+
+**核对到的关键事实**
+
+- `git log`：`63153ed fix47`、`d783448 fix48`、`223c8c5 fix49` 均已提交，`master` 与 `origin/master` 同步，工作树干净。
+  本文档此前一直写"未提交、未推送"，属过期信息。
+- `build/libs/` 仅有 fix49 三件产物；根目录 `build_compile*.log` 已不存在（随 fix47 清理并入库）。
+- `libs/` 与 `dependencies.gradle` 已是 290b3 实机版本（AE2 1050、GT 5.09.54.133、NEI 2.8.130、AE2FC 1.5.106、
+  MUI2 2.3.88、PH 0.2.0p24、GTNL 0.2.7-pre3-dev-290、NEE 1.7.41、BQ 3.8.84、TE 1.7.60、Avaritia 1.99）。
+- `fix42~fix46` 的改动没有独立 commit，被并入 `63153ed fix47`；与"一个修复一个 commit"的约定不符，已如实登记。
+- `docs/mcp-full-function-audit-fix41.md` 的 A13/A14/A15 方向已在代码落地（`util/ItemIdentity`），
+  但报告状态列未回填、也未实测，本轮**不代为标记为已修复**。
+
+**本次修改文件（全部为文档）**
+
+- `docs/AGENT_CHECKPOINT.md`（本文件）：第一节元数据、第二节基线、第三节新增本条、
+  第四节 fix47~fix49 提交状态、第五节待办与实测项、第六节约束第 2/8 条、第七节 v7 现行做法注记、
+  第八节版本与文档状态/F22 根因/协作环境、使用说明。
+- `README.md`、`README.en.md`：版本说明与依赖对照表。
+- `docs/MOD_MAP.md`、`docs/mixin_notes.md`：v7 方案描述与完整 Mixin 清单。
+- `docs/GTNH-构建与代码参考.md`、`docs/GTNH-迁移移植指南.md`：占位值与过期基线。
+- `CHANGELOG.md`：追加本轮记录。
+
+**本次是否编译通过**：未编译（仅文档，未改任何 `.java`）
+**是否部署**：否
+**是否提交/推送**：否（改动留在工作区，待用户确认后再决定是否提交）
 
 
 ### 2026-09-19 · v7 材质 8 轮排查定案与万能维护仓首成功
@@ -514,6 +577,9 @@ PatternUploadTarget.java、PatternRecipeMatcher.java、PatternRouteKey.java、Pa
 
 ## 十、fix42 历史收尾与验证结果（已填写）
 
+> 后置说明（2026-09-25 补）：本节为 fix42 当时的记录，其中"未提交、未推送"仅描述当时状态；
+> 该改动**后来随 fix47 一起并入提交 `63153ed`**，未独立成 commit。本节其余文字保持原貌。
+
 ### 10.1 完成检查
 
 - [x] 单入口代码、版本与全局已完成列表已更新。
@@ -588,6 +654,9 @@ JAVA_HOME=/e/java17 bash docs/tooltip-fix42-regression.sh
 ---
 
 ## 十一、fix43 收尾与验证结果（已填写）
+
+> 后置说明（2026-09-25 补）：本节记的 fix42/fix43 改动当时确实"未提交"；这些改动**后来随 fix47 一起并入提交 `63153ed`**，
+> 并未各自独立成 commit。本节其余文字保持当时的原貌，不作为当前 git 状态依据。
 
 - [x] 用户要求：库存检测覆盖板**物品堆叠上限为 64**；不是把监控阈值改为 64。
 - [x] 代码、主版本、双语 README、根 CHANGELOG、完成清单和会话记录同步完成。

@@ -92,6 +92,6 @@
 1. 已有 Mixin 配置，修改时需核对 `usesMixins`、`mixinsPackage`、`separateMixinSourceSet`
 2. 构建使用 GTNH 的 `gtnhconvention` 插件
 3. AE2 部分类被 GTNH 修改，不能直接照搬原版 AE2
-4. Mixin 注入点需适配 GTNH 2.9.0-beta-1
+4. Mixin 注入点需适配 GTNH **2.9.0-beta-3**（AE2 rv3-beta-1050 / GT 5.09.54.133）；历史文档中的 beta-1 / rv3-beta-977 已过期
 5. 移植后必须检查 `mixin.log`
 6. 参考 `reference_src` 中的其他模组代码
