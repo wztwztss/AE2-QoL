@@ -21,6 +21,8 @@
     "client.MixinTextureMap"
   ],
   "client": [
+    "ae.MixinKeyBindHandler",
+    "ae.MixinClientHelperPickBlock",
     "nei.MixinRecipeHandlerRef",
     "nei.MixinDefaultOverlayHandler",
     "nei.MixinGuiOverlayButton",

@@ -1,3 +1,37 @@
+## 工作区决策记录 2026-09-25 (18) - fix53-diag 增补**客户端**埋点（仍为诊断版，非发布）
+
+> 产物 `build/libs/AE2-QoL-3.19.0-fix53-diag.jar`（SHA256 `153D02CC…`），已部署到 b3 实例。
+
+### 为什么还要加埋点
+
+上一版埋点**全在服务端**，它只能证明"包没到服务端"，证明不了"客户端卡在哪一步"。
+本轮把客户端这一侧的三处关键判定补上：
+
+| 标记 | 位置 | 含义 |
+|---|---|---|
+| `CLIENT-EVENT` | `appeng.client.ClientHelper.onPickBlockEvent` HEAD | GTNHLib 的 `PickBlockEvent` 路径是否被触发（**只有两键相等时才会走到这里**） |
+| `CLIENT-BINDS` | `appeng.client.KeyBindHandler.arePickBlockBindsEqual` RETURN | AE2 的 Pick Block 是否与原版「选取方块」同键 |
+| `CLIENT-HANDLE` | `appeng.client.KeyBindHandler.handlePickBlock` RETURN | AE2 是否真的决定发包（true = 已发 `PacketPickBlock`） |
+
+新增两个 Mixin：`mixin/ae/MixinKeyBindHandler`、`mixin/ae/MixinClientHelperPickBlock`，
+登记在 `mixins.ae2_qof.json` 的 **client** 段；根副本与 `src/main/resources/` 副本已同步
+（SHA256 均为 `90D7D733…`）。仍然**只记录、不改变任何行为**。
+
+### 验证
+
+- 构建 `BUILD SUCCESSFUL`，退出码 0；产物内两个新 Mixin 类与其注入方法已入包，
+  jar 内 `mixins.ae2_qof.json` 已登记两者；
+- 部署后实例 SHA256 与本地一致，mods 内只有一份 AE2-QoL。
+
+### 顺带记一条操作教训（已写入 skill）
+
+核对产物时我用了 `jar xf <产物.jar> mixins.ae2_qof.json`，**在工作区根目录解包**，
+覆盖并随后移走了仓库里的同名根副本 ⇒ 等于删除了 `mixins.ae2_qof.json`。
+已从 `src/main/resources/` 恢复并校验两份一致。
+**以后核对产物只解到临时目录，或只用 `jar tf` 看清单。**
+
+---
+
 ## 工作区决策记录 2026-09-25 (17) - 实测结果回填（第二轮）：fix50 ✅ / fix51 ✅ / fix52 根因查明于客户端键位
 
 > 无代码变更（本轮只回填结论 + 改了一条用户侧配置）。产物仍为 `build/libs/AE2-QoL-3.19.0-fix53-diag.jar`。
