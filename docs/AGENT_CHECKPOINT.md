@@ -3,6 +3,7 @@
 **放置位置**：`docs/AGENT_CHECKPOINT.md`（原模板要求放根目录，应项目方归类要求改放 `docs/`；**根目录不存在副本**——2026-09-25 核实，以 `docs/` 下这一份为唯一来源）
 **适用范围**：DeepSeek Harness（DSH）/ OpenCode / Codex / ShunCode 等所有 AI 编程智能体
 **强制铁则**：任何智能体启动工作，第一步必须读取本文档；任务中断、切换智能体、阶段性完成时，必须记录自身使用的工具平台与底层模型，并更新全部进度信息。
+**更高的第一优先**：先加载 skill **`ae2qol-workflow`**（`.dsh/skills/ae2qol-workflow/SKILL.md`）——它规定了本项目的工作流程（先确认问题到 99% → 口令 → 只读源码取证 → 口令 → 才可改文件），并汇总了构建/部署/文档义务与已踩坑位。本文档负责**状态与进度**，该 skill 负责**流程与纪律**。
 
 ---
 
@@ -407,6 +408,11 @@ PatternUploadTarget.java、PatternRecipeMatcher.java、PatternRouteKey.java、Pa
 - 线程与平台判定用 `Platform.isServer()/isClient()`；网络包统一走 `ModNetwork.CHANNEL`，服务端任务通过 `ServerTerminalHelper.scheduleServerTask` 回主线程。
 - 生命周期：`MyMod.serverStopping` → `CommonProxy.serverStopping`，统一保存并清空自适应电网、无线频道/方块链接、供应器缓存；客户端 `WorldEvent.Unload` 清空高亮与 NEI 库存缓存。
 **协作与环境注意**
+
+- **工作流程已固化为 skill**：项目版 `ae2qol-workflow`（`.dsh/skills/ae2qol-workflow/SKILL.md`，随仓库走）；
+  另在 `DSH_HOME\skills\evidence-first-workflow` 放了一份**与项目无关的通用版**，其它项目也会自动命中。
+  两者同时命中时**以项目版为准**（项目版含本项目构建/实例/依赖与专属坑位）。
+  修改流程时请同步这两份（通用版只放可迁移内容）。
 
 - 当前（2026-09-25）会话平台为 **DeepSeek Harness（DSH）**，工具链为原生文件读写（read/edit/write）+ PowerShell；下一位接手者请按自己的平台重写本节，不要把旧平台的专用入口（PortableGit Bash、MCP `apply_patch`、`expected_versions`）当成必需步骤。
 - 构建统一以 PowerShell 命令为准（见上），不再依赖 Git Bash 的 `env JAVA_HOME=...` 写法。
