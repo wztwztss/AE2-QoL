@@ -1,3 +1,90 @@
+## 工作区决策记录 2026-09-25 (15) - fix52：世界里键下单在网络线程上开界面，静默无效
+
+> 未提交；产物 `build/libs/AE2-QoL-3.19.0-fix52.jar`。
+
+### 现象
+
+生存模式下，身上带着已绑定且在范围内的 ME 无线终端、背包与 ME 网络都没有该物品、
+但网络里**确实存在**可合成它的样板时，对着世界里的方块按中键**完全没有反应**，
+不弹「要合成多少个」。对照：对**有存量**的方块中键能正常取到手；
+对**无存量且无样板**的方块中键与目标情形现象完全相同。
+
+### 排查过程与证据（逐步排除）
+
+| 假设 | 结论 | 依据 |
+|---|---|---|
+| 注入未生效 | **排除** | 运行日志 `Mixing ae.MixinPacketPickBlock … into … PacketPickBlock`，且注入体标注 `does use it's CallbackInfo` |
+| 客户端不发包 | **排除** | AE2 1050 `KeyBindHandler` 只在 `capabilities.isCreativeMode` 时 `return false`；实测为生存模式，`PacketPickBlock` 无条件发出 |
+| 原版路径被破坏 | **排除** | 「有存量」时能正常取到手 |
+| 背包已有 → 放行 | **排除** | 背包里没有该物品 |
+| 样板不在合成网格缓存（`patterns.isEmpty()`） | **排除** | **决定性 A/B**：同一位置、同一终端、同一物品，用 **NEI 左侧物品面板中键能正常弹出**下单页——两条路径共用 `resolveTerminal` + `openCraftAmountIfCraftable`，故样板、终端、网格缓存全部正常 |
+| `hasNetworkStock` 误判为有存量 | 可能性低 | 已核对 `PlayerSource` 是纯数据类、`MEMonitorHandler.extractItems(SIMULATE)` 直接委托，空网络按 AE2 契约返回 `null` |
+
+⇒ 排除后只剩**最后一步**：`openCraftAmountIfCraftable` 里
+`Platform.openGUI(...)` 之后 `player.openContainer instanceof ContainerCraftAmount` 不成立，
+即**界面没有真正打开**。
+
+### 根因
+
+两条路径唯一的**结构性差异是线程**：
+
+- NEI 面板中键 → `network/RequestCraftingPacket.java` 第 53 行显式
+  `ServerTerminalHelper.scheduleServerTask(...)`，注释写明「归队到服务端 tick 线程执行，
+  避免 Netty IO 线程并发访问 grid/container」——**实测可用**；
+- 世界中键 → 注入在 `PacketPickBlock.serverPacketData` 里**同步**执行同一个开界面方法。
+
+AE2 的包处理器走的是 FML `FMLEventChannel` 的 `ServerCustomPacketEvent`
+（`NetworkHandler.serverPacket` → `AppEngServerPacketHandler.onPacketData`），
+该事件在**网络线程**上触发。在网络线程里替换 `player.openContainer`／打开界面不会生效，
+于是整条兜底逻辑静默失败。
+
+fix47 原先的注释写的「与原版同上下文，故不额外归队线程」是**错误推理**：
+同上下文只说明不会额外引入并发问题，并不说明网络线程上可以开界面。该注释已一并更正。
+
+### 修复
+
+- `src/main/java/com/wztwzt/ae2_qof/mixin/ae/MixinPacketPickBlock.java`
+  - 判定部分（解析被点物品、背包检查、终端解析、存量判定）仍在同步段完成，**保持廉价**；
+  - 真正的开界面动作改为 `ServerTerminalHelper.scheduleServerTask(...)`，
+    与 NEI 路径完全对齐；
+  - **不再 `ci.cancel()`**：目标情形下原版自身必然无操作（网络无存量 → 提取结果为空 →
+    落到 `PacketPickBlock.serverPacketData` 的收尾分支直接 `return`），
+    因此「不拦截」与「拦截」等价，却不必在网络线程上改变原版流程；
+    相应地移除了注入上的 `cancellable = true`（不再需要）。
+- `src/main/java/com/wztwzt/ae2_qof/network/ServerTerminalHelper.java`
+  - `hasNetworkStock` 的异常兜底由「按有存量返回 `true`」改为「按无存量返回 `false`」并记一条警告。
+    原行为的问题：调用方据此**直接放行**，一次判定异常就会让「世界中键下单」**永久静默失效**
+    且不留痕迹——这正是本问题此前难以定位的原因（参见审查 P2-027 对静默捕获的要求）。
+    改为 `false` 后，调用方会继续走开界面流程，而界面**只在真的存在可用样板时才打开**
+    （`openCraftAmountIfCraftable` 内部会再校验样板），最坏结果只是多弹一次无害的合成界面。
+
+### 影响面与风险
+
+| 项 | 结论 |
+|---|---|
+| 网络有存量时的原版取物 | 不受影响（仍在同步段提前放行） |
+| NEI 面板中键、Shift+左键取物 | 不受影响（未改这两条路径） |
+| 网络协议 | 未改动，无 fix41 那种双端同版本约束 |
+| 行为差异 | 界面延后 1 个服务端 tick 出现；已保留「已在 `ContainerCraftAmount` 时不重复打开」的防连点逻辑 |
+| 风险 | 若在服务端线程上开界面仍失败，最坏表现与本次修复前一致（无反应），届时需查 `Platform.openGUI` 在 1050 上的容器契约 |
+
+### 验证（已完成）
+
+- 构建：`$env:JAVA_HOME='E:\java17'` + `.\gradlew.bat build --offline -x spotlessJavaCheck -x spotlessCheck`
+  → `BUILD SUCCESSFUL`，**进程退出码 0**。
+- 产物：`build/libs/AE2-QoL-3.19.0-fix52.jar`。
+- 元数据：`gradle.properties` 与 `src/main/resources/mcmod.info` 主版本均为 `3.19.0-fix52`。
+
+### 待用户实测（未实测前不标通过）
+
+1. 世界里中键「无存量 + 有样板」的方块 → 弹出 AE2 原生「要合成多少个」，**不代玩家点确认**；
+2. 有存量 → 原样取物到手；都没有 → 原生无反应（两条均无回归）；
+3. 连点中键不重复开界面、不清空已填数量；
+4. 日志无 `[AE2QoL] pick-block craft-amount task failed` 与
+   `[AE2QoL] hasNetworkStock check failed`。
+
+---
+
 ## 工作区决策记录 2026-09-25 (14) - fix51：IO 端口搬不出无限磁盘的流体（AE2 每元件只取一个存储通道）
 
 > 未提交；产物 `build/libs/AE2-QoL-3.19.0-fix51.jar`。

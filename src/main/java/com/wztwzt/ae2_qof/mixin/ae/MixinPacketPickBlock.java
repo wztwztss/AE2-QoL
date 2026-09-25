@@ -39,12 +39,16 @@ import appeng.util.item.AEItemStack;
  * <li>背包里已经有同种物品（哪怕是散的、在背包里没在快捷栏）→ 放行，原版会帮你切槽/补齐</li>
  * <li>身上没有可用的无线终端（未携带 / 未绑定 / 不在范围）→ 放行，原版会给出「未找到无线终端」提示</li>
  * <li>ME 网络里还有存量 → 放行，原版自己取物</li>
- * <li>只剩最后一种情况：网络没存量但有可用样板 → 打开下单界面并拦截原版</li>
+ * <li>只剩最后一种情况：网络没存量但有可用样板 → 打开下单界面（不拦截原版，见下方线程说明）</li>
  * </ol>
  * 任何一步出现异常都按「放行原版」处理，绝不让异常冒泡到网络线程。
  * <p>
- * 线程说明：注入点与原版取物逻辑处在同一个调用上下文，做的又是原版逻辑的子集
- * （读背包、模拟取物、查样板、开界面），因此不额外做线程调度，与原版行为一致。
+ * 线程说明（fix52 修正）：AE2 的包处理器走 FML {@code FMLEventChannel} 的
+ * {@code ServerCustomPacketEvent}，**运行在网络线程上**。原实现据此认为「与原版同上下文所以
+ * 不需归队」——这个推理是错的：同上下文不等于可以开界面。世界的 NEI 面板中键路径
+ * （{@code RequestCraftingPacket}）一直显式归队到服务端 tick 线程且实测可用，
+ * 两条路径共用同一个开界面方法，差异只有线程。因此本类现在**只做判定**，
+ * 真正的开界面动作交给 {@code ServerTerminalHelper.scheduleServerTask} 在服务端 tick 线程执行。
  */
 @Mixin(value = PacketPickBlock.class, remap = false)
 public abstract class MixinPacketPickBlock {
@@ -56,7 +60,6 @@ public abstract class MixinPacketPickBlock {
     @Inject(
         method = "serverPacketData(Lappeng/core/sync/network/INetworkInfo;Lappeng/core/sync/AppEngPacket;Lnet/minecraft/entity/player/EntityPlayer;)V",
         at = @At("HEAD"),
-        cancellable = true,
         remap = false)
     private void ae2qol$craftAmountFallback(INetworkInfo networkInfo, AppEngPacket packet, EntityPlayer player,
         CallbackInfo ci) {
@@ -82,10 +85,22 @@ public abstract class MixinPacketPickBlock {
             // 网络里还有存量 → 交给原版取物
             if (ServerTerminalHelper.hasNetworkStock(terminal, target)) return;
 
-            // 没存量：有样板就打开「要合成多少个」，没有就仍由原版静默处理
-            if (ServerTerminalHelper.openCraftAmountIfCraftable(playerMP, terminal, target)) {
-                ci.cancel();
-            }
+            // 没存量：有样板就打开「要合成多少个」，没有就仍由原版静默处理。
+            // fix52：开界面必须归队到服务端 tick 线程。AE2 的包处理器走的是 FML
+            // FMLEventChannel 的 ServerCustomPacketEvent，运行在网络线程上；在该线程里替换
+            // player.openContainer / 打开界面不会生效。NEI 面板中键那条路径
+            // （RequestCraftingPacket）同样做了归队，实测可用；世界中键原先没有归队，实测无效
+            // ——两条路径共用同一个 openCraftAmountIfCraftable，差异只剩线程，故按 NEI 路径对齐。
+            // 这里也**不再 cancel()**：目标情形下原版自身必然无操作（网络无存量 → 提取结果为空 →
+            // 落到收尾分支直接 return），因此「不拦截」与「拦截」等价，却不必在网络线程上
+            // 改变原版流程。
+            ServerTerminalHelper.scheduleServerTask(() -> {
+                try {
+                    ServerTerminalHelper.openCraftAmountIfCraftable(playerMP, terminal, target);
+                } catch (Throwable taskError) {
+                    MyMod.LOG.warn("[AE2QoL] pick-block craft-amount task failed: {}", taskError.toString());
+                }
+            });
         } catch (Throwable t) {
             MyMod.LOG.warn("[AE2QoL] pick-block craft fallback skipped: {}", t.toString());
         }

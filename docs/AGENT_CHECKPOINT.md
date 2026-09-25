@@ -14,7 +14,7 @@
 |模型信息|DeepSeek-V4.1-Flash|
 |工作分支|master；本轮起点 `223c8c5`（fix49），工作树干净、与 origin/master 同步|
 |启动时间|2026-09-25（Asia/Shanghai，文档对齐轮）|
-|本次会话目标|核对仓库真实状态与本文档的偏差并同步修正：更正 fix47~fix49 的提交状态（原写"未提交、未推送"，实际已提交并推送）、把基线统一为 GTNH 2.9.0-beta-3 / `3.19.0-fix49`、补齐 README 双语依赖对照表与"本版变化"、补全 MOD_MAP 与 mixin_notes 的 Mixin 清单。**只改文档，不动业务代码，不部署、不提交。**|
+|本次会话目标|①**文档对齐**（已完成，commit `8b6a5a7`）：更正 fix47~fix49 的提交状态、基线统一为 GTNH 2.9.0-beta-3、补齐 README 双语依赖表与"本版变化"、补全 MOD_MAP 与 mixin_notes 的 Mixin 清单。②**用户报障三问题的定位与修复**（已完成，`fix50`/`fix51`/`fix52`）：万能维护仓电路板槽全拒、IO 端口搬不出无限磁盘流体、世界里键无存量+有样板不弹下单页。严格按用户协议：先 5 轮提问确认问题，获"确认理解，开始读源码"后只读源码，获"确认方案，开始修改"后才动代码。**未部署、未推送。**|
 |上一轮（历史）|工具：Codex Desktop｜模型：GPT-5：fix49 依赖全量对齐 290b3 实机版本，修复升级暴露的 6 处 API 断裂。|
 
 ---
@@ -28,6 +28,25 @@ GTNH 2.9.0-beta-3（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 ## 三、全局已完成清单
 
 > 按完成时间倒序排列，均标注产出文件路径。历史结论保留原貌，不等于本版验证结果。
+
+- [x] 2026-09-25 | 工具：DeepSeek Harness | 模型：DeepSeek-V4.1-Flash：**用户报障三问题定位与修复（fix50 / fix51 / fix52），全部代码完成并构建验证，均待实机实测**。
+  1. **fix50｜万能维护仓电路板槽放不进任何物品**：根因是 GT 5.09.54 新接通 MTE 物品校验链
+     （`MTEItemStackHandler.isItemValid` → `MTEHatchMaintenance.func_94041_b` → `IsAutoMaintenanceInput`），
+     本仓恒以 `aAuto=false` 构造导致槽位 0 对一切物品返回 `false`（5.09.52 无此链，故 b1 可用）。
+     修复：`hatch/AE2MaintenanceHatchUniversal.java` 新增 `func_94041_b` 覆写（**SRG 名**），
+     只对电路板槽放行各电压电路板。产物 `build/libs/AE2-QoL-3.19.0-fix50.jar`，commit `cfc146a`。
+  2. **fix51｜IO 端口搬不出无限磁盘的流体**：根因在 **AE2 上游** `TileIOPort.getInv`——
+     它在 `AEStackTypeRegistry.getAllTypes()` 里取到第一个匹配通道就 `break`，
+     多通道元件（内置无限磁盘）因此只搬一个通道；单通道流体元件的唯一匹配恰好是流体，所以能搬。
+     修复：`mixin/ae/MixinTileIOPort.java` 新增 `tickingRequest` RETURN 注入，按相同顺序枚举通道、
+     跳过索引 0，对剩余通道用 AE2 自身 `transferContents` 补搬（**反射**，因其返回私有内部类）。
+     commit `5300e61`。
+  3. **fix52｜世界里键无存量+有样板不弹下单页**：根因是 **AE2 包处理器运行在网络线程**，
+     在其中替换 `player.openContainer`／开界面不生效；NEI 面板中键路径一直归队服务端 tick 线程
+     （实测可用），两条路径共用同一开界面方法，差异只有线程。修复：世界中键也归队 + 不再 `cancel()`；
+     并把 `hasNetworkStock` 的异常兜底由「当作有存量」改为「当作无存量」+ 警告，消除静默失效。
+     产物 `build/libs/AE2-QoL-3.19.0-fix52.jar`。
+  **三个问题的根因链、证据、影响面与验证步骤见根目录 `CHANGELOG.md` 的 (13)(14)(15) 三节。**
 
 - [x] 2026-09-25 | 工具：DeepSeek Harness | 模型：DeepSeek-V4.1-Flash：**接力文档与仓库真实状态对齐（仅文档，未动业务代码）**。
   背景：本文档长期停留在 fix49 开工前——写"未提交、未推送"、起点 `ffe946a`、基线 beta-1；
@@ -143,6 +162,20 @@ GTNH 2.9.0-beta-3（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 > 状态说明（2026-09-25 核对）：fix47、fix48、fix49 的代码**均已提交并推送**
 > （`63153ed` / `d783448` / `223c8c5`），工作树干净。本节条目保留"待用户实测"性质——
 > **提交不等于游戏内验收通过**。
+
+### 4.-2 用户报障三问题修复（2026-09-25，fix50/fix51/fix52，**代码完成并构建验证，待实测**）
+
+- **fix50** 万能维护仓电路板槽全拒（GT 5.09.54 新增校验链）—— commit `cfc146a`。
+- **fix51** IO 端口搬不出无限磁盘流体（AE2 `getInv` 每元件只取一个通道）—— commit `5300e61`。
+- **fix52** 世界里键无存量+有样板不弹下单页（网络线程上开界面）—— 本提交。
+- 统一产物：`build/libs/AE2-QoL-3.19.0-fix52.jar`（已含三者）。**未部署**，部署前须单独征得用户同意。
+- 根因、证据链、影响面、待测项：见 `CHANGELOG.md` 的 (13)(14)(15) 三节。
+- 实测要点（按优先级）：
+  1. **fix52**：世界中键「无存量 + 有样板」弹「要合成多少个」；有存量仍取到手；都没有仍无反应。
+  2. **fix51**：无限磁盘流体**双向**（转出 + 转入）都能过；物品不受影响；普通流体元件对照一致。
+  3. **fix50**：各电压电路板可放入/取出；GUI 里 `max` 随电压变化；存读档保留；非电路板仍被拒。
+- 已知未测项：fix51 的补搬**不参与**原版「搬空后弹元件到输出口」判定，且每个剩余通道按与主循环相同的
+  初始预算处理（不递减原循环配额）——这两条是刻意的实现边界，已在 CHANGELOG 登记。
 
 ### 4.-1 MTE ID 让位与旧存档迁移（fix48，**代码已提交 `d783448`，待用户实测**）
 
@@ -382,6 +415,40 @@ PatternUploadTarget.java、PatternRecipeMatcher.java、PatternRouteKey.java、Pa
 ---
 
 ## 九、历史会话操作日志
+
+### 2026-09-25 · 用户报障三问题：源码定位 + 修复（fix50/fix51/fix52）
+
+- 工具平台：DeepSeek Harness（DSH Web GUI）｜底层模型：DeepSeek-V4.1-Flash｜工作分支：master
+- 会话方式：**先按用户要求反复提问确认问题（5 轮），得到"确认理解，开始读源码"后才读源码；
+  给出修复思路并获"确认方案，开始修改"后才动代码。** 全程未做无证据的猜测性修改。
+
+**调查手段（全部只读）**：`javap` 对比 GT 5.09.52.594 与 5.09.54.133 字节码、核对实例正在运行的
+AE2 120 与 GT jar 的成员签名、读 `reference_src_290b3` 源码、读实例 `fml-client-latest.log`（13.8 MB）、
+比对编译期 `libs/` 与运行期实例的依赖版本。
+
+**关键教训（已写入 mixin_notes 与 CHANGELOG）**
+
+1. **不要拿 `reference_src` 的源码当编译基线的真身**：本项目 `libs/gregtech-*.jar` 是**未反混淆**产物，
+   MC 接口成员保留 **SRG 名**（`IInventory.isItemValidForSlot` 在 jar 里叫 `func_94041_b`）。
+   第一次用 MCP 名去 `javap` 比对，得出"5.09.54 新增 `CommonMetaTileEntity.isItemValidForSlot`"——**错的**。
+2. **AE2 的 IO 端口对每个元件只取一个存储通道**（`TileIOPort.getInv` 取到就 `break`）；
+   `AEStackTypeRegistry.getAllTypes()` 是 HashMap 顺序，确定顺序的是 `getSortedTypes()`。
+3. **AE2 的包处理器运行在网络线程上**（FML `FMLEventChannel` 的 `ServerCustomPacketEvent`）；
+   在那里开界面／替换 `openContainer` 不生效。fix47 注释里"与原版同上下文故不需归队"是错误推理。
+4. **静默兜底会掩盖故障**：`hasNetworkStock` 原先异常时返回 `true`（放行原版），
+   一次异常就让功能永久静默失效且无痕迹——这是问题 2 难以定位的直接原因。
+
+**本次修改文件**
+
+- `hatch/AE2MaintenanceHatchUniversal.java`（fix50）、`mixin/ae/MixinTileIOPort.java`（fix51）、
+  `mixin/ae/MixinPacketPickBlock.java` + `network/ServerTerminalHelper.java`（fix52）；
+- 版本与文档：`gradle.properties`、`src/main/resources/mcmod.info`、`CHANGELOG.md`、
+  `README.md`、`README.en.md`、`docs/MOD_MAP.md`、`docs/mixin_notes.md`、本文件。
+
+**本次是否编译通过**：是。三次构建均 `BUILD SUCCESSFUL`，并用**无管道命令**复核进程退出码为 **0**；
+产物逐次解包核对新增/改动的成员已入包且名称未被重混淆（`func_94041_b`、三个 `ae2qol$` 帮助方法）。
+**是否部署**：否（按用户 D4 决定"三件都做完统一部署"，且部署需单独授权）。
+**是否提交/推送**：已本地提交 4 个 commit（`8b6a5a7` 文档对齐、`cfc146a` fix50、`5300e61` fix51、本提交 fix52），**未推送**。
 
 ### 2026-09-25 · 接力文档与仓库真实状态对齐（仅文档）
 

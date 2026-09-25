@@ -11,6 +11,7 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 
 import com.gtnewhorizon.gtnhlib.util.ServerThreadUtil;
+import com.wztwzt.ae2_qof.MyMod;
 
 import appeng.api.AEApi;
 import appeng.api.config.Actionable;
@@ -36,6 +37,8 @@ public final class ServerTerminalHelper {
 
     private static Field myPlayerField;
     private static Method baublesGetBaubles;
+    /** 存量判定异常只记一次警告，避免热路径刷屏。 */
+    private static boolean stockCheckWarned;
 
     static {
         try {
@@ -359,8 +362,7 @@ public final class ServerTerminalHelper {
 
     /**
      * 判断 ME 网络中当前是否还有该物品可提取（只做 SIMULATE，不扣减）。
-     * 用于「世界中键取物」在交给原版前先确认原版确实能取到东西，
-     * 避免把该由原版处理的取物流程抢走。
+     * 用于「世界中键取物」在开合成界面之前先确认网络确实没货，避免网络还有货时也弹界面。
      *
      * @return true 表示网络里至少还能取出 1 个
      */
@@ -380,9 +382,17 @@ public final class ServerTerminalHelper {
             // 避免「终端没电」被误判成「网络没存量」而弹出合成界面。
             IAEItemStack simulated = itemInv.extractItems(request, Actionable.SIMULATE, new PlayerSource(player, null));
             return simulated != null && simulated.getStackSize() > 0;
-        } catch (Throwable ignored) {
-            // 判定失败时按「有存量」处理，把流程让回原版，最坏结果与改动前一致
-            return true;
+        } catch (Throwable t) {
+            // fix52：原先这里按「有存量」返回 true（把流程让回原版）。问题是调用方据此直接放行，
+            // 于是一次判定异常就会让「世界中键下单」永久静默失效，且不留任何痕迹——
+            // 这正是该功能此前难以定位的原因（参见审查 P2-027 对静默捕获的要求）。
+            // 改为按「无存量」返回 false 并记一条警告：调用方会继续尝试开界面，
+            // 而界面只在真的存在可用样板时才会打开，最坏结果只是多弹一次无害的合成界面。
+            if (!stockCheckWarned) {
+                stockCheckWarned = true;
+                MyMod.LOG.warn("[AE2QoL] hasNetworkStock check failed, treating as no stock: {}", t.toString());
+            }
+            return false;
         }
     }
 }
