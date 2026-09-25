@@ -4,21 +4,26 @@
 
 An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
-**Author: wztwzt · Current source version: 3.19.0-fix52 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.19.0-fix54 · Reference pack: GTNH 2.9.0-beta-3**
 
 This repository is for personal archival and is not currently offered for distribution. See [CREDITS.md](CREDITS.md) for attribution and licensing records. Feature descriptions are not a claim that every integration has passed in-game testing.
 
-## What's new in fix52
+## What's new in fix54 (includes the final fix52 fix)
 
-- **Fixed "middle-clicking a block in the world does not open the craft screen when the network has no
-  stock but a pattern exists".** AE2's packet handler runs on the **network thread**, and replacing
-  `player.openContainer` / opening a screen from there silently has no effect. The NEI panel path has always
-  deferred to the server tick thread (and works); both paths share the same helper, so the thread was the
-  only difference. The in-world path now defers the same way, and no longer cancels the vanilla packet
-  (vanilla is already a no-op in the target case). The stock check's failure fallback also changed from
-  "assume stock" to "assume no stock" plus a warning, so a single exception can no longer silently kill the
-  feature. **Needs in-game confirmation**: no stock + pattern opens the screen, stock still picks up normally,
-  neither still does nothing.
+- **In-world pick-block is now confirmed working on GTNH 2.9.0-beta-3.** The root cause was neither our mod
+  nor AE2: the pack's **sciencenotleisure (SNL)** injects at the HEAD of vanilla
+  `Minecraft.middleClickMouse()` and cancels it (`ClientUtils.onBeforePickBlock` runs its own 1000-block
+  range pick and then unconditionally returns `true` when no entity is targeted). As a result GTNHLib's
+  `PickBlockEvent` is never posted and **AE2 never sends `PacketPickBlock`**, so the server-side fallback
+  (fix52) was never executed. The new `client/PickBlockCompatHandler` takes a **different trigger point**
+  (Forge `InputEvent.MouseInputEvent`, unrelated to SNL and to the vanilla method) and re-sends that packet
+  with the same preconditions as AE2's `handlePickBlock()`, plus an extra check that a wireless terminal is
+  actually carried — otherwise the server would spam `PickBlockTerminalNotFound` on every middle-click.
+  **Verified in game**: no stock + pattern opens the craft-amount screen (log `branch E` → `G7`), and once the
+  item is in the inventory a further middle-click correctly falls through to vanilla (`branch B`).
+- This release also folds in fix52's server-tick-thread deferral and the stock-check fallback fix;
+  **all diagnostic instrumentation has been stripped** (failure branches now log a single WARN, normal
+  pass-throughs log nothing).
 
 ### Previous fix51
 
@@ -74,7 +79,7 @@ See the [investigation](docs/mcp-tooltip-duplicate-investigation.md) for evidenc
 ## Installation and upgrades
 
 1. Stop the game/server and back up the **complete world and configuration**, retaining the previous JAR for rollback. Infinity Cell contents live in the world save; backing up item NBT alone is insufficient.
-2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-3.19.0-fix52.jar`. Do not retain multiple versions.
+2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-3.19.0-fix54.jar`. Do not retain multiple versions.
 3. **Use the same version on client and server.** fix41 changed upload-related packets; upgrading only one side is unsupported.
 4. This JAR includes `aeinfinitycell` (bundled metadata remains `1.0.4-ae2qol`). Do not also install the standalone AE2 Infinity Cell JAR. Test old cells in a copied world before migrating.
 5. Check startup logs, generated configuration and Mixin loading, then exercise the features you use in a test world. Deployment to the development test instance requires separate approval.

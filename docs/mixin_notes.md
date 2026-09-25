@@ -8,7 +8,7 @@
 > 2. 修改后jar放入测试环境，查看mixin.log确认注入状态。
 > 3. 参考其他模组Mixin实现：`E:\wzt\MC\modcreater\reference_src_290b3`（旧的 `reference_src_290b1_已过期` 已废弃）。
 
-> 当前基线：GTNH **2.9.0-beta-3** / MC 1.7.10 / 版本 `3.19.0-fix49`。
+> 当前基线：GTNH **2.9.0-beta-3** / MC 1.7.10 / 版本 `3.19.0-fix54`。
 > 清单与 `src/main/resources/mixins.ae2_qof.json` 逐条对齐（通用 13 条 + client 16 条 = 29 条）。
 
 ---

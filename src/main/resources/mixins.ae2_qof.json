@@ -21,9 +21,6 @@
     "client.MixinTextureMap"
   ],
   "client": [
-    "client.MixinMinecraftPickBlockDiag",
-    "ae.MixinKeyBindHandler",
-    "ae.MixinClientHelperPickBlock",
     "nei.MixinRecipeHandlerRef",
     "nei.MixinDefaultOverlayHandler",
     "nei.MixinGuiOverlayButton",

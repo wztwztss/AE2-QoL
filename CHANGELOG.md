@@ -1,3 +1,49 @@
+## 工作区决策记录 2026-09-25 (21) - **正式版 3.19.0-fix54**：三问题全部实测通过，诊断埋点已剥离
+
+> 产物 `build/libs/AE2-QoL-3.19.0-fix54.jar`。fix50 / fix51 / fix52+fix54 全部经用户实机验证通过。
+
+### 一、最终验证结果（用户实机）
+
+| 问题 | 结论 | 证据 |
+|---|---|---|
+| 万能维护仓电路板槽全拒（fix50） | ✅ 通过 | 用户实测"完全修好了" |
+| IO 端口搬不出无限磁盘流体（fix51） | ✅ 通过（转出方向；用户固定用 EMPTY 模式） | 流体被抽干、元件随后正常弹走 |
+| 世界里键无存量+有样板不弹下单页（fix52+fix54） | ✅ 通过 | 日志 `branch E`（已排入开界面任务）→ `branch G7`（**界面已打开，样板数=1**）；物品到手后再按中键走 `branch B`（正确放行原版）。用户确认"完美，可以使用了" |
+
+### 二、正式版相对 fix54-diag 的变化（**只删埋点，不动修复逻辑**）
+
+1. `network/ServerTerminalHelper`：删除 `diagLogged` / `diagOnce` / `diagNeeded`，
+   改为生产用的 **`warnOnce(branch, detail)`**——只有「本不该发生」的失败分支才记一次 WARN
+   （任务排入失败、空参数、终端无 grid、无 craftingGrid、终端槽位非法、界面未打开、
+   反射读不到 `pickedBlock`、`AEItemStack.create` 返回空）；
+   **正常放行一律不记**（背包已有 / 无终端 / 有存量 / 无样板 / 已在下单界面内）。
+2. `mixin/ae/MixinTileIOPort`：删除 IO 端口诊断段（`ae2qol$lastCell`/`ae2qol$lastInv` 字段、
+   `getInv` RETURN 与 `shouldMove` HEAD 两个注入、及其两个辅助方法），
+   **保留 fix51 的 `ae2qol$fanOutExtraChannels` 补搬逻辑**；同时清理随之失效的 import。
+3. `mixin/ae/MixinPacketPickBlock`：A~E 分支日志按上述口径收敛（A/A2 → `warnOnce`，B/C/D/E 删除）。
+4. 删除三份诊断专用 Mixin 及其配置条目：
+   `mixin/ae/MixinKeyBindHandler`、`mixin/ae/MixinClientHelperPickBlock`、
+   `mixin/client/MixinMinecraftPickBlockDiag`。
+   `mixins.ae2_qof.json` 回到 **通用 13 + client 16 = 29 条**（两份副本 SHA256 一致）。
+5. 版本 `3.19.0-fix54`（`gradle.properties` + `src/main/resources/mcmod.info`）。
+
+### 三、验证与核对
+
+- 构建 `BUILD SUCCESSFUL`（含 checkstyle，故 import 清理完备）；
+- 产物内已无诊断 Mixin 类，`client/PickBlockCompatHandler.class`、`MixinPacketPickBlock.class`、
+  `MixinTileIOPort.class` 均在；
+- 源码中已无 `diagOnce` / `diagNeeded` / `diagLogged` / `[AE2QoL][diag]` 残留；
+- 文档同步：README 双语（版本、本版变化段）、`docs/MOD_MAP.md`（新增 fix54 类）、
+  `docs/mixin_notes.md`（基线版本）、`docs/AGENT_CHECKPOINT.md`。
+
+### 四、顺带记一条操作教训（已写入 skill）
+
+用 PowerShell 的 `Set-Content -Encoding UTF8` 改仓库文本文件会**加 BOM 并整文件重写**
+（README 出现 197/191 行的噪声差异）。**仓库文本改动一律用 edit 工具**；
+`gradle.properties` 与 `mcmod.info` 的 BOM 是更早一轮就已提交的（游戏读取正常，暂不清理）。
+
+---
+
 ## 工作区决策记录 2026-09-25 (20) - fix54：为问题 2 增加**客户端触发补丁**（方案 A，已部署待验证）
 
 > 产物 `build/libs/AE2-QoL-3.19.0-fix54-diag.jar`（SHA256 `666B7AE1…`），已部署到 b3 实例。

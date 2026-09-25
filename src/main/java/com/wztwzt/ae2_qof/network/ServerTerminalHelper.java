@@ -43,37 +43,20 @@ public final class ServerTerminalHelper {
     /** 存量判定异常只记一次警告，避免热路径刷屏。 */
     private static boolean stockCheckWarned;
 
-    // ===== fix53-diag：诊断构建专用（仅记录分支，不改变任何判定；正式修复时收敛为“失败即记录”） =====
-    private static final Set<String> diagLogged = Collections
+    // ===== 失败分支只记一次，避免热路径刷屏 =====
+    // fix53-diag 的诊断埋点在 fix54 正式版里收敛：**正常放行不记**（背包已有 / 无终端 / 有存量 /
+    // 无样板 / 已在下单界面内），只有异常或功能实际失效（反射读不到包字段、任务排入失败、
+    // 终端或合成网格异常、界面没能打开）才走这里——避免"静默失效"。
+    private static final Set<String> warnedBranches = Collections
         .newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
-    /**
-     * fix53-diag：把「世界中键下单」这条链路上原本**静默**的放行/失败分支记录下来，每个分支只记一次。
-     * <p>
-     * 之所以需要它：该链路有 4 条静默 return 与若干静默 false 出口，源码无法区分运行期命中了哪一条，
-     * 只能靠一次埋点观测定位（详见 CHANGELOG 的 fix53-diag 一节）。
-     */
-    public static void diagOnce(String branch, String detail) {
+    /** 把「本不该发生」的失败分支记一次 WARN（每个分支只记一次）。 */
+    public static void warnOnce(String branch, String detail) {
         try {
-            if (diagLogged.add(branch)) {
-                MyMod.LOG.info("[AE2QoL][diag] branch {}: {}", branch, detail);
+            if (warnedBranches.add(branch)) {
+                MyMod.LOG.warn("[AE2QoL] {}: {}", branch, detail);
             }
         } catch (Throwable ignored) {}
-    }
-
-    /**
-     * fix53-diag：该分支是否**尚未**记录过。
-     * <p>
-     * 用途：诊断详情有时很贵（例如枚举无限磁盘各通道的内容）。若直接把详情写进
-     * {@code diagOnce(...)} 的实参里，即使日志被去重，**实参每 tick 都会被求值**——
-     * 那是纯浪费（热路径上还会制造大量临时对象）。所以先问这里，再决定要不要算详情。
-     */
-    public static boolean diagNeeded(String branch) {
-        try {
-            return !diagLogged.contains(branch);
-        } catch (Throwable ignored) {
-            return false;
-        }
     }
 
     static {
@@ -294,8 +277,8 @@ public final class ServerTerminalHelper {
                 ServerThreadUtil.addScheduledTask(task);
             }
         } catch (Throwable t) {
-            // fix53-diag：这里原本是完全静默的 catch——若 GTNHLib 排任务抛错，功能会无声失效。
-            diagOnce("F", "任务排入失败（scheduleServerTask）: " + t);
+            // 这里原本是完全静默的 catch——若 GTNHLib 排任务抛错，功能会无声失效。
+            warnOnce("pick-block:schedule-failed", "任务排入失败: " + t);
         }
     }
 
@@ -366,33 +349,32 @@ public final class ServerTerminalHelper {
     public static boolean openCraftAmountIfCraftable(EntityPlayerMP player, WirelessTerminalGuiObject terminal,
         IAEItemStack target) {
         if (player == null || terminal == null || target == null) {
-            diagOnce("G0", "参数为空");
+            warnOnce("pick-block:null-args", "openCraftAmountIfCraftable 收到空参数");
             return false;
         }
 
         // 已经在该界面里时不重复打开：界面弹出有网络延迟，点击过快可能在界面出现前
         // 连发几个包，重复打开会把玩家已经填好的数量清空。
         if (player.openContainer instanceof ContainerCraftAmount) {
-            diagOnce("G6", "已在下单界面内，视为成功");
             return true;
         }
 
         IGrid grid = terminal.getGrid();
         if (grid == null) {
-            diagOnce("G1", "终端 getGrid() 为空");
+            warnOnce("pick-block:no-grid", "终端 getGrid() 为空");
             return false;
         }
 
         ICraftingGrid craftingGrid = grid.getCache(ICraftingGrid.class);
         if (craftingGrid == null) {
-            diagOnce("G2", "craftingGrid 为空");
+            warnOnce("pick-block:no-crafting-grid", "craftingGrid 为空");
             return false;
         }
 
         ImmutableCollection<ICraftingPatternDetails> patterns = craftingGrid
             .getCraftingFor(target, null, 0, player.worldObj);
         if (patterns == null || patterns.isEmpty()) {
-            diagOnce("G3", "合成网格里查不到该物品的样板（patterns 为空）");
+            // 正常情形：网络里既没有存量也没有样板 —— 静默（与原版一致）
             return false;
         }
 
@@ -403,7 +385,7 @@ public final class ServerTerminalHelper {
             slotIndex = findTerminalSlot(player);
         }
         if (slotIndex < 0) {
-            diagOnce("G4", "终端槽位非法");
+            warnOnce("pick-block:bad-slot", "终端槽位非法");
             return false;
         }
 
@@ -412,10 +394,12 @@ public final class ServerTerminalHelper {
         if (player.openContainer instanceof ContainerCraftAmount cca) {
             cca.setItemToCraft(target);
             cca.detectAndSendChanges();
-            diagOnce("G7", "界面已打开，slot=" + slotIndex + "，样板数=" + patterns.size());
             return true;
         }
-        diagOnce("G5", "openGUI 之后 openContainer 仍是 " + player.openContainer.getClass().getName());
+        warnOnce(
+            "pick-block:gui-not-opened",
+            "openGUI 之后 openContainer 仍是 " + player.openContainer.getClass()
+                .getName());
         return false;
     }
 

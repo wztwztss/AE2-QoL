@@ -238,6 +238,11 @@ $env:GRADLE_USER_HOME = 'C:\Users\29357\.gradle'
       ① **必须预检前置条件**，否则会把副作用放大（本例：AE2 服务端在没有无线终端时会
       `addChatMessage(PickBlockTerminalNotFound)`，无脑补发包会让没终端的玩家每次中键被刷提示）；
       ② **确认不会与原路径重复触发**（本例"两键相等"配置下 AE2 对方块永不自行发包，故不重复）。
+17. **改仓库里的文本文件一律用 edit 工具，不要用 PowerShell 的 `Set-Content -Encoding UTF8`**
+    （2026-09-25 实际踩到）：后者会**加 UTF-8 BOM 并整文件重写**——本次只改 1 行版本号，
+    README 却出现 **197/191 行**的差异噪声（行尾与 BOM 全变）。
+    正确做法：用 `edit` 做字面替换（逐字节保留其余内容），改完用 `git diff --numstat` 复核差异规模
+    （只该改的那几行）。若不慎整文件重写：`git checkout -- <文件>` 回滚后用 `edit` 重做。
 
 ---
 
