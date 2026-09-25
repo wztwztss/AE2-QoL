@@ -1,3 +1,80 @@
+## 工作区决策记录 2026-09-25 (17) - 实测结果回填（第二轮）：fix50 ✅ / fix51 ✅ / fix52 根因查明于客户端键位
+
+> 无代码变更（本轮只回填结论 + 改了一条用户侧配置）。产物仍为 `build/libs/AE2-QoL-3.19.0-fix53-diag.jar`。
+
+### 一、fix50（万能维护仓电路板槽）—— ✅ 通过
+
+用户实测"完全修好了"。`func_94041_b`（SRG 名）覆写路线成立。
+
+### 二、fix51（IO 端口搬不出无限磁盘流体）—— ✅ 通过（转出方向）
+
+诊断版日志给出运行期实证：
+
+```
+[21:24:16] [AE2QoL][diag] branch IO-PICK: 端口为该无限磁盘选中的通道 = item
+[21:25:33] [AE2QoL][diag] branch IO-MOVE: OperationMode=EMPTY, FullnessMode=EMPTY, didWork=true,
+           被选中通道还有内容=true, 其余通道还有内容=true
+```
+
+- "端口只取第一个匹配通道 = item"**被实机证实**，与 (14) 的源码推断一致；
+- 该 tick 两个通道都还有内容 ⇒ 按 `matches` 的 `EMPTY` 规则此时**不该**搬走元件
+  ⇒ 元件留在输入半区 ⇒ RETURN 注入的补搬有条件把其余通道搬完；
+- **用户实测结果：流体被抽干，元件随后正常弹到输出半区** ✓ —— 这正是修复后的预期行为
+  （**搬空之后**才判"完成"并弹出，而不是一开始就被误判）。
+
+**仍待补测 / 已知边界**：
+- `FILL`（转入）方向；以及"普通流体元件对照行为不变"。
+- ⚠️ **`FullnessMode=HALF` 下本修复不成立**：`matches()` 在 `HALF` 时**无条件返回 true（总是搬）**，
+  元件会在第一次搬运后就被弹到输出半区，流体仍搬不空。本次实测成功的是
+  `OperationMode=EMPTY + FullnessMode=EMPTY` 组合（诊断行已记录该组合）。
+  若用户要用 HALF，需要追加"对本模组多通道元件改为全通道完成才搬"的 `shouldMove` 覆写
+  （设计已在上一轮修复思路中给出，尚未实施）。
+
+### 三、fix52（世界中键下单）—— 根因**不在服务端，而在客户端键位**
+
+诊断版在服务端包处理器埋了 A~G 全分支日志，但整场会话**一条都没出现**
+⇒ `PacketPickBlock.serverPacketData` **从未被调用** ⇒ **客户端根本没发包**。
+
+读 AE2 源码 + 用户的 `options.txt` 定位到：
+
+| 路径 | 触发条件 | 用户实际状态 |
+|---|---|---|
+| 鼠标事件路径 | `isKeyPressed(PICK_BLOCK) && !arePickBlockBindsEqual()` | AE2 键未绑定 ⇒ 永远 false ✗ |
+| GTNHLib `PickBlockEvent` 路径 | `arePickBlockBindsEqual()` | `-98 ≠ 0` ⇒ 不接管 ✗ |
+
+- AE2 `ActionKey.PICK_BLOCK` 默认 **`Keyboard.KEY_NONE`（未绑定）**；
+- 用户 `options.txt`：`key_key.pickItem:-98`（原版中键）、**`key_key.pick_block.desc:0`**（AE2 未绑定）。
+
+⇒ **两条互补路径同时失效，AE2 的世界中键取物在该环境下完全未激活**；
+fix47 / fix52 的服务端实现因此从未被执行——这也是它一直"完全没反应"的真正原因。
+
+**处理（用户侧配置，非代码）**：把 AE2 的 Pick Block 也绑定到中键（`-98`）。
+1.7.10 的控件界面无法设置鼠标键，故直接改 `options.txt`：
+
+```
+key_key.pick_block.desc:-98      # 原为 0
+```
+
+改动前已备份 `options.txt.bak-before-pickblock-key`；与备份比对**仅 1 行不同、行数不变（354）**。
+
+**待用户复测**：① AE2 原生取物是否恢复（对"有存量"的方块中键应从网络到手）；
+② 再跑场景 A，日志中应出现 `[AE2QoL][diag] branch X:`。
+
+### 四、本轮顺带查明但**与本模组无关**的两件事
+
+1. **"进不去存档 / 新建世界也不行"的根因是内存，不是模组**：
+   实例被设成 `-Xms8192m -Xmx9192m`，在 15.6 GB 机器上叠加 Windows 与后台程序后仅剩 0.79 GB 可用
+   → 换页 → 世界载入走不完。此前 19:52/19:56 的两次 `OutOfMemoryError` 同源；
+   崩溃报告里 `Memory: 10 MB / 8192 MB up to 8192 MB` 说明"堆满但活跃集极小"，
+   属**同一客户端反复载入失败世界累积垃圾**，并非"世界真的需要 8 GB 以上"。
+   用户重启电脑后顺利进入世界（本轮日志的 `IO-PICK` 由 `[Server thread]` 打印即为证据）。
+2. **21:18:44 的 `StackOverflowError`**：递归环为纯原版
+   `Chunk.addTileEntity → TileEntityChest.invalidate → checkForAdjacentChests → World.getBlock
+   → 加载相邻区块 → Chunk.addTileEntity …`，即**跨区块边界的箱子**触发的区块加载递归，
+   与内存无关、与本模组无关（栈帧中没有本模组）。若复现再单独排查。
+
+---
+
 ## 工作区决策记录 2026-09-25 (16) - fix53-diag：实测结果回填 + 诊断构建（仅取证，不发布）
 
 > **非发布版本**。产物 `build/libs/AE2-QoL-3.19.0-fix53-diag.jar`，用途只有一个：把两个仍未修好的问题

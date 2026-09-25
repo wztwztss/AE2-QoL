@@ -203,6 +203,17 @@ $env:GRADLE_USER_HOME = 'C:\Users\29357\.gradle'
 13. **游戏卡住/崩溃时日志可能是 0 字节**（本整合包的日志有缓冲），
     此时应改用：崩溃报告（`crash-reports/`）、存档目录的 `session.lock`/`level.dat` 写入时间、
     以及**进程命令行与内存占用**来判断它走到哪一步、是否在推进。
+14. **AE2 的"世界中键取物"依赖它自己的动作键被绑定**（2026-09-25 实际踩到，害我连着查错两轮）：
+    `appeng.client.settings.ActionKey.PICK_BLOCK` 默认是 **`Keyboard.KEY_NONE`（未绑定）**，
+    而两条互补路径都有前提——
+    - 鼠标事件路径：`isKeyPressed(PICK_BLOCK) && !arePickBlockBindsEqual()`；
+    - GTNHLib `PickBlockEvent` 路径：`arePickBlockBindsEqual()`（要求 AE2 的键 == 原版 `key.pickItem`）。
+
+    **未绑定时两条都失效 ⇒ 客户端根本不发 `PacketPickBlock` ⇒ 任何服务端修复都不会被执行。**
+    判断：`options.txt` 里 `key_key.pick_block.desc` 与 `key_key.pickItem` 是否同值（中键 = `-98`）；
+    修复：把 AE2 的 Pick Block 也绑成 `-98`（1.7.10 的控件界面不能设鼠标键，需直接改 `options.txt`）。
+    **教训：用户说"完全没反应"时，先确认"客户端到底发没发包"，不要直接去服务端找原因。**
+    证据形态：若在服务端包处理器里埋了日志却一条都没出现 ⇒ 包没发（而不是分支判断走错了）。
 
 ---
 
