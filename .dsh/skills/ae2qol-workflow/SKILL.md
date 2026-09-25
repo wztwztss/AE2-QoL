@@ -219,6 +219,20 @@ $env:GRADLE_USER_HOME = 'C:\Users\29357\.gradle'
     随后若把解出来的文件移走，就等于**删掉了仓库文件**（本次就是这样让 `mixins.ae2_qof.json` 消失，
     幸而它能从 `src/main/resources/` 同名文件恢复并校验一致）。
     正确做法：`jar tf` 只看清单；需要看内容时解到**临时目录**，绝不落在工作区根目录。
+16. **别把"客户端那条链路会走到"当成前提**（2026-09-25，问题 2 的最终根因，为此白写两轮、查错三轮）：
+    本整合包的 **`sciencenotleisure`（SNL 0.2.7-pre3，私货）** 在
+    `Minecraft.middleClickMouse()`（SRG `func_147112_ai`）的 HEAD 注入并 `ci.cancel()`
+    （`ClientUtils.onBeforePickBlock` 在"准星没瞄到实体"时**无条件 return true**），
+    它自带 1000 格远程取物 + 自己的 `WirelessPickBlock` 包。
+    **后果**：中键点**方块**时原版取物例程被整个取消 ⇒ **GTNHLib 的 `PickBlockEvent` 不会发出**
+    ⇒ AE2 永远不发 `PacketPickBlock` ⇒ **任何挂在 `PacketPickBlock.serverPacketData` 的修复永远不执行**。
+    判据与教训：
+    - 客户端链路各处埋点，**若"源头事件"一条都不出现，就别再往服务端找**；
+    - 用户说"中键有反应/快捷栏会跳"**不等于**原版或 AE2 那条路通了——
+      本次那个"跳格"是 **SNL 自己的远程取物**，不是原版行为；
+    - 查"谁拦了原版方法"的正解：`javap -v` 逐个看相关模组 jar 里 `@Mixin(Minecraft)` 类的
+      `@Inject(method=[...], cancellable=...)` 注解常量池，比读日志猜靠得住。
+    - **SNL 无配置开关**（`MainConfig` 里没有取物相关项），只能代码层绕开或改触发点。
 
 ---
 

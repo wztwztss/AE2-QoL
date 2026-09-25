@@ -1,3 +1,64 @@
+## 工作区决策记录 2026-09-25 (19) - 问题 2 最终根因：**SNL 在 `middleClickMouse()` HEAD 取消原版取物**，AE2 链路整条不执行
+
+> 纯代码/字节码取证结论（用户已表示不再进游戏测试）。**尚未实施修复。**
+
+### 一、事实链（全部有据）
+
+1. 用户实测：**原版对照组"快捷栏会跳"**；但同一次会话的诊断日志里
+   **`CLIENT-EVENT`（GTNHLib PickBlockEvent 到达 AE2）一次都没有**，只有 `CLIENT-BINDS`。
+2. 我在客户端链路上的三个埋点**都已正确注入**（`Mixing ae.MixinClientHelperPickBlock … into
+   appeng.client.ClientHelper`、`Mixing ae.MixinKeyBindHandler … into appeng.client.KeyBindHandler`），
+   且运行时 AE2 字节码确认 `ClientHelper.onPickBlockEvent(com.gtnewhorizon.gtnhlib.event.PickBlockEvent)`
+   存在、带 `@SubscribeEvent(priority = LOW)`，`ClientHelper` 也确实 `MinecraftForge.EVENT_BUS.register(this)`。
+3. GTNHLib 的钩子本身无条件：`@Mixin(Minecraft)` + `@Inject(method=["func_147112_ai"], at=HEAD)`
+   → `if (MinecraftForge.EVENT_BUS.post(new PickBlockEvent())) ci.cancel();`
+   （`func_147112_ai` = **`middleClickMouse`**，映射表原文确认）。
+4. **凶手**：`sciencenotleisure-0.2.7-pre3` 的
+   `com.science.gtnl.mixins.early.minecraft.MixinMinecraft.onBeforePickBlock`：
+
+   ```java
+   @Inject(method = "func_147112_ai", at = @At("HEAD"), cancellable = true)   // = middleClickMouse
+   private void onBeforePickBlock(CallbackInfo ci) {
+       if (ClientUtils.onBeforePickBlock(this.field_71439_g, this.field_71441_e, false)) ci.cancel();
+   }
+   ```
+
+   而 `ClientUtils.onBeforePickBlock` 的字节码为：
+
+   ```java
+   if (tryOpenMultiEssentiaJarBlock(world)) return true;
+   if (tryHandlePickBlockHandler(player))  return true;
+   boolean alt = Keyboard.isKeyDown(29) || Keyboard.isKeyDown(157);
+   if (!onPickEntity(player, 1000.0D, flag)) {         // 准星没瞄到实体
+       if (alt) return onPickBlockNBTRange(...);
+       onPickBlockRange(...);                          // SNL 自己的 1000 格远程取物
+       return true;                                    // ← 无条件取消原版
+   }
+   return false;
+   ```
+
+   SNL 自带 `com.science.gtnl.common.packet.WirelessPickBlock`，即它**自己实现了一套远程取物**。
+
+### 二、结论
+
+- **中键点方块 ⇒ SNL 取消原版 `middleClickMouse()` ⇒ GTNHLib 的 `PickBlockEvent` 不会发出
+  ⇒ AE2 永远不发 `PacketPickBlock` ⇒ 挂在 `PacketPickBlock.serverPacketData` 的 fix47/fix52
+  永远不会被执行**（代码本身没错，是**触发源在本整合包里不存在**）。
+- 用户看到的"快捷栏跳格"是 **SNL 的**行为，不是原版；21:53 那次 `CLIENT-EVENT` 能出现，
+  是因为当时准星大概对着**实体**（SNL 走 `onPickEntity` 分支返回 false、未取消）。
+- SNL **没有配置开关**（`MainConfig` 内无取物相关项），无法用配置关掉。
+
+### 三、可选修复方向（待用户决定）
+
+- **A（推荐）**：本模组在**客户端**另取触发点（Forge `InputEvent.MouseInputEvent`，与 SNL/原版方法无关），
+  在"世界中 + 非创造 + 中键按下 + 准星为方块 + `getPickBlock` 非空"时**自行发送 `PacketPickBlock`**，
+  由已有的服务端兜底逻辑接管。`KeyBindHandler.onMouseInput` 可用性受 SNL 无关；此路径不与 SNL 冲突，
+  且因"两键相等"时 AE2 自身不会发方块取物包，**不会重复发送**。
+- **B**：报告给整合包作者（SNL 与 AE2 的取物集成冲突）。
+- **C**：什么都不做，仅在文档中登记该整合包冲突。
+
+---
+
 ## 工作区决策记录 2026-09-25 (18) - fix53-diag 增补**客户端**埋点（仍为诊断版，非发布）
 
 > 产物 `build/libs/AE2-QoL-3.19.0-fix53-diag.jar`（SHA256 `153D02CC…`），已部署到 b3 实例。
