@@ -80,6 +80,24 @@ public abstract class MixinPatternDualInputHatchWildcard {
                 wildcardSlots++;
                 SmartWildcardExpander.Result result = SmartWildcardExpander.expand(slot, world);
                 if (result.truncated) truncated++;
+                // M3：样板自带电路 → 写入本机虚拟电路槽（PH 总成 / MK.II / 我们的 MK.III 同一处生效；
+                // 样板没自带电路时**不动**机器原有电路，整机层留给玩家自己设置）
+                try {
+                    SmartWildcardState wildcardState = SmartWildcardState.of(slot);
+                    if (wildcardState != null && wildcardState.circuit >= 1) {
+                        gregtech.api.interfaces.metatileentity.IMetaTileEntity mte =
+                            (gregtech.api.interfaces.metatileentity.IMetaTileEntity) (Object) this;
+                        int target = com.wztwzt.ae2_qof.wildcard.SmartWildcardCircuit.resolve(
+                            wildcardState.circuit,
+                            -1,
+                            com.wztwzt.ae2_qof.wildcard.SmartWildcardCircuit.readMachineCircuit(mte));
+                        if (target >= 1) {
+                            com.wztwzt.ae2_qof.wildcard.SmartWildcardCircuit.apply(mte, target, "PH 样板仓");
+                        }
+                    }
+                } catch (Throwable t) {
+                    MyMod.LOG.warn("[AE2QoL] 写入 PH 仓内置电路失败", t);
+                }
                 if (result.isEmpty()) {
                     // 空状态必须可解释（本项目原则）：把原因打进日志
                     MyMod.LOG.warn("[AE2QoL] PH 仓的智能通配样板未展开出任何样板：{}", result.describe());

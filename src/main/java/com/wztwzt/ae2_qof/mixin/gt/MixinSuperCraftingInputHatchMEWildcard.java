@@ -96,6 +96,25 @@ public abstract class MixinSuperCraftingInputHatchMEWildcard {
                     this.ae2qol$wildcards.put(i, wrapped);
                     wildcardSlots.add(wrapped);
                     MyMod.LOG.info("[AE2QoL] GTNL 样板总成发现通配样板并展开：slot={} {}", i, wrapped.expandSummary());
+                    // M3：样板自带电路 → 写入本机虚拟电路槽（样板自带 > 槽位 > 整机；无设置则不动机器）
+                    try {
+                        SmartWildcardState state = SmartWildcardState.of(
+                            ((MixinGtnlPatternSlotAccess) (Object) slot).getAe2qolSlotPattern());
+                        if (state != null && state.circuit >= 1) {
+                            gregtech.api.interfaces.metatileentity.IMetaTileEntity mte =
+                                (gregtech.api.interfaces.metatileentity.IMetaTileEntity) (Object) this;
+                            int target = com.wztwzt.ae2_qof.wildcard.SmartWildcardCircuit.resolve(
+                                state.circuit,
+                                -1,
+                                com.wztwzt.ae2_qof.wildcard.SmartWildcardCircuit.readMachineCircuit(mte));
+                            if (target >= 1) {
+                                com.wztwzt.ae2_qof.wildcard.SmartWildcardCircuit
+                                    .apply(mte, target, "GTNL 超级样板总成 slot=" + i);
+                            }
+                        }
+                    } catch (Throwable t) {
+                        MyMod.LOG.warn("[AE2QoL] 写入 GTNL 内置电路失败：slot=" + i, t);
+                    }
                     continue;
                 }
                 plainSlots.add(slot);

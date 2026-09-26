@@ -109,6 +109,8 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard {
                     this.ae2qol$wildcards.put(i, wrapped);
                     wildcardSlots.add(wrapped);
                     MyMod.LOG.info("[AE2QoL] GT 样板仓发现通配样板并展开：slot={} {}", i, wrapped.expandSummary());
+                    // M3：样板自带电路 → 写入本机虚拟电路槽（样板自带 > 槽位 > 整机；没有设置就**不动**机器）
+                    this.ae2qol$applyPatternCircuit(wrapped, i);
                     continue;
                 }
                 plainSlots.add(slot);
@@ -231,10 +233,34 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard {
         }
     }
 
+    /**
+     * M3：把**样板自带的编程电路**写进本机虚拟电路槽。
+     * 口径（用户确认）：优先级 样板自带 &gt; 槽位 &gt; 整机；槽位层尚未实现（传 -1）
+     * ⇒ 这里只在“样板确实自带电路”时动手，否则**绝不动**机器原有电路（整机层由玩家自己设置）。
+     */
+    @Unique
+    private void ae2qol$applyPatternCircuit(MTEHatchCraftingInputME.PatternSlot<MTEHatchCraftingInputME> slot,
+        int index) {
+        try {
+            ItemStack pattern = ((MixinPatternSlotAccess) (Object) slot).getAe2qolSlotPattern();
+            SmartWildcardState state = SmartWildcardState.of(pattern);
+            if (state == null || state.circuit < 1) return;
+            gregtech.api.interfaces.metatileentity.IMetaTileEntity mte =
+                (gregtech.api.interfaces.metatileentity.IMetaTileEntity) (Object) this;
+            int target = com.wztwzt.ae2_qof.wildcard.SmartWildcardCircuit
+                .resolve(state.circuit, -1, com.wztwzt.ae2_qof.wildcard.SmartWildcardCircuit.readMachineCircuit(mte));
+            if (target >= 1) {
+                com.wztwzt.ae2_qof.wildcard.SmartWildcardCircuit
+                    .apply(mte, target, "GT 样板输入仓 slot=" + index);
+            }
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 写入 GT 仓内置电路失败：slot=" + index, t);
+        }
+    }
+
     /** 该槽位的样板物品是不是我们的通配样板（经内部类 accessor 读取，只读不改）。 */
     @Unique
-    private boolean ae2qol$isWildcardItem(MTEHatchCraftingInputME.PatternSlot<MTEHatchCraftingInputME> slot) {
-        try {
+    private boolean ae2qol$isWildcardItem(MTEHatchCraftingInputME.PatternSlot<MTEHatchCraftingInputME> slot) {        try {
             ItemStack pattern = ((MixinPatternSlotAccess) (Object) slot).getAe2qolSlotPattern();
             return pattern != null && pattern.getItem() != null && SmartWildcardState.isSmartWildcard(pattern);
         } catch (Throwable t) {
