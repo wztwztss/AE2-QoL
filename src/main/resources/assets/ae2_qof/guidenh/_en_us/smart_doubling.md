@@ -28,12 +28,18 @@ The toggle is per-medium and off by default.
 
 ## Config
 
-`smart_doubling_max_rounds` in `config/ae2_qof/settings.json`:
+`config/ae2_qof/settings.json`:
 
-| Value | Meaning |
-|---|---|
-| `0` (default) | Unlimited: push as many rounds as possible per shot |
-| `> 0` | Per-push round cap |
+| Key | Value | Meaning |
+|---|---|---|
+| `smart_doubling_max_rounds` | `0` (default) | Unlimited: dispatch as many rounds as possible in one go |
+| | `> 0` | Upper bound on the total rounds dispatched at once |
+| `smart_doubling_push_cap` | `4096` (default) | **Per-push (per-tick) round cap**: at most this many rounds each tick; the remainder continues next tick |
+
+> Want bigger batches? Raise `smart_doubling_push_cap` (keep `smart_doubling_max_rounds` at 0).
+> The 4096 default exists because AE2's power probe stops as soon as it has collected enough — asking for
+> hundreds of millions of AE at once forces a walk over every energy storage, and stuffing that many items
+> into a machine buffer drowns the client in item updates (that is how 1T-scale orders used to freeze).
 
 ## Notes
 

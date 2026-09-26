@@ -1,3 +1,43 @@
+## 工作区决策记录 2026-09-26 (30) - **3.21.4**：智能倍增单次推送上限改可配 + 修 3.21.3 诊断误报
+
+> 产物 `build/libs/AE2-QoL-3.21.4.jar`（1192155 字节，SHA256 `8DB5EBBCD5C89CD6CB00F7FDCCCC175CD86B84F8C3508368C2402B9ADA842A57`）。
+> 前置：3.21.3 已由用户实测确认（服务端日志出现「智能倍增开关 = true …（样板介质=true）」，倍增生效）。
+
+### 一、用户反馈的定性（不是 bug）
+
+用户实测："倍增有效果了，但不是一键直接全部发配——下单 100M，不开就 1 个 1 个发，开了大概几万几万地发"。
+
+取证结论：**设计如此**。
+- `MixinCraftingCPUCluster` 的功率钳制把单次推送**显式封顶 4096 轮**（源码注释原文：「单次推送封顶 4096 轮，
+  剩余轮数下一 tick 继续推送」）。这是审计项 #51 的修复产物：AE2 `EnergyGridCache.simulateExtract`
+  是"凑够即停"的遍历，一次索要上亿点电量会强制走遍全部储能设备（O(P)）。
+- 审计项 #73（1T 级订单客户端被海量物品更新淹没）同样要求分批推送。
+- "几万" = 4096 轮 × 样板每轮产出 ⇒ 与用户观察吻合。
+⇒ 保留分批语义（每 tick 继续推送），把"单次上限"做成**配置项**，由服务器管理员按算力调。
+
+### 二、改动
+
+1. `Config` 新增热加载字段 **`smart_doubling_push_cap`**（默认 4096，范围 1..Integer.MAX_VALUE）：
+   javadoc / 读 JSON / 写 JSON / `applySetting` 全通道接通；**写文件走重载**（6 参版本委托到 7 参版本），
+   既有 5 处调用点签名不动 ⇒ 回归面最小。
+2. `MixinCraftingCPUCluster`：功率钳制上界由硬编码 `4096` 改为 `Config.smartDoublingPushCap`
+   （`max(1, …)` 兜底），注释同步更新。
+3. 游戏内「Mods → AE2 QoL → Config」页新增该字段（含范围标签），`/ae2qof status` 一并输出；
+   `joinStatus` 改为 varargs 以容纳第 4 个字段。
+4. **修掉 3.21.3 的一条诊断误报**：`SmartDoublingTogglePacket` 在 `SET(false)` 时清除"期望开启"登记
+   —— 否则用户手动关闭开关后，CPU 侧仍会在 5 分钟窗口内误报「服务端开关仍为 false」（实测出现过）。
+5. 指南同步：两语言 `smart_doubling.md` 配置表补 `smart_doubling_push_cap` 并说明与 `max_rounds` 的关系及代价；
+   两语言 `index.md` 配置表各加一行。
+
+### 三、验证
+
+- 构建 `BUILD SUCCESSFUL`（**无管道取退出码：GRADLE_EXIT=0**）；产物 `AE2-QoL-3.21.4.jar` 1192155 字节 / SHA256 `8DB5EBBC…`；
+- 入包核对：`Config` / `GuiConfigScreen` / `CommandAe2QoL` / `SmartDoublingTogglePacket` 均在，包内版本 3.21.4；
+- **待验收**：① 服务器 `settings.json` 出现 `smart_doubling_push_cap`；把它改成 16384 后热重载（改文件约 1 秒或 `/ae2qof reload`）；
+  ② 同订单每批明显变大；③ 手动关闭开关后日志**不再**出现误报的「服务端开关仍为 false」。
+
+---
+
 ## 工作区决策记录 2026-09-26 (29) - **3.21.3**：修「智能倍增在专用服务器上不生效」（开关写入被 MUI2 静默丢弃）
 
 > 产物 `build/libs/AE2-QoL-3.21.3.jar`（1190908 字节，SHA256 `B5A4E7919195C82012A727EAD018D84EFC824DC1887EEEB1C1B28CE2453BC137`）。

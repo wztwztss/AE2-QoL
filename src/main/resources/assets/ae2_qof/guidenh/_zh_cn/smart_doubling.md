@@ -28,12 +28,18 @@ author: wztwzt
 
 ## 配置
 
-`config/ae2_qof/settings.json` 的 `smart_doubling_max_rounds`：
+`config/ae2_qof/settings.json`：
 
-| 值 | 含义 |
-|---|---|
-| `0`（默认） | 不限：一次推送尽可能多的轮数 |
-| `> 0` | 单次推送轮数上限 |
+| 键 | 值 | 含义 |
+|---|---|---|
+| `smart_doubling_max_rounds` | `0`（默认） | 不限：一次发配尽可能多的轮数 |
+| | `> 0` | 一次发配的总轮数上限 |
+| `smart_doubling_push_cap` | `4096`（默认） | **单次（每 tick）推送轮数上限**：每 tick 最多推这么多轮，剩余轮数下一 tick 继续 |
+
+> 想让每批更大：把 `smart_doubling_push_cap` 调大即可（`smart_doubling_max_rounds` 保持 0）。
+> 上限之所以默认 4096，是因为 AE2 的功率探测是"凑够即停"的遍历——一次索要上亿点电量会强制走遍全部储能设备；
+> 而且一次性把海量物品塞进机器缓冲会把客户端物品更新淹没（历史上 1T 级订单就是这么卡死的）。
+> 服务器算力充裕时可调大，代价是每 tick 的提取量与物品更新量线性上升。
 
 ## 注意
 

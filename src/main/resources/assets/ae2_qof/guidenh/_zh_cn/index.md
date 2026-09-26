@@ -50,6 +50,7 @@ AE2 QoL 为 Applied Energistics 2（GTNH 版）提供一系列效率增强功能
 |---|---|---|
 | `io_port_rate` | 强化 IO 端口单次传输倍率 | 1024 |
 | `smart_doubling_max_rounds` | 智能倍增最大轮数（0=不限） | 0 |
+| `smart_doubling_push_cap` | 智能倍增单次（每 tick）推送轮数上限 | 4096 |
 | `nei_overlay_enabled` | NEI 叠加层开关 | true |
 
 支持热加载（改完约 1 秒生效），或用 `/ae2qof reload` 立即重载。

@@ -4,9 +4,22 @@
 
 An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
-**Author: wztwzt · Current source version: 3.21.3 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.21.4 · Reference pack: GTNH 2.9.0-beta-3**
 
 This repository is for personal archival and is not currently offered for distribution. See [CREDITS.md](CREDITS.md) for attribution and licensing records. Feature descriptions are not a claim that every integration has passed in-game testing.
+
+## What's new in 3.21.4 (configurable per-push cap for Smart Doubling)
+
+- **New setting `smart_doubling_push_cap`** (default **4096**, range 1..2147483647): the **per-push
+  (per-tick) round cap** for Smart Doubling. Raise it for bigger batches (keep
+  `smart_doubling_max_rounds` at 0 = unlimited). The 4096 default is the safety value chosen when fixing
+  audit items #51 (an oversized power probe walks every energy storage, O(P)) and #73 (1T-scale orders
+  drowned the client in item updates); raising it costs linearly more extraction and item updates per tick.
+  Editable in `settings.json`, the in-game "Mods → AE2 QoL → Config" page, and visible via `/ae2qof status`.
+- **Fixed a diagnostic false positive**: turning the toggle off did not clear the "expect enabled"
+  registration, so the CPU could wrongly warn that the server switch was still false (seen while testing 3.21.3).
+- Note: the "tens of thousands at a time" you saw is `4096 rounds × the pattern's output per craft` —
+  a designed cap, not a failure.
 
 ## What's new in 3.21.3 (Smart Doubling fixed on dedicated servers)
 
@@ -177,7 +190,7 @@ See the [investigation](docs/mcp-tooltip-duplicate-investigation.md) for evidenc
 ## Installation and upgrades
 
 1. Stop the game/server and back up the **complete world and configuration**, retaining the previous JAR for rollback. Infinity Cell contents live in the world save; backing up item NBT alone is insufficient.
-2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-3.21.3.jar`. Do not retain multiple versions.
+2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-3.21.4.jar`. Do not retain multiple versions.
 3. **Use the same version on client and server.** fix41 changed upload-related packets; upgrading only one side is unsupported.
 4. This JAR includes `aeinfinitycell` (bundled metadata remains `1.0.4-ae2qol`). Do not also install the standalone AE2 Infinity Cell JAR. Test old cells in a copied world before migrating.
 5. Check startup logs, generated configuration and Mixin loading, then exercise the features you use in a test world. Deployment to the development test instance requires separate approval.

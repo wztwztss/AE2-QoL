@@ -18,6 +18,10 @@ import com.google.gson.JsonObject;
  * 统一玩家配置文件 {@code config/ae2_qof/settings.json}：
  * - io_port_rate：强化 IO 端口传输倍率（默认 1024，1..Integer.MAX_VALUE）
  * - smart_doubling_max_rounds：智能倍增最大轮数（默认 0=不限，0..Integer.MAX_VALUE；0 表示一次发配剩余全部轮数）
+ * - smart_doubling_push_cap：智能倍增**单次推送轮数上限**（默认 4096，1..Integer.MAX_VALUE）
+ *   —— 受 AE2 功率探测（凑够即停的遍历，超额查询会走遍全部储能设备）与物品更新量限制，
+ *   默认 4096 是审计项 #51（O(P) 探测）与 #73（大订单客户端被海量更新淹没）修复时定下的安全值；
+ *   服务器算力充裕时可调大，代价是每 tick 的提取量与物品更新量线性上升。
  * - nei_overlay_enabled：NEI 叠加层开关（默认 true）
  *
  * 支持热加载：直接编辑文件后约 1 秒内自动生效（服务端/单机均可），
@@ -30,6 +34,13 @@ public class Config {
 
     /** 智能倍增最大轮数（热加载字段）：0 = 不限（一次发配剩余全部轮数）。 */
     public static volatile int smartDoublingMaxRounds = 0;
+
+    /**
+     * 智能倍增单次推送轮数上限（热加载字段，3.21.4）。
+     * 受功率探测复杂度与物品更新量限制，默认 4096（#51/#73 修复时定下的安全值）；
+     * 服务器算力充裕时可调大，但每 tick 开销会线性上升。
+     */
+    public static volatile int smartDoublingPushCap = 4096;
 
     /** NEI 叠加层开关（热加载字段）。 */
     public static volatile boolean neiOverlayEnabled = true;
@@ -120,6 +131,7 @@ public class Config {
         }
         int io = exIOPortTransferContentsRate;
         int rounds = smartDoublingMaxRounds;
+        int pushCap = smartDoublingPushCap;
         boolean overlay = neiOverlayEnabled;
         boolean pinRow = pinRowEnabled;
         String presets = stockMonitorPresets;
@@ -143,6 +155,10 @@ public class Config {
                     value = obj.get("smart_doubling_max_rounds");
                     if (value != null && value.isJsonPrimitive()) {
                         rounds = clamp(value.getAsInt(), 0, Integer.MAX_VALUE, rounds);
+                    }
+                    value = obj.get("smart_doubling_push_cap");
+                    if (value != null && value.isJsonPrimitive()) {
+                        pushCap = clamp(value.getAsInt(), 1, Integer.MAX_VALUE, pushCap);
                     }
                     value = obj.get("nei_overlay_enabled");
                     if (value != null && value.isJsonPrimitive()) {
@@ -170,6 +186,7 @@ public class Config {
         }
         exIOPortTransferContentsRate = io;
         smartDoublingMaxRounds = rounds;
+        smartDoublingPushCap = pushCap;
         neiOverlayEnabled = overlay;
         pinRowEnabled = pinRow;
         stockMonitorPresets = presets;
@@ -244,6 +261,13 @@ public class Config {
                         0,
                         Integer.MAX_VALUE,
                         smartDoublingMaxRounds);
+                    break;
+                case "smart_doubling_push_cap":
+                    smartDoublingPushCap = clamp(
+                        Integer.parseInt(value.trim()),
+                        1,
+                        Integer.MAX_VALUE,
+                        smartDoublingPushCap);
                     break;
                 case "nei_overlay_enabled":
                     neiOverlayEnabled = Boolean.parseBoolean(value.trim());
@@ -321,6 +345,12 @@ public class Config {
      */
     private static boolean writeFile(int ioRate, int rounds, boolean overlay, boolean pinRow, String presets,
         String v7) {
+        // 3.21.4：新增字段（smart_doubling_push_cap）走重载，既有 5 处调用点的签名保持不变，降低回归面。
+        return writeFile(ioRate, rounds, overlay, pinRow, presets, v7, smartDoublingPushCap);
+    }
+
+    private static boolean writeFile(int ioRate, int rounds, boolean overlay, boolean pinRow, String presets,
+        String v7, int pushCap) {
         try {
             Path parent = SETTINGS_FILE.getParent();
             if (parent != null && !Files.exists(parent)) {
@@ -329,6 +359,7 @@ public class Config {
             JsonObject root = new JsonObject();
             root.addProperty("io_port_rate", ioRate);
             root.addProperty("smart_doubling_max_rounds", rounds);
+            root.addProperty("smart_doubling_push_cap", pushCap);
             root.addProperty("nei_overlay_enabled", overlay);
             root.addProperty("pin_row_enabled", pinRow);
             root.addProperty("stock_monitor_presets", presets);

@@ -52,6 +52,7 @@
 | 库存统计终端：Nexus 缺失时的回退网络选择面板（3.20.3 新增） | `src/main/java/com/wztwzt/ae2_qof/terminal/StockMonitorTerminalNetworkPanel.java`（与覆盖板的 `cover/stockmonitor/gui/NetworkSelectPanel` 是兄弟实现；刻意不改覆盖板那份，保持"不触碰已确认可用代码"的边界） |
 | 库存统计终端：行内【高亮】【传送】请求包（3.21.0 新增） | `src/main/java/com/wztwzt/ae2_qof/network/StockMonitorActionPacket.java`（C2S 只发坐标；服务端 tick 线程内重新解析目标 + 会话/`isActiveViewer` + AE BUILD 权限校验后执行；高亮复用 `WirelessHighlightPacket` 200 tick 自动清除，传送复用 `HatchActionPacket` 那份匿名 `Teleporter`） |
 | 库存统计终端：覆盖板列表范围（3.21.1） | 在 `StockMonitorTerminalGui.CoverScan` 内：只列 `CoverRegistry.getByNetwork(终端 networkId)` 的覆盖板；被过滤数量经 `IntSyncValue` S2C，空列表时显示"另有 N 个属于其他网络" |
+| 智能倍增：单次推送上限配置（3.21.4） | `Config.smartDoublingPushCap`（键 `smart_doubling_push_cap`，默认 4096）→ 被 `mixin/ae/MixinCraftingCPUCluster` 的功率/推送钳制读取；可在 `settings.json`、`client/gui/GuiConfigScreen`（Mods → AE2 QoL → Config）、`/ae2qof status` 查看与修改 |
 | 智能倍增：开关的跨端写入与回读（3.21.3 重构） | `network/SmartDoublingTogglePacket.java`（C2S：容器 / **坐标设置** / **坐标查询** 三模式；服务端按坐标重定位 MTE 并校验 `ISmartDoublingMedium`）+ `network/SmartDoublingStatePacket.java`（**新增** S2C：服务端权威值写回客户端机器对象，供界面显示）。原因：三处开关 mixin 在 `client` 段，`BooleanSyncValue.allowC2S()` 依赖服务端存在同名同步处理器，专用服务端上会被 MUI2 静默丢弃（详见 CHANGELOG 记录 (29)） |
 | 库存统计终端无线端点 | `src/main/java/com/wztwzt/ae2_qof/terminal/StockMonitorTerminalWirelessEndpoint.java` |
 | ME 任务检测器 F16（方块） | `src/main/java/com/wztwzt/ae2_qof/tile/TileQuestDetector.java` |

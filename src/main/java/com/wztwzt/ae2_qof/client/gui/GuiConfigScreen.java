@@ -54,6 +54,7 @@ public class GuiConfigScreen extends GuiScreen {
 
     private GuiTextField ioField;
     private GuiTextField roundsField;
+    private GuiTextField pushCapField;
     private GuiTextField overlayField;
     private GuiTextField mapKeyField;
     private GuiTextField mapValueField;
@@ -92,6 +93,9 @@ public class GuiConfigScreen extends GuiScreen {
         this.roundsField.setText(Integer.toString(Config.smartDoublingMaxRounds));
         this.overlayField = new GuiTextField(this.fontRendererObj, left, y0 + 106, 220, 18);
         this.overlayField.setText(Boolean.toString(Config.neiOverlayEnabled));
+        // 3.21.4：单次推送轮数上限（默认 4096，见 Config 字段注释）
+        this.pushCapField = new GuiTextField(this.fontRendererObj, left, y0 + 154, 220, 18);
+        this.pushCapField.setText(Integer.toString(Config.smartDoublingPushCap));
 
         int editX = this.width / 2 + 50;
         int fieldW = this.width - editX - 20;
@@ -162,9 +166,16 @@ public class GuiConfigScreen extends GuiScreen {
                 left - 10,
                 this.overlayField.yPosition - 11,
                 0xA0A0A0);
+            this.drawString(
+                this.fontRendererObj,
+                "智能倍增单次推送上限 (smart_doubling_push_cap)  范围 1~2147483647",
+                left - 10,
+                this.pushCapField.yPosition - 11,
+                0xA0A0A0);
             this.ioField.drawTextBox();
             this.roundsField.drawTextBox();
             this.overlayField.drawTextBox();
+            this.pushCapField.drawTextBox();
         } else {
             this.drawCenteredString(this.fontRendererObj, "名字映射编辑", centerX, 6, 0xFFFFFF);
             if (this.subTab == 2) {
@@ -299,8 +310,10 @@ public class GuiConfigScreen extends GuiScreen {
             this.ioField.mouseClicked(mouseX, mouseY, mouseButton);
             this.roundsField.mouseClicked(mouseX, mouseY, mouseButton);
             this.overlayField.mouseClicked(mouseX, mouseY, mouseButton);
+            this.pushCapField.mouseClicked(mouseX, mouseY, mouseButton);
             this.focusField = this.ioField.isFocused() ? this.ioField
-                : (this.roundsField.isFocused() ? this.roundsField : this.overlayField);
+                : (this.roundsField.isFocused() ? this.roundsField
+                    : (this.pushCapField.isFocused() ? this.pushCapField : this.overlayField));
         } else if (this.subTab == 2) {
             this.refFilterField.mouseClicked(mouseX, mouseY, mouseButton);
             this.focusField = this.refFilterField;
@@ -431,7 +444,8 @@ public class GuiConfigScreen extends GuiScreen {
         String status = this.applySingle("io_port_rate", this.ioField.getText());
         String status2 = this.applySingle("smart_doubling_max_rounds", this.roundsField.getText());
         String status3 = this.applySingle("nei_overlay_enabled", this.overlayField.getText());
-        String combined = joinStatus(status, status2, status3);
+        String status4 = this.applySingle("smart_doubling_push_cap", this.pushCapField.getText());
+        String combined = joinStatus(status, status2, status3, status4);
         this.statusText = combined.isEmpty() ? "已应用（多人服务器需 OP 权限）" : combined;
     }
 
@@ -460,9 +474,9 @@ public class GuiConfigScreen extends GuiScreen {
         }
     }
 
-    private String joinStatus(String a, String b, String c) {
+    private String joinStatus(String... parts) {
         StringBuilder sb = new StringBuilder();
-        for (String s : new String[] { a, b, c }) {
+        for (String s : parts) {
             if (!s.isEmpty()) {
                 if (sb.length() > 0) {
                     sb.append("; ");

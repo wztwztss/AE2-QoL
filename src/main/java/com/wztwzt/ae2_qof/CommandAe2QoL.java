@@ -70,6 +70,8 @@ public class CommandAe2QoL extends CommandBase {
                     "[AE2QoL] io_port_rate=" + Config.exIOPortTransferContentsRate
                         + ", smart_doubling_max_rounds="
                         + Config.smartDoublingMaxRounds
+                        + ", smart_doubling_push_cap="
+                        + Config.smartDoublingPushCap
                         + ", nei_overlay_enabled="
                         + Config.neiOverlayEnabled
                         + ", recipe_mappings="

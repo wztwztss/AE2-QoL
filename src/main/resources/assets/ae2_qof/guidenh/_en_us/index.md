@@ -50,6 +50,7 @@ AE2 QoL brings a set of quality-of-life enhancements to Applied Energistics 2 (G
 |---|---|---|
 | `io_port_rate` | Enhanced IO Port transfer multiplier | 1024 |
 | `smart_doubling_max_rounds` | Smart Doubling max rounds (0 = unlimited) | 0 |
+| `smart_doubling_push_cap` | Smart Doubling per-push (per-tick) round cap | 4096 |
 | `nei_overlay_enabled` | NEI overlay toggle | true |
 
 Hot-reload supported (~1s), or run `/ae2qof reload`.

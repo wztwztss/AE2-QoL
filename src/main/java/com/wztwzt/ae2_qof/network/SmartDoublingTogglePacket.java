@@ -126,6 +126,13 @@ public class SmartDoublingTogglePacket implements IMessage {
         return until != null && until > System.currentTimeMillis();
     }
 
+    /** 清除"期望开启"登记（玩家关闭开关时调用，避免 CPU 侧误报）。 */
+    public static void clearExpectEnabled(int dim, int x, int y, int z) {
+        try {
+            EXPECT_ENABLED.remove(expectKey(dim, x, y, z));
+        } catch (Throwable ignored) {}
+    }
+
     @Override
     public void fromBytes(ByteBuf buf) {
         try {
@@ -201,6 +208,10 @@ public class SmartDoublingTogglePacket implements IMessage {
                 sdm.setSmartDoubling(msg.enabled);
                 if (msg.enabled) {
                     markExpectEnabled(msg.dim, msg.x, msg.y, msg.z);
+                } else {
+                    // 3.21.4：关闭开关时清掉"期望开启"登记，否则 CPU 侧会误报
+                    // "刚要求开启但服务端仍为 false"（实测出现过这个误报）。
+                    clearExpectEnabled(msg.dim, msg.x, msg.y, msg.z);
                 }
                 try {
                     te.markDirty();

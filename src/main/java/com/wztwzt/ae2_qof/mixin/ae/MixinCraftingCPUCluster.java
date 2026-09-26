@@ -799,13 +799,15 @@ public abstract class MixinCraftingCPUCluster {
                         if (medium instanceof DualityInterface) sum *= Math
                             .pow(4.0, ((DualityInterface) medium).getInstalledUpgrades(Upgrades.PATTERN_CAPACITY));
 
-                        // 功率钳制：以 min(effectiveN, 4096) 轮电费为查询上界做 SIMULATE。
+                        // 功率钳制：以 min(effectiveN, pushCap) 轮电费为查询上界做 SIMULATE。
                         // AE2 EnergyGridCache.simulateExtract 凑够即停，有限查询通常 O(1)；
                         // Double.MAX_VALUE 会强制遍历全部储能设备（O(P)，#51）。
                         // 电量 ≥ 上界时视为"电不是瓶颈"，effectiveN 维持原料/容量钳制结果；
-                        // 单次推送封顶 4096 轮，剩余轮数下一 tick 继续推送。
+                        // 单次推送封顶 pushCap 轮（默认 4096，可配置 smart_doubling_push_cap），
+                        // 剩余轮数下一 tick 继续推送。
                         if (effectiveN > 1) {
-                            final double probeRounds = Math.min(effectiveN, 4096);
+                            final int pushCap = Math.max(1, Config.smartDoublingPushCap);
+                            final double probeRounds = Math.min(effectiveN, pushCap);
                             final double availablePower = eg
                                 .extractAEPower(sum * probeRounds, Actionable.SIMULATE, PowerMultiplier.CONFIG);
                             if (availablePower < sum - 0.01) {
