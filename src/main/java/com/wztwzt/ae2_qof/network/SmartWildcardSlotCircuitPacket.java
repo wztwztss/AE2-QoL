@@ -127,6 +127,17 @@ public class SmartWildcardSlotCircuitPacket implements IMessage {
                         MyMod.LOG.warn("[AE2QoL] 样板槽手势写回：机器元数据为空");
                         return;
                     }
+                    // 安全校验：只允许近距离操作该机器（防止构造包远程改别人机器里的样板）。
+                    // 维度无需另查——TE 是在玩家自己的世界里按坐标取的。8 格是玩家正常开界面能摸到的范围。
+                    if (player.getDistanceSq(message.x + 0.5D, message.y + 0.5D, message.z + 0.5D) > 64.0D) {
+                        MyMod.LOG.warn(
+                            "[AE2QoL] 样板槽手势写回被拒：玩家 {} 距机器过远 @ [{}, {}, {}]",
+                            player.getCommandSenderName(),
+                            message.x,
+                            message.y,
+                            message.z);
+                        return;
+                    }
                     ItemStack pattern = findPattern(mte, message.slot);
                     if (pattern == null || !SmartWildcardState.isSmartWildcard(pattern)) {
                         MyMod.LOG.warn(
