@@ -40,8 +40,9 @@ public class ContainerSmartWildcard extends Container {
         this.player = playerInventory.player;
         this.patternSlotIndex = patternSlotIndex;
 
-        // 样板槽：直接用玩家背包里的那个槽位（x/y 由 GUI 负责摆放，这里给 0 占位）
-        this.addSlotToContainer(new Slot(playerInventory, patternSlotIndex, 0, 0) {
+        // 样板槽：直接用玩家背包里的那个槽位。坐标放在界面右下角（不再压在页签上）；
+        // x/y 是相对 guiLeft/guiTop 的偏移，GuiContainer 会据此把槽画出来。
+        this.addSlotToContainer(new Slot(playerInventory, patternSlotIndex, 286, 192) {
 
             @Override
             public boolean isItemValid(ItemStack stack) {
