@@ -94,11 +94,15 @@ public final class SmartWildcardRecipeDeriver {
                     templateStack.stackSize = Math.max(1, stack.stackSize);
                     result.templateIn.add(templateStack);
 
-                    // ③ 编程电路：记进 state.circuit，并且**不**把它变成通配规则（它必须精确匹配）
+                    // ③ 编程电路：记进 state.circuit，**不写进模板输入**。
+                    // 依据用户方案（每槽电路 + 优先级 样板自带 > 槽位 > 整机）：电路由机器虚拟电路槽承载，
+                    // 若同时作为样板输入，GT 会从幽灵槽与样板输入各看到一份电路 ⇒ 冲突/无法匹配。
                     String unlocalized = stack.getItem()
                         .getUnlocalizedName();
                     if (unlocalized != null && unlocalized.startsWith("gt.integrated_circuit")) {
                         result.state.circuit = stack.getItemDamage();
+                        // 模板 in 列表里已经按原样加入了这一格，这里把它撤掉（保持“电路不入样板”的口径）
+                        result.templateIn.remove(slot);
                         continue;
                     }
 
