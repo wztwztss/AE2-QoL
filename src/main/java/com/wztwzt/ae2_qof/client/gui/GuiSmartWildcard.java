@@ -50,6 +50,11 @@ public class GuiSmartWildcard extends GuiContainer {
     private static final int ID_EXCLUDE_BASE = 100;
     private static final int ID_REMOVE_BASE = 300;
     private static final int ID_BLACKLIST_ADD = 400;
+    private static final int ID_TAB_CIRCUIT = 4;
+    private static final int ID_CIRCUIT_BASE = 500;
+    private static final int ID_CIRCUIT_CLEAR = 530;
+    private static final int ID_CIRCUIT_ADD_NONCONSUM = 531;
+    private static final int ID_NONCONSUM_REMOVE_BASE = 600;
 
     private final ContainerSmartWildcard container;
     private int page = 0;
@@ -99,10 +104,35 @@ public class GuiSmartWildcard extends GuiContainer {
         int x = this.guiLeft;
         int y = this.guiTop;
 
-        this.buttonList.add(new GuiButton(ID_TAB_RULES, x + 8, y + 6, 70, 18, "\u89c4\u5219"));
-        this.buttonList.add(new GuiButton(ID_TAB_PREVIEW, x + 82, y + 6, 70, 18, "\u9884\u89c8"));
-        this.buttonList.add(new GuiButton(ID_TAB_BLACKLIST, x + 156, y + 6, 70, 18, "\u9ed1\u540d\u5355"));
-        this.buttonList.add(new GuiButton(ID_SAVE, x + 234, y + 6, 78, 18, "\u4fdd\u5b58"));
+        this.buttonList.add(new GuiButton(ID_TAB_RULES, x + 6, y + 6, 62, 18, "\u89c4\u5219"));
+        this.buttonList.add(new GuiButton(ID_TAB_PREVIEW, x + 70, y + 6, 62, 18, "\u9884\u89c8"));
+        this.buttonList.add(new GuiButton(ID_TAB_BLACKLIST, x + 134, y + 6, 62, 18, "\u9ed1\u540d\u5355"));
+        this.buttonList.add(new GuiButton(ID_TAB_CIRCUIT, x + 198, y + 6, 62, 18, "\u7535\u8def"));
+        this.buttonList.add(new GuiButton(ID_SAVE, x + 262, y + 6, 54, 18, "\u4fdd\u5b58"));
+
+        // M3 第 4 页：内置编程电路 1~24 + 其他不消耗物品（写进样板 NBT，机器索引期自动读取）
+        if (this.page == 3) {
+            int startX = x + 10;
+            int startY = y + 34;
+            for (int i = 0; i < 24; i++) {
+                int col = i % 8;
+                int row = i / 8;
+                int id = ID_CIRCUIT_BASE + i;
+                this.buttonList
+                    .add(new GuiButton(id, startX + col * 30, startY + row * 20, 28, 18, String.valueOf(i + 1)));
+                this.ae2qol$rowNames.put(id, String.valueOf(i + 1));
+            }
+            SmartWildcardState circuitState = workingOrLoad();
+            int listY = startY + 66;
+            this.buttonList.add(new GuiButton(ID_CIRCUIT_CLEAR, startX, listY, 96, 18, "\u6e05\u9664\uff08\u7ee7\u627f\uff09"));
+            this.buttonList.add(
+                new GuiButton(ID_CIRCUIT_ADD_NONCONSUM, startX + 100, listY, 150, 18, "\u628a\u624b\u6301\u7269\u54c1\u8bb0\u4e3a\u4e0d\u6d88\u8017"));
+            for (int i = 0; i < 4 && i < circuitState.nonConsumed.size(); i++) {
+                int id = ID_NONCONSUM_REMOVE_BASE + i;
+                this.buttonList.add(new GuiButton(id, startX + 250, listY + 20 + i * 18, 50, 16, "\u5220\u9664"));
+                this.ae2qol$rowNames.put(id, String.valueOf(i));
+            }
+        }
 
         this.blacklistField = null;
         if (this.page == 2) {
@@ -211,6 +241,39 @@ public class GuiSmartWildcard extends GuiContainer {
                     this.scroll = 0;
                     initGui();
                     return;
+                case ID_TAB_CIRCUIT:
+                    this.page = 3;
+                    this.scroll = 0;
+                    initGui();
+                    return;
+                case ID_CIRCUIT_CLEAR:
+                    workingOrLoad().circuit = -1;
+                    this.statusLine = "\u5df2\u6e05\u9664\u7535\u8def\uff08\u5c06\u7ee7\u627f\u69fd\u4f4d/\u6574\u673a\uff09";
+                    initGui();
+                    return;
+                case ID_CIRCUIT_ADD_NONCONSUM: {
+                    // 其他不消耗物品（铸模/模头/透镜等）：把手持物品记进样板（只作标记，不消耗）
+                    ItemStack held = this.mc.thePlayer == null ? null : this.mc.thePlayer.getCurrentEquippedItem();
+                    if (held == null || held.getItem() == null) {
+                        this.statusLine = "\u624b\u6301\u7269\u54c1\u4e3a\u7a7a";
+                        return;
+                    }
+                    ItemStack mark = held.copy();
+                    mark.stackSize = 1;
+                    String name = String.valueOf(
+                        mark.getItem()
+                            .getItemStackDisplayName(mark));
+                    for (ItemStack existing : workingOrLoad().nonConsumed) {
+                        if (existing != null && ItemStack.areItemStacksEqual(existing, mark)) {
+                            this.statusLine = "\u5df2\u5728\u5217\u8868\u4e2d\uff1a" + name;
+                            return;
+                        }
+                    }
+                    workingOrLoad().nonConsumed.add(mark);
+                    this.statusLine = "\u5df2\u8bb0\u4e3a\u4e0d\u6d88\u8017\uff1a" + name;
+                    initGui();
+                    return;
+                }
                 case ID_SAVE:
                     this.ae2qol$save();
                     return;
@@ -226,6 +289,26 @@ public class GuiSmartWildcard extends GuiContainer {
                     return;
                 default:
                     break;
+            }
+            if (button.id >= ID_CIRCUIT_BASE && button.id < ID_CIRCUIT_BASE + 24) {
+                int circuit = button.id - ID_CIRCUIT_BASE + 1;
+                workingOrLoad().circuit = circuit;
+                this.statusLine = "\u5df2\u9009\u7535\u8def " + circuit + "\uff08\u4fdd\u5b58\u540e\u751f\u6548\uff09";
+                initGui();
+                return;
+            }
+            if (button.id >= ID_NONCONSUM_REMOVE_BASE && button.id < ID_NONCONSUM_REMOVE_BASE + 4) {
+                int idx = button.id - ID_NONCONSUM_REMOVE_BASE;
+                java.util.List<ItemStack> list = workingOrLoad().nonConsumed;
+                if (idx >= 0 && idx < list.size()) {
+                    ItemStack removed = list.remove(idx);
+                    this.statusLine = "\u5df2\u79fb\u9664\u4e0d\u6d88\u8017\u7269\u54c1\uff1a"
+                        + (removed == null ? "?"
+                            : removed.getItem()
+                                .getItemStackDisplayName(removed));
+                }
+                initGui();
+                return;
             }
             if (button.id >= ID_EXCLUDE_BASE && button.id < ID_EXCLUDE_BASE + 10) {
                 String token = this.ae2qol$rowNames.get(button.id);
@@ -357,6 +440,24 @@ public class GuiSmartWildcard extends GuiContainer {
                 this.fontRendererObj.drawStringWithShadow(name, 10, y + i * 16 + 3, 0xFFFFFF);
             }
             this.fontRendererObj.drawStringWithShadow(EnumChatFormatting.GRAY + this.previewSummary, 10, 200, 0xFFFFFF);
+        } else if (this.page == 3) {
+            this.fontRendererObj.drawStringWithShadow(
+                EnumChatFormatting.AQUA + "\u7535\u8def\u53f7\uff081~24\uff09\u5f53\u524d\uff1a"
+                    + (state.circuit < 1 ? "\u672a\u8bbe\u7f6e\uff08\u7ee7\u627f\uff09" : String.valueOf(state.circuit)),
+                10,
+                y,
+                0xFFFFFF);
+            int listY = 34 + 66 + 62;
+            this.fontRendererObj
+                .drawStringWithShadow(EnumChatFormatting.AQUA + "\u4e0d\u6d88\u8017\u7269\u54c1\uff1a", 10, listY, 0xFFFFFF);
+            for (int i = 0; i < 4 && i < state.nonConsumed.size(); i++) {
+                ItemStack item = state.nonConsumed.get(i);
+                String name = item == null ? "?"
+                    : String.valueOf(
+                        item.getItem()
+                            .getItemStackDisplayName(item));
+                this.fontRendererObj.drawStringWithShadow(name, 14, listY + 20 + i * 18 + 4, 0xFFFFFF);
+            }
         } else {
             this.fontRendererObj.drawStringWithShadow(
                 EnumChatFormatting.AQUA + "\u9ed1\u540d\u5355 " + state.blacklist.size() + " \u9879",
