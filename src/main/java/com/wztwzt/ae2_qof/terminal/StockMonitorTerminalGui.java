@@ -222,24 +222,32 @@ public class StockMonitorTerminalGui {
         // ===== 覆盖板列表 =====
         column.child(new TextWidget<>(IKey.lang("ae2_qof.terminal.covers")).size(LIST_W, 12).color(0xFF009933));
 
-        final RowCache<CoverRow> coverCache = new RowCache<>();
+        // 3.21.1（用户决定）：只列**本终端所连网络**的覆盖板。
+        // 被过滤掉的数量单独同步给客户端，让"列表为空"能解释清楚——否则"覆盖板怎么不见了"
+        // 会变成无法定性的现象（本项目原则：不做无法定性的空状态）。
+        final CoverScan coverScan = new CoverScan();
         GenericListSyncHandler<CoverRow> coverRows = GenericListSyncHandler.<CoverRow>builder()
-            .getter(() -> coverCache.get(terminal.getBaseMetaTileEntity(), () -> collectCoverRows(terminal)))
+            .getter(() -> coverScan.rows(terminal))
             .serializer(CoverRow::write)
             .deserializer(CoverRow::read)
             .immutableCopy()
             .build();
         syncManager.syncValue("sm_terminal_covers", coverRows);
 
+        IntSyncValue hiddenCoversSync = new IntSyncValue(() -> coverScan.hidden(terminal));
+        syncManager.syncValue("sm_terminal_covers_hidden", hiddenCoversSync);
+
         DynamicLinkedSyncHandler<GenericListSyncHandler<CoverRow>> coverListHandler =
             new DynamicLinkedSyncHandler<>(coverRows).widgetProvider(
                 (dynamicSyncManager, value) -> buildCoverList(value.getValue(), dynamicSyncManager, player,
-                    coverEditPanel, terminal));
+                    coverEditPanel, terminal, hiddenCoversSync));
         syncManager.syncValue("sm_terminal_covers_dyn", coverListHandler);
 
         column.child(
             new DynamicSyncedWidget<>().size(LIST_W, LIST_H)
-                .initialChild(buildCoverList(coverRows.getValue(), syncManager, player, coverEditPanel, terminal))
+                .initialChild(
+                    buildCoverList(coverRows.getValue(), syncManager, player, coverEditPanel, terminal,
+                        hiddenCoversSync))
                 .syncHandler(coverListHandler));
 
         column.child(
@@ -350,41 +358,90 @@ public class StockMonitorTerminalGui {
 
     // ===== 覆盖板列表 =====
 
-    /** 在服务端汇总覆盖板注册表（含一次在线状态刷新），生成快照行。 */
-    private static List<CoverRow> collectCoverRows(StockMonitorTerminal terminal) {
-        List<CoverRow> rows = new ArrayList<>();
-        try {
-            TileEntity te = (TileEntity) terminal.getBaseMetaTileEntity();
-            if (te == null) return rows;
-            CoverRegistry registry = CoverRegistry.get(te.getWorldObj());
-            registry.refreshOnlineStatus(); // 只有服务端需要，且只在重算时执行
-            Collection<CoverEntry> covers = registry.getAll();
+    /**
+     * 覆盖板列表扫描（服务端）：**只列本终端所连网络**的覆盖板（3.21.1 用户决定），
+     * 并记录"因属于其它网络而被过滤掉"的数量，供空列表时给出可解释的提示。
+     * 与 {@link RowCache} 同款按 {@link #LIST_REFRESH_INTERVAL} 节流（getter 每 tick 都会被调用）。
+     */
+    private static final class CoverScan {
 
-            List<CoverEntry> sorted = new ArrayList<>(covers);
-            sorted.sort(
-                Comparator.comparingInt((CoverEntry e) -> e.dim)
-                    .thenComparingInt(e -> e.x)
-                    .thenComparingInt(e -> e.y)
-                    .thenComparingInt(e -> e.z)
-                    .thenComparingInt(e -> e.side));
+        private long lastTick = -LIST_REFRESH_INTERVAL;
+        private List<CoverRow> rows = Collections.emptyList();
+        private int hidden = 0;
 
-            for (int i = 0; i < sorted.size(); i++) {
-                CoverEntry entry = sorted.get(i);
-                rows.add(new CoverRow(i, entry.dim, entry.x, entry.y, entry.z, entry.side,
-                    entry.targetName, entry.online, entry.modeOrdinal, entry.threshold, entry));
-            }
-        } catch (Throwable t) {
-            ae2qol$warnCollectFailure("覆盖板", t);
+        List<CoverRow> rows(StockMonitorTerminal terminal) {
+            refresh(terminal);
+            return rows;
         }
-        return rows;
+
+        int hidden(StockMonitorTerminal terminal) {
+            refresh(terminal);
+            return hidden;
+        }
+
+        private void refresh(StockMonitorTerminal terminal) {
+            long now = 0L;
+            try {
+                TileEntity te = (TileEntity) terminal.getBaseMetaTileEntity();
+                if (te != null && te.getWorldObj() != null) now = te.getWorldObj().getTotalWorldTime();
+            } catch (Throwable ignored) {}
+            if (now - lastTick < LIST_REFRESH_INTERVAL) return;
+            lastTick = now;
+
+            List<CoverRow> fresh = new ArrayList<>();
+            int hiddenCount = 0;
+            try {
+                TileEntity te = (TileEntity) terminal.getBaseMetaTileEntity();
+                if (te == null) {
+                    rows = fresh;
+                    hidden = 0;
+                    return;
+                }
+                CoverRegistry registry = CoverRegistry.get(te.getWorldObj());
+                registry.refreshOnlineStatus(); // 只有服务端需要，且只在重算时执行
+
+                int total = registry.getAll()
+                    .size();
+                // 只显示本终端所连网络：终端未绑定（邻接直连，networkId 为空）时 getByNetwork 返回全部
+                Collection<CoverEntry> covers = registry.getByNetwork(terminal.getNetworkId());
+
+                List<CoverEntry> sorted = new ArrayList<>(covers);
+                sorted.sort(
+                    Comparator.comparingInt((CoverEntry e) -> e.dim)
+                        .thenComparingInt(e -> e.x)
+                        .thenComparingInt(e -> e.y)
+                        .thenComparingInt(e -> e.z)
+                        .thenComparingInt(e -> e.side));
+
+                for (int i = 0; i < sorted.size(); i++) {
+                    CoverEntry entry = sorted.get(i);
+                    fresh.add(new CoverRow(i, entry.dim, entry.x, entry.y, entry.z, entry.side,
+                        entry.targetName, entry.online, entry.modeOrdinal, entry.threshold, entry));
+                }
+                hiddenCount = Math.max(0, total - sorted.size());
+            } catch (Throwable t) {
+                ae2qol$warnCollectFailure("覆盖板", t);
+            }
+            rows = fresh;
+            hidden = hiddenCount;
+        }
     }
 
     private static IWidget buildCoverList(List<CoverRow> rows, PanelSyncManager syncManager, EntityPlayer player,
-            IPanelHandler editPanel, StockMonitorTerminal terminal) {
+            IPanelHandler editPanel, StockMonitorTerminal terminal, IntSyncValue hiddenSync) {
         RowList list = new RowList();
         if (rows == null || rows.isEmpty()) {
-            list.child(
-                new TextWidget<>(IKey.lang("ae2_qof.terminal.no_covers")).color(0xFFAAAAAA).size(LIST_W - 8, 12));
+            // 空列表要能说明原因：是"本网络下确实没有覆盖板"，还是"有但都属于别的网络（被过滤了）"
+            int hidden = hiddenSync == null ? 0 : hiddenSync.getValue();
+            if (hidden > 0) {
+                list.child(
+                    new TextWidget<>(IKey.lang("ae2_qof.terminal.no_covers_filtered", hidden)).color(0xFFAAAAAA)
+                        .size(LIST_W - 8, 12));
+            } else {
+                list.child(
+                    new TextWidget<>(IKey.lang("ae2_qof.terminal.no_covers")).color(0xFFAAAAAA)
+                        .size(LIST_W - 8, 12));
+            }
             return list;
         }
         for (CoverRow row : rows) {

@@ -384,3 +384,4 @@ ae2_qof.terminal.teleport_no_spot=目标附近找不到安全落点，传送已�
 ae2_qof.terminal.target_other_dim=目标在维度 %s，高亮只在同维度可见
 ae2_qof.terminal.highlighted=已高亮目标 [%s, %s, %s]（10 秒）
 ae2_qof.terminal.teleported=已传送到 [%s, %s, %s] dim:%s
+ae2_qof.terminal.no_covers_filtered=本终端所连网络下没有覆盖板（另有 %s 个属于其他网络，已隐藏）

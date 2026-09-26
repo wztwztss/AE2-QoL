@@ -15,7 +15,7 @@
 |模型信息|DeepSeek-V4.1-Flash|
 |工作分支|master；本轮起点 `fa612f4`（fix54 部署与推送收尾），工作树干净、与 origin/master 同步|
 |启动时间|2026-09-26（Asia/Shanghai，新功能轮：编程样板输入总成 MK.III）|
-|本次会话目标|**新增「编程样板输入总成 MK.III」**：ProgrammableHatches「编程样板输入总成」（MTE 22069）的扩容克隆版，样板槽 36 → **144**，样板窗改成 9 列 × 9 可见行的可滚动网格，只在装了 PH 时存在。严格按用户协议推进：先反复提问确认需求（7 项产品决策全部由用户拍板）→ 只读取证（PH 源码 + 实例 jar 字节码 + AE2/GT/MUI2 三层 API）→ 用户说「确认方案，开始修改」后才动代码。**3.20.0 首次实测失败**（可选依赖守卫把 PH 的 modid 误写成包名前缀 `proghatches`，物品从未注册且无日志），已定位并修复为 **3.20.1**（真实 modid + 关键类判据 + 三条分支日志），产物 `build/libs/AE2-QoL-3.20.1.jar`（SHA256 `D0F00177…`）**已部署到 b3 实例**（mods 内仅一份）。**已实测通过（用户：「样板确实扩充了没问题」）；日志证据见 CHANGELOG 记录 (23) 第六节。**随后按用户「你正常修就行，修完推」又完成 **3.20.2**：修 GuideNH 指南页 5 页 × 中英的 `icon:`/`item_ids:` 错误（GT 机器真实注册名是 `gregtech:gt.blockmachines:<MTE ID>`，原写成了 `ae2_qof:<机器名>`），并做了全量对照审计；产物 `build/libs/AE2-QoL-3.20.2.jar`（SHA256 `3B7189EF…`）。**3.20.2 未部署到实例**（纯资源修正）。随后用户报「库存统计终端打开无法连接 AE / 没有 nexus 的连接 UI / 无法实时修改」→ 完成 **3.20.3**：终端 GUI 双端构建重写（`GenericListSyncHandler`+`DynamicSyncedWidget` 快照渲染）、发信器枚举 API 修正（`node.getMachine()`）、列表改可滚动并取消 5 行上限、编辑值全走 SyncValue、新增 Nexus 缺失回退面板；产物 `build/libs/AE2-QoL-3.20.3.jar`（SHA256 `85BB3AE7…`）+ **3.20.4**（同版本行为不变，仅给两个列表收集器补"首次失败 WARN"，让"列表为空"与"枚举出错"可区分；SHA256 `1AF11606…`）；**3.20.4 已部署到实例（mods 内仅一份）**。随后按用户「优化 UI + 加高亮与传送（参照自适应电网终端）+ 修汉化」完成 **3.21.0**：行内【高亮】【传送】两按钮（客户端回调发坐标、服务端重新解析并做会话+BUILD 双鉴权）、高亮 10 秒自动清除、传送支持跨维度与安全落点、物品名与行内缩写全部汉化；产物 `build/libs/AE2-QoL-3.21.0.jar`（SHA256 `5590DCC0…`）；**3.21.0 待游戏内验收 5 项**。|
+|本次会话目标|**新增「编程样板输入总成 MK.III」**：ProgrammableHatches「编程样板输入总成」（MTE 22069）的扩容克隆版，样板槽 36 → **144**，样板窗改成 9 列 × 9 可见行的可滚动网格，只在装了 PH 时存在。严格按用户协议推进：先反复提问确认需求（7 项产品决策全部由用户拍板）→ 只读取证（PH 源码 + 实例 jar 字节码 + AE2/GT/MUI2 三层 API）→ 用户说「确认方案，开始修改」后才动代码。**3.20.0 首次实测失败**（可选依赖守卫把 PH 的 modid 误写成包名前缀 `proghatches`，物品从未注册且无日志），已定位并修复为 **3.20.1**（真实 modid + 关键类判据 + 三条分支日志），产物 `build/libs/AE2-QoL-3.20.1.jar`（SHA256 `D0F00177…`）**已部署到 b3 实例**（mods 内仅一份）。**已实测通过（用户：「样板确实扩充了没问题」）；日志证据见 CHANGELOG 记录 (23) 第六节。**随后按用户「你正常修就行，修完推」又完成 **3.20.2**：修 GuideNH 指南页 5 页 × 中英的 `icon:`/`item_ids:` 错误（GT 机器真实注册名是 `gregtech:gt.blockmachines:<MTE ID>`，原写成了 `ae2_qof:<机器名>`），并做了全量对照审计；产物 `build/libs/AE2-QoL-3.20.2.jar`（SHA256 `3B7189EF…`）。**3.20.2 未部署到实例**（纯资源修正）。随后用户报「库存统计终端打开无法连接 AE / 没有 nexus 的连接 UI / 无法实时修改」→ 完成 **3.20.3**：终端 GUI 双端构建重写（`GenericListSyncHandler`+`DynamicSyncedWidget` 快照渲染）、发信器枚举 API 修正（`node.getMachine()`）、列表改可滚动并取消 5 行上限、编辑值全走 SyncValue、新增 Nexus 缺失回退面板；产物 `build/libs/AE2-QoL-3.20.3.jar`（SHA256 `85BB3AE7…`）+ **3.20.4**（同版本行为不变，仅给两个列表收集器补"首次失败 WARN"，让"列表为空"与"枚举出错"可区分；SHA256 `1AF11606…`）；**3.20.4 已部署到实例（mods 内仅一份）**。随后按用户「优化 UI + 加高亮与传送（参照自适应电网终端）+ 修汉化」完成 **3.21.0**：行内【高亮】【传送】两按钮（客户端回调发坐标、服务端重新解析并做会话+BUILD 双鉴权）、高亮 10 秒自动清除、传送支持跨维度与安全落点、物品名与行内缩写全部汉化；产物 `build/libs/AE2-QoL-3.21.0.jar`（SHA256 `5590DCC0…`）；**3.21.0 待游戏内验收 5 项**。随后用户拍板「覆盖板列表只看本终端所连网络」→ 完成 **3.21.1**（改用 `CoverRegistry.getByNetwork(terminal.getNetworkId())`；被过滤数量经 SyncValue 下发，空列表时显示"另有 N 个属于其他网络"；扫描收拢进 `CoverScan` 共用一次遍历）；产物 `build/libs/AE2-QoL-3.21.1.jar`（SHA256 `74BBBA2A…`）。|
 |上一轮（历史）|工具：DeepSeek Harness｜模型：DeepSeek-V4.1-Flash：fix50/51/52+54 三问题定位与修复，正式版 `3.19.0-fix54` 已部署到 b3 实例并推送到 `origin/master`。|
 
 ---
@@ -30,6 +30,14 @@ GTNH 2.9.0-beta-3（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 
 > 按完成时间倒序排列，均标注产出文件路径。历史结论保留原貌，不等于本版验证结果。
 
+- [x] 2026-09-26 | 工具：DeepSeek Harness（DSH Web GUI）| 模型：DeepSeek-V4.1-Flash：**3.21.1：覆盖板列表改为只看本终端所连网络**（用户拍板，记录 (26) 遗留项）。
+  1. 改动：`CoverRegistry.getAll()` → `getByNetwork(terminal.getNetworkId())`（与该方法注释的设计意图对齐；
+     终端未绑网络时 `getByNetwork("")` 仍返回全部，此路径行为不变）。
+  2. 新增 `IntSyncValue`（`sm_terminal_covers_hidden`）：被过滤数量 S2C，空列表显示
+     「本终端所连网络下没有覆盖板（另有 N 个属于其他网络，已隐藏）」，避免"覆盖板不见了"无法定性。
+  3. 扫描逻辑收拢进 `CoverScan` 内部类（行与隐藏计数共用一次扫描 + 20 tick 节流）。
+  4. 验证：`BUILD SUCCESSFUL`（`GRADLE_EXIT=0`）；产物 `AE2-QoL-3.21.1.jar`（1183287 字节，SHA256 `74BBBA2A…`）。
+     待验收 3 项：只显示本网络 / 空列表带数字说明 / 邻接直连仍显示全部。
 - [x] 2026-09-26 | 工具：DeepSeek Harness（DSH Web GUI）| 模型：DeepSeek-V4.1-Flash：**3.21.0：库存统计终端 —— 行内高亮/传送 + UI 优化 + 汉化**（用户：「再优化一下 ui，增加一个高亮和传送，可以参考我们的自适配能源终端的高亮和传送，然后汉化有点问题」）。
   1. 阶段 0 侦察：`gt.blockmachines.stock_monitor_terminal.name` 在 zh/en **都缺**（自适应终端有、所以它是中文）；
      自适应终端的高亮/传送语义（C2S 包 → 服务端会话/团队鉴权 → `WirelessHighlightPacket` + 200 tick 清除；
