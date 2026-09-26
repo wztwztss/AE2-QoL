@@ -14,6 +14,7 @@ import java.util.Map.Entry;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 
@@ -30,6 +31,9 @@ import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.api.ISmartDoublingMedium;
 import com.wztwzt.ae2_qof.network.CraftingCompletePacket;
 import com.wztwzt.ae2_qof.network.ModNetwork;
+import com.wztwzt.ae2_qof.network.SmartDoublingTogglePacket;
+
+import gregtech.api.interfaces.metatileentity.IMetaTileEntity;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;
@@ -549,6 +553,13 @@ public abstract class MixinCraftingCPUCluster {
         if (workableTasks == null || workableTasks.isEmpty()) {
             return false;
         }
+        // 3.21.3 诊断：统计"支持倍增但服务端开关为 false"的介质，并且**只在玩家刚刚要求开启过**
+        // （SmartDoublingTogglePacket 的期望窗口）时记一条 WARN。
+        // 正常运行零噪声；而"界面勾选没写进服务端"这类静默故障从此可定性（此前完全无日志）。
+        int candidates = 0;
+        int mediumsSeen = 0;
+        int capableButOff = 0;
+        boolean expectedButOff = false;
         for (final Entry<ICraftingPatternDetails, Object> e : workableTasks.entrySet()) {
             if (ae2qol$taskValue(e.getValue()) <= 1L) {
                 continue;
@@ -561,13 +572,66 @@ public abstract class MixinCraftingCPUCluster {
             if (mediums == null) {
                 continue;
             }
+            candidates++;
             for (final ICraftingMedium medium : mediums) {
-                if (medium instanceof ISmartDoublingMedium sdm && sdm.isSmartDoublingEnabled()) {
-                    return true;
+                mediumsSeen++;
+                if (medium instanceof ISmartDoublingMedium sdm) {
+                    if (sdm.isSmartDoublingEnabled()) {
+                        return true;
+                    }
+                    capableButOff++;
+                    if (!expectedButOff && ae2qol$expectedEnabled(medium)) {
+                        expectedButOff = true;
+                    }
                 }
             }
         }
+        if (expectedButOff && capableButOff > 0) {
+            ae2qol$warnExpectedButOff(candidates, mediumsSeen, capableButOff);
+        }
         return false;
+    }
+
+    /**
+     * 介质所在位置是否处于"刚被要求开启"的期望窗口（只对 GT 系机器介质有意义，其它介质返回 false）。
+     * 用于区分"玩家没勾"与"勾了但没写进服务端"——后者才是故障。
+     */
+    @Unique
+    private static boolean ae2qol$expectedEnabled(ICraftingMedium medium) {
+        try {
+            if (!(medium instanceof IMetaTileEntity mte)) return false;
+            final TileEntity base = (TileEntity) mte.getBaseMetaTileEntity();
+            if (base == null || base.getWorldObj() == null) return false;
+            return SmartDoublingTogglePacket.isExpectEnabled(
+                base.getWorldObj().provider.dimensionId,
+                base.xCoord,
+                base.yCoord,
+                base.zCoord);
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** 诊断限频：同一原因 15 秒最多一条，避免合成期间刷屏。 */
+    @Unique
+    private static final Map<String, Long> ae2qol$diagCooldown = new java.util.concurrent.ConcurrentHashMap<>();
+
+    @Unique
+    private static void ae2qol$warnExpectedButOff(int candidates, int mediums, int capableButOff) {
+        try {
+            final String key = "smart-off-expected";
+            final long now = System.currentTimeMillis();
+            final Long last = ae2qol$diagCooldown.get(key);
+            if (last != null && now - last < 15_000L) return;
+            ae2qol$diagCooldown.put(key, now);
+            MyMod.LOG.warn(
+                "[AE2QoL] 智能倍增未生效：候选任务 {} 个 / 介质 {} 个，其中 {} 个支持倍增但**服务端开关仍为 false**，"
+                    + "而该位置刚刚被要求开启 —— 说明开关没有写到服务端（客户端/服务端是否同版本？"
+                    + "日志里应能看到本模组的「智能倍增开关 = true」行）",
+                candidates,
+                mediums,
+                capableButOff);
+        } catch (Throwable ignored) {}
     }
 
     /**

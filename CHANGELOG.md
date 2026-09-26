@@ -1,3 +1,67 @@
+## 工作区决策记录 2026-09-26 (29) - **3.21.3**：修「智能倍增在专用服务器上不生效」（开关写入被 MUI2 静默丢弃）
+
+> 产物 `build/libs/AE2-QoL-3.21.3.jar`（1190908 字节，SHA256 `B5A4E7919195C82012A727EAD018D84EFC824DC1887EEEB1C1B28CE2453BC137`）。
+> 用户报：智能倍增在**云上专用服务端**不生效——开关能勾住，但合成仍一次一轮；**同一个 3.21.2 jar 在单人下正常**。
+
+### 一、阶段 0 收敛（只读侦察 + 逐轮提问）
+
+| 事实 | 结论 |
+|---|---|
+| 服务端与该实例同版本 3.21.2；mods 与本地一致 | 排除"没装 / 版本不一致" |
+| 服务端 `smart_doubling_max_rounds=0` | 排除"配置把轮数卡成 1" |
+| 开关勾住、**关掉界面再打开仍然勾住** | 排除"没点中 / 控件没渲染"（但**不能**证明写到了服务端） |
+| 其它功能（无限元件 / 强化 IO 端口 / MK.III 144 槽 / 指南页）在服务器上全正常 | 排除"整个 jar 在服务端没生效" |
+| **单人 3.21.2 正常、只有专用服务端不行** | 环境相关，不是普通代码回归 |
+| 现象 = 机器/输入仓材料**一次只进一轮**，无异常、无日志 | 指向"服务端看到的开关是 false" |
+
+### 二、阶段 1 取证（先证伪，再定位）
+
+1. `javap -v` 扫智能倍增链全部关键类：**没有任何 `net/minecraft/client/*`、`appeng/client/*` 引用**
+   ⇒ **推翻**"服务端缺客户端类导致 NoClassDefFoundError 静默降级"。
+2. `javap` 核对反射目标：`TaskProgress.value` / `consumeCraftSession`、`finalOutput` / `diagnostics` /
+   `tasks` / `workableTasks` / `getServerTick`、`CraftingCpuDiagnostics.recordExpectedOutput(...)` **全部命中**，
+   且 `CraftingCPUCluster` **无任何 `@SideOnly`** ⇒ **推翻**"反射失败静默降级"。
+3. 找到真正的**结构性不对称**：
+   - `mixins.ae2_qof.json` 里三处开关 mixin（`gt.MixinSuperCraftingInputHatchMEGui`（GTNL 21504/21505）、
+     `gt.MixinMTEHatchCraftingInputMEGui`（GT）、`gt.MixinDualInputHatchUI`（PH））**都在 `client` 段**；
+   - 它们用 `new BooleanSyncValue(getter, setter).allowC2S()` 写机器字段——这条写入**要求服务端存在同名同步处理器**；
+   - MUI2 2.3.88 `PanelSyncManager.receiveWidgetUpdate`：`if (!syncHandlers.containsKey(mapKey)) { LOGGER.warn(...); return; }`；
+     而更早的两条丢弃分支（`ModularNetworkSide.receivePacket` 的 `activeScreens` 查不到、
+     `ModularSyncManager.receiveWidgetUpdate` 的 `psm == null` 且面板名在历史里）**都不写日志**
+     ⇒ 与"服务端日志里找不到相关行"完全吻合；
+   - 目标类本身**不是 client-only**（`javap -v`：GTNL `SuperCraftingInputHatchMEGui` 无 `@SideOnly`、
+     `extends gregtech...MTEHatchBaseGui`、含 `buildUI` / `createBottomLeftCornerFlow`；GT 与 PH 的目标类同理）
+     ⇒ 服务端**会**构建该面板，只是**没有**我们的注入。
+   ⇒ 服务端机器 `ae2qol$smartDoubling` 恒 false ⇒ `isSmartDoublingEnabled()` false
+   ⇒ `hasSmartDoublingTask` false ⇒ **静默走原版一次一轮**。
+4. 单人为何正常：SP 是**同一个客户端 JVM**，`client` 段 mixin 照样变换了该类，
+   集成服务端调用面板构建方法时跑的就是注入后版本。
+
+### 三、修复（与 MUI2 面板机制解耦）
+
+1. `network/SmartDoublingTogglePacket` 扩展为三模式：容器（旧，ME 接口）/ **坐标设置** / **坐标查询**；
+   坐标模式在服务端 `scheduleServerTask` 内**按坐标重新定位 MTE**、校验 `ISmartDoublingMedium`、
+   写入开关并 `markDirty()`，随后回读真值。
+2. 新增 `network/SmartDoublingStatePacket`（S2C）：把服务端真值写进**客户端**机器对象，
+   界面 getter 立刻显示权威值；打开界面时查询一次，重登后显示与服务端一致。
+3. 三处客户端 mixin 去掉 `allowC2S()`，改为 setter 里发坐标包 + 创建控件时查询一次
+   （顺带消掉服务端那条 `does not exist for panel` 的 WARN 噪声）。
+4. **补诊断（不再静默）**：服务端应用开关记 INFO（机器类型/坐标/是否样板介质）、目标非法记 WARN；
+   CPU 侧新增"玩家刚要求开启、但服务端看到的仍是 false"的 WARN
+   （15 秒限频 + 5 分钟期望窗口 ⇒ 正常运行零噪声）。这正是以前完全查不出的那类故障。
+5. **未改动**：CPU 推送/记账逻辑、NBT 键名、单人行为、ME 接口的容器路径（那条本来就能在服务端工作）。
+
+### 四、验证
+
+- 构建 `BUILD SUCCESSFUL`（**无管道取退出码：GRADLE_EXIT=0**）；
+- 产物 `AE2-QoL-3.21.3.jar` 1190908 字节 / SHA256 `B5A4E791…`；
+- 入包核对：`SmartDoublingTogglePacket`（+`$Handler`）、`SmartDoublingStatePacket`（+`$Handler`）、
+  四个 mixin、`ModNetwork` 均在；
+- **待游戏内验收（服务器）**：① 服务端日志出现「智能倍增开关 = true @ <机器> d<dim> [x,y,z]」；
+  ② 重启服务端后开关仍勾住；③ 下单后机器/输入仓**一次进 N 轮材料**；④ 单人行为不变（回归自测）。
+
+---
+
 ## 工作区决策记录 2026-09-26 (28) - **3.21.2**：修行内名称空白 + 发信器数量改不动（两个根因都读源码/字节码取证）
 
 > 产物 `build/libs/AE2-QoL-3.21.2.jar`（1183439 字节，SHA256 `09BDD665A4E100D49E64A17409B555D4054B57A69B8713FBBF53B4AEBA674517`）。

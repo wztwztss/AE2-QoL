@@ -49,9 +49,14 @@ public abstract class MixinMTEHatchCraftingInputMEGui {
 
     @Unique
     private ToggleButton ae2qol$createSmartDoublingToggle(PanelSyncManager syncManager) {
+        // 3.21.3：同 GTNL 版——allowC2S 在专用服务端会被静默丢弃，改为按坐标写服务端 + 主动拉真值。
         BooleanSyncValue smartDoublingSync = new BooleanSyncValue(
             () -> ((ISmartDoublingMedium) (Object) this.ae2qol$machine).isSmartDoublingEnabled(),
-            val -> ((ISmartDoublingMedium) (Object) this.ae2qol$machine).setSmartDoubling(val)).allowC2S();
+            val -> {
+                ((ISmartDoublingMedium) (Object) this.ae2qol$machine).setSmartDoubling(val);
+                com.wztwzt.ae2_qof.network.SmartDoublingTogglePacket.sendFromClient(val, this.ae2qol$machine);
+            });
+        com.wztwzt.ae2_qof.network.SmartDoublingTogglePacket.queryFromClient(this.ae2qol$machine);
 
         ToggleButton btn = new ToggleButton().value(smartDoublingSync)
             .overlay(GTGuiTextures.OVERLAY_BUTTON_PATTERN_OPTIMIZE);

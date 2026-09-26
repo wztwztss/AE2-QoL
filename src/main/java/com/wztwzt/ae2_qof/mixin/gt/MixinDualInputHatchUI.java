@@ -34,9 +34,17 @@ public abstract class MixinDualInputHatchUI {
         if (!(this instanceof ICraftingProvider)) {
             return;
         }
+        // 3.21.3：同 GTNL 版——allowC2S 在专用服务端会被静默丢弃，改为按坐标写服务端 + 主动拉真值。
         BooleanSyncValue smartDoublingSync = new BooleanSyncValue(
             () -> ((ISmartDoublingMedium) (Object) this).isSmartDoublingEnabled(),
-            val -> ((ISmartDoublingMedium) (Object) this).setSmartDoubling(val)).allowC2S();
+            val -> {
+                ((ISmartDoublingMedium) (Object) this).setSmartDoubling(val);
+                com.wztwzt.ae2_qof.network.SmartDoublingTogglePacket.sendFromClient(
+                    val,
+                    (gregtech.api.interfaces.metatileentity.IMetaTileEntity) (Object) this);
+            });
+        com.wztwzt.ae2_qof.network.SmartDoublingTogglePacket.queryFromClient(
+            (gregtech.api.interfaces.metatileentity.IMetaTileEntity) (Object) this);
 
         builder.child(ae2qol$createSmartDoublingToggle(smartDoublingSync));
     }

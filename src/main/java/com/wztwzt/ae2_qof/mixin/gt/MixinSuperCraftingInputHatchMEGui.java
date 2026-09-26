@@ -55,9 +55,16 @@ public abstract class MixinSuperCraftingInputHatchMEGui {
 
     @Unique
     private ToggleButton ae2qol$createSmartDoublingToggle(PanelSyncManager syncManager) {
+        // 3.21.3：不再用 allowC2S —— 它要求服务端存在同名同步处理器，而本 mixin 只在客户端段，
+        // 专用服务端上那条写入会被 MUI2 静默丢弃（详见 SmartDoublingTogglePacket 的类注释）。
+        // 改为"本地翻转 + 按坐标把真值写给服务端"，并主动拉一次服务端真值对齐显示。
         BooleanSyncValue smartDoublingSync = new BooleanSyncValue(
             () -> ((ISmartDoublingMedium) (Object) this.ae2qol$machine).isSmartDoublingEnabled(),
-            val -> ((ISmartDoublingMedium) (Object) this.ae2qol$machine).setSmartDoubling(val)).allowC2S();
+            val -> {
+                ((ISmartDoublingMedium) (Object) this.ae2qol$machine).setSmartDoubling(val);
+                com.wztwzt.ae2_qof.network.SmartDoublingTogglePacket.sendFromClient(val, this.ae2qol$machine);
+            });
+        com.wztwzt.ae2_qof.network.SmartDoublingTogglePacket.queryFromClient(this.ae2qol$machine);
 
         ToggleButton btn = new ToggleButton().value(smartDoublingSync)
             .overlay(GTGuiTextures.OVERLAY_BUTTON_PATTERN_OPTIMIZE);

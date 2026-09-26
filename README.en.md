@@ -4,11 +4,37 @@
 
 An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
-**Author: wztwzt · Current source version: 3.21.2 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.21.3 · Reference pack: GTNH 2.9.0-beta-3**
 
 This repository is for personal archival and is not currently offered for distribution. See [CREDITS.md](CREDITS.md) for attribution and licensing records. Feature descriptions are not a claim that every integration has passed in-game testing.
 
-## What's new in 3.21.0 (Stock Monitor Terminal: highlight / teleport + UI + localization)
+## What's new in 3.21.3 (Smart Doubling fixed on dedicated servers)
+
+- **Root cause**: the Smart Doubling toggles for GT/GTNL/PH machines were implemented in **client-only
+  mixins** (the `client` section of `mixins.ae2_qof.json`), and their `BooleanSyncValue(...).allowC2S()`
+  write needs a **matching sync handler on the server**. A dedicated server has no such injection, so the
+  write was silently dropped by MUI2, leaving the machine flag `false` on the server — the CPU then fell
+  back to the vanilla one-round path with no log at all. Single-player worked because the client JVM
+  applies the client-section mixin globally, so the integrated server ran the transformed method.
+- **Fix**: the toggle now sends the **machine coordinates** to the server, which re-resolves the MTE,
+  verifies `ISmartDoublingMedium`, writes the flag and `markDirty()`s it, then returns the
+  **authoritative state** to the client for display — fully decoupled from MUI2's dual-side panel
+  building. The GUI also queries the state when it opens, so the display matches the server after a relog.
+- **Diagnostics**: the server logs an INFO line whenever a toggle is applied (machine class, position,
+  whether it is a pattern medium), and the CPU logs a WARN if a medium was just asked to enable but the
+  server still sees it off — this class of "I ticked it and nothing happened" is no longer silent.
+- Unchanged: the CPU push/accounting logic, the NBT key, single-player behaviour, and the existing
+  container-based path used by the AE2 ME interface (which already worked server-side).
+
+## Previous releases
+
+- **3.21.2**: fixed blank row names and uneditable emitter amounts in the Stock Monitor Terminal
+  (MUI2 `ButtonWidget` extends `SingleChildWidget`, so a second child silently disposes the first —
+  widget text now goes through `overlay(IKey)`; `LevelType` constants are `ITEM_LEVEL`/`ENERGY_LEVEL`).
+- **3.21.1**: the Stock Monitor Terminal's cover list now shows only covers of the network the terminal
+  is bound to, and reports how many were hidden from other networks.
+- **3.21.0**: Stock Monitor Terminal highlight (10 s) and cross-dimension teleport buttons plus UI and
+  localization fixes.
 
 - **New: two action buttons per row — Highlight and Teleport** (same division of labour as the
   Adaptive Energy Grid terminal). Highlight draws a **glowing box for 10 seconds** (the renderer skips
@@ -151,7 +177,7 @@ See the [investigation](docs/mcp-tooltip-duplicate-investigation.md) for evidenc
 ## Installation and upgrades
 
 1. Stop the game/server and back up the **complete world and configuration**, retaining the previous JAR for rollback. Infinity Cell contents live in the world save; backing up item NBT alone is insufficient.
-2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-3.21.2.jar`. Do not retain multiple versions.
+2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-3.21.3.jar`. Do not retain multiple versions.
 3. **Use the same version on client and server.** fix41 changed upload-related packets; upgrading only one side is unsupported.
 4. This JAR includes `aeinfinitycell` (bundled metadata remains `1.0.4-ae2qol`). Do not also install the standalone AE2 Infinity Cell JAR. Test old cells in a copied world before migrating.
 5. Check startup logs, generated configuration and Mixin loading, then exercise the features you use in a test world. Deployment to the development test instance requires separate approval.

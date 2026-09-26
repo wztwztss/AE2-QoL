@@ -15,7 +15,7 @@
 |模型信息|DeepSeek-V4.1-Flash|
 |工作分支|master；本轮起点 `fa612f4`（fix54 部署与推送收尾），工作树干净、与 origin/master 同步|
 |启动时间|2026-09-26（Asia/Shanghai，新功能轮：编程样板输入总成 MK.III）|
-|本次会话目标|**新增「编程样板输入总成 MK.III」**：ProgrammableHatches「编程样板输入总成」（MTE 22069）的扩容克隆版，样板槽 36 → **144**，样板窗改成 9 列 × 9 可见行的可滚动网格，只在装了 PH 时存在。严格按用户协议推进：先反复提问确认需求（7 项产品决策全部由用户拍板）→ 只读取证（PH 源码 + 实例 jar 字节码 + AE2/GT/MUI2 三层 API）→ 用户说「确认方案，开始修改」后才动代码。**3.20.0 首次实测失败**（可选依赖守卫把 PH 的 modid 误写成包名前缀 `proghatches`，物品从未注册且无日志），已定位并修复为 **3.20.1**（真实 modid + 关键类判据 + 三条分支日志），产物 `build/libs/AE2-QoL-3.20.1.jar`（SHA256 `D0F00177…`）**已部署到 b3 实例**（mods 内仅一份）。**已实测通过（用户：「样板确实扩充了没问题」）；日志证据见 CHANGELOG 记录 (23) 第六节。**随后按用户「你正常修就行，修完推」又完成 **3.20.2**：修 GuideNH 指南页 5 页 × 中英的 `icon:`/`item_ids:` 错误（GT 机器真实注册名是 `gregtech:gt.blockmachines:<MTE ID>`，原写成了 `ae2_qof:<机器名>`），并做了全量对照审计；产物 `build/libs/AE2-QoL-3.20.2.jar`（SHA256 `3B7189EF…`）。**3.20.2 未部署到实例**（纯资源修正）。随后用户报「库存统计终端打开无法连接 AE / 没有 nexus 的连接 UI / 无法实时修改」→ 完成 **3.20.3**：终端 GUI 双端构建重写（`GenericListSyncHandler`+`DynamicSyncedWidget` 快照渲染）、发信器枚举 API 修正（`node.getMachine()`）、列表改可滚动并取消 5 行上限、编辑值全走 SyncValue、新增 Nexus 缺失回退面板；产物 `build/libs/AE2-QoL-3.20.3.jar`（SHA256 `85BB3AE7…`）+ **3.20.4**（同版本行为不变，仅给两个列表收集器补"首次失败 WARN"，让"列表为空"与"枚举出错"可区分；SHA256 `1AF11606…`）；**3.20.4 已部署到实例（mods 内仅一份）**。随后按用户「优化 UI + 加高亮与传送（参照自适应电网终端）+ 修汉化」完成 **3.21.0**：行内【高亮】【传送】两按钮（客户端回调发坐标、服务端重新解析并做会话+BUILD 双鉴权）、高亮 10 秒自动清除、传送支持跨维度与安全落点、物品名与行内缩写全部汉化；产物 `build/libs/AE2-QoL-3.21.0.jar`（SHA256 `5590DCC0…`）；**3.21.0 待游戏内验收 5 项**。随后用户拍板「覆盖板列表只看本终端所连网络」→ 完成 **3.21.1**（改用 `CoverRegistry.getByNetwork(terminal.getNetworkId())`；被过滤数量经 SyncValue 下发，空列表时显示"另有 N 个属于其他网络"；扫描收拢进 `CoverScan` 共用一次遍历）；产物 `build/libs/AE2-QoL-3.21.1.jar`（SHA256 `74BBBA2A…`）。用户实机截图又报两处：**行内名称整列空白 + 发信器数量改不动** → **3.21.2** 修复（① MUI2 `ButtonWidget extends SingleChildWidget`，`child()` 会 dispose 旧子控件 ⇒ 名称被数值挤掉，改走 `overlay(IKey)`；② 按钮内文本吞点击（PH `NonInteractiveText` 同坑）⇒ 点行打不开编辑；③ `LevelType` 常量实为 `ITEM_LEVEL`/`ENERGY_LEVEL` ⇒ 类型恒显示"未知"，改前缀匹配）；产物 `build/libs/AE2-QoL-3.21.2.jar`（SHA256 `09BDD665…`）。|
+|本次会话目标|**新增「编程样板输入总成 MK.III」**：ProgrammableHatches「编程样板输入总成」（MTE 22069）的扩容克隆版，样板槽 36 → **144**，样板窗改成 9 列 × 9 可见行的可滚动网格，只在装了 PH 时存在。严格按用户协议推进：先反复提问确认需求（7 项产品决策全部由用户拍板）→ 只读取证（PH 源码 + 实例 jar 字节码 + AE2/GT/MUI2 三层 API）→ 用户说「确认方案，开始修改」后才动代码。**3.20.0 首次实测失败**（可选依赖守卫把 PH 的 modid 误写成包名前缀 `proghatches`，物品从未注册且无日志），已定位并修复为 **3.20.1**（真实 modid + 关键类判据 + 三条分支日志），产物 `build/libs/AE2-QoL-3.20.1.jar`（SHA256 `D0F00177…`）**已部署到 b3 实例**（mods 内仅一份）。**已实测通过（用户：「样板确实扩充了没问题」）；日志证据见 CHANGELOG 记录 (23) 第六节。**随后按用户「你正常修就行，修完推」又完成 **3.20.2**：修 GuideNH 指南页 5 页 × 中英的 `icon:`/`item_ids:` 错误（GT 机器真实注册名是 `gregtech:gt.blockmachines:<MTE ID>`，原写成了 `ae2_qof:<机器名>`），并做了全量对照审计；产物 `build/libs/AE2-QoL-3.20.2.jar`（SHA256 `3B7189EF…`）。**3.20.2 未部署到实例**（纯资源修正）。随后用户报「库存统计终端打开无法连接 AE / 没有 nexus 的连接 UI / 无法实时修改」→ 完成 **3.20.3**：终端 GUI 双端构建重写（`GenericListSyncHandler`+`DynamicSyncedWidget` 快照渲染）、发信器枚举 API 修正（`node.getMachine()`）、列表改可滚动并取消 5 行上限、编辑值全走 SyncValue、新增 Nexus 缺失回退面板；产物 `build/libs/AE2-QoL-3.20.3.jar`（SHA256 `85BB3AE7…`）+ **3.20.4**（同版本行为不变，仅给两个列表收集器补"首次失败 WARN"，让"列表为空"与"枚举出错"可区分；SHA256 `1AF11606…`）；**3.20.4 已部署到实例（mods 内仅一份）**。随后按用户「优化 UI + 加高亮与传送（参照自适应电网终端）+ 修汉化」完成 **3.21.0**：行内【高亮】【传送】两按钮（客户端回调发坐标、服务端重新解析并做会话+BUILD 双鉴权）、高亮 10 秒自动清除、传送支持跨维度与安全落点、物品名与行内缩写全部汉化；产物 `build/libs/AE2-QoL-3.21.0.jar`（SHA256 `5590DCC0…`）；**3.21.0 待游戏内验收 5 项**。随后用户拍板「覆盖板列表只看本终端所连网络」→ 完成 **3.21.1**（改用 `CoverRegistry.getByNetwork(terminal.getNetworkId())`；被过滤数量经 SyncValue 下发，空列表时显示"另有 N 个属于其他网络"；扫描收拢进 `CoverScan` 共用一次遍历）；产物 `build/libs/AE2-QoL-3.21.1.jar`（SHA256 `74BBBA2A…`）。用户实机截图又报两处：**行内名称整列空白 + 发信器数量改不动** → **3.21.2** 修复（① MUI2 `ButtonWidget extends SingleChildWidget`，`child()` 会 dispose 旧子控件 ⇒ 名称被数值挤掉，改走 `overlay(IKey)`；② 按钮内文本吞点击（PH `NonInteractiveText` 同坑）⇒ 点行打不开编辑；③ `LevelType` 常量实为 `ITEM_LEVEL`/`ENERGY_LEVEL` ⇒ 类型恒显示"未知"，改前缀匹配）；产物 `build/libs/AE2-QoL-3.21.2.jar`（SHA256 `09BDD665…`）。随后用户报「智能倍增在**云上专用服务端**不生效（开关能勾住、合成仍一次一轮），同一 jar 单人正常」→ 完成 **3.21.3**：根因是三处开关 mixin 在 `mixins.ae2_qof.json` 的 **client 段**，而 `BooleanSyncValue.allowC2S()` 要求服务端存在同名同步处理器 ⇒ 专用服务端上写入被 MUI2 静默丢弃（两条丢弃分支都不打日志）⇒ 服务端开关恒 false ⇒ CPU 静默回退一次一轮；单人正常是因为同一客户端 JVM 里 client 段 mixin 也变换了该类。修复：改为「客户端只报坐标 → 服务端重定位并校验后写入 + S2C 权威回读」，并补上应用/未生效诊断；产物 `build/libs/AE2-QoL-3.21.3.jar`（SHA256 `B5A4E791…`）。|
 |上一轮（历史）|工具：DeepSeek Harness｜模型：DeepSeek-V4.1-Flash：fix50/51/52+54 三问题定位与修复，正式版 `3.19.0-fix54` 已部署到 b3 实例并推送到 `origin/master`。|
 
 ---
@@ -30,6 +30,22 @@ GTNH 2.9.0-beta-3（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 
 > 按完成时间倒序排列，均标注产出文件路径。历史结论保留原貌，不等于本版验证结果。
 
+- [x] 2026-09-26 | 工具：DeepSeek Harness（DSH Web GUI）| 模型：DeepSeek-V4.1-Flash：**3.21.3：修「智能倍增在专用服务器上不生效」**（用户：云服务器上开关能勾住、合成仍一次一轮；同 jar 单人正常）。
+  1. 阶段 0 逐条排除：服务端同版本/配置 0/其它功能正常/开关显示保持 ⇒ 收窄到"服务端看到的开关是 false"。
+  2. 阶段 1 先证伪两条：`javap -v` 扫全链**无客户端类引用**（推翻 NoClassDefFoundError 说）；反射目标
+     `finalOutput/diagnostics/tasks/workableTasks/getServerTick/TaskProgress.*` **全部命中**且无 `@SideOnly`
+     （推翻"反射失败降级"说）。
+  3. 真根因：三处开关 mixin（GTNL/GT/PH）在 **client 段**，其 `BooleanSyncValue.allowC2S()` 要求服务端
+     **存在同名同步处理器**（MUI2 面板双端各构建一次才注册）；专用服务端没有该注入 ⇒ 写入被丢弃
+     （`PanelSyncManager.receiveWidgetUpdate` 的 WARN 分支，以及两条**完全静默**的更早分支——
+     与"服务端日志里找不到相关行"吻合）⇒ 服务端 `ae2qol$smartDoubling` 恒 false ⇒ `hasSmartDoublingTask`
+     返回 false ⇒ 静默原版一次一轮。单人正常 = 同一客户端 JVM 里该 mixin 也变换了类。
+  4. 修复：`SmartDoublingTogglePacket` 扩为容器/**坐标设置**/**坐标查询**三模式（服务端按坐标重定位 MTE、
+     校验 `ISmartDoublingMedium`、写入 + `markDirty`）；新增 `SmartDoublingStatePacket`（S2C 权威回读，
+     写回客户端机器对象供界面显示）；三处客户端 mixin 去掉 `allowC2S` 改发坐标包 + 打开时查询一次；
+     补"应用 INFO / 目标非法 WARN / CPU 侧期望窗口 WARN"三层诊断（正常零噪声）。
+  5. 验证：`BUILD SUCCESSFUL`（`GRADLE_EXIT=0`）；`AE2-QoL-3.21.3.jar`（1190908 字节，SHA256 `B5A4E791…`）；
+     新包类与四个 mixin 均已入包。待服务器验收 4 项（日志有"开关 = true"行 / 重启后仍勾住 / 一次进 N 轮材料 / 单人回归）。
 - [x] 2026-09-26 | 工具：DeepSeek Harness（DSH Web GUI）| 模型：DeepSeek-V4.1-Flash：**3.21.2：修行内名称空白 + 发信器数量改不动**（用户实机截图报障）。
   1. 取证顺序（值得复用）：先用 `javap -c` 反编译**自己构建的** `EmitterRow` 证明 `write/read` 对称、
      `ByteBufUtils` 成对 ⇒ **先排除传输层**；再读 MUI2 源码。

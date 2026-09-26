@@ -196,5 +196,13 @@ public final class ModNetwork {
             StockMonitorActionPacket.class,
             discriminator++,
             Side.SERVER);
+
+        // 3.21.3：智能倍增开关的权威回读（S2C）——客户端据此对齐显示，
+        // 不再依赖 MUI2 双端面板的同步处理器（专用服务端上那条路原来会被静默丢弃）
+        CHANNEL.registerMessage(
+            SmartDoublingStatePacket.Handler.class,
+            SmartDoublingStatePacket.class,
+            discriminator++,
+            Side.CLIENT);
     }
 }
