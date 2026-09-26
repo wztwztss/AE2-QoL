@@ -5,6 +5,8 @@ import net.minecraft.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
+import gregtech.common.tileentities.machines.MTEHatchCraftingInputME;
+
 /**
  * GT 样板槽 {@code MTEHatchCraftingInputME$PatternSlot} 的字段访问器（3.22.0）。
  *
@@ -17,7 +19,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
  * <p>只读：本模组**从不改写** GT 槽位的任何字段（{@code pattern} 若被改写会在
  * {@code loadNBTData} 末尾同步回 {@code mInventory[i]}，污染玩家槽位，GT:857-860）。
  */
-@Mixin(targets = "gregtech.common.tileentities.machines.MTEHatchCraftingInputME$PatternSlot", remap = false)
+@Mixin(value = MTEHatchCraftingInputME.PatternSlot.class, remap = false)
 public interface MixinPatternSlotAccess {
 
     @Accessor("pattern")
