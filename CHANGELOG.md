@@ -79,6 +79,18 @@
 22. **AE2 `Grid.getMachines(Class)` 返回的是 `IGridNode` 集合**（`IMachineSet extends IReadOnlyCollection<IGridNode>`），
     机器要 `node.getMachine()` 取；且它是**精确类名**查表，传父类会漏掉子类。
 
+### 六、3.20.4：给列表收集补"首次失败 WARN"（不改行为，只为让下一轮必然可定性）
+
+3.20.3 的两个列表收集器沿用旧的 `catch (Throwable ignored)` —— 一旦枚举抛异常，
+"列表为空"会与"确实没有发信器/覆盖板"**完全无法区分**（正是 skill 第 6 条反对的静默兜底）。
+3.20.4 只在**首次**失败时各记一条 `[StockMonitor] …列表枚举失败` WARN（同步去重，不会刷屏），
+行为、NBT 与网络格式完全不变。
+
+- 产物 `build/libs/AE2-QoL-3.20.4.jar`；构建 `BUILD SUCCESSFUL`（无管道取码 `GRADLE_EXIT=0`）。
+- 自检记录：改这段时**误删了 `buildEmitterList` 的方法签名**，编译立刻报错并已定位修好
+  —— 这正是"每改必编译、不靠肉眼"的价值。
+- 部署：3.20.3 与 3.20.4 都已按规范换入测试实例（旧件只移不删，mods 内始终仅一份）。
+
 ---
 
 ## 工作区决策记录 2026-09-26 (24) - **3.20.2**：修 GuideNH 指南页的图标/物品 ID 写错（5 个页面 · 中英各一份）

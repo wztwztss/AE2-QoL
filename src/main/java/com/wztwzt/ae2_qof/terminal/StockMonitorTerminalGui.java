@@ -54,6 +54,7 @@ import appeng.parts.automation.PartLevelEmitter;
 
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 
+import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.cover.stockmonitor.StockMonitorCover;
 import com.wztwzt.ae2_qof.cover.stockmonitor.ThresholdMode;
 import com.wztwzt.ae2_qof.cover.stockmonitor.ae.NeighborAeConnector;
@@ -81,6 +82,9 @@ import com.wztwzt.ae2_qof.terminal.CoverRegistry.CoverEntry;
  *
  * <p>行数据是**不可变快照**（只含显示所需字段），并且实现了值语义的 equals/hashCode：
  * 否则 {@code detectAndSendChanges} 会每 tick 都判定"变了"而持续发包。
+ *
+ * <p>列表收集失败时只在**首次**记一条 WARN：静默兜底会让"列表为空"无法区分
+ * "确实没有发信器/覆盖板"与"枚举抛异常"（skill 坑位 6）。
  */
 public class StockMonitorTerminalGui {
 
@@ -270,8 +274,25 @@ public class StockMonitorTerminalGui {
                 rows.add(new EmitterRow(i, getEmitterLabel(emitter), levelTypeName(emitter),
                     emitter.getReportingValue(), emitter));
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable t) {
+            // 静默兜底会掩盖故障：首次失败记一条 WARN，"列表为空"才能与"枚举出错"区分开。
+            ae2qol$warnCollectFailure("发信器", t);
+        }
         return rows;
+    }
+
+    private static boolean warnedEmitterCollect = false;
+    private static boolean warnedCoverCollect = false;
+
+    private static synchronized void ae2qol$warnCollectFailure(String what, Throwable t) {
+        if ("发信器".equals(what)) {
+            if (warnedEmitterCollect) return;
+            warnedEmitterCollect = true;
+        } else {
+            if (warnedCoverCollect) return;
+            warnedCoverCollect = true;
+        }
+        MyMod.LOG.warn("[StockMonitor] " + what + "列表枚举失败（同类失败只记一次）", t);
     }
 
     private static IWidget buildEmitterList(List<EmitterRow> rows, PanelSyncManager syncManager, EntityPlayer player,
@@ -329,7 +350,9 @@ public class StockMonitorTerminalGui {
                 rows.add(new CoverRow(i, entry.dim, entry.x, entry.y, entry.z, entry.side,
                     entry.targetName, entry.online, entry.modeOrdinal, entry.threshold, entry));
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable t) {
+            ae2qol$warnCollectFailure("覆盖板", t);
+        }
         return rows;
     }
 
