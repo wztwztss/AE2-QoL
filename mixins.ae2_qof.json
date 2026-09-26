@@ -35,6 +35,7 @@
     "nei.MixinNEIRecipeWidget",
     "nei.MixinPanelWidgetClick",
     "nei.MixinGuiRecipe",
+    "mui.MixinItemSlotWildcardGesture",
     "ae.MixinGuiCraftConfirm",
     "ae.MixinGuiInterface",
     "ae.MixinGuiSuperInterface",

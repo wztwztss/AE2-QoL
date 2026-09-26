@@ -34,6 +34,22 @@ public abstract class MixinDualInputHatchUI {
         if (!(this instanceof ICraftingProvider)) {
             return;
         }
+        // 3.22.0 M3 手势：记住本机坐标（PH 家族：PH 总成 / MK.II / 我们的 MK.III 共用此处）
+        try {
+            if (this instanceof gregtech.api.interfaces.metatileentity.IMetaTileEntity mte
+                && mte.getBaseMetaTileEntity() != null) {
+                com.wztwzt.ae2_qof.client.SmartWildcardClientState.machineX = mte.getBaseMetaTileEntity()
+                    .getXCoord();
+                com.wztwzt.ae2_qof.client.SmartWildcardClientState.machineY = mte.getBaseMetaTileEntity()
+                    .getYCoord();
+                com.wztwzt.ae2_qof.client.SmartWildcardClientState.machineZ = mte.getBaseMetaTileEntity()
+                    .getZCoord();
+                com.wztwzt.ae2_qof.client.SmartWildcardClientState.machineDim = mte.getBaseMetaTileEntity()
+                    .getWorld().provider.dimensionId;
+            }
+        } catch (Throwable t) {
+            com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 记录 PH 仓坐标失败（样板槽手势将不可用）", t);
+        }
         // 3.21.3：同 GTNL 版——allowC2S 在专用服务端会被静默丢弃，改为按坐标写服务端 + 主动拉真值。
         BooleanSyncValue smartDoublingSync = new BooleanSyncValue(
             () -> ((ISmartDoublingMedium) (Object) this).isSmartDoublingEnabled(),

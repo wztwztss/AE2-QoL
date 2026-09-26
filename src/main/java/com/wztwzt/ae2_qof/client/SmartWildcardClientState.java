@@ -18,6 +18,14 @@ import com.wztwzt.ae2_qof.wildcard.SmartWildcardState;
 public final class SmartWildcardClientState {
 
     private static Object activeGui;
+    /**
+     * 当前打开 GUI 的机器坐标：由三个机器 GUI 的 mixin 在构造/建界面时写入，
+     * 供「Shift+中键点样板槽」手势定位机器（写回包需要坐标）。未打开机器界面时为 {@code Integer.MIN_VALUE}。
+     */
+    public static int machineX = Integer.MIN_VALUE;
+    public static int machineY;
+    public static int machineZ;
+    public static int machineDim;
     private static SmartWildcardState derived;
     private static String derivedSummary = "";
     private static java.util.List<net.minecraft.item.ItemStack> derivedTemplateIn;

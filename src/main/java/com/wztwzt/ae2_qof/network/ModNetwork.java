@@ -89,6 +89,13 @@ public final class ModNetwork {
             discriminator++,
             Side.SERVER);
 
+        // 3.22.0 M3：机器样板槽上的手势（Shift+中键弹电路选择屏）写回
+        CHANNEL.registerMessage(
+            SmartWildcardSlotCircuitPacket.Handler.class,
+            SmartWildcardSlotCircuitPacket.class,
+            discriminator++,
+            Side.SERVER);
+
         CHANNEL.registerMessage(
             SmartDoublingTogglePacket.Handler.class,
             SmartDoublingTogglePacket.class,

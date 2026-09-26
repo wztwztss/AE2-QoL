@@ -41,6 +41,21 @@ public abstract class MixinSuperCraftingInputHatchMEGui {
     @Inject(method = "<init>", at = @At("TAIL"), remap = false)
     private void ae2qol$captureMachine(SuperCraftingInputHatchME hatch, CallbackInfo ci) {
         this.ae2qol$machine = hatch;
+        // 3.22.0 M3 手势：记住本机坐标，供样板槽上的 Shift+中键写回包定位机器
+        try {
+            if (hatch != null && hatch.getBaseMetaTileEntity() != null) {
+                com.wztwzt.ae2_qof.client.SmartWildcardClientState.machineX = hatch.getBaseMetaTileEntity()
+                    .getXCoord();
+                com.wztwzt.ae2_qof.client.SmartWildcardClientState.machineY = hatch.getBaseMetaTileEntity()
+                    .getYCoord();
+                com.wztwzt.ae2_qof.client.SmartWildcardClientState.machineZ = hatch.getBaseMetaTileEntity()
+                    .getZCoord();
+                com.wztwzt.ae2_qof.client.SmartWildcardClientState.machineDim = hatch.getBaseMetaTileEntity()
+                    .getWorld().provider.dimensionId;
+            }
+        } catch (Throwable t) {
+            com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 记录 GTNL 仓坐标失败（样板槽手势将不可用）", t);
+        }
     }
 
     @Inject(method = "createBottomLeftCornerFlow", at = @At("RETURN"), remap = false)
