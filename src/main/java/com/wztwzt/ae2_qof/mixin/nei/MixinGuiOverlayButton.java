@@ -49,7 +49,10 @@ public abstract class MixinGuiOverlayButton {
      */
     @Inject(method = "updateEnabled()V", at = @At("TAIL"))
     private void ae2qol$forceEnabledForMergedTerminalPerFrame(CallbackInfo ci) {
-        if (firstGui != null && firstGui instanceof GuiMergedTerminal) {
+        // 3.22.0：通配样板配置界面同样需要强制可用（GT 处理配方的 overlay identifier 不是 crafting，
+        // NEI 会把按钮算成 disabled ⇒ 点击不会被派发）
+        if (firstGui != null && (firstGui instanceof GuiMergedTerminal
+            || firstGui instanceof com.wztwzt.ae2_qof.client.gui.GuiSmartWildcard)) {
             ((net.minecraft.client.gui.GuiButton) (Object) this).enabled = true;
         }
     }
@@ -88,7 +91,8 @@ public abstract class MixinGuiOverlayButton {
      */
     @Inject(method = "canFillCraftingGrid()Z", at = @At("HEAD"), cancellable = true)
     private void ae2qol$alwaysFillableForMergedTerminal(CallbackInfoReturnable<Boolean> cir) {
-        if (firstGui != null && firstGui instanceof GuiMergedTerminal) {
+        if (firstGui != null && (firstGui instanceof GuiMergedTerminal
+            || firstGui instanceof com.wztwzt.ae2_qof.client.gui.GuiSmartWildcard)) {
             cir.setReturnValue(true);
         }
     }
