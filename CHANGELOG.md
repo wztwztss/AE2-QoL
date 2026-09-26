@@ -23,6 +23,15 @@
 
 ### 三、**尚未交付**（M1 之后的计划，已与用户确认）
 
+> **进展（续）**：PH 族接管已完成并编译通过 —— `mixin/ph/MixinPatternDualInputHatchWildcard`
+> 在 `PatternDualInputHatch.provideCrafting` 的 RETURN 补注册展开 details（复现 `isActive()` 守卫、
+> 只读不改 PH 的缓存数组、空结果/截断都记日志）；因注入在 PH 基类上，**PH 总成 22069 / MK.II 22179 与
+> 我们的 MK.III（32108）同时受益**。同时修正 `SmartWildcardExpander` 取矿辞前缀的实现：
+> 原先“第一个大写字母”切分对 `dustSmallIron`/`plateDoubleIron`/`crushedPurifiedIron` 会得到错误材料名，
+> 现改用 GT 权威 `OrePrefixes.detectPrefix(ItemStack)`（失败才回退并记 WARN）。
+> 另发现根目录 `mixins.ae2_qof.json` 与 `src/main/resources/` 那份**已不一致**（历史事故遗留），已同步。
+> **仍未交付**：GT 样板仓接管、GTNL 超级总成接管、M2 可视化界面与 NEI 加号推导、M3 每槽电路、M4 文档收口。
+
 1. **M1 剩余**：GT 样板输入仓（`MTEHatchCraftingInputME.provideCrafting`/`pushPattern`/`onPatternChange` + `PatternSlot` 子类：GT 的 `patternDetails` 是 `final`，一槽一 details，必须子类化并重建 `patternDetailsPatternSlotMap`）；
 2. **M2**：NEI **加号** → 自动推导规则（矿辞优先、无矿辞按 RecipeMap+电路兜底）→ 确认窗（可视化查看/当场排除）→ 写回样板；本仓已有 `MixinGuiOverlayButton`/`MixinGuiRecipe` 现成钩子；
 3. **M3**：**每槽电路**（`Shift+中键`点样板槽 → 列表选择电路 1~32 与“其他不消耗物品”，优先级**样板自带 > 槽位 > 整机**；写入走 GT 官方 `GhostCircuitItemStackHandler.setCircuitConfig()`），覆盖 GT 仓 / PH 总成 / GTNL 超级总成 / ME 接口 / MK.III；

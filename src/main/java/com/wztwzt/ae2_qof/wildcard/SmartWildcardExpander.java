@@ -375,8 +375,31 @@ public final class SmartWildcardExpander {
         }
     }
 
+    /**
+     * 取「矿辞前缀 + 材料名」。
+     *
+     * <p><b>3.22.0 修正</b>：原先按“第一个大写字母”切分矿辞名，对 {@code dustSmallIron}、
+     * {@code plateDoubleIron}、{@code crushedPurifiedIron} 这类**多段前缀**会切错
+     * （会切成 prefix={@code dust} + material={@code SmallIron}），表现只是“候选变少/不对”，很难查。
+     * 现在优先用 GT 权威 API {@code OrePrefixes.detectPrefix(ItemStack)}（按 VALUES 最长前缀匹配 + 特例修正），
+     * 失败才回退到老的切分法并记一条 WARN（不静默）。
+     */
     private static OrePrefixInfo oreInfo(ItemStack stack) {
         if (stack == null || stack.getItem() == null) return null;
+        try {
+            java.util.List<gregtech.api.enums.OrePrefixes.ParsedOreDictName> parsed =
+                gregtech.api.enums.OrePrefixes.detectPrefix(stack);
+            if (parsed != null) {
+                for (gregtech.api.enums.OrePrefixes.ParsedOreDictName name : parsed) {
+                    if (name == null || name.prefix == null) continue;
+                    String key = name.prefix.getOreprefixKey();
+                    if (key == null || key.isEmpty() || name.material == null || name.material.isEmpty()) continue;
+                    return new OrePrefixInfo(key, name.material);
+                }
+            }
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] OrePrefixes.detectPrefix 失败，回退矿辞名切分", t);
+        }
         try {
             int[] ids = OreDictionary.getOreIDs(stack);
             if (ids == null || ids.length == 0) return null;

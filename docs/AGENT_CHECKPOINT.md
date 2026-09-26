@@ -41,7 +41,8 @@ GTNH 2.9.0-beta-3（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
      `wildcard/ItemSmartWildcardPattern`（继承 AE2 `ItemEncodedPattern`）、`MixinDualityInterface.addToCraftingList` 注入、
      `/ae2qof wildcard [矿辞前缀]` 自测命令、`Config.smart_wildcard_expand_cap`（默认 512）。
   4. 验证：`BUILD SUCCESSFUL`（`GRADLE_EXIT=0`）；`wildcard/` 下 7 个类入包；编译期修了两处（long→int 收窄、局部变量重名）。
-  5. **未交付**：M1 剩余的 GT 样板输入仓接管、M2（NEI 加号 + 可视化）、M3（每槽电路）、M4（文档/指南/版本收口）。
+  5. **未交付**：GT 样板仓接管、GTNL 超级总成接管、M2（可视化界面 + NEI 加号）、M3（每槽电路）、M4（文档/指南/版本收口）。
+  6. 续做记录：**PH 族接管已完成**（`mixin/ph/MixinPatternDualInputHatchWildcard`，注入 PH 基类 ⇒ 同时覆盖 PH 22069/MK.II 22179 与我们的 MK.III 32108；`@Shadow public abstract boolean isActive()` 走 PH 自己声明的方法），并把 `SmartWildcardExpander` 取前缀改用 GT `OrePrefixes.detectPrefix`；同时同步了根目录与 src 两份 mixin 配置。编译均通过，未部署。
 - [x] 2026-09-26 | 工具：DeepSeek Harness（DSH Web GUI）| 模型：DeepSeek-V4.1-Flash：**3.21.4：智能倍增单次推送上限改可配 + 修 3.21.3 诊断误报**（用户实测确认 3.21.3 已生效，随后反馈"几万几万一发"）。
   1. 定性：`MixinCraftingCPUCluster` 的功率钳制**显式封顶 4096 轮**（注释原文），是 #51（O(P) 探测）与
      #73（1T 订单客户端被淹没）的修复产物 ⇒ "几万几万"= 4096 × 样板每轮产出 ⇒ **设计如此**，不改分批语义。
