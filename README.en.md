@@ -4,11 +4,37 @@
 
 An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
-**Author: wztwzt · Current source version: 3.19.0-fix54 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.20.0 · Reference pack: GTNH 2.9.0-beta-3**
 
 This repository is for personal archival and is not currently offered for distribution. See [CREDITS.md](CREDITS.md) for attribution and licensing records. Feature descriptions are not a claim that every integration has passed in-game testing.
 
-## What's new in fix54 (includes the final fix52 fix)
+## What's new in 3.20.0 (new: Programmable Crafting Input Buffer MK.III)
+
+- **New machine: Programmable Crafting Input Buffer MK.III** — an **expanded clone** of
+  ProgrammableHatches' Programmable Crafting Input Buffer: pattern slots go from 36 to **144** (4x),
+  and the pattern window becomes a **scrollable 9-column x 9-visible-row grid** (scrolling over all 16 rows),
+  docked with screen-size clamping. Input structure matches the MK.II (32 item + 32 fluid per order,
+  24 isolated buffers).
+- **It only exists when ProgrammableHatches is installed**: every PH type is confined to the body of
+  `ph/PhIntegration.register()`, whose first statement is `Loader.isModLoaded("proghatches")`.
+  Without PH the item is never registered, never shown in the creative tab, and no PH type is loaded
+  (the same pattern as the GuideNH integration).
+- **Obtaining it**: shaped crafting-table recipe (original buffer + 4x Master Circuit + 4x Advanced Circuit),
+  and it also appears in the AE2 QoL creative tab.
+- **Works with this mod's existing features out of the box**: pattern upload / recall / interface terminal
+  all read capacity from `IInterfaceViewable.rows() * rowSize()`, so those three code paths needed no change
+  for 144 slots; the inner class is registered with AE2's `InterfaceTerminalRegistry`
+  (AE2 looks machines up by **exact class name** — skipping that registration would hide it from both the
+  AE2 interface terminal and this mod's pattern terminal).
+- **Save compatibility**: NBT keys are identical to the original buffer, so the two items can be swapped
+  freely; swapping back to the original buffer with more than 36 patterns makes slots 37+ unreachable
+  (data is not lost, it stays in the NBT).
+- **Implementation note**: PH hard-codes its capacity in the length of four arrays (its two constructors
+  each contain four `bipush 36` instructions). This version replaces those arrays with 144 through an
+  interface-style accessor mixin (`mixin/ph/MixinPatternDualInputHatchAccess`) and **does not touch PH
+  itself** — PH's own buffer / MK.II / item-only variants keep their 36 slots.
+
+### Previous release: 3.19.0-fix54 (includes the final fix52 fix)
 
 - **In-world pick-block is now confirmed working on GTNH 2.9.0-beta-3.** The root cause was neither our mod
   nor AE2: the pack's **sciencenotleisure (SNL)** injects at the HEAD of vanilla
@@ -79,7 +105,7 @@ See the [investigation](docs/mcp-tooltip-duplicate-investigation.md) for evidenc
 ## Installation and upgrades
 
 1. Stop the game/server and back up the **complete world and configuration**, retaining the previous JAR for rollback. Infinity Cell contents live in the world save; backing up item NBT alone is insufficient.
-2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-3.19.0-fix54.jar`. Do not retain multiple versions.
+2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-3.20.0.jar`. Do not retain multiple versions.
 3. **Use the same version on client and server.** fix41 changed upload-related packets; upgrading only one side is unsupported.
 4. This JAR includes `aeinfinitycell` (bundled metadata remains `1.0.4-ae2qol`). Do not also install the standalone AE2 Infinity Cell JAR. Test old cells in a copied world before migrating.
 5. Check startup logs, generated configuration and Mixin loading, then exercise the features you use in a test world. Deployment to the development test instance requires separate approval.

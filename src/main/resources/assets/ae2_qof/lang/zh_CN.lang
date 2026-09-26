@@ -342,3 +342,11 @@ ae2_qof.select_provider.use_selected=用选中机器
 ae2_qof.info.upload_target_missing=上传失败：目标机器已不存在（可能被拆除或所在区块重载），请重新选择供应器
 ae2_qof.info.upload_rejected=上传失败：目标机器拒绝了这张样板（样板槽已满，或该机器不接受这类样板）
 ae2_qof.info.upload_no_permission=上传失败：你在该 AE 网络上没有注入权限
+
+# ===== 编程样板输入总成 MK.III（ProgrammableHatches 可选依赖；仅装 PH 时注册，见 docs/MOD_MAP.md）=====
+gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.name=编程样板输入总成 MK.III
+gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.tooltip=§6编程样板输入总成 MK.III\n§7144 个样板槽（原版的 4 倍）\n§7每份订单最多 32 物品 + 32 流体\n§724 个彼此隔离的内部缓冲区\n§8[AE2 QoL + ProgrammableHatches]
+gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.desc=同时支持物品与流体的 AE 直连样板仓室（扩容版）
+gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.desc.0=144 个样板槽（原版 36 的 4 倍），样板窗为可滚动网格。
+gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.desc.1=每份订单最多 32 物品 + 32 流体，24 个彼此隔离的缓冲区。
+gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.desc.2=需要安装 ProgrammableHatches 才会出现，由原总成升级合成。

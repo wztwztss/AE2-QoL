@@ -115,3 +115,24 @@
 | client | `mixin/gt/MixinSuperCraftingInputHatchMEGui.java` | `com.science.gtnl.common.gui.modularui.SuperCraftingInputHatchMEGui` | 同上；GTNL 21504/21505 |
 | client | `mixin/gt/MixinDualInputHatchUI.java` | `reobf.proghatches.gt.metatileentity.DualInputHatch` | `populateUI` RETURN；PH 可选依赖 |
 | client | `mixin/GuiContainerAccessor.java` | `net.minecraft.client.gui.inventory.GuiContainer` | 纯 Accessor：`guiLeft`/`guiTop`/`ySize` |
+
+---
+
+## 编程样板输入总成 MK.III（3.20.0 新增 · ProgrammableHatches 可选依赖）
+
+> 目标：把 PH「编程样板输入总成」（`hatch.input.buffered.me`，MTE 22069）扩容克隆成一台新机器，
+> 样板槽 36 → **144**，仅在安装 PH 时存在。**不改动 PH 本体**。
+
+| 类别 | 文件路径 | 说明 |
+|---|---|---|
+| MTE 主体 | `src/main/java/com/wztwzt/ae2_qof/ph/MTEPatternCraftingBufferMKIII.java` | 继承 PH `PatternDualInputHatch`；MTE ID **32108**，内部名 `ae2qof.hatch.input.buffered.me.mkiii`；`page()=2`、`rows()=16`、`rowSize()=9`；覆写 `getStackForm`/`getMachineCraftingIcon`（模板实例 base 为 null 会 NPE）、`loadNBTData`（补齐被 PH 缩回 36 的倍率数组）、`newMetaEntity`（返回自己的 `Inst`）、`createPatternWindow2`（9 列可滚动样板窗） |
+| 窗口部件 | `src/main/java/com/wztwzt/ae2_qof/ph/PatternWindowWidgets.java` | PH 三个包私有内部部件（`DragTab`/`PanelDragForwarder`/`NonInteractiveText`）与两个 private 按钮工厂的等价副本（跨包无法复用，只用 MUI2 公开 API） |
+| 可选依赖入口 | `src/main/java/com/wztwzt/ae2_qof/ph/PhIntegration.java` | `Loader.isModLoaded("proghatches")` 守卫 → 注册 MTE + 工作台配方 + `InterfaceTerminalRegistry.register(Inst.class)`；`mkiiiStack` 供创造页使用 |
+| Mixin | `src/main/java/com/wztwzt/ae2_qof/mixin/ph/MixinPatternDualInputHatchAccess.java` | 接口式 accessor：读写 PH 的 `pattern`/`multiplier`/`patternItemCache`/`patternDetailCache`；`@Invoker` `onPatternChange()` / `refundAll()`（均在公共 `mixins` 列表） |
+| 注册调用点 | `src/main/java/com/wztwzt/ae2_qof/CommonProxy.java` → `init` 末尾 | `PhIntegration.register()` |
+| 创造页 | `src/main/java/com/wztwzt/ae2_qof/AE2QoLCreativeTab.java` → `displayAllReleventItems` | GT 机器走 `sBlockMachines` meta 值，`setCreativeTab` 管不到，需显式追加 |
+| 语言文件 | `assets/ae2_qof/lang/zh_CN.lang` + `en_US.lang` | `gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.name/.tooltip/.desc*`（显示名走 GT 的 `getLocalNameKey()`） |
+
+**与既有功能的接口**：样板上传/撤回（`network/UploadPatternPacket`、`RecallPatternPacket`）、
+供应器定位（`util/ProviderLocator`）、二合一终端（`merged/ContainerMergedTerminal`）全部按
+`IInterfaceViewable.rows()*rowSize()` 取容量 ⇒ 144 槽自动生效，**这些文件本轮未改动**。

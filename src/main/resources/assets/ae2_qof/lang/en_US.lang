@@ -341,3 +341,11 @@ ae2_qof.select_provider.use_selected=Use selected
 ae2_qof.info.upload_target_missing=Upload failed: the target machine no longer exists (removed or its chunk reloaded). Please pick a provider again.
 ae2_qof.info.upload_rejected=Upload failed: the target machine rejected this pattern (slots full, or it does not accept this pattern type).
 ae2_qof.info.upload_no_permission=Upload failed: you do not have INJECT permission on this AE network.
+
+# ===== Programmable Crafting Input Buffer MK.III (optional ProgrammableHatches dependency) =====
+gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.name=Programmable Crafting Input Buffer MK.III
+gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.tooltip=§6Programmable Crafting Input Buffer MK.III\n§7144 pattern slots (4x the original 36)\n§7Up to 32 item + 32 fluid inputs per order\n§724 isolated internal buffers\n§8[AE2 QoL + ProgrammableHatches]
+gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.desc=AE-direct item/fluid pattern buffer for multiblocks (expanded)
+gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.desc.0=144 pattern slots (4x the original 36), in a scrollable pattern window.
+gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.desc.1=Up to 32 item + 32 fluid inputs per order, 24 isolated buffers.
+gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.desc.2=Only exists when ProgrammableHatches is installed; crafted by upgrading the original buffer.

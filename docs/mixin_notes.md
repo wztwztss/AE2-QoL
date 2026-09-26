@@ -8,8 +8,8 @@
 > 2. 修改后jar放入测试环境，查看mixin.log确认注入状态。
 > 3. 参考其他模组Mixin实现：`E:\wzt\MC\modcreater\reference_src_290b3`（旧的 `reference_src_290b1_已过期` 已废弃）。
 
-> 当前基线：GTNH **2.9.0-beta-3** / MC 1.7.10 / 版本 `3.19.0-fix54`。
-> 清单与 `src/main/resources/mixins.ae2_qof.json` 逐条对齐（通用 13 条 + client 16 条 = 29 条）。
+> 当前基线：GTNH **2.9.0-beta-3** / MC 1.7.10 / 版本 `3.20.0`。
+> 清单与 `src/main/resources/mixins.ae2_qof.json` 逐条对齐（通用 14 条 + client 16 条 = 30 条）。
 
 ---
 
@@ -29,6 +29,27 @@
 | `mixin/gt/MixinMTEHatchCraftingInputMEGui.java` | `gregtech.common.gui.modularui.hatch.MTEHatchCraftingInputMEGui` | `<init>` TAIL; `createBottomLeftCornerFlow` RETURN | 在GT样板输入仓GUI（2714/2715）底部按钮行追加智能倍增开关。通过BooleanSyncValue双向同步。 |
 | `mixin/gt/MixinSuperCraftingInputHatchMEGui.java` | `com.science.gtnl.common.gui.modularui.SuperCraftingInputHatchMEGui` | `<init>` TAIL; `createBottomLeftCornerFlow` RETURN | 在GTNL超级样板输入总成(21504/21505)底部按钮行追加智能倍增开关。GTNL为运行时可选依赖。 |
 | `mixin/gt/MixinDualInputHatchUI.java` | `reobf.proghatches.gt.metatileentity.DualInputHatch` | `populateUI` RETURN | 在ProgrammableHatches的DualInputHatch（22130/22179）UI追加智能倍增开关。仅对实现ICraftingProvider的子类显示。PH为运行时可选依赖。 |
+
+### ProgrammableHatches 扩容（编程样板输入总成 MK.III） - 1个Mixin
+
+| Mixin 类路径 | 目标类 | 注入点 | 风险/说明 |
+|---|---|---|---|
+| `mixin/ph/MixinPatternDualInputHatchAccess.java` | `reobf.proghatches.gt.metatileentity.PatternDualInputHatch` (remap=false) | 接口式 `@Accessor`：`pattern` / `multiplier` / `patternItemCache` / `patternDetailCache` 的读写；`@Invoker`：`onPatternChange()`、`refundAll()` | 让本模组子类 `ph/MTEPatternCraftingBufferMKIII` 把 PH **写死在数组长度里的 36** 换成 144（该类所有功能循环都按 `pattern.length` 走，所以换数组＝换容量）。**不改动 PH 自身行为**，PH 自己的三种变体仍是 36 槽。条目放在公共 `mixins` 列表（服务端同样要换数组）。PH 为运行时可选依赖：目标类未被加载时该 mixin 既不应用也不报错。 |
+
+**该域的坑位（务必保留）**
+
+1. PH 的 `loadNBTData` 里有 `if (multiplier.length < 36) multiplier = new int[36];`——新机器**首次读档必然**把倍率数组缩回 36，
+   所以子类必须在 `super.loadNBTData()` 之后重新补齐 4 个数组（`MTEPatternCraftingBufferMKIII#ae2qol$ensureSlots`），
+   否则样板窗第 37 格起的倍率读写会数组越界。
+2. `pattern` 只能「长度不符才重建 + `System.arraycopy` 搬运」，无条件重建会丢光已放样板；
+   `patternItemCache` / `patternDetailCache` 是可重建缓存，直接换新（它们按 `pattern.length` 索引，长度不足会越界）。
+3. `@Accessor` setter 依赖运行时 Mixin 的 `AccessorInfo$AccessorType.FIELD_SETTER`（UniMixins 0.3.1 已确认存在）。
+   若 PH 升级后字段改名，Mixin 会在目标类加载时**硬失败**（而非静默失效）——这是有意选择的失败模式。
+4. 样板窗靠覆写 `protected createPatternWindow2(PanelSyncManager)`（9 列 × 9 可见行可滚动，覆盖 16 行）。
+   其中 PH 的三个包私有内部部件（`DragTab` / `PanelDragForwarder` / `NonInteractiveText`）与两个 private 按钮工厂
+   已在 `ph/PatternWindowWidgets` 做了等价副本；**PH 升级后需要复核这些副本是否仍与上游一致**。
+5. PH 自己的 `DualInputHatch.openGui` 有 `GTGuis.GLOBAL_SWITCH_MUI2 || hasBadge(player)` 前置条件，
+   MK.III 的样板窗与 PH 自己的机器**同条件**生效。
 
 ### NEI 增强/覆盖层 - 6个Mixin
 
@@ -118,7 +139,7 @@
 
 ## 按功能域汇总
 
-> 与 `mixins.ae2_qof.json` 对齐，共 **29 条**（部分类跨域复用，故分域计数之和大于 29）。
+> 与 `mixins.ae2_qof.json` 对齐，共 **30 条**（部分类跨域复用，故分域计数之和大于 30）。
 
 | 功能域 | 文件数 | 涉及文件 |
 |--------|--------|----------|
@@ -128,5 +149,6 @@
 | 自动样板上传辅助 | 2 | MixinDefaultOverlayHandler, MixinRecipeHandlerRef |
 | 其他 QoL | 3 | TileDriveMixin, MixinTileIOPort, MixinPinsHolder |
 | Accessor | 1 | GuiContainerAccessor |
+| PH 扩容（编程样板输入总成 MK.III） | 1 | MixinPatternDualInputHatchAccess |
 | 万能维护仓 | 1 | MixinMTEMultiBlockBase |
 | 上传取物/材质/GT 注册与迁移 | 6 | MixinPacketPickBlock, MixinTextureMap, MixinBaseMetaTileEntityIdMigration, MixinProcessingLogicSpeed, MixinCommonBaseMetaTileEntityMultiblockRegistry, MixinGuiCraftConfirm |

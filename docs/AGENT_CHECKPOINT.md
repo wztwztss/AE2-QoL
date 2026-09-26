@@ -13,10 +13,10 @@
 |---|---|
 |工具平台|DeepSeek Harness（DSH Web GUI）|
 |模型信息|DeepSeek-V4.1-Flash|
-|工作分支|master；本轮起点 `223c8c5`（fix49），工作树干净、与 origin/master 同步|
-|启动时间|2026-09-25（Asia/Shanghai，文档对齐轮）|
-|本次会话目标|①**文档对齐**（已完成，commit `8b6a5a7`）：更正 fix47~fix49 的提交状态、基线统一为 GTNH 2.9.0-beta-3、补齐 README 双语依赖表与"本版变化"、补全 MOD_MAP 与 mixin_notes 的 Mixin 清单。②**用户报障三问题的定位与修复**：万能维护仓电路板槽全拒（fix50 ✅）、IO 端口搬不出无限磁盘流体（fix51 ✅）、世界里键无存量+有样板不弹下单页（fix52 → 根因定位为整合包内 SNL 冲突 → **fix54 修复 ✅**）。严格按用户协议推进（先提问确认 → 授权后读源码 → 再授权后改代码）。③**正式版 `3.19.0-fix54` 已构建并部署**：诊断埋点全部剥离，文档同步完成。**本轮所有部署均经用户授权；正式版已部署到 b3 实例（`【私货】AE2-QoL-3.19.0-fix54.jar`，SHA256 `38845A04…`，mods 内仅一份），代码已推送到 `origin/master`（`223c8c5..59f1c11`）。**|
-|上一轮（历史）|工具：Codex Desktop｜模型：GPT-5：fix49 依赖全量对齐 290b3 实机版本，修复升级暴露的 6 处 API 断裂。|
+|工作分支|master；本轮起点 `fa612f4`（fix54 部署与推送收尾），工作树干净、与 origin/master 同步|
+|启动时间|2026-09-26（Asia/Shanghai，新功能轮：编程样板输入总成 MK.III）|
+|本次会话目标|**新增「编程样板输入总成 MK.III」**：ProgrammableHatches「编程样板输入总成」（MTE 22069）的扩容克隆版，样板槽 36 → **144**，样板窗改成 9 列 × 9 可见行的可滚动网格，只在装了 PH 时存在。严格按用户协议推进：先反复提问确认需求（7 项产品决策全部由用户拍板）→ 只读取证（PH 源码 + 实例 jar 字节码 + AE2/GT/MUI2 三层 API）→ 用户说「确认方案，开始修改」后才动代码。产物 `build/libs/AE2-QoL-3.20.0.jar`（SHA256 `F85883A8…`），构建 exit 0，产物与字节码已自检。**游戏内验收 9 项待用户配合；部署尚未进行（需单独授权）。**|
+|上一轮（历史）|工具：DeepSeek Harness｜模型：DeepSeek-V4.1-Flash：fix50/51/52+54 三问题定位与修复，正式版 `3.19.0-fix54` 已部署到 b3 实例并推送到 `origin/master`。|
 
 ---
 
@@ -30,6 +30,29 @@ GTNH 2.9.0-beta-3（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 
 > 按完成时间倒序排列，均标注产出文件路径。历史结论保留原貌，不等于本版验证结果。
 
+- [x] 2026-09-26 | 工具：DeepSeek Harness（DSH Web GUI）| 模型：DeepSeek-V4.1-Flash：**新增「编程样板输入总成 MK.III」（3.20.0，ProgrammableHatches 可选依赖，144 样板槽）——代码完成、构建通过、产物自检通过；游戏内验收待用户配合，部署尚未进行**。
+  1. **需求确认（7 项产品决策全部由用户拍板）**：144 样板槽；样板窗为 9 列 × 9 可见行的**可滚动网格**（覆盖 16 行）；
+     屏幕基线 1920×1080 + GUI 缩放 4；输入结构与 MK.II 一致（每缓冲 32 物品 + 32 流体，24 个隔离缓冲）；
+     配方 + 进 AE2 QoL 创造标签页；中英名「编程样板输入总成 MK.III」；不做 NBT 迁移；MTE ID **32108**；版本 **3.20.0**。
+  2. **只读取证结论**：实例 `programmablehatches-0.2.0p24.jar` 与 `libs/` 编译依赖 SHA256 完全一致（`77470645…`）；
+     PH 的容量**写死在 4 个数组长度里**（`javap -c`：两个构造器各 4 次 `bipush 36`，类内循环全走 `pattern.length`）⇒ 换数组＝换容量；
+     AE2 的 `InterfaceTerminalRegistry` 与 `Grid.getMachines(Class)` 按**精确类名**查表 ⇒ 必须注册 `Inst.class`；
+     AE2 `GuiInterfaceTerminal.VIEW_WIDTH=174` ⇒ 每行最多 9 格、行数不限（条目逐行做可见性判断，故 16 行可滚到底）；
+     MUI2 **2.3.88（编译）与 2.3.91（运行）**的 `widget.ScrollWidget` / `scroll.VerticalScrollData` 同名同包；
+     运行时 Mixin（UniMixins 0.3.1）含 `AccessorType.FIELD_SETTER`。
+  3. **实现**：新增 `ph/MTEPatternCraftingBufferMKIII`、`ph/PatternWindowWidgets`、`ph/PhIntegration`、
+     `mixin/ph/MixinPatternDualInputHatchAccess`；改动 `CommonProxy`（init 调用注册）、`AE2QoLCreativeTab`（创造页追加）、
+     `mixins.ae2_qof.json` **两份**（通用 14 + client 16 = 30）、中英 lang、版本号两处。**未改动 PH 本体**
+     （PH 自己的总成 22069 / MK.II 22179 / 仅物品版仍是 36 槽）。
+  4. **本轮坑位**：PH 的 `loadNBTData` 有 `if (multiplier.length < 36) multiplier = new int[36];`，新机器首次读档必缩回 36
+     ⇒ 必须 `super` 之后重新补齐 4 个数组；`pattern` 只能「长度不符才重建 + `System.arraycopy` 搬运」；
+     `newMetaEntity` 必须返回我们自己的 `Inst`（照抄 PH 会退回 36 槽）；`getStackForm` 必须覆写（模板实例 base 为 null 会 NPE，
+     与库存统计终端同一个坑）；`ItemDrawable` 在 `com.cleanroommc.modularui.drawable`（不是 `api.drawable`，首次编译即报此处）。
+  5. **验证（已完成部分）**：构建 `BUILD SUCCESSFUL`（exit 0、无管道取码）；产物 `build/libs/AE2-QoL-3.20.0.jar`
+     1152357 字节 / SHA256 `F85883A8CF09ED073C44415797089396D2B0210A5636965C16E2C202EAA6EFDD`；
+     新类（4 + `$Inst` + `$1` + 3 个窗口部件）全部入包；**PH/MUI2/GT 的类未被打包**；包内 `mixins.ae2_qof.json` 含新条目
+     （解包到临时目录核对）；字节码核对 `PhIntegration.register()` 首条指令即 `Loader.isModLoaded`、MTE 经 `invokeinterface` 走 accessor。
+  6. **待办**：游戏内 9 项验收（清单见 `CHANGELOG.md` 记录 (22) 第六点）；**部署到测试实例需用户单独授权**。
 - [x] 2026-09-25 | 工具：DeepSeek Harness | 模型：DeepSeek-V4.1-Flash：**用户报障三问题定位与修复（fix50 / fix51 / fix52），全部代码完成并构建验证，均待实机实测**。
   1. **fix50｜万能维护仓电路板槽放不进任何物品**：根因是 GT 5.09.54 新接通 MTE 物品校验链
      （`MTEItemStackHandler.isItemValid` → `MTEHatchMaintenance.func_94041_b` → `IsAutoMaintenanceInput`），

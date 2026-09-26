@@ -18,7 +18,8 @@
     "gt.MixinProcessingLogicSpeed",
     "gt.MixinBaseMetaTileEntityIdMigration",
     "TileDriveMixin",
-    "client.MixinTextureMap"
+    "client.MixinTextureMap",
+    "ph.MixinPatternDualInputHatchAccess"
   ],
   "client": [
     "nei.MixinRecipeHandlerRef",

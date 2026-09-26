@@ -1,3 +1,100 @@
+## 工作区决策记录 2026-09-26 (22) - **3.20.0**：新增「编程样板输入总成 MK.III」（ProgrammableHatches 可选依赖，144 样板槽）
+
+> 产物 `build/libs/AE2-QoL-3.20.0.jar`（1152357 字节，SHA256 `F85883A8CF09ED073C44415797089396D2B0210A5636965C16E2C202EAA6EFDD`）。
+> 本轮是**新增功能**，不是修 bug。PH 未安装时该物品**整体不存在**（不注册、不进创造页）。
+
+### 一、需求（与用户逐项确认）
+
+| 项 | 决定 |
+|---|---|
+| 样板槽 | **144**（原型 36 的 4 倍）⇒ AE2 接口终端 16 行 × 9 列 |
+| 样板窗 | **可滚动网格**：9 列 × 9 可见行，滚动覆盖 16 行 |
+| 屏幕基线 | 1920×1080 + GUI 缩放 4（约 480×270 逻辑像素），窗口停靠位置按屏幕裁剪 |
+| 输入结构 | 与 **MK.II** 一致：每缓冲 32 物品 + 32 流体（`page()==2`），24 个隔离缓冲 |
+| 获取 | 工作台配方 **+** 进 AE2 QoL 创造标签页 |
+| 名称 | 编程样板输入总成 MK.III / Programmable Crafting Input Buffer MK.III |
+| 存档兼容 | NBT 键与原版完全一致；>36 样板换回原版总成时取不出（用户确认可接受，**不做**迁移工具） |
+| MTE ID | 32108（备选 32109，已按 290b3 全表核对：32xxx 仅本模组与 fissionevolved 32100/32101 占用） |
+| 版本 | `3.19.0-fix54` → **`3.20.0`** |
+
+### 二、为什么这样改能成（根因级证据）
+
+1. PH 的容量**写死在数组长度里**：`PatternDualInputHatch` 的 `pattern` / `multiplier` / `patternItemCache` /
+   `patternDetailCache` 四个字段都是 `new ...[36]`（`javap -c` 两个构造器里各 4 次 `bipush 36`），
+   而类内所有功能循环都按 `pattern.length` 走 ⇒ **换数组 = 换容量**，无需触碰 PH 的任何逻辑。
+2. 但 4 个字段是**包私有**，跨包子类读不到 ⇒ 新增接口式 accessor mixin
+   `mixin/ph/MixinPatternDualInputHatchAccess`（`@Accessor` 读写 4 个字段 + `@Invoker` 两个 private 方法
+   `onPatternChange()` / `refundAll()`）。可行性证据：运行时 Mixin（UniMixins 0.3.1）的
+   `AccessorInfo$AccessorType` 含 `FIELD_SETTER`；本仓已有同类先例 `mixin/GuiContainerAccessor`。
+3. 样板窗由 `protected ModularPanel createPatternWindow2(PanelSyncManager)` 构建，`populateUI` 虚调用它
+   ⇒ 子类覆写即可重排网格（PH 原版固定 4 列 × 9 行 = 36 格）。
+4. AE2 的 `InterfaceTerminalRegistry` 与 `Grid.getMachines(Class)` 都是**精确类名**查表
+   ⇒ 必须把我们的内部类 `Inst.class` 注册进去，否则 AE2 接口终端与**本模组的样板终端**都看不见它。
+5. 本模组的样板上传/撤回走 `IInterfaceViewable`（容量 = `rows()*rowSize()`）⇒ 只要乘积 = 144 就自动接管，
+   `UploadPatternPacket` / `RecallPatternPacket` / `ProviderLocator` **三处零改动**。
+6. 9 列的来历：AE2 `GuiInterfaceTerminal.VIEW_WIDTH = 174`，每行最多 9 格；行数不限
+   （条目高度 `rows*18+1` 且逐行做可见性判断，16 行能滚到底）。
+7. 编译/运行基线一致：实例 `【私货】programmablehatches-0.2.0p24.jar` 与 `libs/programmablehatches-0.2.0p24.jar`
+   SHA256 完全相同（`77470645…`）；MUI2 编译 2.3.88 与实例运行 2.3.91 的
+   `ScrollWidget` / `scroll.VerticalScrollData` **同名同包**。
+
+### 三、新增与改动
+
+**新增（4 个类，均在 `com.wztwzt.ae2_qof.ph` / `...mixin.ph`）**
+
+| 文件 | 职责 |
+|---|---|
+| `ph/MTEPatternCraftingBufferMKIII.java` | 主体：144 槽数组替换、`rows/rowSize`、`newMetaEntity`、`loadNBTData` 补齐、样板窗覆写 |
+| `ph/PatternWindowWidgets.java` | PH 三个包私有内部部件的等价副本 + 两个按钮工厂（跨包无法复用） |
+| `ph/PhIntegration.java` | 可选依赖入口：`Loader.isModLoaded("proghatches")` 守卫 → 注册 MTE / 配方 / AE2 接口终端注册表 |
+| `mixin/ph/MixinPatternDualInputHatchAccess.java` | 接口式 accessor/invoker（换数组 + 两个 private 方法） |
+
+**改动**：`CommonProxy`（init 末尾调用 `PhIntegration.register()`）、`AE2QoLCreativeTab`（追加 MK.III 物品堆）、
+`mixins.ae2_qof.json` **两份**（公共列表 +1 ⇒ 通用 14 + client 16 = 30）、中英 lang（名称/工具提示/描述）、
+`gradle.properties` 与 `mcmod.info`（版本）。
+
+### 四、关键坑位（本轮踩到或刻意规避）
+
+1. **`loadNBTData` 会把倍率数组缩回 36**：PH 里有 `if (multiplier.length < 36) multiplier = new int[36];`，
+   新机器首次读档必然命中 ⇒ 必须在 `super.loadNBTData()` 之后重新补齐 4 个数组，否则样板窗第 37 格起的倍率读写越界。
+2. **`pattern` 不能无条件重建**（会丢光已放样板）：只在长度不符时重建 + `System.arraycopy` 搬运。
+3. **`newMetaEntity` 必须返回我们自己的 `Inst`**：PH 的实现返回 PH 的 `PatternDualInputHatch.Inst`，
+   照抄会让真实方块实体退回 36 槽。
+4. **`getStackForm` 必须覆写**：GT 默认实现走 `getBaseMetaTileEntity().getMetaTileID()`，而模板实例在 init 阶段
+   base 为 null ⇒ 注册配方时 NPE（与库存统计终端同一个坑）；`getMachineCraftingIcon` 一并覆写。
+5. **`ItemDrawable` 的包名是 `com.cleanroommc.modularui.drawable`**，不是 `api.drawable`（首次编译即报此处）。
+6. **显示名走 GT 的 `getLocalNameKey()`**：`gt.blockmachines.<mName>.name`，与「万能维护仓」完全同款；
+   `getDescription()` 用 `.desc` / `.desc.N` 懒翻译（构造发生在 FML init，那时语言文件可能还没好）。
+7. PH 的 `bufferNum` / `dirty` 是包私有：`bufferNum` 从构造参数自己存一份；`dirty` 不需要
+   （`refundAll()` 自己会 `markDirty(); dirty = true;`）。
+8. PH 的 `DualInputHatch.openGui` 有 `GTGuis.GLOBAL_SWITCH_MUI2 || hasBadge(player)` 前置条件
+   ⇒ MK.III 的样板窗与 PH 自己的机器**同条件**生效（本机已满足，否则 PH 原版样板窗也用不了）。
+
+### 五、验证与核对（已完成部分）
+
+- 构建 `BUILD SUCCESSFUL`（exit 0，**无管道取码**）；
+- 产物 `AE2-QoL-3.20.0.jar`：`ph/` 下 4 个类 + `MTEPatternCraftingBufferMKIII$Inst` + `$1`（匿名面板）+
+  3 个窗口部件类 + `mixin/ph/MixinPatternDualInputHatchAccess.class` **全部入包**；
+- **PH / MUI2 / GT 的类没有被打进我们的 jar**（`compileOnly` 生效，已用 `jar tf` 反查确认为空）；
+- 包内 `mixins.ae2_qof.json` 含 `ph.MixinPatternDualInputHatchAccess`（解包到**临时目录**核对，未落工作区根）；
+- 字节码核对：`PhIntegration.register()` 的首条指令就是 `Loader.isModLoaded("proghatches")`
+  （PH 缺失时不会加载任何 PH 类型），`sipush 32108` 说明常量已内联；
+  MTE 经 `invokeinterface` 调用 accessor 读写 PH 字段（`getAe2qolPattern`/`setAe2qolMultiplier`/…）。
+
+### 六、待测项（游戏内验收，需用户配合）
+
+1. 启动日志出现 `[AE2QoL] PH 编程样板输入总成 MK.III 已注册：id=32108，样板槽=144（16 行 × 9 列）`，且无 Mixin 报错；
+2. NEI / AE2 QoL 创造页能找到该物品（中文名「编程样板输入总成 MK.III」）；
+3. 装成多方块仓室 → 点加号打开样板窗：144 格可滚到最后一行，**第 144 格能放样板**；
+4. 单独倍率页改第 100 格倍率 → 退档重进仍保留（验证 `loadNBTData` 补齐逻辑）；
+5. 批量倍率 ×2 / =1 / ×N / =N 与退款按钮生效；
+6. 放 >40 个样板后 ME 接口终端能看到这台机器，16 行条目能滚到底；
+7. 本模组样板终端的「上传 / 撤回样板」对新机器生效（例如上传到第 100 格）；
+8. 发一份需要 >36 种样板的订单，能正常接单出料；
+9. 换回原版总成（22069）：前 36 格样板仍在（多的取不出，符合确认过的取舍）。
+
+---
+
 ## 工作区决策记录 2026-09-25 (21) - **正式版 3.19.0-fix54**：三问题全部实测通过，诊断埋点已剥离
 
 > 产物 `build/libs/AE2-QoL-3.19.0-fix54.jar`。fix50 / fix51 / fix52+fix54 全部经用户实机验证通过。
