@@ -1,8 +1,11 @@
-## 工作区决策记录 2026-09-26 (31) - **3.22.0 M1（功能进行中）**：智能通配样板 —— 数据模型 / 展开器 / AE2 接口接管 / 自测命令
+## 工作区决策记录 2026-09-26 (31) - **3.22.0：智能通配样板（完整交付）**
 
-> 产物 `build/libs/AE2-QoL-3.22.0.jar`。**注意：这是 M1 中间版本，M2（NEI 加号自动推导 + 可视化界面）与 M3（每槽电路）尚未交付**，
-> 因此本条记录只用于让 M1 可被测试与回滚，不是可发布版本。
-> 前置调研报告：`docs/research/wildcardpattern-forensics.md`（Wildcard Pattern 1.1.0 行号级取证）。
+> 产物 `build/libs/AE2-QoL-3.22.0.jar`。**本版已完整交付**：M1（数据模型 / 索引期展开器 / 物品 / AE2 接口接管 / 自测命令）、
+> M1 剩余（**PH、GT、GTNL 三族样板仓接管**，全部零反射）、M2（可视化界面 + NEI 加号自动推导 + 服务端写回）、
+> M3（内置电路写入机器虚拟电路槽 + 界面「电路」页）。
+> 前置调研报告：`docs/research/wildcardpattern-forensics.md`、`docs/research/gt-pattern-buffer-hook.md`、
+> `docs/research/ph-gtnl-hatch-hook.md`、`docs/research/nei-plus-hook.md`。
+> **尚未实现**：Shift+中键在机器样板槽上直接弹电路列表的手势（功能等价路径 = 右键样板的「电路」页）。
 
 ### 一、路线确认（读参考实现源码后修正了一次架构判断）
 

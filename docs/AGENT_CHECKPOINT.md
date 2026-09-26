@@ -30,6 +30,7 @@ GTNH 2.9.0-beta-3（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 
 > 按完成时间倒序排列，均标注产出文件路径。历史结论保留原貌，不等于本版验证结果。
 
+- [x] 2026-09-26 | 工具：DeepSeek Harness（DSH Web GUI）| 模型：DeepSeek-V4.1-Flash：**3.22.0 完整交付（智能通配样板，2026-09-26）**：① 物品与数据模型（`wildcard/ItemSmartWildcardPattern`（配方=AE2 空白样板）、`SmartWildcardState`、`SmartWildcardExpander`：索引期展开 + `smart_wildcard_expand_cap`（默认 512）+ LRU 缓存 + 超限 WARN）；② **三族样板仓接管，全部零反射**（AE2 `DualityInterface.addToCraftingList`；GT `MTEHatchCraftingInputME` 与 GTNL `SuperCraftingInputHatchME`：`PatternSlot` 子类 + 内部类 accessor + 四处注入，用 `shouldBeCached()→false` 取代参考实现那个字段已不存在的死反射；PH `PatternDualInputHatch` 一处注入即覆盖 PH 22069/MK.II/我们 MK.III）；③ M2（`ContainerSmartWildcard` + 四页 `GuiSmartWildcard` + `SmartWildcardRecipeDeriver` + `SmartWildcardRulesPacket` 服务端写回 + `MixinGuiOverlayButton` 三处接管，加号在 GT 处理配方上也可点）；④ M3（`SmartWildcardCircuit` 走 `IConfigurationCircuitSupport.getCircuitSlot()` + `GTUtility.getIntegratedCircuit()`，**绕开 MUI2 编译边界**；三族索引期自动写入，优先级 样板自带 > 槽位 > 整机）。**未实现**：MUI2 槽位上的 Shift+中键手势（等价路径 = 右键样板的「电路」页）。构建 `BUILD SUCCESSFUL`，产物 `AE2-QoL-3.22.0.jar`（1,266,252 字节，SHA256 `8942AF5C…`）。
 - [x] 2026-09-26 | 工具：DeepSeek Harness（DSH Web GUI）| 模型：DeepSeek-V4.1-Flash：**3.22.0 M1：智能通配样板（进行中）**。
   1. 前置调研：两个参考模组（AE2PatternGen = 批量产具体样板；Wildcard Pattern = 单张通配样板）源码级取证，
      报告归档 `docs/research/wildcardpattern-forensics.md`；**关键更正**：参考实现是“索引期展开成 N 张普通样板”

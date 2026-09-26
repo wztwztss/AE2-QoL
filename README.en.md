@@ -8,6 +8,27 @@ An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI patte
 
 This repository is for personal archival and is not currently offered for distribution. See [CREDITS.md](CREDITS.md) for attribution and licensing records. Feature descriptions are not a claim that every integration has passed in-game testing.
 
+## What's new in 3.22.0 (Smart Wildcard Pattern)
+
+- **New item: Smart Wildcard Pattern** (crafted from one AE2 Blank Pattern): **one pattern covers a whole recipe class** —
+  e.g. "1× any ingot → 1× the matching plate". At pattern-index time it expands into legal ordinary patterns for each
+  material, so every buffer accepts it (GT 2714/2715, PH 22069/22179 and this mod's MK.III 32108, GTNL 21504/21505,
+  AE2 ME Interface).
+- **One step from NEI**: right-click the pattern to open its screen, open a recipe in NEI and press **+** — rules and the
+  recipe template are derived on the spot; press Save and the server writes them. Ore dictionary first (GT's
+  `OrePrefixes.detectPrefix`), NEI fluid placeholders skipped, programmed circuits recognised by `gt.integrated_circuit`.
+- **Visual editing (four pages)**: Rules / Preview (per-candidate **Exclude** button feeds the blacklist) /
+  Blacklist (`*` and `?` supported) / Circuit (1..24 plus non-consumed items such as molds, extruder shapes, lenses).
+  The preview uses the **same expander** as the machine, so nothing is shown that cannot be crafted.
+- **Built-in programmed circuit**: when a machine reads the pattern the circuit number is written into its virtual circuit
+  slot (GT's official `IConfigurationCircuitSupport` + `GTUtility.getIntegratedCircuit`); priority is
+  **pattern's own > slot > machine**; a pattern without a circuit never touches the machine's existing value.
+- **New setting `smart_wildcard_expand_cap`** (default **512**): per-pattern expansion cap; exceeding it **truncates and
+  logs a WARN** (never a silent shortfall). Comparable mods expand unbounded on the server's network hook path, a known
+  lag source, so this mod caps it deliberately.
+- Known limits: expansion happens at index time (placing/changing a pattern, loading NBT) and one pattern covers **one
+  recipe class**; see the in-game guide page "Smart Wildcard Pattern" for details.
+
 ## What's new in 3.21.4 (configurable per-push cap for Smart Doubling)
 
 - **New setting `smart_doubling_push_cap`** (default **4096**, range 1..2147483647): the **per-push
