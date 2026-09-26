@@ -45,6 +45,24 @@ public class ItemSmartWildcardPattern extends ItemEncodedPattern {
 
     public ItemSmartWildcardPattern register() {
         GameRegistry.registerItem(this, "smart_wildcard_pattern", MyMod.MODID);
+        // 3.22.0：合成配方 = 1 张 AE2 空白样板 → 1 张智能通配样板（QoL 便利品，与参考模组同思路）。
+        // 注册失败必须留日志（本项目原则），并保证物品仍可从 AE2 QoL 创造标签取出。
+        try {
+            ItemStack blank = appeng.api.AEApi.instance()
+                .definitions()
+                .materials()
+                .blankPattern()
+                .maybeStack(1)
+                .get();
+            if (blank != null) {
+                GameRegistry.addShapelessRecipe(new ItemStack(this), blank);
+                MyMod.LOG.info("[AE2QoL] 智能通配样板配方已注册：AE2 空白样板 → 智能通配样板");
+            } else {
+                MyMod.LOG.warn("[AE2QoL] 智能通配样板配方注册失败：取不到 AE2 空白样板");
+            }
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 智能通配样板配方注册异常（物品仍可从创造标签取出）", t);
+        }
         return this;
     }
 
