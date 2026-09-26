@@ -41,9 +41,25 @@
 - 部署：有缺陷的 `【私货】AE2-QoL-3.20.0.jar` 改名 `【私货】AE2-QoL-3.20.0-modid-bug.jar` **移入备份（只移不删）**，
   新 jar `【私货】AE2-QoL-3.20.1.jar` 已就位，SHA256 与本地一致，mods 内仅 1 份。
 
-### 六、待测项
+### 六、实测结果（用户实机 · 2026-09-26）
 
-与记录 (22) 第六点相同的 9 项。其中第 1 项现在**必定**会打印一行（要么「已注册：id=32108，样板槽=144」，要么「未检测到 ProgrammableHatches」，要么「注册失败 + 堆栈」），可一步定性。
+**✅ 通过**：用户复测结论「**样板确实扩充了没问题**」。
+
+日志证据（实例 `fml-client-latest.log`，修正版启动）：
+
+| 行号 | 日志 | 说明 |
+|---|---|---|
+| 16238 | `ae2_qof(AE2 QoL:3.20.1)` | 修正版已加载 |
+| 37664 | `[mixin/ae2_qof]: Mixing ph.MixinPatternDualInputHatchAccess ... into reobf.proghatches.gt.metatileentity.PatternDualInputHatch` | accessor mixin 应用成功 |
+| **37679** | **`[AE2QoL] PH 编程样板输入总成 MK.III 已注册：id=32108，样板槽=144（16 行 × 9 列）`** | **注册成功**——正是修复前完全缺失的那一行 |
+| 96133 | `成功将 ... [编程样板输入总成 MK.III] ... 给予 ...` | 物品存在，且**中文显示名生效**（GT `getLocalNameKey()` → `gt.blockmachines.<mName>.name` ✓） |
+
+全日志**没有**任何 `MTEPatternCraftingBufferMKIII` / `PhIntegration` / `PatternWindowWidgets` 的异常或堆栈；
+仅有的 `[GuideNH] Couldn't find icon item ae2_qof:...` 是既有问题，与本次无关。
+
+**未逐项复测（如需可补测）**：记录 (22) 清单里的第 4 项「第 100 格倍率存读」、第 7 项「上传/撤回写到第 100 格」、
+第 8 项「>36 种样板的订单」、第 9 项「换回原版总成后前 36 格仍在」。这几项共同依赖 `loadNBTData` 的数组补齐逻辑，
+本轮未取到证据，按「不写推断」原则**不声明已验证**。
 
 ---
 
