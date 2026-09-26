@@ -69,6 +69,14 @@ public class GuiSmartWildcard extends GuiContainer {
         this.ySize = 220;
     }
 
+    /** NEI 加号推导完成后由 NEI 注入调用：丢掉旧工作副本并刷新界面（新规则/新模板立即可见）。 */
+    public void ae2qol$reloadDerived() {
+        this.working = null;
+        this.scroll = 0;
+        this.statusLine = "\u5df2\u4ece NEI \u63a8\u5bfc\u89c4\u5219";
+        initGui();
+    }
+
     private ItemStack patternStack() {
         return this.container.getPatternStack();
     }
@@ -210,7 +218,11 @@ public class GuiSmartWildcard extends GuiContainer {
     private void ae2qol$save() {
         try {
             SmartWildcardState state = workingOrLoad();
-            ModNetwork.CHANNEL.sendToServer(new SmartWildcardRulesPacket(state));
+            ModNetwork.CHANNEL.sendToServer(
+                new SmartWildcardRulesPacket(
+                    state,
+                    SmartWildcardClientState.derivedTemplateIn(),
+                    SmartWildcardClientState.derivedTemplateOut()));
             this.statusLine = "\u5df2\u53d1\u9001\u4fdd\u5b58\uff08rules=" + state.rules.size() + "\uff09";
             MyMod.LOG.info(
                 "[AE2QoL] 通配样板规则已发送：rules={} blacklist={} whitelist={}",

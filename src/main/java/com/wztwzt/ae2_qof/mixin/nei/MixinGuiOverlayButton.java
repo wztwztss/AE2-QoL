@@ -63,6 +63,36 @@ public abstract class MixinGuiOverlayButton {
             return;
         }
         if (firstGui == null || !(firstGui instanceof GuiMergedTerminal)) {
+            // 3.22.0：通配样板界面里的加号 = 「从当前 NEI 配方推导通配规则（含配方模板）」，
+            // 不落 AE2 原版填充。推导结果交给界面，用户确认后由 C2S 包在服务端写入样板 NBT。
+            if (firstGui instanceof com.wztwzt.ae2_qof.client.gui.GuiSmartWildcard) {
+                ae2qol$inOverlayFill = true;
+                try {
+                    RecipeHandlerRef ref = ((GuiRecipeButton) (Object) this).handlerRef;
+                    if (ref != null && ref.handler != null && ref.recipeIndex >= 0) {
+                        com.wztwzt.ae2_qof.client.SmartWildcardRecipeDeriver.Result derived =
+                            com.wztwzt.ae2_qof.client.SmartWildcardRecipeDeriver.derive(
+                                ref.handler,
+                                ref.recipeIndex,
+                                net.minecraft.client.Minecraft.getMinecraft().theWorld);
+                        com.wztwzt.ae2_qof.client.SmartWildcardClientState.setDerived(derived);
+                        if (derived.ok) {
+                            com.wztwzt.ae2_qof.MyMod.LOG.info("[AE2QoL] NEI 加号推导通配规则：{}", derived.summary);
+                        } else {
+                            com.wztwzt.ae2_qof.MyMod.LOG
+                                .warn("[AE2QoL] NEI 加号推导失败（未产生规则）：{}", derived.reason);
+                        }
+                        ((com.wztwzt.ae2_qof.client.gui.GuiSmartWildcard) firstGui).ae2qol$reloadDerived();
+                    } else {
+                        com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 加号被按下但拿不到配方上下文（handlerRef 为空）");
+                    }
+                } catch (Throwable t) {
+                    com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 通配界面加号处理异常", t);
+                } finally {
+                    ae2qol$inOverlayFill = false;
+                }
+                ci.cancel();
+            }
             return;
         }
         ae2qol$inOverlayFill = true;

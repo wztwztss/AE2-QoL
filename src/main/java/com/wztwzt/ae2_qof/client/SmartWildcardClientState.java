@@ -20,6 +20,8 @@ public final class SmartWildcardClientState {
     private static Object activeGui;
     private static SmartWildcardState derived;
     private static String derivedSummary = "";
+    private static java.util.List<net.minecraft.item.ItemStack> derivedTemplateIn;
+    private static java.util.List<net.minecraft.item.ItemStack> derivedTemplateOut;
 
     private SmartWildcardClientState() {}
 
@@ -49,5 +51,30 @@ public final class SmartWildcardClientState {
     public static void clearDerived() {
         derived = null;
         derivedSummary = "";
+        derivedTemplateIn = null;
+        derivedTemplateOut = null;
+    }
+
+    /**
+     * NEI 加号推导完成（**含配方模板**）：状态 + 模板一起交给界面；界面点保存时原样发给服务端，
+     * 由服务端一次写入「规则 + 模板 in/out」⇒ 用户点一下加号就等于完成了编码。
+     */
+    public static void setDerived(SmartWildcardRecipeDeriver.Result result) {
+        if (result == null) {
+            clearDerived();
+            return;
+        }
+        derived = result.state;
+        derivedSummary = result.summary;
+        derivedTemplateIn = result.templateIn;
+        derivedTemplateOut = result.templateOut;
+    }
+
+    public static java.util.List<net.minecraft.item.ItemStack> derivedTemplateIn() {
+        return derivedTemplateIn;
+    }
+
+    public static java.util.List<net.minecraft.item.ItemStack> derivedTemplateOut() {
+        return derivedTemplateOut;
     }
 }
