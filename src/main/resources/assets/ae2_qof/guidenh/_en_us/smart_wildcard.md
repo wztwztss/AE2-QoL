@@ -66,5 +66,8 @@ Then drop that pattern into any pattern buffer.
   first, falling back to an exact display-name match;
 - Fluids that NEI shows as placeholder items are **skipped** (they are never used for ore-dictionary derivation);
 - Expansion happens at **index time** (placing/changing a pattern, loading NBT), not every tick, and is capped;
-- The "Shift+middle-click a pattern slot to pick a circuit" gesture is still in development — for now use the
-  **Circuit page** of the pattern's own screen (functionally equivalent).
+- **Gesture on machine pattern slots**: in the GT Crafting Input Buffer, the PH family and the GTNL Super Crafting Input
+  Hatch, **Shift+middle-click** a pattern slot to open a circuit picker (1..24 / Clear (inherit) / record the held item as
+  non-consumed). It is written into **that pattern's own NBT**, and when a machine reads the pattern the number is written
+  into its virtual circuit slot. AE2 ME Interface slots are AE2's own slots (not MUI2 widgets), so the gesture does not fire
+  there — use the **Circuit page** of the pattern instead.

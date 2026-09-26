@@ -5,7 +5,9 @@
 > M3（内置电路写入机器虚拟电路槽 + 界面「电路」页）。
 > 前置调研报告：`docs/research/wildcardpattern-forensics.md`、`docs/research/gt-pattern-buffer-hook.md`、
 > `docs/research/ph-gtnl-hatch-hook.md`、`docs/research/nei-plus-hook.md`。
-> **尚未实现**：Shift+中键在机器样板槽上直接弹电路列表的手势（功能等价路径 = 右键样板的「电路」页）。
+> **手势也已交付**：在 GT 样板仓 / PH 家族 / GTNL 超级总成的界面里 **Shift+中键**点样板槽 → 弹出电路选择屏
+> （1~24 / 清除（继承） / 手持物品记为不消耗）→ C2S 写进该样板自己的 NBT。AE2 ME 接口的样板槽是 AE2 自己的
+> `Slot`（非 MUI2 `ItemSlot`），该手势不触发，请用右键样板的「电路」页。
 
 ### 一、路线确认（读参考实现源码后修正了一次架构判断）
 
