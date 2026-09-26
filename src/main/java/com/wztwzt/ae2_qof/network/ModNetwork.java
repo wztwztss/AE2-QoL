@@ -189,5 +189,12 @@ public final class ModNetwork {
             UploadFeedbackPacket.class,
             discriminator++,
             Side.CLIENT);
+
+        // 3.21.0：库存统计终端的「高亮 / 传送」请求（C2S，服务端重新解析目标并鉴权）
+        CHANNEL.registerMessage(
+            StockMonitorActionPacket.Handler.class,
+            StockMonitorActionPacket.class,
+            discriminator++,
+            Side.SERVER);
     }
 }

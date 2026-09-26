@@ -4,11 +4,29 @@
 
 An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
-**Author: wztwzt · Current source version: 3.20.4 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.21.0 · Reference pack: GTNH 2.9.0-beta-3**
 
 This repository is for personal archival and is not currently offered for distribution. See [CREDITS.md](CREDITS.md) for attribution and licensing records. Feature descriptions are not a claim that every integration has passed in-game testing.
 
-## What's new in 3.20.3 (Stock Monitor Terminal fixed)
+## What's new in 3.21.0 (Stock Monitor Terminal: highlight / teleport + UI + localization)
+
+- **New: two action buttons per row — Highlight and Teleport** (same division of labour as the
+  Adaptive Energy Grid terminal). Highlight draws a **glowing box for 10 seconds** (the renderer skips
+  other dimensions; a chat hint is given when the target is elsewhere). Teleport places the player on a
+  **standable spot next to/above** the target and **works across dimensions** (reusing the adaptive
+  terminal's custom `Teleporter` that overrides `placeInPortal`, avoiding the old
+  "search/build a nether portal" bug). Both buttons are **client-side callbacks** that only send
+  coordinates; the server re-resolves the target (a cover must really be attached there; an emitter
+  requires an AE host block) and enforces a **session + AE network BUILD permission** check.
+- **UI polish**: rows are now "name on the left (left aligned), Chinese value on the right"; type and
+  mode are shown in Chinese; hovering a row shows the full name plus `Ddim [x, y, z]` (covers also show
+  the face and online state); title colour tweaks; lists remain scrollable with no row cap.
+- **Localization fix**: the item name key `gt.blockmachines.stock_monitor_terminal.name` was missing
+  (NEI showed the English "Stock Monitor Terminal"), and `getLocalName()` is now overridden as a second
+  safeguard; row abbreviations plus hardcoded `Close`, `Type:`, `(unset)` and `Emitter` were moved to
+  language keys.
+- Also: the terminal now advances the "highlight auto-clear" queue every tick, so highlights expire on
+  time even in saves without the Adaptive Energy Grid terminal.
 
 - **3.20.3 fix: the Stock Monitor Terminal (32107) GUI showed only its two section headers**
   ("stock monitor covers" / "AE standard emitters") — no lists, no connect button, no input fields,
@@ -133,7 +151,7 @@ See the [investigation](docs/mcp-tooltip-duplicate-investigation.md) for evidenc
 ## Installation and upgrades
 
 1. Stop the game/server and back up the **complete world and configuration**, retaining the previous JAR for rollback. Infinity Cell contents live in the world save; backing up item NBT alone is insufficient.
-2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-3.20.4.jar`. Do not retain multiple versions.
+2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-3.21.0.jar`. Do not retain multiple versions.
 3. **Use the same version on client and server.** fix41 changed upload-related packets; upgrading only one side is unsupported.
 4. This JAR includes `aeinfinitycell` (bundled metadata remains `1.0.4-ae2qol`). Do not also install the standalone AE2 Infinity Cell JAR. Test old cells in a copied world before migrating.
 5. Check startup logs, generated configuration and Mixin loading, then exercise the features you use in a test world. Deployment to the development test instance requires separate approval.

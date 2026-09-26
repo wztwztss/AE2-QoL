@@ -88,6 +88,90 @@ public class StockMonitorTerminal extends MTEHatch {
         }
     }
 
+    // ===================== 3.21.0：汉化 + 高亮/传送所需的会话与网络 =====================
+
+    /**
+     * 显示名：GT 的机器名走 {@code IMetaTileEntity.getLocalName()} →
+     * {@code StatCollector.translateToLocal("gt.blockmachines.<mName>.name")}。
+     * 这里显式覆写一次，保证不依赖 GT 内部取名字的具体路径（语言文件里同名键同时补上）。
+     */
+    @Override
+    public String getLocalName() {
+        try {
+            String localized = StatCollector.translateToLocal("gt.blockmachines.stock_monitor_terminal.name");
+            if (localized != null && !localized.isEmpty()) return localized;
+        } catch (Throwable ignored) {}
+        return "Stock Monitor Terminal";
+    }
+
+    /**
+     * 「正打开本终端界面」的玩家集合（等价自适应电网终端的 activeViewers / 审查 P1-011）：
+     * 高亮/传送请求只有在会话内才被接受，避免任意玩家凭构造包探测或传送到他人设备。
+     */
+    private final java.util.Set<java.util.UUID> activeViewers = java.util.Collections
+        .newSetFromMap(new java.util.concurrent.ConcurrentHashMap<java.util.UUID, Boolean>());
+
+    public void registerActiveViewer(EntityPlayer player) {
+        if (player != null) activeViewers.add(player.getUniqueID());
+    }
+
+    public boolean isActiveViewer(java.util.UUID id) {
+        return id != null && activeViewers.contains(id);
+    }
+
+    /** 终端当前生效的 AE 网络：优先 Nexus 无线绑定，其次邻接连接。 */
+    public appeng.api.networking.IGrid resolveGrid() {
+        try {
+            net.minecraft.tileentity.TileEntity te = (net.minecraft.tileentity.TileEntity) getBaseMetaTileEntity();
+            if (te == null) return null;
+            if (isBound() && com.wztwzt.ae2_qof.cover.stockmonitor.ae.WirelessAeConnector.isNexusAvailable()) {
+                try {
+                    java.util.UUID netId = java.util.UUID.fromString(getNetworkId());
+                    appeng.api.networking.IGrid grid = com.wztwzt.ae2_qof.cover.stockmonitor.ae.WirelessAeConnector
+                        .getGridForNetwork(netId, te.getWorldObj());
+                    if (grid != null) return grid;
+                } catch (IllegalArgumentException ignored) {}
+            }
+            return com.wztwzt.ae2_qof.cover.stockmonitor.ae.NeighborAeConnector
+                .findGrid(te.getWorldObj(), te.xCoord, te.yCoord, te.zCoord, ForgeDirection.UNKNOWN);
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    /**
+     * 终端所连 AE 网络的 BUILD 权限（终端完全没连网时放行）。
+     * 覆盖板远程编辑与高亮/传送共用这一条判据（原实现在 GUI 里，3.21.0 移到终端本体，
+     * 让网络包也能复用同一套鉴权）。
+     */
+    public boolean hasBuildPermission(EntityPlayer player) {
+        appeng.api.networking.IGrid grid = resolveGrid();
+        if (grid == null) return true;
+        try {
+            appeng.api.networking.security.ISecurityGrid security = grid
+                .getCache(appeng.api.networking.security.ISecurityGrid.class);
+            if (security == null || !security.isAvailable()) return true;
+            return security.hasPermission(player, appeng.api.config.SecurityPermissions.BUILD);
+        } catch (Throwable t) {
+            return true;
+        }
+    }
+
+    /**
+     * 推进"高亮自动清除"队列（10 秒）。
+     * 该队列由 {@link com.wztwzt.ae2_qof.network.HatchActionPacket} 维护，原本只在自适应电网终端
+     * 的 tick 里推进——那样"没装自适应终端"的存档里高亮会永不消失。这里补上推进点。
+     */
+    @Override
+    public void onPostTick(IGregTechTileEntity aBaseMetaTileEntity, long aTick) {
+        super.onPostTick(aBaseMetaTileEntity, aTick);
+        try {
+            if (aBaseMetaTileEntity != null && aBaseMetaTileEntity.isServerSide()) {
+                com.wztwzt.ae2_qof.network.HatchActionPacket.tickPendingClears();
+            }
+        } catch (Throwable ignored) {}
+    }
+
     @Override
     public String[] getDescription() {
         try {

@@ -1,3 +1,67 @@
+## 工作区决策记录 2026-09-26 (26) - **3.21.0**：库存统计终端 —— 高亮 / 传送 + 行内 UI + 汉化
+
+> 产物 `build/libs/AE2-QoL-3.21.0.jar`（1180817 字节，SHA256 `5590DCC0A19ADF333DA4CAAA46C22D44B9108825A7DC7328664419EC88ADCD9B`）。
+> 前置：3.20.3 已修复"只有两行标题 / 读不到库存"（记录 25），用户截图确认列表与连接均正常。
+
+### 一、需求（用户逐项确认）
+
+| 项 | 决定 |
+|---|---|
+| 高亮 | 目标**方块级**发光框，持续 **10 秒**；目标在别的维度时不做无意义高亮，改给提示 |
+| 传送 | 落点 = 目标**旁/上的可站立格**；**支持跨维度** |
+| 鉴权 | 沿用自适应电网终端那套：**会话**（必须正打开该终端 GUI）+ 权限 |
+| 行内 | 每行**两个独立小按钮**【高亮】【传送】 |
+| UI | 名称左对齐 / 数值右对齐；类型与模式显示**中文**；悬停 tooltip（完整名称 + 坐标/维度）；标题配色微调 |
+| 汉化 | 物品名、行内缩写（I/F/E、ABO/BEL）、硬编码英文（Close、Type:、(unset)、Emitter） |
+
+### 二、实现（全部复用既有范式，不发明新机制）
+
+| 项 | 复用什么 | 说明 |
+|---|---|---|
+| 高亮 | `WirelessHighlightPacket`（`{dim,x,y,z,colorType}`）+ `WirelessHighlightRenderer` + `HatchActionPacket.scheduleClear` | 200 tick = 10 秒自动清除；颜色索引复用渲染器自带调色板（覆盖板=蓝、发信器=紫） |
+| 传送 | `HatchActionPacket.handleTeleport` 那份**匿名 `Teleporter`**（覆写 `placeInPortal` 直接落坐标，`placeInExistingPortal`/`makePortal` 短路） | 绕开 `new Teleporter(world)` 去找/建下界门的老 bug（记录 3.18.1-fix11） |
+| 鉴权 | 自适应终端的 **P1-011 会话**思路 + 本终端已有的 AE **BUILD** 权限 | 会话集合放在终端本体（`registerActiveViewer`/`isActiveViewer`），GUI 打开时登记（仅服务端） |
+| 行内按钮 | 自适应终端用 `.onMousePressed(...)`（**客户端**回调）发 C2S 包 | 明确不用 `keyBindSneak.getIsKeyPressed()` 判 Shift——GUI 打开时它恒 false（fix11 老坑） |
+| 列表行 | 3.20.3 已有的 `GenericListSyncHandler` + `DynamicSyncedWidget` | 行快照（发信器）新增"宿主方块坐标"字段，供动作按钮使用 |
+
+**新增文件**：`network/StockMonitorActionPacket.java`（C2S 高亮/传送请求 + 服务端解析 / 鉴权 / 执行）。
+**改动**：`terminal/StockMonitorTerminal.java`（覆写 `getLocalName()`、会话集合、把 `resolveGrid()`/`hasBuildPermission()`
+从 GUI 下移到终端本体、`onPostTick` 推进高亮清除队列）、`terminal/StockMonitorTerminalGui.java`（行布局 / 中文标签 /
+tooltip / 动作按钮 / 覆盖板未加载提示 / 未选中时不再提前 return）、`network/ModNetwork.java`（注册新包）、
+中英 lang（新增 26 个键）。
+**未触碰**：覆盖板自身 GUI 与逻辑、`HatchActionPacket`/`WirelessHighlightPacket`/渲染器（只调用不改）、
+Nexus 集成、AE2/GT 本体。
+
+### 三、安全设计（为什么这么做）
+
+1. 客户端**只发坐标**、不做任何判定；服务端在 tick 线程里依序校验：
+   `player.openContainer != null` → 定位终端 → `isActiveViewer(UUID)` → `hasBuildPermission(player)`
+   → `blockExists` → **目标真实性**（覆盖板必须真贴在该方块某面；发信器要求该方块是 `IGridHost`）→ 才执行。
+2. 跨维度高亮在服务端就被拦成"提示"（渲染器 `if (dim != currentDim) continue;` 本来也画不出来），
+   避免发一个永远不可见的包。
+3. 传送落点先做 `isStandable` 检查（脚/头两格空气 + 脚下实心），找不到就拒绝并提示，不硬塞坐标。
+
+### 四、验证
+
+- 构建 `BUILD SUCCESSFUL`（**无管道取退出码：GRADLE_EXIT=0**）；
+- 产物 `AE2-QoL-3.21.0.jar` 1180817 字节 / SHA256 `5590DCC0…`；
+- 入包核对：`network/StockMonitorActionPacket`（+`$Handler`/`$Handler$1`）、
+  `terminal/StockMonitorTerminalGui`（+`$EmitterRow`/`$CoverRow`/`$RowList`/`$RowCache`）均在；
+- 编译期修正记录：`ThresholdMode` 的枚举常量是 `BELOW_THRESHOLD_RUN`/`ABOVE_THRESHOLD_RUN`
+  （我最初按 `BELOW`/`ABOVE` 猜，编译立刻报错并已修正——再次印证"每改必编译"）。
+- **待游戏内验收**：① 物品名为中文；② 行内左对齐 + 中文类型/模式 + 悬停 tooltip；
+  ③ 点【高亮】出现发光框、10 秒后消失（同维度）；④ 点【传送】落到目标旁安全点（同维度与跨维度各一次）；
+  ⑤ 无权限 / 会话失效时给出提示。
+
+### 五、仍未决策（不擅自扩大范围）
+
+覆盖板列表目前仍列出**全服所有**覆盖板（`CoverRegistry.getAll()`，一直如此）；而
+`CoverRegistry.getByNetwork()` 的注释写着"统计终端只显示同网络的覆盖板"——也就是说**显示范围与注释不一致**。
+本次**没有**改显示范围（怕你在意"覆盖板突然消失"），但高亮/传送已加会话 + BUILD 双重门禁。
+是否改成"只看本终端所连网络的覆盖板"需要你拍板。
+
+---
+
 ## 工作区决策记录 2026-09-26 (25) - **3.20.3**：修库存统计终端（32107）GUI 只有两行标题 / 读不到库存
 
 > 产物 `build/libs/AE2-QoL-3.20.3.jar`（1167679 字节，SHA256 `85BB3AE7AABCF5A94B49BC5EDF4D8D2846AAA2F39325653314A4E1986F757A58`）。
