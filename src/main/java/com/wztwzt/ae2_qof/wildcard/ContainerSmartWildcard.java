@@ -64,7 +64,8 @@ public class ContainerSmartWildcard extends Container {
      *
      * @return 写入是否成功（失败必留日志，不静默）
      */
-    public boolean applyRules(SmartWildcardState incoming) {
+    public boolean applyRules(SmartWildcardState incoming, net.minecraft.nbt.NBTTagList templateIn,
+        net.minecraft.nbt.NBTTagList templateOut) {
         ItemStack stack = this.getPatternStack();
         if (stack == null || !(stack.getItem() instanceof ItemSmartWildcardPattern)) {
             MyMod.LOG.warn(
@@ -78,6 +79,23 @@ public class ContainerSmartWildcard extends Container {
             return false;
         }
         incoming.writeAndBumpRevision(stack);
+        // 模板 in/out：NEI 加号推导出的配方本体。注意顺序——先 writeAndBumpRevision 保证 NBT 根存在。
+        try {
+            if (stack.getTagCompound() != null) {
+                if (templateIn != null && templateIn.tagCount() > 0) {
+                    stack.getTagCompound()
+                        .setTag("in", templateIn);
+                    stack.getTagCompound()
+                        .setBoolean("crafting", false);
+                }
+                if (templateOut != null && templateOut.tagCount() > 0) {
+                    stack.getTagCompound()
+                        .setTag("out", templateOut);
+                }
+            }
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 写入通配样板模板 in/out 失败（规则已写，模板保留原值）", t);
+        }
         SmartWildcardExpander.clearCache();
         this.detectAndSendChanges();
         MyMod.LOG.info(

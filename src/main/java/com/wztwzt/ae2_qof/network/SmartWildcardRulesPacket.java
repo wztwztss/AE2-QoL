@@ -42,6 +42,30 @@ public class SmartWildcardRulesPacket implements IMessage {
         this.tag = encode(state);
     }
 
+    /**
+     * 带模板的构造器：NEI 加号推导出的结果要**同时写规则与配方本体**（用户点一下加号就等于完成了编码）。
+     * 这里刻意内联 NBT 列表构建、不引用任何客户端类（本包会在专用服务端加载）。
+     */
+    public SmartWildcardRulesPacket(SmartWildcardState state, java.util.List<ItemStack> templateIn,
+        java.util.List<ItemStack> templateOut) {
+        this.tag = encode(state);
+        if (templateIn != null && !templateIn.isEmpty()) this.tag.setTag("TemplateIn", buildList(templateIn));
+        if (templateOut != null && !templateOut.isEmpty()) this.tag.setTag("TemplateOut", buildList(templateOut));
+    }
+
+    private static NBTTagList buildList(java.util.List<ItemStack> stacks) {
+        NBTTagList list = new NBTTagList();
+        for (ItemStack stack : stacks) {
+            if (stack == null || stack.getItem() == null) continue;
+            NBTTagCompound entry = new NBTTagCompound();
+            stack.writeToNBT(entry);
+            entry.setInteger("Count", Math.max(1, stack.stackSize));
+            entry.setLong("Cnt", Math.max(1, stack.stackSize));
+            list.appendTag(entry);
+        }
+        return list;
+    }
+
     // ================= 序列化 =================
 
     /** 把状态拍成一份独立 NBT（与物品 NBT 里的子树同构，便于两端对账）。 */
@@ -155,7 +179,11 @@ public class SmartWildcardRulesPacket implements IMessage {
                         return;
                     }
                     SmartWildcardState state = decode(message.tag);
-                    if (!container.applyRules(state)) {
+                    NBTTagList templateIn = message.tag == null ? null
+                        : message.tag.getTagList("TemplateIn", Constants.NBT.TAG_COMPOUND);
+                    NBTTagList templateOut = message.tag == null ? null
+                        : message.tag.getTagList("TemplateOut", Constants.NBT.TAG_COMPOUND);
+                    if (!container.applyRules(state, templateIn, templateOut)) {
                         MyMod.LOG.warn("[AE2QoL] 通配样板规则写回被容器拒绝：player={}", player.getCommandSenderName());
                     }
                 } catch (Throwable t) {
