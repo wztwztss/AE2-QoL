@@ -33,11 +33,32 @@ public final class PhIntegration {
      */
     public static ItemStack mkiiiStack;
 
+    /**
+     * ProgrammableHatches 的**真实 modid**。来源是它的 {@code @Mod(modid = MyMod.MODID)}：
+     * {@code MyMod.MODID = "programmablehatches"}`，与 jar 内 `mcmod.info` 一致。
+     *
+     * <p><b>2026-09-26 实测教训</b>：本类最初写的是 `proghatches` —— 那是 PH 的**包名前缀**
+     * （`reobf.proghatches.*`、coremod 类名也是这个），**不是 modid**。后果是守卫恒为 false：
+     * 物品不注册、进不了 NEI/创造页，而且**连一条日志都没有**（现象就是「找不到这个物品」）。
+     * 教训：可选依赖判定只能取对方 {@code @Mod}/`mcmod.info` 里的 modid，不能从包名或 jar 文件名猜；
+     * 且守卫的「跳过」分支也必须留日志，否则这类失败完全静默。
+     */
+    private static final String PH_MODID = "programmablehatches";
+
+    /**
+     * PH 的关键类。真正决定「这个功能能不能跑」的是**类是否存在**而不是 modid，
+     * 所以两道判据都用上：modid 走常规路径，类存在性兜住 modid 变更的情况。
+     */
+    private static final String PH_ANCHOR_CLASS = "reobf.proghatches.gt.metatileentity.PatternDualInputHatch";
+
     private PhIntegration() {}
 
     public static void register() {
-        if (!Loader.isModLoaded("proghatches")) {
-            // 未安装 ProgrammableHatches：本功能整体不存在（物品既不会注册也不会出现在创造页）
+        if (!ae2qol$programmableHatchesPresent()) {
+            // 未安装 PH：本功能整体不存在（物品既不会注册也不会出现在创造页）。
+            // 这一行日志是刻意保留的——没有它，「守卫判错」与「注册失败」都无法与「根本没调到」区分开。
+            MyMod.LOG.info(
+                "[AE2QoL] 未检测到 ProgrammableHatches（modid=" + PH_MODID + "），跳过「编程样板输入总成 MK.III」");
             return;
         }
         try {
@@ -90,6 +111,20 @@ public final class PhIntegration {
         } catch (Throwable t) {
             // 注册失败不影响本模组其它功能；吞掉会让「物品不出现」变成无痕迹故障，所以必须记日志
             MyMod.LOG.error("[AE2QoL] 编程样板输入总成 MK.III 注册失败（已跳过该物品）", t);
+        }
+    }
+
+    /** PH 是否可用：modid 命中 **且** 关键类能被加载（后者才是真正的能力判据）。 */
+    private static boolean ae2qol$programmableHatchesPresent() {
+        try {
+            if (!Loader.isModLoaded(PH_MODID)) {
+                return false;
+            }
+            // initialize=false：只确认类可解析，不触发它的静态初始化
+            Class.forName(PH_ANCHOR_CLASS, false, PhIntegration.class.getClassLoader());
+            return true;
+        } catch (Throwable t) {
+            return false;
         }
     }
 }

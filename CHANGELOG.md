@@ -1,3 +1,52 @@
+## 工作区决策记录 2026-09-26 (23) - **3.20.1**：修 modid 守卫写错导致 MK.III 完全静默（用户报「没找到这个物品」）
+
+> 产物 `build/libs/AE2-QoL-3.20.1.jar`（1152678 字节，SHA256 `D0F0017755C22154604A09581ABA403931E374D8D30DECB91005D9C21CECCFEC`）。
+> 3.20.0 功能内容正确但**物品实际从未注册**；本版是修正版，功能与 3.20.0 相同。
+
+### 一、现象与证据链（全部来自实例日志，不猜）
+
+| # | 证据 | 结论 |
+|---|---|---|
+| 1 | `fml-client-latest.log:16238` → `ae2_qof(AE2 QoL:3.20.0)` | 3.20.0 **确实被加载**了 |
+| 2 | `:37656` → `[AE2QoL] GuideNH guide registered`（17:43:40） | 本模组的 `CommonProxy.init` **确实跑过**（不是没进初始化） |
+| 3 | 全日志搜不到 `[AE2QoL] PH 编程样板输入总成 MK.III 已注册`，**也搜不到 `注册失败`** | 卡在 `PhIntegration.register()` 的**第一句守卫**：既没注册、也没抛异常 |
+| 4 | `:37933` → `[mixin/programmablehatches]: Mixing ph.MixinPatternDualInputHatchAccess from mixins.ae2_qof.json into reobf.proghatches.gt.metatileentity.PatternDualInputHatch` | **accessor mixin 应用成功**，且全日志无任何 mixin 失败 ⇒ 排除 mixin |
+| 5 | PH jar 内 `mcmod.info`（`"modid": "programmablehatches"`）+ PH 源码 `MyMod.MODID = "programmablehatches"` + 日志 `:16263` → `programmablehatches(ProgrammableHatches:0.2.0p24)` | 真实 modid 是 **`programmablehatches`**；我写的 `proghatches` 是它的**包名前缀**（`reobf.proghatches.*`，连 coremod 类名都是 `reobf.proghatches.main.asm.FMLPlugin`） |
+
+### 二、根因
+
+`PhIntegration.register()` 用 `Loader.isModLoaded("proghatches")` 做守卫 ⇒ **恒为 false** ⇒ 直接 `return`。
+后果：物品不注册、不进 NEI 与创造页，而且**一条日志都不打**——用户看到的只有「找不到这个物品」。
+
+### 三、修复（3.20.1）
+
+1. `PH_MODID = "programmablehatches"`（取对方 `@Mod(modid = MyMod.MODID)` 的真实值）；
+2. 守卫升级为**两道判据**：modid 命中 **且** `Class.forName("reobf.proghatches.gt.metatileentity.PatternDualInputHatch", false, ...)`
+   能解析——真正决定「功能能不能跑」的是**类是否存在**，这样即使对方 modid 变更也不会误判；
+3. 「跳过」分支补 `INFO` 日志：此后「未装 PH」「守卫判错」「注册失败」三种情况在日志里**可区分**；
+4. `CommonProxy` 中对应注释同步更正（原注释里也写着错的 modid）。
+
+### 四、教训（已写入 skill 第 18 条）
+
+- **可选依赖判定只能取对方 `@Mod` / `mcmod.info` 里的 modid**，不能从包名、coremod 类名或 jar 文件名猜。
+  本例最坑之处是「包名前缀恰好看起来像 modid」，而且全程无报错。
+- **守卫的「跳过」分支也必须留日志**：否则「没装依赖」「守卫判错」「注册失败」在日志里无法区分。
+- **部署后先看我们自己主动打的那行日志**：本次起无论走哪条分支都会有一行，可直接定性。
+
+### 五、验证
+
+- 构建 `BUILD SUCCESSFUL`（exit 0，无管道取码）；
+- 字节码核对 `PhIntegration`：常量池同时含 `programmablehatches` 与 `reobf.proghatches.gt.metatileentity.PatternDualInputHatch`，
+  `ae2qol$programmableHatchesPresent()` 依次调用 `Loader.isModLoaded` 与 `Class.forName`；
+- 部署：有缺陷的 `【私货】AE2-QoL-3.20.0.jar` 改名 `【私货】AE2-QoL-3.20.0-modid-bug.jar` **移入备份（只移不删）**，
+  新 jar `【私货】AE2-QoL-3.20.1.jar` 已就位，SHA256 与本地一致，mods 内仅 1 份。
+
+### 六、待测项
+
+与记录 (22) 第六点相同的 9 项。其中第 1 项现在**必定**会打印一行（要么「已注册：id=32108，样板槽=144」，要么「未检测到 ProgrammableHatches」，要么「注册失败 + 堆栈」），可一步定性。
+
+---
+
 ## 工作区决策记录 2026-09-26 (22) - **3.20.0**：新增「编程样板输入总成 MK.III」（ProgrammableHatches 可选依赖，144 样板槽）
 
 > 产物 `build/libs/AE2-QoL-3.20.0.jar`（1152357 字节，SHA256 `F85883A8CF09ED073C44415797089396D2B0210A5636965C16E2C202EAA6EFDD`）。

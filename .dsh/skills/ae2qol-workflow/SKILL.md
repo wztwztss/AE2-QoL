@@ -243,6 +243,24 @@ $env:GRADLE_USER_HOME = 'C:\Users\29357\.gradle'
     README 却出现 **197/191 行**的差异噪声（行尾与 BOM 全变）。
     正确做法：用 `edit` 做字面替换（逐字节保留其余内容），改完用 `git diff --numstat` 复核差异规模
     （只该改的那几行）。若不慎整文件重写：`git checkout -- <文件>` 回滚后用 `edit` 重做。
+18. **可选依赖判定只能取对方 `@Mod`/`mcmod.info` 里的真实 modid，不能从包名、coremod 类名或 jar 文件名猜**
+    （2026-09-26 实际踩到，用户端症状是「没找到这个物品」）：
+    本次给 ProgrammableHatches 写守卫时 modid 写成了 **`proghatches`** —— 那是它的**包名前缀**
+    （`reobf.proghatches.*`，连 coremod 类名都是 `reobf.proghatches.main.asm.FMLPlugin`），
+    而真实 modid 是 **`programmablehatches`**（PH 源码 `MyMod.MODID`、jar 内 `mcmod.info`、
+    日志模组表 `programmablehatches(ProgrammableHatches:0.2.0p24)` 三处一致）。
+    后果：`Loader.isModLoaded(...)` 恒为 false ⇒ 物品从未注册、NEI 里找不到。
+    正确做法（**两条判据都用**）：
+    - 取真实 modid：`jar xf <对方jar> mcmod.info`（**解到临时目录**）看 `"modid"`，或读对方源码的 `@Mod(modid = ...)`；
+    - 再加「关键类可解析」判据 —— 真正决定功能能否运行的是**类是否存在**：
+      `Class.forName("<包名>.PatternDualInputHatch", false, PhIntegration.class.getClassLoader())`；
+      这样即使对方将来改 modid 也不会误判。仓库现成实现见 `ph/PhIntegration.ae2qol$programmableHatchesPresent()`；
+    - 运行期权威值：启动日志的模组表 `[FML/]: <modid>(<name>:<version>): <jar>`。
+19. **可选依赖的「跳过」分支也必须留一条日志**（2026-09-26，与第 18 条同一轮）：
+    守卫 return 时什么都不打，「没装依赖」「守卫判错（如 modid 写错）」「注册抛异常」三种情况
+    在日志里**完全无法区分**，用户端只表现为「找不到物品」，很容易把排查引向 NEI/配方/渲染等错误方向。
+    修复后 `PhIntegration.register()` 三条分支各打一行：已注册（INFO）、未检测到 PH（INFO，含探测用 modid）、
+    注册失败（ERROR + 堆栈）。**部署后第一件事就是确认日志里出现的是哪一行。**
 
 ---
 

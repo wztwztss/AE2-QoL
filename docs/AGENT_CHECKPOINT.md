@@ -15,7 +15,7 @@
 |模型信息|DeepSeek-V4.1-Flash|
 |工作分支|master；本轮起点 `fa612f4`（fix54 部署与推送收尾），工作树干净、与 origin/master 同步|
 |启动时间|2026-09-26（Asia/Shanghai，新功能轮：编程样板输入总成 MK.III）|
-|本次会话目标|**新增「编程样板输入总成 MK.III」**：ProgrammableHatches「编程样板输入总成」（MTE 22069）的扩容克隆版，样板槽 36 → **144**，样板窗改成 9 列 × 9 可见行的可滚动网格，只在装了 PH 时存在。严格按用户协议推进：先反复提问确认需求（7 项产品决策全部由用户拍板）→ 只读取证（PH 源码 + 实例 jar 字节码 + AE2/GT/MUI2 三层 API）→ 用户说「确认方案，开始修改」后才动代码。产物 `build/libs/AE2-QoL-3.20.0.jar`（SHA256 `F85883A8…`），构建 exit 0，产物与字节码已自检。**游戏内验收 9 项待用户配合；部署尚未进行（需单独授权）。**|
+|本次会话目标|**新增「编程样板输入总成 MK.III」**：ProgrammableHatches「编程样板输入总成」（MTE 22069）的扩容克隆版，样板槽 36 → **144**，样板窗改成 9 列 × 9 可见行的可滚动网格，只在装了 PH 时存在。严格按用户协议推进：先反复提问确认需求（7 项产品决策全部由用户拍板）→ 只读取证（PH 源码 + 实例 jar 字节码 + AE2/GT/MUI2 三层 API）→ 用户说「确认方案，开始修改」后才动代码。**3.20.0 首次实测失败**（可选依赖守卫把 PH 的 modid 误写成包名前缀 `proghatches`，物品从未注册且无日志），已定位并修复为 **3.20.1**（真实 modid + 关键类判据 + 三条分支日志），产物 `build/libs/AE2-QoL-3.20.1.jar`（SHA256 `D0F00177…`）**已部署到 b3 实例**（mods 内仅一份）。**游戏内 9 项验收待用户配合；推送尚未进行（验收通过后再推）。**|
 |上一轮（历史）|工具：DeepSeek Harness｜模型：DeepSeek-V4.1-Flash：fix50/51/52+54 三问题定位与修复，正式版 `3.19.0-fix54` 已部署到 b3 实例并推送到 `origin/master`。|
 
 ---
@@ -52,7 +52,15 @@ GTNH 2.9.0-beta-3（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
      1152357 字节 / SHA256 `F85883A8CF09ED073C44415797089396D2B0210A5636965C16E2C202EAA6EFDD`；
      新类（4 + `$Inst` + `$1` + 3 个窗口部件）全部入包；**PH/MUI2/GT 的类未被打包**；包内 `mixins.ae2_qof.json` 含新条目
      （解包到临时目录核对）；字节码核对 `PhIntegration.register()` 首条指令即 `Loader.isModLoaded`、MTE 经 `invokeinterface` 走 accessor。
-  6. **待办**：游戏内 9 项验收（清单见 `CHANGELOG.md` 记录 (22) 第六点）；**部署到测试实例需用户单独授权**。
+  6. **3.20.0 实测失败 → 3.20.1 修正**（用户报「没找到这个物品」）：3.20.0 里可选依赖守卫把 PH 的 **modid**
+     误写成它的**包名前缀** `proghatches`（真实值是 `programmablehatches`），守卫恒假 ⇒ 物品从未注册且**无任何日志**。
+     证据：日志有 `[AE2QoL] GuideNH guide registered`（init 确实跑过）、无「已注册」也无「注册失败」（卡在守卫第一句）、
+     `mixin/programmablehatches: Mixing ph.MixinPatternDualInputHatchAccess ... into ...PatternDualInputHatch`（**mixin 应用成功**，
+     排除 mixin 问题）。修复：真实 modid + 「关键类可解析」第二道判据 + 三条分支各打一行日志。
+     产物 `build/libs/AE2-QoL-3.20.1.jar`（SHA256 `D0F00177…`）已部署，有缺陷的 3.20.0 改名 `-modid-bug` 入备份。
+     教训已写入 skill 第 18/19 条（可选依赖只能取 `@Mod`/`mcmod.info` 的真实 modid；跳过分支必须留日志）。
+  7. **待办**：游戏内 9 项验收（清单见 `CHANGELOG.md` 记录 (22)/(23) 第六点）。启动后先看日志里出现的是
+     「已注册：id=32108，样板槽=144」还是「未检测到 ProgrammableHatches」还是「注册失败 + 堆栈」，即可一步定性。
 - [x] 2026-09-25 | 工具：DeepSeek Harness | 模型：DeepSeek-V4.1-Flash：**用户报障三问题定位与修复（fix50 / fix51 / fix52），全部代码完成并构建验证，均待实机实测**。
   1. **fix50｜万能维护仓电路板槽放不进任何物品**：根因是 GT 5.09.54 新接通 MTE 物品校验链
      （`MTEItemStackHandler.isItemValid` → `MTEHatchMaintenance.func_94041_b` → `IsAutoMaintenanceInput`），

@@ -444,7 +444,8 @@ public class CommonProxy {
         }
 
         // Programmable-Hatches 可选依赖：编程样板输入总成 MK.III（144 样板槽）。
-        // 方法内部先判 Loader.isModLoaded("proghatches")，未装 PH 时不会加载任何 PH 类型。
+        // 方法内部先用「modid + 关键类存在性」两道判据判断 PH 是否可用，未装 PH 时不会加载任何 PH 类型。
+        // 注意 PH 的真实 modid 是 programmablehatches（不是包名前缀 proghatches，2026-09-26 踩过）。
         com.wztwzt.ae2_qof.ph.PhIntegration.register();
     }
 
