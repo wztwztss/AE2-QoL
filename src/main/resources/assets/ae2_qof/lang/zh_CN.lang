@@ -395,3 +395,5 @@ ae2_qof.wildcard.tip.blacklist=黑名单 %s 项（已排除）
 ae2_qof.wildcard.tip.circuit=样板自带电路 %s 号
 ae2_qof.wildcard.tip.non_consumed=样板自带不消耗物品 %s 种
 ae2_qof.wildcard.tip.cap=单张样板展开上限 %s
+ae2_qof.wildcard.gui.rules_header=本样板当前规则（在 NEI 里按加号可自动推导）
+ae2_qof.wildcard.gui.no_rules=还没有规则：在 NEI 里对着配方按加号即可自动推导

@@ -394,3 +394,5 @@ ae2_qof.wildcard.tip.blacklist=%s blacklisted (excluded)
 ae2_qof.wildcard.tip.circuit=Pattern carries circuit #%s
 ae2_qof.wildcard.tip.non_consumed=Pattern carries %s non-consumed item(s)
 ae2_qof.wildcard.tip.cap=Per-pattern expansion cap: %s
+ae2_qof.wildcard.gui.rules_header=Current rules (press + in NEI to derive)
+ae2_qof.wildcard.gui.no_rules=No rules yet: open a recipe in NEI and press + to derive

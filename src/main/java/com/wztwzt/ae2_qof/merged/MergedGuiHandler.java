@@ -36,6 +36,16 @@ public class MergedGuiHandler implements IGuiHandler {
         if (host != null) {
             return new ContainerMergedTerminal(player.inventory, host);
         }
+        // 3.22.0：智能通配样板配置界面（手持形态，x = 玩家背包里的槽位号）
+        if (ID == com.wztwzt.ae2_qof.wildcard.ItemSmartWildcardPattern.GUI_ID) {
+            ItemStack held = player.inventory.getStackInSlot(x);
+            if (held != null && held.getItem() instanceof com.wztwzt.ae2_qof.wildcard.ItemSmartWildcardPattern) {
+                return new com.wztwzt.ae2_qof.wildcard.ContainerSmartWildcard(player.inventory, x);
+            }
+            com.wztwzt.ae2_qof.MyMod.LOG
+                .warn("[AE2QoL] 打开通配样板界面失败：槽位 {} 里已不是通配样板（player={}）", x, player.getCommandSenderName());
+            return null;
+        }
         if (ID == BlockWirelessTransceiver.GUI_ID) {
             TileEntity te = world.getTileEntity(x, y, z);
             if (te instanceof TileWirelessTransceiver) {
@@ -50,6 +60,11 @@ public class MergedGuiHandler implements IGuiHandler {
         IMergedTerminalHost host = resolveHost(ID, player, world, x, y, z);
         if (host != null) {
             return new GuiMergedTerminal(player.inventory, host);
+        }
+        // 3.22.0：智能通配样板配置界面（与容器同一槽位 ⇒ 是带槽位的 GuiContainer，NEI 加号才认它）
+        if (ID == com.wztwzt.ae2_qof.wildcard.ItemSmartWildcardPattern.GUI_ID) {
+            return new com.wztwzt.ae2_qof.client.gui.GuiSmartWildcard(
+                new com.wztwzt.ae2_qof.wildcard.ContainerSmartWildcard(player.inventory, x));
         }
         if (ID == BlockWirelessTransceiver.GUI_ID) {
             TileEntity te = world.getTileEntity(x, y, z);

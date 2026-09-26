@@ -34,6 +34,9 @@ import cpw.mods.fml.common.registry.GameRegistry;
  */
 public class ItemSmartWildcardPattern extends ItemEncodedPattern {
 
+    /** 本模组配置界面的 Gui ID（由 {@code MergedGuiHandler} 分支处理；x 参数传玩家背包槽位号）。 */
+    public static final int GUI_ID = 130;
+
     public ItemSmartWildcardPattern() {
         setUnlocalizedName("ae2_qof.smart_wildcard_pattern");
         setMaxStackSize(1);
@@ -106,6 +109,14 @@ public class ItemSmartWildcardPattern extends ItemEncodedPattern {
     @Override
     public ItemStack onItemRightClick(ItemStack stack, World world, EntityPlayer player) {
         ItemStack result = super.onItemRightClick(stack, world, player);
+        // 3.22.0：右键打开我们自己的配置界面（由服务端发起，FML 会在两端各自构造各自的界面）
+        try {
+            if (!world.isRemote && player != null) {
+                player.openGui(MyMod.instance, GUI_ID, world, player.inventory.currentItem, 0, 0);
+            }
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 打开通配样板界面失败", t);
+        }
         try {
             if (!world.isRemote && player != null) {
                 SmartWildcardState state = SmartWildcardState.of(stack);

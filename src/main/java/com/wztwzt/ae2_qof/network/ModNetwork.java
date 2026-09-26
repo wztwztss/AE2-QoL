@@ -82,6 +82,13 @@ public final class ModNetwork {
 
         CHANNEL.registerMessage(ReplanPacket.Handler.class, ReplanPacket.class, discriminator++, Side.SERVER);
 
+        // 3.22.0：通配样板规则写回（客户端 → 服务端；写 NBT 一律在服务端）
+        CHANNEL.registerMessage(
+            SmartWildcardRulesPacket.Handler.class,
+            SmartWildcardRulesPacket.class,
+            discriminator++,
+            Side.SERVER);
+
         CHANNEL.registerMessage(
             SmartDoublingTogglePacket.Handler.class,
             SmartDoublingTogglePacket.class,
