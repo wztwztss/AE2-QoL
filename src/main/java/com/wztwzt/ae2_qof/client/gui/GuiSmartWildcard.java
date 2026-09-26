@@ -14,6 +14,7 @@ import org.lwjgl.input.Mouse;
 
 import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.client.SmartWildcardClientState;
+import com.wztwzt.ae2_qof.client.SmartWildcardRecipeDeriver;
 import com.wztwzt.ae2_qof.network.SmartWildcardRulesPacket;
 import com.wztwzt.ae2_qof.network.ModNetwork;
 import com.wztwzt.ae2_qof.wildcard.ContainerSmartWildcard;
@@ -143,11 +144,44 @@ public class GuiSmartWildcard extends GuiContainer {
     /** 每行按钮对应的数据（候选显示名或黑名单条目），供 actionPerformed 使用。 */
     private final java.util.Map<Integer, String> ae2qol$rowNames = new java.util.HashMap<>();
 
+    /**
+     * 拼一张“工作副本样板”供预览展开：把界面里**尚未保存**的规则与刚推导的模板写进去。
+     *
+     * <p>为什么必须这么做：预览若直接展开物品上已保存的 NBT，用户刚按完加号、还没点保存时
+     * 预览里什么都不会变（而保存后结果又不一样）—— 这正是参考实现“预览能出、实际出不来”的观感来源。
+     * 这里用与服务器**同一个展开器**展开同一份数据，预览与保存后必然一致。
+     */
+    private ItemStack ae2qol$workingStackForPreview() {
+        ItemStack base = patternStack();
+        if (base == null) return null;
+        try {
+            ItemStack temp = base.copy();
+            temp.stackSize = 1;
+            java.util.List<ItemStack> in = SmartWildcardClientState.derivedTemplateIn();
+            java.util.List<ItemStack> out = SmartWildcardClientState.derivedTemplateOut();
+            if ((in != null && !in.isEmpty()) || (out != null && !out.isEmpty())) {
+                net.minecraft.nbt.NBTTagCompound tag = temp.getTagCompound();
+                if (tag == null) {
+                    tag = new net.minecraft.nbt.NBTTagCompound();
+                    temp.setTagCompound(tag);
+                }
+                if (in != null && !in.isEmpty()) tag.setTag("in", SmartWildcardRecipeDeriver.toPatternList(in));
+                if (out != null && !out.isEmpty()) tag.setTag("out", SmartWildcardRecipeDeriver.toPatternList(out));
+                tag.setBoolean("crafting", false);
+            }
+            workingOrLoad().write(temp);
+            return temp;
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 构建预览用工作副本失败（改用物品已存数据）", t);
+            return base;
+        }
+    }
+
     private void ae2qol$rebuildPreview(SmartWildcardState state) {
         this.previewItems.clear();
         this.previewSummary = "";
         try {
-            ItemStack stack = patternStack();
+            ItemStack stack = ae2qol$workingStackForPreview();
             if (stack == null) return;
             SmartWildcardExpander.Result result = SmartWildcardExpander.expand(stack, this.mc.theWorld);
             this.previewSummary = result.describe();
