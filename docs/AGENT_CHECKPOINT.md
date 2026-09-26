@@ -15,7 +15,7 @@
 |模型信息|DeepSeek-V4.1-Flash|
 |工作分支|master；本轮起点 `fa612f4`（fix54 部署与推送收尾），工作树干净、与 origin/master 同步|
 |启动时间|2026-09-26（Asia/Shanghai，新功能轮：编程样板输入总成 MK.III）|
-|本次会话目标|**新增「编程样板输入总成 MK.III」**：ProgrammableHatches「编程样板输入总成」（MTE 22069）的扩容克隆版，样板槽 36 → **144**，样板窗改成 9 列 × 9 可见行的可滚动网格，只在装了 PH 时存在。严格按用户协议推进：先反复提问确认需求（7 项产品决策全部由用户拍板）→ 只读取证（PH 源码 + 实例 jar 字节码 + AE2/GT/MUI2 三层 API）→ 用户说「确认方案，开始修改」后才动代码。**3.20.0 首次实测失败**（可选依赖守卫把 PH 的 modid 误写成包名前缀 `proghatches`，物品从未注册且无日志），已定位并修复为 **3.20.1**（真实 modid + 关键类判据 + 三条分支日志），产物 `build/libs/AE2-QoL-3.20.1.jar`（SHA256 `D0F00177…`）**已部署到 b3 实例**（mods 内仅一份）。**已实测通过（用户：「样板确实扩充了没问题」）；日志证据见 CHANGELOG 记录 (23) 第六节。**随后按用户「你正常修就行，修完推」又完成 **3.20.2**：修 GuideNH 指南页 5 页 × 中英的 `icon:`/`item_ids:` 错误（GT 机器真实注册名是 `gregtech:gt.blockmachines:<MTE ID>`，原写成了 `ae2_qof:<机器名>`），并做了全量对照审计；产物 `build/libs/AE2-QoL-3.20.2.jar`（SHA256 `3B7189EF…`）。**3.20.2 未部署到实例**（纯资源修正，需用户确认后再换 jar）。|
+|本次会话目标|**新增「编程样板输入总成 MK.III」**：ProgrammableHatches「编程样板输入总成」（MTE 22069）的扩容克隆版，样板槽 36 → **144**，样板窗改成 9 列 × 9 可见行的可滚动网格，只在装了 PH 时存在。严格按用户协议推进：先反复提问确认需求（7 项产品决策全部由用户拍板）→ 只读取证（PH 源码 + 实例 jar 字节码 + AE2/GT/MUI2 三层 API）→ 用户说「确认方案，开始修改」后才动代码。**3.20.0 首次实测失败**（可选依赖守卫把 PH 的 modid 误写成包名前缀 `proghatches`，物品从未注册且无日志），已定位并修复为 **3.20.1**（真实 modid + 关键类判据 + 三条分支日志），产物 `build/libs/AE2-QoL-3.20.1.jar`（SHA256 `D0F00177…`）**已部署到 b3 实例**（mods 内仅一份）。**已实测通过（用户：「样板确实扩充了没问题」）；日志证据见 CHANGELOG 记录 (23) 第六节。**随后按用户「你正常修就行，修完推」又完成 **3.20.2**：修 GuideNH 指南页 5 页 × 中英的 `icon:`/`item_ids:` 错误（GT 机器真实注册名是 `gregtech:gt.blockmachines:<MTE ID>`，原写成了 `ae2_qof:<机器名>`），并做了全量对照审计；产物 `build/libs/AE2-QoL-3.20.2.jar`（SHA256 `3B7189EF…`）。**3.20.2 未部署到实例**（纯资源修正）。随后用户报「库存统计终端打开无法连接 AE / 没有 nexus 的连接 UI / 无法实时修改」→ 完成 **3.20.3**：终端 GUI 双端构建重写（`GenericListSyncHandler`+`DynamicSyncedWidget` 快照渲染）、发信器枚举 API 修正（`node.getMachine()`）、列表改可滚动并取消 5 行上限、编辑值全走 SyncValue、新增 Nexus 缺失回退面板；产物 `build/libs/AE2-QoL-3.20.3.jar`（SHA256 `85BB3AE7…`）；**3.20.3 待游戏内验收**。|
 |上一轮（历史）|工具：DeepSeek Harness｜模型：DeepSeek-V4.1-Flash：fix50/51/52+54 三问题定位与修复，正式版 `3.19.0-fix54` 已部署到 b3 实例并推送到 `origin/master`。|
 
 ---
@@ -30,6 +30,21 @@ GTNH 2.9.0-beta-3（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 
 > 按完成时间倒序排列，均标注产出文件路径。历史结论保留原貌，不等于本版验证结果。
 
+- [x] 2026-09-26 | 工具：DeepSeek Harness（DSH Web GUI）| 模型：DeepSeek-V4.1-Flash：**3.20.3：修库存统计终端（32107）GUI 只有两行标题、读不到库存**（用户报「打开无法连接 AE / 没有 nexus 的连接 UI / 连不上 AE / 无法实时修改」）。
+  1. 阶段 0 定性：坏的**只有终端**（覆盖板自身 GUI 用户确认可用）；终端**自始至终不能用**；Nexus 1.0.2 已装且自身可用、
+     编译依赖与实例 jar 逐字节一致、`WirelessSelectionPanel.build` 签名与设计一致、日志无任何异常。
+  2. 根因 1：控件建在 `if (isServer)` 之后，而 **MUI2 面板双端各构建一次、渲染的是客户端那棵树** ⇒ 客户端上
+     连接状态/连接按钮/两个列表全都不存在（只剩标题与两个区块标题，与用户现象逐字对应）。
+  3. 根因 2（隐藏）：`Grid.getMachines()` 返回的是 **IGridNode** 集合
+     （`IMachineSet extends IReadOnlyCollection<IGridNode>`，用实例 AE2 jar 核对），
+     旧代码对节点做 `instanceof PartLevelEmitter` 永不匹配 ⇒ 发信器列表恒空。
+  4. 附带静态自查：`RowCache` 以 `Long.MIN_VALUE` 作哨兵会让 `now - lastTick` 溢出成负 ⇒ 首次调用永不重算。
+  5. 修复：结构双端一致 + `GenericListSyncHandler`/`DynamicSyncedWidget` 快照渲染（范式分别取自**覆盖板 GUI**
+     与 **Nexus 自身面板**）+ 可滚动列表（取消 5 行上限）+ 编辑值全走 SyncValue（权限校验在服务端 setter）+
+     新增 Nexus 缺失回退面板 `StockMonitorTerminalNetworkPanel`；**未触碰覆盖板任何文件**。
+  6. 验证：`BUILD SUCCESSFUL`（无管道取码 `GRADLE_EXIT=0`）；产物 `AE2-QoL-3.20.3.jar`
+     （1167679 字节，SHA256 `85BB3AE7…`）；新类与内部类均已入包。**待游戏内验收 4 项**（见 CHANGELOG 记录 (25) 第四节）。
+  7. 教训已写入 skill 第 21/22 条（MUI2 双端构建；AE2 `getMachines` 返回节点 + 精确类名查表）。
 - [x] 2026-09-26 | 工具：DeepSeek Harness（DSH Web GUI）| 模型：DeepSeek-V4.1-Flash：**3.20.2：修 GuideNH 指南页图标/物品 ID 写错（5 页 × 中英 = 10 个文件，纯资源修正）**。
   1. 现象：启动日志 4 条 `[GuideNH] [NavigationUtil] Couldn't find icon item ae2_qof:...`
      （万能维护仓 / 自适应电网 / 无线 EU 电网 / 库存统计终端 各一条），指南页图标空白。

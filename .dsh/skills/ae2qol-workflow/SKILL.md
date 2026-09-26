@@ -275,6 +275,26 @@ $env:GRADLE_USER_HOME = 'C:\Users\29357\.gradle'
       **不是** `certus_quartz_cutting_knife`；
     - **`icon:` 写错会记 ERROR，`item_ids:` 写错完全静默** ⇒ 改这类页面后必须做
       **全量对照审计**（把每个页面声明的所有 id 与注册名列表逐一比对），不能只看日志报错的那几页。
+21. **MUI2 的面板是"双端各构建一次、渲染客户端那棵树"——绝不能用 `!worldObj.isRemote` 决定要不要建控件**
+    （2026-09-26 实际踩到，症状是"GUI 打开只有两行标题、没有按钮没有输入框"）：
+    `库存统计终端`（32107）把连接状态/连接按钮/两个列表全写在 `if (isServer)` 之后，
+    于是**客户端那棵树里这些控件根本不存在**，只有没被 gate 掉的标题渲染出来了；
+    同时它把"选中项"存在**服务端静态表**里，客户端编辑子面板读不到就提前 `return`（⇒ 没有输入框）。
+    正确做法：
+    - 控件结构**双侧一致**、无条件构建；
+    - 服务端专有的数据一律经 `SyncValue` / 同步包下发：单值用 `IntSyncValue/LongSyncValue/BooleanSyncValue/StringSyncValue`
+      （只给 getter 即 S2C；再给 setter + `allowC2S()` 即双向），**权限校验写在服务端 setter 里**而不是构建期；
+    - **变长列表**用 `GenericListSyncHandler`（服务端 `getter` 求值 → 以快照 S2C）+
+      `DynamicSyncedWidget`（按快照重建控件）+ `ListWidget`（可滚动），每行点击用
+      `syncManager.getOrCreateSyncHandler("row_"+key, InteractionSyncHandler.class, …)` 回服务端执行；
+      行快照必须实现**值语义 equals/hashCode**，否则 `detectAndSendChanges` 每 tick 都判定"变了"而持续发包；
+    - 本仓两份可直接抄的范例：**覆盖板 GUI**（静态结构 + SyncValue，用户实测可用）与
+      **Nexus 的 `WirelessSelectionPanel`**（上述变长列表范式，同版本运行）。
+22. **AE2 `Grid.getMachines(Class)` 返回的是 `IGridNode` 集合，不是机器**（2026-09-26 与第 21 条同一轮踩到）：
+    `IMachineSet extends IReadOnlyCollection<IGridNode>`（已用实例 AE2 jar `javap` 核对过），
+    机器必须走 `node.getMachine()`。旧代码 `for (Object m : grid.getMachines(X.class)) if (m instanceof X)`
+    **永远匹配不到**，而且不报错、不抛异常，只表现为"列表恒空"。同时它是**精确类名**查表（与接口终端同一个坑）：
+    要覆盖子类得遍历 `grid.getMachinesClasses()` 再按 `X.class.isAssignableFrom(c)` 过滤。
 
 ---
 

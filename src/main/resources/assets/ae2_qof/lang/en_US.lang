@@ -349,3 +349,10 @@ gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.desc=AE-direct item/fluid 
 gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.desc.0=144 pattern slots (4x the original 36), in a scrollable pattern window.
 gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.desc.1=Up to 32 item + 32 fluid inputs per order, 24 isolated buffers.
 gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.desc.2=Only exists when ProgrammableHatches is installed; crafted by upgrading the original buffer.
+
+# ===== Stock Monitor Terminal (keys added in 3.20.3) =====
+ae2_qof.terminal.status.bound=§a● Bound to wireless network
+ae2_qof.terminal.status.unbound=§7● Not connected
+ae2_qof.terminal.none_selected=Nothing selected
+ae2_qof.terminal.energy_readonly=Energy emitter: threshold is read-only
+ae2_qof.gui.stock_monitor.switch_network=Switch network

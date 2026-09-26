@@ -4,11 +4,25 @@
 
 An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
-**Author: wztwzt · Current source version: 3.20.2 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.20.3 · Reference pack: GTNH 2.9.0-beta-3**
 
 This repository is for personal archival and is not currently offered for distribution. See [CREDITS.md](CREDITS.md) for attribution and licensing records. Feature descriptions are not a claim that every integration has passed in-game testing.
 
-## What's new in 3.20.2 (new: Programmable Crafting Input Buffer MK.III)
+## What's new in 3.20.3 (Stock Monitor Terminal fixed)
+
+- **3.20.3 fix: the Stock Monitor Terminal (32107) GUI showed only its two section headers**
+  ("stock monitor covers" / "AE standard emitters") — no lists, no connect button, no input fields,
+  and no stock readings; it had **never worked**. There were two root causes, the second hidden:
+  1. The widgets were created behind `if (isServer)`, but **MUI2 builds every panel on both sides and
+     renders the client-side tree**, where that flag is always false — so the status row, the connect
+     button and both lists simply did not exist on the client;
+  2. The emitter scan used the wrong AE2 API: `Grid.getMachines()` returns a set of **`IGridNode`**
+     (`IMachineSet extends IReadOnlyCollection<IGridNode>`), and the old code tested the *node* with
+     `instanceof PartLevelEmitter`, which can never match — the list was always empty.
+  The panel is now built identically on both sides, the variable-length lists are rendered from a
+  server-side snapshot through `GenericListSyncHandler` + `DynamicSyncedWidget` (the same pattern Nexus
+  itself uses), edits flow through SyncValues, a fallback network selector was added for the case where
+  Nexus is unavailable, and the old "show only 5 rows" cap is gone (scrollable, all rows).
 
 - **3.20.2 fix**: four in-game guide (GuideNH) pages never showed an icon — the log repeated
   `Couldn't find icon item ae2_qof:...`. Those pages' `icon:` / `item_ids:` used invented names, but the
@@ -119,7 +133,7 @@ See the [investigation](docs/mcp-tooltip-duplicate-investigation.md) for evidenc
 ## Installation and upgrades
 
 1. Stop the game/server and back up the **complete world and configuration**, retaining the previous JAR for rollback. Infinity Cell contents live in the world save; backing up item NBT alone is insufficient.
-2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-3.20.2.jar`. Do not retain multiple versions.
+2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-3.20.3.jar`. Do not retain multiple versions.
 3. **Use the same version on client and server.** fix41 changed upload-related packets; upgrading only one side is unsupported.
 4. This JAR includes `aeinfinitycell` (bundled metadata remains `1.0.4-ae2qol`). Do not also install the standalone AE2 Infinity Cell JAR. Test old cells in a copied world before migrating.
 5. Check startup logs, generated configuration and Mixin loading, then exercise the features you use in a test world. Deployment to the development test instance requires separate approval.

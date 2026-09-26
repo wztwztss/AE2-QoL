@@ -1,3 +1,86 @@
+## 工作区决策记录 2026-09-26 (25) - **3.20.3**：修库存统计终端（32107）GUI 只有两行标题 / 读不到库存
+
+> 产物 `build/libs/AE2-QoL-3.20.3.jar`（1167679 字节，SHA256 `85BB3AE7AABCF5A94B49BC5EDF4D8D2846AAA2F39325653314A4E1986F757A58`）。
+> 用户报：「打开无法连接 AE、没有 nex 那个模组的连接 UI、连不上 AE、无法实时修改，没实现之前的设计预期」。
+
+### 一、问题定性（阶段 0：只读侦察 + 逐轮提问，未读源码）
+
+- 出问题的**只有库存统计终端（32107）**；**覆盖板自身 GUI 是好的**（用户确认阈值/模式能改能存）；
+- 终端**自始至终不能用**（不是回归）：打开后只有两行区块标题，没有列表/连接入口/数值框，读不到库存；
+- Nexus 1.0.2 已安装且**自身可用**；`libs/` 编译依赖与实例 jar **SHA256 逐字节一致**；
+  `WirelessSelectionPanel.build(String, WirelessBindableEndpoint, EntityPlayer, PanelSyncManager, boolean)`
+  签名与设计文档一致；日志有 `[StockMonitor] AE Wireless Nexus integration loaded successfully`，
+  且**全程无异常**（典型"静默不工作"）；
+- 设计预期（自 fix38/fix5 文档还原，用户确认）：邻接直连 **或** Nexus 原生面板无线绑定 → 两个列表 →
+  点行实时改阈值。
+
+### 二、根因（两条，第二条是隐藏的）
+
+**根因 1：控件建在 `if (isServer)` 之后——而 MUI2 面板双端各构建一次、渲染的是客户端那棵树。**
+
+| 旧代码位置 | 代码 | 后果 |
+|---|---|---|
+| `StockMonitorTerminalGui:87` | `boolean isServer = !player.worldObj.isRemote;` | 客户端恒为 false |
+| 同文件 115 / 143 / 153 | `if (isServer) { 连接状态+连接按钮 / 发信器列表 / 覆盖板列表 }` | 客户端**一个都不建**，只剩标题与两个区块标题 |
+
+⇒ 与用户现象（"就两行字、没有数框"）**逐字对应**；"连不上 AE"是因为**连接按钮在客户端根本不存在**，
+所以 Nexus 原生面板永远没有入口。
+
+**根因 2：发信器枚举用错了 AE2 API。**
+`IMachineSet extends IReadOnlyCollection<IGridNode>`（已用**实例** `appliedenergistics2-rv3-beta-1050-GTNH.jar`
+`javap` 核对）：`Grid.getMachines(Class)` 枚举出来的是**节点**；旧代码
+`for (Object machine : grid.getMachines(PartLevelEmitter.class)) if (machine instanceof PartLevelEmitter)`
+**永远匹配不到** ⇒ 即使修好根因 1，发信器列表仍然是空的。必须走 `node.getMachine()`。
+
+**附带（实现中静态自查发现，发布前即修）**：`RowCache` 用 `Long.MIN_VALUE` 当"未初始化"哨兵时，
+`now - Long.MIN_VALUE` 会**溢出成负数**，首次调用被判为"未到刷新间隔"而永远返回空列表。
+
+### 三、修复（3.20.3）
+
+改造集中在 `terminal/StockMonitorTerminalGui.java`（重写）+ 新增 `terminal/StockMonitorTerminalNetworkPanel.java`，
+**只用两套已验证范式，不发明新机制**：
+
+| 范式 | 出处 | 用途 |
+|---|---|---|
+| 静态结构双端一致 + `*SyncValue` 承载实时数据 | 本模组**覆盖板 GUI**（用户确认可用） | 连接状态、阈值/模式的双向同步 |
+| `GenericListSyncHandler`（服务端 getter → S2C 快照）+ `DynamicSyncedWidget` + `ListWidget` + 每行 `getOrCreateSyncHandler` | **Nexus 自己的 `WirelessSelectionPanel`** | 变长列表跨端渲染 + 行点击回传服务端 |
+
+1. 删除 `isServer` 与三处 gate，**双端构建同一棵树**；
+2. 行数据改为**不可变快照**（`EmitterRow` / `CoverRow`，带值语义 `equals/hashCode`——否则
+   `detectAndSendChanges` 每 tick 都判定"变了"而持续发包），各挂一个 `GenericListSyncHandler`；
+   服务端行另持一个**不参与序列化**的引用（`PartLevelEmitter` / `CoverEntry`）供点击回调使用；
+3. 两个列表改为**可滚动 `ListWidget`**，**取消"只显示 5 行"上限**（用户确认要列出全部）；
+4. 行点击经 `getOrCreateSyncHandler("sm_terminal_emitter_row_i" / "..._cover_row_i")` 回服务端执行
+   （客户端第 i 行 == 服务端第 i 行：客户端列表即服务端快照；两侧都按确定规则排序，保证行序稳定）；
+5. 编辑子面板不再读服务端静态表、不再"未选中就提前 return"；显示值走
+   `StringSyncValue/LongSyncValue/IntSyncValue` 的服务端 getter，写入在服务端 setter 里做 BUILD 权限校验后落盘
+   （P1-015 语义不变）；
+6. 连接按钮无条件构建；Nexus 不可用时**回退到自定义选择面板**（与覆盖板同策略）——新增
+   `StockMonitorTerminalNetworkPanel`，刻意**不去改那份用户已确认可用的覆盖板面板的签名**，守住"本次不触碰覆盖板"的边界；
+7. 覆盖板注册表的 `refreshOnlineStatus()` 移入服务端 getter，并按 20 tick 节流重算
+   （getter 每 tick 都被调用；节流避免每 tick 遍历注册表与读 AE 配置）。
+
+**未改动**：`StockMonitorCoverGui`、`StockMonitorCover*`、`WirelessAeConnector`、
+`StockMonitorTerminalWirelessEndpoint`、Nexus 本体、AE2。终端 NBT 字段与覆盖板注册表格式**均未变**（老存档兼容）。
+
+### 四、验证
+
+- 构建 `BUILD SUCCESSFUL`（**无管道取退出码：GRADLE_EXIT=0**）；
+- 产物 `AE2-QoL-3.20.3.jar` 1167679 字节 / SHA256 `85BB3AE7…`；
+- 入包核对：`terminal/StockMonitorTerminalGui`（含 `$RowList`/`$RowCache`/`$EmitterRow`/`$CoverRow`）、
+  `terminal/StockMonitorTerminalNetworkPanel`（含 `$NetworkEntry`）均在；
+- **待游戏内验收**：① 打开终端能看到连接状态 + 连接按钮 + 两个可滚动列表；
+  ② 点「连接 AE」弹出 **Nexus 原生面板**并可成功绑定；③ 点某行改阈值**立即生效**；④ 全程无异常。
+
+### 五、教训（已写入 skill 第 21/22 条）
+
+21. **MUI2 的 `buildUI` 双端各构建一次，渲染的是客户端那棵树**：控件结构必须双侧一致，
+    服务端专有数据一律经 SyncValue/同步包下发；**绝不能用 `!worldObj.isRemote` 决定"要不要建控件"**。
+22. **AE2 `Grid.getMachines(Class)` 返回的是 `IGridNode` 集合**（`IMachineSet extends IReadOnlyCollection<IGridNode>`），
+    机器要 `node.getMachine()` 取；且它是**精确类名**查表，传父类会漏掉子类。
+
+---
+
 ## 工作区决策记录 2026-09-26 (24) - **3.20.2**：修 GuideNH 指南页的图标/物品 ID 写错（5 个页面 · 中英各一份）
 
 > 产物 `build/libs/AE2-QoL-3.20.2.jar`（1152731 字节，SHA256 `3B7189EF06F1B249E2D0B0E10E9FE6570AEA59EFAA0AE1B0C7EBC5C12D8D69F5`）。
