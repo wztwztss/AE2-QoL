@@ -2,10 +2,10 @@
 navigation:
   title: GT 无线 EU 网格
   parent: index.md
-  icon: ae2_qof:wireless_input_hatch
+  icon: gregtech:gt.blockmachines:32111
 item_ids:
-  - ae2_qof:wireless_input_hatch
-  - ae2_qof:wireless_output_hatch
+  - gregtech:gt.blockmachines:32111
+  - gregtech:gt.blockmachines:32110
 author: wztwzt
 ---
 

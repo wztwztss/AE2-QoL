@@ -261,6 +261,20 @@ $env:GRADLE_USER_HOME = 'C:\Users\29357\.gradle'
     在日志里**完全无法区分**，用户端只表现为「找不到物品」，很容易把排查引向 NEI/配方/渲染等错误方向。
     修复后 `PhIntegration.register()` 三条分支各打一行：已注册（INFO）、未检测到 PH（INFO，含探测用 modid）、
     注册失败（ERROR + 堆栈）。**部署后第一件事就是确认日志里出现的是哪一行。**
+20. **GuideNH 指南页的 `icon:` / `item_ids:` 只能写真实注册名，GT 机器必须带 meta**（2026-09-26 实际踩到）：
+    现象是启动日志里 4 条 `[GuideNH] [NavigationUtil] Couldn't find icon item ae2_qof:<机器名> for page ...`，
+    指南页图标空着。根因：把**机器内部名**当成了物品名。本模组的这些机器是 **GT 机器**，
+    注册名是 `gregtech:gt.blockmachines` + **meta（= MTE ID）**，例如万能维护仓 = `gregtech:gt.blockmachines:32000`。
+    规则与取证方法：
+    - 语法（`IdUtils.parseItemRef`）：`name`（用页面默认域）/ `modid:name` / `modid:name:meta`，
+      需要时再接 `:{SNBT}` 覆盖 NBT；先例可搜参考树 md 里的 `icon: gregtech:gt.blockmachines:2714`；
+    - 本模组物品名一律以 `GameRegistry.registerItem/registerBlock` 的**实参**为准
+      （注意 2 参重载用的是"当前活跃 mod 容器"的域，未必是 `ae2_qof`）；
+    - 第三方物品同理：AE2 的物品注册名是 `appliedenergistics2:item.<FeatureNameExtractor 的结果>`
+      （`ItemFeatureHandler` 里 `"item." + name`），例如切割刀是 `item.ToolCertusQuartzCuttingKnife`，
+      **不是** `certus_quartz_cutting_knife`；
+    - **`icon:` 写错会记 ERROR，`item_ids:` 写错完全静默** ⇒ 改这类页面后必须做
+      **全量对照审计**（把每个页面声明的所有 id 与注册名列表逐一比对），不能只看日志报错的那几页。
 
 ---
 

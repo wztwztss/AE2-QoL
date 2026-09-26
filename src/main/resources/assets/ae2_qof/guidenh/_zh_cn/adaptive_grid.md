@@ -2,13 +2,13 @@
 navigation:
   title: 自适应电网系统
   parent: index.md
-  icon: ae2_qof:adaptive_terminal
+  icon: gregtech:gt.blockmachines:32106
 item_ids:
-  - ae2_qof:adaptive_terminal
-  - ae2_qof:adaptive_input_hatch
-  - ae2_qof:adaptive_laser_source_hatch
-  - ae2_qof:adaptive_dynamo_hatch
-  - ae2_qof:adaptive_laser_target_hatch
+  - gregtech:gt.blockmachines:32106
+  - gregtech:gt.blockmachines:32102
+  - gregtech:gt.blockmachines:32103
+  - gregtech:gt.blockmachines:32104
+  - gregtech:gt.blockmachines:32105
   - ae2_qof:network_data_stick
 author: wztwzt
 ---

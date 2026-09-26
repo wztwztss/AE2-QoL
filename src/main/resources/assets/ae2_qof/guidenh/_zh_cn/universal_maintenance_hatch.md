@@ -2,9 +2,9 @@
 navigation:
   title: 万能维护仓
   parent: index.md
-  icon: ae2_qof:universal_maintenance_hatch
+  icon: gregtech:gt.blockmachines:32000
 item_ids:
-  - ae2_qof:universal_maintenance_hatch
+  - gregtech:gt.blockmachines:32000
 author: wztwzt
 ---
 

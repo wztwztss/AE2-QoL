@@ -3,8 +3,8 @@ navigation:
   title: 切割刀复制名称
   parent: index.md
 item_ids:
-  - appliedenergistics2:certus_quartz_cutting_knife
-  - appliedenergistics2:nether_quartz_cutting_knife
+  - appliedenergistics2:item.ToolCertusQuartzCuttingKnife
+  - appliedenergistics2:item.ToolNetherQuartzCuttingKnife
 author: wztwzt
 ---
 

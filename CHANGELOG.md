@@ -1,3 +1,72 @@
+## 工作区决策记录 2026-09-26 (24) - **3.20.2**：修 GuideNH 指南页的图标/物品 ID 写错（5 个页面 · 中英各一份）
+
+> 产物 `build/libs/AE2-QoL-3.20.2.jar`（1152731 字节，SHA256 `3B7189EF06F1B249E2D0B0E10E9FE6570AEA59EFAA0AE1B0C7EBC5C12D8D69F5`）。
+> **纯资源修正，无 Java 代码改动**。
+
+### 一、现象与根因
+
+启动日志反复出现 4 条 ERROR（每个页面一条）：
+
+```
+[GuideNH] [NavigationUtil] Couldn't find icon item ae2_qof:universal_maintenance_hatch for page ae2_qof:universal_maintenance_hatch.md
+[GuideNH] [NavigationUtil] Couldn't find icon item ae2_qof:adaptive_terminal          for page ae2_qof:adaptive_grid.md
+[GuideNH] [NavigationUtil] Couldn't find icon item ae2_qof:wireless_input_hatch      for page ae2_qof:wireless_eu_grid.md
+[GuideNH] [NavigationUtil] Couldn't find icon item ae2_qof:stock_monitor_terminal    for page ae2_qof:stock_monitor_terminal.md
+```
+
+根因：`navigation.icon` / `item_ids` 里写的是**凭想象拼出来的名字**，不是真实注册名。
+GuideNH 的解析链已核实：
+`Frontmatter.parseIconEntryString` → `IdUtils.parseItemRef`（按前两个冒号切成 `modid:name:meta`，
+第三个字段是 meta，可再接 `:{SNBT}`）→ `NavigationUtil.resolveItemStack`（`Item.itemRegistry.getObject(itemId)`，
+取不到就记 ERROR）。
+
+**本模组这些机器是 GT 机器**：注册名是 `gregtech:gt.blockmachines` + **meta（= MTE ID）**，
+根本不存在 `ae2_qof:<机器名>` 这样的物品 ⇒ 必然查不到。
+
+### 二、修正内容（5 页 × 中英 = 10 个文件）
+
+| 页面 | 原（错） | 现（真实注册名） |
+|---|---|---|
+| universal_maintenance_hatch | `ae2_qof:universal_maintenance_hatch` | `gregtech:gt.blockmachines:32000` |
+| adaptive_grid | `ae2_qof:adaptive_terminal` / `adaptive_input_hatch` / `adaptive_laser_source_hatch` / `adaptive_dynamo_hatch` / `adaptive_laser_target_hatch` | `gregtech:gt.blockmachines:32106` / `:32102` / `:32103` / `:32104` / `:32105`（`ae2_qof:network_data_stick` 本来就对，保留） |
+| wireless_eu_grid | `ae2_qof:wireless_input_hatch` / `wireless_output_hatch` | `gregtech:gt.blockmachines:32111` / `:32110` |
+| stock_monitor_terminal | `ae2_qof:stock_monitor_terminal` | `gregtech:gt.blockmachines:32107`（并补上真实物品 `ae2_qof:stock_monitor_cover`） |
+| knife | `appliedenergistics2:certus_quartz_cutting_knife` / `nether_quartz_cutting_knife` | `appliedenergistics2:item.ToolCertusQuartzCuttingKnife` / `appliedenergistics2:item.ToolNetherQuartzCuttingKnife` |
+
+第 5 页（knife）**不在那 4 条报错里**（它没写 `icon:`，而 `item_ids` 解析失败是**不记日志**的），
+是按同一类问题主动审计出来的，依据是 AE2 的注册名规则：
+`ItemFeatureHandler.register()` 里 `GameRegistry.registerItem(item, "item." + name)`，
+而刀的 name 来自 `FeatureNameExtractor("ToolQuartzCuttingKnife", "CertusQuartzTools")`
+→ 把类名里的 `Quartz` 替换成 `CertusQuartz` ⇒ `item.ToolCertusQuartzCuttingKnife`（下界石英同理）。
+
+### 三、全量审计（不做"只修报错那几页"）
+
+把 16 个页面 × 2 语言声明的**所有** `icon` / `item_ids` 与本模组真实注册名逐一对照：
+
+- **GT 机器 9 个**：32000 / 32102–32107 / 32110 / 32111 全部改为 `gregtech:gt.blockmachines:<id>`；
+- **本模组真实物品**：`ex_io_port`、`quest_detector`、`merged_terminal`、`merged_terminal_part`、
+  `wireless_merged_terminal`、`wireless_transceiver`、`wireless_connect`、`infinity_water_lava_cell`、
+  `network_data_stick`、`stock_monitor_cover` —— 与 `GameRegistry.registerItem/registerBlock` 的实参一一一致；
+- `aeinfinitycell:infinity_storage_cell` 的域经核实是 `aeinfinitycell`（该 mod 有自己的 `@Mod`，
+  日志模组表 `aeinfinitycell(...)` 可见）；
+- 审计后包内**已不存在**任何旧错误 ID（解包 grep 验证，见下）。
+
+### 四、验证
+
+- 构建 `BUILD SUCCESSFUL`（exit 0，无管道取码）；产物 `AE2-QoL-3.20.2.jar` 1152731 字节 / SHA256 `3B7189EF…`；
+- 解包到临时目录核对：包内 md **已无旧 ID**，新 ID 齐全（`gregtech:gt.blockmachines:*` 与 AE2 刀名）；
+- **待游戏内确认**：启动日志里那 4 条 `Couldn't find icon item` 应消失，指南页图标显示为对应机器贴图。
+
+### 五、教训（已写入 skill 第 20 条）
+
+GuideNH 页面的 `icon:` / `item_ids:` **只能写真实注册名**：`modid:name`，
+GT 机器写 `gregtech:gt.blockmachines:<MTE ID>`（需要时再接 `:{SNBT}` 覆盖 NBT）。
+凭"看起来合理"的名字拼（尤其把**机器内部名**当成物品名）不会报任何编译错，
+只会静默丢掉图标与物品关联；而且**只有 `icon:` 会记 ERROR，`item_ids` 写错完全静默** ——
+所以改这类页面后必须做**全量对照审计**，不能只看日志里报错的那几页。
+
+---
+
 ## 工作区决策记录 2026-09-26 (23) - **3.20.1**：修 modid 守卫写错导致 MK.III 完全静默（用户报「没找到这个物品」）
 
 > 产物 `build/libs/AE2-QoL-3.20.1.jar`（1152678 字节，SHA256 `D0F0017755C22154604A09581ABA403931E374D8D30DECB91005D9C21CECCFEC`）。

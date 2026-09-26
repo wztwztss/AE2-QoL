@@ -2,9 +2,10 @@
 navigation:
   title: 库存统计终端
   parent: index.md
-  icon: ae2_qof:stock_monitor_terminal
+  icon: gregtech:gt.blockmachines:32107
 item_ids:
-  - ae2_qof:stock_monitor_terminal
+  - gregtech:gt.blockmachines:32107
+  - ae2_qof:stock_monitor_cover
 author: wztwzt
 ---
 

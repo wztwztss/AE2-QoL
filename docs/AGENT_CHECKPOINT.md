@@ -15,7 +15,7 @@
 |模型信息|DeepSeek-V4.1-Flash|
 |工作分支|master；本轮起点 `fa612f4`（fix54 部署与推送收尾），工作树干净、与 origin/master 同步|
 |启动时间|2026-09-26（Asia/Shanghai，新功能轮：编程样板输入总成 MK.III）|
-|本次会话目标|**新增「编程样板输入总成 MK.III」**：ProgrammableHatches「编程样板输入总成」（MTE 22069）的扩容克隆版，样板槽 36 → **144**，样板窗改成 9 列 × 9 可见行的可滚动网格，只在装了 PH 时存在。严格按用户协议推进：先反复提问确认需求（7 项产品决策全部由用户拍板）→ 只读取证（PH 源码 + 实例 jar 字节码 + AE2/GT/MUI2 三层 API）→ 用户说「确认方案，开始修改」后才动代码。**3.20.0 首次实测失败**（可选依赖守卫把 PH 的 modid 误写成包名前缀 `proghatches`，物品从未注册且无日志），已定位并修复为 **3.20.1**（真实 modid + 关键类判据 + 三条分支日志），产物 `build/libs/AE2-QoL-3.20.1.jar`（SHA256 `D0F00177…`）**已部署到 b3 实例**（mods 内仅一份）。**已实测通过（用户：「样板确实扩充了没问题」）；日志证据见 CHANGELOG 记录 (23) 第六节；本轮收尾后推送 `origin/master`。**|
+|本次会话目标|**新增「编程样板输入总成 MK.III」**：ProgrammableHatches「编程样板输入总成」（MTE 22069）的扩容克隆版，样板槽 36 → **144**，样板窗改成 9 列 × 9 可见行的可滚动网格，只在装了 PH 时存在。严格按用户协议推进：先反复提问确认需求（7 项产品决策全部由用户拍板）→ 只读取证（PH 源码 + 实例 jar 字节码 + AE2/GT/MUI2 三层 API）→ 用户说「确认方案，开始修改」后才动代码。**3.20.0 首次实测失败**（可选依赖守卫把 PH 的 modid 误写成包名前缀 `proghatches`，物品从未注册且无日志），已定位并修复为 **3.20.1**（真实 modid + 关键类判据 + 三条分支日志），产物 `build/libs/AE2-QoL-3.20.1.jar`（SHA256 `D0F00177…`）**已部署到 b3 实例**（mods 内仅一份）。**已实测通过（用户：「样板确实扩充了没问题」）；日志证据见 CHANGELOG 记录 (23) 第六节。**随后按用户「你正常修就行，修完推」又完成 **3.20.2**：修 GuideNH 指南页 5 页 × 中英的 `icon:`/`item_ids:` 错误（GT 机器真实注册名是 `gregtech:gt.blockmachines:<MTE ID>`，原写成了 `ae2_qof:<机器名>`），并做了全量对照审计；产物 `build/libs/AE2-QoL-3.20.2.jar`（SHA256 `3B7189EF…`）。**3.20.2 未部署到实例**（纯资源修正，需用户确认后再换 jar）。|
 |上一轮（历史）|工具：DeepSeek Harness｜模型：DeepSeek-V4.1-Flash：fix50/51/52+54 三问题定位与修复，正式版 `3.19.0-fix54` 已部署到 b3 实例并推送到 `origin/master`。|
 
 ---
@@ -30,6 +30,19 @@ GTNH 2.9.0-beta-3（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 
 > 按完成时间倒序排列，均标注产出文件路径。历史结论保留原貌，不等于本版验证结果。
 
+- [x] 2026-09-26 | 工具：DeepSeek Harness（DSH Web GUI）| 模型：DeepSeek-V4.1-Flash：**3.20.2：修 GuideNH 指南页图标/物品 ID 写错（5 页 × 中英 = 10 个文件，纯资源修正）**。
+  1. 现象：启动日志 4 条 `[GuideNH] [NavigationUtil] Couldn't find icon item ae2_qof:...`
+     （万能维护仓 / 自适应电网 / 无线 EU 电网 / 库存统计终端 各一条），指南页图标空白。
+  2. 根因：`icon:`/`item_ids:` 写的是凭想象拼的名字；这些机器是 **GT 机器**，真实注册名是
+     `gregtech:gt.blockmachines` + meta（即 MTE ID）⇒ `ae2_qof:<机器名>` 不存在。
+     解析链核实：`Frontmatter.parseIconEntryString` → `IdUtils.parseItemRef`（`modid:name:meta` + 可选 `:{SNBT}`）
+     → `NavigationUtil.resolveItemStack`（`Item.itemRegistry.getObject`）。
+  3. 修正：32000 / 32102–32107 / 32110 / 32111 全部改用 `gregtech:gt.blockmachines:<id>`；
+     并修了**不报错**的第 5 页（AE2 切割刀 → `appliedenergistics2:item.ToolCertusQuartzCuttingKnife`，
+     依据 `ItemFeatureHandler` 的 `"item." + name` 与 `FeatureNameExtractor` 的 Quartz→CertusQuartz 替换）。
+  4. 全量审计：16 页 × 2 语言的**所有** `icon`/`item_ids` 与本模组注册名逐一对照；解包 grep 确认包内已无旧 ID。
+  5. 产物 `build/libs/AE2-QoL-3.20.2.jar`（1152731 字节，SHA256 `3B7189EF…`），构建 exit 0。
+  6. 待办：游戏内确认那 4 条 ERROR 消失；**3.20.2 未部署**（纯资源修正，需换 jar + 重启才生效）。
 - [x] 2026-09-26 | 工具：DeepSeek Harness（DSH Web GUI）| 模型：DeepSeek-V4.1-Flash：**新增「编程样板输入总成 MK.III」（3.20.0，ProgrammableHatches 可选依赖，144 样板槽）——代码完成、构建通过、产物自检通过；游戏内验收待用户配合，部署尚未进行**。
   1. **需求确认（7 项产品决策全部由用户拍板）**：144 样板槽；样板窗为 9 列 × 9 可见行的**可滚动网格**（覆盖 16 行）；
      屏幕基线 1920×1080 + GUI 缩放 4；输入结构与 MK.II 一致（每缓冲 32 物品 + 32 流体，24 个隔离缓冲）；
