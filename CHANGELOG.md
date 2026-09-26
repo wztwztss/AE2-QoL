@@ -1,3 +1,43 @@
+## 工作区决策记录 2026-09-26 (28) - **3.21.2**：修行内名称空白 + 发信器数量改不动（两个根因都读源码/字节码取证）
+
+> 产物 `build/libs/AE2-QoL-3.21.2.jar`（1183439 字节，SHA256 `09BDD665A4E100D49E64A17409B555D4054B57A69B8713FBBF53B4AEBA674517`）。
+> 用户报（截图证据：行内只剩「未知 · 1.0G」这类右半边，名称整列空白）：① 看不到物品/流体名称；② 点行后发信器数量改不动。
+
+### 一、取证过程（先证伪传输层，再落到渲染层——不靠猜）
+
+1. **先怀疑字符串没同步过去**，于是用 `javap -c` 反编译**自己刚构建的** `StockMonitorTerminalGui$EmitterRow`：
+   `write`/`read` 里 `cpw.mods.fml.common.network.ByteBufUtils.writeUTF8String/readUTF8String` 成对出现、
+   顺序一致、与构造器字段顺序一致 ⇒ **传输层无罪**（3.20.4 能显示名称也印证这点）。
+2. 读 MUI2 2.3.88 源码 `widgets/ButtonWidget.java` → `ButtonWidget extends SingleChildWidget`；
+   再读 `SingleChildWidget.child()`：
+   ```java
+   if (this.child != null) { this.child.dispose(); }   // 旧子控件被 dispose
+   this.child = child;                                  // 只保留最后一个
+   ```
+   **根因①**：我给按钮加了"名称 + 数值"两个子 `TextWidget` ⇒ **名称被直接扔掉** ⇒ 名称列空白。
+3. **根因②**：装进按钮里的文本会**吞掉点击**（本仓 PH 的 `NonInteractiveText` 就是为这个坑而写）
+   ⇒ "点行打开编辑子面板"失效 ⇒ 选中目标为 null ⇒ 子面板里的数量自然改不动（与用户描述完全一致）。
+4. **根因③（"未知"）**：`javap appeng.api.config.LevelType` 显示常量是 **`ITEM_LEVEL` / `ENERGY_LEVEL`**
+   （该 AE2 线根本没有 `ITEM`/`FLUID`/`ENERGY`）⇒ 3.21.0 的 `typeLabel` 用等值比较必然落到 unknown 分支。
+   （也解释了 3.20.4 为何看着正常：那时显示的是 `typeName.substring(0,1)` 取的 "I"。）
+
+### 二、修复
+
+1. 行结构改为：左「名称按钮」+ 右「数值按钮」（两者都可点开编辑，各自一个 `InteractionSyncHandler`
+   ——同一 handler 实例绑两个控件的行为未经验证，不冒险）+【高亮】【传送】；
+   文字一律走 **`overlay(IKey)`**：这是 3.20.4 实测能渲染文字的路径，且 overlay **不参与点击命中**，
+   一并解决根因①②。
+2. `typeLabel` 改为**前缀匹配**（`ITEM*`/`FLUID*`/`ENERGY*`），兼容不同 AE2 版本的常量命名。
+3. 未触碰其它文件（覆盖板 GUI、动作包、高亮渲染器等均不变）。
+
+### 三、验证
+
+- 构建 `BUILD SUCCESSFUL`（无管道取码 `GRADLE_EXIT=0`）；产物 `AE2-QoL-3.21.2.jar` 1183439 字节 / SHA256 `09BDD665…`；
+- **待游戏内验收**：① 每行左侧能看到物品/流体名称；② 类型显示中文（物品/能量）而非"未知"；
+  ③ 点行能打开编辑子面板且**数量可改、立即生效**；④ 高亮/传送按钮仍可用。
+
+---
+
 ## 工作区决策记录 2026-09-26 (27) - **3.21.1**：覆盖板列表改为「只看本终端所连网络」
 
 > 产物 `build/libs/AE2-QoL-3.21.1.jar`（1183287 字节，SHA256 `74BBBA2A6F591850FA5B99A8E8B28FFC3B4E91E59D574C1C7BB15F27CDA22058`）。

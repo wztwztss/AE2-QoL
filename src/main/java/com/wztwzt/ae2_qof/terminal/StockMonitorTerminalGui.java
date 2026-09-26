@@ -322,26 +322,23 @@ public class StockMonitorTerminalGui {
             return list;
         }
         for (EmitterRow row : rows) {
-            InteractionSyncHandler open = syncManager.getOrCreateSyncHandler(
-                "sm_terminal_emitter_row_" + row.index,
-                InteractionSyncHandler.class,
-                () -> new InteractionSyncHandler().setOnMousePressed(mouse -> {
-                    // 该回调在服务端执行；row 是服务端行的实例，携带真实 AE 部件引用。
-                    // 客户端行的 ref 为 null（快照不含对象），因此这里天然是服务端分支。
-                    if (row.emitter == null) return;
-                    setSelectedEmitter(player, row.emitter);
-                    editPanel.openPanel();
-                }));
-
             String value = typeLabel(row.typeName) + " · " + formatNumber(row.threshold);
             list.child(
                 buildActionRow(
-                    terminal,
+                    syncManager,
+                    "sm_terminal_emitter_row",
                     row.index,
-                    open,
+                    p -> {
+                        // 该回调在服务端执行；row 是服务端行的实例，携带真实 AE 部件引用。
+                        // 客户端行的 ref 为 null（快照不含对象），因此这里天然是服务端分支。
+                        if (row.emitter == null) return;
+                        setSelectedEmitter(p, row.emitter);
+                        editPanel.openPanel();
+                    },
                     row.label,
                     value,
                     row.hasPos() ? new int[] { row.dim, row.x, row.y, row.z } : null,
+                    terminal,
                     StockMonitorActionPacket.KIND_EMITTER,
                     java.util.Arrays.asList(
                         EnumChatFormatting.WHITE + row.label,
@@ -445,27 +442,24 @@ public class StockMonitorTerminalGui {
             return list;
         }
         for (CoverRow row : rows) {
-            InteractionSyncHandler open = syncManager.getOrCreateSyncHandler(
-                "sm_terminal_cover_row_" + row.index,
-                InteractionSyncHandler.class,
-                () -> new InteractionSyncHandler().setOnMousePressed(mouse -> {
-                    if (row.entry == null) return;
-                    setSelectedCover(player, row.entry);
-                    editPanel.openPanel();
-                }));
-
             String name = row.targetName.isEmpty() ? StatCollector.translateToLocal("ae2_qof.terminal.unset")
                 : row.targetName;
             String value = modeLabel(row.modeOrdinal) + " · " + formatNumber(row.threshold);
 
             list.child(
                 buildActionRow(
-                    terminal,
+                    syncManager,
+                    "sm_terminal_cover_row",
                     row.index,
-                    open,
+                    p -> {
+                        if (row.entry == null) return;
+                        setSelectedCover(p, row.entry);
+                        editPanel.openPanel();
+                    },
                     row.online ? name : EnumChatFormatting.GRAY + name + " [OFF]",
                     value,
                     new int[] { row.dim, row.x, row.y, row.z },
+                    terminal,
                     StockMonitorActionPacket.KIND_COVER,
                     java.util.Arrays.asList(
                         EnumChatFormatting.WHITE + name,
@@ -485,29 +479,46 @@ public class StockMonitorTerminalGui {
     // ===== 行构建（左名称 / 右中文数值 / 高亮 + 传送 两个小按钮）=====
 
     /**
-     * 构建一行：整块可点（打开编辑子面板）；最右两个小按钮分别是**客户端**回调的
-     * 高亮/传送请求（照抄自适应电网终端——它用 {@code onMousePressed} 而不是同步处理器，
-     * 避免"服务端发 C2S 包"这种无效路径）。目标坐标不可用时不放按钮（留空占位保持对齐）。
+     * 构建一行：左「名称」按钮 + 右「数值」按钮（两者都能点开编辑子面板）+ 两个动作按钮。
+     *
+     * <h2>为什么用 overlay 而不是按钮的子 TextWidget（3.21.2 两个根因，连着踩）</h2>
+     * <ol>
+     * <li>MUI2 的 {@code ButtonWidget extends SingleChildWidget}，其 {@code child()} 源码是
+     * 「新子控件会先把旧子控件 {@code dispose()} 再替换」——所以"名称 + 数值"两个子控件时
+     * **名称被直接扔掉**，列表里只剩数值（现象：名称整列空白）；</li>
+     * <li>装进按钮里的文本会**吞掉点击**（本仓 PH 的 {@code NonInteractiveText} 就是为这个坑写的），
+     * 于是"点行编辑"失效、发信器数量改不动。</li>
+     * </ol>
+     * {@code overlay(IKey)} 是 3.20.4 实测能渲染文字的路径，且不参与点击命中，一举解决两者。
+     * 名称与数值各用一个独立的 {@code InteractionSyncHandler}（同一 handler 实例绑两个控件的行为
+     * 未经验证，不冒险）。
      */
-    private static IWidget buildActionRow(StockMonitorTerminal terminal, int index, InteractionSyncHandler openHandler,
-            String name, String value, int[] pos, int kind, List<String> tooltipLines) {
-        final int innerW = ROW_W - BTN_W * 2 - 6;
+    private static IWidget buildActionRow(PanelSyncManager syncManager, String keyPrefix, int index,
+            java.util.function.Consumer<EntityPlayer> onOpen, String name, String value, int[] pos,
+            StockMonitorTerminal terminal, int kind, List<String> tooltipLines) {
+        final int nameW = 152;
+        final int valueW = 98;
 
-        Flow row = Flow.row().size(ROW_W, ROW_H).childPadding(2);
+        InteractionSyncHandler nameHandler = syncManager.getOrCreateSyncHandler(
+            keyPrefix + "_name_" + index,
+            InteractionSyncHandler.class,
+            () -> new InteractionSyncHandler().setOnMousePressed(mouse -> onOpen.accept(syncManager.getPlayer())));
+        InteractionSyncHandler valueHandler = syncManager.getOrCreateSyncHandler(
+            keyPrefix + "_value_" + index,
+            InteractionSyncHandler.class,
+            () -> new InteractionSyncHandler().setOnMousePressed(mouse -> onOpen.accept(syncManager.getPlayer())));
 
-        ButtonWidget<?> openArea = new ButtonWidget<>().size(innerW, ROW_H)
-            .background(GuiTextures.BUTTON_CLEAN)
-            .syncHandler(openHandler)
+        Flow row = Flow.row().size(ROW_W, ROW_H).childPadding(2)
             .child(
-                new TextWidget<>(IKey.str(name)).pos(4, 0)
-                    .size(innerW - 100, ROW_H)
-                    .textAlign(Alignment.CenterLeft))
+                new ButtonWidget<>().size(nameW, ROW_H)
+                    .background(GuiTextures.BUTTON_CLEAN)
+                    .overlay(IKey.str(name))
+                    .syncHandler(nameHandler))
             .child(
-                new TextWidget<>(IKey.str(value)).pos(innerW - 104, 0)
-                    .size(100, ROW_H)
-                    .textAlign(Alignment.CenterRight));
-
-        row.child(openArea);
+                new ButtonWidget<>().size(valueW, ROW_H)
+                    .background(GuiTextures.BUTTON_CLEAN)
+                    .overlay(IKey.str(value))
+                    .syncHandler(valueHandler));
 
         if (pos != null) {
             row.child(actionButton(terminal, pos, kind, StockMonitorActionPacket.ACTION_HIGHLIGHT,
@@ -978,11 +989,18 @@ public class StockMonitorTerminalGui {
         return ordinal < 0 ? 0 : (ordinal > max ? max : ordinal);
     }
 
-    /** 类型中文名（行内与编辑面板共用）。 */
+    /**
+     * 类型中文名（行内与编辑面板共用）。
+     *
+     * <p>**必须用前缀匹配**：GTNH 这条 AE2 线上 `LevelType` 的常量是 {@code ITEM_LEVEL} /
+     * {@code ENERGY_LEVEL}（根本没有 {@code ITEM}/{@code FLUID}/{@code ENERGY}），
+     * 3.21.0 用等值比较 ⇒ 永远落到"未知"（已用实例 jar `javap` 核对）。
+     */
     private static String typeLabel(String typeName) {
-        if ("ITEM".equals(typeName)) return StatCollector.translateToLocal("ae2_qof.terminal.type.item");
-        if ("FLUID".equals(typeName)) return StatCollector.translateToLocal("ae2_qof.terminal.type.fluid");
-        if ("ENERGY".equals(typeName)) return StatCollector.translateToLocal("ae2_qof.terminal.type.energy");
+        if (typeName == null) return StatCollector.translateToLocal("ae2_qof.terminal.type.unknown");
+        if (typeName.startsWith("ITEM")) return StatCollector.translateToLocal("ae2_qof.terminal.type.item");
+        if (typeName.startsWith("FLUID")) return StatCollector.translateToLocal("ae2_qof.terminal.type.fluid");
+        if (typeName.startsWith("ENERGY")) return StatCollector.translateToLocal("ae2_qof.terminal.type.energy");
         return StatCollector.translateToLocal("ae2_qof.terminal.type.unknown");
     }
 
