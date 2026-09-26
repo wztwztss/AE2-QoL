@@ -63,6 +63,8 @@ public class CommonProxy {
     public static WirelessEnergyInputTerminal wirelessEnergyInputTerminal;
     public static WirelessEnergyOutputTerminal wirelessEnergyOutputTerminal;
     public static ItemNetworkDataStick networkDataStick;
+    /** 3.22.0：智能通配样板（继承 AE2 原版 ItemEncodedPattern ⇒ 所有样板总成都能识别）。 */
+    public static com.wztwzt.ae2_qof.wildcard.ItemSmartWildcardPattern smartWildcardPattern;
 
     public void preInit(FMLPreInitializationEvent event) {
         // ===== fix39: 已移除 RFB childDelegations 注入 =====
@@ -142,6 +144,15 @@ public class CommonProxy {
             networkDataStick.register();
         } catch (Throwable t) {
             MyMod.LOG.error("[DIAG] ItemNetworkDataStick registration FAILED", t);
+            t.printStackTrace(System.err);
+        }
+        // 3.22.0：智能通配样板。注册成功必须留一行日志（坑位 19：可选/新功能的“跳过”分支绝不能静默）。
+        try {
+            smartWildcardPattern = new com.wztwzt.ae2_qof.wildcard.ItemSmartWildcardPattern();
+            smartWildcardPattern.register();
+            MyMod.LOG.info("[AE2QoL] 智能通配样板已注册：smart_wildcard_pattern（3.22.0 M1）");
+        } catch (Throwable t) {
+            MyMod.LOG.error("[DIAG] ItemSmartWildcardPattern registration FAILED", t);
             t.printStackTrace(System.err);
         }
         try {

@@ -57,6 +57,78 @@ public abstract class MixinDualityInterface implements ISmartDoublingMedium {
     @Shadow
     public abstract BlockingMode getBlockingMode();
 
+    @Shadow
+    @Final
+    private appeng.tile.inventory.AppEngInternalInventory patterns;
+
+    @Shadow
+    public java.util.List<ICraftingPatternDetails> craftingList;
+
+    @Shadow
+    public abstract int getPriority();
+
+    /**
+     * 3.22.0 智能通配样板：ME 接口**建样板索引**时，把一张通配样板展开成 N 张各自合法的普通样板。
+     *
+     * <p>为什么在这里截胡：AE2 原生 {@code addToCraftingList} 一张样板只登记**一个** details，
+     * 而“一张覆盖一类配方”的唯一省事办法就是把它展开成多张普通样板（参考实现同款路线，
+     * 取证见 {@code docs/research/wildcardpattern-forensics.md}）。
+     * 展开出的样板由本模组物品的原生解码路径转成 details（它们已剥掉规则子树，就是普通样板），
+     * 优先级沿用 AE2 原生算式 {@code slot - 36 * getPriority()}。
+     *
+     * <p>失败绝不静默：解析不出候选时记 WARN 并取消（不留半截状态）；
+     * 展开器自身异常时**放行原生逻辑**（此时它退化为“按模板那一张样板”），同时记 WARN。
+     */
+    @Inject(method = "addToCraftingList", at = @At("HEAD"), cancellable = true, remap = false)
+    private void ae2qol$expandSmartWildcard(int slot, CallbackInfo ci) {
+        try {
+            if (this.patterns == null || slot < 0 || slot >= this.patterns.getSizeInventory()) return;
+            net.minecraft.item.ItemStack stack = this.patterns.getStackInSlot(slot);
+            if (stack == null || !com.wztwzt.ae2_qof.wildcard.SmartWildcardState.isSmartWildcard(stack)) return;
+
+            net.minecraft.item.ItemStack single = stack.copy();
+            single.stackSize = 1;
+            net.minecraft.world.World world = this.iHost == null || this.iHost.getTileEntity() == null
+                ? null
+                : this.iHost.getTileEntity()
+                    .getWorldObj();
+            com.wztwzt.ae2_qof.wildcard.SmartWildcardExpander.Result result =
+                com.wztwzt.ae2_qof.wildcard.SmartWildcardExpander.expand(single, world);
+
+            if (result.isEmpty()) {
+                MyMod.LOG.warn("[AE2QoL] 智能通配样板未展开出任何样板（ME 接口 slot={}）：{}", slot, result.describe());
+                ci.cancel();
+                return;
+            }
+
+            final int priority = slot - 36 * this.getPriority();
+            int added = 0;
+            for (net.minecraft.item.ItemStack concrete : result.patterns) {
+                if (concrete == null || concrete.getItem() == null) continue;
+                ICraftingPatternDetails details = null;
+                if (concrete.getItem() instanceof appeng.api.implementations.ICraftingPatternItem patternItem) {
+                    details = patternItem.getPatternForItem(concrete, world);
+                }
+                if (details == null) continue;
+                details.setPriority(priority);
+                this.craftingList.add(details);
+                added++;
+            }
+            if (added == 0) {
+                MyMod.LOG.warn(
+                    "[AE2QoL] 智能通配样板展开后全部解码失败（ME 接口 slot={}）：{}",
+                    slot,
+                    result.describe());
+                ci.cancel();
+                return;
+            }
+            ci.cancel();
+        } catch (Throwable t) {
+            // 放行原生逻辑（退化为模板样板），但绝不静默
+            MyMod.LOG.warn("[AE2QoL] 智能通配样板在 ME 接口展开异常，已回退原生解码：slot=" + slot, t);
+        }
+    }
+
     @Unique
     private boolean smartDoubling;
 

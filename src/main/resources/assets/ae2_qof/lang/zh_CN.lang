@@ -385,3 +385,13 @@ ae2_qof.terminal.target_other_dim=目标在维度 %s，高亮只在同维度可�
 ae2_qof.terminal.highlighted=已高亮目标 [%s, %s, %s]（10 秒）
 ae2_qof.terminal.teleported=已传送到 [%s, %s, %s] dim:%s
 ae2_qof.terminal.no_covers_filtered=本终端所连网络下没有覆盖板（另有 %s 个属于其他网络，已隐藏）
+
+# ===== 3.22.0：智能通配样板 =====
+item.ae2_qof.smart_wildcard_pattern.name=智能通配样板
+ae2_qof.wildcard.tip.unconfigured=未配置规则：用 NEI 的加号把配方写入本样板
+ae2_qof.wildcard.tip.no_rules=尚未配置通配规则
+ae2_qof.wildcard.tip.rules=通配规则 %s 条
+ae2_qof.wildcard.tip.blacklist=黑名单 %s 项（已排除）
+ae2_qof.wildcard.tip.circuit=样板自带电路 %s 号
+ae2_qof.wildcard.tip.non_consumed=样板自带不消耗物品 %s 种
+ae2_qof.wildcard.tip.cap=单张样板展开上限 %s

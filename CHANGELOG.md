@@ -1,3 +1,43 @@
+## 工作区决策记录 2026-09-26 (31) - **3.22.0 M1（功能进行中）**：智能通配样板 —— 数据模型 / 展开器 / AE2 接口接管 / 自测命令
+
+> 产物 `build/libs/AE2-QoL-3.22.0.jar`。**注意：这是 M1 中间版本，M2（NEI 加号自动推导 + 可视化界面）与 M3（每槽电路）尚未交付**，
+> 因此本条记录只用于让 M1 可被测试与回滚，不是可发布版本。
+> 前置调研报告：`docs/research/wildcardpattern-forensics.md`（Wildcard Pattern 1.1.0 行号级取证）。
+
+### 一、路线确认（读参考实现源码后修正了一次架构判断）
+
+参考实现**不是**“一张样板动态匹配多类配方”，而是**在宿主建样板索引时把一条规则展开成 N 张各自合法的普通样板**
+（逐候选 `template.copy()` + 改写原生 `in`/`out` NBT）⇒ AE2/机器永远只看到普通样板，这才是它能被所有总成接受的原因。
+本模组沿用这条路（见 `SmartWildcardExpander` 类注释），并修正了参考实现的三处硬伤。
+
+### 二、本批交付（M1）
+
+| 文件 | 内容 |
+|---|---|
+| `wildcard/SmartWildcardState.java`（新） | 规则（槽位+矿辞/名称匹配串+数量）、**每张样板独立的黑白名单**、自带电路号、自带不消耗物品、**修订号**；模板仍留在原生 `in/out` ⇒ 未配置时它仍是一张合法样板（参考实现会删掉 in/out 导致原生解析失败） |
+| `wildcard/SmartWildcardExpander.java`（新） | **材料配对展开**：从规则匹配的矿辞取材料名 → 输出前缀由模板输出矿辞名去掉模板材料名得到 → 逐材料实例化；对侧矿辞缺失则跳过并计数；同时写 `Count`/`Cnt`（参考实现踩过的坑）；展开后**剥掉规则子树**防止二次展开 |
+| `wildcard/ItemSmartWildcardPattern.java`（新） | 继承 AE2 原版 `ItemEncodedPattern`（⇒ 所有总成天然接受）；tooltip 直出规则/黑名单/电路/上限；右键跑一次展开并回报计数（M1 自测入口） |
+| `Config.smart_wildcard_expand_cap`（新配置） | 默认 **512**、可热加载、可在配置页与 `/ae2qof status` 改；**超限截断并打 WARN**（参考实现是无界展开，是明确卡服点） |
+| `mixin/ae/MixinDualityInterface`（改） | `addToCraftingList` HEAD+cancel：ME 接口建索引时把通配样板展开成 N 张普通样板，优先级沿用原生 `slot - 36 * getPriority()`；解析不出候选/全部解码失败记 WARN 并取消，展开异常则放行原生并记 WARN（**无静默回退**） |
+| `CommandAe2QoL`（改） | `/ae2qof wildcard [矿辞前缀]`：把手持样板写成一条矿素规则并立即展开回报（M2 的 NEI 流程复用同一写入路径） |
+
+### 三、**尚未交付**（M1 之后的计划，已与用户确认）
+
+1. **M1 剩余**：GT 样板输入仓（`MTEHatchCraftingInputME.provideCrafting`/`pushPattern`/`onPatternChange` + `PatternSlot` 子类：GT 的 `patternDetails` 是 `final`，一槽一 details，必须子类化并重建 `patternDetailsPatternSlotMap`）；
+2. **M2**：NEI **加号** → 自动推导规则（矿辞优先、无矿辞按 RecipeMap+电路兜底）→ 确认窗（可视化查看/当场排除）→ 写回样板；本仓已有 `MixinGuiOverlayButton`/`MixinGuiRecipe` 现成钩子；
+3. **M3**：**每槽电路**（`Shift+中键`点样板槽 → 列表选择电路 1~32 与“其他不消耗物品”，优先级**样板自带 > 槽位 > 整机**；写入走 GT 官方 `GhostCircuitItemStackHandler.setCircuitConfig()`），覆盖 GT 仓 / PH 总成 / GTNL 超级总成 / ME 接口 / MK.III；
+4. **M4**：文档（指南页中英）、README×2、版本收口、游戏内验收清单。
+
+### 四、验证（M1 范围）
+
+- 构建 `BUILD SUCCESSFUL`（无管道取码 `GRADLE_EXIT=0`）；`AE2-QoL-3.22.0.jar`；入包核对 `wildcard/` 下 7 个类均在；
+- 编译期修正记录：① `readAmount` 返回 long 赋给 int 需显式收窄；② 同方法内局部变量 `result` 重名。
+- **可测路径（M1）**：装 PH/GT 与 ME 接口 → 用样板终端编码一条“1 锭→1 板”模板 → 合成/取得「智能通配样板」→
+  `/ae2qof wildcard ingot` → 聊天栏应回报 `produced=… matched=… skippedMissingCounterpart=…`；
+  放进 ME 接口后下单任意材质的板，应能对应到具体配方。
+
+---
+
 ## 工作区决策记录 2026-09-26 (30) - **3.21.4**：智能倍增单次推送上限改可配 + 修 3.21.3 诊断误报
 
 > 产物 `build/libs/AE2-QoL-3.21.4.jar`（1192155 字节，SHA256 `8DB5EBBCD5C89CD6CB00F7FDCCCC175CD86B84F8C3508368C2402B9ADA842A57`）。

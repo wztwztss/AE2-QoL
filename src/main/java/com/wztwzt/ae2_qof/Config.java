@@ -42,6 +42,16 @@ public class Config {
      */
     public static volatile int smartDoublingPushCap = 4096;
 
+    /**
+     * 智能通配样板单张最大展开候选数（热加载字段，3.22.0）。
+     *
+     * <p>为什么必须有上限：通配样板是在**宿主建样板索引时**把规则展开成 N 张各自合法的普通样板
+     * （逐候选克隆 + 改写原生 in/out NBT），这条路径由网络钩子同步触发，且每个候选一份完整样板对象。
+     * 参考实现（Wildcard Pattern）在这条路径上无上界展开，是明确的卡服点；
+     * 本模组改为「有上限 + 超限可见 + 记日志」，绝不做静默截断。
+     */
+    public static volatile int smartWildcardExpandCap = 512;
+
     /** NEI 叠加层开关（热加载字段）。 */
     public static volatile boolean neiOverlayEnabled = true;
 
@@ -132,6 +142,7 @@ public class Config {
         int io = exIOPortTransferContentsRate;
         int rounds = smartDoublingMaxRounds;
         int pushCap = smartDoublingPushCap;
+        int wildcardCap = smartWildcardExpandCap;
         boolean overlay = neiOverlayEnabled;
         boolean pinRow = pinRowEnabled;
         String presets = stockMonitorPresets;
@@ -160,6 +171,10 @@ public class Config {
                     if (value != null && value.isJsonPrimitive()) {
                         pushCap = clamp(value.getAsInt(), 1, Integer.MAX_VALUE, pushCap);
                     }
+                    value = obj.get("smart_wildcard_expand_cap");
+                    if (value != null && value.isJsonPrimitive()) {
+                        wildcardCap = clamp(value.getAsInt(), 1, Integer.MAX_VALUE, wildcardCap);
+                    }
                     value = obj.get("nei_overlay_enabled");
                     if (value != null && value.isJsonPrimitive()) {
                         overlay = value.getAsBoolean();
@@ -187,6 +202,7 @@ public class Config {
         exIOPortTransferContentsRate = io;
         smartDoublingMaxRounds = rounds;
         smartDoublingPushCap = pushCap;
+        smartWildcardExpandCap = wildcardCap;
         neiOverlayEnabled = overlay;
         pinRowEnabled = pinRow;
         stockMonitorPresets = presets;
@@ -268,6 +284,13 @@ public class Config {
                         1,
                         Integer.MAX_VALUE,
                         smartDoublingPushCap);
+                    break;
+                case "smart_wildcard_expand_cap":
+                    smartWildcardExpandCap = clamp(
+                        Integer.parseInt(value.trim()),
+                        1,
+                        Integer.MAX_VALUE,
+                        smartWildcardExpandCap);
                     break;
                 case "nei_overlay_enabled":
                     neiOverlayEnabled = Boolean.parseBoolean(value.trim());
@@ -351,6 +374,12 @@ public class Config {
 
     private static boolean writeFile(int ioRate, int rounds, boolean overlay, boolean pinRow, String presets,
         String v7, int pushCap) {
+        // 3.22.0：同样用委托，新增字段（smart_wildcard_expand_cap）从静态字段取值，调用点保持不动。
+        return writeFile(ioRate, rounds, overlay, pinRow, presets, v7, pushCap, smartWildcardExpandCap);
+    }
+
+    private static boolean writeFile(int ioRate, int rounds, boolean overlay, boolean pinRow, String presets,
+        String v7, int pushCap, int wildcardCap) {
         try {
             Path parent = SETTINGS_FILE.getParent();
             if (parent != null && !Files.exists(parent)) {
@@ -360,6 +389,7 @@ public class Config {
             root.addProperty("io_port_rate", ioRate);
             root.addProperty("smart_doubling_max_rounds", rounds);
             root.addProperty("smart_doubling_push_cap", pushCap);
+            root.addProperty("smart_wildcard_expand_cap", wildcardCap);
             root.addProperty("nei_overlay_enabled", overlay);
             root.addProperty("pin_row_enabled", pinRow);
             root.addProperty("stock_monitor_presets", presets);

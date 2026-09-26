@@ -384,3 +384,13 @@ ae2_qof.terminal.target_other_dim=Target is in dimension %s; highlight is only v
 ae2_qof.terminal.highlighted=Highlighted target [%s, %s, %s] (10 s)
 ae2_qof.terminal.teleported=Teleported to [%s, %s, %s] dim:%s
 ae2_qof.terminal.no_covers_filtered=No covers on this terminal's network (%s hidden from other networks)
+
+# ===== 3.22.0: Smart Wildcard Pattern =====
+item.ae2_qof.smart_wildcard_pattern.name=Smart Wildcard Pattern
+ae2_qof.wildcard.tip.unconfigured=No rules yet: use NEI's plus button to write a recipe into this pattern
+ae2_qof.wildcard.tip.no_rules=No wildcard rules configured
+ae2_qof.wildcard.tip.rules=%s wildcard rule(s)
+ae2_qof.wildcard.tip.blacklist=%s blacklisted (excluded)
+ae2_qof.wildcard.tip.circuit=Pattern carries circuit #%s
+ae2_qof.wildcard.tip.non_consumed=Pattern carries %s non-consumed item(s)
+ae2_qof.wildcard.tip.cap=Per-pattern expansion cap: %s
