@@ -150,12 +150,14 @@ public abstract class MixinSuperCraftingInputHatchMEWildcard {
             if (wildcardSlots.isEmpty()) return;
 
             int registered = 0;
+            final List<ICraftingPatternDetails> allDetails = new ArrayList<>();
             for (SuperCraftingInputHatchME.PatternSlot<SuperCraftingInputHatchME> slot : wildcardSlots) {
                 SmartWildcardGtnlPatternSlot wildcardSlot = (SmartWildcardGtnlPatternSlot) slot;
                 for (ICraftingPatternDetails details : wildcardSlot.expandedDetails()) {
                     // 逐条写映射：未命中会 NPE（GTNL:957-958）
                     this.patternDetailsPatternSlotMap.put(details, wildcardSlot);
                     craftingTracker.addCraftingOption((ICraftingProvider) (Object) this, details);
+                    allDetails.add(details);
                     registered++;
                 }
                 if (wildcardSlot.expandedDetails()
@@ -164,17 +166,21 @@ public abstract class MixinSuperCraftingInputHatchMEWildcard {
                         wildcardSlot.expandSummary());
                 }
             }
+            // 3.39.0-diag：只加日志 —— 注册后回读 AE2 合成表
+            com.wztwzt.ae2_qof.wildcard.SmartWildcardDiag
+                .scheduleAeReadBack((ICraftingProvider) (Object) this, allDetails, "GTNL 通配样板");
             long now = System.currentTimeMillis();
             // 3.38.0：初值用 0（旧的 Long.MIN_VALUE 会让 now-last 溢出成负数 ⇒ 这条日志从来没打出来过）
             if (now - this.ae2qol$lastRegisterLogTick > 15000L) {
                 this.ae2qol$lastRegisterLogTick = now;
                 MyMod.LOG.info(
-                    "[AE2QoL] GTNL 通配样板注册（只追加，未 cancel）：通配槽={} 注册 details={} 本机含原版样板={} 映射总数={} 上限={}",
+                    "[AE2QoL] GTNL 通配样板注册（只追加，未 cancel）：通配槽={} 注册 details={} 本机含原版样板={} 映射总数={} 上限={} {}",
                     wildcardSlots.size(),
                     registered,
                     foreign,
                     this.patternDetailsPatternSlotMap.size(),
-                    Config.smartWildcardExpandCap);
+                    Config.smartWildcardExpandCap,
+                    com.wztwzt.ae2_qof.wildcard.SmartWildcardDiag.describe(allDetails, 3));
             }
         } catch (Throwable t) {
             // 绝不静默；也不 cancel ⇒ 原版照样工作

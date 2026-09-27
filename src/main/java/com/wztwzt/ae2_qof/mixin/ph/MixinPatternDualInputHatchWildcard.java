@@ -75,6 +75,7 @@ public abstract class MixinPatternDualInputHatchWildcard {
             int wildcardSlots = 0;
             int registered = 0;
             int truncated = 0;
+            final java.util.List<ICraftingPatternDetails> allDetails = new java.util.ArrayList<>();
             for (ItemStack slot : slots) {
                 // 3.34.0：判据改用统一门（物品实例 → 缺我们 NBT 时先懒同步 → 至少一条规则）。
                 // 旧实现直接用 isSmartWildcard（要求已有我们的 NBT）且判否完全静默 —— 玩家只在 Wild 界面里
@@ -113,16 +114,21 @@ public abstract class MixinPatternDualInputHatchWildcard {
                     ICraftingPatternDetails details = patternItem.getPatternForItem(concrete, world);
                     if (details == null) continue;
                     craftingTracker.addCraftingOption((ICraftingProvider) (Object) this, details);
+                    allDetails.add(details);
                     registered++;
                 }
             }
             if (wildcardSlots > 0) {
+                // 3.39.0-diag：只加日志 —— 注册后回读 AE2 合成表（判断"数据不对"还是"AE 没收录"）
+                com.wztwzt.ae2_qof.wildcard.SmartWildcardDiag
+                    .scheduleAeReadBack((ICraftingProvider) (Object) this, allDetails, "PH 通配样板");
                 MyMod.LOG.info(
-                    "[AE2QoL] PH 通配样板注册：通配槽={} 注册 details={} 截断={} 上限={}",
+                    "[AE2QoL] PH 通配样板注册（只追加，未 cancel）：通配槽={} 注册 details={} 截断={} 上限={} {}",
                     wildcardSlots,
                     registered,
                     truncated,
-                    Config.smartWildcardExpandCap);
+                    Config.smartWildcardExpandCap,
+                    com.wztwzt.ae2_qof.wildcard.SmartWildcardDiag.describe(allDetails, 3));
             }
         } catch (Throwable t) {
             // 不静默、也不 cancel：本轮跳过，原版样板照常工作

@@ -158,26 +158,32 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard {
             if (wildcardSlots.isEmpty()) return; // 没有我们的样板 ⇒ 完全不动
 
             int registered = 0;
+            final List<ICraftingPatternDetails> allDetails = new ArrayList<>();
             for (MTEHatchCraftingInputME.PatternSlot<MTEHatchCraftingInputME> slot : wildcardSlots) {
                 SmartWildcardPatternSlot wildcardSlot = (SmartWildcardPatternSlot) slot;
                 for (ICraftingPatternDetails details : wildcardSlot.expandedDetails()) {
                     // 映射必须逐条写：pushPattern 反查靠它（GT 自己的 body 不写这张表）
                     this.patternDetailsPatternSlotMap.put(details, wildcardSlot);
                     craftingTracker.addCraftingOption((ICraftingProvider) (Object) this, details);
+                    allDetails.add(details);
                     registered++;
                 }
             }
+            // 3.39.0-diag：只加日志 —— 注册后回读 AE2 合成表，判断"数据不对"还是"AE 没收录"
+            com.wztwzt.ae2_qof.wildcard.SmartWildcardDiag
+                .scheduleAeReadBack((ICraftingProvider) (Object) this, allDetails, "GT 通配样板");
             long now = System.currentTimeMillis();
             // 3.38.0：初值用 0（旧的 Long.MIN_VALUE 会让 now-last 溢出成负数 ⇒ 这条日志**从来没打出来过**）
             if (now - this.ae2qol$lastRegisterLogTick > 15000L) {
                 this.ae2qol$lastRegisterLogTick = now;
                 MyMod.LOG.info(
-                    "[AE2QoL] GT 通配样板注册（只追加拿，未 cancel）：通配槽={} 注册 details={} 本机含原版样板={} 映射总数={} 上限={}",
+                    "[AE2QoL] GT 通配样板注册（只追加拿，未 cancel）：通配槽={} 注册 details={} 本机含原版样板={} 映射总数={} 上限={} {}",
                     wildcardSlots.size(),
                     registered,
                     foreign,
                     this.patternDetailsPatternSlotMap.size(),
-                    Config.smartWildcardExpandCap);
+                    Config.smartWildcardExpandCap,
+                    com.wztwzt.ae2_qof.wildcard.SmartWildcardDiag.describe(allDetails, 3));
             }
         } catch (Throwable t) {
             // 绝不静默；也不 cancel ⇒ 原版照样工作
