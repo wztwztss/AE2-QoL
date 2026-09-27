@@ -68,6 +68,13 @@ public class GuiPatternGen {
         // 3.22.0-fix46：机器编码框改成"输机器名片段 + Tab 循环候选"，并在右侧留出「改」按钮
         // （MUI1 自绘界面里系统输入法不可用 ⇒ 用原版输入框的对话框才能打中文，见 GuiTextInputDialog）
         final String[] mapHint = { EnumChatFormatting.GRAY + "输机器名片段（中文/英文/关键字皆可）后按 Tab 循环候选" };
+        final int[] recipeFieldYHolder = new int[1];
+        // 各过滤器框「改」按钮的 y 位置（同样等所有字段声明后再统一建，避开"引用后面声明的变量"）
+        final int[] yOutOreHolder = new int[1];
+        final int[] yInOreHolder = new int[1];
+        final int[] yNcHolder = new int[1];
+        final int[] yBlInHolder = new int[1];
+        final int[] yBlOutHolder = new int[1];
         TextFieldWidget tfRecipeMap = new RecipeMapTextFieldWidget(hint -> mapHint[0] = hint);
         tfRecipeMap.setText(ItemPatternGenerator.getSavedField(held, ItemPatternGenerator.NBT_RECIPE_MAP));
         tfRecipeMap.setPos(6, refY + 14);
@@ -77,31 +84,9 @@ public class GuiPatternGen {
         tfRecipeMap.setTextAlignment(com.gtnewhorizons.modularui.api.math.Alignment.CenterLeft);
         scrollable.widget(tfRecipeMap);
         {
-            ButtonWidget btnEdit = new ButtonWidget();
-            btnEdit.setPos(2 + fullFieldW - 18, refY + 14);
-            btnEdit.setSize(18, 14);
-            scrollable.widget(btnEdit);
-            TextWidget btnEditText = new TextWidget("改");
-            btnEditText.setPos(2 + fullFieldW - 18 + 5, refY + 14 + 3);
-            scrollable.widget(btnEditText);
-            btnEdit.setOnClick((clickData, widget) -> {
-                try {
-                    net.minecraft.client.Minecraft.getMinecraft()
-                        .displayGuiScreen(
-                            new com.wztwzt.ae2_qof.client.gui.GuiTextInputDialog(
-                                I18nUtil.tr("ae2patterngen.gui.pattern_gen.section.recipe"),
-                                tfRecipeMap.getText(),
-                                value -> {
-                                    tfRecipeMap.setText(value == null ? "" : value);
-                                    tfRecipeMap.markForUpdate();
-                                }));
-                } catch (Throwable t) {
-                    com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 打开机器编码输入对话框失败", t);
-                }
-            });
-            // 注意：**不要在这里再加一次 scrollable.widget(btnEdit)** ——
-            // MUI1 的 ModularWindow 用 ImmutableBiMap 存 widget，同一个实例加两次会在 build() 时抛
-            // IllegalArgumentException: Multiple entries with same value（3.22.0-fix49 实测踩到，生成器界面因此打不开）。
+            // 机器编码框的「改」按钮位置：等其它字段都声明之后再建（回调要带上它们的当前值）；
+            // 用数组持有以避开 lambda 对"有效 final 局部变量"的限制。
+            recipeFieldYHolder[0] = refY + 14;
         }
         TextWidget mapHintText = new TextWidget(mapHint[0]);
         mapHintText.setPos(6, refY + 29);
@@ -128,12 +113,7 @@ public class GuiPatternGen {
         tfOutputOre.setTextAlignment(com.gtnewhorizons.modularui.api.math.Alignment.CenterLeft);
         scrollable.widget(tfOutputOre);
         attachDragChoiceSelector(scrollable, tfOutputOre, inputX, refY + 14, fieldW - 18);
-        attachEditButton(
-            scrollable,
-            tfOutputOre,
-            inputX + fieldW - 18,
-            refY + 14,
-            I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.output_ore"));
+        yOutOreHolder[0] = refY + 14;
 
         TextWidget labelInOre = new TextWidget(I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.input_ore"));
         labelInOre.setPos(6, refY + 32 + 3);
@@ -148,12 +128,7 @@ public class GuiPatternGen {
         tfInputOre.setTextAlignment(com.gtnewhorizons.modularui.api.math.Alignment.CenterLeft);
         scrollable.widget(tfInputOre);
         attachDragChoiceSelector(scrollable, tfInputOre, inputX, refY + 32, fieldW - 18);
-        attachEditButton(
-            scrollable,
-            tfInputOre,
-            inputX + fieldW - 18,
-            refY + 32,
-            I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.input_ore"));
+        yInOreHolder[0] = refY + 32;
 
         TextWidget labelNC = new TextWidget(I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.nc_item"));
         labelNC.setPos(6, refY + 50 + 3);
@@ -168,12 +143,7 @@ public class GuiPatternGen {
         tfNCItem.setTextAlignment(com.gtnewhorizons.modularui.api.math.Alignment.CenterLeft);
         scrollable.widget(tfNCItem);
         attachDragChoiceSelector(scrollable, tfNCItem, inputX, refY + 50, fieldW - 18);
-        attachEditButton(
-            scrollable,
-            tfNCItem,
-            inputX + fieldW - 18,
-            refY + 50,
-            I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.nc_item"));
+        yNcHolder[0] = refY + 50;
 
         TextWidget labelTier = new TextWidget(I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.tier"));
         labelTier.setPos(6, refY + 68 + 3);
@@ -239,12 +209,7 @@ public class GuiPatternGen {
         tfBlacklistIn.setTextAlignment(com.gtnewhorizons.modularui.api.math.Alignment.CenterLeft);
         scrollable.widget(tfBlacklistIn);
         attachDragChoiceSelector(scrollable, tfBlacklistIn, inputX, refY + 14, fieldW - 18);
-        attachEditButton(
-            scrollable,
-            tfBlacklistIn,
-            inputX + fieldW - 18,
-            refY + 14,
-            I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.blacklist_input"));
+        yBlInHolder[0] = refY + 14;
 
         TextWidget labelBLOut = new TextWidget(I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.blacklist_output"));
         labelBLOut.setPos(6, refY + 32 + 3);
@@ -259,12 +224,7 @@ public class GuiPatternGen {
         tfBlacklistOut.setTextAlignment(com.gtnewhorizons.modularui.api.math.Alignment.CenterLeft);
         scrollable.widget(tfBlacklistOut);
         attachDragChoiceSelector(scrollable, tfBlacklistOut, inputX, refY + 32, fieldW - 18);
-        attachEditButton(
-            scrollable,
-            tfBlacklistOut,
-            inputX + fieldW - 18,
-            refY + 32,
-            I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.blacklist_output"));
+        yBlOutHolder[0] = refY + 32;
 
         TextWidget regexHint = new TextWidget(
             EnumChatFormatting.DARK_GRAY + I18nUtil.tr("ae2patterngen.gui.pattern_gen.hint.regex"));
@@ -467,21 +427,126 @@ public class GuiPatternGen {
             builder.widget(btnTableText);
         }
 
+        // fix51：机器编码框的「改」按钮（此时所有字段都已声明，回调才能带上它们的当前值一起保存）
+        attachEditButton(
+            scrollable,
+            tfRecipeMap,
+            2 + fullFieldW - 18,
+            recipeFieldYHolder[0],
+            I18nUtil.tr("ae2patterngen.gui.pattern_gen.section.recipe"),
+            value -> new PacketSaveFields(
+                value,
+                tfOutputOre.getText(),
+                tfInputOre.getText(),
+                tfNCItem.getText(),
+                tfBlacklistIn.getText(),
+                tfBlacklistOut.getText(),
+                "",
+                currentTierIndex[0] - 1,
+                true));
+
+        // fix51：5 个过滤器框的「改」按钮统一在这里建（所有字段都已声明，回调才能带上它们的当前值一起保存）
+        attachEditButton(
+            scrollable,
+            tfOutputOre,
+            inputX + fieldW - 18,
+            yOutOreHolder[0],
+            I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.output_ore"),
+            value -> new PacketSaveFields(
+                tfRecipeMap.getText(),
+                value,
+                tfInputOre.getText(),
+                tfNCItem.getText(),
+                tfBlacklistIn.getText(),
+                tfBlacklistOut.getText(),
+                "",
+                currentTierIndex[0] - 1,
+                true));
+        attachEditButton(
+            scrollable,
+            tfInputOre,
+            inputX + fieldW - 18,
+            yInOreHolder[0],
+            I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.input_ore"),
+            value -> new PacketSaveFields(
+                tfRecipeMap.getText(),
+                tfOutputOre.getText(),
+                value,
+                tfNCItem.getText(),
+                tfBlacklistIn.getText(),
+                tfBlacklistOut.getText(),
+                "",
+                currentTierIndex[0] - 1,
+                true));
+        attachEditButton(
+            scrollable,
+            tfNCItem,
+            inputX + fieldW - 18,
+            yNcHolder[0],
+            I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.nc_item"),
+            value -> new PacketSaveFields(
+                tfRecipeMap.getText(),
+                tfOutputOre.getText(),
+                tfInputOre.getText(),
+                value,
+                tfBlacklistIn.getText(),
+                tfBlacklistOut.getText(),
+                "",
+                currentTierIndex[0] - 1,
+                true));
+        attachEditButton(
+            scrollable,
+            tfBlacklistIn,
+            inputX + fieldW - 18,
+            yBlInHolder[0],
+            I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.blacklist_input"),
+            value -> new PacketSaveFields(
+                tfRecipeMap.getText(),
+                tfOutputOre.getText(),
+                tfInputOre.getText(),
+                tfNCItem.getText(),
+                value,
+                tfBlacklistOut.getText(),
+                "",
+                currentTierIndex[0] - 1,
+                true));
+        attachEditButton(
+            scrollable,
+            tfBlacklistOut,
+            inputX + fieldW - 18,
+            yBlOutHolder[0],
+            I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.blacklist_output"),
+            value -> new PacketSaveFields(
+                tfRecipeMap.getText(),
+                tfOutputOre.getText(),
+                tfInputOre.getText(),
+                tfNCItem.getText(),
+                tfBlacklistIn.getText(),
+                value,
+                "",
+                currentTierIndex[0] - 1,
+                true));
+
         buildContext.addCloseListener(saveFunction);
 
         return builder.build();
     }
 
     /**
-     * 3.22.0-fix48：给 MUI1 自绘界面里的文本框挂一个「改」按钮。
+     * 3.22.0-fix48 / fix51：给 MUI1 自绘界面里的文本框挂一个「改」按钮。
      *
-     * <p>为什么必须这样：GTNH-ModularUI（MUI1）自绘界面里**系统输入法无法启用**（用户实测"切不了输入法"），
-     * 而同一整合包里用**原版 GuiTextField** 的搜索栏能正常打中文 ⇒ 用本模组的
-     * {@code client/gui/GuiTextInputDialog}（内部就是原版输入框）作为中文输入入口。
+     * <p>为什么要走对话框：GTNH-ModularUI（MUI1）自绘界面里**系统输入法无法启用**（用户实测"切不了输入法"），
+     * 而原版 {@code GuiTextField} 正常 ⇒ 用 {@code client/gui/GuiTextInputDialog} 作为中文入口。
      *
-     * @param x 按钮左上角（调用方负责先把字段宽度让出 18px）
+     * <p><b>fix51 关键修正</b>：原版 GuiScreen 一打开就会把 MUI 窗口顶掉，确认后回到"无界面"，
+     * 写回的目标字段其实已经随窗口销毁 ⇒ 表现为"关了界面、输入的东西也没了"。
+     * 现在确认后**立刻把编辑结果发给服务端存进手持物品，并请服务端重开生成器界面**
+     * （{@code reopenGui=true}，与 [对照表] 选行后同一套；已实测该手法能正确回到主页并带上新值）。
+     *
+     * @param packetFor 把"新文本"映射成要发送的保存包（各调用点用它带上自己那一格的值）
      */
-    private static void attachEditButton(Scrollable scrollable, TextFieldWidget field, int x, int y, String title) {
+    private static void attachEditButton(Scrollable scrollable, TextFieldWidget field, int x, int y, String title,
+        java.util.function.Function<String, cpw.mods.fml.common.network.simpleimpl.IMessage> packetFor) {
         ButtonWidget button = new ButtonWidget();
         button.setSynced(false, false);
         button.setPos(x, y);
@@ -497,8 +562,16 @@ public class GuiPatternGen {
                             title,
                             field.getText(),
                             value -> {
-                                field.setText(value == null ? "" : value);
+                                String v = value == null ? "" : value;
+                                field.setText(v);
                                 field.markForUpdate();
+                                if (packetFor != null) {
+                                    NetworkHandler.INSTANCE.sendToServer(packetFor.apply(v));
+                                    com.wztwzt.ae2_qof.MyMod.LOG.info(
+                                        "[AE2QoL] 「改」对话框已写回并请求保存+重开界面：字段={} 新值长度={}",
+                                        title,
+                                        v.length());
+                                }
                             }));
             } catch (Throwable t) {
                 com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 打开文本输入对话框失败", t);
