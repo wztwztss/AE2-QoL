@@ -425,7 +425,7 @@ CHANGELOG/README 章节缺失（本轮未追写）；`CHANGELOG.md` 末尾与 `z
 > （`63153ed` / `d783448` / `223c8c5`），工作树干净。本节条目保留"待用户实测"性质——
 > **提交不等于游戏内验收通过**。
 
-### 4.1a **根因 L（已确认，2026-09-27，待修）**：原版 WildcardPattern 的 mixin 截胡我们具体样板的解码
+### 4.1a **根因 L（已确认并已修，2026-09-27，3.43.0）**：原版 WildcardPattern 的 mixin 截胡我们具体样板的解码
 
 证据（3.42.0-diag 配对打印）：
 ```
@@ -455,14 +455,21 @@ private void wildcardpattern$useLightweightPatternDetails(ItemStack stack, World
 后果（与用户全部症状吻合）：三族 `注册 details=396` 但 `输出种类=1`（全铁板）；AE 终端只认铁板；
 GT 2714「能下单但不合成」（注册进去的是预览 details，不是真样板）；原版模组自己的样板正常（它自洽）。
 
-**修复思路（三部分，待用户口令）**：
-1. `buildConcretePattern` 里**剥掉原版标记键**（`WildcardPattern`、`CompositeWildcardPattern`）——
-   具体样板绝不能长得像通配样板（根因修复）；
-2. 我们**四处解码**改为直接 `new appeng.helpers.PatternHelper(concrete, world)`，绕开被注入的方法
-   （`SmartWildcardPatternSlot:105`、`SmartWildcardGtnlPatternSlot:68`、`MixinPatternDualInputHatchWildcard:118`、
-   `MixinDualityInterface:120`）——双保险，也兜住机器里已存的旧样板；
-3. 复核端口代码对"我们物品"调用 `markAsWildcard` 的语义：通配样板**本体**保留（Wild 窗口桥接需要），
-   具体样板必须剥掉。
+**修复思路（三部分，3.43.0 已实施 ✅）**：
+1. ✅ `buildConcretePattern` 里**剥掉原版标记键**（`WildcardPattern`、`CompositeWildcardPattern`）——
+   新 `WildcardPatternGenerator.clearWildcardMarker(stack)`（连带 composite 版）；样板**本体**保留
+   （Wild 窗口桥接需要）；
+2. ✅ 新增 `wildcard/SmartWildcardDecoder.decode(stack, world)`：本模组物品直连
+   `new appeng.helpers.PatternHelper(...)`，绕开注入；其它物品仍走 API（AE2FC 等）；
+   四处调用点全部改到该入口（`SmartWildcardPatternSlot`、`SmartWildcardGtnlPatternSlot`、
+   `MixinPatternDualInputHatchWildcard`、`MixinDualityInterface`）；
+3. ✅ 复核 `markAsWildcard` 调用点：全部作用于样板**本体**（`MessageUpdateWildcardConfig`、
+   `WildcardPatternWindow`、`ItemWildcardPattern`、端口生成器自身），具体样板不经过 ⇒ 无需改动，
+   已在注释中写明口径。
+产物：`build/libs/AE2-QoL-3.43.0.jar`（1,770,171 B，SHA256 `F606CFE4…`）。
+**待实测 4 项**：① `输出种类`=396、样本出现不同材料；② AE 各板可合成可下单；③ 下单能真正制作、
+材料能正常退回（"点总成退回无东西、只有取消才返回"应随之消失）；④ 原版模组识别行为不变。
+**不在本次范围**：原版模组的样板在总成里"能识别但不能合成"（手动电路也不行）——它自己那条链的行为。
 
 **本轮静态排除的其他可能**：AE2 `PatternHelper` 不回写 NBT；`ItemStack.copy()` 深拷贝 NBT；
 `getPatternForItem` 无静态缓存；`ItemStack` 不共享 NBT；电路（用户实测停用自动写＋手动设置仍不合成）。

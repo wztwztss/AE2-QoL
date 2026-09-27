@@ -115,10 +115,8 @@ public abstract class MixinDualityInterface implements ISmartDoublingMedium {
             int added = 0;
             for (net.minecraft.item.ItemStack concrete : result.patterns) {
                 if (concrete == null || concrete.getItem() == null) continue;
-                ICraftingPatternDetails details = null;
-                if (concrete.getItem() instanceof appeng.api.implementations.ICraftingPatternItem patternItem) {
-                    details = patternItem.getPatternForItem(concrete, world);
-                }
+                ICraftingPatternDetails details = com.wztwzt.ae2_qof.wildcard.SmartWildcardDecoder
+                    .decode(concrete, world);
                 if (details == null) continue;
                 details.setPriority(priority);
                 this.craftingList.add(details);

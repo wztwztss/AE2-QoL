@@ -36,6 +36,17 @@ public final class CompositeWildcardPatternGenerator {
                 || stack.hasTagCompound() && stack.getTagCompound().getBoolean(KEY_COMPOSITE_WILDCARD));
     }
 
+    /** 3.43.0 **根因 L 修复**：抹掉"复合通配样板"标记（具体样板不许带；本体样板不要调用）。 */
+    public static void clearCompositeWildcardMarker(ItemStack stack) {
+        if (stack == null) {
+            return;
+        }
+        NBTTagCompound tag = stack.getTagCompound();
+        if (tag != null) {
+            tag.removeTag(KEY_COMPOSITE_WILDCARD);
+        }
+    }
+
     public static void markAsCompositeWildcard(ItemStack stack) {
         if (stack == null) {
             return;

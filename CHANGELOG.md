@@ -1,3 +1,64 @@
+## 工作区决策记录 2026-09-27 (44) - **3.43.0：修根因 L——原版 WildcardPattern 的 mixin 把我们的具体样板当通配样板，解码成"预览 details"**
+
+> 由 3.42.0-diag 的**配对打印**一击命中，证据与修法都写在 `docs/AGENT_CHECKPOINT.md` 4.1a。
+
+### 一、证据（3.42.0-diag 日志原文）
+```
+配对样本（GT）：concrete@1967ead7 out=out-empty ‖ details=WildcardPreviewPatternDetails
+                details.getPattern()@3dd13aa2 out=out-empty 与concrete同一对象=false ‖ details.getOutputs()[0]=铁板
+```
+⇒ `getPatternForItem(concrete)` 返回的**不是 AE2 的 `PatternHelper`**，而是原版模组的"轻量预览 details"。
+
+原版 `com.myname.wildcardpattern.mixin.ItemEncodedPatternMixin`（javap 实证）在
+`appeng.items.misc.ItemEncodedPattern.getPatternForItem` HEAD 处注入：
+```java
+if (!WildcardPatternGenerator.isWildcardPattern(stack)) return;   // stack.getItem()==其物品
+                                                                  // || tag.getBoolean("CompositeWildcardPattern")
+                                                                  // || tag.getBoolean("WildcardPattern")
+cir.setReturnValue(<轻量预览 details>);                            // 输出恒为模板的代表输出（铁板）
+```
+（同一 mixin 还截胡 `getOutput(ItemStack)`、`getOutput(IAEStack)` 与 tooltip。）
+
+### 二、根因：具体样板"长得像通配样板"
+搬入的端口代码会给样板打 `WildcardPatternGenerator.markAsWildcard(stack)`（键 `WildcardPattern=true`；
+调用点 `MessageUpdateWildcardConfig:72`、`WildcardPatternWindow:1934/2768/2779` 等），而
+`SmartWildcardExpander.buildConcretePattern` 克隆样板时**只剥掉了我们自己的子树** `ae2qolSmartWildcard`，
+**原版那个键随整份 NBT 被复制进每一张具体样板** ⇒ 原版注入命中。
+
+**后果（与用户全部症状吻合）**：三族 `注册 details=396` 但 `输出种类=1`（全是模板那块铁板）；
+AE 终端只认铁板、其他板下不了单；GT 1714/21504/32108 里"下单铁板能合成"（那其实是**模板本身那一张真样板**）；
+原版模组自己的样板识别正常（它自洽）。
+
+### 三、修复（三步）
+1. **`SmartWildcardExpander.buildConcretePattern`：具体样板抹掉原版标记键**（新
+   `WildcardPatternGenerator.clearWildcardMarker(stack)` → 同时清 `WildcardPattern` 与
+   `CompositeWildcardPattern`；通配样板**本体**保留该键，Wild 窗口桥接与预览依赖它）——**根因修复**；
+2. **统一解码入口**（新 `wildcard/SmartWildcardDecoder.java`）：本模组物品**直连
+   `new appeng.helpers.PatternHelper(stack, world)`**（= AE2 `getPatternForItem` 内部那条真身路径，
+   不经任何注入、无内部缓存、不回写 NBT），其它物品仍走 `ICraftingPatternItem.getPatternForItem`
+   （AE2FC 等有各自的 details 实现，不能一律替换）。四处调用点全部改到该入口：
+   `SmartWildcardPatternSlot`（GT）、`SmartWildcardGtnlPatternSlot`（GTNL）、
+   `MixinPatternDualInputHatchWildcard`（PH/MK.III）、`MixinDualityInterface`（AE2 ME 接口）。
+   —— 这条同时救回**已存进机器、NBT 里还留着旧标记的历史具体样板**（3.43.0 之前生成的）。
+3. **复核 `markAsWildcard` 调用点**：全部作用于通配样板**本体**（`MessageUpdateWildcardConfig`、
+   `WildcardPatternWindow`、`ItemWildcardPattern`、端口生成器自身），具体样板从不经过 ⇒ 无需改动，
+   已在代码注释中写明"本体保留、具体样板必须抹掉"。
+
+### 四、验证与待测
+- 构建 `BUILD SUCCESSFUL`（无管道取码 `EXIT=0`）；产物 `build/libs/AE2-QoL-3.43.0.jar`
+  （1,770,171 字节，SHA256 `F606CFE4C645246776EDD06933D053F4C30A86ADAAAE7CDE5735C3B87E1EAD6D`）；
+  字节码核对：`clearWildcardMarker` 已在 `buildConcretePattern` 内被调用；`SmartWildcardDecoder.decode`
+  在四处调用点均出现；解码器内部确认 `new appeng.helpers.PatternHelper(...)` 且**仅对本模组物品**，
+  其余回退 `getPatternForItem`。
+- **待用户实测**：① 日志注册行 `输出种类` 变为 **396**（不再是 1）、样本里出现不同材料的板；
+  ② AE 终端里各种板材可合成、可下单；③ 下单后能真正制作、材料能正常退回（此前"点总成退回无东西、
+  只有取消合成才返回"的现象应随之消失 —— 它本就是"AE 手里是预览 details、槽位身份对不上"的下游表现）；
+  ④ 回归：原版模组的样板识别行为不变。
+- **不在本次范围**：原版模组的样板在样板总成里"能识别但不能合成"（手动电路也不行）——那是它自己那条链的
+  行为，本次修改不碰它（遵守"两套模组互不干扰"）。
+
+---
+
 ## 工作区决策记录 2026-09-27 (43) - **3.41.0：输出前缀改为"存在性驱动"——修掉 `输出种类=1` 的真正上游**
 
 > 用户实测 3.40.0 后报"完全没修，和刚才一模一样"。日志取证：**加载的确是 3.40.0**、

@@ -4,9 +4,23 @@
 
 为 **Minecraft 1.7.10 / GT New Horizons** 开发的 AE2 效率增强模组：NEI 样板上传、库存与合成状态提示、二合一终端、无线 AE 连接，以及 GT 仓室、电网与库存监控工具。
 
-**作者：wztwzt · 当前源码版本：3.41.0 · 对照整合包：GTNH 2.9.0-beta-3**
+**作者：wztwzt · 当前源码版本：3.43.0 · 对照整合包：GTNH 2.9.0-beta-3**
 
 本仓库用于个人存档，暂不开放分发。来源、署名与许可记录见 [CREDITS.md](CREDITS.md)。功能说明不代表所有兼容组合均已通过实机测试。
+
+## 本版变化：3.43.0（修根因 L：具体样板被原版通配模组误判 ⇒ AE 只认铁板）
+
+- **现象**：三台样板总成（GT 2714 / GTNL 21504 / MK.III 32108）都注册了 396 条 details，但 AE 里**只有铁板**
+  可合成可下单；而"下单铁板能正常制作"（那其实是模板本身那一张真样板）。
+- **真凶**（3.42.0-diag 配对打印 + javap 实证）：同时装着的原版 WildcardPattern 模组给 AE2 的
+  `ItemEncodedPattern.getPatternForItem` 打了注入，判据是 NBT 键 `WildcardPattern`；命中就把 details 换成
+  "轻量预览 details"（输出恒为模板的代表输出）。我们克隆具体样板时**只剥掉了自己的子树**，**把原版那个键
+  一起复制了进去** ⇒ 每张具体样板解码后都变成同一张铁板。
+- **修复**：① 具体样板生成时**抹掉原版标记键**（`WildcardPattern`/`CompositeWildcardPattern`；样板本体保留，
+  Wild 窗口桥接需要）；② 新增统一解码入口 `SmartWildcardDecoder`，本模组物品**直连
+  `new appeng.helpers.PatternHelper(...)`** 绕开注入（其它物品仍走 API，避免影响 AE2FC 等），
+  同时救回机器里已存的历史具体样板；③ 复核 `markAsWildcard` 只作用于样板本体。
+- 原版模组自己的样板行为不受影响（本次修改不碰它）。
 
 ## 本版变化：3.41.0（输出前缀改为"存在性驱动"——修掉"全部输出同一块铁板"的真正上游）
 

@@ -101,8 +101,7 @@ public class SmartWildcardPatternSlot extends MTEHatchCraftingInputME.PatternSlo
                             .getName());
                     continue;
                 }
-                ICraftingPatternDetails details =
-                    ((ICraftingPatternItem) concrete.getItem()).getPatternForItem(concrete, world);
+                ICraftingPatternDetails details = SmartWildcardDecoder.decode(concrete, world);
                 if (details != null) {
                     // 3.42.0-diag：配对打印（concrete 的 out / details.getPattern() 的 out / details.getOutputs()[0]）
                     com.wztwzt.ae2_qof.wildcard.SmartWildcardDiag.logDecodePair("GT", concrete, details);

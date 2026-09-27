@@ -52,6 +52,28 @@ public final class WildcardPatternGenerator {
         WildcardPatternState.ensureInitialized(stack);
     }
 
+    /**
+     * 3.43.0 **根因 L 修复**：抹掉"通配样板"标记。
+     *
+     * <p>为什么必须给具体样板抹掉：原版 WildcardPattern 模组的 {@code ItemEncodedPatternMixin} 在
+     * {@code appeng.items.misc.ItemEncodedPattern.getPatternForItem} HEAD 处的判据正是
+     * {@code stack.getTagCompound().getBoolean("WildcardPattern")}；一旦命中，它会把返回的 details 换成
+     * "轻量预览 details"（输出恒为模板的代表输出）⇒ 我们展开出的几百张具体样板在 AE 眼里全变成同一张。
+     * 我们的 {@code buildConcretePattern} 克隆样板时会连整份 NBT 一起复制，所以标记必须显式抹掉。
+     *
+     * <p><b>通配样板本体不要调用本方法</b>（Wild 窗口的桥接与预览依赖该标记）。
+     */
+    public static void clearWildcardMarker(ItemStack stack) {
+        if (stack == null) {
+            return;
+        }
+        NBTTagCompound tag = stack.getTagCompound();
+        if (tag != null) {
+            tag.removeTag(KEY_WILDCARD);
+        }
+        CompositeWildcardPatternGenerator.clearCompositeWildcardMarker(stack);
+    }
+
     public static int countPatterns(ItemStack stack) {
         if (CompositeWildcardPatternGenerator.isCompositeWildcardPattern(stack)) {
             return CompositeWildcardPatternGenerator.countPatterns(stack);

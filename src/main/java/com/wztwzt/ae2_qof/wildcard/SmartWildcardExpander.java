@@ -476,6 +476,12 @@ public final class SmartWildcardExpander {
             NBTTagCompound tag = concrete.getTagCompound();
             if (tag == null) return null;
             tag.removeTag(SmartWildcardState.KEY_ROOT);
+            // 3.43.0 **根因 L 修复（核心一行）**：具体样板必须抹掉"原版 WildcardPattern 模组"的标记键。
+            // 原因：原版 `ItemEncodedPatternMixin` 注入 `ItemEncodedPattern.getPatternForItem` HEAD，
+            // 判据是 `tag.getBoolean("WildcardPattern")`；命中就 cir.setReturnValue(<轻量预览 details>)，
+            // 那个 details 的输出恒为**模板的代表输出**（铁板）⇒ 我们展开出的几百张具体样板在 AE 眼里
+            // 全塌成一张（实测 `输出种类=1`、AE 只认铁板）。克隆时整份 NBT 被复制，所以必须显式抹掉。
+            com.wztwzt.ae2_qof.wildport.crafting.WildcardPatternGenerator.clearWildcardMarker(concrete);
 
             NBTTagList newIn = new NBTTagList();
             for (int i = 0; i < templateIn.tagCount(); i++) {

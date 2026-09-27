@@ -64,8 +64,7 @@ public class SmartWildcardGtnlPatternSlot extends SuperCraftingInputHatchME.Patt
             for (ItemStack concrete : result.patterns) {
                 if (concrete == null || concrete.getItem() == null) continue;
                 if (!(concrete.getItem() instanceof ICraftingPatternItem)) continue;
-                ICraftingPatternDetails details =
-                    ((ICraftingPatternItem) concrete.getItem()).getPatternForItem(concrete, world);
+                ICraftingPatternDetails details = SmartWildcardDecoder.decode(concrete, world);
                 if (details != null) {
                     // 3.42.0-diag：配对打印（同上）
                     com.wztwzt.ae2_qof.wildcard.SmartWildcardDiag.logDecodePair("GTNL", concrete, details);
