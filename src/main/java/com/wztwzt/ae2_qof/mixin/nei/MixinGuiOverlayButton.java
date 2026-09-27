@@ -52,7 +52,7 @@ public abstract class MixinGuiOverlayButton {
         // 3.22.0/3.23.0：通配样板编辑器（MUI2 的带容器屏 GuiContainerWrapper）同样需要强制可用
         // （GT 处理配方的 overlay identifier 不是 crafting，NEI 会把按钮算成 disabled ⇒ 点击不会被派发）
         if (firstGui != null && (firstGui instanceof GuiMergedTerminal
-            || firstGui instanceof com.cleanroommc.modularui.screen.GuiContainerWrapper)) {
+            || (firstGui instanceof com.cleanroommc.modularui.screen.GuiContainerWrapper || firstGui instanceof com.gtnewhorizons.modularui.common.internal.wrapper.ModularGui))) {
             ((net.minecraft.client.gui.GuiButton) (Object) this).enabled = true;
         }
     }
@@ -68,7 +68,7 @@ public abstract class MixinGuiOverlayButton {
             // 3.23.0：通配样板编辑器（MUI2 带容器屏）里的加号 = 「按当前 NEI 配方推导规则与模板 + 立即写回样板」。
             // 说明：MUI2 面板是构建期生成的，不能像旧的自绘界面那样即时刷新 ⇒ 这里直接落库，
             // 并用聊天栏回执 + 日志让用户与维护者都能一眼确认结果（符合"不留静默"原则）。
-            if (firstGui instanceof com.cleanroommc.modularui.screen.GuiContainerWrapper) {
+            if ((firstGui instanceof com.cleanroommc.modularui.screen.GuiContainerWrapper || firstGui instanceof com.gtnewhorizons.modularui.common.internal.wrapper.ModularGui)) {
                 ae2qol$inOverlayFill = true;
                 try {
                     RecipeHandlerRef ref = ((GuiRecipeButton) (Object) this).handlerRef;
@@ -164,7 +164,7 @@ public abstract class MixinGuiOverlayButton {
     @Inject(method = "canFillCraftingGrid()Z", at = @At("HEAD"), cancellable = true)
     private void ae2qol$alwaysFillableForMergedTerminal(CallbackInfoReturnable<Boolean> cir) {
         if (firstGui != null && (firstGui instanceof GuiMergedTerminal
-            || firstGui instanceof com.cleanroommc.modularui.screen.GuiContainerWrapper)) {
+            || (firstGui instanceof com.cleanroommc.modularui.screen.GuiContainerWrapper || firstGui instanceof com.gtnewhorizons.modularui.common.internal.wrapper.ModularGui))) {
             cir.setReturnValue(true);
         }
     }
