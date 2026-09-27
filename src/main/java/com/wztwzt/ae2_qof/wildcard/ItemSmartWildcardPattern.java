@@ -41,6 +41,18 @@ public class ItemSmartWildcardPattern extends ItemEncodedPattern {
         setUnlocalizedName("ae2_qof.smart_wildcard_pattern");
         setMaxStackSize(1);
         setCreativeTab(AE2QoLCreativeTab.INSTANCE);
+        // 3.23.0：贴图抄 AE2 原版编码样板（assets/ae2_qof/textures/items/smart_wildcard_pattern.png，
+        // 从 AE2 jar 的 assets/appliedenergistics2/textures/items/ItemEncodedPattern.png 抽出）。
+        setTextureName("ae2_qof:smart_wildcard_pattern");
+    }
+
+    /**
+     * 绿色染色（与参考模组同思路，它是紫色、我们用绿色）：贴图本体保持原版编码样板的形状与明暗，
+     * 由 1.7.10 的 ItemRenderer 用这里返回的颜色相乘着色。
+     */
+    @Override
+    public int getColorFromItemStack(ItemStack stack, int renderPass) {
+        return 0x5CE65C;
     }
 
     public ItemSmartWildcardPattern register() {
