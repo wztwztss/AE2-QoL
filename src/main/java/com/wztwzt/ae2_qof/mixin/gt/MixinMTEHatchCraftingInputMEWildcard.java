@@ -77,11 +77,9 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard {
 
     /** 日志限频：provideCrafting 在网格重建热路径上，不能每次都刷屏。 */
     @Unique
-    private long ae2qol$lastRegisterLogTick = Long.MIN_VALUE;
+    private long ae2qol$lastRegisterLogTick = 0L;
 
-    /** 3.36.0：外来（原版 WildcardPattern）样板的诊断日志限频。 */
-    @Unique
-    private long ae2qol$lastForeignLogTick = Long.MIN_VALUE;
+    /** 3.38.0：外来（原版 WildcardPattern）样板的诊断计数用（日志限频已并入注册行）。 */
 
     /** 3.36.0：该槽位里是不是**别的模组**（原版 WildcardPattern）的通配样板（只用于诊断）。 */
     @Unique
@@ -98,19 +96,28 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard {
         }
     }
 
-    // ================= ① 索引期展开与注册 =================
+    // ================= ① 索引期展开与注册（**只追加，绝不 cancel**） =================
 
-    @Inject(method = "provideCrafting", at = @At("HEAD"), cancellable = true, remap = false)
+    /**
+     * 3.38.0：**刻意把 {@code cancellable} 去掉、也不再调用 {@code ci.cancel()}**。
+     *
+     * <p>用户实测跑出了一个干净的 A/B/A 对照（同一总成里两套模组的样板各放一张）：
+     * <ul>
+     * <li>3.35.0（我们**总是** cancel 并全量注册）⇒ **两边都只剩一张**；</li>
+     * <li>3.36.0（我们的展开还没修好 ⇒ {@code wildcardSlots} 空 ⇒ 我们**没有**接管）⇒ **原版恢复全部**，只有我们不行；</li>
+     * <li>3.37.0（我们展开修好 ⇒ 又能接管）⇒ **两边又都只剩一张**。</li>
+     * </ul>
+     * 结论：**只要我们把 GT 本体的 {@code provideCrafting} cancel 掉，同机原版 WildcardPattern 的展开就会塌成一张**
+     * （它的处理器与 GT 本体是同一条链上的，cancel 是共享标志）。所以本类改为**只追加自己的展开结果**：
+     * 不 cancel、不替 GT 注册普通槽位，把原方法与对方的处理完整留给它们自己。
+     * 代价是 GT 本体仍会为该槽位登记"模板那一张"（与我们展开出的同材料那张重复，无害）。
+     */
+    @Inject(method = "provideCrafting", at = @At("HEAD"), remap = false)
     private void ae2qol$provideCrafting(ICraftingProviderHelper craftingTracker, CallbackInfo ci) {
-        if (this.internalInventory == null || this.patternDetailsPatternSlotMap == null) return; // 交给原方法
-        if (!this.isActive()) {
-            // 复现原方法守卫（GT:1225）：未激活时不注册任何东西
-            ci.cancel();
-            return;
-        }
+        if (this.internalInventory == null || this.patternDetailsPatternSlotMap == null) return;
+        if (!this.isActive()) return; // 原方法自己会在这里返回；我们别白跑
         try {
-            // 阶段一：只收集，不做任何注册（展开/解码可能抛异常，避免半截状态）
-            final List<MTEHatchCraftingInputME.PatternSlot<MTEHatchCraftingInputME>> plainSlots = new ArrayList<>();
+            // 只收集**我们的**通配槽位；普通槽位一律不碰（留给 GT 本体 / 对方的处理器）
             final List<MTEHatchCraftingInputME.PatternSlot<MTEHatchCraftingInputME>> wildcardSlots = new ArrayList<>();
             int foreign = 0;
             for (int i = 0; i < this.internalInventory.length; i++) {
@@ -126,20 +133,17 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard {
                 if (this.ae2qol$isWildcardItem(slot, i)) {
                     // 包一层（搬运库存），并替换进数组 —— 只在这里替换，且替换后仍是同一槽位语义
                     SmartWildcardPatternSlot wrapped = new SmartWildcardPatternSlot(slot, (MTEHatchCraftingInputME) (Object) this);
-                    // 3.34.0 修正：**必须在这里调用 rebuild**。原实现只 new 了槽位、从未调用 rebuild
-                    //（全仓 grep：rebuild 只有定义、零调用者）⇒ expanded 恒为空 ⇒ 通配槽位注册 0 条。
+                    // 3.34.0 修正：**必须在这里调用 rebuild**（旧实现只 new 了槽位，rebuild 全仓零调用者）
                     wrapped.rebuild(this.ae2qol$world());
                     this.internalInventory[i] = wrapped;
                     this.ae2qol$wildcards.put(i, wrapped);
                     if (wrapped.expandedDetails()
                         .isEmpty()) {
-                        // 不静默降级为"什么都不注册"：退回注册模板那一张（getPatternDetails 会走 super），
-                        // 否则"配置了规则但一条候选都没匹配上"会让这台机器彻底不接单。
+                        // 不再由我们"回退注册模板那一张" —— GT 本体本来就会登记它；这里只说明原因（不静默）
                         MyMod.LOG.warn(
-                            "[AE2QoL] GT 通配槽位展开为空，已回退注册模板那一张：slot={} {}",
+                            "[AE2QoL] GT 通配槽位展开为空（模板那一张仍由 GT 本体注册）：slot={} {}",
                             i,
                             wrapped.expandSummary());
-                        plainSlots.add(wrapped);
                     } else {
                         wildcardSlots.add(wrapped);
                         MyMod.LOG.info("[AE2QoL] GT 样板仓发现通配样板并展开：slot={} {}", i, wrapped.expandSummary());
@@ -148,65 +152,36 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard {
                     }
                     continue;
                 }
-                plainSlots.add(slot);
                 if (ae2qol$isForeignWildcard(slot)) foreign++;
             }
 
-            // 3.36.0 **互不干扰**：本机若一张"我们的已配置通配样板"都没有，则**完全不介入** ——
-            // 不注册、不 cancel，直接交回 GT 本体 / 原版 WildcardPattern 模组的处理器。
-            // 旧实现无条件 cancel 并全量注册（对不是我们的槽位只注册 getPatternDetails() 一张），
-            // 在"两套模组同时装着、同一总成各放一张"的场景下会把对方的展开结果一起压成一张
-            // （用户实测：原版模组的样板也只能识别到一个）。
-            if (wildcardSlots.isEmpty()) {
-                long now = System.currentTimeMillis();
-                if (foreign > 0 && now - this.ae2qol$lastForeignLogTick > 15000L) {
-                    this.ae2qol$lastForeignLogTick = now;
-                    MyMod.LOG.info(
-                        "[AE2QoL] GT 样板仓检测到原版 WildcardPattern 的样板 {} 张，本机没有我们的通配样板 ⇒ 不介入（其展开由对方处理器负责）",
-                        foreign);
-                }
-                return;
-            }
+            if (wildcardSlots.isEmpty()) return; // 没有我们的样板 ⇒ 完全不动
 
-            // 阶段二：注册（非通配槽沿用原逻辑；通配槽逐个注册展开产物）
             int registered = 0;
-            for (MTEHatchCraftingInputME.PatternSlot<MTEHatchCraftingInputME> slot : plainSlots) {
-                ICraftingPatternDetails details = slot.getPatternDetails();
-                if (details == null) {
-                    MyMod.LOG.warn("[AE2QoL] GT 样板仓存在无法解析的样板槽（原版同样会告警）");
-                    continue;
-                }
-                craftingTracker.addCraftingOption((ICraftingProvider) (Object) this, details);
-            }
             for (MTEHatchCraftingInputME.PatternSlot<MTEHatchCraftingInputME> slot : wildcardSlots) {
                 SmartWildcardPatternSlot wildcardSlot = (SmartWildcardPatternSlot) slot;
                 for (ICraftingPatternDetails details : wildcardSlot.expandedDetails()) {
-                    // 映射必须逐条写：pushPattern 反查靠它，缺 key 会 NPE（GT:1258-1259）
+                    // 映射必须逐条写：pushPattern 反查靠它（GT 自己的 body 不写这张表）
                     this.patternDetailsPatternSlotMap.put(details, wildcardSlot);
                     craftingTracker.addCraftingOption((ICraftingProvider) (Object) this, details);
                     registered++;
                 }
-                if (wildcardSlot.expandedDetails()
-                    .isEmpty()) {
-                    MyMod.LOG.warn("[AE2QoL] GT 通配槽位未注册任何样板：{}", wildcardSlot.expandSummary());
-                }
             }
-            if (!wildcardSlots.isEmpty()) {
-                long now = System.currentTimeMillis();
-                if (now - this.ae2qol$lastRegisterLogTick > 15000L) {
-                    this.ae2qol$lastRegisterLogTick = now;
-                    MyMod.LOG.info(
-                        "[AE2QoL] GT 通配样板注册：通配槽={} 注册 details={} 映射总数={} 上限={}",
-                        wildcardSlots.size(),
-                        registered,
-                        this.patternDetailsPatternSlotMap.size(),
-                        Config.smartWildcardExpandCap);
-                }
+            long now = System.currentTimeMillis();
+            // 3.38.0：初值用 0（旧的 Long.MIN_VALUE 会让 now-last 溢出成负数 ⇒ 这条日志**从来没打出来过**）
+            if (now - this.ae2qol$lastRegisterLogTick > 15000L) {
+                this.ae2qol$lastRegisterLogTick = now;
+                MyMod.LOG.info(
+                    "[AE2QoL] GT 通配样板注册（只追加拿，未 cancel）：通配槽={} 注册 details={} 本机含原版样板={} 映射总数={} 上限={}",
+                    wildcardSlots.size(),
+                    registered,
+                    foreign,
+                    this.patternDetailsPatternSlotMap.size(),
+                    Config.smartWildcardExpandCap);
             }
-            ci.cancel();
         } catch (Throwable t) {
-            // 不 cancel：放行原方法（退化为“只注册模板那一张”），但绝不静默
-            MyMod.LOG.warn("[AE2QoL] GT 通配样板注册失败，已回退原版 provideCrafting（只注册模板样板）", t);
+            // 绝不静默；也不 cancel ⇒ 原版照样工作
+            MyMod.LOG.warn("[AE2QoL] GT 通配样板注册失败（本轮跳过，不影响原版样板）", t);
         }
     }
 

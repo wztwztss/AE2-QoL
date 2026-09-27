@@ -4,9 +4,25 @@
 
 An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
-**Author: wztwzt · Current source version: 3.37.0 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.38.0 · Reference pack: GTNH 2.9.0-beta-3**
 
 This repository is for personal archival and is not currently offered for distribution. See [CREDITS.md](CREDITS.md) for attribution and licensing records. Feature descriptions are not a claim that every integration has passed in-game testing.
+
+## What's new in 3.38.0 (never cancel the original method — fixes "both wildcard mods see only one pattern")
+
+- **Good news first**: the 3.37.0 log shows **our own expansion now succeeds** — `produced=512` (capped) /
+  `produced=396` with `matched=4393` — so the ore prefix, index alignment and matcher fixes all took effect.
+- **The regression's real cause**: cancelling GT's `provideCrafting` also skips the original WildcardPattern mod's
+  expansion, because `CallbackInfo.cancel()` is a **shared flag**. Your testing produced a clean A/B/A:
+  3.35.0 (always cancelled) both broken → 3.36.0 (we failed to take over) original worked again → 3.37.0 (we took
+  over again) both broken again.
+- **Fix**: in the GT hatch, the GTNL hatch and the AE2 ME interface paths we now **only append and never cancel** —
+  our expanded patterns are added to the registry with their mappings, while plain slots are left to the original
+  methods and to the other mod. The cost is that "the template pattern" is registered once more next to the expanded
+  pattern for the same material (harmless).
+- Also fixed two diagnostic logs that **had never printed** (their throttle sentinel used `Long.MIN_VALUE`, so
+  `now - Long.MIN_VALUE` overflowed negative and the condition never held). `GT 通配样板注册（只追加拿，未 cancel）：…
+  本机含原版样板=N …` now appears as intended.
 
 ## What's new in 3.37.0 (wildcard matching always returned false — the last reason it "never worked")
 

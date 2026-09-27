@@ -79,7 +79,7 @@ public abstract class MixinDualityInterface implements ISmartDoublingMedium {
      * <p>失败绝不静默：解析不出候选时记 WARN 并取消（不留半截状态）；
      * 展开器自身异常时**放行原生逻辑**（此时它退化为“按模板那一张样板”），同时记 WARN。
      */
-    @Inject(method = "addToCraftingList", at = @At("HEAD"), cancellable = true, remap = false)
+    @Inject(method = "addToCraftingList", at = @At("HEAD"), remap = false)
     private void ae2qol$expandSmartWildcard(int slot, CallbackInfo ci) {
         try {
             if (this.patterns == null || slot < 0 || slot >= this.patterns.getSizeInventory()) return;
@@ -131,7 +131,14 @@ public abstract class MixinDualityInterface implements ISmartDoublingMedium {
                     result.describe());
                 return;
             }
-            ci.cancel();
+            // 3.38.0：**不再 ci.cancel()** —— 与 GT/GTNL 同一原则（用户 A/B/A 实测：我们一旦 cancel 掉原方法，
+            // 同机原版 WildcardPattern 的展开就塌成一张）。这里只**追加**展开结果，让 AE2 原生继续登记模板那一张；
+            // 代价是同材料那张会重复一次（无害），换来的是两套模组彻底互不干扰。
+            MyMod.LOG.info(
+                "[AE2QoL] ME 接口通配样板注册（只追加，未 cancel）：slot={} 追加 details={} {}",
+                slot,
+                added,
+                result.describe());
         } catch (Throwable t) {
             // 放行原生逻辑（退化为模板样板），但绝不静默
             MyMod.LOG.warn("[AE2QoL] 智能通配样板在 ME 接口展开异常，已回退原生解码：slot=" + slot, t);

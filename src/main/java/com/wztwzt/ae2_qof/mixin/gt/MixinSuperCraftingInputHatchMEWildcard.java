@@ -65,11 +65,9 @@ public abstract class MixinSuperCraftingInputHatchMEWildcard {
     private final Map<Integer, SmartWildcardGtnlPatternSlot> ae2qol$wildcards = new HashMap<>();
 
     @Unique
-    private long ae2qol$lastRegisterLogTick = Long.MIN_VALUE;
+    private long ae2qol$lastRegisterLogTick = 0L;
 
-    /** 3.36.0：外来（原版 WildcardPattern）样板的诊断日志限频。 */
-    @Unique
-    private long ae2qol$lastForeignLogTick = Long.MIN_VALUE;
+    /** 3.38.0：外来（原版 WildcardPattern）样板的诊断计数用（日志限频已并入注册行）。 */
 
     /** 3.36.0：该槽位里是不是**别的模组**（原版 WildcardPattern）的通配样板（只用于诊断）。 */
     @Unique
@@ -88,15 +86,11 @@ public abstract class MixinSuperCraftingInputHatchMEWildcard {
 
     // ================= ① 索引期展开与注册 =================
 
-    @Inject(method = "provideCrafting", at = @At("HEAD"), cancellable = true, remap = false)
+    @Inject(method = "provideCrafting", at = @At("HEAD"), remap = false)
     private void ae2qol$provideCrafting(ICraftingProviderHelper craftingTracker, CallbackInfo ci) {
         if (this.internalInventory == null || this.patternDetailsPatternSlotMap == null) return;
-        if (!this.isActive()) {
-            ci.cancel();
-            return;
-        }
+        if (!this.isActive()) return; // 原方法自己会在这里返回
         try {
-            final List<SuperCraftingInputHatchME.PatternSlot<SuperCraftingInputHatchME>> plainSlots = new ArrayList<>();
             final List<SuperCraftingInputHatchME.PatternSlot<SuperCraftingInputHatchME>> wildcardSlots = new ArrayList<>();
             int foreign = 0;
             for (int i = 0; i < this.internalInventory.length; i++) {
@@ -120,10 +114,9 @@ public abstract class MixinSuperCraftingInputHatchMEWildcard {
                         .isEmpty()) {
                         // 不静默降级成"什么都不注册"：退回注册模板那一张（getPatternDetails 走 super）
                         MyMod.LOG.warn(
-                            "[AE2QoL] GTNL 通配槽位展开为空，已回退注册模板那一张：slot={} {}",
+                            "[AE2QoL] GTNL 通配槽位展开为空（模板那一张仍由 GTNL 本体注册）：slot={} {}",
                             i,
                             wrapped.expandSummary());
-                        plainSlots.add(wrapped);
                         continue;
                     }
                     wildcardSlots.add(wrapped);
@@ -149,30 +142,14 @@ public abstract class MixinSuperCraftingInputHatchMEWildcard {
                     }
                     continue;
                 }
-                plainSlots.add(slot);
                 if (ae2qol$isForeignWildcard(slot)) foreign++;
             }
 
-            // 3.36.0 **互不干扰**：本机没有"我们的已配置通配样板"时完全不介入（不注册、不 cancel），
-            // 交回 GTNL 本体 / 原版 WildcardPattern 模组的处理器；否则两套完全接管的处理器叠加会把
-            // 对方的展开结果一起压成一张（用户实测：两套模组的样板放同一个总成，都只识别到一个）。
-            if (wildcardSlots.isEmpty()) {
-                long now = System.currentTimeMillis();
-                if (foreign > 0 && now - this.ae2qol$lastForeignLogTick > 15000L) {
-                    this.ae2qol$lastForeignLogTick = now;
-                    MyMod.LOG.info(
-                        "[AE2QoL] GTNL 总成检测到原版 WildcardPattern 的样板 {} 张，本机没有我们的通配样板 ⇒ 不介入",
-                        foreign);
-                }
-                return;
-            }
+            // 3.38.0：**只追加，绝不 cancel** —— 与 GT 版同一结论（用户 A/B/A 实测：我们一旦 cancel，
+            // 同机原版 WildcardPattern 的展开就塌成一张）。普通槽位一律不替它注册，交回 GTNL 本体。
+            if (wildcardSlots.isEmpty()) return;
 
             int registered = 0;
-            for (SuperCraftingInputHatchME.PatternSlot<SuperCraftingInputHatchME> slot : plainSlots) {
-                ICraftingPatternDetails details = slot.getPatternDetails();
-                if (details == null) continue; // GTNL 自己会打 warn，这里不重复
-                craftingTracker.addCraftingOption((ICraftingProvider) (Object) this, details);
-            }
             for (SuperCraftingInputHatchME.PatternSlot<SuperCraftingInputHatchME> slot : wildcardSlots) {
                 SmartWildcardGtnlPatternSlot wildcardSlot = (SmartWildcardGtnlPatternSlot) slot;
                 for (ICraftingPatternDetails details : wildcardSlot.expandedDetails()) {
@@ -183,24 +160,25 @@ public abstract class MixinSuperCraftingInputHatchMEWildcard {
                 }
                 if (wildcardSlot.expandedDetails()
                     .isEmpty()) {
-                    MyMod.LOG.warn("[AE2QoL] GTNL 通配槽位未注册任何样板：{}", wildcardSlot.expandSummary());
+                    MyMod.LOG.warn("[AE2QoL] GTNL 通配槽位未注册任何样板（模板那一张仍由 GTNL 本体注册）：{}",
+                        wildcardSlot.expandSummary());
                 }
             }
-            if (!wildcardSlots.isEmpty()) {
-                long now = System.currentTimeMillis();
-                if (now - this.ae2qol$lastRegisterLogTick > 15000L) {
-                    this.ae2qol$lastRegisterLogTick = now;
-                    MyMod.LOG.info(
-                        "[AE2QoL] GTNL 通配样板注册：通配槽={} 注册 details={} 映射总数={} 上限={}",
-                        wildcardSlots.size(),
-                        registered,
-                        this.patternDetailsPatternSlotMap.size(),
-                        Config.smartWildcardExpandCap);
-                }
+            long now = System.currentTimeMillis();
+            // 3.38.0：初值用 0（旧的 Long.MIN_VALUE 会让 now-last 溢出成负数 ⇒ 这条日志从来没打出来过）
+            if (now - this.ae2qol$lastRegisterLogTick > 15000L) {
+                this.ae2qol$lastRegisterLogTick = now;
+                MyMod.LOG.info(
+                    "[AE2QoL] GTNL 通配样板注册（只追加，未 cancel）：通配槽={} 注册 details={} 本机含原版样板={} 映射总数={} 上限={}",
+                    wildcardSlots.size(),
+                    registered,
+                    foreign,
+                    this.patternDetailsPatternSlotMap.size(),
+                    Config.smartWildcardExpandCap);
             }
-            ci.cancel();
         } catch (Throwable t) {
-            MyMod.LOG.warn("[AE2QoL] GTNL 通配样板注册失败，已回退原版 provideCrafting（只注册模板样板）", t);
+            // 绝不静默；也不 cancel ⇒ 原版照样工作
+            MyMod.LOG.warn("[AE2QoL] GTNL 通配样板注册失败（本轮跳过，不影响原版样板）", t);
         }
     }
 

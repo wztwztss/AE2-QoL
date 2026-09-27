@@ -13,9 +13,11 @@
 |---|---|
 |工具平台|DeepSeek Harness（DSH Web GUI）|
 |模型信息|DeepSeek-V4.1-Flash|
-|工作分支|master；本轮起点 `5be1d26`（3.36.0 交付），工作树干净、与 origin/master 同步（未推送）|
-|启动时间|2026-09-27（Asia/Shanghai，缺陷修复轮：3.37.0，紧接 3.36.0 实测反馈）|
-|本次会话目标|**修"通配匹配恒为 false" —— 本模组通配样板"从未成功过"的最后一个根因 = 3.37.0**。用户实测 3.36.0（自行部署）反馈：识别到了，但**只有原版模组的样板能展开**，我们那张"只能识别到铁板一个"（NEI 按铁板转移 ⇒ 只登记模板一张）。日志把范围收窄：`规则槽位越界` **0 条**、`模板重建后已重排规则槽位` 1 条（3.36.0 下标对齐生效）、展开时规则状态**完全正确**（`规则 slot=0 mode=矿辞 matcher='ingot*' outMatcher='plate*' amount=1`），但 `matched=0 reason=no-material-matched` ×24。**根因 H**：`SmartWildcardState.matches` 把**整个正则串** `toLowerCase()`，把 `Pattern.quote` 的 `\Q…\E` 压成 `\q…\e` ⇒ `PatternSyntaxException: Illegal/unsupported escape sequence`，而 `catch` **静默返回 false** ⇒ **所有**通配匹配恒 false：① 展开器材料枚举恒空（产出 0 ⇒ 回退模板 ⇒ "只能识别铁板一个"）；② `acceptsCandidate` 的黑/白名单恒 false；③ `excludedByRule` 的规则级排除恒 false。已用最小 Java 用例实证（`%TEMP%\ae2qol-regex-probe`：修复前 `matches(ingot*,ingotIron)=false`，修复后 true）。修复：逐字符显式转义元字符 + `Pattern.CASE_INSENSITIVE`，异常记 WARN（不静默）。产物 `build/libs/AE2-QoL-3.37.0.jar`（1,759,863 B，SHA256 `A96D4C3A…`）。**待实测 4 项**（CHANGELOG 记录 (40) 第四节）|
+|工作分支|master；本轮起点 `a6f911d`（3.37.0 交付并部署），工作树干净、与 origin/master 同步（未推送）|
+|启动时间|2026-09-27（Asia/Shanghai，缺陷修复轮：3.38.0，紧接 3.37.0 实测反馈）|
+|本次会话目标|**修「两套通配模组互斥（都只剩一张）」= 3.38.0**。用户实测 3.37.0 后报"现在是都只能识别到一个，之前原版可以正常识别全部锭出板"。**先确认好消息**：3.37.0 日志 `produced=512 matched=4393`／`produced=396` ⇒ 我们自己的展开**已经成功**（3.35.0 矿辞前缀＋3.36.0 下标对齐＋3.37.0 匹配函数三处全生效）。**回归真因**：用户无意中跑出 A/B/A 对照 —— 3.35.0（我们总是 `ci.cancel()`）两边都只剩一张 → 3.36.0（我们展开失败⇒未接管）**原版恢复全部** → 3.37.0（展开修好⇒又接管）两边又都只剩一张 ⇒ **`CallbackInfo.cancel()` 是共享标志：我们 cancel 掉 `provideCrafting`，同机原版 WildcardPattern 的展开会被一并跳过**。3.36.0 那次"互不干扰"只是碰巧（因为没触发接管），机制并未修对。修复：GT/GTNL/AE2 ME 接口三处**只追加、永不 cancel**（去掉 `cancellable` 与全部 `ci.cancel()`；不再替对方注册普通槽位）；顺带修两个**从未打印过**的限频日志（哨兵 `Long.MIN_VALUE` ⇒ `now-last` 溢出成负 ⇒ 条件永不成立，与检查点记过的 `RowCache` 哨兵坑同类），初值改 `0L`。字节码核对：三个 mixin 的 `CallbackInfo.cancel` 次数**均为 0**。产物 `build/libs/AE2-QoL-3.38.0.jar`（1,759,116 B，SHA256 `4F80BEBD…`）。**待实测 4 项**（CHANGELOG 记录 (41) 第四节）|
+|上一轮（历史）|工具：DeepSeek Harness｜模型：DeepSeek-V4.1-Flash：3.37.0（通配匹配恒 false 的根因），`a6f911d` 已部署；用户实测后报"两套模组都只剩一张铁板"。|
+|上一轮会话目标（3.37.0 轮）|**修"通配匹配恒为 false" —— 本模组通配样板"从未成功过"的最后一个根因 = 3.37.0**。用户实测 3.36.0（自行部署）反馈：识别到了，但**只有原版模组的样板能展开**，我们那张"只能识别到铁板一个"（NEI 按铁板转移 ⇒ 只登记模板一张）。日志把范围收窄：`规则槽位越界` **0 条**、`模板重建后已重排规则槽位` 1 条（3.36.0 下标对齐生效）、展开时规则状态**完全正确**（`规则 slot=0 mode=矿辞 matcher='ingot*' outMatcher='plate*' amount=1`），但 `matched=0 reason=no-material-matched` ×24。**根因 H**：`SmartWildcardState.matches` 把**整个正则串** `toLowerCase()`，把 `Pattern.quote` 的 `\Q…\E` 压成 `\q…\e` ⇒ `PatternSyntaxException: Illegal/unsupported escape sequence`，而 `catch` **静默返回 false** ⇒ **所有**通配匹配恒 false：① 展开器材料枚举恒空（产出 0 ⇒ 回退模板 ⇒ "只能识别铁板一个"）；② `acceptsCandidate` 的黑/白名单恒 false；③ `excludedByRule` 的规则级排除恒 false。已用最小 Java 用例实证（`%TEMP%\ae2qol-regex-probe`：修复前 `matches(ingot*,ingotIron)=false`，修复后 true）。修复：逐字符显式转义元字符 + `Pattern.CASE_INSENSITIVE`，异常记 WARN（不静默）。产物 `build/libs/AE2-QoL-3.37.0.jar`（1,759,863 B，SHA256 `A96D4C3A…`）。**待实测 4 项**（CHANGELOG 记录 (40) 第四节）|
 |上一轮（历史）|工具：DeepSeek Harness｜模型：DeepSeek-V4.1-Flash：3.36.0（下标对齐 + 与两套模组互不干扰），`5be1d26`；用户自行部署后报"只有原版能展开、我们只认铁板一张"。|
 |上一轮会话目标（3.36.0 轮）|**修 3.35.0 实机暴露的下标错位与两模组互扰 = 3.36.0**。用户实测反馈：加号只填输入不填输出、放进去仍按样板自己合成、**原版 wildcardpattern 的样板放同一总成也只识别到一个**。日志（3.35.0 会话）证据：`规则槽位越界：slot=1 inSize=1 matcher=ingot*`、`展开失败诊断：材料交集为空`、`produced=0 reason=no-material-matched`（16 条）、推送多为"输入 1 条、输出 0 条"。**根因 F**：机器侧 `rule.slot`＝模板输入下标（模板 `[电路,铁锭]` ⇒ slot=1），而桥旧实现**按"有规则的条目"排行**，电路行从未进界面 ⇒ 行号≠模板下标；自愈又从"只有规则行"重建模板 ⇒ `in=1` ⇒ slot=1 越界 ⇒ 规则被丢 ⇒ 材料集空 ⇒ 产出 0 ⇒ 机器回退模板；输出条目也落不到正确的行；`pullFromWild` 还用"已收集规则数"当 slot ⇒ 每保存一次漂移一次。**根因 G-3**：javap 实证原版 WildcardPattern 的 `MTEHatchCraftingInputMEMixin` 同样在 `provideCrafting` HEAD + `ci.cancel()` 全量接管，并对**共享的** `patternDetailsPatternSlotMap` 做 `removeIf` 清理；我们旧实现**无条件 cancel** 会把对方的展开压成一张。修复：① 桥改为**以模板行为单位**（界面行=模板槽位，非规则行占位空行保行号；输出行按该行自己的模板输出推 `plate*`；`pullFromWild` 用行号当 slot；模板重建后 `remapRuleSlots` 重排并留日志）；② GT/GTNL 处理器**先扫描**，本机没有我们的已配置样板时**完全不介入**（＋外来样板限频诊断）；③ 两处 `pushPattern` 守卫加**反向自愈**（共享映射被第三方清掉时补回并放行）。产物 `build/libs/AE2-QoL-3.36.0.jar`（1,759,609 B，SHA256 `D7D18D82…`）。**待实测 5 项**（CHANGELOG 记录 (39) 第四节）|
 |更早一轮（3.35.0）|工具：DeepSeek Harness｜模型：DeepSeek-V4.1-Flash：3.35.0（矿辞前缀本地化键 + 原生模板被删 + 输出行），`a2043f3` 已部署；用户实测后报"加号只填输入、输出不填、两套模组的样板都只识别一个"。|
@@ -38,6 +40,15 @@ GTNH 2.9.0-beta-3（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 ## 三、全局已完成清单
 
 > 按完成时间倒序排列，均标注产出文件路径。历史结论保留原貌，不等于本版验证结果。
+
+**3.38.0 交付（不再 cancel 原方法 = 修回"两套通配模组互斥"，2026-09-27）**：3.37.0 实测驱动。
+**好消息**：3.37.0 日志 `produced=512 matched=4393`／`produced=396` ⇒ 我们自己的展开**已经成功**。
+**回归真因**：用户的 A/B/A 对照（3.35.0 总是 cancel ⇒ 两边都剩一张；3.36.0 我们未接管 ⇒ 原版恢复全部；
+3.37.0 又接管 ⇒ 两边又都剩一张）证明 **`CallbackInfo.cancel()` 是共享标志**：cancel 掉 `provideCrafting`
+会让同机原版 WildcardPattern 的展开一并被跳过（javap 亦证其处理器与 GT 本体同链）。修复：GT/GTNL/
+AE2 ME 接口三处**只追加、永不 cancel**；顺带修两个从未打印过的限频诊断（`Long.MIN_VALUE` 哨兵溢出）。
+构建 `BUILD SUCCESSFUL`（`EXIT=0`）；产物 `build/libs/AE2-QoL-3.38.0.jar`（1,759,116 B，SHA256 `4F80BEBD…`）；
+字节码核对三个 mixin 的 `CallbackInfo.cancel` 计数均为 0。**待实测 4 项**（CHANGELOG 记录 (41)）。
 
 **3.37.0 交付（通配匹配恒为 false = "从未成功过"的最后一个根因，2026-09-27）**：3.36.0 实测驱动。用户反馈
 "只有原版能展开、我们只认铁板一张"；日志收窄到：`规则槽位越界` 0 条、展开时规则状态完全正确
@@ -391,7 +402,14 @@ CHANGELOG/README 章节缺失（本轮未追写）；`CHANGELOG.md` 末尾与 `z
 > （`63153ed` / `d783448` / `223c8c5`），工作树干净。本节条目保留"待用户实测"性质——
 > **提交不等于游戏内验收通过**。
 
-### 4.1 3.37.0 待游戏内验收（2026-09-27，最新）
+### 4.1 3.38.0 待游戏内验收（2026-09-27，最新）
+
+- ① **同一总成**里两套模组的样板各放一张 ⇒ **两张都能展开出全部锭→板配方**（不再只认铁板）；
+- ② 日志出现 `GT 通配样板注册（只追加拿，未 cancel）：通配槽=1 注册 details=N 本机含原版样板=M …` 且 `N>0`；
+- ③ 我们的样板：AE 里能看到整批展开样板、能按任意材料接单；
+- ④ 回归：原版模组单独使用时行为不变。
+
+### 4.2 3.37.0 待游戏内验收（已被 3.38.0 覆盖，保留供追溯）
 
 - ① 放进总成后日志出现 **`GT 通配样板注册：通配槽=1 注册 details=N`** 且 **N>0**，以及
   `GT 样板仓发现通配样板并展开：slot=… produced=N …`；
