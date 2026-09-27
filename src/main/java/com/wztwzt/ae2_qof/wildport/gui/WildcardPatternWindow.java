@@ -46,11 +46,10 @@ public final class WildcardPatternWindow {
 
     private static final int GUI_WIDTH = 452;
     private static final int GUI_HEIGHT = 292;
-    // 3.33.0：用户要求在 Wild 窗口里直接配「内置电路」⇒ 底部加一条电路带（只加高窗口，不动上面的布局）。
-    private static final int CIRCUIT_BAND_Y = GUI_HEIGHT;
-    private static final int CIRCUIT_BAND_HEIGHT = 50;
-    private static final int GUI_TOTAL_HEIGHT = GUI_HEIGHT + CIRCUIT_BAND_HEIGHT;
+    // 3.34.0：**撤掉** 3.33.0 的底部「内置电路」带 —— 电路改为独立页（用户拍板），窗口高度回到 292。
     private static final int RULE_ROWS = 9;
+    /** 3.34.0：不消耗物品页每页行数（与排除页同一套分页习惯）。 */
+    private static final int NON_CONSUMED_LINES = 8;
     private static final int PREVIEW_LINES = 12;
     private static final int DEDUPE_LINES = 4;
     private static final int EXCLUDE_LINES = 9;
@@ -75,100 +74,299 @@ public final class WildcardPatternWindow {
 
     private WildcardPatternWindow() {}
 
+    /**
+     * 当前打开的 Wild 窗口（3.34.0）。
+     *
+     * <p>为什么需要：NEI 加号必须**就地**把推导结果写进这个窗口的内存态。旧实现只发了个包 + 聊天栏
+     * "关掉重开"，于是 (a) 界面当场看不到任何变化，(b) 窗口内存态还是旧的，用户随后保存/关闭时
+     * 用旧内存态把刚写进去的规则**覆盖成 0 条**（3.33.0 日志指纹：14:57:30 写回 rules=1 → 14:57:32
+     * 窗口保存触发拉回得到"规则 0 条"）。
+     *
+     * <p>只在客户端登记（服务端线程同样会构建窗口；SP 下两者同 JVM，不隔离就会互相覆盖）。
+     */
+    private static WindowState ACTIVE_STATE;
+    private static ModularWindow ACTIVE_WINDOW;
+
     public static ModularWindow createWindow(UIBuildContext buildContext, EntityPlayer player, int slot) {
         WindowState state = new WindowState(player, slot);
-        ModularWindow.Builder builder = ModularWindow.builder(GUI_WIDTH, GUI_TOTAL_HEIGHT);
+        ModularWindow.Builder builder = ModularWindow.builder(GUI_WIDTH, GUI_HEIGHT);
         builder.setBackground(ModularUITextures.VANILLA_BACKGROUND);
 
         addHeader(builder, state);
+        addPageTabs(builder, state);
         addMainPage(builder, state);
-        // 3.33.0：底部电路带（用户要求：在这个窗口里就能配内置电路）
-        addCircuitBand(builder, state);
         addPreviewPage(builder, state);
         addExcludePage(builder, state);
         addDedupePage(builder, state);
+        // 3.34.0：电路与不消耗物品各自成页（用户拍板），页签在顶部右侧
+        addCircuitPage(builder, state);
+        addNonConsumedPage(builder, state);
 
-        return builder.build();
+        ModularWindow window = builder.build();
+        if (player != null && player.worldObj != null && player.worldObj.isRemote) {
+            ACTIVE_STATE = state;
+            ACTIVE_WINDOW = window;
+        }
+        return window;
     }
 
     /**
-     * 3.33.0：底部「内置电路」带（用户要求 Wild 窗口内可配电路 —— 这个窗口原本没有电路页）。
+     * NEI 加号（3.34.0）：把推导结果**就地**写进当前 Wild 窗口的 9 行并立即持久化。
      *
-     * <p>数据仍写进**我们自己的**子树（{@code SmartWildcardState.circuit}）：点一下改值后用既有的
-     * {@code SmartWildcardRulesPacket} 整包发回服务端（**不新增包、不新增通道**）；点击后聊天栏与日志都有回执。
-     * 「不消耗物品」仍在 Shift+右键的四页签编辑器里（那边有专门一页），这里不重复做。
+     * @return true = 本窗口接收并处理了（调用方不要再走"发个包让用户关掉重开"的旧路径）
      */
-    private static void addCircuitBand(ModularWindow.Builder builder, WindowState state) {
-        int current = -1;
+    public static boolean applyDerivedFromNei(
+        ModularWindow window,
+        com.wztwzt.ae2_qof.client.SmartWildcardRecipeDeriver.Result derived) {
+        if (window == null || derived == null || !derived.ok) return false;
+        WindowState state = ACTIVE_STATE;
+        if (state == null || ACTIVE_WINDOW != window) return false;
         try {
-            ItemStack stack = state.player.inventory.getStackInSlot(state.slot);
-            com.wztwzt.ae2_qof.wildcard.SmartWildcardState ours = com.wztwzt.ae2_qof.wildcard.SmartWildcardState
-                .of(stack);
-            current = ours == null ? -1 : ours.circuit;
+            ItemStack held = state.getHeldStack();
+            if (!com.wztwzt.ae2_qof.wildcard.SmartWildcardGate.isOurs(held)) {
+                com.wztwzt.ae2_qof.MyMod.LOG
+                    .warn("[AE2QoL] NEI 加号：槽位 {} 里不是我们的通配样板，未写入", state.slot);
+                return false;
+            }
+            // ① 借用桥的 NBT 往返把"我们的状态"翻成"Wild 的 entry 列表"，再整页替换界面内存行
+            ItemStack tmp = held.copy();
+            com.wztwzt.ae2_qof.wildcard.SmartWildcardState ours = derived.state;
+            ours.write(tmp);
+            NBTTagCompound tmpTag = tmp.getTagCompound();
+            if (tmpTag != null) {
+                if (derived.templateIn != null && !derived.templateIn.isEmpty()) {
+                    tmpTag.setTag("in", com.wztwzt.ae2_qof.network.SmartWildcardRulesPacket.buildList(derived.templateIn));
+                    tmpTag.setBoolean("crafting", false);
+                }
+                if (derived.templateOut != null && !derived.templateOut.isEmpty()) {
+                    tmpTag.setTag("out", com.wztwzt.ae2_qof.network.SmartWildcardRulesPacket.buildList(derived.templateOut));
+                }
+            }
+            com.wztwzt.ae2_qof.wildport.bridge.WildcardBridge.pushToWild(tmp, ours);
+
+            List<WildcardPatternEntry> ins = new ArrayList<>(WildcardPatternState.getInputEntries(tmp));
+            List<WildcardPatternEntry> outs = new ArrayList<>(WildcardPatternState.getOutputEntries(tmp));
+            ensureSize(ins, RULE_ROWS);
+            ensureSize(outs, RULE_ROWS);
+            state.setRows(ins, outs);
+
+            // ② 立刻持久化：规则 + 原生 in/out 走既有包（**带槽位**，避免写到背包里另一张样板）
+            com.wztwzt.ae2_qof.network.ModNetwork.CHANNEL.sendToServer(
+                new com.wztwzt.ae2_qof.network.SmartWildcardRulesPacket(
+                    ours,
+                    derived.templateIn,
+                    derived.templateOut,
+                    state.slot));
+            // ③ Wild 自己的键也写一遍（服务端侧由 MessageUpdateWildcardConfig 应用并同步我们的子树）
+            state.save();
+            com.wztwzt.ae2_qof.MyMod.LOG.info(
+                "[AE2QoL] NEI 加号：已就地把推导结果写进 Wild 窗口（槽位 {}，{}）",
+                state.slot,
+                derived.summary);
+            state.chat("\u00a7a[AE2QoL] \u5df2\u6309 NEI \u914d\u65b9\u586b\u5165\u754c\u9762\u5e76\u5199\u56de\u6837\u677f");
+            return true;
         } catch (Throwable t) {
-            com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 电路带：读取当前电路失败（按未设置显示）", t);
+            com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] NEI 加号就地写入失败（回退到旧路径）", t);
+            return false;
         }
-
-        TextWidget title = new TextWidget(
-            EnumChatFormatting.BLACK + "内置电路 Circuit = " + (current >= 1 ? String.valueOf(current) : "—"));
-        title.setPos(10, CIRCUIT_BAND_Y + 4);
-        title.setSize(GUI_WIDTH - 20, 10);
-        title.setScale(0.85f);
-        builder.widget(title);
-
-        for (int i = 1; i <= 24; i++) {
-            final int circuit = i;
-            int bx = 10 + ((i - 1) % 12) * 36;
-            int by = CIRCUIT_BAND_Y + 16 + ((i - 1) / 12) * 18;
-            ButtonWidget btn = new ButtonWidget();
-            btn.setPos(bx, by);
-            btn.setSize(33, 15);
-            btn.setBackground(ModularUITextures.VANILLA_BUTTON_NORMAL);
-            btn.setOnClick((cd, w) -> applyCircuit(state, circuit));
-            builder.widget(btn);
-            TextWidget num = new TextWidget(String.valueOf(i));
-            num.setPos(bx + 12, by + 4);
-            num.setScale(0.8f);
-            builder.widget(num);
-        }
-        ButtonWidget clear = new ButtonWidget();
-        clear.setPos(10 + 12 * 36 + 6, CIRCUIT_BAND_Y + 16);
-        clear.setSize(94, 15);
-        clear.setBackground(ModularUITextures.VANILLA_BUTTON_NORMAL);
-        clear.setOnClick((cd, w) -> applyCircuit(state, -1));
-        builder.widget(clear);
-        TextWidget clearLabel = new TextWidget("清除（继承）");
-        clearLabel.setPos(10 + 12 * 36 + 22, CIRCUIT_BAND_Y + 20);
-        clearLabel.setScale(0.8f);
-        builder.widget(clearLabel);
     }
 
-    /** 把电路写进我们的子树并发回服务端（客户端本地改值 → 既有包整包发送）。 */
-    private static void applyCircuit(WindowState state, int circuit) {
-        try {
-            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getMinecraft();
-            ItemStack held = mc.thePlayer == null ? null : mc.thePlayer.inventory.getStackInSlot(state.slot);
-            if (held == null || held.getItem() != com.wztwzt.ae2_qof.CommonProxy.smartWildcardPattern) {
-                com.wztwzt.ae2_qof.MyMod.LOG
-                    .warn("[AE2QoL] 电路带：槽位 {} 里不是通配样板，未写入（item={}）", state.slot, held);
-                return;
-            }
-            com.wztwzt.ae2_qof.wildcard.SmartWildcardState s = com.wztwzt.ae2_qof.wildcard.SmartWildcardState
-                .of(held);
-            if (s == null) s = new com.wztwzt.ae2_qof.wildcard.SmartWildcardState();
-            s.circuit = circuit;
-            com.wztwzt.ae2_qof.network.ModNetwork.CHANNEL
-                .sendToServer(new com.wztwzt.ae2_qof.network.SmartWildcardRulesPacket(s));
-            com.wztwzt.ae2_qof.MyMod.LOG
-                .info("[AE2QoL] 电路带：已提交电路 {}（服务端写入后请关掉重开界面查看）", circuit);
-            if (mc.thePlayer != null) {
-                mc.thePlayer.addChatMessage(
-                    new net.minecraft.util.ChatComponentText(
-                        "\u00a7a[AE2QoL] \u5185\u7f6e\u7535\u8def\u5df2\u63d0\u4ea4 = " + (circuit >= 1 ? circuit : "继承")));
-            }
-        } catch (Throwable t) {
-            com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 电路带：写入失败", t);
+    /**
+     * 3.34.0：**电路页**（用户拍板：电路从底部带改为独立页；1~24 按 4 列 × 6 行重排）。
+     *
+     * <p>数据仍写进**我们自己的**子树（{@code SmartWildcardState.circuit}），走既有
+     * {@code SmartWildcardRulesPacket}（带槽位）整包发回服务端，**不新增包、不新增通道**。
+     * 点完当场高亮（按钮背景 supplier 读实时状态）——不再是"关掉重开才能看到"。
+     */
+    private static void addCircuitPage(ModularWindow.Builder builder, WindowState state) {
+        addCircuitPanel(builder, state, 8, 28, 436, 262);
+        addCircuitSeparator(builder, state, 18, 55, 406, 2);
+
+        TextWidget title = new TextWidget("");
+        title.setPos(18, 38);
+        title.setStringSupplier(() -> EnumChatFormatting.BLACK + tr("gui.wildcardpattern.circuit_title") + "："
+            + tr("gui.wildcardpattern.circuit_current")
+            + " = "
+            + (state.currentCircuit() >= 1 ? String.valueOf(state.currentCircuit())
+                : tr("gui.wildcardpattern.circuit_inherit")));
+        addCircuitWidget(builder, state, title);
+
+        TextWidget tip1 = new TextWidget("");
+        tip1.setPos(18, 68);
+        tip1.setStringSupplier(() -> EnumChatFormatting.DARK_GRAY + tr("gui.wildcardpattern.circuit_tip1"));
+        addCircuitWidget(builder, state, tip1);
+
+        TextWidget tip2 = new TextWidget("");
+        tip2.setPos(18, 81);
+        tip2.setStringSupplier(() -> EnumChatFormatting.DARK_GRAY + tr("gui.wildcardpattern.circuit_tip2"));
+        addCircuitWidget(builder, state, tip2);
+
+        // 1~24：4 列 × 6 行（用户选定），按钮 90×22，列距 96，行距 26，起点 (18,104)
+        for (int i = 1; i <= 24; i++) {
+            final int circuit = i;
+            ButtonWidget btn = button(
+                () -> buttonBackground(
+                    state.currentCircuit() == circuit,
+                    String.valueOf(circuit),
+                    state.currentCircuit() == circuit ? 0xFF1B4E8A : BUTTON_TEXT_COLOR));
+            btn.setPos(18 + ((i - 1) % 4) * 96, 104 + ((i - 1) / 4) * 26);
+            btn.setSize(90, 22);
+            btn.setOnClick((clickData, widget) -> applyCircuit(state, circuit));
+            addCircuitWidget(builder, state, btn);
         }
+
+        ButtonWidget clear = button("gui.wildcardpattern.circuit_clear");
+        clear.setPos(18, 264);
+        clear.setSize(120, 18);
+        clear.setOnClick((clickData, widget) -> applyCircuit(state, -1));
+        addCircuitWidget(builder, state, clear);
+
+        ButtonWidget back = button("gui.wildcardpattern.back");
+        back.setPos(382, 264);
+        back.setSize(68, 18);
+        back.setOnClick((clickData, widget) -> state.closeExtraPages());
+        addCircuitWidget(builder, state, back);
+    }
+
+    /**
+     * 3.34.0：**不消耗物品页**（用户拍板：NEI 拖入 + 手持加入 + 逐行删除 + 即时写回，全部都要）。
+     *
+     * <p>拖动接入用的是搬进来的 Wild 自带控件 {@code WildcardFilterDropTextField}（它本就是为
+     * GTNH-MUI 窗口写的 NEI 拖放接收器）；本模组另一个 {@code SmartWildcardNeiDragHandler} 只服务
+     * Cleanroom MUI2 的那个编辑器，对本窗口**不生效**，所以不能复用。
+     */
+    private static void addNonConsumedPage(ModularWindow.Builder builder, WindowState state) {
+        addNonConsumedPanel(builder, state, 8, 28, 436, 262);
+        addNonConsumedSeparator(builder, state, 18, 55, 406, 2);
+
+        TextWidget title = new TextWidget("");
+        title.setPos(18, 38);
+        title.setStringSupplier(
+            () -> EnumChatFormatting.BLACK + tr("gui.wildcardpattern.nonconsumed_title") + "（"
+                + state.getNonConsumedCount()
+                + "）");
+        addNonConsumedWidget(builder, state, title);
+
+        TextWidget tip1 = new TextWidget("");
+        tip1.setPos(18, 68);
+        tip1.setStringSupplier(() -> EnumChatFormatting.DARK_GRAY + tr("gui.wildcardpattern.nonconsumed_tip1"));
+        addNonConsumedWidget(builder, state, tip1);
+
+        ButtonWidget addHeld = button("gui.wildcardpattern.nonconsumed_add_held");
+        addHeld.setPos(18, 92);
+        addHeld.setSize(110, 18);
+        addHeld.setOnClick((clickData, widget) -> state.addHeldAsNonConsumed());
+        addNonConsumedWidget(builder, state, addHeld);
+
+        // NEI 拖入区：用搬运进来的 Wild 自带**物品**拖放框（WildcardEntryDropTextField 收的就是 ItemStack；
+        // WildcardFilterDropTextField 是筛选框、只收 String，不能用在这里）。拖进来即刻记为不消耗。
+        TextFieldWidget drop = new WildcardEntryDropTextField(stack -> state.addNonConsumed(stack));
+        drop.setSynced(false, false);
+        drop.setGetter(() -> tr("gui.wildcardpattern.nonconsumed_drop_hint"));
+        drop.setSetter(value -> {});
+        drop.setText(tr("gui.wildcardpattern.nonconsumed_drop_hint"));
+        drop.setTextColor(FIELD_TEXT_COLOR);
+        drop.setBackground(WildcardPatternWindow::fieldBackground);
+        drop.setTextAlignment(Alignment.CenterLeft);
+        drop.setMaxLength(64);
+        drop.setPos(134, 92);
+        drop.setSize(220, 18);
+        addNonConsumedWidget(builder, state, drop);
+
+        // 8 行/页：图标 + 名称 + 删
+        for (int i = 0; i < NON_CONSUMED_LINES; i++) {
+            final int lineIndex = i;
+            int rowY = 132 + i * 19;
+
+            DrawableWidget icon = new DrawableWidget();
+            icon.setPos(18, rowY);
+            icon.setSize(16, 16);
+            icon.setDrawable(
+                new com.gtnewhorizons.modularui.api.drawable.ItemDrawable(
+                    () -> state.getNonConsumedRow(lineIndex)));
+            addNonConsumedWidget(builder, state, icon);
+
+            TextWidget name = new TextWidget("");
+            name.setPos(40, rowY + 4);
+            name.setScale(0.85f);
+            name.setStringSupplier(() -> {
+                ItemStack stack = state.getNonConsumedRow(lineIndex);
+                return stack == null ? ""
+                    : EnumChatFormatting.BLACK + trim(
+                        stack.getDisplayName() + (stack.stackSize > 1 ? " x" + stack.stackSize : ""),
+                        40);
+            });
+            addNonConsumedWidget(builder, state, name);
+
+            ButtonWidget remove = button("gui.wildcardpattern.nonconsumed_remove");
+            remove.setPos(382, rowY);
+            remove.setSize(44, 16);
+            addNonConsumedWidget(builder, state, remove);
+            // 注意：addNonConsumedWidget 会设置"页码谓词"，这里必须**在它之后**把行存在性判据与页码一起写全，
+            // 否则后者会覆盖前者（Widget.setEnabled 只保留最后一个谓词）。
+            remove.setEnabled(widget -> state.nonConsumedPage && state.getNonConsumedRow(lineIndex) != null);
+            remove.setOnClick((clickData, widget) -> state.removeNonConsumedAt(lineIndex));
+        }
+
+        ButtonWidget prev = button("<");
+        prev.setPos(18, 252);
+        prev.setSize(34, 17);
+        prev.setOnClick((clickData, widget) -> {
+            if (state.nonConsumedPageIndex > 0) state.nonConsumedPageIndex--;
+        });
+        addNonConsumedWidget(builder, state, prev);
+
+        TextWidget page = new TextWidget("");
+        page.setPos(58, 256);
+        page.setStringSupplier(() -> EnumChatFormatting.BLACK + StatCollector
+            .translateToLocalFormatted("gui.wildcardpattern.page", state.nonConsumedPageIndex + 1, state.getNonConsumedPageCount()));
+        addNonConsumedWidget(builder, state, page);
+
+        ButtonWidget next = button(">");
+        next.setPos(110, 252);
+        next.setSize(34, 17);
+        next.setOnClick((clickData, widget) -> {
+            if (state.nonConsumedPageIndex + 1 < state.getNonConsumedPageCount()) state.nonConsumedPageIndex++;
+        });
+        addNonConsumedWidget(builder, state, next);
+
+        ButtonWidget back = button("gui.wildcardpattern.back");
+        back.setPos(382, 252);
+        back.setSize(68, 17);
+        back.setOnClick((clickData, widget) -> state.closeExtraPages());
+        addNonConsumedWidget(builder, state, back);
+    }
+
+    /** 顶部右侧页签条（用户拍板：不放主页底部，改放窗口顶部右侧三个小按钮）。 */
+    private static void addPageTabs(ModularWindow.Builder builder, WindowState state) {
+        ButtonWidget home = button(
+            () -> buttonBackground(!state.circuitPage && !state.nonConsumedPage, tr("gui.wildcardpattern.tab_home"), BUTTON_TEXT_COLOR));
+        home.setPos(298, 5);
+        home.setSize(46, 16);
+        home.setOnClick((clickData, widget) -> state.closeExtraPages());
+        builder.widget(home);
+
+        ButtonWidget circuit = button(
+            () -> buttonBackground(state.circuitPage, tr("gui.wildcardpattern.tab_circuit"), BUTTON_TEXT_COLOR));
+        circuit.setPos(348, 5);
+        circuit.setSize(46, 16);
+        circuit.setOnClick((clickData, widget) -> state.openCircuitPage());
+        builder.widget(circuit);
+
+        ButtonWidget nonConsumed = button(
+            () -> buttonBackground(state.nonConsumedPage, tr("gui.wildcardpattern.tab_nonconsumed"), BUTTON_TEXT_COLOR));
+        nonConsumed.setPos(398, 5);
+        nonConsumed.setSize(52, 16);
+        nonConsumed.setOnClick((clickData, widget) -> state.openNonConsumedPage());
+        builder.widget(nonConsumed);
+    }
+
+    /**
+     * 电路页点号：写进我们的子树并**立刻**发回服务端（唯一写路径见 {@code WindowState.pushOurState}）。
+     * 页面上的"当前 = N"与选中高亮都读窗口内的缓存值，写完立即更新 ⇒ 当场可见。
+     */
+    private static void applyCircuit(WindowState state, int circuit) {
+        state.applyCircuitValue(circuit);
     }
 
     private static void addHeader(ModularWindow.Builder builder, WindowState state) {
@@ -176,22 +374,27 @@ public final class WildcardPatternWindow {
         title.setPos(10, 9);
         title.setScale(0.95f);
         title.setStringSupplier(() -> EnumChatFormatting.BLACK + "" + EnumChatFormatting.BOLD
-            + tr(state.dedupePage
-                ? "gui.wildcardpattern.dedupe_page"
-                : state.excludePage
-                    ? "gui.wildcardpattern.exclude_page"
-                    : state.previewPage ? "gui.wildcardpattern.preview_page" : "gui.wildcardpattern.title"));
+            + tr(state.circuitPage ? "gui.wildcardpattern.circuit_title"
+                : state.nonConsumedPage ? "gui.wildcardpattern.nonconsumed_title"
+                    : state.dedupePage
+                        ? "gui.wildcardpattern.dedupe_page"
+                        : state.excludePage
+                            ? "gui.wildcardpattern.exclude_page"
+                            : state.previewPage ? "gui.wildcardpattern.preview_page" : "gui.wildcardpattern.title"));
         builder.widget(title);
 
         TextWidget hint = new TextWidget("");
+        // 3.34.0：宽度收到 160 —— 右上角要留给三个页签按钮（298 / 348 / 398）
         hint.setPos(132, 11);
-        hint.setSize(280, 10);
+        hint.setSize(160, 10);
         hint.setStringSupplier(() -> EnumChatFormatting.DARK_GRAY
-            + tr(state.dedupePage
-                ? "gui.wildcardpattern.dedupe_hint"
-                : state.excludePage
-                    ? "gui.wildcardpattern.exclude_hint"
-                    : state.previewPage ? "gui.wildcardpattern.preview_hint" : "gui.wildcardpattern.drag_hint"));
+            + tr(state.circuitPage ? "gui.wildcardpattern.circuit_hint"
+                : state.nonConsumedPage ? "gui.wildcardpattern.nonconsumed_hint"
+                    : state.dedupePage
+                        ? "gui.wildcardpattern.dedupe_hint"
+                        : state.excludePage
+                            ? "gui.wildcardpattern.exclude_hint"
+                            : state.previewPage ? "gui.wildcardpattern.preview_hint" : "gui.wildcardpattern.drag_hint"));
         builder.widget(hint);
     }
 
@@ -271,6 +474,9 @@ public final class WildcardPatternWindow {
         EntryCellRefs output = addEntryCell(builder, state, state.outputs, row, x + 154, y);
         refs.add(input);
         refs.add(output);
+        // 3.34.0：把行内控件引用也登记到 state —— NEI 加号要"就地刷新"这 9 行（构建期 setText 只写一次）
+        state.rowRefs.add(input);
+        state.rowRefs.add(output);
 
         TextWidget arrow = new TextWidget(EnumChatFormatting.BLACK + ">");
         arrow.setPos(x + 146, y + 4);
@@ -1030,6 +1236,110 @@ public final class WildcardPatternWindow {
         builder.widget(widget);
     }
 
+    /** 3.34.0：电路页控件（页签谓词与既有三页完全同一套机制 ⇒ 两端控件树一致）。 */
+    private static void addCircuitWidget(ModularWindow.Builder builder, WindowState state, Widget widget) {
+        widget.setEnabled(w -> state.circuitPage);
+        builder.widget(widget);
+    }
+
+    /** 3.34.0：不消耗物品页控件。 */
+    private static void addNonConsumedWidget(ModularWindow.Builder builder, WindowState state, Widget widget) {
+        widget.setEnabled(w -> state.nonConsumedPage);
+        builder.widget(widget);
+    }
+
+    private static void addCircuitPanel(
+        ModularWindow.Builder builder,
+        WindowState state,
+        int x,
+        int y,
+        int width,
+        int height) {
+        DrawableWidget shadow = new DrawableWidget();
+        shadow.setPos(x + 2, y + 2);
+        shadow.setSize(width, height);
+        shadow.setDrawable(new Rectangle().setColor(PANEL_SHADOW_COLOR));
+        addCircuitWidget(builder, state, shadow);
+
+        DrawableWidget border = new DrawableWidget();
+        border.setPos(x, y);
+        border.setSize(width, height);
+        border.setDrawable(WildcardPatternWindow::drawInsetPanel);
+        addCircuitWidget(builder, state, border);
+
+        DrawableWidget fill = new DrawableWidget();
+        fill.setPos(x + 3, y + 3);
+        fill.setSize(width - 6, height - 6);
+        fill.setDrawable(new Rectangle().setColor(PANEL_COLOR));
+        addCircuitWidget(builder, state, fill);
+    }
+
+    private static void addCircuitSeparator(
+        ModularWindow.Builder builder,
+        WindowState state,
+        int x,
+        int y,
+        int width,
+        int height) {
+        DrawableWidget dark = new DrawableWidget();
+        dark.setPos(x, y);
+        dark.setSize(width, Math.max(1, height / 2));
+        dark.setDrawable(new Rectangle().setColor(PANEL_LINE_DARK));
+        addCircuitWidget(builder, state, dark);
+
+        DrawableWidget light = new DrawableWidget();
+        light.setPos(x, y + Math.max(1, height / 2));
+        light.setSize(width, Math.max(1, height - Math.max(1, height / 2)));
+        light.setDrawable(new Rectangle().setColor(PANEL_LINE_LIGHT));
+        addCircuitWidget(builder, state, light);
+    }
+
+    private static void addNonConsumedPanel(
+        ModularWindow.Builder builder,
+        WindowState state,
+        int x,
+        int y,
+        int width,
+        int height) {
+        DrawableWidget shadow = new DrawableWidget();
+        shadow.setPos(x + 2, y + 2);
+        shadow.setSize(width, height);
+        shadow.setDrawable(new Rectangle().setColor(PANEL_SHADOW_COLOR));
+        addNonConsumedWidget(builder, state, shadow);
+
+        DrawableWidget border = new DrawableWidget();
+        border.setPos(x, y);
+        border.setSize(width, height);
+        border.setDrawable(WildcardPatternWindow::drawInsetPanel);
+        addNonConsumedWidget(builder, state, border);
+
+        DrawableWidget fill = new DrawableWidget();
+        fill.setPos(x + 3, y + 3);
+        fill.setSize(width - 6, height - 6);
+        fill.setDrawable(new Rectangle().setColor(PANEL_COLOR));
+        addNonConsumedWidget(builder, state, fill);
+    }
+
+    private static void addNonConsumedSeparator(
+        ModularWindow.Builder builder,
+        WindowState state,
+        int x,
+        int y,
+        int width,
+        int height) {
+        DrawableWidget dark = new DrawableWidget();
+        dark.setPos(x, y);
+        dark.setSize(width, Math.max(1, height / 2));
+        dark.setDrawable(new Rectangle().setColor(PANEL_LINE_DARK));
+        addNonConsumedWidget(builder, state, dark);
+
+        DrawableWidget light = new DrawableWidget();
+        light.setPos(x, y + Math.max(1, height / 2));
+        light.setSize(width, Math.max(1, height - Math.max(1, height / 2)));
+        light.setDrawable(new Rectangle().setColor(PANEL_LINE_LIGHT));
+        addNonConsumedWidget(builder, state, light);
+    }
+
     private static void addDedupePanel(
         ModularWindow.Builder builder,
         WindowState state,
@@ -1143,7 +1453,12 @@ public final class WildcardPatternWindow {
     }
 
     private static void addPageWidget(ModularWindow.Builder builder, WindowState state, Widget widget, boolean previewPage) {
-        widget.setEnabled(w -> !state.dedupePage && !state.excludePage && state.previewPage == previewPage);
+        // 3.34.0：新增两页后，主/预览页也必须让位（否则它们会在电路页/不消耗页上一起画出来）
+        widget.setEnabled(
+            w -> !state.dedupePage && !state.excludePage
+                && !state.circuitPage
+                && !state.nonConsumedPage
+                && state.previewPage == previewPage);
         builder.widget(widget);
     }
 
@@ -1391,6 +1706,14 @@ public final class WildcardPatternWindow {
             this.amountField.setText(this.amountSupplier.get());
             this.amountField.markForUpdate();
         }
+
+        /** 3.34.0：把某个 entry 的显示刷到控件上（NEI 加号就地刷新整页时逐格调用）。 */
+        private void refresh(WildcardPatternEntry entry) {
+            this.textField.setText(entry == null || entry.isEmpty() ? "" : trim(entry.getLabel(), 11));
+            this.amountField.setText(entry == null ? "1" : formatAmount(entry.getAmountLong()));
+            this.textField.markForUpdate();
+            this.amountField.markForUpdate();
+        }
     }
 
     private static final class AnimatedButtonWidget extends ButtonWidget {
@@ -1583,6 +1906,16 @@ public final class WildcardPatternWindow {
         private boolean previewPage;
         private boolean dedupePage;
         private boolean excludePage;
+        /** 3.34.0：两个新页（用户拍板：电路与不消耗物品各自成页）。 */
+        private boolean circuitPage;
+        private boolean nonConsumedPage;
+        private int nonConsumedPageIndex;
+        /** 不消耗物品页的本地镜像（来源＝我们的子树；每次增删立即整包写回服务端）。 */
+        private final List<ItemStack> nonConsumed = new ArrayList<>();
+        /** 懒同步只尝试一次（每帧的 supplier 都会读状态，不能每帧都去 pull NBT）。 */
+        private boolean pulledOursOnce;
+        /** 电路页显示的当前值（缓存，避免每帧解析 NBT；进页与写入后刷新）。 */
+        private int cachedCircuit = Integer.MIN_VALUE;
         private boolean excludeReturnPreview;
         private int selectedRule;
         private int previewRule = -1;
@@ -1590,6 +1923,8 @@ public final class WildcardPatternWindow {
         private int previewPageIndex;
         private int dedupePageIndex;
         private int excludePageIndex;
+        /** 3.34.0：9 行 × 2（输入/输出）的控件引用，供 NEI 加号就地刷新（构建期 setText 只生效一次）。 */
+        private final List<EntryCellRefs> rowRefs = new ArrayList<>();
 
         private WindowState(EntityPlayer player, int slot) {
             this.player = player;
@@ -1619,11 +1954,246 @@ public final class WildcardPatternWindow {
             ensureSize(this.outputs, RULE_ROWS);
             while (this.ruleIncludes.size() < RULE_ROWS) this.ruleIncludes.add("");
             while (this.ruleExcludes.size() < RULE_ROWS) this.ruleExcludes.add("");
+
+            // 3.34.0：不消耗物品页的本地镜像取自我们的子树（需要时懒同步一次；失败按空列表并留痕）
+            try {
+                com.wztwzt.ae2_qof.wildcard.SmartWildcardState ours = materializeOurs(stack);
+                if (ours != null) this.nonConsumed.addAll(ours.nonConsumed);
+            } catch (Throwable t) {
+                com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 读取样板的不消耗物品列表失败（按空列表显示）", t);
+            }
+        }
+
+        // ================= 3.34.0：两个新页（电路 / 不消耗物品）=================
+
+        /** 切到电路页（同时收掉其它页 —— 任一时刻只有一个页面在画）。 */
+        private void openCircuitPage() {
+            this.previewPage = false;
+            this.excludePage = false;
+            this.dedupePage = false;
+            this.nonConsumedPage = false;
+            this.circuitPage = true;
+            refreshCircuitCache();
+            refreshActivePage();
+        }
+
+        /** 切到不消耗物品页。 */
+        private void openNonConsumedPage() {
+            this.previewPage = false;
+            this.excludePage = false;
+            this.dedupePage = false;
+            this.circuitPage = false;
+            this.nonConsumedPage = true;
+            if (this.nonConsumedPageIndex >= getNonConsumedPageCount()) {
+                this.nonConsumedPageIndex = Math.max(0, getNonConsumedPageCount() - 1);
+            }
+            refreshActivePage();
+        }
+
+        /** 回主页（页签「主页」与两页的「返回」共用）。 */
+        private void closeExtraPages() {
+            this.circuitPage = false;
+            this.nonConsumedPage = false;
+            refreshActivePage();
+        }
+
+        /** 当前电路（读缓存；未初始化时先刷新一次）。 */
+        private int currentCircuit() {
+            if (this.cachedCircuit == Integer.MIN_VALUE) refreshCircuitCache();
+            return this.cachedCircuit;
+        }
+
+        /** 重新读取"这张样板自带的电路"到缓存（进电路页时调用一次，不在渲染循环里解析 NBT）。 */
+        private void refreshCircuitCache() {
+            try {
+                com.wztwzt.ae2_qof.wildcard.SmartWildcardState ours = materializeOurs(getHeldStack());
+                this.cachedCircuit = ours == null ? -1 : ours.circuit;
+            } catch (Throwable t) {
+                com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 电路页：读取当前电路失败（按未设置显示）", t);
+                this.cachedCircuit = -1;
+            }
+        }
+
+        /** 电路页点号：写回服务端并立即更新本地缓存（界面当场变化）。 */
+        private void applyCircuitValue(int circuit) {
+            if (!pushOurState(s -> s.circuit = circuit, "电路页")) return;
+            this.cachedCircuit = circuit;
+            chat("\u00a7a[AE2QoL] \u5185\u7f6e\u7535\u8def = " + (circuit >= 1 ? circuit : "继承"));
+        }
+
+        /**
+         * 取出"我们自己的状态"：没有子树时**懒同步一次**（玩家可能只在 Wild 界面里配过）。
+         *
+         * <p>为什么这里也要兜底：电路页/不消耗页的写回是"读—改—整包写"，读不到就发空包 ⇒ 会把服务端
+         * 已有的规则覆盖成 0 条（3.33.0 实测到的规则被抹掉就是这个机理）。
+         */
+        private com.wztwzt.ae2_qof.wildcard.SmartWildcardState materializeOurs(ItemStack stack) {
+            if (!com.wztwzt.ae2_qof.wildcard.SmartWildcardGate.isOurs(stack)) return null;
+            com.wztwzt.ae2_qof.wildcard.SmartWildcardState ours = com.wztwzt.ae2_qof.wildcard.SmartWildcardState
+                .of(stack);
+            if (ours == null && !this.pulledOursOnce) {
+                this.pulledOursOnce = true;
+                try {
+                    com.wztwzt.ae2_qof.wildport.bridge.WildcardBridge.pullFromWild(stack);
+                } catch (Throwable t) {
+                    com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 窗口内懒同步失败（按未配置处理）", t);
+                }
+                ours = com.wztwzt.ae2_qof.wildcard.SmartWildcardState.of(stack);
+            }
+            return ours;
+        }
+
+        /** 唯一写路径：就地改我们的状态 + **立刻**整包发回服务端（带槽位）。返回是否成功。 */
+        private boolean pushOurState(
+            java.util.function.Consumer<com.wztwzt.ae2_qof.wildcard.SmartWildcardState> mutator,
+            String why) {
+            try {
+                ItemStack held = getHeldStack();
+                if (!com.wztwzt.ae2_qof.wildcard.SmartWildcardGate.isOurs(held)) {
+                    com.wztwzt.ae2_qof.MyMod.LOG
+                        .warn("[AE2QoL] {}：槽位 {} 里不是通配样板，未写入（item={}）", why, this.slot, held);
+                    return false;
+                }
+                com.wztwzt.ae2_qof.wildcard.SmartWildcardState s = materializeOurs(held);
+                if (s == null) s = new com.wztwzt.ae2_qof.wildcard.SmartWildcardState();
+                mutator.accept(s);
+                com.wztwzt.ae2_qof.network.ModNetwork.CHANNEL.sendToServer(
+                    new com.wztwzt.ae2_qof.network.SmartWildcardRulesPacket(s, this.slot));
+                com.wztwzt.ae2_qof.MyMod.LOG.info(
+                    "[AE2QoL] {}：已提交（槽位 {}，规则 {} 条、不消耗 {} 项、电路 {}）",
+                    why,
+                    this.slot,
+                    s.rules.size(),
+                    s.nonConsumed.size(),
+                    s.circuit);
+                return true;
+            } catch (Throwable t) {
+                com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] " + why + "：写入失败", t);
+                return false;
+            }
+        }
+
+        private int getNonConsumedCount() {
+            return this.nonConsumed.size();
+        }
+
+        private int getNonConsumedPageCount() {
+            return Math.max(1, (this.nonConsumed.size() + NON_CONSUMED_LINES - 1) / NON_CONSUMED_LINES);
+        }
+
+        private ItemStack getNonConsumedRow(int lineIndex) {
+            int absolute = this.nonConsumedPageIndex * NON_CONSUMED_LINES + lineIndex;
+            return absolute >= 0 && absolute < this.nonConsumed.size() ? this.nonConsumed.get(absolute) : null;
+        }
+
+        /** 手持物品记为不消耗（按钮入口）。 */
+        private void addHeldAsNonConsumed() {
+            try {
+                net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getMinecraft();
+                ItemStack held = mc == null || mc.thePlayer == null ? null : mc.thePlayer.getCurrentEquippedItem();
+                if (held == null) {
+                    chat("\u00a7c[AE2QoL] \u624b\u4e0a\u6ca1\u6709\u7269\u54c1");
+                    return;
+                }
+                addNonConsumed(held);
+            } catch (Throwable t) {
+                com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 记为不消耗物品失败", t);
+            }
+        }
+
+        /** 记为"合成时不消耗"（NEI 拖入区与"加入手持"共用），**立即**写回服务端。 */
+        private void addNonConsumed(ItemStack stack) {
+            if (stack == null || stack.getItem() == null) return;
+            ItemStack mark = stack.copy();
+            mark.stackSize = 1;
+            for (ItemStack existing : this.nonConsumed) {
+                if (existing != null && existing.getItem() == mark.getItem()
+                    && existing.getItemDamage() == mark.getItemDamage()
+                    && ItemStack.areItemStackTagsEqual(existing, mark)) {
+                    chat("\u00a7e[AE2QoL] \u5df2\u5728\u5217\u8868\u4e2d\uff1a" + mark.getDisplayName());
+                    return;
+                }
+            }
+            this.nonConsumed.add(mark);
+            if (this.nonConsumedPageIndex >= getNonConsumedPageCount()) {
+                this.nonConsumedPageIndex = getNonConsumedPageCount() - 1;
+            }
+            if (pushOurState(s -> {
+                s.nonConsumed.clear();
+                s.nonConsumed.addAll(this.nonConsumed);
+            }, "不消耗物品页（加入）")) {
+                chat("\u00a7a[AE2QoL] \u5df2\u8bb0\u4e3a\u4e0d\u6d88\u8017\uff1a" + mark.getDisplayName());
+            } else {
+                // 写回失败就地回滚，避免界面与服务端不一致（本项目原则：不允许静默不一致）
+                this.nonConsumed.remove(this.nonConsumed.size() - 1);
+            }
+        }
+
+        /** 删除第 lineIndex 行（当前页内）的不消耗物品，**立即**写回服务端。 */
+        private void removeNonConsumedAt(int lineIndex) {
+            int absolute = this.nonConsumedPageIndex * NON_CONSUMED_LINES + lineIndex;
+            if (absolute < 0 || absolute >= this.nonConsumed.size()) return;
+            ItemStack removed = this.nonConsumed.remove(absolute);
+            if (!pushOurState(s -> {
+                s.nonConsumed.clear();
+                s.nonConsumed.addAll(this.nonConsumed);
+            }, "不消耗物品页（删除）")) {
+                this.nonConsumed.add(absolute, removed); // 失败回滚
+                return;
+            }
+            if (this.nonConsumedPageIndex >= getNonConsumedPageCount()) {
+                this.nonConsumedPageIndex = Math.max(0, getNonConsumedPageCount() - 1);
+            }
+            chat("\u00a7a[AE2QoL] \u5df2\u79fb\u9664\uff1a" + (removed == null ? "?" : removed.getDisplayName()));
+        }
+
+        /**
+         * 3.34.0：整页替换 9 行（用户拍板："加号按推导结果整页替换"），并就地刷新控件。
+         *
+         * <p>为什么必须刷新控件：窗口的行文本是**构建期** {@code setText} 写死的，只改内存态不会重绘。
+         */
+        private void setRows(List<WildcardPatternEntry> newInputs, List<WildcardPatternEntry> newOutputs) {
+            for (int i = 0; i < RULE_ROWS; i++) {
+                this.inputs.set(i, i < newInputs.size() ? newInputs.get(i) : WildcardPatternEntry.fromStack(null));
+                this.outputs.set(i, i < newOutputs.size() ? newOutputs.get(i) : WildcardPatternEntry.fromStack(null));
+                this.ruleIncludes.set(i, "");
+                this.ruleExcludes.set(i, "");
+            }
+            refreshRuleRows();
+            refreshActivePage();
+            this.cachedCircuit = Integer.MIN_VALUE; // 行被整页替换后，电路缓存一并作废（下次进电路页重新读）
+        }
+
+        /** 把 9 行的显示刷成当前内存态（输入/输出文本 + 数量）。 */
+        private void refreshRuleRows() {
+            for (int row = 0; row < RULE_ROWS; row++) {
+                int inputRef = row * 2;
+                if (inputRef + 1 < this.rowRefs.size()) {
+                    this.rowRefs.get(inputRef)
+                        .refresh(this.inputs.get(row));
+                    this.rowRefs.get(inputRef + 1)
+                        .refresh(this.outputs.get(row));
+                }
+            }
+        }
+
+        /** 聊天栏回执（就地刷新后给用户一条明确反馈，避免"点了没反应"的观感）。 */
+        private void chat(String message) {
+            try {
+                net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getMinecraft();
+                if (mc != null && mc.thePlayer != null) {
+                    mc.thePlayer.addChatMessage(new net.minecraft.util.ChatComponentText(message));
+                }
+            } catch (Throwable t) {
+                com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 聊天栏回执失败", t);
+            }
         }
 
         private void openPreview(int rule) {
             this.dedupePage = false;
             this.excludePage = false;
+            this.circuitPage = false;
+            this.nonConsumedPage = false;
             this.previewRule = rule;
             this.previewPageIndex = 0;
             this.previewPage = true;
@@ -1634,6 +2204,8 @@ public final class WildcardPatternWindow {
             this.excludeReturnPreview = this.previewPage;
             this.previewPage = false;
             this.dedupePage = false;
+            this.circuitPage = false;
+            this.nonConsumedPage = false;
             this.excludeRule = rule;
             this.excludeDraft = "";
             this.excludePageIndex = 0;
@@ -1652,6 +2224,8 @@ public final class WildcardPatternWindow {
         private void openDedupe() {
             this.previewPage = false;
             this.excludePage = false;
+            this.circuitPage = false;
+            this.nonConsumedPage = false;
             this.dedupePage = true;
             this.dedupePageIndex = 0;
             rebuildDedupe();

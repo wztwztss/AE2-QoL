@@ -1,3 +1,128 @@
+## 工作区决策记录 2026-09-27 (37) - **3.34.0：修「通配样板放进总成不被识别 / NEI 加号无效 / 电路与不消耗物品没有独立页」**
+
+> 用户实测 3.33.0 的三条报障 + 一条我侦察发现的静默失效。工具：DeepSeek Harness（DSH Web GUI）｜模型：DeepSeek-V4.1-Flash。
+> 流程：先只读取证（实例 jar/日志/原版 mod 字节码）→ 三轮提问确认到 99%（用户拍板 16 项）→ 方案确认 → 实施。
+
+### 一、问题 C（核心）：有规则的通配样板放进**任何**总成都不被识别
+
+**现象**：GT 样板输入仓 / GTNL 超级总成 / PH 22069 / MK.II / 我们的 MK.III（32108）全部不识别；样板放得进槽位、
+机器无任何动作、无任何提示；AE 合成 CPU/合成监控里看不到展开出的配方；用户确认**从未成功过**（非回归）。
+对照组：同一台 GT ME 样板输入总成，**原版 WildcardPattern 1.1.0 的样板能正常工作**。
+
+**根因一（结构性，与玩家数据无关）**：`SmartWildcardPatternSlot.rebuild(World)` 与
+`SmartWildcardGtnlPatternSlot.rebuild(World)` **全仓零调用者**（`grep rebuild` 只有两处定义）。
+两个槽位类的 `expanded` 列表因此恒为空 ⇒ GT 与 GTNL 两条链**即使判据通过也注册 0 条**。
+证据：`build/libs/AE2-QoL-3.33.0.jar` 与源码内 `rebuild` 均无调用点；3.33.0 实测日志里
+`GT 样板仓发现通配样板并展开` / `GT 通配样板注册` / `GTNL ...` **一条都没有**。
+
+**根因二（判据次序，3.32.0 的修复对自己要修的场景不可达）**：四个入口
+（`MixinMTEHatchCraftingInputMEWildcard:265`、`MixinSuperCraftingInputHatchMEWildcard:231`、
+`MixinPatternDualInputHatchWildcard:79`、`MixinDualityInterface:87`）的判据都是
+`SmartWildcardState.isSmartWildcard`（要求 NBT 里**已有**我们的子树 `ae2qolSmartWildcard`）。
+该子树只有两条写入路径：`WildcardBridge.pullFromWild`（仅由 `MessageUpdateWildcardConfig`
+＝ **Wild 窗口保存**调用）与 `SmartWildcardRulesPacket`（编辑器/加号）。
+3.32.0 把"懒同步"写在 `SmartWildcardExpander.expand()` 内部，而 `expand()` **只有判据通过后才会被调用**
+⇒ 那段兜底永远救不到它想救的"只有 Wild 键、没有我们 NBT"的样板。
+**实测计数（3.33.0 会话）**：`pushToWild` 24 次、`pullFromWild` **2 次且两次都是"规则 0 条"**、
+`展开前懒同步` **0 次** ⇒ 四处判据全部判否，而 GT/GTNL 的判否分支是**静默**的
+（直接落 `plainSlots`，一行日志都不打）⇒ 现象正是"放得进、机器不动、无提示"。
+
+**修复**：
+1. 新建 `wildcard/SmartWildcardGate`：判据链 = **物品实例**（`isOurs`，不看 NBT）→ 缺我们 NBT 时
+   **先懒同步**（`pullFromWild`，只读 Wild 键、不联网）→ `isConfigured()` 至少一条规则。
+   四个入口全部改用 `isConfiguredWildcard(stack, where)`，**判否必留限频 WARN**（区分"不是我们的物品"/
+   "是我们的但没配置"/"懒同步失败"三种完全不同的情况）。
+2. GT / GTNL 两处包装点（`provideCrafting` 与 `onPatternChange`/`loadNBTData` 的重包路径）
+   **补上 `rebuild(world)`** 调用（世界经 `getBaseMetaTileEntity().getWorld()` 取，失败记 WARN）。
+3. **不静默降级**：GT/GTNL 展开为空时不再"注册 0 条"，改为**退回注册模板那一张**（+ WARN）；
+   AE2 ME 接口侧同样从 `ci.cancel()`（什么都不注册）改为**放行原生逻辑**（退化为模板那一张）。
+   守住的**不变量**：未配置的通配样板仍是一张合法普通样板，绝不能让原本可用的模板配方失效。
+
+### 二、问题 A：Wild 窗口里 NEI「+」无效（配方不落界面）
+
+**时序指纹（3.33.0 实测日志）**：
+```
+14:57:30 [AE2QoL] NEI 加号推导并写回通配样板：in=2 out=1 oreRules=1 ...
+14:57:30 [AE2QoL] 通配样板写回成功（MUI2 编辑器）：rules=1 ... revision=1
+14:57:32 [AE2QoL] 桥：已把 Wild 界面的配置拉回我们的模型（规则 0 条、总排除 0 项、电路 1）
+```
+外加同一张样板 revision 出现 `2 → 3 → 1` 的**回退**。
+
+**根因**（三个独立毛病叠加）：
+1. **写错物品**：`SmartWildcardRulesPacket` 服务端处理里目标是"**背包里第一张**我们的样板"
+   （`SmartWildcardRulesPacket:191-197`），**不是窗口那张** ⇒ revision 回退即"写到另一张"的指纹。
+2. **界面不刷新**：Wild 窗口是**构建期**读 NBT，加号只发包 + 聊天栏提示"关掉重开"，
+   窗口内存态没变 ⇒ 用户看到"点了没反应"。
+3. **旧内存态覆盖**：窗口保存时 `MessageUpdateWildcardConfig` → `pullFromWild` 用**窗口内存态**
+   重建我们的规则；内存态是旧的（0 行）⇒ 把加号刚写进去的规则**清成 0 条**（上表 14:57:32 那行）。
+
+**修复**：
+1. `SmartWildcardRulesPacket` 新增**目标槽位**（`-1` = 旧行为），服务端**优先写该槽位**那张样板、
+   找不到才退回背包搜索（并 WARN 说明）；成功日志区分"指定槽位/背包搜索"。
+2. Wild 窗口新增 `applyDerivedFromNei(window, derived)`：**就地**把推导结果**整页替换**进 9 行
+   （用户拍板：整页替换）→ 刷新行控件 → 立刻持久化（带槽位的规则包 + 原生 in/out 模板，再走一次
+   Wild 自己的保存）→ 聊天回执"已按 NEI 配方填入界面并写回样板"。
+3. `MixinGuiOverlayButton`：GTNH-MUI 分支改为**只认"当前主窗口就是 Wild 通配样板窗口"**
+   （`WildcardPatternWindow.ACTIVE_WINDOW` 身份比较）⇒ 当场刷新；同时不再误伤别的 GTNH-MUI 窗口
+   （例如批量样板生成器）——旧实现把**任何** `ModularGui` 都当通配编辑器。
+   MUI2 分支加 `ModularScreen.isActive(MODID,"ae2qol_wildcard_editor")` 收紧。
+4. 新增"窗口级唯一写路径" `WindowState.pushOurState(...)`：读—改—**立刻**整包写回；
+   `materializeOurs` 在读不到我们的子树时**先懒同步一次**（防止发空包把服务端规则覆盖成 0；
+   这正是"电路带把规则清掉"的机理）。写回失败时**就地回滚**界面（不允许界面与服务端静默不一致）。
+
+### 三、问题 B：电路与不消耗物品没有独立页（Wild 窗口）
+
+- **撤掉** 3.33.0 的底部 50px「内置电路」带，窗口高度回到 292。
+- 新增**顶部右侧三个页签按钮**（主页 / 电路 / 不消耗，用户选定位置），沿窗口既有页面机制
+  （页签按钮 + 每页控件挂 `setEnabled(谓词)` 控显隐，双端控件树一致 → 不会重演 32107 那个
+  "只有服务端建控件"的坑）；新增两页后，主/预览/排除/去重四页的谓词也一并排除新页。
+- **电路页**：1~24 按 **4 列 × 6 行**（按钮 90×22，列距 96，行距 26）＋「清除（继承）」＋「返回」；
+  点号**当场生效、当场高亮**（缓存值 + `buttonBackground(active,…)` supplier），不再"关掉重开"。
+- **不消耗物品页**：**NEI 拖入**（复用搬进来的 Wild 自带物品拖放框 `WildcardEntryDropTextField`
+  —— 本模组的 `SmartWildcardNeiDragHandler` 只服务 Cleanroom MUI2 编辑器，对 GTNH-MUI 窗口**不生效**）
+  ＋「加入手持」＋ 8 行/页（**图标 + 名称**，`ItemDrawable(supplier)` 逐帧求值）＋ 逐行「删」
+  ＋ `<`/`>` 分页 ＋「返回」；增删**立即写回**服务端。
+- 语言键：新增 16 个 `gui.wildcardpattern.*`（中英各一份）。**注意**：这个窗口其余 `gui.wildcardpattern.*`
+  键**不在本模组资源里**，一直靠实例内**原版 WildcardPattern mod 的 lang 文件**提供；
+  因此新键必须自带（否则会显示原始键名）。
+
+### 四、问题 D：`mui.MixinItemSlotWildcardGesture` 注入失败（静默失效）
+
+3.33.0 日志唯一一条 mixin 失败：`InvalidInjectionException: ... ae2qol$openCircuitPicker(...CallbackInfo)V!
+CallbackInfoReturnable is required!`。javap 实证目标方法签名为
+`public Interactable$Result com.cleanroommc.modularui.widgets.slot.ItemSlot.onMousePressed(int)`
+（`libs/modularui2-2.3.88-1.7.10.jar`）⇒ 回调类型必须是 `CallbackInfoReturnable<Interactable.Result>`。
+修复后**不调用 `setReturnValue`**（中键对槽位本无原版语义，放行原逻辑最稳）。
+⇒ MUI2 槽位上的「Shift+中键 → 电路选择屏」手势从 3.22.0 起**从未生效过**，本版起才真正可用。
+
+### 五、验证与待测
+
+- 构建：`gradlew build --offline -x spotlessJavaCheck -x spotlessCheck`，**无管道取码 `EXIT=0`**，
+  `BUILD SUCCESSFUL`。产物 `build/libs/AE2-QoL-3.34.0.jar`（1,753,773 字节，
+  SHA256 `EB5FBC222D60E3466395985A4D70ACFD9DFFC6D71D58F1712964735C6F780F0D`）。
+- **产物字节码核对**（不是只看源码）：
+  - `javap` 产物内 `MixinItemSlotWildcardGesture.ae2qol$openCircuitPicker` 已是
+    `CallbackInfoReturnable<Interactable$Result>`；
+  - `MixinMTEHatchCraftingInputMEWildcard` 与 `MixinSuperCraftingInputHatchMEWildcard` 各自
+    **2 处** `invokevirtual ...PatternSlot.rebuild(World)`；
+  - 四个入口均 `invokestatic SmartWildcardGate.isConfiguredWildcard(ItemStack, String)Z`；
+  - `SmartWildcardGate.class` 入包；包内 `mcmod.info` 版本 = 3.34.0；包内 `mixins.ae2_qof.json`
+    通配条目齐全（`mui.MixinItemSlotWildcardGesture` 仍在 **client 段**，其余在通用段）。
+- **待用户实测**（本轮验收清单）：
+  1. Wild 窗口（右键样板）里按 NEI 加号 ⇒ **界面 9 行当场出现配方**（整页替换）且关掉重开仍在；
+  2. 电路页签：点号**当场高亮**；「清除（继承）」可用；
+  3. 不消耗物品页签：NEI 拖入 / 加入手持 / 逐行删 均立即生效，8 行分页正常；
+  4. 把配好的样板放进 GT 样板输入仓 / GTNL 超级总成 / PH 22069 / MK.II / MK.III，
+     **机器能接单**；日志应出现 `发现通配样板并展开：slot=… produced=N …` 与 `通配样板注册：… details=N`；
+  5. 对照组：**原版 WildcardPattern 的样板在原版总成里仍正常工作**（两套 mixin 同改一批类，必须不退化）；
+  6. 未配置的通配样板/普通 AE2 样板仍按模板工作（不变量验证）。
+- **已知文档债（如实登记）**：`CHANGELOG` 的 3.29.0～3.33.0、`README`/`README.en` 的 3.30.0～3.33.0
+  **没有各自的记录/章节**（本轮只做 3.34.0 记录，未追写历史）；`CHANGELOG.md` 末尾与
+  `zh_CN.lang` 尾部存在**历史编码损坏（乱码）**段落（3.31.0 合并 AE2PatternGen 语言文件时引入的
+  非 UTF-8 字节），本轮未修，需单独一轮按 UTF-8 重写并核对。
+
+---
+
 ## 工作区决策记录 2026-09-26 (36) - **3.25.2 → 3.28.0：通配样板接线修复 + 生成器界面整窗移植 AE2PatternGen**
 
 ### 一、3.25.2～3.25.4：Wild 界面接线的三个真问题（全部由用户实测日志定位）

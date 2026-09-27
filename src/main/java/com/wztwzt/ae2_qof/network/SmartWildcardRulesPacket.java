@@ -36,10 +36,24 @@ public class SmartWildcardRulesPacket implements IMessage {
 
     private NBTTagCompound tag;
 
+    /**
+     * 目标槽位（3.34.0）：{@code >= 0} 时服务端**只写这个槽位**的物品；{@code -1} = 旧行为（在背包里找第一张）。
+     *
+     * <p>为什么必须带槽位：3.33.0 实测里，玩家在 Wild 窗口（打开于槽位 7）按加号，包却被写到"背包里第一张"
+     * 我们的样板（日志指纹：同一张样板的 revision 由 3 回退到 1）⇒ 窗口那张始终是空的，用户看到"加号没效果"。
+     */
+    private int slot = -1;
+
     public SmartWildcardRulesPacket() {}
 
     public SmartWildcardRulesPacket(SmartWildcardState state) {
         this.tag = encode(state);
+    }
+
+    /** 3.34.0：指定目标槽位（Wild 窗口 / 电路页用），避免写错样板。 */
+    public SmartWildcardRulesPacket(SmartWildcardState state, int slot) {
+        this.tag = encode(state);
+        this.slot = slot;
     }
 
     /**
@@ -53,7 +67,15 @@ public class SmartWildcardRulesPacket implements IMessage {
         if (templateOut != null && !templateOut.isEmpty()) this.tag.setTag("TemplateOut", buildList(templateOut));
     }
 
-    private static NBTTagList buildList(java.util.List<ItemStack> stacks) {
+    /** 3.34.0：带模板 + 指定目标槽位（Wild 窗口里按 NEI 加号走这条）。 */
+    public SmartWildcardRulesPacket(SmartWildcardState state, java.util.List<ItemStack> templateIn,
+        java.util.List<ItemStack> templateOut, int slot) {
+        this(state, templateIn, templateOut);
+        this.slot = slot;
+    }
+
+    /** 3.34.0：改为 public —— Wild 窗口的"加号就地刷新"也要用它构造原生 in/out，单一来源避免两处形状不一致。 */
+    public static NBTTagList buildList(java.util.List<ItemStack> stacks) {
         NBTTagList list = new NBTTagList();
         for (ItemStack stack : stacks) {
             if (stack == null || stack.getItem() == null) continue;
@@ -148,8 +170,10 @@ public class SmartWildcardRulesPacket implements IMessage {
     public void fromBytes(ByteBuf buf) {
         try {
             this.tag = ByteBufUtils.readTag(buf);
+            this.slot = buf.readInt();
         } catch (Throwable t) {
             this.tag = null;
+            this.slot = -1;
             MyMod.LOG.warn("[AE2QoL] 通配样板规则包解析失败（已忽略该包）", t);
         }
     }
@@ -157,6 +181,7 @@ public class SmartWildcardRulesPacket implements IMessage {
     @Override
     public void toBytes(ByteBuf buf) {
         ByteBufUtils.writeTag(buf, this.tag == null ? new NBTTagCompound() : this.tag);
+        buf.writeInt(this.slot);
     }
 
     // ================= 服务端处理 =================
@@ -187,20 +212,37 @@ public class SmartWildcardRulesPacket implements IMessage {
                     // 3.32.0：**不要只看主手** —— Wild 窗口是 ModularUIContainer，打开时主手未必指着那张样板
                     //（用户实测日志：通配样板写回失败：…主手也不是通配样板（container=ModularUIContainer））。
                     // 改为**在背包里找**我们的通配样板；判据用物品实例（全新样板没有我们的 NBT，不能用 isSmartWildcard）。
+                    // 3.34.0：**优先按发送方给的槽位**（Wild 窗口 / 电路页都会带），找不到才退回"背包里第一张"。
+                    // 旧行为正是"加号写到另一张样板"的根因（revision 3→1 的指纹）。
                     ItemStack held = null;
-                    for (ItemStack candidate : player.inventory.mainInventory) {
-                        if (candidate != null
-                            && candidate.getItem() == com.wztwzt.ae2_qof.CommonProxy.smartWildcardPattern) {
+                    boolean bySlot = false;
+                    if (message.slot >= 0 && message.slot < player.inventory.mainInventory.length) {
+                        ItemStack candidate = player.inventory.mainInventory[message.slot];
+                        if (com.wztwzt.ae2_qof.wildcard.SmartWildcardGate.isOurs(candidate)) {
                             held = candidate;
-                            break;
+                            bySlot = true;
+                        } else {
+                            MyMod.LOG.warn(
+                                "[AE2QoL] 通配样板写回：指定槽位 {} 里不是我们的通配样板（item={}）⇒ 退回背包搜索",
+                                message.slot,
+                                candidate == null ? "null" : candidate.getItem());
+                        }
+                    }
+                    if (held == null) {
+                        for (ItemStack candidate : player.inventory.mainInventory) {
+                            if (com.wztwzt.ae2_qof.wildcard.SmartWildcardGate.isOurs(candidate)) {
+                                held = candidate;
+                                break;
+                            }
                         }
                     }
                     if (held == null) {
                         MyMod.LOG.warn(
-                            "[AE2QoL] 通配样板写回失败：既不是通配样板容器，主手也不是通配样板（container={}）",
+                            "[AE2QoL] 通配样板写回失败：既不是通配样板容器，背包里也没有我们的通配样板（container={} slot={}）",
                             player.openContainer == null ? "null"
                                 : player.openContainer.getClass()
-                                    .getSimpleName());
+                                    .getSimpleName(),
+                            message.slot);
                         return;
                     }
                     SmartWildcardState state = decode(message.tag);
@@ -238,8 +280,10 @@ public class SmartWildcardRulesPacket implements IMessage {
                         MyMod.LOG.warn("[AE2QoL] 写回后推送到 Wild 键失败（Wild 界面里的内容可能未同步）", t);
                     }
                     MyMod.LOG.info(
-                        "[AE2QoL] 通配样板写回成功（MUI2 编辑器）：player={} rules={} blacklist={} circuit={} revision={}",
+                        "[AE2QoL] 通配样板写回成功（{}）：player={} slot={} rules={} blacklist={} circuit={} revision={}",
+                        bySlot ? "指定槽位" : "背包搜索",
                         player.getCommandSenderName(),
+                        message.slot,
                         state.rules.size(),
                         state.blacklist.size(),
                         state.circuit,

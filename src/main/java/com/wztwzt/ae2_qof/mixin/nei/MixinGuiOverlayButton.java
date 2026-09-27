@@ -66,9 +66,60 @@ public abstract class MixinGuiOverlayButton {
             // 3.22.0：通配样板界面里的加号 = 「从当前 NEI 配方推导通配规则（含配方模板）」，
             // 不落 AE2 原版填充。推导结果交给界面，用户确认后由 C2S 包在服务端写入样板 NBT。
             // 3.23.0：通配样板编辑器（MUI2 带容器屏）里的加号 = 「按当前 NEI 配方推导规则与模板 + 立即写回样板」。
-            // 说明：MUI2 面板是构建期生成的，不能像旧的自绘界面那样即时刷新 ⇒ 这里直接落库，
-            // 并用聊天栏回执 + 日志让用户与维护者都能一眼确认结果（符合"不留静默"原则）。
-            if ((firstGui instanceof com.cleanroommc.modularui.screen.GuiContainerWrapper || firstGui instanceof com.gtnewhorizons.modularui.common.internal.wrapper.ModularGui)) {
+            // 3.34.0：**Wild 窗口（GTNH-MUI）改为就地写入** —— 推导结果直接落进已打开窗口的内存 9 行并立即
+            //   持久化（WildcardPatternWindow.applyDerivedFromNei）。旧实现只发包 + 聊天栏"关掉重开"，
+            //   结果是界面当场毫无变化，且窗口旧内存态在保存时把刚写入的规则覆盖成 0 条（实测"加号无效果"）。
+            //   同时**收紧识别**：只有"当前 GTNH-MUI 主窗口就是 Wild 通配样板窗口"才消费加号；其它 GTNH-MUI
+            //   窗口（例如批量样板生成器）不再被误当成通配编辑器去写样板数据。
+            if (firstGui instanceof com.gtnewhorizons.modularui.common.internal.wrapper.ModularGui modularGui) {
+                ae2qol$inOverlayFill = true;
+                try {
+                    RecipeHandlerRef ref = ((GuiRecipeButton) (Object) this).handlerRef;
+                    if (ref != null && ref.handler != null && ref.recipeIndex >= 0) {
+                        com.wztwzt.ae2_qof.client.SmartWildcardRecipeDeriver.Result derived =
+                            com.wztwzt.ae2_qof.client.SmartWildcardRecipeDeriver.derive(
+                                ref.handler,
+                                ref.recipeIndex,
+                                net.minecraft.client.Minecraft.getMinecraft().theWorld);
+                        if (derived != null && derived.ok) {
+                            com.wztwzt.ae2_qof.client.SmartWildcardClientState.setDerived(derived);
+                            com.gtnewhorizons.modularui.api.screen.ModularWindow window = modularGui.getContext() == null
+                                ? null
+                                : modularGui.getContext()
+                                    .getMainWindow();
+                            if (com.wztwzt.ae2_qof.wildport.gui.WildcardPatternWindow
+                                .applyDerivedFromNei(window, derived)) {
+                                com.wztwzt.ae2_qof.MyMod.LOG
+                                    .info("[AE2QoL] NEI 加号推导并就地写入 Wild 界面：{}", derived.summary);
+                                ci.cancel();
+                                return;
+                            }
+                            com.wztwzt.ae2_qof.MyMod.LOG.info(
+                                "[AE2QoL] NEI 加号：当前 GTNH-MUI 窗口不是 Wild 通配样板窗口，未接管（交回 NEI）");
+                        } else {
+                            com.wztwzt.ae2_qof.MyMod.LOG.warn(
+                                "[AE2QoL] NEI 加号推导失败（未产生规则）：{}",
+                                derived == null ? "null" : derived.reason);
+                            ae2qol$chat(
+                                "\u00a7c[AE2QoL] \u63a8\u5bfc\u5931\u8d25\uff1a"
+                                    + (derived == null ? "null" : derived.reason));
+                        }
+                    } else {
+                        com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 加号被按下但拿不到配方上下文（handlerRef 为空）");
+                    }
+                } catch (Throwable t) {
+                    com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] Wild 界面加号处理异常", t);
+                } finally {
+                    ae2qol$inOverlayFill = false;
+                }
+                return;
+            }
+            if (firstGui instanceof com.cleanroommc.modularui.screen.GuiContainerWrapper) {
+                // 3.34.0：确认当前 MUI2 屏幕确实是我们的编辑器面板（避免误伤本模组其它 MUI2 容器屏）
+                if (!com.cleanroommc.modularui.screen.ModularScreen
+                    .isActive(com.wztwzt.ae2_qof.MyMod.MODID, "ae2qol_wildcard_editor")) {
+                    return;
+                }
                 ae2qol$inOverlayFill = true;
                 try {
                     RecipeHandlerRef ref = ((GuiRecipeButton) (Object) this).handlerRef;

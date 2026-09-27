@@ -4,9 +4,35 @@
 
 An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
-**Author: wztwzt · Current source version: 3.29.0 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.34.0 · Reference pack: GTNH 2.9.0-beta-3**
 
 This repository is for personal archival and is not currently offered for distribution. See [CREDITS.md](CREDITS.md) for attribution and licensing records. Feature descriptions are not a claim that every integration has passed in-game testing.
+
+## What's new in 3.34.0 (wildcard pattern not recognised by any hatch + NEI "+" + dedicated Circuit / Non-consumed pages)
+
+- **Fixed "a configured wildcard pattern is not recognised by any hatch"** (in-game: GT Crafting Input Buffer, GTNL
+  Super Input Hatch, PH 22069 / MK.II and our own MK.III all failed — the pattern sits in the slot but the machine
+  does nothing, with no log trace). Two stacked root causes: (1) `rebuild()` on the GT and GTNL pattern slots had
+  **zero callers**, so the expansion list stayed empty and nothing was registered; (2) all four entry points required
+  "the item already carries our NBT", which is only written when the Wild window saves — and the negative branch was
+  **silent**. Now a single gate (`SmartWildcardGate`: item instance → lazy pull when our NBT is missing → at least one
+  rule) is used everywhere, negative branches log a rate-limited WARN, and an empty expansion **falls back to
+  registering the template pattern** instead of registering nothing.
+- **Fixed the NEI "+" inside the Wild window**: it now writes the derived recipe **in place** — the window's nine rows
+  are replaced wholesale, the widgets refresh immediately and the pattern is persisted at once (no more "close and
+  reopen"). The write target is pinned to **the pattern the window is editing** (the old code wrote to "the first
+  pattern in the inventory", visible as a revision counter going backwards). Recognition was also tightened so only
+  the actual Wild window is hijacked, not other GTNH-MUI windows such as the batch pattern generator.
+- **Two dedicated pages in the Wild window** (tabs at the top-right: Main / Circuit / Non-consumed):
+  **Circuit** lays out 1–24 as 4 columns × 6 rows plus "Clear (inherit)" and applies/highlights immediately;
+  **Non-consumed** supports NEI drag-in, "add held", 8 rows per page (icon + name) and per-row delete, all written
+  back immediately. The 50 px circuit band added in 3.33.0 has been **removed** (window height back to 292).
+- **Fixed a gesture that had been silently dead since 3.22.0**: "Shift+middle-click a slot → circuit picker" on MUI2
+  slots. The mixin callback was declared as `CallbackInfo` while the target returns `Interactable.Result`, so the
+  injection threw and UniMixins swallowed it into a single WARN. It only works from this version on.
+- ⚠️ This round does **not** back-fill dedicated sections for 3.30.0–3.33.0 (recorded honestly as documentation
+  debt); `CHANGELOG.md` and the tail of this mod's `zh_CN.lang` contain **historically corrupted (mojibake)
+  segments** that need a separate UTF-8 rewrite pass.
 
 ## What's new in 3.26.x – 3.29.0 (Pattern Generator UI ported from AE2PatternGen + dual entry for the wildcard pattern)
 

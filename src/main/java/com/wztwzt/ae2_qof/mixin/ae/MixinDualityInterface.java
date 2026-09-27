@@ -84,7 +84,11 @@ public abstract class MixinDualityInterface implements ISmartDoublingMedium {
         try {
             if (this.patterns == null || slot < 0 || slot >= this.patterns.getSizeInventory()) return;
             net.minecraft.item.ItemStack stack = this.patterns.getStackInSlot(slot);
-            if (stack == null || !com.wztwzt.ae2_qof.wildcard.SmartWildcardState.isSmartWildcard(stack)) return;
+            // 3.34.0：判据改用统一门（物品实例 → 缺我们 NBT 时先懒同步 → 至少一条规则）。
+            // 旧实现要求"已有我们的 NBT"，玩家只在 Wild 界面里配过的样板会被静默放行给原生逻辑
+            //（原生只登记模板那一张，表现为"通配没生效、机器按模板走"）。
+            if (!com.wztwzt.ae2_qof.wildcard.SmartWildcardGate
+                .isConfiguredWildcard(stack, "AE2 ME 接口 slot=" + slot)) return;
 
             net.minecraft.item.ItemStack single = stack.copy();
             single.stackSize = 1;
@@ -96,8 +100,12 @@ public abstract class MixinDualityInterface implements ISmartDoublingMedium {
                 com.wztwzt.ae2_qof.wildcard.SmartWildcardExpander.expand(single, world);
 
             if (result.isEmpty()) {
-                MyMod.LOG.warn("[AE2QoL] 智能通配样板未展开出任何样板（ME 接口 slot={}）：{}", slot, result.describe());
-                ci.cancel();
+                // 3.34.0：**不再 cancel** —— 取消等于这个槽位一条样板都不登记，机器会彻底不接单。
+                // 放行原生逻辑 ⇒ 退化为"按模板那一张样板"（仍然可用），原因照旧记 WARN，不静默。
+                MyMod.LOG.warn(
+                    "[AE2QoL] 智能通配样板未展开出任何样板，已回退原生解码（按模板那一张）：ME 接口 slot={} {}",
+                    slot,
+                    result.describe());
                 return;
             }
 
@@ -116,10 +124,9 @@ public abstract class MixinDualityInterface implements ISmartDoublingMedium {
             }
             if (added == 0) {
                 MyMod.LOG.warn(
-                    "[AE2QoL] 智能通配样板展开后全部解码失败（ME 接口 slot={}）：{}",
+                    "[AE2QoL] 智能通配样板展开后全部解码失败，已回退原生解码（按模板那一张）：ME 接口 slot={} {}",
                     slot,
                     result.describe());
-                ci.cancel();
                 return;
             }
             ci.cancel();

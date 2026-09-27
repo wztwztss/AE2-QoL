@@ -397,6 +397,24 @@ ae2_qof.wildcard.tip.cap=Per-pattern expansion cap: %s
 ae2_qof.wildcard.gui.rules_header=Current rules (press + in NEI to derive)
 ae2_qof.wildcard.gui.no_rules=No rules yet: open a recipe in NEI and press + to derive
 
+# ===== 3.34.0: two new pages in the Wild window (tabs at the top-right) =====
+gui.wildcardpattern.tab_home=Main
+gui.wildcardpattern.tab_circuit=Circuit
+gui.wildcardpattern.tab_nonconsumed=Non-cons.
+gui.wildcardpattern.circuit_title=Built-in circuit
+gui.wildcardpattern.circuit_current=Current
+gui.wildcardpattern.circuit_inherit=inherit
+gui.wildcardpattern.circuit_tip1=Click a number to store it on this pattern (pattern > slot > machine)
+gui.wildcardpattern.circuit_tip2=Clear (inherit) = this pattern sets no circuit; slot or machine decides
+gui.wildcardpattern.circuit_clear=Clear (inherit)
+gui.wildcardpattern.circuit_hint=Applies immediately, no reopen needed
+gui.wildcardpattern.nonconsumed_title=Non-consumed items
+gui.wildcardpattern.nonconsumed_tip1=These items are not consumed while crafting (molds, lenses, ...), for this pattern only
+gui.wildcardpattern.nonconsumed_add_held=Add held
+gui.wildcardpattern.nonconsumed_drop_hint=Drag an item here from NEI
+gui.wildcardpattern.nonconsumed_remove=Del
+gui.wildcardpattern.nonconsumed_hint=Drag / add held / delete per row - written back immediately
+
 # ===== 3.23.0: Pattern generator =====
 item.ae2_qof.smart_pattern_generator.name=Pattern Generator
 ae2_qof.generator.tip=Right-click to open: bulk-generate concrete patterns from a GT RecipeMap (optional filters)

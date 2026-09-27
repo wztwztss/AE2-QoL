@@ -20,6 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.wztwzt.ae2_qof.Config;
 import com.wztwzt.ae2_qof.MyMod;
+import com.wztwzt.ae2_qof.wildcard.SmartWildcardGate;
 import com.wztwzt.ae2_qof.wildcard.SmartWildcardPatternSlot;
 import com.wztwzt.ae2_qof.wildcard.SmartWildcardState;
 
@@ -102,15 +103,29 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard {
                     wildcardSlots.add(slot);
                     continue;
                 }
-                if (this.ae2qol$isWildcardItem(slot)) {
+                if (this.ae2qol$isWildcardItem(slot, i)) {
                     // 包一层（搬运库存），并替换进数组 —— 只在这里替换，且替换后仍是同一槽位语义
                     SmartWildcardPatternSlot wrapped = new SmartWildcardPatternSlot(slot, (MTEHatchCraftingInputME) (Object) this);
+                    // 3.34.0 修正：**必须在这里调用 rebuild**。原实现只 new 了槽位、从未调用 rebuild
+                    //（全仓 grep：rebuild 只有定义、零调用者）⇒ expanded 恒为空 ⇒ 通配槽位注册 0 条。
+                    wrapped.rebuild(this.ae2qol$world());
                     this.internalInventory[i] = wrapped;
                     this.ae2qol$wildcards.put(i, wrapped);
-                    wildcardSlots.add(wrapped);
-                    MyMod.LOG.info("[AE2QoL] GT 样板仓发现通配样板并展开：slot={} {}", i, wrapped.expandSummary());
-                    // M3：样板自带电路 → 写入本机虚拟电路槽（样板自带 > 槽位 > 整机；没有设置就**不动**机器）
-                    this.ae2qol$applyPatternCircuit(wrapped, i);
+                    if (wrapped.expandedDetails()
+                        .isEmpty()) {
+                        // 不静默降级为"什么都不注册"：退回注册模板那一张（getPatternDetails 会走 super），
+                        // 否则"配置了规则但一条候选都没匹配上"会让这台机器彻底不接单。
+                        MyMod.LOG.warn(
+                            "[AE2QoL] GT 通配槽位展开为空，已回退注册模板那一张：slot={} {}",
+                            i,
+                            wrapped.expandSummary());
+                        plainSlots.add(wrapped);
+                    } else {
+                        wildcardSlots.add(wrapped);
+                        MyMod.LOG.info("[AE2QoL] GT 样板仓发现通配样板并展开：slot={} {}", i, wrapped.expandSummary());
+                        // M3：样板自带电路 → 写入本机虚拟电路槽（样板自带 > 槽位 > 整机；没有设置就**不动**机器）
+                        this.ae2qol$applyPatternCircuit(wrapped, i);
+                    }
                     continue;
                 }
                 plainSlots.add(slot);
@@ -212,11 +227,13 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard {
                 }
                 return;
             }
-            if (!this.ae2qol$isWildcardItem(slot)) {
+            if (!this.ae2qol$isWildcardItem(slot, index)) {
                 this.ae2qol$wildcards.remove(index);
                 return;
             }
             SmartWildcardPatternSlot wrapped = new SmartWildcardPatternSlot(slot, (MTEHatchCraftingInputME) (Object) this);
+            // 3.34.0：与 provideCrafting 同一处修正 —— 重包后必须重新展开，否则换样板/读档后永远注册 0 条
+            wrapped.rebuild(this.ae2qol$world());
             this.internalInventory[index] = wrapped;
             this.ae2qol$wildcards.put(index, wrapped);
             for (ICraftingPatternDetails details : wrapped.expandedDetails()) {
@@ -258,14 +275,35 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard {
         }
     }
 
-    /** 该槽位的样板物品是不是我们的通配样板（经内部类 accessor 读取，只读不改）。 */
+    /**
+     * 该槽位的样板物品是否应按"已配置的通配样板"处理（经内部类 accessor 读取，只读不改）。
+     *
+     * <p>3.34.0：判据交给 {@link SmartWildcardGate}（物品实例 → 缺我们 NBT 时先懒同步 → 至少一条规则），
+     * 并在任一不满足时**留痕**。旧实现直接用 {@code isSmartWildcard}（要求已有我们的 NBT）且判否时
+     * 完全静默，导致"界面上配好了但机器不认"在日志里毫无痕迹。
+     */
     @Unique
-    private boolean ae2qol$isWildcardItem(MTEHatchCraftingInputME.PatternSlot<MTEHatchCraftingInputME> slot) {        try {
+    private boolean ae2qol$isWildcardItem(MTEHatchCraftingInputME.PatternSlot<MTEHatchCraftingInputME> slot,
+        int index) {
+        try {
             ItemStack pattern = ((MixinPatternSlotAccess) (Object) slot).getAe2qolSlotPattern();
-            return pattern != null && pattern.getItem() != null && SmartWildcardState.isSmartWildcard(pattern);
+            return SmartWildcardGate.isConfiguredWildcard(pattern, "GT 样板仓 slot=" + index);
         } catch (Throwable t) {
             MyMod.LOG.warn("[AE2QoL] 读取 GT 槽位样板失败（按非通配处理）", t);
             return false;
+        }
+    }
+
+    /** 本机的世界（展开时解码模板需要；取不到就按 null 世界解码，并留痕）。 */
+    @Unique
+    private net.minecraft.world.World ae2qol$world() {
+        try {
+            gregtech.api.interfaces.tileentity.IGregTechTileEntity base =
+                ((MTEHatchCraftingInputME) (Object) this).getBaseMetaTileEntity();
+            return base == null ? null : base.getWorld();
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 读取 GT 样板仓所在世界失败（本次以 null 世界解码模板）", t);
+            return null;
         }
     }
 }

@@ -6,7 +6,7 @@ import org.lwjgl.input.Keyboard;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.cleanroommc.modularui.widgets.slot.ItemSlot;
 import com.cleanroommc.modularui.widgets.slot.ModularSlot;
@@ -34,12 +34,20 @@ import com.wztwzt.ae2_qof.wildcard.ItemSmartWildcardPattern;
  *
  * <p>目标机器坐标来自三个机器 GUI mixin 在打开时记录到 {@link SmartWildcardClientState} 的值；
  * 记录为空（不是在机器界面里）时直接不介入。所有异常都记日志（本项目原则）。
+ *
+ * <p><b>3.34.0 修正（原实现静默失效）</b>：{@code ItemSlot.onMousePressed(int)} 的返回类型是
+ * {@code Interactable.Result}（javap 实证：{@code public Interactable$Result onMousePressed(int)}），
+ * 因此回调**必须**是 {@code CallbackInfoReturnable}；原先写成 {@code CallbackInfo} 会让 Mixin 抛
+ * {@code InvalidInjectionException: CallbackInfoReturnable is required}，被 UniMixins 的 MixinErrorHandler
+ * 吞成一条 WARN ⇒ 整个手势从未生效。这里仍不调用 {@code setReturnValue}：中键对槽位本无原版语义。
  */
 @Mixin(value = ItemSlot.class, remap = false)
 public abstract class MixinItemSlotWildcardGesture {
 
     @Inject(method = "onMousePressed", at = @At("HEAD"), remap = false)
-    private void ae2qol$openCircuitPicker(int button, CallbackInfo ci) {
+    private void ae2qol$openCircuitPicker(
+        int button,
+        CallbackInfoReturnable<com.cleanroommc.modularui.api.widget.Interactable.Result> cir) {
         try {
             if (button != 2) return;
             if (!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) && !Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) return;

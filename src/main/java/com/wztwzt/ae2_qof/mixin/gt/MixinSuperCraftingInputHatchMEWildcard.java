@@ -89,11 +89,23 @@ public abstract class MixinSuperCraftingInputHatchMEWildcard {
                     wildcardSlots.add(slot);
                     continue;
                 }
-                if (this.ae2qol$isWildcardItem(slot)) {
+                if (this.ae2qol$isWildcardItem(slot, i)) {
                     SmartWildcardGtnlPatternSlot wrapped =
                         new SmartWildcardGtnlPatternSlot(slot, (SuperCraftingInputHatchME) (Object) this, i);
+                    // 3.34.0：**必须调用 rebuild**（旧实现只 new 了槽位，rebuild 全仓零调用者 ⇒ 永远注册 0 条）
+                    wrapped.rebuild(this.ae2qol$world());
                     this.internalInventory[i] = wrapped;
                     this.ae2qol$wildcards.put(i, wrapped);
+                    if (wrapped.expandedDetails()
+                        .isEmpty()) {
+                        // 不静默降级成"什么都不注册"：退回注册模板那一张（getPatternDetails 走 super）
+                        MyMod.LOG.warn(
+                            "[AE2QoL] GTNL 通配槽位展开为空，已回退注册模板那一张：slot={} {}",
+                            i,
+                            wrapped.expandSummary());
+                        plainSlots.add(wrapped);
+                        continue;
+                    }
                     wildcardSlots.add(wrapped);
                     MyMod.LOG.info("[AE2QoL] GTNL 样板总成发现通配样板并展开：slot={} {}", i, wrapped.expandSummary());
                     // M3：样板自带电路 → 写入本机虚拟电路槽（样板自带 > 槽位 > 整机；无设置则不动机器）
@@ -202,12 +214,14 @@ public abstract class MixinSuperCraftingInputHatchMEWildcard {
                 }
                 return;
             }
-            if (!this.ae2qol$isWildcardItem(slot)) {
+            if (!this.ae2qol$isWildcardItem(slot, index)) {
                 this.ae2qol$wildcards.remove(index);
                 return;
             }
             SmartWildcardGtnlPatternSlot wrapped =
                 new SmartWildcardGtnlPatternSlot(slot, (SuperCraftingInputHatchME) (Object) this, index);
+            // 3.34.0：重包后必须重新展开（与 provideCrafting 同一处修正）
+            wrapped.rebuild(this.ae2qol$world());
             this.internalInventory[index] = wrapped;
             this.ae2qol$wildcards.put(index, wrapped);
             for (ICraftingPatternDetails details : wrapped.expandedDetails()) {
@@ -224,14 +238,30 @@ public abstract class MixinSuperCraftingInputHatchMEWildcard {
         }
     }
 
+    /** 3.34.0：判据交给 {@link SmartWildcardGate}（物品实例 → 缺 NBT 先懒同步 → 至少一条规则），判否必留痕。 */
     @Unique
-    private boolean ae2qol$isWildcardItem(SuperCraftingInputHatchME.PatternSlot<SuperCraftingInputHatchME> slot) {
+    private boolean ae2qol$isWildcardItem(SuperCraftingInputHatchME.PatternSlot<SuperCraftingInputHatchME> slot,
+        int index) {
         try {
             ItemStack pattern = ((MixinGtnlPatternSlotAccess) (Object) slot).getAe2qolSlotPattern();
-            return pattern != null && pattern.getItem() != null && SmartWildcardState.isSmartWildcard(pattern);
+            return com.wztwzt.ae2_qof.wildcard.SmartWildcardGate
+                .isConfiguredWildcard(pattern, "GTNL 超级样板总成 slot=" + index);
         } catch (Throwable t) {
             MyMod.LOG.warn("[AE2QoL] 读取 GTNL 槽位样板失败（按非通配处理）", t);
             return false;
+        }
+    }
+
+    /** 本机的世界（展开解码模板用；取不到按 null 世界解码并留痕）。 */
+    @Unique
+    private net.minecraft.world.World ae2qol$world() {
+        try {
+            gregtech.api.interfaces.tileentity.IGregTechTileEntity base =
+                ((SuperCraftingInputHatchME) (Object) this).getBaseMetaTileEntity();
+            return base == null ? null : base.getWorld();
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 读取 GTNL 总成所在世界失败（本次以 null 世界解码模板）", t);
+            return null;
         }
     }
 }

@@ -76,7 +76,11 @@ public abstract class MixinPatternDualInputHatchWildcard {
             int registered = 0;
             int truncated = 0;
             for (ItemStack slot : slots) {
-                if (slot == null || !SmartWildcardState.isSmartWildcard(slot)) continue;
+                // 3.34.0：判据改用统一门（物品实例 → 缺我们 NBT 时先懒同步 → 至少一条规则）。
+                // 旧实现直接用 isSmartWildcard（要求已有我们的 NBT）且判否完全静默 —— 玩家只在 Wild 界面里
+                // 配过的样板会被跳过，表现为"机器完全不动且日志无痕"（3.33.0 实测根因之一）。
+                if (!com.wztwzt.ae2_qof.wildcard.SmartWildcardGate
+                    .isConfiguredWildcard(slot, "PH 编程样板总成")) continue;
                 wildcardSlots++;
                 SmartWildcardExpander.Result result = SmartWildcardExpander.expand(slot, world);
                 if (result.truncated) truncated++;

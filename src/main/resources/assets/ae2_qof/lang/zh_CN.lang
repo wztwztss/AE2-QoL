@@ -398,6 +398,24 @@ ae2_qof.wildcard.tip.cap=单张样板展开上限 %s
 ae2_qof.wildcard.gui.rules_header=本样板当前规则（在 NEI 里按加号可自动推导）
 ae2_qof.wildcard.gui.no_rules=还没有规则：在 NEI 里对着配方按加号即可自动推导
 
+# ===== 3.34.0：Wild 窗口新增「电路」「不消耗物品」两页（页签在右上角） =====
+gui.wildcardpattern.tab_home=主页
+gui.wildcardpattern.tab_circuit=电路
+gui.wildcardpattern.tab_nonconsumed=不消耗
+gui.wildcardpattern.circuit_title=内置电路
+gui.wildcardpattern.circuit_current=当前
+gui.wildcardpattern.circuit_inherit=继承
+gui.wildcardpattern.circuit_tip1=点一个号即写进这张样板自带的电路（优先级：样板自带 > 槽位 > 整机）
+gui.wildcardpattern.circuit_tip2=「清除（继承）」=本样板不指定电路，交给槽位设置或整机电路
+gui.wildcardpattern.circuit_clear=清除（继承）
+gui.wildcardpattern.circuit_hint=点号即生效，不用关掉重开
+gui.wildcardpattern.nonconsumed_title=不消耗物品
+gui.wildcardpattern.nonconsumed_tip1=这些物品在合成时不被消耗（铸模 / 模头 / 透镜等），只对这张样板生效
+gui.wildcardpattern.nonconsumed_add_held=加入手持
+gui.wildcardpattern.nonconsumed_drop_hint=把 NEI 里的物品拖到这里
+gui.wildcardpattern.nonconsumed_remove=删
+gui.wildcardpattern.nonconsumed_hint=拖入 / 加入手持 / 逐行删除，立即写回样板
+
 # ===== 3.23.0：批量样板生成器 =====
 item.ae2_qof.smart_pattern_generator.name=批量样板生成器
 ae2_qof.generator.tip=右键打开：按 GT RecipeMap 批量生成具体样板（过滤器可选）

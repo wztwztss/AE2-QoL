@@ -51,12 +51,22 @@
 5. PH 自己的 `DualInputHatch.openGui` 有 `GTGuis.GLOBAL_SWITCH_MUI2 || hasBadge(player)` 前置条件，
    MK.III 的样板窗与 PH 自己的机器**同条件**生效。
 
+### 智能通配样板（机器侧展开与槽位手势）- 5个Mixin（3.34.0 全部复核）
+
+| Mixin 类路径 | 目标类 | 注入点 | 风险/说明 |
+|---|---|---|---|
+| `mixin/gt/MixinMTEHatchCraftingInputMEWildcard.java` | `gregtech.common.tileentities.machines.MTEHatchCraftingInputME` (remap=false) | `provideCrafting` HEAD(cancellable); `pushPattern` HEAD; `onPatternChange`/`loadNBTData` RETURN | 索引期把通配样板展开成 N 张具体样板并逐条写 `patternDetailsPatternSlotMap`（缺 key 会 NPE）。**3.34.0 修正**：包装槽位后必须调用 `SmartWildcardPatternSlot.rebuild(world)`（此前零调用者 ⇒ 永远注册 0 条）；判据改用 `SmartWildcardGate.isConfiguredWildcard`；展开为空时**退回注册模板那一张**（不静默降级成"什么都不注册"）；判否留限频 WARN |
+| `mixin/gt/MixinSuperCraftingInputHatchMEWildcard.java` | `com.science.gtnl.common.machine.hatch.SuperCraftingInputHatchME` (remap=false) | 同上四处 | 同上；GTNL 的 `pushPattern` **无判空**（NPE 会穿透到 CPU tick），故 `pushPattern` HEAD 兜底守卫是保命项。3.34.0 同样补 `rebuild(world)` + 统一判据 + 空展开回退 |
+| `mixin/ph/MixinPatternDualInputHatchWildcard.java` | `reobf.proghatches.gt.metatileentity.PatternDualInputHatch` (remap=false) | `provideCrafting` RETURN | 覆盖 PH 22069 / MK.II 22179 / 我们的 MK.III 32108。**3.34.0**：判据改 `SmartWildcardGate.isConfiguredWildcard`（旧判据要求"已有我们 NBT"，只在 Wild 界面配过的样板会被**静默跳过**） |
+| `mixin/ae/MixinDualityInterface.java` | `appeng.helpers.DualityInterface` (@Inject remap=false) | `addToCraftingList` HEAD(cancellable) | ME 接口/样板供应器侧展开。**3.34.0**：判据同上；展开为空或全部解码失败时**不再 `ci.cancel()`**（那等于该槽一条样板都不登记）→ 放行原生逻辑退化为模板那一张 + WARN |
+| `mixin/mui/MixinItemSlotWildcardGesture.java` | `com.cleanroommc.modularui.widgets.slot.ItemSlot` (remap=false，**client 段**) | `onMousePressed` HEAD | Shift+中键点样板槽 → 电路选择屏。**⚠️ 3.34.0 修正的静默失效**：目标方法返回 `Interactable.Result`（javap 实证 `public Interactable$Result onMousePressed(int)`）⇒ 回调**必须**是 `CallbackInfoReturnable<Interactable.Result>`；写成 `CallbackInfo` 会让整个 Mixin 抛 `InvalidInjectionException: ... CallbackInfoReturnable is required!`，被 UniMixins 的 `MixinErrorHandler` 吞成一条 WARN ⇒ **手势从 3.22.0 起从未生效**。修复后仍不 `setReturnValue`（中键对槽位无原版语义） |
+
 ### NEI 增强/覆盖层 - 6个Mixin
 
 | Mixin 类路径 | 目标类 | 注入点 | 风险/说明 |
 |---|---|---|---|
 | `mixin/nei/MixinGuiRecipe.java` | `codechicken.nei.recipe.GuiRecipe` (remap=false) | `updateScreen` HEAD | 每次屏幕更新时捕获玩家当前浏览的NEI配方，存储到NeiRecipeCapture，供合并终端"一键填充"按钮读取。 |
-| `mixin/nei/MixinGuiOverlayButton.java` | `codechicken.nei.recipe.GuiOverlayButton` (remap=false) | `updateEnabled` TAIL; `overlayRecipe` HEAD (cancellable); `canFillCraftingGrid` HEAD (cancellable) | 合并终端增强NEI"+"按钮：(1) 每帧强制按钮可用；(2) 点击时无条件直传填充样板面板；(3) canFillCraftingGrid对合并终端始终返回true。 |
+| `mixin/nei/MixinGuiOverlayButton.java` | `codechicken.nei.recipe.GuiOverlayButton` (remap=false) | `updateEnabled` TAIL; `overlayRecipe` HEAD (cancellable); `canFillCraftingGrid` HEAD (cancellable) | 合并终端增强NEI"+"按钮：(1) 每帧强制按钮可用；(2) 点击时无条件直传填充样板面板；(3) canFillCraftingGrid对合并终端始终返回true。**3.34.0**：通配样板相关分支拆成两类 —— GTNH-MUI 的 Wild 窗口走 `WildcardPatternWindow.applyDerivedFromNei`（**就地刷新界面 + 立即写回**，且只认"当前主窗口就是 Wild 窗口"，不再误伤批量样板生成器等其它 GTNH-MUI 窗口）；MUI2 编辑器分支用 `ModularScreen.isActive(MODID,"ae2qol_wildcard_editor")` 收紧后再走带槽位的写回包 |
 | `mixin/nei/MixinDefaultOverlayHandler.java` | `codechicken.nei.recipe.DefaultOverlayHandler` (remap=false) | `transferRecipe` HEAD (cancellable); `@Overwrite` assignIngredients | 两大功能：(1) 合并终端NEI直传：拦截transferRecipe直传填充样板面板；(2) 书签优先级分配：重写assignIngredients加入NEI书签优先级加分。 |
 | `mixin/nei/MixinPanelWidgetClick.java` | `codechicken.nei.PanelWidget` (remap=false) | `handleClick` HEAD (cancellable) | NEI面板点击快捷操作：(1) Shift+左键从AE2网络取出一组物品；(2) 中键打开AE2合成确认界面。与AE2Things兼容。 |
 | `mixin/nei/MixinNEIRecipeWidget.java` | `codechicken.nei.recipe.NEIRecipeWidget` (remap=false) | `draw` TAIL | 在NEI配方界面每个物品格上叠加显示：可合成物品->编码样板小图标；有库存物品->数量角标。受OverlayConfig开关控制。 |
