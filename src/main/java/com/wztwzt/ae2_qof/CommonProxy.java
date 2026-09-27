@@ -243,6 +243,16 @@ public class CommonProxy {
         } catch (Throwable t) {
             MyMod.LOG.error("[AE2QoL] Wild 界面注册失败（该界面将无法打开）", t);
         }
+        // 3.26.x：搬运进来的 AE2PatternGen 界面（GTNH-MUI）—— 独立 GUI id（101 生成器 / 102 存储）
+        // 与独立网络通道（_apg，避免与 ModNetwork / WildcardNetwork 重名导致 NetworkRegistry 抛异常）。
+        try {
+            NetworkRegistry.INSTANCE
+                .registerGuiHandler(MyMod.instance, new com.wztwzt.ae2_qof.apgport.gui.GuiHandler());
+            com.wztwzt.ae2_qof.apgport.network.NetworkHandler.init();
+            MyMod.LOG.info("[AE2QoL] apgport 生成器界面已注册：GUI handler（101/102）+ NetworkHandler 通道 _apg");
+        } catch (Throwable t) {
+            MyMod.LOG.error("[AE2QoL] apgport 生成器界面注册失败（该界面将无法打开）", t);
+        }
         cpw.mods.fml.common.FMLCommonHandler.instance()
             .bus()
             .register(new WirelessBlockEventListener());

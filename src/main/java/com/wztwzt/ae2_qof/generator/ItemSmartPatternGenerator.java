@@ -56,10 +56,20 @@ public class ItemSmartPatternGenerator extends Item
     public ItemStack onItemRightClick(ItemStack stack, World world, EntityPlayer player) {
         try {
             if (!world.isRemote && player != null) {
-                PlayerInventoryGuiFactory.INSTANCE.openFromMainHand(player);
+                // 3.26.x：界面换成搬运进来的 AE2PatternGen 界面（GTNH-MUI）。它的窗口工厂
+                // GuiPatternGen.createWindow(buildContext, player.getCurrentEquippedItem()) 直接从**手持物品**读配置，
+                // 所以 GUI id 传 101 即可，x/y/z 无意义。
+                player.openGui(
+                    MyMod.instance,
+                    com.wztwzt.ae2_qof.apgport.item.ItemPatternGenerator.GUI_ID,
+                    world,
+                    0,
+                    0,
+                    0);
+                MyMod.LOG.info("[AE2QoL] 已打开 apgport 生成器界面（手持 {}）", stack.getDisplayName());
             }
         } catch (Throwable t) {
-            MyMod.LOG.warn("[AE2QoL] 打开样板生成器界面失败", t);
+            MyMod.LOG.warn("[AE2QoL] 打开 apgport 生成器界面失败", t);
         }
         return stack;
     }
