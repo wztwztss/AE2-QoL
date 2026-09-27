@@ -187,10 +187,12 @@ public final class GeneratorPanel {
         }
     }
 
-    private static Flow row(String label, TextFieldWidget field) {        Flow flow = Flow.row()
-            .childPadding(3);
-        flow.child(new TextWidget<>(IKey.str(label)).size(60, 12))
-            .child(field);
+    private static Flow row(String label, TextFieldWidget field) {
+        Flow flow = Flow.row()
+            .childPadding(3)
+            .size(288, 18);
+        flow.child(new TextWidget<>(IKey.str(label)).size(60, 14))
+            .child(field).size(180, 14));
         return flow;
     }
 }
