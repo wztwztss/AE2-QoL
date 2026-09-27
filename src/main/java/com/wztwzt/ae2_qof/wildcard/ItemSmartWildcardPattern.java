@@ -41,9 +41,10 @@ public class ItemSmartWildcardPattern extends ItemEncodedPattern {
         setUnlocalizedName("ae2_qof.smart_wildcard_pattern");
         setMaxStackSize(1);
         setCreativeTab(AE2QoLCreativeTab.INSTANCE);
-        // 3.23.0：贴图抄 AE2 原版编码样板（assets/ae2_qof/textures/items/smart_wildcard_pattern.png，
-        // 从 AE2 jar 的 assets/appliedenergistics2/textures/items/ItemEncodedPattern.png 抽出）。
-        setTextureName("ae2_qof:smart_wildcard_pattern");
+        // 3.23.0：图标**运行时引用** AE2 自己的编码样板贴图，而不是把它复制进本仓库。
+        // 原因（版权）：AE2 是 LGPL-3.0，复制其素材会让被复制的文件受 LGPL 约束；
+        // 仅按名字引用则本仓库不再分发该素材，而 AE2 本就是本模组的硬依赖（required-after）。
+        setTextureName("appliedenergistics2:ItemEncodedPattern");
     }
 
     /**
