@@ -1,3 +1,54 @@
+## 工作区决策记录 2026-09-26 (35) - **3.24.0 → 3.25.1：界面整窗移植 WildcardPatternforGTNH（GTNH-MUI）**
+
+> 用户指令：「你不如直接把 wild 模组的复制过来，在此基础改」。路线（用户拍板）：**整窗搬运** Wild 的界面子系统
+> （它用的是另一套 MUI：`com.gtnewhorizons.modularui`，与我们的 Cleanroom MUI2 控件体系不通用），
+> 再用**双向桥**接上我们自己的数据模型与展开器 —— **机器侧行为不变**。
+
+### 一、3.24.0：三个真 bug（先交付，不让人干等）
+
+1. **流体幻影误判**（用户日志 `ingredientStacks=2 / skippedFluid=2`）：javap 核对 GT jar 后确认
+   `GTNEIDefaultHandler$IFluidAlternativeStack` 由 `GTNEIDefaultHandler$FixedPositionedStack` 实现，
+   而后者是 GT NEI 装**所有**原料的类 ⇒ 原 `instanceof` 对每个原料都成立（两个物品原料被判成两个流体）。
+   改判 `gregtech.common.items.ItemFluidDisplay`（GT 表示流体的占位物品）。
+2. **展开失败诊断**：`no-material-matched` 时逐条打印规则的 slot / 模式 / 匹配串 / 输出匹配 / 数量 / 排除项，
+   并区分「所有规则都没参与推导（无规则/空串/槽位越界/精确匹配）」与「规则跑了但材料交集为空」。
+3. **NEI 拖入命中测试**：MUI2 的 `getHovered()` 在帧外恒为 null（日志 `hovered=null mouse=(104,101)`），
+   新增按 `IWidget.getArea()` 的**坐标命中测试**兜底；两条都失败时打印鼠标坐标与所有候选区域。
+
+### 二、3.24.x：编译基线 + 整窗搬运
+
+- 运行期实例本身就有 GTNH-MUI（`modularui-1.3.4.jar`，SHA256 `9221B07C…`），复制进 `libs/` 并在
+  `dependencies.gradle` 以 `compileOnly(project.files(...))` 声明（离线构建只能走本地 jar，与既有 10 个基线一致）。
+- **机械搬运**（复制 → 包名改 `com.wztwzt.ae2_qof.wildport` → 文件头加 MIT 来源声明 → 编译）：
+  **25 个文件 / 7,870 行**（主窗 2143、复合窗 1871、entry 975、generator 451、config 415…）。
+  依赖顺序全靠编译器收敛：23 类一次编译 ⇒ 6 个错误全是缺 `ModItems` ⇒ 补搬 ⇒ 只剩
+  `MyMod.GUI_*` 常量缺失 ⇒ 收口到 `WildportIds`（不污染 `MyMod`）⇒ 全绿。
+- **两条"险些出事"的隐患**（部署前扫掉）：
+  1. `WildcardNetwork` 的通道名经包名改写后等于 `MyMod.MODID`，与我们的 `ModNetwork.CHANNEL` **同名** ——
+     `NetworkRegistry.newSimpleChannel` 遇重名会直接抛异常（**启动崩溃**）⇒ 改为 `MODID + "_wild"`；
+  2. 它的保存处理器守卫是 `stack.getItem() != ModItems.wildcardPattern` ⇒ 用**我们的**样板点保存会被
+     **静默丢弃** ⇒ 改为两种物品都接受，拒绝时记 WARN。
+- **NBT 键核实**：它的键全在根（`WildcardInputComponents` 等），我们的键在子树 `ae2qolSmartWildcard`
+  ⇒ **零重叠** ✓（唯一共用 `in`/`out` 模板键，本就该共用）。
+
+### 三、3.25.0 / 3.25.1：入口 + 双向桥
+
+- `wildport/bridge/WildcardBridge.java`：`pushToWild`（9 行规则 → 它的 entry，走它的 `fromNbt` NBT 往返；
+  另写总排除与规则级排除）与 `pullFromWild`（它的 entry/排除列表 → 我们的 `Rule`/`blacklist`，
+  `writeAndBumpRevision` + 清展开器缓存）。
+- 入口：右键**先推再** `openGui(GUI_WILDCARD_PATTERN, 手持槽位)`；保存由它的 `MessageUpdateWildcardConfig`
+  转发 `pullFromWild`。
+- 3.25.1 自检发现：`pushToWild` 原先只在服务端分支执行 ⇒ **客户端仍是旧 NBT、新界面打开会是空的** ⇒ 改为两侧都推。
+
+### 四、验证与待测
+
+- 验证：每个里程碑 `BUILD SUCCESSFUL`（无管道取码 0）；`jar tf` 确认 `wildport/` 全量入包；
+  3.24.0 / 3.25.0 / 3.25.1 各自部署（`mods` 内恒一份、与本地 SHA256 一致）。
+- **待用户实测**：窗口能否打开、是否显示已配置内容、保存是否回写（日志那三行）、机器侧展开是否跟随变化。
+  **移植目前只到「编译通过 + 数据流按其源码接对」这一层 —— 界面尚未在游戏内验证。**
+
+---
+
 ## 工作区决策记录 2026-09-26 (34) - **3.24.0：三个真 bug 修复（流体误判 / 展开诊断 / 拖入命中测试）**
 
 > 用户实测 3.23.5 后又给了截图与日志，据此定位并修掉三个**确定性**缺陷。界面本身按用户拍板的路线
