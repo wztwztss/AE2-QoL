@@ -29,8 +29,9 @@ public final class GeneratorPanel {
     public static ModularPanel build(PlayerInventoryGuiData data, PanelSyncManager syncManager) {
         ModularPanel panel = new ModularPanel("ae2qol_pattern_generator").size(300, 190);
 
-        TextFieldWidget mapField = new TextFieldWidget().setMaxLength(64)
-            .size(180, 12);
+        // 3.20.0-fix44：关键字框支持"输入机器名片段 → Tab 循环候选"，并配 [对照表] 与提示行
+        final String[] mapHint = { "输机器名片段（中文/英文/关键字皆可）后按 Tab 循环候选；或点右侧 [对照表] 查表" };
+        TextFieldWidget mapField = new RecipeMapKeywordField(hint -> mapHint[0] = hint).size(150, 12);
         TextFieldWidget inBlack = new TextFieldWidget().setMaxLength(64)
             .size(180, 12);
         TextFieldWidget outBlack = new TextFieldWidget().setMaxLength(64)
@@ -56,8 +57,32 @@ public final class GeneratorPanel {
             .childPadding(3)
             .size(292, 170);
         column.child(new TextWidget<>(IKey.str("批量样板生成器（按 GT RecipeMap 生成具体样板）")).size(290, 10));
-        column.child(new TextWidget<>(IKey.str("配方设置：RecipeMap id 或其片段，如 rolling / gt.recipe.rolling")).size(290, 10));
+        column.child(new TextWidget<>(IKey.str("配方设置：输机器名片段（中文/英文/关键字）后按 Tab 循环候选")).size(290, 10));
         column.child(row("配 方  Map", mapField));
+        // [对照表] 按钮 + 动态提示行（Tab 循环时显示"当前候选 x/y：中文 · 英文 · 关键字"）
+        Flow mapExtra = Flow.row()
+            .childPadding(3)
+            .size(288, 16);
+        mapExtra.child(new ButtonWidget<>().size(60, 14)
+            .overlay(IKey.str("对照表"))
+            .tooltip(t -> {
+                t.addLine(IKey.str("列出全部 RecipeMap：中文名 | 英文名 | 关键字"));
+                t.addLine(IKey.str("点整行 = 填入关键字并返回"));
+            })
+            .onMouseTapped(ctx -> {
+                if (!data.isClient()) return true;
+                try {
+                    net.minecraft.client.Minecraft.getMinecraft()
+                        .displayGuiScreen(
+                            new com.wztwzt.ae2_qof.client.gui.GuiRecipeMapTable(
+                                ((RecipeMapKeywordField) mapField)::pickFromTable));
+                } catch (Throwable t) {
+                    MyMod.LOG.warn("[AE2QoL] 打开 RecipeMap 对照表失败", t);
+                }
+                return true;
+            }));
+        mapExtra.child(IKey.dynamic(() -> mapHint[0]).asWidget());
+        column.child(mapExtra);
         column.child(new TextWidget<>(IKey.str("过滤器（留空 = 不启用；支持 * 与 ?；可匹配显示名或矿辞）")).size(290, 10));
         column.child(row("输入排除", inBlack));
         column.child(row("输出排除", outBlack));

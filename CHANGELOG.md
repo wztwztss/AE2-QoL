@@ -34,6 +34,50 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-09-27 (48) - **3.20.0-fix44：批量样板生成器 —— 机器名片段 + Tab 循环候选 + 机器↔编码对照表**
+
+### 一、需求（用户）
+> 「现在要输入机器 id 编码太麻烦了，最好改成玩家输入其中的一部分，然后按 tab 帮助填充，然后再给一个表格，提供参考。」
+
+口径（用户逐条拍板）：改的是 **RecipeMap 关键字框**；**中文名 / 英文名 / 关键字三者任一**模糊匹配；
+**Tab = 循环切换候选**；对照表**单独一页**、入口是输入框右侧 `[对照表]` 按钮；
+列 = **中文名 | 英文名 | 关键字**；**点整行 = 填入并返回主页**；要**提示行**；**分页 10 行**。
+
+### 二、取证
+- 生成器界面：`generator/GeneratorPanel.java`（MUI2，关键字框是 `TextFieldWidget`）；
+- 数据源：`RecipeMap.ALL_RECIPE_MAPS`（`SmartPatternGenerator.listRecipeMaps()/findMatchingRecipeMaps()` 已在用）；
+- **GT `RecipeMap` 只暴露 `public final String unlocalizedName`，没有显示名 getter** ⇒ 显示名必须自己拼：
+  中文名走 `StatCollector.translateToLocal(unlocalizedName)`（客户端当前语言），英文名从资源包
+  `gregtech:lang/en_US.lang` 读一次并缓存（GTNH 用自己资源包覆盖 GT 同名文件）；
+- MUI2 的 `BaseTextFieldWidget` 声明了 `public Interactable.Result onKeyPressed(char, int)`
+  ⇒ **Tab 可以拦**（返回 `SUCCESS` 吞掉按键，不让焦点跳走）。
+
+### 三、实现
+1. **`generator/RecipeMapNames.java`**（数据层）：`Entry{id, zh, en}`；
+   `matchIds(fragment)`（**关键字/中文名/英文名任一**，不区分大小写；排序 精确 &gt; 前缀 &gt; 子串，同级按中文名序；
+   片段为空 ⇒ 整表）；
+   `englishName` 读不到资源时回落"关键字尾巴转 Title Case"（`electricimplosioncompressor` →
+   `Electric Implosion Compressor`），**首次回落记一条 INFO**（不许静默降级）；枚举失败记 WARN 并返回空表。
+2. **`generator/RecipeMapKeywordField.java`**：`Tab`（`Keyboard.KEY_TAB`）触发 `cycle()`；
+   **单独锁定"用户输入的片段"**——填充后框里是关键字的坑由此避开，只有玩家手动按键才解锁；
+   候选为 0 记 WARN + 提示行给出引导；`pickFromTable(id)` 供对照表选行后填入。
+3. **`client/gui/GuiRecipeMapTable.java`**：轻量 `GuiScreen`；搜索框用**原版 `GuiTextField`**
+   （自绘 MUI 界面里 IME 不可用，见 fix43）；表头 + 每页 10 行 + 上一页/下一页/返回；
+   行悬停高亮；**点整行 = 回调填关键字并返回**；`共 N 条 · 第 x/y 页`。
+4. **`generator/GeneratorPanel.java`**：关键字框换成 `RecipeMapKeywordField`；其下加一行
+   `[对照表]` 按钮 + **动态提示行**（`IKey.dynamic(() -> mapHint[0])`，Tab 时显示
+   `当前候选 x/y：中文 · 英文 · 关键字`）；点按钮 `displayGuiScreen(new GuiRecipeMapTable(field::pickFromTable))`。
+
+### 四、验证与待测
+- 构建 `BUILD SUCCESSFUL`（无管道取码 `EXIT=0`）；产物 `build/libs/AE2-QoL-3.20.0-fix44.jar`
+  （1,785,577 字节，SHA256 `B1A91B3D6E8C66E7511DDE38AD06D10562C6D10B5BBE58EEEA9CA70E17D3136A`）。
+- **待用户实测**：① 关键字框里输"滚"/"rolling"/"roll" 后按 **Tab** ⇒ 框内容在候选间循环，
+  提示行显示"当前候选 x/y：中文 · 英文 · 关键字"；② 清空片段再按 Tab ⇒ 按整表（中文名序）循环；
+  ③ 点 `[对照表]` ⇒ 表格页，搜索框可打中文、翻页正常、**点整行填入并返回**；
+  ④ 用填入的关键字点「生成样板」能正常出样板；⑤ 英文名若显示为"关键字生成的 Title Case"，
+  说明该键不在 `gregtech:lang/en_US.lang`（日志里有一条 INFO，不代表出错）。
+
+
 ## 工作区决策记录 2026-09-27 (47) - **3.20.0-fix43：给自绘界面的文本框加"改"按钮 —— 走原版输入框，中文/输入法可用**
 
 ### 一、问题（用户实测）
