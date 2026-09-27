@@ -4,13 +4,13 @@
 
 An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
-**Author: wztwzt · Current source version: 3.41.0 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.20.0-fix38 · Reference pack: GTNH 2.9.0-beta-3**
 
 This repository is for personal archival and is not currently offered for distribution. See [CREDITS.md](CREDITS.md) for attribution and licensing records. Feature descriptions are not a claim that every integration has passed in-game testing.
 
-## What's new in 3.41.0 (output prefix is now existence-driven — the real upstream of "every pattern outputs the same plate")
+## What's new in 3.20.0-fix38 (output prefix is now existence-driven — the real upstream of "every pattern outputs the same plate")
 
-- **Why 3.40.0 had no effect**: it fixed the *output-slot replacement test*, but that whole block sits inside
+- **Why 3.20.0-fix37 had no effect**: it fixed the *output-slot replacement test*, but that whole block sits inside
   `if (outStack != null)`, and `outStack` is only computed when the **output prefix is non-empty**. The decisive
   counter-evidence was in the log: the new "replacement slot not found" WARN **never fired**, proving the block was
   never entered.
@@ -27,7 +27,7 @@ This repository is for personal archival and is not currently offered for distri
 - **Self-verifying log**: `展开样本：material=Copper prefix=plate in=… out=… 产出out=…` (three lines per JVM), so
   the next round needs no guesswork.
 
-## What's new in 3.40.0 (every expanded pattern produced the same iron plate)
+## What's new in 3.20.0-fix37 (every expanded pattern produced the same iron plate)
 
 - **The diagnostics hit it in one reproduction**: after adding a line that prints the number of **distinct outputs**
   plus a read-back of AE2's own crafting table, one run showed that **all 396 expanded patterns on all three
@@ -44,19 +44,19 @@ This repository is for personal archival and is not currently offered for distri
 - The diagnostics stay (distinct-output count + AE crafting-table read-back) but are computed only when the
   rate-limited log actually fires.
 
-## What's new in 3.39.0-diag (diagnostic build: distinct outputs + AE crafting-table read-back)
+## What's new in 3.20.0-fix36 (diagnostic build: distinct outputs + AE crafting-table read-back)
 
 - **Logs only, no behaviour change**: each registration prints the number of **distinct outputs** and the first
   three samples, then reads AE2's own crafting table back on the next tick (entry count, whether sampled outputs
   are indexed, and the medium class). These two lines are what pinpointed the real cause in the next release.
 
-## What's new in 3.38.0 (never cancel the original method — fixes "both wildcard mods see only one pattern")
+## What's new in 3.20.0-fix35 (never cancel the original method — fixes "both wildcard mods see only one pattern")
 
-- **Good news first**: the 3.37.0 log shows **our own expansion now succeeds** — `produced=512` (capped) /
+- **Good news first**: the 3.20.0-fix34 log shows **our own expansion now succeeds** — `produced=512` (capped) /
   `produced=396` with `matched=4393` — so the ore prefix, index alignment and matcher fixes all took effect.
 - **The regression's real cause**: cancelling GT's `provideCrafting` also skips the original WildcardPattern mod's
   expansion, because `CallbackInfo.cancel()` is a **shared flag**. Your testing produced a clean A/B/A:
-  3.35.0 (always cancelled) both broken → 3.36.0 (we failed to take over) original worked again → 3.37.0 (we took
+  3.20.0-fix32 (always cancelled) both broken → 3.20.0-fix33 (we failed to take over) original worked again → 3.20.0-fix34 (we took
   over again) both broken again.
 - **Fix**: in the GT hatch, the GTNL hatch and the AE2 ME interface paths we now **only append and never cancel** —
   our expanded patterns are added to the registry with their mappings, while plain slots are left to the original
@@ -66,7 +66,7 @@ This repository is for personal archival and is not currently offered for distri
   `now - Long.MIN_VALUE` overflowed negative and the condition never held). `GT 通配样板注册（只追加拿，未 cancel）：…
   本机含原版样板=N …` now appears as intended.
 
-## What's new in 3.37.0 (wildcard matching always returned false — the last reason it "never worked")
+## What's new in 3.20.0-fix34 (wildcard matching always returned false — the last reason it "never worked")
 
 - **Fixed the wildcard matcher**: `SmartWildcardState.matches` used to lowercase the **entire regex string**,
   turning the `\Q…\E` quoting produced by `Pattern.quote` into `\q…\e`; Java then throws
@@ -77,12 +77,12 @@ This repository is for personal archival and is not currently offered for distri
   It now escapes metacharacters explicitly and uses `CASE_INSENSITIVE`, and exceptions are no longer silent
   (they log a WARN). Verified before/after with a minimal Java case: `matches(ingot*, ingotIron)` was `false`,
   now `true`.
-- Note: 3.36.0's index alignment and 3.35.0's ore prefix / template self-heal remain valid (this round's log shows
+- Note: 3.20.0-fix33's index alignment and 3.20.0-fix32's ore prefix / template self-heal remain valid (this round's log shows
   `matcher='ingot*'`, `outMatcher='plate*'` and no out-of-range slots); this was the final blocker.
 - ⚠️ Regression notice: blacklists and excludes only take effect **from this version on**. If you see materials
   being excluded, check that pattern's global/rule excludes — the old entries are finally doing their job.
 
-## What's new in 3.36.0 (row / rule-slot / template-index alignment + no interference between the two wildcard mods)
+## What's new in 3.20.0-fix33 (row / rule-slot / template-index alignment + no interference between the two wildcard mods)
 
 - **Fixed "the + only fills the input row, the output row stays empty, and the machine still crafts the pattern
   itself"**: the real cause was **three mismatched numbering schemes** — a machine-side rule slot is an index into
@@ -101,10 +101,10 @@ This repository is for personal archival and is not currently offered for distri
 - **New reverse self-heal**: the shared details→slot map is cleaned by the original mod's `removeIf`; the
   `pushPattern` guard now checks our own expansion first, **restores the mapping and lets the original method run**
   instead of permanently rejecting our patterns.
-- Note: the 3.35.0 results still hold (ore prefix now `ingot*`, template self-heal works); this release fixes the
+- Note: the 3.20.0-fix32 results still hold (ore prefix now `ingot*`, template self-heal works); this release fixes the
   index-model mismatch and the cross-mod interference they exposed.
 
-## What's new in 3.35.0 (the wildcard pattern finally expands: wrong ore prefix + deleted native template)
+## What's new in 3.20.0-fix32 (the wildcard pattern finally expands: wrong ore prefix + deleted native template)
 
 - **The ore-dictionary string produced by "+" was not an ore name at all**: `OrePrefixes.getOreprefixKey()`
   returns GT's **localisation key** (proven with javap: the constant pool literally contains `gt.oreprefix.`,
@@ -124,11 +124,11 @@ This repository is for personal archival and is not currently offered for distri
   reconfigured**.
 - **The output row is no longer blank**: when a rule does not specify an output, the prefix derived by the
   expander itself (e.g. `plate`) is displayed as `plate*`, matching the expected "input `ingot*` → output `plate*`".
-- Note: the 3.34.0 fixes did work (the machine side now reaches our code and "+" writes into the window in
+- Note: the 3.20.0-fix31 fixes did work (the machine side now reaches our code and "+" writes into the window in
   place); this release fixes the two deeper causes they exposed. Only from this release does the expansion
   path actually reach "produce N patterns" for the first time.
 
-## What's new in 3.34.0 (wildcard pattern not recognised by any hatch + NEI "+" + dedicated Circuit / Non-consumed pages)
+## What's new in 3.20.0-fix31 (wildcard pattern not recognised by any hatch + NEI "+" + dedicated Circuit / Non-consumed pages)
 
 - **Fixed "a configured wildcard pattern is not recognised by any hatch"** (in-game: GT Crafting Input Buffer, GTNL
   Super Input Hatch, PH 22069 / MK.II and our own MK.III all failed — the pattern sits in the slot but the machine
@@ -146,15 +146,15 @@ This repository is for personal archival and is not currently offered for distri
 - **Two dedicated pages in the Wild window** (tabs at the top-right: Main / Circuit / Non-consumed):
   **Circuit** lays out 1–24 as 4 columns × 6 rows plus "Clear (inherit)" and applies/highlights immediately;
   **Non-consumed** supports NEI drag-in, "add held", 8 rows per page (icon + name) and per-row delete, all written
-  back immediately. The 50 px circuit band added in 3.33.0 has been **removed** (window height back to 292).
-- **Fixed a gesture that had been silently dead since 3.22.0**: "Shift+middle-click a slot → circuit picker" on MUI2
+  back immediately. The 50 px circuit band added in 3.20.0-fix30 has been **removed** (window height back to 292).
+- **Fixed a gesture that had been silently dead since 3.20.0-fix10**: "Shift+middle-click a slot → circuit picker" on MUI2
   slots. The mixin callback was declared as `CallbackInfo` while the target returns `Interactable.Result`, so the
   injection threw and UniMixins swallowed it into a single WARN. It only works from this version on.
-- ⚠️ This round does **not** back-fill dedicated sections for 3.30.0–3.33.0 (recorded honestly as documentation
+- ⚠️ This round does **not** back-fill dedicated sections for 3.20.0-fix27–3.20.0-fix30 (recorded honestly as documentation
   debt); `CHANGELOG.md` and the tail of this mod's `zh_CN.lang` contain **historically corrupted (mojibake)
   segments** that need a separate UTF-8 rewrite pass.
 
-## What's new in 3.26.x – 3.29.0 (Pattern Generator UI ported from AE2PatternGen + dual entry for the wildcard pattern)
+## What's new in 3.26.x – 3.20.0-fix26 (Pattern Generator UI ported from AE2PatternGen + dual entry for the wildcard pattern)
 
 - **The Pattern Generator now uses AE2PatternGen's own UI** (per the request to "just copy it over first, then change it"): its whole
   UI subsystem was ported into `apgport/` — **65 files / 9,983 lines** (main window `GuiPatternGen`, recipe picker `GuiRecipePicker`,
@@ -191,9 +191,9 @@ This repository is for personal archival and is not currently offered for distri
   (now suffixed `_wild`); and its original save guard silently **discarded our** pattern (now both items are accepted,
   with a WARN when rejected).
 - ⚠️ **Stated plainly**: the port currently reaches "compiles + data flow wired as its source intends" — the **UI has not
-  been verified in game yet**. The first testable build is **3.25.1**; results pending.
+  been verified in game yet**. The first testable build is **3.20.0-fix19**; results pending.
 
-## What's new in 3.23.4 (UI rebuilt to your design: four tabs + NEI drag-in)
+## What's new in 3.20.0-fix15 (UI rebuilt to your design: four tabs + NEI drag-in)
 
 - **Four tabs**: Rules / Coverage preview / Exclusions & non-consumed / Circuit. MUI2 has **no** `TabWidget`, so it is
   "tab buttons + four page containers + `setEnabledIf(page predicate)`" (the predicate is evaluated every frame, so
@@ -216,7 +216,7 @@ This repository is for personal archival and is not currently offered for distri
   intersection, so the whole pattern expanded to nothing; such rules are now treated as **exact matches**; ⑤
   `createScreen` is now overridden with this mod's id as MUI2 requires, silencing the "or else it will crash" warning.
 
-## What's new in 3.23.0 (wildcard editor rebuilt on MUI2 + Pattern Generator)
+## What's new in 3.20.0-fix11 (wildcard editor rebuilt on MUI2 + Pattern Generator)
 
 - **Rebuilt UI (MUI2)**: the Smart Wildcard Pattern now uses a Cleanroom ModularUI 2 screen (container-backed, so
   **NEI's + still works**). Instead of "a few buttons and a lot of empty space" it is a **single-page editor**:
@@ -236,7 +236,7 @@ This repository is for personal archival and is not currently offered for distri
   earlier (an LGPL asset) has been **removed** in favour of a runtime name reference; the `LICENSE` copyright line is
   now `wztwzt` (still MIT); and research notes about other people's source were moved out of the repo and ignored.
 
-## What's new in 3.22.0 (Smart Wildcard Pattern)
+## What's new in 3.20.0-fix10 (Smart Wildcard Pattern)
 
 - **New item: Smart Wildcard Pattern** (crafted from one AE2 Blank Pattern): **one pattern covers a whole recipe class** —
   e.g. "1× any ingot → 1× the matching plate". At pattern-index time it expands into legal ordinary patterns for each
@@ -257,7 +257,7 @@ This repository is for personal archival and is not currently offered for distri
 - Known limits: expansion happens at index time (placing/changing a pattern, loading NBT) and one pattern covers **one
   recipe class**; see the in-game guide page "Smart Wildcard Pattern" for details.
 
-## What's new in 3.21.4 (configurable per-push cap for Smart Doubling)
+## What's new in 3.20.0-fix9 (configurable per-push cap for Smart Doubling)
 
 - **New setting `smart_doubling_push_cap`** (default **4096**, range 1..2147483647): the **per-push
   (per-tick) round cap** for Smart Doubling. Raise it for bigger batches (keep
@@ -266,11 +266,11 @@ This repository is for personal archival and is not currently offered for distri
   drowned the client in item updates); raising it costs linearly more extraction and item updates per tick.
   Editable in `settings.json`, the in-game "Mods → AE2 QoL → Config" page, and visible via `/ae2qof status`.
 - **Fixed a diagnostic false positive**: turning the toggle off did not clear the "expect enabled"
-  registration, so the CPU could wrongly warn that the server switch was still false (seen while testing 3.21.3).
+  registration, so the CPU could wrongly warn that the server switch was still false (seen while testing 3.20.0-fix8).
 - Note: the "tens of thousands at a time" you saw is `4096 rounds × the pattern's output per craft` —
   a designed cap, not a failure.
 
-## What's new in 3.21.3 (Smart Doubling fixed on dedicated servers)
+## What's new in 3.20.0-fix8 (Smart Doubling fixed on dedicated servers)
 
 - **Root cause**: the Smart Doubling toggles for GT/GTNL/PH machines were implemented in **client-only
   mixins** (the `client` section of `mixins.ae2_qof.json`), and their `BooleanSyncValue(...).allowC2S()`
@@ -290,12 +290,12 @@ This repository is for personal archival and is not currently offered for distri
 
 ## Previous releases
 
-- **3.21.2**: fixed blank row names and uneditable emitter amounts in the Stock Monitor Terminal
+- **3.20.0-fix7**: fixed blank row names and uneditable emitter amounts in the Stock Monitor Terminal
   (MUI2 `ButtonWidget` extends `SingleChildWidget`, so a second child silently disposes the first —
   widget text now goes through `overlay(IKey)`; `LevelType` constants are `ITEM_LEVEL`/`ENERGY_LEVEL`).
-- **3.21.1**: the Stock Monitor Terminal's cover list now shows only covers of the network the terminal
+- **3.20.0-fix6**: the Stock Monitor Terminal's cover list now shows only covers of the network the terminal
   is bound to, and reports how many were hidden from other networks.
-- **3.21.0**: Stock Monitor Terminal highlight (10 s) and cross-dimension teleport buttons plus UI and
+- **3.20.0-fix5**: Stock Monitor Terminal highlight (10 s) and cross-dimension teleport buttons plus UI and
   localization fixes.
 
 - **New: two action buttons per row — Highlight and Teleport** (same division of labour as the
@@ -316,7 +316,7 @@ This repository is for personal archival and is not currently offered for distri
 - Also: the terminal now advances the "highlight auto-clear" queue every tick, so highlights expire on
   time even in saves without the Adaptive Energy Grid terminal.
 
-- **3.20.3 fix: the Stock Monitor Terminal (32107) GUI showed only its two section headers**
+- **3.20.0-fix3 fix: the Stock Monitor Terminal (32107) GUI showed only its two section headers**
   ("stock monitor covers" / "AE standard emitters") — no lists, no connect button, no input fields,
   and no stock readings; it had **never worked**. There were two root causes, the second hidden:
   1. The widgets were created behind `if (isServer)`, but **MUI2 builds every panel on both sides and
@@ -330,7 +330,7 @@ This repository is for personal archival and is not currently offered for distri
   itself uses), edits flow through SyncValues, a fallback network selector was added for the case where
   Nexus is unavailable, and the old "show only 5 rows" cap is gone (scrollable, all rows).
 
-- **3.20.2 fix**: four in-game guide (GuideNH) pages never showed an icon — the log repeated
+- **3.20.0-fix2 fix**: four in-game guide (GuideNH) pages never showed an icon — the log repeated
   `Couldn't find icon item ae2_qof:...`. Those pages' `icon:` / `item_ids:` used invented names, but the
   machines are **GregTech machines**: their real registry name is `gregtech:gt.blockmachines` plus meta
   (the MTE ID), e.g. the Universal Maintenance Hatch is `gregtech:gt.blockmachines:32000`. This release
@@ -338,7 +338,7 @@ This repository is for personal archival and is not currently offered for distri
   whose real id is `appliedenergistics2:item.ToolCertusQuartzCuttingKnife`) in both languages, and
   cross-audits every declared id against this mod's actual registry names.
 
-- **3.20.1 fix**: in 3.20.0 the optional-dependency guard used PH's **package prefix** (`proghatches`)
+- **3.20.0-fix1 fix**: in 3.20.0 the optional-dependency guard used PH's **package prefix** (`proghatches`)
   instead of its real **modid**, so the guard was always false — the item was never registered, could not be
   found in NEI or the creative tab, and **no log line was written at all**. It now uses the real modid
   `programmablehatches`, plus a second "anchor class resolves" check and a log line on the skip path
@@ -439,7 +439,7 @@ See the [investigation](docs/mcp-tooltip-duplicate-investigation.md) for evidenc
 ## Installation and upgrades
 
 1. Stop the game/server and back up the **complete world and configuration**, retaining the previous JAR for rollback. Infinity Cell contents live in the world save; backing up item NBT alone is insufficient.
-2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-3.21.4.jar`. Do not retain multiple versions.
+2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-3.20.0-fix9.jar`. Do not retain multiple versions.
 3. **Use the same version on client and server.** fix41 changed upload-related packets; upgrading only one side is unsupported.
 4. This JAR includes `aeinfinitycell` (bundled metadata remains `1.0.4-ae2qol`). Do not also install the standalone AE2 Infinity Cell JAR. Test old cells in a copied world before migrating.
 5. Check startup logs, generated configuration and Mixin loading, then exercise the features you use in a test world. Deployment to the development test instance requires separate approval.
