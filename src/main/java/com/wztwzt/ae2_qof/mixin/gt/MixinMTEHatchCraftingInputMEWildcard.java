@@ -147,8 +147,8 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard {
                     } else {
                         wildcardSlots.add(wrapped);
                         MyMod.LOG.info("[AE2QoL] GT 样板仓发现通配样板并展开：slot={} {}", i, wrapped.expandSummary());
-                        // M3：样板自带电路 → 写入本机虚拟电路槽（样板自带 > 槽位 > 整机；没有设置就**不动**机器）
-                        this.ae2qol$applyPatternCircuit(wrapped, i);
+                        // 4.1.0（用户口径）：**我们彻底不再管电路** —— 不再把样板自带电路写进本机虚拟电路槽。
+                        // 电路交给玩家手动设置；PH 家族总成（含 MK.III）另走 PH 的编程器电路机制。
                     }
                     continue;
                 }

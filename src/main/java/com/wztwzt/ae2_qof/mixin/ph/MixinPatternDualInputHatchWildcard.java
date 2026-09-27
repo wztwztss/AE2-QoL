@@ -60,6 +60,163 @@ public abstract class MixinPatternDualInputHatchWildcard {
     @org.spongepowered.asm.mixin.Unique
     private long ae2qol$lastRegisterLogTick = 0L;
 
+    // ================= 4.1.0：把样板里的电路 / 不消耗物品转换成 PH:编程器电路 =================
+
+    @org.spongepowered.asm.mixin.Unique
+    private long ae2qol$lastWrapLogTick = 0L;
+    @org.spongepowered.asm.mixin.Unique
+    private int ae2qol$lastWrapCount = -1;
+
+    /**
+     * **4.1.0 核心改动**：把一张具体样板输入里的「GT 编程电路」与「样板不消耗物品」换成
+     * **PH:编程器电路**（{@code ItemProgrammingCircuit.wrap(目标)}）。
+     *
+     * <h2>为什么这样做（用户口径）</h2>
+     * MK.III 就是 PH（可编程仓室）原版样板总成的**扩槽版**：界面与"编程器模式"都是 PH 自己的，
+     * 我们一行都不用改；要改的只是"我们通配样板喂进去的东西"：
+     * <ul>
+     * <li>GT 编程电路 → 编程器电路（记录那号电路）：AE 会按样板去取编程器电路（PH 的
+     * {@code ProgrammingCircuitProvider} 按需生成），送进 PH 家族总成后被 PH **自己识别并消耗**，
+     * 把记录的目标写进该缓冲的虚拟槽 ⇒ **AE 不再需要备货 GT 电路，也不会在总成里残留电路**；</li>
+     * <li>不消耗物品（铸模/模头/透镜…）→ 同样换成记录该物品的编程器电路，由 PH 写进虚拟槽；</li>
+     * <li>样板自带电路号存在但输入里没有电路项时，**补一条**编程器电路（编辑器里设的电路照样生效）。</li>
+     * </ul>
+     * 只对 PH 家族宿主生效（本 mixin 只作用于 PH 的类）——GT 2714 / GTNL 21504 没有编程器模式，不参与。
+     *
+     * <h2>为什么先 copy</h2>
+     * 展开结果带 LRU 缓存（{@code SmartWildcardExpander.CACHE}），原地改写会污染缓存 ⇒ 一律先
+     * {@code copy()} 再改；异常时返回原对象并记日志（不静默）。
+     */
+    @org.spongepowered.asm.mixin.Unique
+    private ItemStack ae2qol$wrapProgrammingCircuits(ItemStack concrete, ItemStack pattern) {
+        try {
+            SmartWildcardState state = SmartWildcardState.of(pattern);
+            if (state == null) return concrete;
+            java.util.List<ItemStack> nonConsumed = state.nonConsumed;
+            boolean hasCircuitTarget = state.circuit >= 1;
+            if (!hasCircuitTarget && (nonConsumed == null || nonConsumed.isEmpty())) return concrete;
+
+            ItemStack copy = concrete.copy();
+            net.minecraft.nbt.NBTTagCompound tag = copy.getTagCompound();
+            if (tag == null) return concrete;
+            net.minecraft.nbt.NBTTagList in = tag
+                .getTagList("in", net.minecraftforge.common.util.Constants.NBT.TAG_COMPOUND);
+            net.minecraft.nbt.NBTTagList newIn = new net.minecraft.nbt.NBTTagList();
+            boolean circuitWrapped = false;
+            int nonConsumedWrapped = 0;
+            for (int i = 0; i < in.tagCount(); i++) {
+                net.minecraft.nbt.NBTTagCompound entry = (net.minecraft.nbt.NBTTagCompound) in.getCompoundTagAt(i)
+                    .copy();
+                ItemStack stack = ItemStack.loadItemStackFromNBT(entry);
+                if (stack != null && reobf.proghatches.item.ItemProgrammingCircuit.getCircuit(stack)
+                    .isPresent()) {
+                    // 已经是编程器电路（例如用户用 PH 编程工具箱转写过的样板）：原样保留
+                    newIn.appendTag(entry);
+                    continue;
+                }
+                if (ae2qol$isGtCircuit(stack)) {
+                    newIn.appendTag(ae2qol$programmingCircuitTag(stack));
+                    circuitWrapped = true;
+                    continue;
+                }
+                if (ae2qol$isNonConsumed(stack, nonConsumed)) {
+                    newIn.appendTag(ae2qol$programmingCircuitTag(stack));
+                    nonConsumedWrapped++;
+                    continue;
+                }
+                newIn.appendTag(entry);
+            }
+            // 样板自带电路号在、但输入里没有电路项 ⇒ 补一条编程器电路（记录该号 GT 电路）
+            if (hasCircuitTarget && !circuitWrapped) {
+                ItemStack target = gregtech.api.util.GTUtility.getIntegratedCircuit(state.circuit);
+                if (target != null) {
+                    newIn.appendTag(ae2qol$programmingCircuitTag(target));
+                    circuitWrapped = true;
+                }
+            }
+            // 不消耗物品里还有输入列表中没有的 ⇒ 也补编程器电路
+            if (nonConsumed != null) {
+                for (ItemStack item : nonConsumed) {
+                    if (item == null || item.getItem() == null) continue;
+                    if (ae2qol$inListContains(in, item)) continue;
+                    newIn.appendTag(ae2qol$programmingCircuitTag(item));
+                    nonConsumedWrapped++;
+                }
+            }
+            if (!circuitWrapped && nonConsumedWrapped == 0) return concrete;
+            tag.setTag("in", newIn);
+            ae2qol$logWrap(circuitWrapped, nonConsumedWrapped);
+            return copy;
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 转换 PH 编程器电路失败（该张保持原样）", t);
+            return concrete;
+        }
+    }
+
+    /** GT 编程电路的识别口径与 {@code SmartWildcardCircuit} 一致：未本地化名以 {@code gt.integrated_circuit} 开头。 */
+    @org.spongepowered.asm.mixin.Unique
+    private static boolean ae2qol$isGtCircuit(ItemStack stack) {
+        if (stack == null || stack.getItem() == null) return false;
+        String unlocalized = stack.getItem()
+            .getUnlocalizedName();
+        return unlocalized != null && unlocalized.startsWith("gt.integrated_circuit");
+    }
+
+    /** 该输入项是否在"样板不消耗物品"清单里（按 物品+damage+NBT 指纹，忽略数量）。 */
+    @org.spongepowered.asm.mixin.Unique
+    private static boolean ae2qol$isNonConsumed(ItemStack stack, java.util.List<ItemStack> nonConsumed) {
+        if (stack == null || nonConsumed == null) return false;
+        for (ItemStack item : nonConsumed) {
+            if (item == null || item.getItem() == null) continue;
+            if (item.getItem() != stack.getItem()) continue;
+            if (item.getItemDamage() != stack.getItemDamage()) continue;
+            if (ItemStack.areItemStackTagsEqual(item, stack)) return true;
+        }
+        return false;
+    }
+
+    /** 输入列表里是否已经有这种物品（用于决定要不要补一条编程器电路）。 */
+    @org.spongepowered.asm.mixin.Unique
+    private static boolean ae2qol$inListContains(net.minecraft.nbt.NBTTagList in, ItemStack item) {
+        for (int i = 0; i < in.tagCount(); i++) {
+            ItemStack stack = ItemStack.loadItemStackFromNBT(in.getCompoundTagAt(i));
+            if (stack == null || stack.getItem() == null) continue;
+            if (stack.getItem() != item.getItem()) continue;
+            if (stack.getItemDamage() != item.getItemDamage()) continue;
+            if (ItemStack.areItemStackTagsEqual(stack, item)) return true;
+        }
+        return false;
+    }
+
+    /** 造一条"记录该目标"的编程器电路的 NBT 条目（写进样板的 in 列表）。 */
+    @org.spongepowered.asm.mixin.Unique
+    private static net.minecraft.nbt.NBTTagCompound ae2qol$programmingCircuitTag(ItemStack target) {
+        ItemStack wrapped = reobf.proghatches.item.ItemProgrammingCircuit.wrap(target.copy());
+        net.minecraft.nbt.NBTTagCompound slotTag = new net.minecraft.nbt.NBTTagCompound();
+        wrapped.writeToNBT(slotTag);
+        slotTag.setInteger("Count", 1);
+        slotTag.setLong("Cnt", 1);
+        return slotTag;
+    }
+
+    /** 限频日志（15 秒或变化时打一次）：换了多少条、其中电路几条。 */
+    @org.spongepowered.asm.mixin.Unique
+    private void ae2qol$logWrap(boolean circuitWrapped, int nonConsumedWrapped) {
+        try {
+            long now = System.currentTimeMillis();
+            int total = (circuitWrapped ? 1 : 0) + nonConsumedWrapped;
+            if (total == this.ae2qol$lastWrapCount && now - this.ae2qol$lastWrapLogTick < 15000L) return;
+            this.ae2qol$lastWrapLogTick = now;
+            this.ae2qol$lastWrapCount = total;
+            MyMod.LOG.info(
+                "[AE2QoL] 已把具体样板输入里的电路/不消耗物品转换为 PH:编程器电路：电路={} 不消耗={}（AE 将按需取编程器电路，PH 总成收到后写进虚拟槽）",
+                circuitWrapped,
+                nonConsumedWrapped);
+        } catch (Throwable ignored) {
+            // 日志失败不影响主流程
+        }
+    }
+
     @Inject(method = "provideCrafting", at = @At("RETURN"), remap = false)
     private void ae2qol$registerWildcardExpansions(ICraftingProviderHelper craftingTracker, CallbackInfo ci) {
         try {
@@ -89,24 +246,8 @@ public abstract class MixinPatternDualInputHatchWildcard {
                 wildcardSlots++;
                 SmartWildcardExpander.Result result = SmartWildcardExpander.expand(slot, world);
                 if (result.truncated) truncated++;
-                // M3：样板自带电路 → 写入本机虚拟电路槽（PH 总成 / MK.II / 我们的 MK.III 同一处生效；
-                // 样板没自带电路时**不动**机器原有电路，整机层留给玩家自己设置）
-                try {
-                    SmartWildcardState wildcardState = SmartWildcardState.of(slot);
-                    if (wildcardState != null && wildcardState.circuit >= 1) {
-                        gregtech.api.interfaces.metatileentity.IMetaTileEntity mte =
-                            (gregtech.api.interfaces.metatileentity.IMetaTileEntity) (Object) this;
-                        int target = com.wztwzt.ae2_qof.wildcard.SmartWildcardCircuit.resolve(
-                            wildcardState.circuit,
-                            -1,
-                            com.wztwzt.ae2_qof.wildcard.SmartWildcardCircuit.readMachineCircuit(mte));
-                        if (target >= 1) {
-                            com.wztwzt.ae2_qof.wildcard.SmartWildcardCircuit.apply(mte, target, "PH 样板仓");
-                        }
-                    }
-                } catch (Throwable t) {
-                    MyMod.LOG.warn("[AE2QoL] 写入 PH 仓内置电路失败", t);
-                }
+                // 4.1.0：**不再写机器全局电路槽**（用户口径：我们彻底不管电路）。
+                // 电路改由 PH 的"编程器电路"机制处理：见下面 ae2qol$wrapProgrammingCircuits(...)。
                 if (result.isEmpty()) {
                     // 空状态必须可解释（本项目原则）：把原因打进日志
                     MyMod.LOG.warn("[AE2QoL] PH 仓的智能通配样板未展开出任何样板：{}", result.describe());
@@ -115,11 +256,17 @@ public abstract class MixinPatternDualInputHatchWildcard {
                 for (ItemStack concrete : result.patterns) {
                     if (concrete == null || concrete.getItem() == null) continue;
                     if (!(concrete.getItem() instanceof ICraftingPatternItem patternItem)) continue;
+                    // 4.1.0 **核心改动**：把这一张具体样板输入里的
+                    //   ① GT 编程电路 ② 样板"不消耗物品"
+                    // 换成 **PH:编程器电路（记录对应目标）**：这样 AE 会按样板去取编程器电路（由 PH 的
+                    // 编程器电路提供器按需生成），送进 PH 家族总成（含我们的 MK.III）后由 PH 自己识别并
+                    // 消耗掉、把记录的目标写进对应缓冲的虚拟槽 ⇒ 不再需要 AE 备货 GT 电路、也不会残留电路。
+                    ItemStack baked = ae2qol$wrapProgrammingCircuits(concrete, slot);
                     ICraftingPatternDetails details = com.wztwzt.ae2_qof.wildcard.SmartWildcardDecoder
-                        .decode(concrete, world);
+                        .decode(baked, world);
                     if (details == null) continue;
                     // 3.42.0-diag：配对打印（concrete 的 out / details 自带 pattern 的 out / details.getOutputs()[0]）
-                    com.wztwzt.ae2_qof.wildcard.SmartWildcardDiag.logDecodePair("PH", concrete, details);
+                    com.wztwzt.ae2_qof.wildcard.SmartWildcardDiag.logDecodePair("PH", baked, details);
                     craftingTracker.addCraftingOption((ICraftingProvider) (Object) this, details);
                     allDetails.add(details);
                     registered++;
