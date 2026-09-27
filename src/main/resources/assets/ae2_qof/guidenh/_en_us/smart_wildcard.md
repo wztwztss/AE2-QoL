@@ -26,6 +26,9 @@ That is why every existing pattern buffer accepts it and machines match it norma
 
 1. Obtain the "Smart Wildcard Pattern" item (AE2 QoL creative tab; crafting recipe below).
 2. **Right-click** it to open the config screen (the **Wild window ported wholesale**, built on GTNH-ModularUI; the rules / coverage preview / exclusions / circuit pages and buttons are preserved):
+   - **Two entries**: plain right-click = the Wild window above (rules/exclusions/preview + NEI drag-in + **one-click `+` transfer**);
+     **Shift+right-click** = this mod's own four-tab editor (which carries the **built-in circuit 1..24** and the
+     **non-consumed items** pages — the Wild window has neither);
    - **Rule table (9 rows)**: each row is `input matcher | amount | -> | output matcher | amount | clear | x2` and can be
      **hand-written**. The matcher carries its mode as a prefix — `ore:ingot*` = ore dictionary, `name:*Ingot` = display
      name (no prefix means ore dictionary), so the field explains itself. Leave the output empty to keep the template's
