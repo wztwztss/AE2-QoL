@@ -29,5 +29,7 @@ public final class WildcardNetwork {
             MessageUpdateCompositeWildcardConfig.class,
             1,
             Side.SERVER);
+        // 3.22.0-fix53：「改」对话框确认后重开 Wild 窗口（原版对话框会把 MUI 窗口顶掉）
+        CHANNEL.registerMessage(MessageReopenWildGui.Handler.class, MessageReopenWildGui.class, 2, Side.SERVER);
     }
 }

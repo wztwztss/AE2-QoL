@@ -1087,6 +1087,13 @@ public final class WildcardPatternWindow {
                                 setter.accept(v);
                                 field.setText(v);
                                 field.markForUpdate();
+                                // 3.22.0-fix53：原版对话框会把 Wild 窗口顶掉 ⇒ 确认后请服务端重开界面
+                                try {
+                                    com.wztwzt.ae2_qof.wildport.network.WildcardNetwork.CHANNEL.sendToServer(
+                                        new com.wztwzt.ae2_qof.wildport.network.MessageReopenWildGui());
+                                } catch (Throwable t2) {
+                                    com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 请求重开 Wild 界面失败（去重页）", t2);
+                                }
                             }));
             } catch (Throwable t) {
                 com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 打开文本输入对话框失败（去重页）", t);
@@ -1138,6 +1145,13 @@ public final class WildcardPatternWindow {
                                 setter.accept(v);
                                 field.setText(v);
                                 field.markForUpdate();
+                                // 3.22.0-fix53：原版对话框会把 Wild 窗口顶掉 ⇒ 确认后请服务端重开界面
+                                try {
+                                    com.wztwzt.ae2_qof.wildport.network.WildcardNetwork.CHANNEL.sendToServer(
+                                        new com.wztwzt.ae2_qof.wildport.network.MessageReopenWildGui());
+                                } catch (Throwable t2) {
+                                    com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 请求重开 Wild 界面失败", t2);
+                                }
                             }));
             } catch (Throwable t) {
                 com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 打开文本输入对话框失败", t);
