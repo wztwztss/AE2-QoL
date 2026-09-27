@@ -52,6 +52,9 @@ dependencies {
     compileOnly(project.files("libs/sciencenotleisure-0.2.7-pre3-dev-290.jar"))
     compileOnly(project.files("libs/gregtech-5.09.54.133.jar"))
     compileOnly(project.files("libs/modularui2-2.3.88-1.7.10.jar"))
+    // 3.24.x：GTNH-MUI（com.gtnewhorizons.modularui）。整窗移植 WildcardPatternforGTNH 的界面需要它（对方也是
+    // compileOnly + runtimeOnlyNonPublishable 这么声明的）。仅编译期需要，运行期由实例的 modularui-1.3.4.jar 提供。
+    compileOnly(project.files("libs/modularui-1.3.4.jar"))
     compileOnly(project.files("libs/programmablehatches-0.2.0p24.jar"))
     compileOnly(project.files("libs/ae_wireless_nexus-1.0.2.jar"))
     // StructureLib（GT 依赖，万能维护仓需要 IAlignment 接口）
