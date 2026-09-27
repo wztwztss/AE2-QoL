@@ -4,9 +4,32 @@
 
 An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
-**Author: wztwzt · Current source version: 3.38.0 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.40.0 · Reference pack: GTNH 2.9.0-beta-3**
 
 This repository is for personal archival and is not currently offered for distribution. See [CREDITS.md](CREDITS.md) for attribution and licensing records. Feature descriptions are not a claim that every integration has passed in-game testing.
+
+## What's new in 3.40.0 (every expanded pattern produced the same iron plate)
+
+- **The diagnostics hit it in one reproduction**: after adding a line that prints the number of **distinct outputs**
+  plus a read-back of AE2's own crafting table, one run showed that **all 396 expanded patterns on all three
+  machines output the same iron plate** (`输出种类=1`), and AE2 did index them — so the problem was our data,
+  not AE2.
+- **The culprit is one wrong comparison** in `buildConcretePattern`: the output slot was replaced only when
+  `templateOutputMaterial == candidateMaterial`, but the template output's material is always `Iron`, so only the
+  iron candidate was rewritten and **every other pattern kept the template's iron plate**. That is why all
+  ingot→plate recipes collapsed into one, and why the GT hatch "accepted the order but never crafted" (AE planned
+  per material while the machine received only iron plates).
+- **Fix**: the slot is now identified by "one of its ore-dictionary names starts with this rule's output prefix"
+  (`plate` matches `plateIron`/`plateAnyIron`); only the first match is replaced, byproducts stay as templated,
+  and a miss logs a rate-limited WARN instead of failing silently.
+- The diagnostics stay (distinct-output count + AE crafting-table read-back) but are computed only when the
+  rate-limited log actually fires.
+
+## What's new in 3.39.0-diag (diagnostic build: distinct outputs + AE crafting-table read-back)
+
+- **Logs only, no behaviour change**: each registration prints the number of **distinct outputs** and the first
+  three samples, then reads AE2's own crafting table back on the next tick (entry count, whether sampled outputs
+  are indexed, and the medium class). These two lines are what pinpointed the real cause in the next release.
 
 ## What's new in 3.38.0 (never cancel the original method — fixes "both wildcard mods see only one pattern")
 

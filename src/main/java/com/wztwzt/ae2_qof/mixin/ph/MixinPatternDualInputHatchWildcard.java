@@ -56,6 +56,10 @@ public abstract class MixinPatternDualInputHatchWildcard {
     @org.spongepowered.asm.mixin.Shadow
     public abstract boolean isActive();
 
+    /** 3.40.0：注册/诊断日志限频（初值 0，别用 Long.MIN_VALUE —— now-last 会溢出成负数）。 */
+    @org.spongepowered.asm.mixin.Unique
+    private long ae2qol$lastRegisterLogTick = 0L;
+
     @Inject(method = "provideCrafting", at = @At("RETURN"), remap = false)
     private void ae2qol$registerWildcardExpansions(ICraftingProviderHelper craftingTracker, CallbackInfo ci) {
         try {
@@ -119,16 +123,20 @@ public abstract class MixinPatternDualInputHatchWildcard {
                 }
             }
             if (wildcardSlots > 0) {
-                // 3.39.0-diag：只加日志 —— 注册后回读 AE2 合成表（判断"数据不对"还是"AE 没收录"）
-                com.wztwzt.ae2_qof.wildcard.SmartWildcardDiag
-                    .scheduleAeReadBack((ICraftingProvider) (Object) this, allDetails, "PH 通配样板");
-                MyMod.LOG.info(
-                    "[AE2QoL] PH 通配样板注册（只追加，未 cancel）：通配槽={} 注册 details={} 截断={} 上限={} {}",
-                    wildcardSlots,
-                    registered,
-                    truncated,
-                    Config.smartWildcardExpandCap,
-                    com.wztwzt.ae2_qof.wildcard.SmartWildcardDiag.describe(allDetails, 3));
+                // 3.39.0-diag（3.40.0 起只在限频日志触发时才做）：注册后回读 AE2 合成表 + 输出种类数
+                long now = System.currentTimeMillis();
+                if (now - this.ae2qol$lastRegisterLogTick > 15000L) {
+                    this.ae2qol$lastRegisterLogTick = now;
+                    com.wztwzt.ae2_qof.wildcard.SmartWildcardDiag
+                        .scheduleAeReadBack((ICraftingProvider) (Object) this, allDetails, "PH 通配样板");
+                    MyMod.LOG.info(
+                        "[AE2QoL] PH 通配样板注册（只追加，未 cancel）：通配槽={} 注册 details={} 截断={} 上限={} {}",
+                        wildcardSlots,
+                        registered,
+                        truncated,
+                        Config.smartWildcardExpandCap,
+                        com.wztwzt.ae2_qof.wildcard.SmartWildcardDiag.describe(allDetails, 3));
+                }
             }
         } catch (Throwable t) {
             // 不静默、也不 cancel：本轮跳过，原版样板照常工作

@@ -169,13 +169,13 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard {
                     registered++;
                 }
             }
-            // 3.39.0-diag：只加日志 —— 注册后回读 AE2 合成表，判断"数据不对"还是"AE 没收录"
-            com.wztwzt.ae2_qof.wildcard.SmartWildcardDiag
-                .scheduleAeReadBack((ICraftingProvider) (Object) this, allDetails, "GT 通配样板");
+            // 3.39.0-diag（3.40.0 起只在限频日志触发时才做，避免每次网格重建都遍历几百条 details）
             long now = System.currentTimeMillis();
             // 3.38.0：初值用 0（旧的 Long.MIN_VALUE 会让 now-last 溢出成负数 ⇒ 这条日志**从来没打出来过**）
             if (now - this.ae2qol$lastRegisterLogTick > 15000L) {
                 this.ae2qol$lastRegisterLogTick = now;
+                com.wztwzt.ae2_qof.wildcard.SmartWildcardDiag
+                    .scheduleAeReadBack((ICraftingProvider) (Object) this, allDetails, "GT 通配样板");
                 MyMod.LOG.info(
                     "[AE2QoL] GT 通配样板注册（只追加拿，未 cancel）：通配槽={} 注册 details={} 本机含原版样板={} 映射总数={} 上限={} {}",
                     wildcardSlots.size(),

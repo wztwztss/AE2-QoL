@@ -264,8 +264,8 @@ public final class SmartWildcardExpander {
             List<String> tokens = candidateTokens(material, inputPrefix, outputPrefix, inStack, outStack);
             if (!state.acceptsCandidate(tokens)) continue;
 
-            ItemStack concrete = buildConcretePattern(wildcard, templateIn, templateOut, state, material, inStack,
-                outStack);
+            ItemStack concrete = buildConcretePattern(wildcard, templateIn, templateOut, state, material, outputPrefix,
+                inStack, outStack);
             if (concrete != null) out.add(concrete);
         }
         return new Result(out, materials.size(), skipped, truncated, null);
@@ -276,7 +276,7 @@ public final class SmartWildcardExpander {
      * 关键点：**剥掉本模组规则子树**，否则宿主重建索引时会再次展开（无限放大）。
      */
     private static ItemStack buildConcretePattern(ItemStack wildcard, NBTTagList templateIn, NBTTagList templateOut,
-        SmartWildcardState state, String material, ItemStack inStack, ItemStack outStack) {
+        SmartWildcardState state, String material, String outputPrefix, ItemStack inStack, ItemStack outStack) {
         try {
             ItemStack concrete = wildcard.copy();
             concrete.stackSize = 1;
@@ -306,22 +306,36 @@ public final class SmartWildcardExpander {
 
             if (outStack != null) {
                 NBTTagList newOut = new NBTTagList();
+                boolean replaced = false;
                 for (int i = 0; i < templateOut.tagCount(); i++) {
                     NBTTagCompound slot = (NBTTagCompound) templateOut.getCompoundTagAt(i)
                         .copy();
                     ItemStack stack = ItemStack.loadItemStackFromNBT(slot);
                     if (stack == null) continue;
-                    // 只替换“与模板材料同名”的那个输出槽，其余输出（副产物）原样保留
+                    // 3.40.0 **修正（致命一行）**：只替换"矿辞前缀 == 本规则输出前缀（如 plate）"的那一个输出槽。
+                    // 旧实现写的是 `info.material.equals(material)` —— 拿**候选材料**去比**模板输出的材料名**，
+                    // 而模板输出的材料名恒为模板自己那个（例如 Iron）⇒ **只有候选材料恰好是 Iron 时才替换**，
+                    // 其余几百张具体样板全部原样保留模板输出（铁板）。
+                    // 诊断实证（3.39.0-diag）：三族一律 `输出种类=1 样本=[铁板, 铁板, 铁板]`，
+                    // 于是 AE 里永远只有铁板可合成；GT 那台"能下单但不合成"也是同一根因
+                    //（AE 计划里的材料与真正推入机器的材料对不上）。
                     OrePrefixInfo info = oreInfo(stack);
-                    if (info != null && info.material.equals(material)) {
+                    if (!replaced && outputPrefix != null
+                        && !outputPrefix.isEmpty()
+                        && matchesOutputPrefix(stack, outputPrefix)) {
                         stack = outStack.copy();
                         stack.stackSize = (int) Math.max(1L, Math.min(Integer.MAX_VALUE, readAmount(slot)));
+                        replaced = true;
                     }
                     NBTTagCompound slotTag = new NBTTagCompound();
                     stack.writeToNBT(slotTag);
                     slotTag.setInteger("Count", stack.stackSize);
                     slotTag.setLong("Cnt", stack.stackSize);
                     newOut.appendTag(slotTag);
+                }
+                if (!replaced) {
+                    // 不许静默：替换槽没命中时必须能看出来（每张样板只记一次）
+                    logOutputSlotMissOnce(material, outputPrefix, templateOut);
                 }
                 if (newOut.tagCount() > 0) tag.setTag("out", newOut);
             }
@@ -332,6 +346,57 @@ public final class SmartWildcardExpander {
         } catch (Throwable t) {
             MyMod.LOG.warn("[AE2QoL] 智能通配样板实例化失败：material=" + material, t);
             return null;
+        }
+    }
+
+    /**
+     * 该输出槽是否"随材料变化"：它的某个矿辞名以本规则的输出前缀开头（例如前缀 {@code plate} 命中
+     * {@code plateIron} / {@code plateAnyIron}）。
+     *
+     * <p>为什么不用 {@link #oreInfo} 的单次解析：GT 板材往往同时注册 {@code plateIron} 与
+     * {@code plateAnyIron} 两个矿辞名，单次解析取到哪个取决于注册顺序 ⇒ 前缀可能被算成 {@code plateAny}
+     * 而与规则里的 {@code plate} 对不上（3.40.0 之前的判据更是彻底错：拿候选材料名去比模板输出的材料名）。
+     */
+    private static boolean matchesOutputPrefix(ItemStack stack, String outputPrefix) {
+        if (stack == null || stack.getItem() == null || outputPrefix == null || outputPrefix.isEmpty()) return false;
+        try {
+            int[] ids = OreDictionary.getOreIDs(stack);
+            if (ids != null) {
+                for (int id : ids) {
+                    String ore = OreDictionary.getOreName(id);
+                    if (ore == null || ore.length() <= outputPrefix.length()) continue;
+                    if (ore.regionMatches(true, 0, outputPrefix, 0, outputPrefix.length())) return true;
+                }
+            }
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 判断输出槽前缀失败（该槽按不替换处理）", t);
+        }
+        return false;
+    }
+
+    /** 替换槽未命中时的诊断（每张样板只记一次，避免热路径刷屏）。 */
+    private static final Set<String> OUTPUT_MISS_LOGGED = Collections
+        .synchronizedSet(new LinkedHashSet<String>());
+
+    private static void logOutputSlotMissOnce(String material, String outputPrefix, NBTTagList templateOut) {
+        try {
+            String key = outputPrefix + "|" + material;
+            if (!OUTPUT_MISS_LOGGED.add(key)) return;
+            if (OUTPUT_MISS_LOGGED.size() > 64) OUTPUT_MISS_LOGGED.clear();
+            StringBuilder slots = new StringBuilder();
+            for (int i = 0; i < templateOut.tagCount(); i++) {
+                ItemStack stack = ItemStack.loadItemStackFromNBT(templateOut.getCompoundTagAt(i));
+                OrePrefixInfo info = oreInfo(stack);
+                if (slots.length() > 0) slots.append(", ");
+                slots.append(info == null ? "?" : info.prefix + "/" + info.material);
+            }
+            MyMod.LOG.warn(
+                "[AE2QoL] 具体样板的输出槽没找到可替换项：material={} outputPrefix='{}' 模板输出槽=[{}] ⇒ 该张仍沿用模板输出",
+                material,
+                outputPrefix,
+                slots);
+        } catch (Throwable t) {
+            // 诊断本身失败就不刷屏了
         }
     }
 
