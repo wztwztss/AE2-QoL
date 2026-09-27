@@ -35,11 +35,20 @@ public class SmartPatternGenPacket implements IMessage {
     private String requireOutputOre = "";
     private String requireNonConsumed = "";
     private int maxPatterns = 512;
+    /** 电压等级上限（0=ULV…；-1 = 不限）。 */
+    private int maxTier = -1;
 
     public SmartPatternGenPacket() {}
 
     public SmartPatternGenPacket(String mapKeyword, String blacklistInput, String blacklistOutput,
         String requireInputOre, String requireOutputOre, String requireNonConsumed, int maxPatterns) {
+        this(mapKeyword, blacklistInput, blacklistOutput, requireInputOre, requireOutputOre, requireNonConsumed,
+            maxPatterns, -1);
+    }
+
+    public SmartPatternGenPacket(String mapKeyword, String blacklistInput, String blacklistOutput,
+        String requireInputOre, String requireOutputOre, String requireNonConsumed, int maxPatterns, int maxTier) {
+        this.maxTier = maxTier;
         this.mapKeyword = safe(mapKeyword);
         this.blacklistInput = safe(blacklistInput);
         this.blacklistOutput = safe(blacklistOutput);
@@ -62,6 +71,7 @@ public class SmartPatternGenPacket implements IMessage {
         ByteBufUtils.writeUTF8String(buf, requireOutputOre);
         ByteBufUtils.writeUTF8String(buf, requireNonConsumed);
         buf.writeInt(maxPatterns);
+        buf.writeInt(maxTier);
     }
 
     @Override
@@ -74,6 +84,7 @@ public class SmartPatternGenPacket implements IMessage {
             requireOutputOre = ByteBufUtils.readUTF8String(buf);
             requireNonConsumed = ByteBufUtils.readUTF8String(buf);
             maxPatterns = buf.readInt();
+            maxTier = buf.readInt();
         } catch (Throwable t) {
             MyMod.LOG.warn("[AE2QoL] 样板生成请求包解析失败（已忽略）", t);
         }
@@ -93,6 +104,7 @@ public class SmartPatternGenPacket implements IMessage {
                     filters.requireInputOre = message.requireInputOre;
                     filters.requireOutputOre = message.requireOutputOre;
                     filters.requireNonConsumed = message.requireNonConsumed;
+                    filters.maxTier = message.maxTier;
 
                     SmartPatternGenerator.Result result = SmartPatternGenerator
                         .generate(message.mapKeyword, filters, message.maxPatterns);

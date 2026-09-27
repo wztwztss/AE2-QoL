@@ -99,6 +99,8 @@ public final class SmartPatternGenerator {
         public String requireOutputOre = "";
         /** 必须包含的 NC（不消耗）物品匹配串 —— 对应 GTRecipe 里 stackSize=0 的输入。 */
         public String requireNonConsumed = "";
+        /** 电压等级上限（0=ULV, 1=LV, 2=MV, 3=HV, 4=EV, 5=IV …；-1 = 不限制）。 */
+        public int maxTier = -1;
     }
 
     private SmartPatternGenerator() {}
@@ -221,6 +223,11 @@ public final class SmartPatternGenerator {
             if (!f.requireInputOre.isEmpty() && !anyMatch(recipe.mInputs, f.requireInputOre)) return false;
             if (!f.requireOutputOre.isEmpty() && !anyMatch(recipe.mOutputs, f.requireOutputOre)) return false;
             if (!f.requireNonConsumed.isEmpty() && !anyNonConsumed(recipe.mInputs, f.requireNonConsumed)) return false;
+            // 电压等级过滤：GTRecipe.mEUt 是每 tick EU；用 GTUtility.getTier 换算成等级再比较
+            if (f.maxTier >= 0) {
+                int tier = gregtech.api.util.GTUtility.getTier(recipe.mEUt);
+                if (tier > f.maxTier) return false;
+            }
             return true;
         } catch (Throwable t) {
             MyMod.LOG.warn("[AE2QoL] 生成器过滤判定异常（该配方按不通过处理）", t);

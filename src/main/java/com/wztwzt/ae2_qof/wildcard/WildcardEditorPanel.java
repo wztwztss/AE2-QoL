@@ -204,6 +204,33 @@ public final class WildcardEditorPanel {
             .child(new TextWidget<>(IKey.str("§7现有 " + blacklist.size() + " 项")).size(70, 12));
         column.child(blackRow);
 
+        // ===== 黑名单现有条目（逐行删除）=====
+        // 按**内容**删除而不是按下标：面板不会就地刷新，用下标会在删错行时误删
+        int shownBlack = 0;
+        for (String token : new java.util.ArrayList<>(blacklist)) {
+            if (shownBlack >= 6) break;
+            final String entry = token;
+            Flow entryLine = Flow.row()
+                .childPadding(2);
+            entryLine.child(new TextWidget<>(IKey.str("§7- §c" + entry)).size(230, 10))
+                .child(new ButtonWidget<>().size(28, 10)
+                    .overlay(IKey.str("§c删"))
+                    .tooltip(t -> t.addLine(IKey.str("从黑名单移除「" + entry + "」（保存后生效）")))
+                    .onMouseTapped(ctx -> {
+                        if (blacklist.remove(entry)) {
+                            MyMod.LOG.info("[AE2QoL] 黑名单移除：{}（保存后生效）", entry);
+                        }
+                        return true;
+                    }));
+            column.child(entryLine);
+            shownBlack++;
+        }
+        if (blacklist.size() > shownBlack) {
+            column.child(
+                new TextWidget<>(IKey.str("§8… 另有 " + (blacklist.size() - shownBlack) + " 项（保存后重新打开可见）"))
+                    .size(320, 10));
+        }
+
         // ===== 覆盖预览 =====
         // 构建期按"当前已保存的规则"展开一次，列出前若干条候选，每行一个「排除」（加入黑名单，保存后生效）。
         // 注意：MUI2 要求服务端与客户端构建出**相同的控件树**，所以这里两侧都执行展开

@@ -44,6 +44,10 @@ public final class GeneratorPanel {
         TextFieldWidget capField = new TextFieldWidget().setMaxLength(6)
             .size(50, 12);
         capField.setText("512");
+        // 电压等级上限：0=ULV、1=LV、2=MV、3=HV、4=EV…；留空 = 不限
+        TextFieldWidget tierField = new TextFieldWidget().setMaxLength(2)
+            .size(30, 12);
+        tierField.setText("");
 
         Flow column = Flow.column()
             .childPadding(3)
@@ -59,8 +63,10 @@ public final class GeneratorPanel {
         column.child(row("§7NC 物品", ncItem));
         Flow capRow = Flow.row()
             .childPadding(3);
-        capRow.child(new TextWidget<>(IKey.str("§7数量上限")).size(60, 12))
+        capRow.child(new TextWidget<>(IKey.str("§7数量上限")).size(56, 12))
             .child(capField)
+            .child(new TextWidget<>(IKey.str("§7电压等级")).size(56, 12))
+            .child(tierField)
             .child(new ButtonWidget<>().size(80, 14)
                 .overlay(IKey.str("§a生成样板"))
                 .tooltip(t -> {
@@ -89,7 +95,8 @@ public final class GeneratorPanel {
                                 inOre.getText(),
                                 outOre.getText(),
                                 ncItem.getText(),
-                                cap));
+                                cap,
+                                parseTier(tierField.getText())));
                         MyMod.LOG.info(
                             "[AE2QoL] 已发送样板生成请求：map={} cap={} inBlack={} outBlack={} inOre={} outOre={} nc={}",
                             mapField.getText(),
@@ -112,8 +119,24 @@ public final class GeneratorPanel {
         return panel;
     }
 
-    private static Flow row(String label, TextFieldWidget field) {
-        Flow flow = Flow.row()
+    /** 解析电压等级输入：空串 = 不限（-1）；非法或越界同样按不限处理并记日志（不静默）。 */
+    private static int parseTier(String text) {
+        try {
+            String s = text == null ? "" : text.trim();
+            if (s.isEmpty()) return -1;
+            int v = Integer.parseInt(s);
+            if (v < 0 || v > 14) {
+                MyMod.LOG.warn("[AE2QoL] 电压等级应在 0~14（0=ULV，1=LV…），输入 {} 已按不限处理", s);
+                return -1;
+            }
+            return v;
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 电压等级输入非法，已按不限处理：{}", text);
+            return -1;
+        }
+    }
+
+    private static Flow row(String label, TextFieldWidget field) {        Flow flow = Flow.row()
             .childPadding(3);
         flow.child(new TextWidget<>(IKey.str(label)).size(60, 12))
             .child(field);
