@@ -169,13 +169,17 @@ public class ItemSmartWildcardPattern extends ItemEncodedPattern
         // 3.24.x：入口切到搬运进来的 Wild 界面（GTNH-MUI）。打开前先把我们的状态推进 Wild 的键，
         // 这样界面一打开就是已配置的内容；它保存时再由 MessageUpdateWildcardConfig 的处理器拉回我们的模型。
         try {
-            if (!world.isRemote && player != null) {
+            if (player != null) {
+                // 自检发现的坑：**两侧都要推**。只推服务端的话，客户端手上的还是旧 NBT，
+                // 新界面打开就会是空的（服务端改 NBT 不会自动同步给客户端那张样板）。
                 SmartWildcardState state = SmartWildcardState.of(stack);
                 if (state != null) {
                     com.wztwzt.ae2_qof.wildport.bridge.WildcardBridge.pushToWild(stack, state);
                 } else {
                     MyMod.LOG.info("[AE2QoL] 通配样板尚未配置（无我们的 NBT），Wild 界面将以空配置打开");
                 }
+            }
+            if (!world.isRemote && player != null) {
                 player.openGui(
                     MyMod.instance,
                     com.wztwzt.ae2_qof.wildport.WildportIds.GUI_WILDCARD_PATTERN,
