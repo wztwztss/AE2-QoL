@@ -15,7 +15,8 @@ pattern buffer accepts them.
 ## Usage (three steps)
 
 1. Obtain the "Pattern Generator" item (crafted from one AE2 Blank Pattern; also in the AE2 QoL creative tab).
-2. **Right-click** it and fill in:
+2. **Right-click** it — the window is the one **ported wholesale from AE2PatternGen** (recipe settings / recipe picker /
+   filters / exclusion rules / replacement rules / build cache / preview count / generate, one field per row below) — and fill in:
    - **Recipe map**: the RecipeMap id or a fragment of it (`rolling` matches `gt.recipe.rolling`; if a fragment
      matches several maps the first is used **and the rest are listed in the log** — never a silent pick);
    - **Filters** (all "empty = disabled"; `*` and `?` supported; matched against **display names and ore names**):
