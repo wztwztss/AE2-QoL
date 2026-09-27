@@ -620,3 +620,57 @@ ae2patterngen.msg.pattern.insufficient_blank_pattern=[AE2PatternGen] 生成失�
 
 # 消息 - 通用
 ae2patterngen.msg.common.unknown_item=未知物品
+
+# ==== 3.22.0-fix45：从参考模组（WildcardPattern / AE2PatternGen）搬入的语言条目 ====
+# 背景：我们的通配窗口/生成器界面是从这两个模组搬过来的，界面文案一直依赖它们的 lang；
+# 用户删除这两个模组后界面变成生键名 ⇒ 现在把这些条目并入本模组，从此不再依赖它们。
+gui.wildcardpattern.actions=操作
+gui.wildcardpattern.back=返回
+gui.wildcardpattern.clear=清空
+gui.wildcardpattern.clear_short=清
+gui.wildcardpattern.col_amount=数量
+gui.wildcardpattern.col_input=输入
+gui.wildcardpattern.col_mode=模式
+gui.wildcardpattern.col_output=输出
+gui.wildcardpattern.dedupe=修改所属模组
+gui.wildcardpattern.dedupe_cycle=切换
+gui.wildcardpattern.dedupe_hint=遇到同矿辞的多个物品时，默认优先 GT 物品；可搜索并切换保留项
+gui.wildcardpattern.dedupe_input=切换输入
+gui.wildcardpattern.dedupe_output=切换输出
+gui.wildcardpattern.dedupe_page=样板去重
+gui.wildcardpattern.divide_short=/2
+gui.wildcardpattern.drag_hint=可从 NEI 拖入，或输入矿辞如 ingot*，名称如 *锭
+gui.wildcardpattern.duplicate_output=重复输出
+gui.wildcardpattern.exclude_current=当前排除规则
+gui.wildcardpattern.exclude_empty=暂无排除规则
+gui.wildcardpattern.exclude_hint=在这里编辑通配排除规则；总排除和单条规则排除都使用相同的通配匹配逻辑
+gui.wildcardpattern.exclude_page=排除规则
+gui.wildcardpattern.exclude_short=排除
+gui.wildcardpattern.exclude_tip1=可使用逗号、分号或空格分隔多个规则
+gui.wildcardpattern.exclude_tip2=示例：iron*  *dust  wrought?
+gui.wildcardpattern.filter_short=筛
+gui.wildcardpattern.global_exclude=总排除
+gui.wildcardpattern.include_short=允许
+gui.wildcardpattern.input_toggle=输入：%s
+gui.wildcardpattern.mode_name=名称
+gui.wildcardpattern.mode_oredict=矿辞
+gui.wildcardpattern.multiply_short=x2
+gui.wildcardpattern.off=关
+gui.wildcardpattern.on=开
+gui.wildcardpattern.output_toggle=输出：%s
+gui.wildcardpattern.page=%s / %s
+gui.wildcardpattern.preview=预览：%s 个配方
+gui.wildcardpattern.preview_all=全部预览
+gui.wildcardpattern.preview_button=预
+gui.wildcardpattern.preview_empty=当前没有可预览的样板
+gui.wildcardpattern.preview_hint=每行规则独立预览；可搜索、翻页，并进入对应的排除规则页面
+gui.wildcardpattern.preview_in=输入
+gui.wildcardpattern.preview_out=输出
+gui.wildcardpattern.preview_page=通配样板预览
+gui.wildcardpattern.preview_rule=第 %s 行规则预览
+gui.wildcardpattern.preview_short=预
+gui.wildcardpattern.rule_exclude=规则%s排除
+gui.wildcardpattern.save=保存
+gui.wildcardpattern.search=搜索
+gui.wildcardpattern.tab_pairs=规则列表
+gui.wildcardpattern.title=通配样板配置

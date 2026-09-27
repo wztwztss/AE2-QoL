@@ -619,3 +619,57 @@ ae2patterngen.msg.pattern.insufficient_blank_pattern=[AE2PatternGen] Generation 
 
 # Message - Common
 ae2patterngen.msg.common.unknown_item=Unknown Item
+
+# ==== 3.22.0-fix45：从参考模组（WildcardPattern / AE2PatternGen）搬入的语言条目 ====
+# 背景：我们的通配窗口/生成器界面是从这两个模组搬过来的，界面文案一直依赖它们的 lang；
+# 用户删除这两个模组后界面变成生键名 ⇒ 现在把这些条目并入本模组，从此不再依赖它们。
+gui.wildcardpattern.actions=Actions
+gui.wildcardpattern.back=Back
+gui.wildcardpattern.clear=Clear
+gui.wildcardpattern.clear_short=C
+gui.wildcardpattern.col_amount=Amt
+gui.wildcardpattern.col_input=Input
+gui.wildcardpattern.col_mode=Mode
+gui.wildcardpattern.col_output=Output
+gui.wildcardpattern.dedupe=Change Mod
+gui.wildcardpattern.dedupe_cycle=Cycle
+gui.wildcardpattern.dedupe_hint=For duplicated ore tags, GT items are preferred by default; you can search and switch
+gui.wildcardpattern.dedupe_input=Input
+gui.wildcardpattern.dedupe_output=Output
+gui.wildcardpattern.dedupe_page=Dedupe Choices
+gui.wildcardpattern.divide_short=/2
+gui.wildcardpattern.drag_hint=Drag from NEI, or type ore dict like ingot* and names like *Ingot
+gui.wildcardpattern.duplicate_output=Duplicate output
+gui.wildcardpattern.exclude_current=Current exclude rules
+gui.wildcardpattern.exclude_empty=No exclude rules
+gui.wildcardpattern.exclude_hint=Edit wildcard exclude rules here; global and per-rule exclusions both use wildcard matching
+gui.wildcardpattern.exclude_page=Exclude Rules
+gui.wildcardpattern.exclude_short=Block
+gui.wildcardpattern.exclude_tip1=Use separators like comma, semicolon, or spaces
+gui.wildcardpattern.exclude_tip2=Examples: iron*  *dust  wrought?
+gui.wildcardpattern.filter_short=F
+gui.wildcardpattern.global_exclude=Global Block
+gui.wildcardpattern.include_short=Allow
+gui.wildcardpattern.input_toggle=In: %s
+gui.wildcardpattern.mode_name=Name
+gui.wildcardpattern.mode_oredict=OreDict
+gui.wildcardpattern.multiply_short=x2
+gui.wildcardpattern.off=OFF
+gui.wildcardpattern.on=ON
+gui.wildcardpattern.output_toggle=Out: %s
+gui.wildcardpattern.page=%s / %s
+gui.wildcardpattern.preview=Preview: %s recipes
+gui.wildcardpattern.preview_all=Preview All
+gui.wildcardpattern.preview_button=Preview
+gui.wildcardpattern.preview_empty=No preview patterns available
+gui.wildcardpattern.preview_hint=Each row previews independently; search, page, and open its exclude rules
+gui.wildcardpattern.preview_in=IN
+gui.wildcardpattern.preview_out=OUT
+gui.wildcardpattern.preview_page=Wildcard Pattern Preview
+gui.wildcardpattern.preview_rule=Rule %s Preview
+gui.wildcardpattern.preview_short=P
+gui.wildcardpattern.rule_exclude=R%s Block
+gui.wildcardpattern.save=Save
+gui.wildcardpattern.search=Search
+gui.wildcardpattern.tab_pairs=Rules
+gui.wildcardpattern.title=Wildcard Pattern

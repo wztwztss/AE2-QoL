@@ -34,6 +34,35 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-09-27 (49) - **3.22.0-fix45：把两个参考模组的 lang 条目并入本模组（删掉它们后界面不再出现生键名）**
+
+### 一、问题（用户实测）
+用户删除了参考模组 `WildcardPatternforGTNH` 与 `AE2PatternGen` 之后，通配窗口变成一片**生键名**
+（`gui.wildcardpattern.title`、`...drag_hint`、列名 `col_*`、按钮 `clear/dedupe/preview_all/save` …）。
+
+### 二、根因（历史遗留债，如实说明）
+通配窗口（`wildport/`，约 25 文件）与批量生成器界面（`apgport/`）是**从这两个模组整窗搬过来的**，
+**界面文案一直调用它们的 lang 键**（`gui.wildcardpattern.*` / `gui.ae2patterngen.*`）；搬运时**没有把语言条目
+一起搬**，只在本模组 lang 里补了 16 条自用条目 ⇒ 一旦原版模组被删，其余键就失去来源。
+
+### 三、修法
+1. 从参考源码（`reference_src_290b3/WildcardPatternforGTNH-1.7.10-1.1.0/.../assets/wildcardpattern/lang/{zh_CN,en_US}.lang`
+   与 `AE2PatternGen-1.5/.../assets/ae2patterngen/lang/{zh_CN,en_US}.lang`）**全量提取**
+   `gui.wildcardpattern.*` / `gui.ae2patterngen.*` / `wildcardpattern.*` / `ae2patterngen.*` 条目，
+   **只补本模组 lang 里尚不存在的**（不覆盖我们已有的定制文案）⇒ 每种语言各并入 **50 条**；
+2. 完整性校验：代码里的**字面键 56 个**现已**全部**有条目；并核对界面文案**没有动态拼接键**
+   （无 `"gui.wildcardpattern." + x` 之类）；
+3. 从此本模组界面**不再依赖**那两个模组存在（它们仍可作为独立模组安装，互不影响）。
+
+### 四、验证与待测
+- 构建 `BUILD SUCCESSFUL`（无管道取码 `EXIT=0`）；产物 `build/libs/AE2-QoL-3.22.0-fix45.jar`
+  （1,787,313 字节，SHA256 `207949D8AAFF6EF2B689896B5A45875F2C86A6D3588E1ADE90BF5353C204CE82`）。
+- **待用户实测**（在**已删除**那两个模组的环境下）：① 右键通配样板 ⇒ 标题/列名/按钮/提示**全部中文**，
+  不再出现 `gui.wildcardpattern.*` 生键名；② 电路页 / 不消耗页 / 预览页 / 去重页 / 排除页文案正常；
+  ③ 批量生成器界面文案正常；④ 若仍有生键名，把那行文字发我，按同一手法再补。
+
+---
+
 ## 工作区决策记录 2026-09-27 (48) - **3.20.0-fix44：批量样板生成器 —— 机器名片段 + Tab 循环候选 + 机器↔编码对照表**
 
 ### 一、需求（用户）
