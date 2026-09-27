@@ -391,6 +391,50 @@ public class GuiPatternGen {
         builder.widget(btnGenerate);
         builder.widget(btnGenerateText);
 
+        // 3.22.0-fix47：[对照表] 按钮 —— 打开"机器 ↔ 编码"参考表（中文名|英文名|关键字，每页 10 行，
+        // 点整行 = 填入并返回）。独立 GuiScreen 会关掉本窗口，所以选行后由服务端**保存字段并重开界面**
+        // （PacketSaveFields 的 reopenGui 标志），这样既落盘又能立刻看到填入结果。
+        {
+            int btnTBX = btnGBX + btnW + btnGap;
+            ButtonWidget btnTable = new ButtonWidget();
+            btnTable.setSynced(false, false);
+            btnTable.setPos(btnTBX, btnY);
+            btnTable.setSize(70, btnH);
+            btnTable.setBackground(com.gtnewhorizons.modularui.api.ModularUITextures.VANILLA_BUTTON_NORMAL);
+            TextWidget btnTableText = new TextWidget("对照表");
+            btnTableText.setPos(btnTBX + 18, btnY + 6);
+            btnTable.setOnClick((cd, w) -> {
+                try {
+                    net.minecraft.client.Minecraft.getMinecraft()
+                        .displayGuiScreen(
+                            new com.wztwzt.ae2_qof.client.gui.GuiRecipeMapTable(recipeMapId -> {
+                                try {
+                                    NetworkHandler.INSTANCE.sendToServer(
+                                        new PacketSaveFields(
+                                            recipeMapId,
+                                            tfOutputOre.getText(),
+                                            tfInputOre.getText(),
+                                            tfNCItem.getText(),
+                                            tfBlacklistIn.getText(),
+                                            tfBlacklistOut.getText(),
+                                            "",
+                                            currentTierIndex[0] - 1,
+                                            true));
+                                    com.wztwzt.ae2_qof.MyMod.LOG.info(
+                                        "[AE2QoL] 对照表已选：{}（已请求保存并重开生成器界面）",
+                                        recipeMapId);
+                                } catch (Throwable t) {
+                                    com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 对照表选行后保存失败", t);
+                                }
+                            }));
+                } catch (Throwable t) {
+                    com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 打开 RecipeMap 对照表失败", t);
+                }
+            });
+            builder.widget(btnTable);
+            builder.widget(btnTableText);
+        }
+
         buildContext.addCloseListener(saveFunction);
 
         return builder.build();

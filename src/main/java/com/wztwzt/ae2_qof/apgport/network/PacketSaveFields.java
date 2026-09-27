@@ -29,11 +29,18 @@ public class PacketSaveFields implements IMessage {
     private String blacklistOutput;
     private String replacements;
     private int targetTier;
+    /** 3.22.0-fix47：保存后是否**重新打开生成器界面**（对照表选行后靠它回到主页）。 */
+    private boolean reopenGui;
 
     public PacketSaveFields() {}
 
     public PacketSaveFields(String recipeMap, String outputOre, String inputOre, String ncItem, String blacklistInput,
         String blacklistOutput, String replacements, int targetTier) {
+        this(recipeMap, outputOre, inputOre, ncItem, blacklistInput, blacklistOutput, replacements, targetTier, false);
+    }
+
+    public PacketSaveFields(String recipeMap, String outputOre, String inputOre, String ncItem, String blacklistInput,
+        String blacklistOutput, String replacements, int targetTier, boolean reopenGui) {
         this.recipeMap = recipeMap;
         this.outputOre = outputOre;
         this.inputOre = inputOre;
@@ -42,6 +49,7 @@ public class PacketSaveFields implements IMessage {
         this.blacklistOutput = blacklistOutput;
         this.replacements = replacements;
         this.targetTier = targetTier;
+        this.reopenGui = reopenGui;
     }
 
     @Override
@@ -54,6 +62,7 @@ public class PacketSaveFields implements IMessage {
         blacklistOutput = ByteBufUtils.readUTF8String(buf);
         replacements = ByteBufUtils.readUTF8String(buf);
         targetTier = buf.readInt();
+        reopenGui = buf.readBoolean();
     }
 
     @Override
@@ -66,6 +75,7 @@ public class PacketSaveFields implements IMessage {
         ByteBufUtils.writeUTF8String(buf, blacklistOutput != null ? blacklistOutput : "");
         ByteBufUtils.writeUTF8String(buf, replacements != null ? replacements : "");
         buf.writeInt(targetTier);
+        buf.writeBoolean(reopenGui);
     }
 
     public static class Handler implements IMessageHandler<PacketSaveFields, IMessage> {
@@ -76,7 +86,11 @@ public class PacketSaveFields implements IMessage {
             if (player == null) return null;
             ItemStack held = player.getCurrentEquippedItem();
 
-            if (held != null && held.getItem() instanceof ItemPatternGenerator) {
+            // 3.22.0-fix47 **真 bug 修复**：这里原来只认移植过来的 ItemPatternGenerator，
+            // 而实际注册使用的是本模组自己的 generator/ItemSmartPatternGenerator（extends Item）
+            // ⇒ 判断恒为假、字段**从来没被保存过**（界面每次打开都是空的）。现在两者都认。
+            boolean ours = held != null && held.getItem() instanceof com.wztwzt.ae2_qof.generator.ItemSmartPatternGenerator;
+            if (held != null && (held.getItem() instanceof ItemPatternGenerator || ours)) {
                 ItemPatternGenerator.saveAllFields(
                     held,
                     message.recipeMap,
@@ -87,6 +101,28 @@ public class PacketSaveFields implements IMessage {
                     message.blacklistOutput,
                     message.replacements,
                     message.targetTier);
+                com.wztwzt.ae2_qof.MyMod.LOG.info(
+                    "[AE2QoL] 生成器字段已保存到手持物品：map='{}' tier={} 来源={}",
+                    message.recipeMap,
+                    message.targetTier,
+                    ours ? "本模组生成器物品" : "移植物品");
+            } else if (held != null) {
+                com.wztwzt.ae2_qof.MyMod.LOG.warn(
+                    "[AE2QoL] 拒绝保存生成器字段：手持物品不是生成器（{}）",
+                    held.getItem()
+                        .getClass()
+                        .getName());
+            }
+
+            // 3.22.0-fix47：对照表选行后由服务端重新打开生成器界面（独立 GuiScreen 关掉后要能回到主页）
+            if (message.reopenGui) {
+                player.openGui(
+                    com.wztwzt.ae2_qof.MyMod.instance,
+                    ItemPatternGenerator.GUI_ID,
+                    player.worldObj,
+                    0,
+                    0,
+                    0);
             }
 
             return null;
