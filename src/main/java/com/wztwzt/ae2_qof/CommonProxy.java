@@ -233,6 +233,16 @@ public class CommonProxy {
             com.wztwzt.ae2_qof.util.ModTextures.init();
         }
         NetworkRegistry.INSTANCE.registerGuiHandler(MyMod.instance, new MergedGuiHandler());
+        // 3.24.x：搬运进来的 Wild 界面（GTNH-MUI）—— 独立 GUI id（WildportIds）+ 独立网络通道（_wild，
+        // 避免与 ModNetwork 同名导致 NetworkRegistry 抛异常）。注册成功必须留一行日志（本项目铁则）。
+        try {
+            NetworkRegistry.INSTANCE
+                .registerGuiHandler(MyMod.instance, new com.wztwzt.ae2_qof.wildport.gui.WildcardGuiHandler());
+            com.wztwzt.ae2_qof.wildport.network.WildcardNetwork.init();
+            MyMod.LOG.info("[AE2QoL] Wild 界面（GTNH-MUI）已注册：GUI handler + WildcardNetwork 通道 _wild");
+        } catch (Throwable t) {
+            MyMod.LOG.error("[AE2QoL] Wild 界面注册失败（该界面将无法打开）", t);
+        }
         cpw.mods.fml.common.FMLCommonHandler.instance()
             .bus()
             .register(new WirelessBlockEventListener());
