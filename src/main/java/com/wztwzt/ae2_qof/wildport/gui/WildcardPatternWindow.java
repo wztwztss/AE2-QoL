@@ -46,6 +46,10 @@ public final class WildcardPatternWindow {
 
     private static final int GUI_WIDTH = 452;
     private static final int GUI_HEIGHT = 292;
+    // 3.33.0：用户要求在 Wild 窗口里直接配「内置电路」⇒ 底部加一条电路带（只加高窗口，不动上面的布局）。
+    private static final int CIRCUIT_BAND_Y = GUI_HEIGHT;
+    private static final int CIRCUIT_BAND_HEIGHT = 50;
+    private static final int GUI_TOTAL_HEIGHT = GUI_HEIGHT + CIRCUIT_BAND_HEIGHT;
     private static final int RULE_ROWS = 9;
     private static final int PREVIEW_LINES = 12;
     private static final int DEDUPE_LINES = 4;
@@ -73,16 +77,98 @@ public final class WildcardPatternWindow {
 
     public static ModularWindow createWindow(UIBuildContext buildContext, EntityPlayer player, int slot) {
         WindowState state = new WindowState(player, slot);
-        ModularWindow.Builder builder = ModularWindow.builder(GUI_WIDTH, GUI_HEIGHT);
+        ModularWindow.Builder builder = ModularWindow.builder(GUI_WIDTH, GUI_TOTAL_HEIGHT);
         builder.setBackground(ModularUITextures.VANILLA_BACKGROUND);
 
         addHeader(builder, state);
         addMainPage(builder, state);
+        // 3.33.0：底部电路带（用户要求：在这个窗口里就能配内置电路）
+        addCircuitBand(builder, state);
         addPreviewPage(builder, state);
         addExcludePage(builder, state);
         addDedupePage(builder, state);
 
         return builder.build();
+    }
+
+    /**
+     * 3.33.0：底部「内置电路」带（用户要求 Wild 窗口内可配电路 —— 这个窗口原本没有电路页）。
+     *
+     * <p>数据仍写进**我们自己的**子树（{@code SmartWildcardState.circuit}）：点一下改值后用既有的
+     * {@code SmartWildcardRulesPacket} 整包发回服务端（**不新增包、不新增通道**）；点击后聊天栏与日志都有回执。
+     * 「不消耗物品」仍在 Shift+右键的四页签编辑器里（那边有专门一页），这里不重复做。
+     */
+    private static void addCircuitBand(ModularWindow.Builder builder, WindowState state) {
+        int current = -1;
+        try {
+            ItemStack stack = state.player.inventory.getStackInSlot(state.slot);
+            com.wztwzt.ae2_qof.wildcard.SmartWildcardState ours = com.wztwzt.ae2_qof.wildcard.SmartWildcardState
+                .of(stack);
+            current = ours == null ? -1 : ours.circuit;
+        } catch (Throwable t) {
+            com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 电路带：读取当前电路失败（按未设置显示）", t);
+        }
+
+        TextWidget title = new TextWidget(
+            EnumChatFormatting.BLACK + "内置电路 Circuit = " + (current >= 1 ? String.valueOf(current) : "—"));
+        title.setPos(10, CIRCUIT_BAND_Y + 4);
+        title.setSize(GUI_WIDTH - 20, 10);
+        title.setScale(0.85f);
+        builder.widget(title);
+
+        for (int i = 1; i <= 24; i++) {
+            final int circuit = i;
+            int bx = 10 + ((i - 1) % 12) * 36;
+            int by = CIRCUIT_BAND_Y + 16 + ((i - 1) / 12) * 18;
+            ButtonWidget btn = new ButtonWidget();
+            btn.setPos(bx, by);
+            btn.setSize(33, 15);
+            btn.setBackground(ModularUITextures.VANILLA_BUTTON_NORMAL);
+            btn.setOnClick((cd, w) -> applyCircuit(state, circuit));
+            builder.widget(btn);
+            TextWidget num = new TextWidget(String.valueOf(i));
+            num.setPos(bx + 12, by + 4);
+            num.setScale(0.8f);
+            builder.widget(num);
+        }
+        ButtonWidget clear = new ButtonWidget();
+        clear.setPos(10 + 12 * 36 + 6, CIRCUIT_BAND_Y + 16);
+        clear.setSize(94, 15);
+        clear.setBackground(ModularUITextures.VANILLA_BUTTON_NORMAL);
+        clear.setOnClick((cd, w) -> applyCircuit(state, -1));
+        builder.widget(clear);
+        TextWidget clearLabel = new TextWidget("清除（继承）");
+        clearLabel.setPos(10 + 12 * 36 + 22, CIRCUIT_BAND_Y + 20);
+        clearLabel.setScale(0.8f);
+        builder.widget(clearLabel);
+    }
+
+    /** 把电路写进我们的子树并发回服务端（客户端本地改值 → 既有包整包发送）。 */
+    private static void applyCircuit(WindowState state, int circuit) {
+        try {
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getMinecraft();
+            ItemStack held = mc.thePlayer == null ? null : mc.thePlayer.inventory.getStackInSlot(state.slot);
+            if (held == null || held.getItem() != com.wztwzt.ae2_qof.CommonProxy.smartWildcardPattern) {
+                com.wztwzt.ae2_qof.MyMod.LOG
+                    .warn("[AE2QoL] 电路带：槽位 {} 里不是通配样板，未写入（item={}）", state.slot, held);
+                return;
+            }
+            com.wztwzt.ae2_qof.wildcard.SmartWildcardState s = com.wztwzt.ae2_qof.wildcard.SmartWildcardState
+                .of(held);
+            if (s == null) s = new com.wztwzt.ae2_qof.wildcard.SmartWildcardState();
+            s.circuit = circuit;
+            com.wztwzt.ae2_qof.network.ModNetwork.CHANNEL
+                .sendToServer(new com.wztwzt.ae2_qof.network.SmartWildcardRulesPacket(s));
+            com.wztwzt.ae2_qof.MyMod.LOG
+                .info("[AE2QoL] 电路带：已提交电路 {}（服务端写入后请关掉重开界面查看）", circuit);
+            if (mc.thePlayer != null) {
+                mc.thePlayer.addChatMessage(
+                    new net.minecraft.util.ChatComponentText(
+                        "\u00a7a[AE2QoL] \u5185\u7f6e\u7535\u8def\u5df2\u63d0\u4ea4 = " + (circuit >= 1 ? circuit : "继承")));
+            }
+        } catch (Throwable t) {
+            com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 电路带：写入失败", t);
+        }
     }
 
     private static void addHeader(ModularWindow.Builder builder, WindowState state) {
