@@ -32,7 +32,8 @@ import cpw.mods.fml.common.registry.GameRegistry;
  * <li>所有“没配置/解析失败”路径都**写日志**并给出可见提示，不做静默回退。</li>
  * </ol>
  */
-public class ItemSmartWildcardPattern extends ItemEncodedPattern {
+public class ItemSmartWildcardPattern extends ItemEncodedPattern
+    implements com.cleanroommc.modularui.api.IGuiHolder<com.cleanroommc.modularui.factory.PlayerInventoryGuiData> {
 
     /** 本模组配置界面的 Gui ID（由 {@code MergedGuiHandler} 分支处理；x 参数传玩家背包槽位号）。 */
     public static final int GUI_ID = 130;
@@ -54,6 +55,18 @@ public class ItemSmartWildcardPattern extends ItemEncodedPattern {
     @Override
     public int getColorFromItemStack(ItemStack stack, int renderPass) {
         return 0x5CE65C;
+    }
+
+    /**
+     * MUI2 面板构建（3.23.0 界面重做）：服务端与客户端都会走这里 ⇒ 只能用两侧都存在的 MUI2 类。
+     * 面板内容见 {@link WildcardEditorPanel}。
+     */
+    @Override
+    public com.cleanroommc.modularui.screen.ModularPanel buildUI(
+        com.cleanroommc.modularui.factory.PlayerInventoryGuiData data,
+        com.cleanroommc.modularui.value.sync.PanelSyncManager syncManager,
+        com.cleanroommc.modularui.screen.UISettings settings) {
+        return WildcardEditorPanel.build(data, syncManager);
     }
 
     public ItemSmartWildcardPattern register() {
@@ -140,13 +153,14 @@ public class ItemSmartWildcardPattern extends ItemEncodedPattern {
     @Override
     public ItemStack onItemRightClick(ItemStack stack, World world, EntityPlayer player) {
         ItemStack result = super.onItemRightClick(stack, world, player);
-        // 3.22.0：右键打开我们自己的配置界面（由服务端发起，FML 会在两端各自构造各自的界面）
+        // 3.23.0：改用 MUI2 的玩家背包 GUI 工厂打开（带容器屏由 MUI2 的 GuiContainerWrapper 处理，
+        // 因此 NEI 的加号仍然认这个界面）；旧的 openGui(GUI_ID) 路径已被它取代。
         try {
             if (!world.isRemote && player != null) {
-                player.openGui(MyMod.instance, GUI_ID, world, player.inventory.currentItem, 0, 0);
+                com.cleanroommc.modularui.factory.PlayerInventoryGuiFactory.INSTANCE.openFromMainHand(player);
             }
         } catch (Throwable t) {
-            MyMod.LOG.warn("[AE2QoL] 打开通配样板界面失败", t);
+            MyMod.LOG.warn("[AE2QoL] 打开通配样板编辑界面失败", t);
         }
         try {
             if (!world.isRemote && player != null) {

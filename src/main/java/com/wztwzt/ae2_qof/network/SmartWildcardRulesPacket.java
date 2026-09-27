@@ -170,12 +170,27 @@ public class SmartWildcardRulesPacket implements IMessage {
                 try {
                     EntityPlayerMP player = ctx.getServerHandler().playerEntity;
                     if (player == null) return;
-                    if (!(player.openContainer instanceof ContainerSmartWildcard container)) {
+                    if (player.openContainer instanceof ContainerSmartWildcard container) {
+                        SmartWildcardState state = decode(message.tag);
+                        NBTTagList templateIn = message.tag == null ? null
+                            : message.tag.getTagList("TemplateIn", Constants.NBT.TAG_COMPOUND);
+                        NBTTagList templateOut = message.tag == null ? null
+                            : message.tag.getTagList("TemplateOut", Constants.NBT.TAG_COMPOUND);
+                        if (!container.applyRules(state, templateIn, templateOut)) {
+                            MyMod.LOG
+                                .warn("[AE2QoL] 通配样板规则写回被容器拒绝：player={}", player.getCommandSenderName());
+                        }
+                        return;
+                    }
+                    // 3.23.0：MUI2 编辑器（PlayerInventoryGuiFactory）打开时容器是 MUI2 的 ModularContainer，
+                    // 目标样板就是玩家手持的那张 ⇒ 直接写主手物品（同样是服务端权威写入 + 记日志）。
+                    ItemStack held = player.getCurrentEquippedItem();
+                    if (held == null || !SmartWildcardState.isSmartWildcard(held)) {
                         MyMod.LOG.warn(
-                            "[AE2QoL] 通配样板规则包被丢弃：当前打开的不是通配样板界面（container={}）",
+                            "[AE2QoL] 通配样板写回失败：既不是通配样板容器，主手也不是通配样板（container={}）",
                             player.openContainer == null ? "null"
                                 : player.openContainer.getClass()
-                                    .getName());
+                                    .getSimpleName());
                         return;
                     }
                     SmartWildcardState state = decode(message.tag);
@@ -183,9 +198,32 @@ public class SmartWildcardRulesPacket implements IMessage {
                         : message.tag.getTagList("TemplateIn", Constants.NBT.TAG_COMPOUND);
                     NBTTagList templateOut = message.tag == null ? null
                         : message.tag.getTagList("TemplateOut", Constants.NBT.TAG_COMPOUND);
-                    if (!container.applyRules(state, templateIn, templateOut)) {
-                        MyMod.LOG.warn("[AE2QoL] 通配样板规则写回被容器拒绝：player={}", player.getCommandSenderName());
+                    state.writeAndBumpRevision(held);
+                    try {
+                        if (held.getTagCompound() != null) {
+                            if (templateIn != null && templateIn.tagCount() > 0) {
+                                held.getTagCompound()
+                                    .setTag("in", templateIn);
+                                held.getTagCompound()
+                                    .setBoolean("crafting", false);
+                            }
+                            if (templateOut != null && templateOut.tagCount() > 0) {
+                                held.getTagCompound()
+                                    .setTag("out", templateOut);
+                            }
+                        }
+                    } catch (Throwable t) {
+                        MyMod.LOG.warn("[AE2QoL] 通配样板模板 in/out 写入失败（规则已写）", t);
                     }
+                    com.wztwzt.ae2_qof.wildcard.SmartWildcardExpander.clearCache();
+                    player.inventory.markDirty();
+                    MyMod.LOG.info(
+                        "[AE2QoL] 通配样板写回成功（MUI2 编辑器）：player={} rules={} blacklist={} circuit={} revision={}",
+                        player.getCommandSenderName(),
+                        state.rules.size(),
+                        state.blacklist.size(),
+                        state.circuit,
+                        state.revision);
                 } catch (Throwable t) {
                     MyMod.LOG.warn("[AE2QoL] 通配样板规则包处理异常", t);
                 }
