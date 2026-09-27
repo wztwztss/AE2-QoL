@@ -6,6 +6,10 @@
 ## AE2 QoL 主逻辑
 | 功能简述 | 文件路径 |
 |---|---|
+| 批量样板生成器界面（3.26.0，整窗搬运 AE2PatternGen） | `src/main/java/com/wztwzt/ae2_qof/apgport/`（65 文件 / 9,983 行，每份文件头保留 MIT 来源声明）：`gui/GuiPatternGen.java`（440，主窗：配方设置/过滤器/排除规则/替换规则/构建缓存/预览数量/生成样板）、`gui/GuiRecipePicker.java`（678，配方选择）、`gui/GuiPatternStorage.java`（274）与 `gui/GuiPatternDetail.java`（114）（存储/详情面板，其导航经 `ApgStubs` 暂未接线并记 WARN）、`gui/GuiComboBox.java`（177）、`gui/ExplicitFilterDropFormatter.java`（199）、`gui/FilterTextFieldWidget.java`（68）、`gui/FilterDragChoiceButtonWidget.java`（20）、`gui/GuiHandler.java`（70；GUI id **101 生成器 / 102 存储**）、`network/NetworkHandler.java`（通道 **`_apg`**，避免与 ModNetwork/WildcardNetwork 重名）、`filter/*`（9 个）、`recipe/GTRecipeSource.java`（363）、`encoder/PatternEncoder.java`（166）、`storage/*`（PatternStorage 436 / RecipeCacheStorage 539 / RecipeCacheService 407 / ModVersionHelper 330）、`config/*`、`util/*`、`command/CommandPatternGen.java`、`ApgStubs.java`（proxy 三处调用的收口） |
+| 生成器物品右键入口（3.26.0） | `src/main/java/com/wztwzt/ae2_qof/generator/ItemSmartPatternGenerator.java`（右键 `openGui(101)` → 上面那套界面；其窗口工厂从**手持物品**读配置）+ `CommonProxy` 中注册其 `GuiHandler` 与 `NetworkHandler.init()` |
+| 通配样板**双入口**（3.27.0） | `src/main/java/com/wztwzt/ae2_qof/wildcard/ItemSmartWildcardPattern.java`：直接右键 → Wild 界面（`wildport`，先 `WildcardBridge.pushToWild` 再 `openGui(GUI_WILDCARD_PATTERN)`）；**Shift+右键** → 我们原有的四页签 MUI2 编辑器（`wildcard/WildcardEditorPanel.java`，含**内置电路 1~24** 与**不消耗物品**页） |
+| 加号/保存写回反馈（3.28.0） | `src/main/java/com/wztwzt/ae2_qof/network/SmartWildcardRulesPacket.java`（写回我们的 NBT 后 `WildcardBridge.pushToWild` + 聊天提示重开界面即可看到） |
 | 智能倍增（核心逻辑） | `src/main/java/com/wztwzt/ae2_qof/mixin/ae/MixinCraftingCPUCluster.java` |
 | 智能倍增（GT 仓最大轮数） | `src/main/java/com/wztwzt/ae2_qof/mixin/gt/MixinMTEHatchInputBus.java` |
 | 智能倍增（UI 开关） | `src/main/java/com/wztwzt/ae2_qof/mixin/gt/MixinMTEHatchCraftingInputMEGui.java` |
