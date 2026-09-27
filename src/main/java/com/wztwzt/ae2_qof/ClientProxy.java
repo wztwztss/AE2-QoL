@@ -80,6 +80,9 @@ public class ClientProxy extends CommonProxy {
         } catch (Throwable ignored) {}
         try {
             codechicken.nei.api.API.registerNEIGuiHandler(new com.wztwzt.ae2_qof.client.nei.MergedNeiHandler());
+        // 3.23.2：NEI 拖放 → 智能通配样板编辑器的输入/输出匹配框（NEI 的官方扩展点 handleDragNDrop）
+        codechicken.nei.api.API
+            .registerNEIGuiHandler(new com.wztwzt.ae2_qof.client.nei.SmartWildcardNeiDragHandler());
         } catch (Throwable ignored) {}
         try {
             // 让 NEI 配方界面的「+」覆盖层对合并终端生效（与 AE2 原生终端一致注册方式）

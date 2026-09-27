@@ -52,6 +52,9 @@ public final class WildcardEditorPanel {
     private static final int PAGE_SIZE = 8;
 
     /** 当前页签（客户端本地状态；控件树两端一致，仅启用状态不同）。 */
+    /** 预览页一次最多构建多少行（再多的候选请用「全部预览」看聊天栏）。 */
+    private static final int PREVIEW_LIST_MAX = 64;
+
     private static int PAGE = 0;
     /** 预览页的搜索词与页码（客户端本地）。 */
     private static String PREVIEW_SEARCH = "";
@@ -74,13 +77,37 @@ public final class WildcardEditorPanel {
         TextFieldWidget[] inAmounts = new TextFieldWidget[ROWS];
         TextFieldWidget[] outFields = new TextFieldWidget[ROWS];
         TextFieldWidget[] outAmounts = new TextFieldWidget[ROWS];
-        final boolean[] inOre = new boolean[ROWS];
-        final boolean[] outOre = new boolean[ROWS];
+        final boolean[] inOre = IN_ORE;
+        final boolean[] outOre = OUT_ORE;
+        java.util.Arrays.fill(IN_ORE, true);
+        java.util.Arrays.fill(OUT_ORE, true);
         for (int i = 0; i < ROWS; i++) {
             SmartWildcardState.Rule rule = i < base.rules.size() ? base.rules.get(i) : null;
-            inOre[i] = rule == null || rule.oreDictMode;
-            outOre[i] = rule == null || rule.outOreDictMode;
+            IN_ORE[i] = rule == null || rule.oreDictMode;
+            OUT_ORE[i] = rule == null || rule.outOreDictMode;
         }
+        // 重建 NEI 拖放落点表（面板每次打开都重建，旧的控件已随界面销毁）
+        DROP_TARGETS.clear();
+
+        // ===================== 预览数据（构建期算一次，供预览页与计数说明用） =====================
+        List<String> candidateNames = new ArrayList<>();
+        SmartWildcardExpander.Result preview = null;
+        try {
+            if (stack != null) {
+                ItemStack previewSource = stack.copy();
+                base.write(previewSource);
+                preview = SmartWildcardExpander.expand(previewSource, data.getWorld());
+                for (ItemStack pattern : preview.patterns) {
+                    if (candidateNames.size() >= PREVIEW_LIST_MAX) break;
+                    String name = firstInputName(pattern);
+                    if (name != null) candidateNames.add(name);
+                }
+            }
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 编辑器预览计算失败", t);
+        }
+        final String previewSummary = preview == null ? "预览不可用（见日志）" : describeZh(preview);
+        final boolean previewTruncatedList = preview != null && preview.patterns.size() > candidateNames.size();
 
         // ===================== 页签栏 =====================
         Flow tabBar = Flow.row()
@@ -144,6 +171,9 @@ public final class WildcardEditorPanel {
             inAmounts[i] = inAmount;
             outFields[i] = outField;
             outAmounts[i] = outAmount;
+            // 登记为 NEI 拖放落点：{行号, 侧}（侧 0=输入 1=输出）
+            DROP_TARGETS.put(inField, new int[] { i, 0 });
+            DROP_TARGETS.put(outField, new int[] { i, 1 });
 
             BooleanSyncValue inMode = new BooleanSyncValue(() -> inOre[index], v -> inOre[index] = v);
             BooleanSyncValue outMode = new BooleanSyncValue(() -> outOre[index], v -> outOre[index] = v);
@@ -252,13 +282,72 @@ public final class WildcardEditorPanel {
                 }));
         pageRules.child(rulesBottom);
 
-        // ===================== 页面 2：覆盖预览（骨架，下一轮补搜索/翻页） =====================
+        // ===================== 页面 2：覆盖预览（搜索 + 翻页 + 逐行排除） =====================
+        // MUI2 面板不能在原地重建，所以「搜索」和「翻页」都用 setEnabledIf 的**逐帧谓词**：
+        // 谓词在求值时读取搜索框的当前文本与 PREVIEW_PAGE，因此点按钮/打字即刻生效。
         Flow pagePreview = Flow.column()
             .childPadding(GAP)
             .size(352, 226)
             .setEnabledIf(w -> PAGE == 1);
-        pagePreview.child(new TextWidget<>(IKey.str("覆盖预览（搜索 / 翻页 / 逐行排除，下一轮补齐）")).size(348, 10));
-        pagePreview.child(new TextWidget<>(IKey.str("当前计数见聊天栏「全部预览」或日志")).size(348, 10));
+
+        final TextFieldWidget searchField = new TextFieldWidget().setMaxLength(48)
+            .size(180, 16);
+        Flow previewTop = Flow.row()
+            .childPadding(GAP)
+            .size(348, 18);
+        previewTop.child(searchField)
+            .child(new ButtonWidget<>().size(40, 16)
+                .overlay(IKey.str("上一页"))
+                .onMouseTapped(ctx -> {
+                    if (PREVIEW_PAGE > 0) PREVIEW_PAGE--;
+                    return true;
+                }))
+            .child(new ButtonWidget<>().size(40, 16)
+                .overlay(IKey.str("下一页"))
+                .onMouseTapped(ctx -> {
+                    PREVIEW_PAGE++;
+                    return true;
+                }))
+            .child(new TextWidget<>(IKey.str("搜索：显示名/矿辞包含即可")).size(120, 16));
+        pagePreview.child(previewTop);
+        pagePreview.child(new TextWidget<>(IKey.str(previewSummary)).size(348, 10));
+
+        final int totalPages = Math.max(1, (candidateNames.size() + PAGE_SIZE - 1) / PAGE_SIZE);
+        pagePreview.child(
+            new TextWidget<>(
+                IKey.str("共 " + candidateNames.size() + " 个候选，每页 " + PAGE_SIZE + " 个，共 " + totalPages + " 页"
+                    + (previewTruncatedList ? "（列表只列前 " + PREVIEW_LIST_MAX + " 个，其余见「全部预览」与日志）" : "")))
+                .size(348, 10));
+
+        if (candidateNames.isEmpty()) {
+            pagePreview.child(
+                new TextWidget<>(IKey.str("当前没有覆盖任何候选 —— 上方已给出原因（常见：规则为空，或匹配串没有通配符）"))
+                    .size(348, 10));
+        } else {
+            for (int idx = 0; idx < candidateNames.size(); idx++) {
+                final String candidateName = candidateNames.get(idx);
+                final int candidateIndex = idx;
+                Flow line = Flow.row()
+                    .childPadding(GAP)
+                    .size(348, 14);
+                line.child(new TextWidget<>(IKey.str(candidateName)).size(280, 12))
+                    .child(new ButtonWidget<>().size(28, 12)
+                        .overlay(IKey.str("排除"))
+                        .tooltip(tip -> tip.addLine(IKey.str("把「" + candidateName + "」加入总排除（保存后生效）")))
+                        .onMouseTapped(ctx -> {
+                            if (blacklist.add(candidateName)) {
+                                MyMod.LOG.info("[AE2QoL] 预览排除：已加入黑名单 {}（保存后生效）", candidateName);
+                            }
+                            return true;
+                        }));
+                // 搜索过滤（读搜索框当前文本）+ 分页（读 PREVIEW_PAGE）
+                line.setEnabledIf(
+                    w -> ae2qol$matchSearch(
+                        searchField.getText(),
+                        candidateName) && candidateIndex / PAGE_SIZE == PREVIEW_PAGE);
+                pagePreview.child(line);
+            }
+        }
 
         // ===================== 页面 3：排除（骨架） =====================
         Flow pageExclude = Flow.column()
@@ -489,6 +578,78 @@ public final class WildcardEditorPanel {
         if (s.startsWith("name:")) return s.substring(5)
             .trim();
         return s;
+    }
+
+    /** 搜索匹配：搜索词为空则全通过；否则显示名/矿辞包含即命中（不区分大小写）。 */
+    private static boolean ae2qol$matchSearch(String query, String candidateName) {
+        String q = query == null ? "" : query.trim()
+            .toLowerCase();
+        if (q.isEmpty()) return true;
+        return candidateName != null && candidateName.toLowerCase()
+            .contains(q);
+    }
+
+    /** 输入/输出模式（跨页签共享；NEI 拖入时会按物品自动切换）。 */
+    private static final boolean[] IN_ORE = new boolean[ROWS];
+    private static final boolean[] OUT_ORE = new boolean[ROWS];
+    /** NEI 拖放落点：匹配框控件 → {行号, 侧(0=输入,1=输出)}（每次打开面板重建）。 */
+    private static final java.util.Map<Object, int[]> DROP_TARGETS = new java.util.HashMap<>();
+
+    /**
+     * NEI 把物品拖到某个匹配框上时调用（由 {@code SmartWildcardNeiDragHandler} 转发）。
+     *
+     * <p>写入规则：物品有矿辞 ⇒ 取 GT 权威的矿辞前缀写成 {@code <前缀>*} 并把该行切到**矿辞模式**；
+     * 没有矿辞 ⇒ 写成显示名并把该行切到**名称模式**。返回是否消费了这次拖放（未消费则 NEI 继续走默认行为）。
+     */
+    public static boolean applyDropToHovered(Object hoveredWidget, ItemStack stack) {
+        try {
+            if (hoveredWidget == null || stack == null || stack.getItem() == null) return false;
+            int[] pos = DROP_TARGETS.get(hoveredWidget);
+            if (pos == null) return false;
+            if (!(hoveredWidget instanceof TextFieldWidget field)) return false;
+
+            String orePrefix = null;
+            try {
+                java.util.List<gregtech.api.enums.OrePrefixes.ParsedOreDictName> parsed =
+                    gregtech.api.enums.OrePrefixes.detectPrefix(stack);
+                if (parsed != null) {
+                    for (gregtech.api.enums.OrePrefixes.ParsedOreDictName name : parsed) {
+                        if (name == null || name.prefix == null) continue;
+                        String key = name.prefix.getOreprefixKey();
+                        if (key != null && !key.isEmpty()) {
+                            orePrefix = key;
+                            break;
+                        }
+                    }
+                }
+            } catch (Throwable t) {
+                MyMod.LOG.warn("[AE2QoL] NEI 拖入：读取矿辞前缀失败，改按显示名处理", t);
+            }
+
+            boolean oreMode = orePrefix != null;
+            String matcher = oreMode ? orePrefix + "*"
+                : String.valueOf(
+                    stack.getItem()
+                        .getItemStackDisplayName(stack));
+            field.setText(matcher);
+            if (pos[1] == 0) {
+                IN_ORE[pos[0]] = oreMode;
+            } else {
+                OUT_ORE[pos[0]] = oreMode;
+            }
+            MyMod.LOG.info(
+                "[AE2QoL] NEI 拖入：第 {} 行{} ← {}（{} 模式，匹配串 {}）",
+                pos[0] + 1,
+                pos[1] == 0 ? "输入" : "输出",
+                stack.getItem()
+                    .getItemStackDisplayName(stack),
+                oreMode ? "矿辞" : "显示名",
+                matcher);
+            return true;
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] NEI 拖入处理失败", t);
+            return false;
+        }
     }
 
     /** 聊天栏回执（仅客户端）。 */
