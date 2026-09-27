@@ -69,7 +69,7 @@ public final class ModVersionHelper {
             } catch (RuntimeException ignored) {}
 
             if (loaderConfigDir != null) {
-                files.add(new File(loaderConfigDir, "MyMod.cfg"));
+                files.add(new File(loaderConfigDir, "ae2patterngen.cfg"));
             }
             files.add(ReplacementConfig.getConfigFile());
             return files;
@@ -213,7 +213,7 @@ public final class ModVersionHelper {
                 } catch (RuntimeException ignored) {}
 
                 if (loaderConfigDir != null) {
-                    files.add(new File(loaderConfigDir, "MyMod.cfg"));
+                    files.add(new File(loaderConfigDir, "ae2patterngen.cfg"));
                 }
                 files.add(ReplacementConfig.getConfigFile());
                 return files;

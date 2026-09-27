@@ -45,7 +45,7 @@ public class GuiPatternGen {
         builder.setBackground(com.gtnewhorizons.modularui.api.ModularUITextures.VANILLA_BACKGROUND);
 
         TextWidget titleText = new TextWidget(
-            EnumChatFormatting.BOLD + I18nUtil.tr("MyMod.gui.pattern_gen.title"));
+            EnumChatFormatting.BOLD + I18nUtil.tr("ae2patterngen.gui.pattern_gen.title"));
         titleText.setScale(1.2f);
         titleText.setSize(guiWidth - 16, 20);
         titleText.setPos(8, 8);
@@ -61,7 +61,7 @@ public class GuiPatternGen {
         int inputX = 80;
 
         TextWidget labelRecipe = new TextWidget(
-            EnumChatFormatting.BOLD + I18nUtil.tr("MyMod.gui.pattern_gen.section.recipe"));
+            EnumChatFormatting.BOLD + I18nUtil.tr("ae2patterngen.gui.pattern_gen.section.recipe"));
         labelRecipe.setPos(6, refY + 3);
         scrollable.widget(labelRecipe);
 
@@ -76,11 +76,11 @@ public class GuiPatternGen {
         refY += 38;
 
         TextWidget labelFilter = new TextWidget(
-            EnumChatFormatting.BOLD + I18nUtil.tr("MyMod.gui.pattern_gen.section.filter"));
+            EnumChatFormatting.BOLD + I18nUtil.tr("ae2patterngen.gui.pattern_gen.section.filter"));
         labelFilter.setPos(6, refY + 3);
         scrollable.widget(labelFilter);
 
-        TextWidget labelOutOre = new TextWidget(I18nUtil.tr("MyMod.gui.pattern_gen.label.output_ore"));
+        TextWidget labelOutOre = new TextWidget(I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.output_ore"));
         labelOutOre.setPos(6, refY + 14 + 3);
         scrollable.widget(labelOutOre);
 
@@ -94,7 +94,7 @@ public class GuiPatternGen {
         scrollable.widget(tfOutputOre);
         attachDragChoiceSelector(scrollable, tfOutputOre, inputX, refY + 14, fieldW);
 
-        TextWidget labelInOre = new TextWidget(I18nUtil.tr("MyMod.gui.pattern_gen.label.input_ore"));
+        TextWidget labelInOre = new TextWidget(I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.input_ore"));
         labelInOre.setPos(6, refY + 32 + 3);
         scrollable.widget(labelInOre);
 
@@ -108,7 +108,7 @@ public class GuiPatternGen {
         scrollable.widget(tfInputOre);
         attachDragChoiceSelector(scrollable, tfInputOre, inputX, refY + 32, fieldW);
 
-        TextWidget labelNC = new TextWidget(I18nUtil.tr("MyMod.gui.pattern_gen.label.nc_item"));
+        TextWidget labelNC = new TextWidget(I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.nc_item"));
         labelNC.setPos(6, refY + 50 + 3);
         scrollable.widget(labelNC);
 
@@ -122,12 +122,12 @@ public class GuiPatternGen {
         scrollable.widget(tfNCItem);
         attachDragChoiceSelector(scrollable, tfNCItem, inputX, refY + 50, fieldW);
 
-        TextWidget labelTier = new TextWidget(I18nUtil.tr("MyMod.gui.pattern_gen.label.tier"));
+        TextWidget labelTier = new TextWidget(I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.tier"));
         labelTier.setPos(6, refY + 68 + 3);
         scrollable.widget(labelTier);
 
         final List<String> tiers = Arrays.asList(
-            I18nUtil.tr("MyMod.gui.common.any"),
+            I18nUtil.tr("ae2patterngen.gui.common.any"),
             "ULV",
             "LV",
             "MV",
@@ -169,11 +169,11 @@ public class GuiPatternGen {
         refY += 84;
 
         TextWidget labelBL = new TextWidget(
-            EnumChatFormatting.BOLD + I18nUtil.tr("MyMod.gui.pattern_gen.section.blacklist"));
+            EnumChatFormatting.BOLD + I18nUtil.tr("ae2patterngen.gui.pattern_gen.section.blacklist"));
         labelBL.setPos(6, refY + 3);
         scrollable.widget(labelBL);
 
-        TextWidget labelBLIn = new TextWidget(I18nUtil.tr("MyMod.gui.pattern_gen.label.blacklist_input"));
+        TextWidget labelBLIn = new TextWidget(I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.blacklist_input"));
         labelBLIn.setPos(6, refY + 14 + 3);
         scrollable.widget(labelBLIn);
 
@@ -187,7 +187,7 @@ public class GuiPatternGen {
         scrollable.widget(tfBlacklistIn);
         attachDragChoiceSelector(scrollable, tfBlacklistIn, inputX, refY + 14, fieldW);
 
-        TextWidget labelBLOut = new TextWidget(I18nUtil.tr("MyMod.gui.pattern_gen.label.blacklist_output"));
+        TextWidget labelBLOut = new TextWidget(I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.blacklist_output"));
         labelBLOut.setPos(6, refY + 32 + 3);
         scrollable.widget(labelBLOut);
 
@@ -202,17 +202,17 @@ public class GuiPatternGen {
         attachDragChoiceSelector(scrollable, tfBlacklistOut, inputX, refY + 32, fieldW);
 
         TextWidget regexHint = new TextWidget(
-            EnumChatFormatting.DARK_GRAY + I18nUtil.tr("MyMod.gui.pattern_gen.hint.regex"));
+            EnumChatFormatting.DARK_GRAY + I18nUtil.tr("ae2patterngen.gui.pattern_gen.hint.regex"));
         regexHint.setPos(6, refY + 50 + 3);
         scrollable.widget(regexHint);
 
         TextWidget blacklistHint = new TextWidget(
-            EnumChatFormatting.DARK_GRAY + I18nUtil.tr("MyMod.gui.pattern_gen.hint.blacklist"));
+            EnumChatFormatting.DARK_GRAY + I18nUtil.tr("ae2patterngen.gui.pattern_gen.hint.blacklist"));
         blacklistHint.setPos(6, refY + 60 + 3);
         scrollable.widget(blacklistHint);
 
         TextWidget blacklistExamples = new TextWidget(
-            EnumChatFormatting.DARK_GRAY + I18nUtil.tr("MyMod.gui.pattern_gen.hint.blacklist_examples"));
+            EnumChatFormatting.DARK_GRAY + I18nUtil.tr("ae2patterngen.gui.pattern_gen.hint.blacklist_examples"));
         blacklistExamples.setPos(6, refY + 70 + 3);
         scrollable.widget(blacklistExamples);
 
@@ -221,12 +221,12 @@ public class GuiPatternGen {
         int loadedRuleCount = com.wztwzt.ae2_qof.apgport.config.ReplacementConfig.load();
 
         TextWidget labelRep = new TextWidget(
-            EnumChatFormatting.BOLD + I18nUtil.tr("MyMod.gui.pattern_gen.section.replacements"));
+            EnumChatFormatting.BOLD + I18nUtil.tr("ae2patterngen.gui.pattern_gen.section.replacements"));
         labelRep.setPos(6, refY + 3);
         scrollable.widget(labelRep);
 
         TextWidget labelRepCount = new TextWidget(
-            I18nUtil.tr("MyMod.gui.pattern_gen.replacements.count", loadedRuleCount));
+            I18nUtil.tr("ae2patterngen.gui.pattern_gen.replacements.count", loadedRuleCount));
         labelRepCount.setPos(6, refY + 20);
         scrollable.widget(labelRepCount);
 
@@ -238,7 +238,7 @@ public class GuiPatternGen {
         btnConfig.setSize(80, 20);
         btnConfig.setBackground(com.gtnewhorizons.modularui.api.ModularUITextures.VANILLA_BUTTON_NORMAL);
 
-        TextWidget btnConfigText = new TextWidget(I18nUtil.tr("MyMod.gui.pattern_gen.button.open_config"));
+        TextWidget btnConfigText = new TextWidget(I18nUtil.tr("ae2patterngen.gui.pattern_gen.button.open_config"));
         btnConfigText.setPos(btnCfgX + 16, btnCfgY + 6);
 
         btnConfig.setOnClick((cd, w) -> {
@@ -253,7 +253,7 @@ public class GuiPatternGen {
         builder.widget(scrollable);
 
         TextWidget statusWidget = new TextWidget("");
-        GuiPatternGenStatusBridge.setStatus(I18nUtil.tr("MyMod.gui.pattern_gen.status.ready"));
+        GuiPatternGenStatusBridge.setStatus(I18nUtil.tr("ae2patterngen.gui.pattern_gen.status.ready"));
         statusWidget.setStringSupplier(GuiPatternGenStatusBridge::getStatus);
         statusWidget.setPos(8, guiHeight - 12);
         builder.widget(statusWidget);
@@ -283,12 +283,12 @@ public class GuiPatternGen {
         btnCache.setSize(btnW, btnH);
         btnCache.setBackground(com.gtnewhorizons.modularui.api.ModularUITextures.VANILLA_BUTTON_NORMAL);
 
-        TextWidget btnCacheText = new TextWidget(I18nUtil.tr("MyMod.gui.pattern_gen.button.build_cache"));
+        TextWidget btnCacheText = new TextWidget(I18nUtil.tr("ae2patterngen.gui.pattern_gen.button.build_cache"));
         btnCacheText.setPos(btnStartX + 10, btnY + 6);
 
         btnCache.setOnClick((cd, w) -> {
             NetworkHandler.INSTANCE.sendToServer(new PacketCreateCache());
-            GuiPatternGenStatusBridge.setStatus(I18nUtil.tr("MyMod.gui.pattern_gen.status.cache_requested"));
+            GuiPatternGenStatusBridge.setStatus(I18nUtil.tr("ae2patterngen.gui.pattern_gen.status.cache_requested"));
         });
         builder.widget(btnCache);
         builder.widget(btnCacheText);
@@ -300,14 +300,14 @@ public class GuiPatternGen {
         btnPreview.setSize(btnW, btnH);
         btnPreview.setBackground(com.gtnewhorizons.modularui.api.ModularUITextures.VANILLA_BUTTON_NORMAL);
 
-        TextWidget btnPreviewText = new TextWidget(I18nUtil.tr("MyMod.gui.pattern_gen.button.preview_count"));
+        TextWidget btnPreviewText = new TextWidget(I18nUtil.tr("ae2patterngen.gui.pattern_gen.button.preview_count"));
         btnPreviewText.setPos(btnPBX + 14, btnY + 6);
 
         btnPreview.setOnClick((cd, w) -> {
             if (tfRecipeMap.getText()
                 .isEmpty()) {
                 GuiPatternGenStatusBridge
-                    .setStatus(EnumChatFormatting.RED + I18nUtil.tr("MyMod.gui.pattern_gen.error.empty_map"));
+                    .setStatus(EnumChatFormatting.RED + I18nUtil.tr("ae2patterngen.gui.pattern_gen.error.empty_map"));
                 return;
             }
             saveFunction.run();
@@ -320,7 +320,7 @@ public class GuiPatternGen {
                     tfBlacklistIn.getText(),
                     tfBlacklistOut.getText(),
                     currentTierIndex[0] - 1));
-            GuiPatternGenStatusBridge.setStatus(I18nUtil.tr("MyMod.gui.pattern_gen.status.preview_requested"));
+            GuiPatternGenStatusBridge.setStatus(I18nUtil.tr("ae2patterngen.gui.pattern_gen.status.preview_requested"));
         });
         builder.widget(btnPreview);
         builder.widget(btnPreviewText);
@@ -332,14 +332,14 @@ public class GuiPatternGen {
         btnGenerate.setSize(btnW, btnH);
         btnGenerate.setBackground(com.gtnewhorizons.modularui.api.ModularUITextures.VANILLA_BUTTON_NORMAL);
 
-        TextWidget btnGenerateText = new TextWidget(I18nUtil.tr("MyMod.gui.pattern_gen.button.generate"));
+        TextWidget btnGenerateText = new TextWidget(I18nUtil.tr("ae2patterngen.gui.pattern_gen.button.generate"));
         btnGenerateText.setPos(btnGBX + 10, btnY + 6);
 
         btnGenerate.setOnClick((cd, w) -> {
             if (tfRecipeMap.getText()
                 .isEmpty()) {
                 GuiPatternGenStatusBridge
-                    .setStatus(EnumChatFormatting.RED + I18nUtil.tr("MyMod.gui.pattern_gen.error.empty_map"));
+                    .setStatus(EnumChatFormatting.RED + I18nUtil.tr("ae2patterngen.gui.pattern_gen.error.empty_map"));
                 return;
             }
             saveFunction.run();
@@ -353,7 +353,7 @@ public class GuiPatternGen {
                     tfBlacklistOut.getText(),
                     "",
                     currentTierIndex[0] - 1));
-            GuiPatternGenStatusBridge.setStatus(I18nUtil.tr("MyMod.gui.pattern_gen.status.generate_requested"));
+            GuiPatternGenStatusBridge.setStatus(I18nUtil.tr("ae2patterngen.gui.pattern_gen.status.generate_requested"));
         });
         builder.widget(btnGenerate);
         builder.widget(btnGenerateText);
@@ -375,8 +375,8 @@ public class GuiPatternGen {
         selector.setSize(DRAG_SELECTOR_W, 14);
         selector.setEnabled(widget -> hasAlternativeChoices(currentChoices[0]));
         selector.setBackground(() -> buildSelectorBackground(currentChoices[0], currentIndex[0]));
-        selector.addTooltip(I18nUtil.tr("MyMod.gui.pattern_gen.drag_choice.tooltip.line1"));
-        selector.addTooltip(I18nUtil.tr("MyMod.gui.pattern_gen.drag_choice.tooltip.line2"));
+        selector.addTooltip(I18nUtil.tr("ae2patterngen.gui.pattern_gen.drag_choice.tooltip.line1"));
+        selector.addTooltip(I18nUtil.tr("ae2patterngen.gui.pattern_gen.drag_choice.tooltip.line2"));
         selector.setOnClick((clickData, widget) -> {
             if (!hasAlternativeChoices(currentChoices[0])) {
                 return;
@@ -434,14 +434,14 @@ public class GuiPatternGen {
             .get(safeIndex);
         switch (choice.getSource()) {
             case ITEM_ID:
-                return I18nUtil.tr("MyMod.gui.pattern_gen.drag_choice.id");
+                return I18nUtil.tr("ae2patterngen.gui.pattern_gen.drag_choice.id");
             case ORE_DICT:
-                return I18nUtil.tr("MyMod.gui.pattern_gen.drag_choice.ore");
+                return I18nUtil.tr("ae2patterngen.gui.pattern_gen.drag_choice.ore");
             case DISPLAY_NAME:
-                return I18nUtil.tr("MyMod.gui.pattern_gen.drag_choice.name");
+                return I18nUtil.tr("ae2patterngen.gui.pattern_gen.drag_choice.name");
             case CUSTOM:
             default:
-                return I18nUtil.tr("MyMod.gui.pattern_gen.drag_choice.custom");
+                return I18nUtil.tr("ae2patterngen.gui.pattern_gen.drag_choice.custom");
         }
     }
 }

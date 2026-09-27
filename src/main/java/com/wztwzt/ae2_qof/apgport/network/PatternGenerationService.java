@@ -31,7 +31,7 @@ public final class PatternGenerationService {
 
     public static boolean generateAndStore(EntityPlayerMP player, String source, List<RecipeEntry> recipes) {
         if (player == null || recipes == null || recipes.isEmpty()) {
-            send(player, EnumChatFormatting.YELLOW, "MyMod.msg.pattern.no_valid_after_encode");
+            send(player, EnumChatFormatting.YELLOW, "ae2patterngen.msg.pattern.no_valid_after_encode");
             return false;
         }
 
@@ -45,7 +45,7 @@ public final class PatternGenerationService {
         //   ④ 聊天栏 + 日志给出**全量计数**（本项目铁则：不许静默）。
         List<ItemStack> patterns = PatternEncoder.encodeBatch(recipes);
         if (patterns.isEmpty()) {
-            send(player, EnumChatFormatting.YELLOW, "MyMod.msg.pattern.no_valid_after_encode");
+            send(player, EnumChatFormatting.YELLOW, "ae2patterngen.msg.pattern.no_valid_after_encode");
             return false;
         }
 
@@ -88,7 +88,7 @@ public final class PatternGenerationService {
             send(
                 player,
                 EnumChatFormatting.RED,
-                "MyMod.msg.pattern.insufficient_blank_pattern",
+                "ae2patterngen.msg.pattern.insufficient_blank_pattern",
                 requiredCount,
                 currentHas);
             return false;

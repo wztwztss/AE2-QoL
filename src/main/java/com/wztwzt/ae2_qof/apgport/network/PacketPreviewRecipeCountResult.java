@@ -71,7 +71,7 @@ public class PacketPreviewRecipeCountResult implements IMessage {
                 .func_152344_a(() -> {
                     if (!message.cacheValid) {
                         String text = EnumChatFormatting.RED
-                            + I18nUtil.tr("MyMod.msg.cache.missing_or_invalid");
+                            + I18nUtil.tr("ae2patterngen.msg.cache.missing_or_invalid");
                         GuiPatternGenStatusBridge.setStatus(text);
                         if (Minecraft.getMinecraft().thePlayer != null) {
                             Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(text));
@@ -82,13 +82,13 @@ public class PacketPreviewRecipeCountResult implements IMessage {
                     if (message.matchedMapCount <= 0) {
                         GuiPatternGenStatusBridge.setStatus(
                             EnumChatFormatting.RED
-                                + I18nUtil.tr("MyMod.msg.generate.no_matching_map", message.requestedKeyword));
+                                + I18nUtil.tr("ae2patterngen.msg.generate.no_matching_map", message.requestedKeyword));
                         return;
                     }
 
                     GuiPatternGenStatusBridge.setStatus(
                         I18nUtil.tr(
-                            "MyMod.gui.pattern_gen.status.filter_result",
+                            "ae2patterngen.gui.pattern_gen.status.filter_result",
                             message.totalLoadedCount,
                             message.totalFilteredCount));
                 });

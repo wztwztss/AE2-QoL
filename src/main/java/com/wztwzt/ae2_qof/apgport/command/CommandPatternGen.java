@@ -80,21 +80,21 @@ public class CommandPatternGen extends CommandBase {
     }
 
     private void sendHelp(ICommandSender sender) {
-        send(sender, EnumChatFormatting.GOLD, "MyMod.command.help.title");
-        send(sender, EnumChatFormatting.YELLOW, "MyMod.command.help.list");
-        send(sender, EnumChatFormatting.YELLOW, "MyMod.command.help.count");
-        send(sender, EnumChatFormatting.YELLOW, "MyMod.command.help.generate");
+        send(sender, EnumChatFormatting.GOLD, "ae2patterngen.command.help.title");
+        send(sender, EnumChatFormatting.YELLOW, "ae2patterngen.command.help.list");
+        send(sender, EnumChatFormatting.YELLOW, "ae2patterngen.command.help.count");
+        send(sender, EnumChatFormatting.YELLOW, "ae2patterngen.command.help.generate");
     }
 
     private void handleList(ICommandSender sender) {
         Map<String, String> maps = GTRecipeSource.getAvailableRecipeMaps();
-        send(sender, EnumChatFormatting.GOLD, "MyMod.command.list.available_maps", maps.size());
+        send(sender, EnumChatFormatting.GOLD, "ae2patterngen.command.list.available_maps", maps.size());
 
         for (Map.Entry<String, String> entry : maps.entrySet()) {
             send(
                 sender,
                 EnumChatFormatting.GREEN,
-                "MyMod.command.list.entry",
+                "ae2patterngen.command.list.entry",
                 entry.getKey(),
                 entry.getValue());
         }
@@ -102,12 +102,12 @@ public class CommandPatternGen extends CommandBase {
 
     private void handleGenerate(ICommandSender sender, String[] args) {
         if (args.length < 2) {
-            send(sender, EnumChatFormatting.RED, "MyMod.command.generate.usage");
+            send(sender, EnumChatFormatting.RED, "ae2patterngen.command.generate.usage");
             return;
         }
 
         if (!(sender instanceof EntityPlayerMP)) {
-            send(sender, EnumChatFormatting.RED, "MyMod.command.only_player");
+            send(sender, EnumChatFormatting.RED, "ae2patterngen.command.only_player");
             return;
         }
 
@@ -115,7 +115,7 @@ public class CommandPatternGen extends CommandBase {
         List<RecipeEntry> filtered = collectAndFilter(sender, args);
 
         if (filtered.isEmpty()) {
-            send(sender, EnumChatFormatting.YELLOW, "MyMod.command.no_matching_recipe");
+            send(sender, EnumChatFormatting.YELLOW, "ae2patterngen.command.no_matching_recipe");
             return;
         }
 
@@ -127,17 +127,17 @@ public class CommandPatternGen extends CommandBase {
 
         if (!com.wztwzt.ae2_qof.apgport.util.InventoryUtil.consumeItem(player, blankPattern, requiredCount)) {
             int currentHas = com.wztwzt.ae2_qof.apgport.util.InventoryUtil.countItem(player, blankPattern);
-            send(sender, EnumChatFormatting.RED, "MyMod.command.generate.insufficient_blank_pattern");
+            send(sender, EnumChatFormatting.RED, "ae2patterngen.command.generate.insufficient_blank_pattern");
             send(
                 sender,
                 EnumChatFormatting.RED,
-                "MyMod.command.generate.required_vs_owned",
+                "ae2patterngen.command.generate.required_vs_owned",
                 requiredCount,
                 currentHas);
             return;
         }
 
-        send(sender, EnumChatFormatting.GREEN, "MyMod.command.generate.start", patterns.size());
+        send(sender, EnumChatFormatting.GREEN, "ae2patterngen.command.generate.start", patterns.size());
 
         int givenToInventory = 0;
         int droppedOnGround = 0;
@@ -160,20 +160,20 @@ public class CommandPatternGen extends CommandBase {
         send(
             sender,
             EnumChatFormatting.GREEN,
-            "MyMod.command.generate.done",
+            "ae2patterngen.command.generate.done",
             givenToInventory,
             droppedOnGround);
     }
 
     private void handleCount(ICommandSender sender, String[] args) {
         if (args.length < 2) {
-            send(sender, EnumChatFormatting.RED, "MyMod.command.count.usage");
+            send(sender, EnumChatFormatting.RED, "ae2patterngen.command.count.usage");
             return;
         }
 
         List<RecipeEntry> filtered = collectAndFilter(sender, args);
 
-        send(sender, EnumChatFormatting.GREEN, "MyMod.command.count.result", filtered.size());
+        send(sender, EnumChatFormatting.GREEN, "ae2patterngen.command.count.result", filtered.size());
     }
 
     private List<RecipeEntry> collectAndFilter(ICommandSender sender, String[] args) {
@@ -185,10 +185,10 @@ public class CommandPatternGen extends CommandBase {
         // 1. 查找配方表
         List<String> matchedMaps = GTRecipeSource.findMatchingRecipeMaps(recipeMapIdInput);
         if (matchedMaps.isEmpty()) {
-            send(sender, EnumChatFormatting.RED, "MyMod.command.map_not_found", recipeMapIdInput);
+            send(sender, EnumChatFormatting.RED, "ae2patterngen.command.map_not_found", recipeMapIdInput);
             return new java.util.ArrayList<>();
         }
-        send(sender, EnumChatFormatting.GRAY, "MyMod.command.matched_maps", String.join(", ", matchedMaps));
+        send(sender, EnumChatFormatting.GRAY, "ae2patterngen.command.matched_maps", String.join(", ", matchedMaps));
 
         // 2. 收集配方
         List<RecipeEntry> recipes = GTRecipeSource.collectRecipes(recipeMapIdInput);
@@ -211,7 +211,7 @@ public class CommandPatternGen extends CommandBase {
             }
         }
 
-        send(sender, EnumChatFormatting.GRAY, "MyMod.command.filter_result", totalBefore, filtered.size());
+        send(sender, EnumChatFormatting.GRAY, "ae2patterngen.command.filter_result", totalBefore, filtered.size());
 
         return filtered;
     }

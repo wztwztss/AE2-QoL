@@ -233,25 +233,20 @@ public class CommonProxy {
             com.wztwzt.ae2_qof.util.ModTextures.init();
         }
         NetworkRegistry.INSTANCE.registerGuiHandler(MyMod.instance, new MergedGuiHandler());
-        // 3.24.x：搬运进来的 Wild 界面（GTNH-MUI）—— 独立 GUI id（WildportIds）+ 独立网络通道（_wild，
-        // 避免与 ModNetwork 同名导致 NetworkRegistry 抛异常）。注册成功必须留一行日志（本项目铁则）。
+        // 3.24.x/3.26.x：搬运进来的两套 GTNH-MUI 界面（Wild 通配样板窗口 / AE2PatternGen 生成器窗口）。
+        // ⚠️ `NetworkRegistry.registerGuiHandler` **每个模组只保留最后一次注册** —— 我们此前在这里各注册过一次，
+        // 结果把上面的 MergedGuiHandler **整个顶掉**了（用户实测：右键通配样板打不开界面 ✗）。
+        // 正确做法：只注册 MergedGuiHandler 一个，由它把这两套 id 分发给各自的 handler（见 MergedGuiHandler）。
         try {
-            NetworkRegistry.INSTANCE
-                .registerGuiHandler(MyMod.instance, new com.wztwzt.ae2_qof.wildport.gui.WildcardGuiHandler());
             com.wztwzt.ae2_qof.wildport.network.WildcardNetwork.init();
-            MyMod.LOG.info("[AE2QoL] Wild 界面（GTNH-MUI）已注册：GUI handler + WildcardNetwork 通道 _wild");
-        } catch (Throwable t) {
-            MyMod.LOG.error("[AE2QoL] Wild 界面注册失败（该界面将无法打开）", t);
-        }
-        // 3.26.x：搬运进来的 AE2PatternGen 界面（GTNH-MUI）—— 独立 GUI id（101 生成器 / 102 存储）
-        // 与独立网络通道（_apg，避免与 ModNetwork / WildcardNetwork 重名导致 NetworkRegistry 抛异常）。
-        try {
-            NetworkRegistry.INSTANCE
-                .registerGuiHandler(MyMod.instance, new com.wztwzt.ae2_qof.apgport.gui.GuiHandler());
             com.wztwzt.ae2_qof.apgport.network.NetworkHandler.init();
-            MyMod.LOG.info("[AE2QoL] apgport 生成器界面已注册：GUI handler（101/102）+ NetworkHandler 通道 _apg");
+            MergedGuiHandler.setUiHandlers(
+                new com.wztwzt.ae2_qof.wildport.gui.WildcardGuiHandler(),
+                new com.wztwzt.ae2_qof.apgport.gui.GuiHandler());
+            MyMod.LOG.info(
+                "[AE2QoL] 两套搬运界面已挂到唯一的 MergedGuiHandler：Wild 通道 _wild、apgport 通道 _apg（GUI id 140 / 101 / 102）");
         } catch (Throwable t) {
-            MyMod.LOG.error("[AE2QoL] apgport 生成器界面注册失败（该界面将无法打开）", t);
+            MyMod.LOG.error("[AE2QoL] 搬运界面注册失败（Wild 窗口与生成器窗口将无法打开）", t);
         }
         cpw.mods.fml.common.FMLCommonHandler.instance()
             .bus()

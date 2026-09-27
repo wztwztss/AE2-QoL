@@ -65,7 +65,7 @@ public class PacketCacheStatistics implements IMessage {
             Minecraft.getMinecraft()
                 .func_152344_a(() -> {
                     String status = I18nUtil.tr(
-                        "MyMod.gui.pattern_gen.status.cache_ready",
+                        "ae2patterngen.gui.pattern_gen.status.cache_ready",
                         message.totalRecipeMaps,
                         message.totalRecipeCount);
                     GuiPatternGenStatusBridge.setStatus(status);
@@ -74,7 +74,7 @@ public class PacketCacheStatistics implements IMessage {
                         Minecraft.getMinecraft().thePlayer.addChatMessage(
                             new ChatComponentText(
                                 EnumChatFormatting.GREEN + I18nUtil.tr(
-                                    "MyMod.msg.cache.statistics",
+                                    "ae2patterngen.msg.cache.statistics",
                                     message.totalRecipeMaps,
                                     message.totalRecipeCount,
                                     message.totalModCount,

@@ -77,18 +77,18 @@ public class PacketResolveConflictsBatch implements IMessage {
                     return null;
                 }
                 ConflictSession.stop(uuid);
-                send(player, EnumChatFormatting.YELLOW, "MyMod.msg.conflict.cancelled");
+                send(player, EnumChatFormatting.YELLOW, "ae2patterngen.msg.conflict.cancelled");
                 return null;
             }
 
             if (message.expectedStartIndex > 0 && message.expectedStartIndex != serverStartIndex) {
-                send(player, EnumChatFormatting.RED, "MyMod.msg.conflict.session_updated");
+                send(player, EnumChatFormatting.RED, "ae2patterngen.msg.conflict.session_updated");
                 sendCurrentBatch(player, session);
                 return null;
             }
 
             if (message.selectedIndices == null || message.selectedIndices.length == 0) {
-                send(player, EnumChatFormatting.RED, "MyMod.msg.conflict.no_valid_selection");
+                send(player, EnumChatFormatting.RED, "ae2patterngen.msg.conflict.no_valid_selection");
                 sendCurrentBatch(player, session);
                 return null;
             }
@@ -98,7 +98,7 @@ public class PacketResolveConflictsBatch implements IMessage {
 
                 java.util.List<RecipeEntry> currentRecipes = session.getCurrentRecipes();
                 if (currentRecipes == null || currentRecipes.isEmpty()) {
-                    send(player, EnumChatFormatting.RED, "MyMod.msg.conflict.session_empty_group");
+                    send(player, EnumChatFormatting.RED, "ae2patterngen.msg.conflict.session_empty_group");
                     ConflictSession.stop(uuid);
                     return null;
                 }
@@ -107,7 +107,7 @@ public class PacketResolveConflictsBatch implements IMessage {
                     send(
                         player,
                         EnumChatFormatting.RED,
-                        "MyMod.msg.conflict.invalid_batch_selection",
+                        "ae2patterngen.msg.conflict.invalid_batch_selection",
                         selectedIndex);
                     sendCurrentBatch(player, session);
                     return null;

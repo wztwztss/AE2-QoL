@@ -72,23 +72,23 @@ public class PacketCacheProgress implements IMessage {
                     String text;
                     switch (message.stage) {
                         case STAGE_STARTED:
-                            text = EnumChatFormatting.GRAY + I18nUtil.tr("MyMod.msg.cache.build_started");
+                            text = EnumChatFormatting.GRAY + I18nUtil.tr("ae2patterngen.msg.cache.build_started");
                             GuiPatternGenStatusBridge
-                                .setStatus(I18nUtil.tr("MyMod.gui.pattern_gen.status.cache_requested"));
+                                .setStatus(I18nUtil.tr("ae2patterngen.gui.pattern_gen.status.cache_requested"));
                             break;
                         case STAGE_ALREADY_RUNNING:
                             text = EnumChatFormatting.YELLOW
-                                + I18nUtil.tr("MyMod.msg.cache.build_already_running");
+                                + I18nUtil.tr("ae2patterngen.msg.cache.build_already_running");
                             GuiPatternGenStatusBridge.setStatus(
                                 EnumChatFormatting.YELLOW
-                                    + I18nUtil.tr("MyMod.msg.cache.build_already_running"));
+                                    + I18nUtil.tr("ae2patterngen.msg.cache.build_already_running"));
                             break;
                         case STAGE_PROGRESS:
                             text = EnumChatFormatting.GRAY + I18nUtil
-                                .tr("MyMod.msg.cache.progress", message.detail, message.current, message.total);
+                                .tr("ae2patterngen.msg.cache.progress", message.detail, message.current, message.total);
                             GuiPatternGenStatusBridge.setStatus(
                                 I18nUtil.tr(
-                                    "MyMod.msg.cache.progress",
+                                    "ae2patterngen.msg.cache.progress",
                                     message.detail,
                                     message.current,
                                     message.total));
@@ -96,10 +96,10 @@ public class PacketCacheProgress implements IMessage {
                         case STAGE_ERROR:
                         default:
                             text = EnumChatFormatting.RED
-                                + I18nUtil.tr("MyMod.msg.cache.build_failed", message.detail);
+                                + I18nUtil.tr("ae2patterngen.msg.cache.build_failed", message.detail);
                             GuiPatternGenStatusBridge.setStatus(
                                 EnumChatFormatting.RED
-                                    + I18nUtil.tr("MyMod.msg.cache.build_failed", message.detail));
+                                    + I18nUtil.tr("ae2patterngen.msg.cache.build_failed", message.detail));
                             break;
                     }
 

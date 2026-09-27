@@ -42,7 +42,7 @@ public class GuiRecipePicker {
         List<String> productNames = new ArrayList<>();
         productNames.add(
             message != null && message.productName != null ? message.productName
-                : I18nUtil.tr("MyMod.gui.recipe_picker.unknown_product"));
+                : I18nUtil.tr("ae2patterngen.gui.recipe_picker.unknown_product"));
 
         List<List<RecipeEntry>> groups = new ArrayList<>();
         groups.add(message != null && message.recipes != null ? message.recipes : new ArrayList<RecipeEntry>());
@@ -119,14 +119,14 @@ public class GuiRecipePicker {
         TextWidget listTitle = new TextWidget("");
         listTitle.setStringSupplier(
             () -> EnumChatFormatting.BOLD + I18nUtil.tr(
-                "MyMod.gui.recipe_picker.list_title",
+                "ae2patterngen.gui.recipe_picker.list_title",
                 state.getCurrentRecipes()
                     .size()));
         listTitle.setPos(8, topY - 10);
         builder.widget(listTitle);
 
         TextWidget detailTitle = new TextWidget(
-            EnumChatFormatting.BOLD + I18nUtil.tr("MyMod.gui.recipe_picker.detail_title"));
+            EnumChatFormatting.BOLD + I18nUtil.tr("ae2patterngen.gui.recipe_picker.detail_title"));
         detailTitle.setPos(rightX, topY - 10);
         builder.widget(detailTitle);
 
@@ -136,7 +136,7 @@ public class GuiRecipePicker {
 
         int previewBtnW = leftW - 6 - SELECT_BTN_W - 4;
         int chooseLabelW = Minecraft.getMinecraft().fontRenderer
-            .getStringWidth(I18nUtil.tr("MyMod.gui.recipe_picker.button.select"));
+            .getStringWidth(I18nUtil.tr("ae2patterngen.gui.recipe_picker.button.select"));
 
         for (int i = 0; i < rowCapacity; i++) {
             final int recipeIndex = i;
@@ -159,7 +159,7 @@ public class GuiRecipePicker {
                 if (recipeIndex < 0 || recipeIndex >= currentRecipes.size()) return;
                 state.selectedRecipeIndex = recipeIndex;
                 state.statusText = EnumChatFormatting.DARK_GRAY
-                    + I18nUtil.tr("MyMod.gui.recipe_picker.status.previewed", recipeIndex + 1);
+                    + I18nUtil.tr("ae2patterngen.gui.recipe_picker.status.previewed", recipeIndex + 1);
             });
             candidateList.widget(previewBtn);
 
@@ -212,7 +212,7 @@ public class GuiRecipePicker {
                 int chosenIndex = resolveChosenIndex(recipeIndex, state.selectedRecipeIndex, currentRecipes.size());
                 if (chosenIndex < 0) {
                     state.statusText = EnumChatFormatting.RED
-                        + I18nUtil.tr("MyMod.gui.recipe_picker.status.no_candidate");
+                        + I18nUtil.tr("ae2patterngen.gui.recipe_picker.status.no_candidate");
                     state.inputLocked = false;
                     return;
                 }
@@ -238,7 +238,7 @@ public class GuiRecipePicker {
                 boolean isFinalConflict = state.currentConflictIndex() >= state.totalConflicts;
                 if (isFinalConflict) {
                     state.statusText = EnumChatFormatting.YELLOW
-                        + I18nUtil.tr("MyMod.gui.recipe_picker.status.final_submitted");
+                        + I18nUtil.tr("ae2patterngen.gui.recipe_picker.status.final_submitted");
                     activeState = null;
                     Minecraft.getMinecraft()
                         .displayGuiScreen(null);
@@ -246,12 +246,12 @@ public class GuiRecipePicker {
                 }
                 state.awaitingServer = true;
                 state.statusText = EnumChatFormatting.YELLOW
-                    + I18nUtil.tr("MyMod.gui.recipe_picker.status.batch_submitted");
+                    + I18nUtil.tr("ae2patterngen.gui.recipe_picker.status.batch_submitted");
             });
             candidateList.widget(selectBtn);
 
             TextWidget selectBtnText = new TextWidget(
-                EnumChatFormatting.BLACK + I18nUtil.tr("MyMod.gui.recipe_picker.button.select"));
+                EnumChatFormatting.BLACK + I18nUtil.tr("ae2patterngen.gui.recipe_picker.button.select"));
             selectBtnText.setEnabled(
                 widget -> isValidRecipeIndex(
                     recipeIndex,
@@ -311,7 +311,7 @@ public class GuiRecipePicker {
         });
         builder.widget(cancelBtn);
 
-        String cancelText = I18nUtil.tr("MyMod.gui.recipe_picker.button.cancel");
+        String cancelText = I18nUtil.tr("ae2patterngen.gui.recipe_picker.button.cancel");
         int cancelTextWidth = Minecraft.getMinecraft().fontRenderer.getStringWidth(cancelText);
         TextWidget cancelBtnText = new TextWidget(EnumChatFormatting.BLACK + cancelText);
         cancelBtnText.setPos(cancelBtnX + Math.max(2, (cancelBtnW - cancelTextWidth) / 2), cancelBtnY + 2);
@@ -329,11 +329,11 @@ public class GuiRecipePicker {
     private static String formatInputPreview(RecipeEntry recipe, boolean selected) {
         String color = selected ? EnumChatFormatting.DARK_AQUA.toString() : EnumChatFormatting.DARK_GRAY.toString();
         return color
-            + I18nUtil.tr("MyMod.gui.recipe_picker.preview.input", trimText(buildInputPreview(recipe, 2), 24));
+            + I18nUtil.tr("ae2patterngen.gui.recipe_picker.preview.input", trimText(buildInputPreview(recipe, 2), 24));
     }
 
     private static String buildInputPreview(RecipeEntry recipe, int maxParts) {
-        if (recipe == null) return I18nUtil.tr("MyMod.gui.common.none");
+        if (recipe == null) return I18nUtil.tr("ae2patterngen.gui.common.none");
         List<String> parts = new ArrayList<>();
 
         if (recipe.inputs != null) {
@@ -353,7 +353,7 @@ public class GuiRecipePicker {
         }
 
         int totalCount = countItemStacks(recipe.inputs) + countFluidStacks(recipe.fluidInputs);
-        if (parts.isEmpty()) return I18nUtil.tr("MyMod.gui.common.none");
+        if (parts.isEmpty()) return I18nUtil.tr("ae2patterngen.gui.common.none");
         String preview = String.join(", ", parts);
         if (totalCount > parts.size()) {
             preview += ", ...";
@@ -376,45 +376,45 @@ public class GuiRecipePicker {
     private static List<String> buildDetailLines(RecipeEntry recipe) {
         ArrayList<String> lines = new ArrayList<>();
         if (recipe == null) {
-            lines.add(EnumChatFormatting.RED + I18nUtil.tr("MyMod.gui.recipe_picker.detail.not_selected"));
+            lines.add(EnumChatFormatting.RED + I18nUtil.tr("ae2patterngen.gui.recipe_picker.detail.not_selected"));
             return lines;
         }
 
         lines.add(
             EnumChatFormatting.AQUA + ""
                 + EnumChatFormatting.BOLD
-                + I18nUtil.tr("MyMod.gui.recipe_picker.detail.meta"));
+                + I18nUtil.tr("ae2patterngen.gui.recipe_picker.detail.meta"));
         lines.add(
             EnumChatFormatting.WHITE + I18nUtil.tr(
-                "MyMod.gui.recipe_picker.detail.machine",
+                "ae2patterngen.gui.recipe_picker.detail.machine",
                 trimText(safeText(recipe.machineDisplayName), 24)));
         lines.add(
             EnumChatFormatting.WHITE + I18nUtil
-                .tr("MyMod.gui.recipe_picker.detail.recipe_map", trimText(safeText(recipe.recipeMapId), 24)));
+                .tr("ae2patterngen.gui.recipe_picker.detail.recipe_map", trimText(safeText(recipe.recipeMapId), 24)));
         lines.add(
-            EnumChatFormatting.WHITE + I18nUtil.tr("MyMod.gui.recipe_picker.detail.duration", recipe.duration));
+            EnumChatFormatting.WHITE + I18nUtil.tr("ae2patterngen.gui.recipe_picker.detail.duration", recipe.duration));
         lines.add(EnumChatFormatting.WHITE + "EU/t: " + recipe.euPerTick);
         lines.add("");
 
-        appendItemSection(lines, I18nUtil.tr("MyMod.gui.recipe_picker.detail.input_items"), recipe.inputs, 20);
+        appendItemSection(lines, I18nUtil.tr("ae2patterngen.gui.recipe_picker.detail.input_items"), recipe.inputs, 20);
         appendFluidSection(
             lines,
-            I18nUtil.tr("MyMod.gui.recipe_picker.detail.input_fluids"),
+            I18nUtil.tr("ae2patterngen.gui.recipe_picker.detail.input_fluids"),
             recipe.fluidInputs,
             20);
         appendItemSection(
             lines,
-            I18nUtil.tr("MyMod.gui.recipe_picker.detail.output_items"),
+            I18nUtil.tr("ae2patterngen.gui.recipe_picker.detail.output_items"),
             recipe.outputs,
             20);
         appendFluidSection(
             lines,
-            I18nUtil.tr("MyMod.gui.recipe_picker.detail.output_fluids"),
+            I18nUtil.tr("ae2patterngen.gui.recipe_picker.detail.output_fluids"),
             recipe.fluidOutputs,
             20);
         appendItemSection(
             lines,
-            I18nUtil.tr("MyMod.gui.recipe_picker.detail.special_items"),
+            I18nUtil.tr("ae2patterngen.gui.recipe_picker.detail.special_items"),
             recipe.specialItems,
             20);
         return lines;
@@ -424,7 +424,7 @@ public class GuiRecipePicker {
         int count = countItemStacks(stacks);
         lines.add(EnumChatFormatting.AQUA + "" + EnumChatFormatting.BOLD + title + " (" + count + ")");
         if (count == 0) {
-            lines.add(EnumChatFormatting.GRAY + " - " + I18nUtil.tr("MyMod.gui.common.none"));
+            lines.add(EnumChatFormatting.GRAY + " - " + I18nUtil.tr("ae2patterngen.gui.common.none"));
             lines.add("");
             return;
         }
@@ -443,7 +443,7 @@ public class GuiRecipePicker {
         int count = countFluidStacks(fluids);
         lines.add(EnumChatFormatting.AQUA + "" + EnumChatFormatting.BOLD + title + " (" + count + ")");
         if (count == 0) {
-            lines.add(EnumChatFormatting.GRAY + " - " + I18nUtil.tr("MyMod.gui.common.none"));
+            lines.add(EnumChatFormatting.GRAY + " - " + I18nUtil.tr("ae2patterngen.gui.common.none"));
             lines.add("");
             return;
         }
@@ -464,7 +464,7 @@ public class GuiRecipePicker {
     }
 
     private static String getPrimaryOutputName(RecipeEntry recipe) {
-        if (recipe == null) return I18nUtil.tr("MyMod.gui.common.unknown");
+        if (recipe == null) return I18nUtil.tr("ae2patterngen.gui.common.unknown");
         if (recipe.outputs != null) {
             for (ItemStack out : recipe.outputs) {
                 if (out != null) {
@@ -479,7 +479,7 @@ public class GuiRecipePicker {
                 }
             }
         }
-        return I18nUtil.tr("MyMod.gui.common.unknown");
+        return I18nUtil.tr("ae2patterngen.gui.common.unknown");
     }
 
     private static int countItemStacks(ItemStack[] stacks) {
@@ -528,7 +528,7 @@ public class GuiRecipePicker {
     }
 
     private static String safeText(String text) {
-        return text != null && !text.isEmpty() ? text : I18nUtil.tr("MyMod.gui.common.none");
+        return text != null && !text.isEmpty() ? text : I18nUtil.tr("ae2patterngen.gui.common.none");
     }
 
     private static int[] buildSubmittedSelections(int[] selections, int expectedCount) {
@@ -574,7 +574,7 @@ public class GuiRecipePicker {
         int current = state.currentConflictIndex();
         int total = state.totalConflicts;
         int remaining = current > 0 ? Math.max(0, total - current + 1) : Math.max(0, total);
-        return I18nUtil.tr("MyMod.gui.recipe_picker.title", productName, remaining);
+        return I18nUtil.tr("ae2patterngen.gui.recipe_picker.title", productName, remaining);
     }
 
     private static String buildDefaultStatusText(ClientBatchState state) {
@@ -584,8 +584,8 @@ public class GuiRecipePicker {
         int total = state.totalConflicts;
         return recipeCount > 0
             ? EnumChatFormatting.DARK_GRAY
-                + I18nUtil.tr("MyMod.gui.recipe_picker.status.default", current, total)
-            : EnumChatFormatting.RED + I18nUtil.tr("MyMod.gui.recipe_picker.status.default_empty");
+                + I18nUtil.tr("ae2patterngen.gui.recipe_picker.status.default", current, total)
+            : EnumChatFormatting.RED + I18nUtil.tr("ae2patterngen.gui.recipe_picker.status.default_empty");
     }
 
     public static class ClientBatchState {
@@ -670,10 +670,10 @@ public class GuiRecipePicker {
 
         String getCurrentProductName() {
             if (localIndex < 0 || localIndex >= productNames.size()) {
-                return I18nUtil.tr("MyMod.gui.recipe_picker.unknown_product");
+                return I18nUtil.tr("ae2patterngen.gui.recipe_picker.unknown_product");
             }
             String name = productNames.get(localIndex);
-            return name != null ? name : I18nUtil.tr("MyMod.gui.recipe_picker.unknown_product");
+            return name != null ? name : I18nUtil.tr("ae2patterngen.gui.recipe_picker.unknown_product");
         }
 
         List<RecipeEntry> getCurrentRecipes() {

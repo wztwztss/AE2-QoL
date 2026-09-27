@@ -69,20 +69,20 @@ public class PacketResolveConflicts implements IMessage {
 
             if (message.cancel) {
                 ConflictSession.stop(uuid);
-                send(player, EnumChatFormatting.YELLOW, "MyMod.msg.conflict.cancelled");
+                send(player, EnumChatFormatting.YELLOW, "ae2patterngen.msg.conflict.cancelled");
                 return null;
             }
 
             int serverConflictIndex = ConflictResolutionService.currentServerStartIndex(session);
             if (message.expectedConflictIndex > 0 && message.expectedConflictIndex != serverConflictIndex) {
-                send(player, EnumChatFormatting.RED, "MyMod.msg.conflict.session_changed");
+                send(player, EnumChatFormatting.RED, "ae2patterngen.msg.conflict.session_changed");
                 ConflictResolutionService.sendCurrentBatch(player, session);
                 return null;
             }
 
             List<RecipeEntry> currentRecipes = session.getCurrentRecipes();
             if (currentRecipes == null || currentRecipes.isEmpty()) {
-                send(player, EnumChatFormatting.RED, "MyMod.msg.conflict.session_empty");
+                send(player, EnumChatFormatting.RED, "ae2patterngen.msg.conflict.session_empty");
                 ConflictSession.stop(uuid);
                 return null;
             }
@@ -91,7 +91,7 @@ public class PacketResolveConflicts implements IMessage {
                 send(
                     player,
                     EnumChatFormatting.RED,
-                    "MyMod.msg.conflict.invalid_selection",
+                    "ae2patterngen.msg.conflict.invalid_selection",
                     message.recipeIndex);
                 ConflictResolutionService.sendCurrentBatch(player, session);
                 return null;

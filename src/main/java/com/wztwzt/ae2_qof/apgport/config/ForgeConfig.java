@@ -80,7 +80,7 @@ public final class ForgeConfig {
     private ForgeConfig() {}
 
     public static void load(File suggestedConfigFile) {
-        File file = suggestedConfigFile != null ? suggestedConfigFile : new File("config", "MyMod.cfg");
+        File file = suggestedConfigFile != null ? suggestedConfigFile : new File("config", "ae2patterngen.cfg");
         Configuration cfg = new Configuration(file);
         try {
             cfg.load();

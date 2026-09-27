@@ -81,7 +81,7 @@ public class PacketStorageAction implements IMessage {
 
         private void handleExtract(EntityPlayerMP player, UUID uuid) {
             if (PatternStorage.isEmpty(uuid)) {
-                send(player, EnumChatFormatting.YELLOW, "MyMod.msg.storage.empty_extract");
+                send(player, EnumChatFormatting.YELLOW, "ae2patterngen.msg.storage.empty_extract");
                 return;
             }
 
@@ -94,7 +94,7 @@ public class PacketStorageAction implements IMessage {
             }
 
             if (freeSlots == 0) {
-                send(player, EnumChatFormatting.RED, "MyMod.msg.storage.inventory_full");
+                send(player, EnumChatFormatting.RED, "ae2patterngen.msg.storage.inventory_full");
                 return;
             }
 
@@ -114,29 +114,29 @@ public class PacketStorageAction implements IMessage {
                 send(
                     player,
                     EnumChatFormatting.GREEN,
-                    "MyMod.msg.storage.extracted_with_remaining",
+                    "ae2patterngen.msg.storage.extracted_with_remaining",
                     added,
                     remaining.count);
             } else {
-                send(player, EnumChatFormatting.GREEN, "MyMod.msg.storage.extracted", added);
+                send(player, EnumChatFormatting.GREEN, "ae2patterngen.msg.storage.extracted", added);
             }
         }
 
         private void handleClear(EntityPlayerMP player, UUID uuid) {
             PatternStorage.StorageSummary summary = PatternStorage.getSummary(uuid);
             if (summary.count == 0) {
-                send(player, EnumChatFormatting.YELLOW, "MyMod.msg.storage.already_empty");
+                send(player, EnumChatFormatting.YELLOW, "ae2patterngen.msg.storage.already_empty");
                 return;
             }
 
             PatternStorage.clear(uuid);
-            send(player, EnumChatFormatting.GREEN, "MyMod.msg.storage.cleared", summary.count);
+            send(player, EnumChatFormatting.GREEN, "ae2patterngen.msg.storage.cleared", summary.count);
         }
 
         private void handleDelete(EntityPlayerMP player, UUID uuid, int index) {
             ItemStack removed = PatternStorage.delete(uuid, index);
             if (removed == null) {
-                send(player, EnumChatFormatting.RED, "MyMod.msg.storage.delete_invalid");
+                send(player, EnumChatFormatting.RED, "ae2patterngen.msg.storage.delete_invalid");
                 return;
             }
 
@@ -144,7 +144,7 @@ public class PacketStorageAction implements IMessage {
             send(
                 player,
                 EnumChatFormatting.GREEN,
-                "MyMod.msg.storage.deleted",
+                "ae2patterngen.msg.storage.deleted",
                 removed.getDisplayName(),
                 remaining.count);
         }

@@ -73,7 +73,7 @@ public class ItemPatternGenerator extends Item implements INetworkEncodable, IWi
 
     public ItemPatternGenerator() {
         super();
-        setUnlocalizedName("MyMod.pattern_generator");
+        setUnlocalizedName("ae2patterngen.pattern_generator");
         setMaxStackSize(1);
         setCreativeTab(CreativeTabs.tabRedstone);
     }
@@ -129,7 +129,7 @@ public class ItemPatternGenerator extends Item implements INetworkEncodable, IWi
 
         TileEntity te = world.getTileEntity(x, y, z);
         if (te == null) {
-            player.addChatMessage(msg(EnumChatFormatting.RED, "MyMod.msg.item.block_not_detectable"));
+            player.addChatMessage(msg(EnumChatFormatting.RED, "ae2patterngen.msg.item.block_not_detectable"));
             return true;
         }
 
@@ -143,7 +143,7 @@ public class ItemPatternGenerator extends Item implements INetworkEncodable, IWi
                 player.addChatMessage(
                     msg(
                         EnumChatFormatting.GREEN,
-                        "MyMod.msg.item.detected_recipe_map",
+                        "ae2patterngen.msg.item.detected_recipe_map",
                         recipeMap.unlocalizedName));
                 return true;
             }
@@ -154,9 +154,9 @@ public class ItemPatternGenerator extends Item implements INetworkEncodable, IWi
         if (insertTarget == null) {
             // 如果既不是可读取的 GT 机器也不是容器，提示错误
             if (te instanceof IGregTechTileEntity) {
-                player.addChatMessage(msg(EnumChatFormatting.RED, "MyMod.msg.item.machine_part_unsupported"));
+                player.addChatMessage(msg(EnumChatFormatting.RED, "ae2patterngen.msg.item.machine_part_unsupported"));
             } else {
-                player.addChatMessage(msg(EnumChatFormatting.RED, "MyMod.msg.item.block_extract_unsupported"));
+                player.addChatMessage(msg(EnumChatFormatting.RED, "ae2patterngen.msg.item.block_extract_unsupported"));
             }
             return true;
         }
@@ -164,7 +164,7 @@ public class ItemPatternGenerator extends Item implements INetworkEncodable, IWi
         // 执行原有导出逻辑
         UUID uuid = player.getUniqueID();
         if (PatternStorage.isEmpty(uuid)) {
-            player.addChatMessage(msg(EnumChatFormatting.YELLOW, "MyMod.msg.item.storage_empty_export"));
+            player.addChatMessage(msg(EnumChatFormatting.YELLOW, "ae2patterngen.msg.item.storage_empty_export"));
             return true;
         }
 
@@ -194,7 +194,7 @@ public class ItemPatternGenerator extends Item implements INetworkEncodable, IWi
             PatternStorage.clear(uuid);
         } else {
             if (!PatternStorage.save(uuid, remainingPatterns, storageSummary.source)) {
-                player.addChatMessage(msg(EnumChatFormatting.RED, "MyMod.msg.item.storage_update_failed"));
+                player.addChatMessage(msg(EnumChatFormatting.RED, "ae2patterngen.msg.item.storage_update_failed"));
                 return true;
             }
         }
@@ -205,11 +205,11 @@ public class ItemPatternGenerator extends Item implements INetworkEncodable, IWi
             player.addChatMessage(
                 msg(
                     EnumChatFormatting.GREEN,
-                    "MyMod.msg.item.exported_with_remaining",
+                    "ae2patterngen.msg.item.exported_with_remaining",
                     transferred,
                     remainingPatterns.size()));
         } else {
-            player.addChatMessage(msg(EnumChatFormatting.GREEN, "MyMod.msg.item.exported", transferred));
+            player.addChatMessage(msg(EnumChatFormatting.GREEN, "ae2patterngen.msg.item.exported", transferred));
         }
 
         return true; // 消费事件
@@ -607,91 +607,91 @@ public class ItemPatternGenerator extends Item implements INetworkEncodable, IWi
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void addInformation(ItemStack stack, EntityPlayer player, List list, boolean advanced) {
         if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
-            list.add(EnumChatFormatting.YELLOW + I18nUtil.tr("MyMod.tooltip.feature.title"));
+            list.add(EnumChatFormatting.YELLOW + I18nUtil.tr("ae2patterngen.tooltip.feature.title"));
             list.add(
                 EnumChatFormatting.GRAY + "(1) "
                     + EnumChatFormatting.WHITE
-                    + I18nUtil.tr("MyMod.tooltip.feature.batch_encode")
+                    + I18nUtil.tr("ae2patterngen.tooltip.feature.batch_encode")
                     + EnumChatFormatting.GRAY
                     + ": "
-                    + I18nUtil.tr("MyMod.tooltip.feature.batch_encode.desc"));
+                    + I18nUtil.tr("ae2patterngen.tooltip.feature.batch_encode.desc"));
             list.add(
                 EnumChatFormatting.GRAY + "(2) "
                     + EnumChatFormatting.WHITE
-                    + I18nUtil.tr("MyMod.tooltip.feature.smart_filter")
+                    + I18nUtil.tr("ae2patterngen.tooltip.feature.smart_filter")
                     + EnumChatFormatting.GRAY
                     + ": "
-                    + I18nUtil.tr("MyMod.tooltip.feature.smart_filter.desc"));
+                    + I18nUtil.tr("ae2patterngen.tooltip.feature.smart_filter.desc"));
             list.add(
                 EnumChatFormatting.GRAY + "(3) "
                     + EnumChatFormatting.WHITE
-                    + I18nUtil.tr("MyMod.tooltip.feature.explicit_blacklist")
+                    + I18nUtil.tr("ae2patterngen.tooltip.feature.explicit_blacklist")
                     + EnumChatFormatting.GRAY
                     + ": "
-                    + I18nUtil.tr("MyMod.tooltip.feature.explicit_blacklist.desc"));
+                    + I18nUtil.tr("ae2patterngen.tooltip.feature.explicit_blacklist.desc"));
             list.add(
                 EnumChatFormatting.GRAY + "(4) "
                     + EnumChatFormatting.WHITE
-                    + I18nUtil.tr("MyMod.tooltip.feature.conflict_resolution")
+                    + I18nUtil.tr("ae2patterngen.tooltip.feature.conflict_resolution")
                     + EnumChatFormatting.GRAY
                     + ": "
-                    + I18nUtil.tr("MyMod.tooltip.feature.conflict_resolution.desc"));
+                    + I18nUtil.tr("ae2patterngen.tooltip.feature.conflict_resolution.desc"));
             list.add(
                 EnumChatFormatting.GRAY + "(5) "
                     + EnumChatFormatting.WHITE
-                    + I18nUtil.tr("MyMod.tooltip.feature.virtual_storage")
+                    + I18nUtil.tr("ae2patterngen.tooltip.feature.virtual_storage")
                     + EnumChatFormatting.GRAY
                     + ": "
-                    + I18nUtil.tr("MyMod.tooltip.feature.virtual_storage.desc"));
+                    + I18nUtil.tr("ae2patterngen.tooltip.feature.virtual_storage.desc"));
             list.add(
                 EnumChatFormatting.GRAY + "(6) "
                     + EnumChatFormatting.WHITE
-                    + I18nUtil.tr("MyMod.tooltip.feature.equivalent_consume")
+                    + I18nUtil.tr("ae2patterngen.tooltip.feature.equivalent_consume")
                     + EnumChatFormatting.GRAY
                     + ": "
-                    + I18nUtil.tr("MyMod.tooltip.feature.equivalent_consume.desc"));
+                    + I18nUtil.tr("ae2patterngen.tooltip.feature.equivalent_consume.desc"));
             list.add("");
-            list.add(EnumChatFormatting.YELLOW + I18nUtil.tr("MyMod.tooltip.usage.title"));
+            list.add(EnumChatFormatting.YELLOW + I18nUtil.tr("ae2patterngen.tooltip.usage.title"));
             list.add(
                 EnumChatFormatting.GRAY + "- "
                     + EnumChatFormatting.WHITE
-                    + I18nUtil.tr("MyMod.tooltip.usage.right_click_air")
+                    + I18nUtil.tr("ae2patterngen.tooltip.usage.right_click_air")
                     + EnumChatFormatting.GRAY
                     + ": "
-                    + I18nUtil.tr("MyMod.tooltip.usage.right_click_air.desc"));
+                    + I18nUtil.tr("ae2patterngen.tooltip.usage.right_click_air.desc"));
             list.add(
                 EnumChatFormatting.GRAY + "- "
                     + EnumChatFormatting.WHITE
-                    + I18nUtil.tr("MyMod.tooltip.usage.shift_right_click_air")
+                    + I18nUtil.tr("ae2patterngen.tooltip.usage.shift_right_click_air")
                     + EnumChatFormatting.GRAY
                     + ": "
-                    + I18nUtil.tr("MyMod.tooltip.usage.shift_right_click_air.desc"));
+                    + I18nUtil.tr("ae2patterngen.tooltip.usage.shift_right_click_air.desc"));
             list.add(
                 EnumChatFormatting.GRAY + "- "
                     + EnumChatFormatting.WHITE
-                    + I18nUtil.tr("MyMod.tooltip.usage.shift_right_click_block")
+                    + I18nUtil.tr("ae2patterngen.tooltip.usage.shift_right_click_block")
                     + EnumChatFormatting.GRAY
                     + ": "
-                    + I18nUtil.tr("MyMod.tooltip.usage.shift_right_click_block.desc"));
+                    + I18nUtil.tr("ae2patterngen.tooltip.usage.shift_right_click_block.desc"));
             list.add(
                 EnumChatFormatting.GRAY + "- "
                     + EnumChatFormatting.WHITE
-                    + I18nUtil.tr("MyMod.tooltip.usage.network_binding")
+                    + I18nUtil.tr("ae2patterngen.tooltip.usage.network_binding")
                     + EnumChatFormatting.GRAY
                     + ": "
-                    + I18nUtil.tr("MyMod.tooltip.usage.network_binding.desc"));
+                    + I18nUtil.tr("ae2patterngen.tooltip.usage.network_binding.desc"));
         } else {
-            list.add(EnumChatFormatting.GRAY + I18nUtil.tr("MyMod.tooltip.hint.quick_open"));
-            list.add(EnumChatFormatting.GRAY + I18nUtil.tr("MyMod.tooltip.hint.quick_storage"));
-            list.add(EnumChatFormatting.GRAY + I18nUtil.tr("MyMod.tooltip.hint.quick_detect_export"));
+            list.add(EnumChatFormatting.GRAY + I18nUtil.tr("ae2patterngen.tooltip.hint.quick_open"));
+            list.add(EnumChatFormatting.GRAY + I18nUtil.tr("ae2patterngen.tooltip.hint.quick_storage"));
+            list.add(EnumChatFormatting.GRAY + I18nUtil.tr("ae2patterngen.tooltip.hint.quick_detect_export"));
             list.add(
-                EnumChatFormatting.GRAY + I18nUtil.tr("MyMod.tooltip.hint.hold_shift_prefix")
+                EnumChatFormatting.GRAY + I18nUtil.tr("ae2patterngen.tooltip.hint.hold_shift_prefix")
                     + " "
                     + EnumChatFormatting.AQUA
-                    + I18nUtil.tr("MyMod.tooltip.key.shift")
+                    + I18nUtil.tr("ae2patterngen.tooltip.key.shift")
                     + EnumChatFormatting.GRAY
                     + " "
-                    + I18nUtil.tr("MyMod.tooltip.hint.hold_shift"));
+                    + I18nUtil.tr("ae2patterngen.tooltip.hint.hold_shift"));
         }
     }
 

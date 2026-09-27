@@ -32,7 +32,7 @@ public class GuiPatternDetail {
         builder.setBackground(com.gtnewhorizons.modularui.api.ModularUITextures.VANILLA_BACKGROUND);
 
         TextWidget titleText = new TextWidget(
-            EnumChatFormatting.BOLD + I18nUtil.tr("MyMod.gui.pattern_detail.title", patternIndex + 1));
+            EnumChatFormatting.BOLD + I18nUtil.tr("ae2patterngen.gui.pattern_detail.title", patternIndex + 1));
         titleText.setScale(1.2f);
         titleText.setSize(GUI_W - 16, 20);
         titleText.setPos(8, 8);
@@ -44,13 +44,13 @@ public class GuiPatternDetail {
 
         int y = 0;
         TextWidget inTitle = new TextWidget(
-            EnumChatFormatting.BOLD + I18nUtil.tr("MyMod.gui.pattern_detail.input.title", inputNames.size()));
+            EnumChatFormatting.BOLD + I18nUtil.tr("ae2patterngen.gui.pattern_detail.input.title", inputNames.size()));
         inTitle.setPos(4, y);
         scrollable.widget(inTitle);
         y += 12;
 
         if (inputNames.isEmpty()) {
-            TextWidget emptyIn = new TextWidget(EnumChatFormatting.GRAY + I18nUtil.tr("MyMod.gui.common.none"));
+            TextWidget emptyIn = new TextWidget(EnumChatFormatting.GRAY + I18nUtil.tr("ae2patterngen.gui.common.none"));
             emptyIn.setPos(8, y);
             scrollable.widget(emptyIn);
             y += 12;
@@ -65,14 +65,14 @@ public class GuiPatternDetail {
         y += 8;
 
         TextWidget outTitle = new TextWidget(
-            EnumChatFormatting.BOLD + I18nUtil.tr("MyMod.gui.pattern_detail.output.title", outputNames.size()));
+            EnumChatFormatting.BOLD + I18nUtil.tr("ae2patterngen.gui.pattern_detail.output.title", outputNames.size()));
         outTitle.setPos(4, y);
         scrollable.widget(outTitle);
         y += 12;
 
         if (outputNames.isEmpty()) {
             TextWidget emptyOut = new TextWidget(
-                EnumChatFormatting.GRAY + I18nUtil.tr("MyMod.gui.common.none"));
+                EnumChatFormatting.GRAY + I18nUtil.tr("ae2patterngen.gui.common.none"));
             emptyOut.setPos(8, y);
             scrollable.widget(emptyOut);
             y += 12;
@@ -94,7 +94,7 @@ public class GuiPatternDetail {
         btnDelete.setPos(GUI_W / 2 - btnW - 4, btnY);
         btnDelete.setSize(btnW, btnH);
         btnDelete.setBackground(com.gtnewhorizons.modularui.api.ModularUITextures.VANILLA_BUTTON_NORMAL);
-        TextWidget btnDelText = new TextWidget(I18nUtil.tr("MyMod.gui.pattern_detail.button.delete"));
+        TextWidget btnDelText = new TextWidget(I18nUtil.tr("ae2patterngen.gui.pattern_detail.button.delete"));
         btnDelText.setPos(GUI_W / 2 - btnW - 4 + 16, btnY + 6);
         btnDelete.setOnClick((cd, w) -> {
             NetworkHandler.INSTANCE
@@ -108,7 +108,7 @@ public class GuiPatternDetail {
         btnBack.setPos(GUI_W / 2 + 4, btnY);
         btnBack.setSize(btnW, btnH);
         btnBack.setBackground(com.gtnewhorizons.modularui.api.ModularUITextures.VANILLA_BUTTON_NORMAL);
-        TextWidget btnBackText = new TextWidget(I18nUtil.tr("MyMod.gui.common.back"));
+        TextWidget btnBackText = new TextWidget(I18nUtil.tr("ae2patterngen.gui.common.back"));
         btnBackText.setPos(GUI_W / 2 + 4 + 32, btnY + 6);
         btnBack.setOnClick(
             (cd, w) -> { com.wztwzt.ae2_qof.apgport.ApgStubs.openPatternStorageScreen(Minecraft.getMinecraft().thePlayer); });

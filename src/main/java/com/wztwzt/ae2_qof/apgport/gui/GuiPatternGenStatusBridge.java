@@ -24,7 +24,7 @@ public final class GuiPatternGenStatusBridge {
 
     public static String getStatus() {
         if (statusText == null || statusText.isEmpty()) {
-            return I18nUtil.tr("MyMod.gui.pattern_gen.status.ready");
+            return I18nUtil.tr("ae2patterngen.gui.pattern_gen.status.ready");
         }
         return statusText;
     }

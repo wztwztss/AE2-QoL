@@ -110,7 +110,7 @@ public class PacketGeneratePatterns implements IMessage {
                     send(
                         player,
                         EnumChatFormatting.RED,
-                        "MyMod.msg.generate.storage_not_empty",
+                        "ae2patterngen.msg.generate.storage_not_empty",
                         existing.count,
                         existing.source);
                     return null;
@@ -125,7 +125,7 @@ public class PacketGeneratePatterns implements IMessage {
                     message.targetTier);
                 CacheQueryResult queryResult = RecipeCacheService.loadAndFilterRecipes(message.recipeMapId, filter);
                 if (!queryResult.cacheValid) {
-                    send(player, EnumChatFormatting.RED, "MyMod.msg.cache.missing_or_invalid");
+                    send(player, EnumChatFormatting.RED, "ae2patterngen.msg.cache.missing_or_invalid");
                     return null;
                 }
 
@@ -135,7 +135,7 @@ public class PacketGeneratePatterns implements IMessage {
                     send(
                         player,
                         EnumChatFormatting.RED,
-                        "MyMod.msg.generate.no_matching_map",
+                        "ae2patterngen.msg.generate.no_matching_map",
                         message.recipeMapId);
                     return null;
                 }
@@ -143,7 +143,7 @@ public class PacketGeneratePatterns implements IMessage {
                 send(
                     player,
                     EnumChatFormatting.GRAY,
-                    "MyMod.msg.generate.matched_maps",
+                    "ae2patterngen.msg.generate.matched_maps",
                     String.join(", ", matchedMaps));
 
                 // 2. 使用缓存查询结果
@@ -152,12 +152,12 @@ public class PacketGeneratePatterns implements IMessage {
                 send(
                     player,
                     EnumChatFormatting.GRAY,
-                    "MyMod.msg.generate.filter_result",
+                    "ae2patterngen.msg.generate.filter_result",
                     queryResult.totalLoadedCount,
                     queryResult.totalFilteredCount);
 
                 if (filtered.isEmpty()) {
-                    send(player, EnumChatFormatting.YELLOW, "MyMod.msg.generate.no_match_after_filter");
+                    send(player, EnumChatFormatting.YELLOW, "ae2patterngen.msg.generate.no_match_after_filter");
                     return null;
                 }
 
@@ -181,13 +181,13 @@ public class PacketGeneratePatterns implements IMessage {
                                 recipe.euPerTick));
                     }
                     filtered = replaced;
-                    send(player, EnumChatFormatting.GRAY, "MyMod.msg.generate.replacement_applied");
+                    send(player, EnumChatFormatting.GRAY, "ae2patterngen.msg.generate.replacement_applied");
                 }
 
                 // [新增] 配方冲突检测与分组 (按产物显示名称)
                 java.util.Map<String, List<RecipeEntry>> groups = new java.util.LinkedHashMap<>();
                 for (RecipeEntry re : filtered) {
-                    String key = I18nUtil.tr("MyMod.msg.common.unknown_item");
+                    String key = I18nUtil.tr("ae2patterngen.msg.common.unknown_item");
                     if (re.outputs != null && re.outputs.length > 0 && re.outputs[0] != null) {
                         key = ItemStackUtil.getSafeDisplayName(re.outputs[0]);
                     } else if (re.fluidOutputs != null && re.fluidOutputs.length > 0 && re.fluidOutputs[0] != null) {
@@ -213,7 +213,7 @@ public class PacketGeneratePatterns implements IMessage {
                         send(
                             player,
                             EnumChatFormatting.RED,
-                            "MyMod.msg.generate.conflicts_too_large",
+                            "ae2patterngen.msg.generate.conflicts_too_large",
                             filtered.size(),
                             conflicts.size(),
                             ConflictSelectionPolicy.getMaxInteractiveFilteredRecipes(),
@@ -226,7 +226,7 @@ public class PacketGeneratePatterns implements IMessage {
                     send(
                         player,
                         EnumChatFormatting.YELLOW,
-                        "MyMod.msg.generate.conflicts_detected",
+                        "ae2patterngen.msg.generate.conflicts_detected",
                         conflicts.size());
 
                     // 发送第一个冲突给客户端
@@ -241,7 +241,7 @@ public class PacketGeneratePatterns implements IMessage {
                     "[AE2PatternGen] Generation request failed for player %s: %s",
                     player != null ? player.getCommandSenderName() : "unknown",
                     e.getMessage());
-                send(player, EnumChatFormatting.RED, "MyMod.msg.generate.internal_error");
+                send(player, EnumChatFormatting.RED, "ae2patterngen.msg.generate.internal_error");
             }
             return null;
         }
