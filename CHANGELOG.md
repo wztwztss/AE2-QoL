@@ -1,3 +1,51 @@
+## 工作区决策记录 2026-09-26 (36) - **3.25.2 → 3.28.0：通配样板接线修复 + 生成器界面整窗移植 AE2PatternGen**
+
+### 一、3.25.2～3.25.4：Wild 界面接线的三个真问题（全部由用户实测日志定位）
+
+1. **保存被拒 —— 用户口中"无法转移"的直接原因**：`MessageUpdateWildcardConfig` 的守卫用了
+   `SmartWildcardState.isSmartWildcard(stack)`，而它的实现要求"物品上**已经有**我们的 NBT"
+   （`hasTagCompound() && hasKey(KEY_ROOT)`）⇒ **全新未配置**的样板必然被判成"不是通配样板"。
+   用户日志铁证：`Wild 界面保存被拒绝：槽位 6 不是通配样板（item=ItemSmartWildcardPattern）`。
+   改为判**物品实例**（`stack.getItem() == CommonProxy.smartWildcardPattern`）✓。
+2. **批量样板生成器界面只画出标题与一个框**：同"子容器没写尺寸 ⇒ MUI2 按 0 高布局"的老坑（`row()` 与 `capRow` 缺 `size`）；
+   该文件还残留 **16 处 `§` 颜色码**（用户最早批评过的"浅底深灰字"）⇒ 一并清除 ✓。
+3. **NEI 加号在新窗口里失效**：`MixinGuiOverlayButton` 只认 MUI2 的 `GuiContainerWrapper`，而新窗口宿主是 GTNH-MUI 的
+   `ModularGui`。javap 取证：`ModularGui extends GuiContainer implements INEIGuiHandler` ⇒ NEI 本就会把 `+` 派发过来，
+   是判据漏了它 ⇒ 补齐 ✓。
+
+### 二、3.26.0：批量样板生成器界面**整窗移植 AE2PatternGen**（用户指令"直接复制过来再改再优化"）
+
+- **取证**：AE2PatternGen 的界面**也是 GTNH-MUI**（声明 `ModularUI:1.3.1`）⇒ 与已放进 `libs/` 的
+  `modularui-1.3.4.jar` 同一套，可直接照搬 ✓。
+- **搬运**：`apgport/` **65 个文件 / 9,983 行**（gui / filter / recipe / encoder / storage / network / config / util / command），
+  每份文件头保留 **MIT** 来源声明；包名改 `com.wztwzt.ae2_qof.apgport`；新增 `ApgStubs` 收口其 proxy 的三处调用
+  （关闭屏幕照常实现；存储/详情面板记 WARN 待接线，不静默）。
+- **又拦下一个启动崩溃级缺陷**：其 `NetworkHandler.INSTANCE = newSimpleChannel(MyMod.MODID)` 与我们的 `ModNetwork`
+  **同名** ⇒ `NetworkRegistry` 遇重名直接抛异常 ⇒ 改 `_apg` 独立通道 ✓（与 Wild 那次的 `_wild` 同一坑）。
+- **接线**：`CommonProxy` 注册其 `GuiHandler`（101 生成器 / 102 存储）并调用 `NetworkHandler.init()`，成功与失败各留日志；
+  生成器物品右键改开它的窗口（`GuiPatternGen.createWindow(buildContext, 手持物品)` 从手持物品读配置）。
+
+### 三、3.27.0：通配样板恢复**双入口**（用户要求"电路 1~24 与不消耗物品要有入口"）
+
+- **直接右键** → Wild 界面；**Shift+右键** → 我们原有的**四页签 MUI2 编辑器**（含**内置电路**与**不消耗物品**两页）。
+- 旧编辑器因此不再是无入口死代码，而是**备选入口**；两入口都记日志，Shift 那次还在聊天栏说明区别 ✓。
+
+### 四、3.28.0：加号/保存写回后的明确反馈
+
+- 服务端写回我们的 NBT 之后，**同一状态也推到 Wild 的键**，并聊天提示「关掉重开一次即可看到」——
+  Wild 窗口是**构建期**读 NBT、无法就地刷新（限制写在此处，属"说清而不是静默"）✓。
+
+### 五、验证与待测
+
+- 验证：每版 `BUILD SUCCESSFUL`（无管道取码 0）；3.25.2 / 3.25.3 / 3.25.4 / 3.26.0 / 3.27.0 / 3.28.0 各自部署，
+  `mods` 内恒一份且 SHA256 一致；`jar tf` 确认 `wildport/` 与 `apgport/` 全量入包。
+- **待用户实测**：Wild 界面的加号与保存回写；Shift+右键的四页签编辑器（电路/不消耗物品）；AE2PatternGen 界面的打开与使用。
+- **我自己的两次过程失误（记账）**："提交消息写了功能、代码其实没落地"（脚本锚点未命中却照写）✗，以及一次 `mods` 内
+  短暂出现两份 jar（同轮已恢复为一份）✗。⇒ 已固定两条规矩：**代码改写一律用 `edit`**（脚本只做复制/改包名/加声明头）、
+  **提交一律卡在构建成功之后**。
+
+---
+
 ## 工作区决策记录 2026-09-26 (35) - **3.24.0 → 3.25.1：界面整窗移植 WildcardPatternforGTNH（GTNH-MUI）**
 
 > 用户指令：「你不如直接把 wild 模组的复制过来，在此基础改」。路线（用户拍板）：**整窗搬运** Wild 的界面子系统
