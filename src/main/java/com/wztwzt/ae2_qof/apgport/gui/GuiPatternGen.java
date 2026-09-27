@@ -65,15 +65,48 @@ public class GuiPatternGen {
         labelRecipe.setPos(6, refY + 3);
         scrollable.widget(labelRecipe);
 
-        TextFieldWidget tfRecipeMap = new TextFieldWidget();
+        // 3.22.0-fix46：机器编码框改成"输机器名片段 + Tab 循环候选"，并在右侧留出「改」按钮
+        // （MUI1 自绘界面里系统输入法不可用 ⇒ 用原版输入框的对话框才能打中文，见 GuiTextInputDialog）
+        final String[] mapHint = { EnumChatFormatting.GRAY + "输机器名片段（中文/英文/关键字皆可）后按 Tab 循环候选" };
+        TextFieldWidget tfRecipeMap = new RecipeMapTextFieldWidget(hint -> mapHint[0] = hint);
         tfRecipeMap.setText(ItemPatternGenerator.getSavedField(held, ItemPatternGenerator.NBT_RECIPE_MAP));
         tfRecipeMap.setPos(6, refY + 14);
-        tfRecipeMap.setSize(fullFieldW, 14);
+        tfRecipeMap.setSize(fullFieldW - 20, 14);
         tfRecipeMap.setTextColor(0xFFFFFF);
         tfRecipeMap.setBackground(new Rectangle().setColor(0xFF1E1E30));
         tfRecipeMap.setTextAlignment(com.gtnewhorizons.modularui.api.math.Alignment.CenterLeft);
         scrollable.widget(tfRecipeMap);
-        refY += 38;
+        {
+            ButtonWidget btnEdit = new ButtonWidget();
+            btnEdit.setPos(2 + fullFieldW - 18, refY + 14);
+            btnEdit.setSize(18, 14);
+            scrollable.widget(btnEdit);
+            TextWidget btnEditText = new TextWidget("改");
+            btnEditText.setPos(2 + fullFieldW - 18 + 5, refY + 14 + 3);
+            scrollable.widget(btnEditText);
+            btnEdit.setOnClick((clickData, widget) -> {
+                try {
+                    net.minecraft.client.Minecraft.getMinecraft()
+                        .displayGuiScreen(
+                            new com.wztwzt.ae2_qof.client.gui.GuiTextInputDialog(
+                                I18nUtil.tr("ae2patterngen.gui.pattern_gen.section.recipe"),
+                                tfRecipeMap.getText(),
+                                value -> {
+                                    tfRecipeMap.setText(value == null ? "" : value);
+                                    tfRecipeMap.markForUpdate();
+                                }));
+                } catch (Throwable t) {
+                    com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 打开机器编码输入对话框失败", t);
+                }
+            });
+            scrollable.widget(btnEdit);
+        }
+        TextWidget mapHintText = new TextWidget(mapHint[0]);
+        mapHintText.setPos(6, refY + 29);
+        mapHintText.setSize(fullFieldW, 9);
+        mapHintText.setStringSupplier(() -> mapHint[0]);
+        scrollable.widget(mapHintText);
+        refY += 42;
 
         TextWidget labelFilter = new TextWidget(
             EnumChatFormatting.BOLD + I18nUtil.tr("ae2patterngen.gui.pattern_gen.section.filter"));
