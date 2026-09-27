@@ -7,9 +7,10 @@
 
 | 项目 | 我们做了什么 | 许可状态 | 是否需要额外义务 |
 |---|---|---|---|
-| **WildcardPatternforGTNH**（`com.myname.wildcardpattern` 1.1.0） | **只读其源码做兼容性调研**，借鉴"索引期展开"这一**架构思路**；**未复制任何代码**（见下文 §三 的硬证据） | 其仓库为 **MIT** | 无需（思路不受版权保护；且我们未复制表达）。已在本文档致谢 |
+| **WildcardPatternforGTNH**（早期阶段：只读调研） | 3.22/3.23 阶段**只读其源码做兼容性调研**，借鉴"索引期展开"这一**架构思路**，当时**未复制任何代码**（见下文 §三 的硬证据）；**3.24.x 起改为整窗搬运其界面代码，见下一行** | 其仓库为 **MIT** | 早期无需；搬运后按下一行履行 |
 | **WildcardPatternforGTNH** 1.7.10-1.1.0 | 3.24.x/3.25.x：**界面子系统整窗搬运**到本仓库 `wildport/`（25 个文件 / 7,870 行：主窗与复合窗、state/config/entry/generator、三个拖入控件、GUI handler、两个网络包、compat 两个类），并另写 `wildport/bridge/WildcardBridge.java` 与我们的 `SmartWildcardState`/`SmartWildcardExpander` 做双向桥接 | 该项目 LICENSE 为 **MIT** | 已履行：每个搬运文件头保留原项目名与 MIT 声明、并写明「本仓库改了什么」（包名改为 `com.wztwzt.ae2_qof.wildport`、`WildcardPatternMod` 引用改 `MyMod`、GUI id 收口到 `WildportIds`、网络通道改 `_wild` 后缀避免与 `ModNetwork` 重名）；其物品注册入口**不调用**（我们的物品仍是 `ItemSmartWildcardPattern`）；本文档与 CHANGELOG 记录来源与改动 |
-| **GTNH-ModularUI (ModularUI 1.3.4)** | 仅**编译期**依赖（`libs/modularui-1.3.4.jar`，SHA256 `9221B07C…`，取自测试实例），用于编译搬运进来的 Wild 界面；运行期由实例的 `modularui-1.3.4.jar` 提供，我们的 jar 内**不分发**其代码 | LGPL-3.0（编译期引用，非再分发） | 与既有 `libs/` 编译基线（GT/AE2/Thaumcraft…）同一处理方式 || **AE2PatternGen** 1.5 | 3.23.0 的**批量生成器核心改编自其代码**（`recipe/GTRecipeSource` 的 RecipeMap 枚举与筛选思路、`encoder/PatternEncoder` 的样板 NBT 编码、`filter/*` 的过滤器功能面）；改编文件头保留了其版权与许可声明 | README 明确写 **MIT** | 已履行：保留版权声明与许可文本、在本文档与 CHANGELOG 注明来源与改动 |
+| **GTNH-ModularUI (ModularUI 1.3.4)** | 仅**编译期**依赖（`libs/modularui-1.3.4.jar`，SHA256 `9221B07C…`，取自测试实例），用于编译搬运进来的 Wild 界面；运行期由实例的 `modularui-1.3.4.jar` 提供，我们的 jar 内**不分发**其代码 | LGPL-3.0（编译期引用，非再分发） | 与既有 `libs/` 编译基线（GT/AE2/Thaumcraft…）同一处理方式 |
+| **AE2PatternGen** 1.5 | 3.23.0 的**批量生成器核心改编自其代码**（`recipe/GTRecipeSource` 的 RecipeMap 枚举与筛选思路、`encoder/PatternEncoder` 的样板 NBT 编码、`filter/*` 的过滤器功能面）；改编文件头保留了其版权与许可声明 | README 明确写 **MIT** | 已履行：保留版权声明与许可文本、在本文档与 CHANGELOG 注明来源与改动 |
 | **Applied Energistics 2 (GTNH)** | 编译期/运行期**链接**（AE2 是本模组的硬依赖） | **LGPL-3.0** | 不再分发其代码/素材 ⇒ 无 LGPL 义务。**原先复制的一张贴图已移除**（见 §二） |
 | **ModularUI 2 (Cleanroom)** | 编译期 `compileOnly` + 运行期由整合包提供；界面用它构建 | **LGPL-3.0** | 同上：不随本模组分发 ⇒ 无义务 |
 | **GT5-Unofficial / ProgrammableHatches / GTNL** | 编译期 `compileOnly`，按官方 API 调用；不复制其代码 | 各自许可（GT 为 LGPL-3.0） | 不随本模组分发 ⇒ 无义务 |
