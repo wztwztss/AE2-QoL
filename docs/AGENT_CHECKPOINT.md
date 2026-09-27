@@ -425,6 +425,48 @@ CHANGELOG/README 章节缺失（本轮未追写）；`CHANGELOG.md` 末尾与 `z
 > （`63153ed` / `d783448` / `223c8c5`），工作树干净。本节条目保留"待用户实测"性质——
 > **提交不等于游戏内验收通过**。
 
+### 4.1a **根因 L（已确认，2026-09-27，待修）**：原版 WildcardPattern 的 mixin 截胡我们具体样板的解码
+
+证据（3.42.0-diag 配对打印）：
+```
+配对样本（GT）：concrete@1967ead7 out=out-empty ‖ details=WildcardPreviewPatternDetails
+                details.getPattern()@3dd13aa2 out=out-empty 与concrete同一对象=false ‖ details.getOutputs()[0]=铁板
+```
+⇒ `getPatternForItem(concrete)` 返回的**不是 AE2 的 `PatternHelper`**，而是原版模组的"轻量预览 details"
+（输出恒为模板的代表输出＝铁板）。
+
+原版 mixin（javap 实证 `com.myname.wildcardpattern.mixin.ItemEncodedPatternMixin`）：
+```java
+private void wildcardpattern$useLightweightPatternDetails(ItemStack stack, World world,
+        CallbackInfoReturnable<ICraftingPatternDetails> cir) {
+    if (!WildcardPatternGenerator.isWildcardPattern(stack)) return;
+    ... cir.setReturnValue(<轻量预览 details>);
+}
+// 判据：stack.getItem()==ModItems.wildcardPattern
+//    || CompositeWildcardPatternGenerator.isCompositeWildcardPattern(stack)   // 键 CompositeWildcardPattern
+//    || tag.getBoolean("WildcardPattern")                                     // 键 WildcardPattern
+// 同一 mixin 还截胡 getOutput(ItemStack) / getOutput(IAEStack) / tooltip
+```
+**为什么我们的具体样板会命中**：搬入的端口代码会给样板打 `WildcardPatternGenerator.markAsWildcard(stack)`
+（键 `WildcardPattern=true`；调用点 `MessageUpdateWildcardConfig:72`、`WildcardPatternWindow:1934/2768/2779`、
+`ItemWildcardPattern` 多处），而 `SmartWildcardExpander.buildConcretePattern` 只剥掉**我们自己**的子树
+`ae2qolSmartWildcard`，**原版那个键随整份 NBT 被复制进每张具体样板** ⇒ 原版 mixin 命中。
+
+后果（与用户全部症状吻合）：三族 `注册 details=396` 但 `输出种类=1`（全铁板）；AE 终端只认铁板；
+GT 2714「能下单但不合成」（注册进去的是预览 details，不是真样板）；原版模组自己的样板正常（它自洽）。
+
+**修复思路（三部分，待用户口令）**：
+1. `buildConcretePattern` 里**剥掉原版标记键**（`WildcardPattern`、`CompositeWildcardPattern`）——
+   具体样板绝不能长得像通配样板（根因修复）；
+2. 我们**四处解码**改为直接 `new appeng.helpers.PatternHelper(concrete, world)`，绕开被注入的方法
+   （`SmartWildcardPatternSlot:105`、`SmartWildcardGtnlPatternSlot:68`、`MixinPatternDualInputHatchWildcard:118`、
+   `MixinDualityInterface:120`）——双保险，也兜住机器里已存的旧样板；
+3. 复核端口代码对"我们物品"调用 `markAsWildcard` 的语义：通配样板**本体**保留（Wild 窗口桥接需要），
+   具体样板必须剥掉。
+
+**本轮静态排除的其他可能**：AE2 `PatternHelper` 不回写 NBT；`ItemStack.copy()` 深拷贝 NBT；
+`getPatternForItem` 无静态缓存；`ItemStack` 不共享 NBT；电路（用户实测停用自动写＋手动设置仍不合成）。
+
 ### 4.1 3.41.0 待游戏内验收（2026-09-27，最新）
 
 - ① 日志出现 **3 条** `展开样本：material=… prefix=plate in=… out=… 产出out=…`，且三行的 `material/产出out` **各不相同**；
