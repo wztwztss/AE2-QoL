@@ -8,7 +8,7 @@
 | 项目 | 我们做了什么 | 许可状态 | 是否需要额外义务 |
 |---|---|---|---|
 | **WildcardPatternforGTNH**（`com.myname.wildcardpattern` 1.1.0） | **只读其源码做兼容性调研**，借鉴"索引期展开"这一**架构思路**；**未复制任何代码**（见下文 §三 的硬证据） | 其仓库为 **MIT** | 无需（思路不受版权保护；且我们未复制表达）。已在本文档致谢 |
-| **AE2PatternGen** 1.5 | 同上：只读调研 + 参照其**功能清单**（过滤器/排除/批量生成）自行实现 | README 明确写 **MIT** | 无需（同上） |
+| **AE2PatternGen** 1.5 | 3.23.0 的**批量生成器核心改编自其代码**（`recipe/GTRecipeSource` 的 RecipeMap 枚举与筛选思路、`encoder/PatternEncoder` 的样板 NBT 编码、`filter/*` 的过滤器功能面）；改编文件头保留了其版权与许可声明 | README 明确写 **MIT** | 已履行：保留版权声明与许可文本、在本文档与 CHANGELOG 注明来源与改动 |
 | **Applied Energistics 2 (GTNH)** | 编译期/运行期**链接**（AE2 是本模组的硬依赖） | **LGPL-3.0** | 不再分发其代码/素材 ⇒ 无 LGPL 义务。**原先复制的一张贴图已移除**（见 §二） |
 | **ModularUI 2 (Cleanroom)** | 编译期 `compileOnly` + 运行期由整合包提供；界面用它构建 | **LGPL-3.0** | 同上：不随本模组分发 ⇒ 无义务 |
 | **GT5-Unofficial / ProgrammableHatches / GTNL** | 编译期 `compileOnly`，按官方 API 调用；不复制其代码 | 各自许可（GT 为 LGPL-3.0） | 不随本模组分发 ⇒ 无义务 |
@@ -55,8 +55,10 @@ foreach ($k in 'WildcardInputComponents','WildcardGeneratedPatternId','Composite
    ⚠️ **历史遗留提醒**：这四份文件此前已经进入 git 历史；公开仓库若沿用现有历史仍可检出它们
    ⇒ 发布时应从**过滤后的历史**导出（例如 `git filter-repo --path docs/research --invert-paths`），
    或另起一个干净仓库再推。发布前请把这一条当作检查项。
-3. **批量生成器允许改编 AE2PatternGen 的代码** ✓（其 README 声明 MIT）⇒ 改编出来的文件会在文件头保留
-   原项目的版权声明与 MIT 许可文本，并在 `CREDITS.md` 注明来源与我们的改动点；其余部分仍为本仓库自行实现。
+3. **批量生成器改编 AE2PatternGen 的代码**（其 README 声明 MIT）✓ **已执行**：改编后的
+   `generator/SmartPatternGenerator.java` 文件头保留了原项目名称、出处与 MIT 许可声明；
+   `CHANGELOG` 记录 (32) 与本文档均注明「哪一部分改编自它、我们改了什么」
+   （去掉了它的缓存/冲突解决/虚拟存储/自建网络子系统，改用本仓库的写回与日志口径）。
 3. **`CREDITS.md` 建议补两行**指向本文档，并列出 WildcardPatternforGTNH / AE2PatternGen 的 MIT 与出处链接（待你确认许可后我一并加上）。
 4. 发布前再跑一次 §三 的审计命令，作为发布检查项。
 
