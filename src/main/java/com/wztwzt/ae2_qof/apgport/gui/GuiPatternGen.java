@@ -120,12 +120,18 @@ public class GuiPatternGen {
         FilterTextFieldWidget tfOutputOre = new FilterTextFieldWidget();
         tfOutputOre.setText(ItemPatternGenerator.getSavedField(held, ItemPatternGenerator.NBT_OUTPUT_ORE));
         tfOutputOre.setPos(inputX, refY + 14);
-        tfOutputOre.setSize(fieldW, 14);
+        tfOutputOre.setSize(fieldW - 18, 14);
         tfOutputOre.setTextColor(0xFFFFFF);
         tfOutputOre.setBackground(new Rectangle().setColor(0xFF1E1E30));
         tfOutputOre.setTextAlignment(com.gtnewhorizons.modularui.api.math.Alignment.CenterLeft);
         scrollable.widget(tfOutputOre);
-        attachDragChoiceSelector(scrollable, tfOutputOre, inputX, refY + 14, fieldW);
+        attachDragChoiceSelector(scrollable, tfOutputOre, inputX, refY + 14, fieldW - 18);
+        attachEditButton(
+            scrollable,
+            tfOutputOre,
+            inputX + fieldW - 18,
+            refY + 14,
+            I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.output_ore"));
 
         TextWidget labelInOre = new TextWidget(I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.input_ore"));
         labelInOre.setPos(6, refY + 32 + 3);
@@ -134,12 +140,18 @@ public class GuiPatternGen {
         FilterTextFieldWidget tfInputOre = new FilterTextFieldWidget();
         tfInputOre.setText(ItemPatternGenerator.getSavedField(held, ItemPatternGenerator.NBT_INPUT_ORE));
         tfInputOre.setPos(inputX, refY + 32);
-        tfInputOre.setSize(fieldW, 14);
+        tfInputOre.setSize(fieldW - 18, 14);
         tfInputOre.setTextColor(0xFFFFFF);
         tfInputOre.setBackground(new Rectangle().setColor(0xFF1E1E30));
         tfInputOre.setTextAlignment(com.gtnewhorizons.modularui.api.math.Alignment.CenterLeft);
         scrollable.widget(tfInputOre);
-        attachDragChoiceSelector(scrollable, tfInputOre, inputX, refY + 32, fieldW);
+        attachDragChoiceSelector(scrollable, tfInputOre, inputX, refY + 32, fieldW - 18);
+        attachEditButton(
+            scrollable,
+            tfInputOre,
+            inputX + fieldW - 18,
+            refY + 32,
+            I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.input_ore"));
 
         TextWidget labelNC = new TextWidget(I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.nc_item"));
         labelNC.setPos(6, refY + 50 + 3);
@@ -148,12 +160,18 @@ public class GuiPatternGen {
         FilterTextFieldWidget tfNCItem = new FilterTextFieldWidget();
         tfNCItem.setText(ItemPatternGenerator.getSavedField(held, ItemPatternGenerator.NBT_NC_ITEM));
         tfNCItem.setPos(inputX, refY + 50);
-        tfNCItem.setSize(fieldW, 14);
+        tfNCItem.setSize(fieldW - 18, 14);
         tfNCItem.setTextColor(0xFFFFFF);
         tfNCItem.setBackground(new Rectangle().setColor(0xFF1E1E30));
         tfNCItem.setTextAlignment(com.gtnewhorizons.modularui.api.math.Alignment.CenterLeft);
         scrollable.widget(tfNCItem);
-        attachDragChoiceSelector(scrollable, tfNCItem, inputX, refY + 50, fieldW);
+        attachDragChoiceSelector(scrollable, tfNCItem, inputX, refY + 50, fieldW - 18);
+        attachEditButton(
+            scrollable,
+            tfNCItem,
+            inputX + fieldW - 18,
+            refY + 50,
+            I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.nc_item"));
 
         TextWidget labelTier = new TextWidget(I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.tier"));
         labelTier.setPos(6, refY + 68 + 3);
@@ -213,12 +231,18 @@ public class GuiPatternGen {
         FilterTextFieldWidget tfBlacklistIn = new FilterTextFieldWidget();
         tfBlacklistIn.setText(ItemPatternGenerator.getSavedField(held, ItemPatternGenerator.NBT_BLACKLIST_INPUT));
         tfBlacklistIn.setPos(inputX, refY + 14);
-        tfBlacklistIn.setSize(fieldW, 14);
+        tfBlacklistIn.setSize(fieldW - 18, 14);
         tfBlacklistIn.setTextColor(0xFFFFFF);
         tfBlacklistIn.setBackground(new Rectangle().setColor(0xFF1E1E30));
         tfBlacklistIn.setTextAlignment(com.gtnewhorizons.modularui.api.math.Alignment.CenterLeft);
         scrollable.widget(tfBlacklistIn);
-        attachDragChoiceSelector(scrollable, tfBlacklistIn, inputX, refY + 14, fieldW);
+        attachDragChoiceSelector(scrollable, tfBlacklistIn, inputX, refY + 14, fieldW - 18);
+        attachEditButton(
+            scrollable,
+            tfBlacklistIn,
+            inputX + fieldW - 18,
+            refY + 14,
+            I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.blacklist_input"));
 
         TextWidget labelBLOut = new TextWidget(I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.blacklist_output"));
         labelBLOut.setPos(6, refY + 32 + 3);
@@ -227,12 +251,18 @@ public class GuiPatternGen {
         FilterTextFieldWidget tfBlacklistOut = new FilterTextFieldWidget();
         tfBlacklistOut.setText(ItemPatternGenerator.getSavedField(held, ItemPatternGenerator.NBT_BLACKLIST_OUTPUT));
         tfBlacklistOut.setPos(inputX, refY + 32);
-        tfBlacklistOut.setSize(fieldW, 14);
+        tfBlacklistOut.setSize(fieldW - 18, 14);
         tfBlacklistOut.setTextColor(0xFFFFFF);
         tfBlacklistOut.setBackground(new Rectangle().setColor(0xFF1E1E30));
         tfBlacklistOut.setTextAlignment(com.gtnewhorizons.modularui.api.math.Alignment.CenterLeft);
         scrollable.widget(tfBlacklistOut);
-        attachDragChoiceSelector(scrollable, tfBlacklistOut, inputX, refY + 32, fieldW);
+        attachDragChoiceSelector(scrollable, tfBlacklistOut, inputX, refY + 32, fieldW - 18);
+        attachEditButton(
+            scrollable,
+            tfBlacklistOut,
+            inputX + fieldW - 18,
+            refY + 32,
+            I18nUtil.tr("ae2patterngen.gui.pattern_gen.label.blacklist_output"));
 
         TextWidget regexHint = new TextWidget(
             EnumChatFormatting.DARK_GRAY + I18nUtil.tr("ae2patterngen.gui.pattern_gen.hint.regex"));
@@ -438,6 +468,42 @@ public class GuiPatternGen {
         buildContext.addCloseListener(saveFunction);
 
         return builder.build();
+    }
+
+    /**
+     * 3.22.0-fix48：给 MUI1 自绘界面里的文本框挂一个「改」按钮。
+     *
+     * <p>为什么必须这样：GTNH-ModularUI（MUI1）自绘界面里**系统输入法无法启用**（用户实测"切不了输入法"），
+     * 而同一整合包里用**原版 GuiTextField** 的搜索栏能正常打中文 ⇒ 用本模组的
+     * {@code client/gui/GuiTextInputDialog}（内部就是原版输入框）作为中文输入入口。
+     *
+     * @param x 按钮左上角（调用方负责先把字段宽度让出 18px）
+     */
+    private static void attachEditButton(Scrollable scrollable, TextFieldWidget field, int x, int y, String title) {
+        ButtonWidget button = new ButtonWidget();
+        button.setSynced(false, false);
+        button.setPos(x, y);
+        button.setSize(18, 14);
+        button.setBackground(com.gtnewhorizons.modularui.api.ModularUITextures.VANILLA_BUTTON_NORMAL);
+        TextWidget label = new TextWidget("改");
+        label.setPos(x + 6, y + 3);
+        button.setOnClick((clickData, widget) -> {
+            try {
+                net.minecraft.client.Minecraft.getMinecraft()
+                    .displayGuiScreen(
+                        new com.wztwzt.ae2_qof.client.gui.GuiTextInputDialog(
+                            title,
+                            field.getText(),
+                            value -> {
+                                field.setText(value == null ? "" : value);
+                                field.markForUpdate();
+                            }));
+            } catch (Throwable t) {
+                com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 打开文本输入对话框失败", t);
+            }
+        });
+        scrollable.widget(button);
+        scrollable.widget(label);
     }
 
     private static void attachDragChoiceSelector(Scrollable scrollable, FilterTextFieldWidget field, int fieldX,
