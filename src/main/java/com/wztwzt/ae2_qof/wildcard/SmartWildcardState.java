@@ -73,6 +73,13 @@ public final class SmartWildcardState {
         /** 输出侧每轮数量；0 = 沿用模板输出槽的数量。 */
         public long outAmount = 0L;
 
+        /**
+         * 规则级排除（3.23.2，按用户要求保留参考模组的两级排除）：
+         * 命中该列表的候选**只对这一条规则**生效（例如"aluminium* 这条规则不要 aluminium"）。
+         * 匹配串支持 {@code *} 与 {@code ?}，可与总排除（全局黑名单）叠加；**总排除优先**。
+         */
+        public final java.util.List<String> excludes = new java.util.ArrayList<>();
+
         public Rule() {}
 
         public Rule(int slot, boolean oreDictMode, String matcher, long amount) {
@@ -111,6 +118,8 @@ public final class SmartWildcardState {
             tag.setString("OutMatcher", outMatcher == null ? "" : outMatcher);
             tag.setBoolean("OutOreDict", outOreDictMode);
             tag.setLong("OutAmount", outAmount);
+            // 3.23.2 规则级排除（老的样板没有这个键 ⇒ 空列表，行为不变）
+            tag.setTag("Excludes", writeStringList(excludes));
             return tag;
         }
 
@@ -124,6 +133,8 @@ public final class SmartWildcardState {
             rule.outMatcher = tag.hasKey("OutMatcher") ? tag.getString("OutMatcher") : "";
             rule.outOreDictMode = !tag.hasKey("OutOreDict") || tag.getBoolean("OutOreDict");
             rule.outAmount = tag.hasKey("OutAmount") ? tag.getLong("OutAmount") : 0L;
+            // 3.23.2 规则级排除
+            readStringList(tag, "Excludes", rule.excludes);
             return rule;
         }
     }
