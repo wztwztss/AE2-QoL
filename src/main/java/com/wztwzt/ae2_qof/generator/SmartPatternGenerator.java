@@ -101,6 +101,12 @@ public final class SmartPatternGenerator {
         public String requireNonConsumed = "";
         /** 电压等级上限（0=ULV, 1=LV, 2=MV, 3=HV, 4=EV, 5=IV …；-1 = 不限制）。 */
         public int maxTier = -1;
+        /**
+         * 替换规则：形如 {@code 源矿辞=目标矿辞}，多条用 {@code ;} 分隔
+         * （例如 {@code dustCopper=dustTin;ingotIron=ingotSteel}）。
+         * 作用：写样板 NBT 时，把配方里命中"源矿辞"的每个输入/输出物品替换成"目标矿辞"的第一个物品，数量不变。
+         */
+        public String replacements = "";
     }
 
     private SmartPatternGenerator() {}
@@ -181,6 +187,8 @@ public final class SmartPatternGenerator {
                 return result;
             }
 
+            // 替换规则只解析一次（每条配方复用同一份映射）
+            final Map<String, String> repl = parseReplacements(f.replacements);
             for (GTRecipe recipe : recipes) {
                 if (recipe == null || !recipe.mEnabled) continue;
                 result.recipesSeen++;
@@ -198,7 +206,7 @@ public final class SmartPatternGenerator {
                     result.truncated++;
                     continue;
                 }
-                ItemStack pattern = encode(template, recipe);
+                ItemStack pattern = encode(template, recipe, repl);
                 if (pattern != null) result.patterns.add(pattern);
             }
             MyMod.LOG.info(
@@ -289,14 +297,19 @@ public final class SmartPatternGenerator {
 
     /** 把一条 GTRecipe 编码成加工样板（结构与 AE2PatternGen 的 PatternEncoder 一致：in/out + crafting=false）。 */
     public static ItemStack encode(ItemStack template, GTRecipe recipe) {
+        return encode(template, recipe, java.util.Collections.<String, String>emptyMap());
+    }
+
+    /** 带替换规则的编码：写 NBT 时把命中「源矿辞」的物品换成「目标矿辞」的第一个物品（数量不变）。 */
+    public static ItemStack encode(ItemStack template, GTRecipe recipe, Map<String, String> replacements) {
         try {
             ItemStack pattern = template.copy();
             pattern.stackSize = 1;
             NBTTagCompound tag = new NBTTagCompound();
             NBTTagList in = new NBTTagList();
-            appendAll(in, recipe.mInputs);
+            appendAll(in, recipe.mInputs, replacements);
             NBTTagList out = new NBTTagList();
-            appendAll(out, recipe.mOutputs);
+            appendAll(out, recipe.mOutputs, replacements);
             tag.setTag("in", in);
             tag.setTag("out", out);
             tag.setBoolean("crafting", false);
@@ -308,10 +321,67 @@ public final class SmartPatternGenerator {
         }
     }
 
-    private static void appendAll(NBTTagList list, ItemStack[] stacks) {
+    /** 解析替换规则串（{@code a=b;c=d}）。非法片段会记 WARN 并忽略，不静默。 */
+    public static Map<String, String> parseReplacements(String spec) {
+        Map<String, String> map = new LinkedHashMap<>();
+        if (spec == null || spec.trim()
+            .isEmpty()) return map;
+        for (String part : spec.split(";")) {
+            String piece = part == null ? "" : part.trim();
+            if (piece.isEmpty()) continue;
+            int eq = piece.indexOf('=');
+            if (eq <= 0 || eq >= piece.length() - 1) {
+                MyMod.LOG.warn("[AE2QoL] 替换规则片段非法（应为 源=目标），已忽略：{}", piece);
+                continue;
+            }
+            String from = piece.substring(0, eq)
+                .trim();
+            String to = piece.substring(eq + 1)
+                .trim();
+            if (from.isEmpty() || to.isEmpty()) {
+                MyMod.LOG.warn("[AE2QoL] 替换规则片段为空，已忽略：{}", piece);
+                continue;
+            }
+            map.put(from, to);
+        }
+        if (!map.isEmpty()) {
+            MyMod.LOG.info("[AE2QoL] 生成器替换规则 {} 条：{}", map.size(), map);
+        }
+        return map;
+    }
+
+    /** 按替换规则换掉物品（命中源矿辞 ⇒ 取目标矿辞的第一个物品，数量沿用原值）。 */
+    private static ItemStack applyReplacements(ItemStack stack, Map<String, String> replacements) {
+        if (stack == null || stack.getItem() == null || replacements == null || replacements.isEmpty()) return stack;
+        try {
+            int[] ids = net.minecraftforge.oredict.OreDictionary.getOreIDs(stack);
+            if (ids == null) return stack;
+            for (int id : ids) {
+                String ore = net.minecraftforge.oredict.OreDictionary.getOreName(id);
+                if (ore == null) continue;
+                String target = replacements.get(ore);
+                if (target == null) continue;
+                java.util.ArrayList<ItemStack> ores = net.minecraftforge.oredict.OreDictionary.getOres(target);
+                if (ores == null || ores.isEmpty()) {
+                    MyMod.LOG.warn("[AE2QoL] 替换规则目标矿辞没有物品：{} → {}（该配方按原样保留）", ore, target);
+                    return stack;
+                }
+                ItemStack replaced = ores.get(0)
+                    .copy();
+                replaced.stackSize = stack.stackSize;
+                return replaced;
+            }
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 应用替换规则失败（该物品按原样保留）", t);
+        }
+        return stack;
+    }
+
+    private static void appendAll(NBTTagList list, ItemStack[] stacks, Map<String, String> replacements) {
         if (stacks == null) return;
-        for (ItemStack stack : stacks) {
-            if (stack == null || stack.getItem() == null) continue;
+        for (ItemStack raw : stacks) {
+            if (raw == null || raw.getItem() == null) continue;
+            ItemStack stack = applyReplacements(raw, replacements);
             NBTTagCompound itemTag = new NBTTagCompound();
             stack.writeToNBT(itemTag);
             // 同时写 Count/Cnt：AE2 对"数量 0（非消耗）"读的是 Cnt
