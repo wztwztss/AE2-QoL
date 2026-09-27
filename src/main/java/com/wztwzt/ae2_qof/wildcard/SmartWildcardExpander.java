@@ -247,6 +247,8 @@ public final class SmartWildcardExpander {
         if (outPrefixCandidates.isEmpty()) {
             logNoOutputPrefixOnce(state, templateOut, templateMaterial);
         }
+        logExpandContextOnce(state, inputPrefix, templateMaterial, outPrefixCandidates, materials, templateIn,
+            templateOut);
 
         // 3) 逐材料实例化
         List<ItemStack> out = new ArrayList<>();
@@ -331,6 +333,59 @@ public final class SmartWildcardExpander {
                 while (cut < ore.length() && !Character.isUpperCase(ore.charAt(cut))) cut++;
                 if (cut > 0 && cut < ore.length()) out.add(ore.substring(0, cut));
             }
+        }
+    }
+
+    /**
+     * 展开上下文诊断（3.41.0，每 JVM 每种上下文只打一次）。
+     *
+     * <p>一行给出：**规则的真实 matcher/outMatcher**、由它推出的 inputPrefix、输出前缀候选、材料数与首个材料。
+     * 这一行专门用来区分两种截然不同的情况：
+     * <ul>
+     * <li>{@code inputPrefix='ingot'} 且 {@code 首材料='Iron'} ⇒ 规则正常，问题在输出侧；</li>
+     * <li>{@code inputPrefix=''} 且 {@code 首材料='ingotIron'} ⇒ **规则 matcher 已经变成匹配一切的东西**
+     * （`matched` 恰好等于全部矿辞名数量就是这么来的），材料其实是完整矿辞名，配对必然错位。</li>
+     * </ul>
+     */
+    private static final java.util.Set<String> CONTEXT_LOGGED = Collections
+        .synchronizedSet(new LinkedHashSet<String>());
+
+    private static void logExpandContextOnce(SmartWildcardState state, String inputPrefix, String templateMaterial,
+        java.util.Set<String> outPrefixCandidates, java.util.Set<String> materials, NBTTagList templateIn,
+        NBTTagList templateOut) {
+        try {
+            StringBuilder rules = new StringBuilder();
+            for (SmartWildcardState.Rule rule : state.rulesView()) {
+                if (rules.length() > 0) rules.append(" | ");
+                rules.append('#')
+                    .append(rule.slot)
+                    .append(rule.oreDictMode ? " ore:'" : " name:'")
+                    .append(rule.matcher)
+                    .append("' out:'")
+                    .append(rule.outMatcher)
+                    .append("'");
+            }
+            String firstMaterial = null;
+            for (String m : materials) {
+                firstMaterial = m;
+                break;
+            }
+            String key = rules + "|" + inputPrefix + "|" + templateMaterial + "|" + firstMaterial + "|"
+                + materials.size();
+            if (!CONTEXT_LOGGED.add(key)) return;
+            if (CONTEXT_LOGGED.size() > 32) CONTEXT_LOGGED.clear();
+            MyMod.LOG.info(
+                "[AE2QoL] 展开上下文：规则=[{}] inputPrefix='{}' 模板材料='{}' 输出候选={} 材料数={} 首材料='{}' 模板in={} out={}",
+                rules,
+                inputPrefix,
+                templateMaterial,
+                outPrefixCandidates,
+                materials.size(),
+                firstMaterial,
+                templateIn.tagCount(),
+                templateOut.tagCount());
+        } catch (Throwable t) {
+            // 诊断失败不刷屏
         }
     }
 
