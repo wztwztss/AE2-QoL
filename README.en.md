@@ -8,6 +8,28 @@ An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI patte
 
 This repository is for personal archival and is not currently offered for distribution. See [CREDITS.md](CREDITS.md) for attribution and licensing records. Feature descriptions are not a claim that every integration has passed in-game testing.
 
+## What's new in 3.25.x (UI ported wholesale from WildcardPatternforGTNH)
+
+- **The UI is now Wild's own** (per the user's request to "just copy the Wild mod over and change it from there"):
+  its whole UI subsystem was ported — **25 files / 7,870 lines** (main window 2143, composite window 1871, rule entry
+  975, generator 451, three drag-in widgets, GUI handler, network messages, …). Each ported file keeps its **MIT**
+  attribution header, and `docs/THIRD_PARTY_NOTES.md` records the provenance.
+- **Why this was possible**: it targets a different MUI (`com.gtnewhorizons.modularui`) than the Cleanroom MUI2 we used
+  before; we now depend on it at **compile time only** (`libs/modularui-1.3.4.jar`; the modpack provides it at runtime
+  and we do **not** redistribute its code).
+- **The machine side is unchanged**: right-click → the bridge pushes our config into Wild's tags → Wild's window opens;
+  saving in that window → the bridge pulls the config back into our subtree ⇒ **pattern-buffer takeover and index-time
+  expansion still use our own expander**.
+- **Three real bugs fixed along the way**: ① the `+` derivation **misread item ingredients as fluids** (javap evidence:
+  that `IFluidAlternativeStack` interface is implemented by the GT class that holds *every* ingredient) — it now keys on
+  GT's fluid placeholder item `ItemFluidDisplay`; ② expansion failures now **dump every rule** (no more guessing at
+  `no-material-matched`); ③ NEI drag-in now uses a **coordinate hit test** (the MUI2 hover state is null outside a frame).
+- **Two hazards caught before deployment**: a duplicate network channel name would have **crashed the game on startup**
+  (now suffixed `_wild`); and its original save guard silently **discarded our** pattern (now both items are accepted,
+  with a WARN when rejected).
+- ⚠️ **Stated plainly**: the port currently reaches "compiles + data flow wired as its source intends" — the **UI has not
+  been verified in game yet**. The first testable build is **3.25.1**; results pending.
+
 ## What's new in 3.23.4 (UI rebuilt to your design: four tabs + NEI drag-in)
 
 - **Four tabs**: Rules / Coverage preview / Exclusions & non-consumed / Circuit. MUI2 has **no** `TabWidget`, so it is
