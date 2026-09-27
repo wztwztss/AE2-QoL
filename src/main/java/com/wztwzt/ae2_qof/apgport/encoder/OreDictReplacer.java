@@ -1,0 +1,94 @@
+/*
+ * 本文件搬运自 AE2PatternGen 1.5（作者 com.github.ae2patterngen，MIT 许可；用户已授权在保留声明的前提下先行复制、再改再优化）。
+ * 本仓库的改动：包名改为 com.wztwzt.ae2_qof.apgport；对原模组主类/代理的引用改为本模组的 MyMod；
+ * 物品注册入口不会被调用（我们仍用自己的批量样板生成器物品）。其余逻辑保持原样，便于后续按需优化。
+ */
+package com.wztwzt.ae2_qof.apgport.encoder;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import net.minecraft.item.ItemStack;
+import net.minecraftforge.oredict.OreDictionary;
+
+import com.wztwzt.ae2_qof.apgport.util.OreDictUtil;
+
+/**
+ * 矿辞替换器 — 在编码前替换 ItemStack 中的物品
+ * <p>
+ * 规则格式: {@code 源矿辞=目标矿辞} (多条用 {@code ;} 分隔)
+ * <p>
+ * 例: {@code ingotCopper=dustCopper;ingotTin=dustTin}
+ */
+public class OreDictReplacer {
+
+    private final Map<String, String> rules;
+
+    public OreDictReplacer(String rulesStr) {
+        this.rules = new LinkedHashMap<>();
+        if (rulesStr == null || rulesStr.trim()
+            .isEmpty()) return;
+
+        for (String rule : rulesStr.split(";")) {
+            rule = rule.trim();
+            if (rule.isEmpty()) continue;
+            int eq = rule.indexOf('=');
+            if (eq <= 0 || eq >= rule.length() - 1) continue;
+            String src = rule.substring(0, eq)
+                .trim();
+            String dst = rule.substring(eq + 1)
+                .trim();
+            if (!src.isEmpty() && !dst.isEmpty()) {
+                rules.put(src, dst);
+            }
+        }
+    }
+
+    /**
+     * @return 是否有任何替换规则
+     */
+    public boolean hasRules() {
+        return !rules.isEmpty();
+    }
+
+    /**
+     * 对物品数组执行矿辞替换
+     *
+     * @param items 原始物品数组
+     * @return 替换后的新数组 (不修改原数组)
+     */
+    public ItemStack[] apply(ItemStack[] items) {
+        if (!hasRules() || items == null) return items;
+
+        ItemStack[] result = new ItemStack[items.length];
+        for (int i = 0; i < items.length; i++) {
+            result[i] = tryReplace(items[i]);
+        }
+        return result;
+    }
+
+    private ItemStack tryReplace(ItemStack original) {
+        if (original == null) return null;
+
+        // 获取此物品注册的所有矿辞名（带越界保护）
+        String[] oreNames = OreDictUtil.getOreNamesSafe(original);
+        if (oreNames.length == 0) return original;
+
+        for (String oreName : oreNames) {
+            if (rules.containsKey(oreName)) {
+                String targetOre = rules.get(oreName);
+                List<ItemStack> candidates = OreDictionary.getOres(targetOre);
+                if (!candidates.isEmpty()) {
+                    // 取第一个注册的物品作为替代
+                    ItemStack replacement = candidates.get(0)
+                        .copy();
+                    replacement.stackSize = original.stackSize;
+                    return replacement;
+                }
+            }
+        }
+
+        return original;
+    }
+}

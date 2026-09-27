@@ -1,0 +1,791 @@
+/*
+ * 本文件搬运自 AE2PatternGen 1.5（作者 com.github.ae2patterngen，MIT 许可；用户已授权在保留声明的前提下先行复制、再改再优化）。
+ * 本仓库的改动：包名改为 com.wztwzt.ae2_qof.apgport；对原模组主类/代理的引用改为本模组的 MyMod；
+ * 物品注册入口不会被调用（我们仍用自己的批量样板生成器物品）。其余逻辑保持原样，便于后续按需优化。
+ */
+package com.wztwzt.ae2_qof.apgport.item;
+
+import com.wztwzt.ae2_qof.MyMod;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.ISidedInventory;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.IIcon;
+import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.world.World;
+
+import org.lwjgl.input.Keyboard;
+
+import com.wztwzt.ae2_qof.apgport.storage.PatternStorage;
+import com.wztwzt.ae2_qof.apgport.util.I18nUtil;
+
+import appeng.api.features.INetworkEncodable;
+import appeng.api.features.IWirelessTermHandler;
+import appeng.api.util.IConfigManager;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
+import gregtech.api.interfaces.metatileentity.IMetaTileEntity;
+import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
+import gregtech.api.interfaces.tileentity.RecipeMapWorkable;
+import gregtech.api.recipe.RecipeMap;
+
+/**
+ * 样板生成器物品 — 三种交互模式:
+ * <ul>
+ * <li>正常右键 (空气) → 打开配置 GUI</li>
+ * <li>蹲下右键 (空气) → 打开仓储 GUI</li>
+ * <li>蹲下右键 (方块) → 检测方块属性，并尝试导出样板到容器</li>
+ * </ul>
+ */
+public class ItemPatternGenerator extends Item implements INetworkEncodable, IWirelessTermHandler {
+
+    public static final int GUI_ID = 101;
+    public static final int GUI_ID_STORAGE = 102;
+    private static final int MAX_PATTERN_TARGET_RESOLVE_DEPTH = 4;
+
+    // NBT 键名
+    public static final String NBT_RECIPE_MAP = "recipeMap";
+    public static final String NBT_OUTPUT_ORE = "outputOre";
+    public static final String NBT_INPUT_ORE = "inputOre";
+    public static final String NBT_NC_ITEM = "ncItem";
+    public static final String NBT_BLACKLIST_INPUT = "blacklistInput";
+    public static final String NBT_BLACKLIST_OUTPUT = "blacklistOutput";
+    public static final String NBT_REPLACEMENTS = "replacements";
+    public static final String NBT_TARGET_TIER = "targetTier";
+
+    @SideOnly(Side.CLIENT)
+    private IIcon blankPatternIcon;
+
+    public ItemPatternGenerator() {
+        super();
+        setUnlocalizedName("MyMod.pattern_generator");
+        setMaxStackSize(1);
+        setCreativeTab(CreativeTabs.tabRedstone);
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public void registerIcons(IIconRegister register) {
+        blankPatternIcon = register.registerIcon("appliedenergistics2:ItemEncodedPattern");
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public IIcon getIconFromDamage(int damage) {
+        return blankPatternIcon;
+    }
+
+    @Override
+    public ItemStack onItemRightClick(ItemStack stack, World world, EntityPlayer player) {
+        if (player.isSneaking()) {
+            // Sneak + right click on block should be handled by onItemUseFirst (detect/export), not storage GUI.
+            MovingObjectPosition hit = getMovingObjectPositionFromPlayer(world, player, false);
+            if (hit != null && hit.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
+                return stack;
+            }
+        }
+
+        if (!world.isRemote) {
+            int guiId = player.isSneaking() ? GUI_ID_STORAGE : GUI_ID;
+            cpw.mods.fml.common.FMLLog.info(
+                "[AE2PatternGen] SERVER SIDE: Requesting to open GUI %d for player %s with instance %s",
+                guiId,
+                player.getCommandSenderName(),
+                com.wztwzt.ae2_qof.MyMod.instance);
+            player.openGui(
+                com.wztwzt.ae2_qof.MyMod.instance,
+                guiId,
+                world,
+                (int) player.posX,
+                (int) player.posY,
+                (int) player.posZ);
+        }
+        return stack;
+    }
+
+    /**
+     * 蹲下右键方块 → 探测机器配方或导出样板到容器
+     */
+    @Override
+    public boolean onItemUseFirst(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side,
+        float hitX, float hitY, float hitZ) {
+        if (!player.isSneaking()) return false;
+        if (world.isRemote) return false;
+
+        TileEntity te = world.getTileEntity(x, y, z);
+        if (te == null) {
+            player.addChatMessage(msg(EnumChatFormatting.RED, "MyMod.msg.item.block_not_detectable"));
+            return true;
+        }
+
+        // 1. 尝试探测 GT 机器配方表 (优先级: 主方块/控制器)
+        if (te instanceof IGregTechTileEntity) {
+            IGregTechTileEntity gte = (IGregTechTileEntity) te;
+            IMetaTileEntity mte = gte.getMetaTileEntity();
+            RecipeMap<?> recipeMap = resolveRecipeMap(mte);
+            if (recipeMap != null) {
+                saveField(stack, NBT_RECIPE_MAP, recipeMap.unlocalizedName);
+                player.addChatMessage(
+                    msg(
+                        EnumChatFormatting.GREEN,
+                        "MyMod.msg.item.detected_recipe_map",
+                        recipeMap.unlocalizedName));
+                return true;
+            }
+        }
+
+        // 2. 如果不是 GT 主方块或探测失败，尝试作为普通容器导出样板
+        PatternInsertTarget insertTarget = resolveInsertTarget(te);
+        if (insertTarget == null) {
+            // 如果既不是可读取的 GT 机器也不是容器，提示错误
+            if (te instanceof IGregTechTileEntity) {
+                player.addChatMessage(msg(EnumChatFormatting.RED, "MyMod.msg.item.machine_part_unsupported"));
+            } else {
+                player.addChatMessage(msg(EnumChatFormatting.RED, "MyMod.msg.item.block_extract_unsupported"));
+            }
+            return true;
+        }
+
+        // 执行原有导出逻辑
+        UUID uuid = player.getUniqueID();
+        if (PatternStorage.isEmpty(uuid)) {
+            player.addChatMessage(msg(EnumChatFormatting.YELLOW, "MyMod.msg.item.storage_empty_export"));
+            return true;
+        }
+
+        IInventory inv = insertTarget.inventory;
+        PatternStorage.StorageSummary storageSummary = PatternStorage.getSummary(uuid);
+        List<ItemStack> patterns = PatternStorage.load(uuid);
+        List<ItemStack> remainingPatterns = new ArrayList<>(patterns.size());
+        int transferred = 0;
+        List<InsertAttemptPlan> insertPlans = buildInsertPlans(inv, side, insertTarget.preferredSlots);
+
+        for (int i = 0; i < patterns.size(); i++) {
+            ItemStack pattern = patterns.get(i);
+            if (tryInsertPattern(inv, pattern, insertPlans)) {
+                transferred++;
+            } else {
+                remainingPatterns.add(pattern);
+                // No slot can accept this pattern now; keep all remaining entries untouched.
+                for (int j = i + 1; j < patterns.size(); j++) {
+                    remainingPatterns.add(patterns.get(j));
+                }
+                break;
+            }
+        }
+
+        // 更新存储
+        if (remainingPatterns.isEmpty()) {
+            PatternStorage.clear(uuid);
+        } else {
+            if (!PatternStorage.save(uuid, remainingPatterns, storageSummary.source)) {
+                player.addChatMessage(msg(EnumChatFormatting.RED, "MyMod.msg.item.storage_update_failed"));
+                return true;
+            }
+        }
+
+        inv.markDirty();
+
+        if (!remainingPatterns.isEmpty()) {
+            player.addChatMessage(
+                msg(
+                    EnumChatFormatting.GREEN,
+                    "MyMod.msg.item.exported_with_remaining",
+                    transferred,
+                    remainingPatterns.size()));
+        } else {
+            player.addChatMessage(msg(EnumChatFormatting.GREEN, "MyMod.msg.item.exported", transferred));
+        }
+
+        return true; // 消费事件
+    }
+
+    private static RecipeMap<?> resolveRecipeMap(IMetaTileEntity mte) {
+        if (mte == null) return null;
+
+        if (mte instanceof RecipeMapWorkable) {
+            return ((RecipeMapWorkable) mte).getRecipeMap();
+        }
+
+        // Some GT multi-block controllers expose getRecipeMap() but do not implement RecipeMapWorkable.
+        try {
+            Method method = mte.getClass()
+                .getMethod("getRecipeMap");
+            Object result = method.invoke(mte);
+            if (result instanceof RecipeMap<?>) {
+                return (RecipeMap<?>) result;
+            }
+        } catch (Throwable ignored) {
+            // Fall through to null when the machine does not expose a recipe map.
+        }
+
+        return null;
+    }
+
+    private static PatternInsertTarget resolveInsertTarget(TileEntity te) {
+        if (te == null) {
+            return null;
+        }
+
+        if (te instanceof IGregTechTileEntity) {
+            IGregTechTileEntity gt = (IGregTechTileEntity) te;
+            PatternInsertTarget gtTarget = resolveInsertTargetFromMetaTile(gt.getMetaTileEntity(), 0);
+            if (gtTarget != null) {
+                return gtTarget;
+            }
+        }
+
+        if (te instanceof IInventory) {
+            return new PatternInsertTarget((IInventory) te, null);
+        }
+
+        return null;
+    }
+
+    private static PatternInsertTarget resolveInsertTargetFromMetaTile(Object metaTile, int depth) {
+        if (metaTile == null || depth > MAX_PATTERN_TARGET_RESOLVE_DEPTH) {
+            return null;
+        }
+
+        IInventory patternInventory = resolvePatternInventory(metaTile);
+        if (patternInventory != null) {
+            return buildPatternInsertTarget(metaTile, patternInventory);
+        }
+
+        Object[] masters = new Object[] { invokeNoArg(metaTile, "getMasterSuper"), invokeNoArg(metaTile, "getMaster"),
+            invokeNoArg(metaTile, "getCraftingMaster") };
+        for (Object master : masters) {
+            if (master == null || master == metaTile) {
+                continue;
+            }
+            PatternInsertTarget nested = resolveInsertTargetFromMetaTile(master, depth + 1);
+            if (nested != null) {
+                return nested;
+            }
+        }
+
+        return null;
+    }
+
+    private static IInventory resolvePatternInventory(Object metaTile) {
+        Object patterns = invokeNoArg(metaTile, "getPatterns");
+        if (patterns instanceof IInventory) {
+            return (IInventory) patterns;
+        }
+        return null;
+    }
+
+    private static PatternInsertTarget buildPatternInsertTarget(Object metaTile, IInventory patternInventory) {
+        int invSize = Math.max(0, patternInventory.getSizeInventory());
+        int slotCircuit = readStaticIntField(metaTile.getClass(), "SLOT_CIRCUIT");
+        int patternCount = readStaticIntField(metaTile.getClass(), "MAX_PATTERN_COUNT");
+        int preferredLimit = -1;
+
+        if (slotCircuit > 0) {
+            preferredLimit = slotCircuit;
+        }
+        if (patternCount > 0) {
+            preferredLimit = preferredLimit > 0 ? Math.min(preferredLimit, patternCount) : patternCount;
+        }
+
+        int[] preferredSlots = null;
+        if (preferredLimit > 0 && invSize > 0) {
+            preferredSlots = buildRangeSlots(Math.min(preferredLimit, invSize));
+        }
+
+        return new PatternInsertTarget(patternInventory, preferredSlots);
+    }
+
+    private static Object invokeNoArg(Object target, String methodName) {
+        if (target == null || methodName == null || methodName.isEmpty()) {
+            return null;
+        }
+
+        Class<?> type = target.getClass();
+        while (type != null) {
+            try {
+                Method method = type.getDeclaredMethod(methodName);
+                method.setAccessible(true);
+                return method.invoke(target);
+            } catch (NoSuchMethodException ignored) {
+                type = type.getSuperclass();
+            } catch (Throwable ignored) {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    private static int readStaticIntField(Class<?> type, String fieldName) {
+        Class<?> current = type;
+        while (current != null) {
+            try {
+                Field field = current.getDeclaredField(fieldName);
+                field.setAccessible(true);
+                if (!Modifier.isStatic(field.getModifiers())) {
+                    current = current.getSuperclass();
+                    continue;
+                }
+                return field.getInt(null);
+            } catch (NoSuchFieldException ignored) {
+                current = current.getSuperclass();
+            } catch (Throwable ignored) {
+                return -1;
+            }
+        }
+        return -1;
+    }
+
+    private static int[] buildRangeSlots(int count) {
+        if (count <= 0) {
+            return new int[0];
+        }
+        int[] slots = new int[count];
+        for (int i = 0; i < count; i++) {
+            slots[i] = i;
+        }
+        return slots;
+    }
+
+    private static int[] sanitizeSlots(int[] slots, int sizeLimit) {
+        if (slots == null || slots.length == 0 || sizeLimit <= 0) {
+            return new int[0];
+        }
+
+        boolean[] seen = new boolean[sizeLimit];
+        int count = 0;
+        for (int slot : slots) {
+            if (slot >= 0 && slot < sizeLimit && !seen[slot]) {
+                seen[slot] = true;
+                count++;
+            }
+        }
+
+        int[] sanitized = new int[count];
+        int idx = 0;
+        for (int slot : slots) {
+            if (slot >= 0 && slot < sizeLimit && seen[slot]) {
+                sanitized[idx++] = slot;
+                seen[slot] = false;
+            }
+        }
+        return sanitized;
+    }
+
+    private static int[] filterSlotsByAllowed(int[] slots, int[] allowedSlots, int sizeLimit) {
+        int[] sanitizedSlots = sanitizeSlots(slots, sizeLimit);
+        if (sanitizedSlots.length == 0 || allowedSlots == null) {
+            return sanitizedSlots;
+        }
+
+        boolean[] allowed = new boolean[sizeLimit];
+        for (int slot : allowedSlots) {
+            if (slot >= 0 && slot < sizeLimit) {
+                allowed[slot] = true;
+            }
+        }
+
+        int count = 0;
+        for (int slot : sanitizedSlots) {
+            if (allowed[slot]) {
+                count++;
+            }
+        }
+
+        int[] filtered = new int[count];
+        int idx = 0;
+        for (int slot : sanitizedSlots) {
+            if (allowed[slot]) {
+                filtered[idx++] = slot;
+            }
+        }
+        return filtered;
+    }
+
+    private static boolean tryInsertPattern(IInventory inv, ItemStack pattern, List<InsertAttemptPlan> plans) {
+        if (inv == null || pattern == null || plans == null || plans.isEmpty()) return false;
+        for (InsertAttemptPlan plan : plans) {
+            if (tryInsertPatternWithPlan(inv, pattern, plan)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean tryInsertPatternWithPlan(IInventory inv, ItemStack pattern, InsertAttemptPlan plan) {
+        if (plan == null || plan.slots == null || plan.slots.length == 0) {
+            return false;
+        }
+        ISidedInventory sided = plan.requireSidedCheck && inv instanceof ISidedInventory ? (ISidedInventory) inv : null;
+
+        for (int slot : plan.slots) {
+            if (slot < 0 || slot >= inv.getSizeInventory()) {
+                continue;
+            }
+
+            ItemStack existing = safeGetStack(inv, slot);
+            if (existing != null) {
+                continue;
+            }
+            if (!isItemValidForSlotSafe(inv, slot, pattern)) {
+                continue;
+            }
+            if (sided != null && !canInsertItemSafe(sided, slot, pattern, plan.side)) {
+                continue;
+            }
+
+            ItemStack inserted = normalizeInsertStack(inv, pattern);
+            if (inserted == null) {
+                continue;
+            }
+
+            try {
+                inv.setInventorySlotContents(slot, inserted);
+            } catch (Throwable ignored) {
+                continue;
+            }
+
+            ItemStack after = safeGetStack(inv, slot);
+            if (isInsertedAsExpected(after, inserted)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static List<InsertAttemptPlan> buildInsertPlans(IInventory inv, int clickedSide, int[] preferredSlots) {
+        List<InsertAttemptPlan> plans = new ArrayList<>();
+        if (inv == null) {
+            return plans;
+        }
+
+        int[] allSlots = preferredSlots != null ? sanitizeSlots(preferredSlots, inv.getSizeInventory()) : null;
+        if (allSlots == null || allSlots.length == 0) {
+            allSlots = buildAllSlots(inv);
+        }
+
+        if (inv instanceof ISidedInventory) {
+            ISidedInventory sided = (ISidedInventory) inv;
+            int normalizedClicked = normalizeSide(clickedSide);
+
+            addSidedPlan(plans, sided, normalizedClicked, allSlots);
+            for (int side = 0; side <= 5; side++) {
+                if (side == normalizedClicked) continue;
+                addSidedPlan(plans, sided, side, allSlots);
+            }
+            // Compatibility fallback for inventories that expose non-standard sided behavior.
+            plans.add(new InsertAttemptPlan(allSlots, -1, false));
+        } else {
+            plans.add(new InsertAttemptPlan(allSlots, -1, false));
+        }
+        return plans;
+    }
+
+    private static void addSidedPlan(List<InsertAttemptPlan> plans, ISidedInventory sided, int side,
+        int[] allowedSlots) {
+        int[] slots = filterSlotsByAllowed(getAccessibleSlotsSafe(sided, side), allowedSlots, sided.getSizeInventory());
+        if (slots.length == 0) return;
+        plans.add(new InsertAttemptPlan(slots, side, true));
+    }
+
+    private static int[] getAccessibleSlotsSafe(ISidedInventory inv, int side) {
+        try {
+            int[] slots = inv.getAccessibleSlotsFromSide(normalizeSide(side));
+            return slots != null ? slots : new int[0];
+        } catch (Throwable ignored) {
+            return new int[0];
+        }
+    }
+
+    private static int[] buildAllSlots(IInventory inv) {
+        int size = Math.max(0, inv.getSizeInventory());
+        int[] slots = new int[size];
+        for (int i = 0; i < size; i++) {
+            slots[i] = i;
+        }
+        return slots;
+    }
+
+    private static ItemStack safeGetStack(IInventory inv, int slot) {
+        try {
+            return inv.getStackInSlot(slot);
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    private static boolean isItemValidForSlotSafe(IInventory inv, int slot, ItemStack stack) {
+        try {
+            return inv.isItemValidForSlot(slot, stack);
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    private static boolean canInsertItemSafe(ISidedInventory inv, int slot, ItemStack stack, int side) {
+        try {
+            return inv.canInsertItem(slot, stack, normalizeSide(side));
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    private static ItemStack normalizeInsertStack(IInventory inv, ItemStack pattern) {
+        if (pattern == null) return null;
+        ItemStack inserted = pattern.copy();
+        if (inserted.stackSize <= 0) {
+            inserted.stackSize = 1;
+        }
+        int limit = Math.max(1, Math.min(inv.getInventoryStackLimit(), inserted.getMaxStackSize()));
+        inserted.stackSize = Math.min(inserted.stackSize, limit);
+        return inserted;
+    }
+
+    private static int normalizeSide(int side) {
+        return side >= 0 && side <= 5 ? side : 0;
+    }
+
+    private static boolean isInsertedAsExpected(ItemStack actual, ItemStack expected) {
+        if (actual == null || expected == null) {
+            return false;
+        }
+        if (actual.getItem() != expected.getItem()) {
+            return false;
+        }
+        if (actual.getItemDamage() != expected.getItemDamage()) {
+            return false;
+        }
+        if (!ItemStack.areItemStackTagsEqual(actual, expected)) {
+            return false;
+        }
+        return actual.stackSize >= expected.stackSize;
+    }
+
+    private static final class InsertAttemptPlan {
+
+        private final int[] slots;
+        private final int side;
+        private final boolean requireSidedCheck;
+
+        private InsertAttemptPlan(int[] slots, int side, boolean requireSidedCheck) {
+            this.slots = slots;
+            this.side = side;
+            this.requireSidedCheck = requireSidedCheck;
+        }
+    }
+
+    private static final class PatternInsertTarget {
+
+        private final IInventory inventory;
+        private final int[] preferredSlots;
+
+        private PatternInsertTarget(IInventory inventory, int[] preferredSlots) {
+            this.inventory = inventory;
+            this.preferredSlots = preferredSlots;
+        }
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public void addInformation(ItemStack stack, EntityPlayer player, List list, boolean advanced) {
+        if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
+            list.add(EnumChatFormatting.YELLOW + I18nUtil.tr("MyMod.tooltip.feature.title"));
+            list.add(
+                EnumChatFormatting.GRAY + "(1) "
+                    + EnumChatFormatting.WHITE
+                    + I18nUtil.tr("MyMod.tooltip.feature.batch_encode")
+                    + EnumChatFormatting.GRAY
+                    + ": "
+                    + I18nUtil.tr("MyMod.tooltip.feature.batch_encode.desc"));
+            list.add(
+                EnumChatFormatting.GRAY + "(2) "
+                    + EnumChatFormatting.WHITE
+                    + I18nUtil.tr("MyMod.tooltip.feature.smart_filter")
+                    + EnumChatFormatting.GRAY
+                    + ": "
+                    + I18nUtil.tr("MyMod.tooltip.feature.smart_filter.desc"));
+            list.add(
+                EnumChatFormatting.GRAY + "(3) "
+                    + EnumChatFormatting.WHITE
+                    + I18nUtil.tr("MyMod.tooltip.feature.explicit_blacklist")
+                    + EnumChatFormatting.GRAY
+                    + ": "
+                    + I18nUtil.tr("MyMod.tooltip.feature.explicit_blacklist.desc"));
+            list.add(
+                EnumChatFormatting.GRAY + "(4) "
+                    + EnumChatFormatting.WHITE
+                    + I18nUtil.tr("MyMod.tooltip.feature.conflict_resolution")
+                    + EnumChatFormatting.GRAY
+                    + ": "
+                    + I18nUtil.tr("MyMod.tooltip.feature.conflict_resolution.desc"));
+            list.add(
+                EnumChatFormatting.GRAY + "(5) "
+                    + EnumChatFormatting.WHITE
+                    + I18nUtil.tr("MyMod.tooltip.feature.virtual_storage")
+                    + EnumChatFormatting.GRAY
+                    + ": "
+                    + I18nUtil.tr("MyMod.tooltip.feature.virtual_storage.desc"));
+            list.add(
+                EnumChatFormatting.GRAY + "(6) "
+                    + EnumChatFormatting.WHITE
+                    + I18nUtil.tr("MyMod.tooltip.feature.equivalent_consume")
+                    + EnumChatFormatting.GRAY
+                    + ": "
+                    + I18nUtil.tr("MyMod.tooltip.feature.equivalent_consume.desc"));
+            list.add("");
+            list.add(EnumChatFormatting.YELLOW + I18nUtil.tr("MyMod.tooltip.usage.title"));
+            list.add(
+                EnumChatFormatting.GRAY + "- "
+                    + EnumChatFormatting.WHITE
+                    + I18nUtil.tr("MyMod.tooltip.usage.right_click_air")
+                    + EnumChatFormatting.GRAY
+                    + ": "
+                    + I18nUtil.tr("MyMod.tooltip.usage.right_click_air.desc"));
+            list.add(
+                EnumChatFormatting.GRAY + "- "
+                    + EnumChatFormatting.WHITE
+                    + I18nUtil.tr("MyMod.tooltip.usage.shift_right_click_air")
+                    + EnumChatFormatting.GRAY
+                    + ": "
+                    + I18nUtil.tr("MyMod.tooltip.usage.shift_right_click_air.desc"));
+            list.add(
+                EnumChatFormatting.GRAY + "- "
+                    + EnumChatFormatting.WHITE
+                    + I18nUtil.tr("MyMod.tooltip.usage.shift_right_click_block")
+                    + EnumChatFormatting.GRAY
+                    + ": "
+                    + I18nUtil.tr("MyMod.tooltip.usage.shift_right_click_block.desc"));
+            list.add(
+                EnumChatFormatting.GRAY + "- "
+                    + EnumChatFormatting.WHITE
+                    + I18nUtil.tr("MyMod.tooltip.usage.network_binding")
+                    + EnumChatFormatting.GRAY
+                    + ": "
+                    + I18nUtil.tr("MyMod.tooltip.usage.network_binding.desc"));
+        } else {
+            list.add(EnumChatFormatting.GRAY + I18nUtil.tr("MyMod.tooltip.hint.quick_open"));
+            list.add(EnumChatFormatting.GRAY + I18nUtil.tr("MyMod.tooltip.hint.quick_storage"));
+            list.add(EnumChatFormatting.GRAY + I18nUtil.tr("MyMod.tooltip.hint.quick_detect_export"));
+            list.add(
+                EnumChatFormatting.GRAY + I18nUtil.tr("MyMod.tooltip.hint.hold_shift_prefix")
+                    + " "
+                    + EnumChatFormatting.AQUA
+                    + I18nUtil.tr("MyMod.tooltip.key.shift")
+                    + EnumChatFormatting.GRAY
+                    + " "
+                    + I18nUtil.tr("MyMod.tooltip.hint.hold_shift"));
+        }
+    }
+
+    private static ChatComponentText msg(EnumChatFormatting color, String key, Object... args) {
+        return new ChatComponentText(color + I18nUtil.tr(key, args));
+    }
+
+    public static String getSavedField(ItemStack stack, String key) {
+        if (stack == null || !stack.hasTagCompound()) return "";
+        NBTTagCompound tag = stack.getTagCompound();
+        return tag.hasKey(key) ? tag.getString(key) : "";
+    }
+
+    public static void saveField(ItemStack stack, String key, String value) {
+        if (stack == null) return;
+        if (!stack.hasTagCompound()) {
+            stack.setTagCompound(new NBTTagCompound());
+        }
+        stack.getTagCompound()
+            .setString(key, value != null ? value : "");
+    }
+
+    public static int getSavedInt(ItemStack stack, String key, int def) {
+        if (stack == null || !stack.hasTagCompound()) return def;
+        return stack.getTagCompound()
+            .hasKey(key)
+                ? stack.getTagCompound()
+                    .getInteger(key)
+                : def;
+    }
+
+    public static void saveInt(ItemStack stack, String key, int value) {
+        if (stack == null) return;
+        if (!stack.hasTagCompound()) {
+            stack.setTagCompound(new NBTTagCompound());
+        }
+        stack.getTagCompound()
+            .setInteger(key, value);
+    }
+
+    public static void saveAllFields(ItemStack stack, String recipeMap, String outputOre, String inputOre,
+        String ncItem, String blacklistInput, String blacklistOutput, String replacements, int targetTier) {
+        saveField(stack, NBT_RECIPE_MAP, recipeMap);
+        saveField(stack, NBT_OUTPUT_ORE, outputOre);
+        saveField(stack, NBT_INPUT_ORE, inputOre);
+        saveField(stack, NBT_NC_ITEM, ncItem);
+        saveField(stack, NBT_BLACKLIST_INPUT, blacklistInput);
+        saveField(stack, NBT_BLACKLIST_OUTPUT, blacklistOutput);
+        saveField(stack, NBT_REPLACEMENTS, replacements);
+        saveInt(stack, NBT_TARGET_TIER, targetTier);
+    }
+
+    // ---- INetworkEncodable ----
+
+    @Override
+    public String getEncryptionKey(ItemStack item) {
+        if (item != null && item.hasTagCompound()) {
+            return item.getTagCompound()
+                .getString("encryptionKey");
+        }
+        return "";
+    }
+
+    @Override
+    public void setEncryptionKey(ItemStack item, String encKey, String name) {
+        if (item != null) {
+            if (!item.hasTagCompound()) {
+                item.setTagCompound(new NBTTagCompound());
+            }
+            item.getTagCompound()
+                .setString("encryptionKey", encKey);
+        }
+    }
+
+    // ---- IWirelessTermHandler ----
+
+    @Override
+    public boolean canHandle(ItemStack is) {
+        return is != null && is.getItem() == this;
+    }
+
+    @Override
+    public boolean usePower(EntityPlayer player, double amount, ItemStack is) {
+        // 生成器目前不消耗 AE2 能量
+        return true;
+    }
+
+    @Override
+    public boolean hasPower(EntityPlayer player, double amount, ItemStack is) {
+        return true;
+    }
+
+    @Override
+    public IConfigManager getConfigManager(ItemStack is) {
+        return null;
+    }
+}

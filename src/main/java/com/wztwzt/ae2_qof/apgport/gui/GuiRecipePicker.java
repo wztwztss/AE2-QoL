@@ -1,0 +1,685 @@
+/*
+ * 本文件搬运自 AE2PatternGen 1.5（作者 com.github.ae2patterngen，MIT 许可；用户已授权在保留声明的前提下先行复制、再改再优化）。
+ * 本仓库的改动：包名改为 com.wztwzt.ae2_qof.apgport；对原模组主类/代理的引用改为本模组的 MyMod；
+ * 物品注册入口不会被调用（我们仍用自己的批量样板生成器物品）。其余逻辑保持原样，便于后续按需优化。
+ */
+package com.wztwzt.ae2_qof.apgport.gui;
+
+import com.wztwzt.ae2_qof.MyMod;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumChatFormatting;
+import net.minecraftforge.fluids.FluidStack;
+
+import com.wztwzt.ae2_qof.apgport.config.ForgeConfig;
+import com.wztwzt.ae2_qof.apgport.network.NetworkHandler;
+import com.wztwzt.ae2_qof.apgport.network.PacketRecipeConflictBatch;
+import com.wztwzt.ae2_qof.apgport.network.PacketRecipeConflicts;
+import com.wztwzt.ae2_qof.apgport.network.PacketResolveConflictsBatch;
+import com.wztwzt.ae2_qof.apgport.recipe.RecipeEntry;
+import com.wztwzt.ae2_qof.apgport.util.I18nUtil;
+import com.wztwzt.ae2_qof.apgport.util.ItemStackUtil;
+import com.gtnewhorizons.modularui.api.drawable.shapes.Rectangle;
+import com.gtnewhorizons.modularui.api.screen.ModularWindow;
+import com.gtnewhorizons.modularui.api.screen.UIBuildContext;
+import com.gtnewhorizons.modularui.common.internal.wrapper.ModularGui;
+import com.gtnewhorizons.modularui.common.internal.wrapper.ModularUIContainer;
+import com.gtnewhorizons.modularui.common.widget.ButtonWidget;
+import com.gtnewhorizons.modularui.common.widget.Scrollable;
+import com.gtnewhorizons.modularui.common.widget.TextWidget;
+
+public class GuiRecipePicker {
+
+    private static final int SELECT_BTN_W = 54;
+    private static ClientBatchState activeState;
+
+    public static void open(PacketRecipeConflicts message) {
+        // Backward compatibility for single-group packet.
+        List<String> productNames = new ArrayList<>();
+        productNames.add(
+            message != null && message.productName != null ? message.productName
+                : I18nUtil.tr("MyMod.gui.recipe_picker.unknown_product"));
+
+        List<List<RecipeEntry>> groups = new ArrayList<>();
+        groups.add(message != null && message.recipes != null ? message.recipes : new ArrayList<RecipeEntry>());
+
+        int startIndex = message != null ? message.currentIndex : 1;
+        int total = message != null ? message.totalConflicts : groups.size();
+        int maxCandidates = !groups.isEmpty() && groups.get(0) != null ? groups.get(0)
+            .size() : 1;
+        openBatch(new PacketRecipeConflictBatch(startIndex, total, Math.max(1, maxCandidates), productNames, groups));
+    }
+
+    public static void openBatch(PacketRecipeConflictBatch message) {
+        if (message == null) return;
+        Minecraft mc = Minecraft.getMinecraft();
+        if (activeState != null && mc.currentScreen instanceof ModularGui && activeState.applyPacket(message)) {
+            return;
+        }
+
+        ClientBatchState state = ClientBatchState.from(message);
+        if (state == null) return;
+        activeState = state;
+        openStateWindow(state);
+    }
+
+    private static void openStateWindow(ClientBatchState state) {
+        UIBuildContext buildContext = new UIBuildContext(Minecraft.getMinecraft().thePlayer);
+        buildContext.addCloseListener(() -> {
+            if (activeState == state) {
+                activeState = null;
+            }
+        });
+        com.gtnewhorizons.modularui.api.screen.ModularUIContext muiContext = new com.gtnewhorizons.modularui.api.screen.ModularUIContext(
+            buildContext,
+            () -> {});
+        ModularWindow window = createWindow(buildContext, state);
+        Minecraft.getMinecraft()
+            .displayGuiScreen(new ModularGui(new ModularUIContainer(muiContext, window)));
+    }
+
+    public static ModularWindow createWindow(UIBuildContext buildContext, ClientBatchState state) {
+        int rowCapacity = state.rowCapacity;
+
+        net.minecraft.client.gui.ScaledResolution res = new net.minecraft.client.gui.ScaledResolution(
+            Minecraft.getMinecraft(),
+            Minecraft.getMinecraft().displayWidth,
+            Minecraft.getMinecraft().displayHeight);
+        int maxH = Minecraft.getMinecraft().displayHeight / res.getScaleFactor() - 20;
+        int guiWidth = ForgeConfig.getRecipePickerGuiWidth();
+        int minHeight = ForgeConfig.getRecipePickerMinHeight();
+        int idealHeight = ForgeConfig.getRecipePickerIdealHeight();
+        int guiHeight = Math.min(maxH, Math.max(minHeight, idealHeight));
+        int rowHeight = ForgeConfig.getRecipePickerRowHeight();
+        int rowGap = ForgeConfig.getRecipePickerRowGap();
+
+        ModularWindow.Builder builder = ModularWindow.builder(guiWidth, guiHeight);
+        builder.setBackground(com.gtnewhorizons.modularui.api.ModularUITextures.VANILLA_BACKGROUND);
+
+        TextWidget titleText = new TextWidget("");
+        titleText
+            .setStringSupplier(() -> EnumChatFormatting.BOLD + trimToPixelWidth(buildTitleText(state), guiWidth - 20));
+        titleText.setScale(1.2f);
+        titleText.setSize(guiWidth - 16, 20);
+        titleText.setPos(8, 8);
+        builder.widget(titleText);
+
+        final int topY = 34;
+        final int footerH = 12;
+        final int contentH = guiHeight - topY - footerH - 6;
+        final int leftW = 218;
+        final int gap = 6;
+        final int rightX = 8 + leftW + gap;
+        final int rightW = guiWidth - rightX - 8;
+
+        TextWidget listTitle = new TextWidget("");
+        listTitle.setStringSupplier(
+            () -> EnumChatFormatting.BOLD + I18nUtil.tr(
+                "MyMod.gui.recipe_picker.list_title",
+                state.getCurrentRecipes()
+                    .size()));
+        listTitle.setPos(8, topY - 10);
+        builder.widget(listTitle);
+
+        TextWidget detailTitle = new TextWidget(
+            EnumChatFormatting.BOLD + I18nUtil.tr("MyMod.gui.recipe_picker.detail_title"));
+        detailTitle.setPos(rightX, topY - 10);
+        builder.widget(detailTitle);
+
+        Scrollable candidateList = new Scrollable().setVerticalScroll();
+        candidateList.setPos(8, topY);
+        candidateList.setSize(leftW, contentH);
+
+        int previewBtnW = leftW - 6 - SELECT_BTN_W - 4;
+        int chooseLabelW = Minecraft.getMinecraft().fontRenderer
+            .getStringWidth(I18nUtil.tr("MyMod.gui.recipe_picker.button.select"));
+
+        for (int i = 0; i < rowCapacity; i++) {
+            final int recipeIndex = i;
+            int rowY = i * (rowHeight + rowGap);
+
+            ButtonWidget previewBtn = new ButtonWidget();
+            previewBtn.setSynced(false, false);
+            previewBtn.setPos(2, rowY + 1);
+            previewBtn.setSize(previewBtnW, rowHeight);
+            previewBtn.setBackground(com.gtnewhorizons.modularui.api.ModularUITextures.VANILLA_BUTTON_NORMAL);
+            previewBtn.setEnabled(
+                widget -> isValidRecipeIndex(
+                    recipeIndex,
+                    state.getCurrentRecipes()
+                        .size())
+                    && !state.awaitingServer);
+            previewBtn.setOnClick((cd, w) -> {
+                if (state.awaitingServer || state.inputLocked) return;
+                List<RecipeEntry> currentRecipes = state.getCurrentRecipes();
+                if (recipeIndex < 0 || recipeIndex >= currentRecipes.size()) return;
+                state.selectedRecipeIndex = recipeIndex;
+                state.statusText = EnumChatFormatting.DARK_GRAY
+                    + I18nUtil.tr("MyMod.gui.recipe_picker.status.previewed", recipeIndex + 1);
+            });
+            candidateList.widget(previewBtn);
+
+            TextWidget rowTitle = new TextWidget("");
+            rowTitle.setStringSupplier(() -> {
+                List<RecipeEntry> currentRecipes = state.getCurrentRecipes();
+                if (recipeIndex < 0 || recipeIndex >= currentRecipes.size()) return "";
+                RecipeEntry recipe = currentRecipes.get(recipeIndex);
+                return formatCandidateTitle(recipe, recipeIndex, state.selectedRecipeIndex == recipeIndex);
+            });
+            rowTitle.setEnabled(
+                widget -> isValidRecipeIndex(
+                    recipeIndex,
+                    state.getCurrentRecipes()
+                        .size()));
+            rowTitle.setPos(6, rowY + 6);
+            candidateList.widget(rowTitle);
+
+            TextWidget rowPreview = new TextWidget("");
+            rowPreview.setStringSupplier(() -> {
+                List<RecipeEntry> currentRecipes = state.getCurrentRecipes();
+                if (recipeIndex < 0 || recipeIndex >= currentRecipes.size()) return "";
+                RecipeEntry recipe = currentRecipes.get(recipeIndex);
+                return formatInputPreview(recipe, state.selectedRecipeIndex == recipeIndex);
+            });
+            rowPreview.setEnabled(
+                widget -> isValidRecipeIndex(
+                    recipeIndex,
+                    state.getCurrentRecipes()
+                        .size()));
+            rowPreview.setPos(6, rowY + 18);
+            candidateList.widget(rowPreview);
+
+            int selectBtnX = 2 + previewBtnW + 4;
+            ButtonWidget selectBtn = new ButtonWidget();
+            selectBtn.setSynced(false, false);
+            selectBtn.setPos(selectBtnX, rowY + 1);
+            selectBtn.setSize(SELECT_BTN_W, rowHeight);
+            selectBtn.setBackground(com.gtnewhorizons.modularui.api.ModularUITextures.VANILLA_BUTTON_NORMAL);
+            selectBtn.setEnabled(
+                widget -> isValidRecipeIndex(
+                    recipeIndex,
+                    state.getCurrentRecipes()
+                        .size())
+                    && !state.awaitingServer);
+            selectBtn.setOnClick((cd, w) -> {
+                if (state.awaitingServer || state.inputLocked) return;
+                state.inputLocked = true;
+                List<RecipeEntry> currentRecipes = state.getCurrentRecipes();
+                int chosenIndex = resolveChosenIndex(recipeIndex, state.selectedRecipeIndex, currentRecipes.size());
+                if (chosenIndex < 0) {
+                    state.statusText = EnumChatFormatting.RED
+                        + I18nUtil.tr("MyMod.gui.recipe_picker.status.no_candidate");
+                    state.inputLocked = false;
+                    return;
+                }
+
+                state.selectedRecipeIndex = chosenIndex;
+                state.selections[state.localIndex] = chosenIndex;
+
+                int batchSize = state.recipeGroups.size();
+                if (state.localIndex < batchSize - 1) {
+                    // Continue selecting next conflict locally without server round-trip and without reopening GUI.
+                    state.localIndex++;
+                    state.selectedRecipeIndex = state.getCurrentRecipes()
+                        .isEmpty() ? -1 : 0;
+                    state.statusText = buildDefaultStatusText(state);
+                    state.inputLocked = false;
+                    return;
+                }
+
+                // Final local selection in this batch: submit once.
+                int[] payload = buildSubmittedSelections(state.selections, batchSize);
+                state.inputLocked = false;
+                NetworkHandler.INSTANCE.sendToServer(new PacketResolveConflictsBatch(state.startIndex, false, payload));
+                boolean isFinalConflict = state.currentConflictIndex() >= state.totalConflicts;
+                if (isFinalConflict) {
+                    state.statusText = EnumChatFormatting.YELLOW
+                        + I18nUtil.tr("MyMod.gui.recipe_picker.status.final_submitted");
+                    activeState = null;
+                    Minecraft.getMinecraft()
+                        .displayGuiScreen(null);
+                    return;
+                }
+                state.awaitingServer = true;
+                state.statusText = EnumChatFormatting.YELLOW
+                    + I18nUtil.tr("MyMod.gui.recipe_picker.status.batch_submitted");
+            });
+            candidateList.widget(selectBtn);
+
+            TextWidget selectBtnText = new TextWidget(
+                EnumChatFormatting.BLACK + I18nUtil.tr("MyMod.gui.recipe_picker.button.select"));
+            selectBtnText.setEnabled(
+                widget -> isValidRecipeIndex(
+                    recipeIndex,
+                    state.getCurrentRecipes()
+                        .size()));
+            selectBtnText.setPos(selectBtnX + (SELECT_BTN_W - chooseLabelW) / 2, rowY + 12);
+            candidateList.widget(selectBtnText);
+        }
+
+        builder.widget(candidateList);
+
+        ButtonWidget detailPanel = new ButtonWidget();
+        detailPanel.setSynced(false, false);
+        detailPanel.setPos(rightX, topY);
+        detailPanel.setSize(rightW, contentH);
+        detailPanel.setBackground(new Rectangle().setColor(0xD0141422));
+        detailPanel.setOnClick((cd, w) -> {});
+        builder.widget(detailPanel);
+
+        Scrollable detailScroll = new Scrollable().setVerticalScroll();
+        detailScroll.setPos(rightX + 6, topY + 6);
+        detailScroll.setSize(rightW - 12, contentH - 12);
+
+        final int maxDetailLines = ForgeConfig.getRecipePickerMaxDetailLines();
+        for (int lineIndex = 0; lineIndex < maxDetailLines; lineIndex++) {
+            final int idx = lineIndex;
+            TextWidget line = new TextWidget("");
+            line.setStringSupplier(() -> getDetailLine(state.getCurrentRecipes(), state.selectedRecipeIndex, idx));
+            line.setPos(2, idx * 10);
+            detailScroll.widget(line);
+        }
+        builder.widget(detailScroll);
+
+        TextWidget statusWidget = new TextWidget("");
+        statusWidget.setStringSupplier(() -> trimToPixelWidth(state.statusText, guiWidth - 16));
+        statusWidget.setPos(8, guiHeight - 11);
+        builder.widget(statusWidget);
+
+        final int cancelBtnW = 54;
+        final int cancelBtnH = 12;
+        final int cancelBtnX = guiWidth - 8 - cancelBtnW;
+        final int cancelBtnY = guiHeight - 24;
+
+        ButtonWidget cancelBtn = new ButtonWidget();
+        cancelBtn.setSynced(false, false);
+        cancelBtn.setPos(cancelBtnX, cancelBtnY);
+        cancelBtn.setSize(cancelBtnW, cancelBtnH);
+        cancelBtn.setBackground(com.gtnewhorizons.modularui.api.ModularUITextures.VANILLA_BUTTON_NORMAL);
+        cancelBtn.setEnabled(widget -> !state.awaitingServer && !state.inputLocked);
+        cancelBtn.setOnClick((cd, w) -> {
+            if (state.awaitingServer || state.inputLocked) return;
+            state.inputLocked = true;
+            NetworkHandler.INSTANCE.sendToServer(new PacketResolveConflictsBatch(state.startIndex, true, new int[0]));
+            activeState = null;
+            Minecraft.getMinecraft()
+                .displayGuiScreen(null);
+        });
+        builder.widget(cancelBtn);
+
+        String cancelText = I18nUtil.tr("MyMod.gui.recipe_picker.button.cancel");
+        int cancelTextWidth = Minecraft.getMinecraft().fontRenderer.getStringWidth(cancelText);
+        TextWidget cancelBtnText = new TextWidget(EnumChatFormatting.BLACK + cancelText);
+        cancelBtnText.setPos(cancelBtnX + Math.max(2, (cancelBtnW - cancelTextWidth) / 2), cancelBtnY + 2);
+        builder.widget(cancelBtnText);
+
+        return builder.build();
+    }
+
+    private static String formatCandidateTitle(RecipeEntry recipe, int index, boolean selected) {
+        String prefix = selected ? EnumChatFormatting.DARK_BLUE + ">> " : EnumChatFormatting.DARK_GRAY + "   ";
+        String displayName = trimText(getPrimaryOutputName(recipe), 18);
+        return prefix + EnumChatFormatting.DARK_GRAY + "#" + (index + 1) + " " + displayName;
+    }
+
+    private static String formatInputPreview(RecipeEntry recipe, boolean selected) {
+        String color = selected ? EnumChatFormatting.DARK_AQUA.toString() : EnumChatFormatting.DARK_GRAY.toString();
+        return color
+            + I18nUtil.tr("MyMod.gui.recipe_picker.preview.input", trimText(buildInputPreview(recipe, 2), 24));
+    }
+
+    private static String buildInputPreview(RecipeEntry recipe, int maxParts) {
+        if (recipe == null) return I18nUtil.tr("MyMod.gui.common.none");
+        List<String> parts = new ArrayList<>();
+
+        if (recipe.inputs != null) {
+            for (ItemStack input : recipe.inputs) {
+                if (input == null) continue;
+                parts.add(safeText(ItemStackUtil.getSafeDisplayName(input)));
+                if (parts.size() >= maxParts) break;
+            }
+        }
+
+        if (parts.size() < maxParts && recipe.fluidInputs != null) {
+            for (FluidStack fluid : recipe.fluidInputs) {
+                if (fluid == null || fluid.getFluid() == null) continue;
+                parts.add(safeText(fluid.getLocalizedName()) + " " + Math.max(0, fluid.amount) + "L");
+                if (parts.size() >= maxParts) break;
+            }
+        }
+
+        int totalCount = countItemStacks(recipe.inputs) + countFluidStacks(recipe.fluidInputs);
+        if (parts.isEmpty()) return I18nUtil.tr("MyMod.gui.common.none");
+        String preview = String.join(", ", parts);
+        if (totalCount > parts.size()) {
+            preview += ", ...";
+        }
+        return preview;
+    }
+
+    private static String getDetailLine(List<RecipeEntry> recipes, int selectedIndex, int lineIndex) {
+        RecipeEntry selected = getSelectedRecipe(recipes, selectedIndex);
+        List<String> lines = buildDetailLines(selected);
+        return lineIndex >= 0 && lineIndex < lines.size() ? lines.get(lineIndex) : "";
+    }
+
+    private static RecipeEntry getSelectedRecipe(List<RecipeEntry> recipes, int selectedIndex) {
+        if (recipes == null) return null;
+        if (selectedIndex < 0 || selectedIndex >= recipes.size()) return null;
+        return recipes.get(selectedIndex);
+    }
+
+    private static List<String> buildDetailLines(RecipeEntry recipe) {
+        ArrayList<String> lines = new ArrayList<>();
+        if (recipe == null) {
+            lines.add(EnumChatFormatting.RED + I18nUtil.tr("MyMod.gui.recipe_picker.detail.not_selected"));
+            return lines;
+        }
+
+        lines.add(
+            EnumChatFormatting.AQUA + ""
+                + EnumChatFormatting.BOLD
+                + I18nUtil.tr("MyMod.gui.recipe_picker.detail.meta"));
+        lines.add(
+            EnumChatFormatting.WHITE + I18nUtil.tr(
+                "MyMod.gui.recipe_picker.detail.machine",
+                trimText(safeText(recipe.machineDisplayName), 24)));
+        lines.add(
+            EnumChatFormatting.WHITE + I18nUtil
+                .tr("MyMod.gui.recipe_picker.detail.recipe_map", trimText(safeText(recipe.recipeMapId), 24)));
+        lines.add(
+            EnumChatFormatting.WHITE + I18nUtil.tr("MyMod.gui.recipe_picker.detail.duration", recipe.duration));
+        lines.add(EnumChatFormatting.WHITE + "EU/t: " + recipe.euPerTick);
+        lines.add("");
+
+        appendItemSection(lines, I18nUtil.tr("MyMod.gui.recipe_picker.detail.input_items"), recipe.inputs, 20);
+        appendFluidSection(
+            lines,
+            I18nUtil.tr("MyMod.gui.recipe_picker.detail.input_fluids"),
+            recipe.fluidInputs,
+            20);
+        appendItemSection(
+            lines,
+            I18nUtil.tr("MyMod.gui.recipe_picker.detail.output_items"),
+            recipe.outputs,
+            20);
+        appendFluidSection(
+            lines,
+            I18nUtil.tr("MyMod.gui.recipe_picker.detail.output_fluids"),
+            recipe.fluidOutputs,
+            20);
+        appendItemSection(
+            lines,
+            I18nUtil.tr("MyMod.gui.recipe_picker.detail.special_items"),
+            recipe.specialItems,
+            20);
+        return lines;
+    }
+
+    private static void appendItemSection(List<String> lines, String title, ItemStack[] stacks, int maxLen) {
+        int count = countItemStacks(stacks);
+        lines.add(EnumChatFormatting.AQUA + "" + EnumChatFormatting.BOLD + title + " (" + count + ")");
+        if (count == 0) {
+            lines.add(EnumChatFormatting.GRAY + " - " + I18nUtil.tr("MyMod.gui.common.none"));
+            lines.add("");
+            return;
+        }
+
+        for (ItemStack stack : stacks) {
+            if (stack == null) continue;
+            String name = safeText(ItemStackUtil.getSafeDisplayName(stack));
+            int amount = stack.stackSize;
+            lines.add(
+                EnumChatFormatting.GRAY + " - " + EnumChatFormatting.WHITE + trimText(name, maxLen) + " x" + amount);
+        }
+        lines.add("");
+    }
+
+    private static void appendFluidSection(List<String> lines, String title, FluidStack[] fluids, int maxLen) {
+        int count = countFluidStacks(fluids);
+        lines.add(EnumChatFormatting.AQUA + "" + EnumChatFormatting.BOLD + title + " (" + count + ")");
+        if (count == 0) {
+            lines.add(EnumChatFormatting.GRAY + " - " + I18nUtil.tr("MyMod.gui.common.none"));
+            lines.add("");
+            return;
+        }
+
+        for (FluidStack fluid : fluids) {
+            if (fluid == null || fluid.getFluid() == null) continue;
+            String name = safeText(fluid.getLocalizedName());
+            lines.add(
+                EnumChatFormatting.GRAY + " - "
+                    + EnumChatFormatting.AQUA
+                    + trimText(name, maxLen)
+                    + EnumChatFormatting.GRAY
+                    + " "
+                    + Math.max(0, fluid.amount)
+                    + "L");
+        }
+        lines.add("");
+    }
+
+    private static String getPrimaryOutputName(RecipeEntry recipe) {
+        if (recipe == null) return I18nUtil.tr("MyMod.gui.common.unknown");
+        if (recipe.outputs != null) {
+            for (ItemStack out : recipe.outputs) {
+                if (out != null) {
+                    return safeText(ItemStackUtil.getSafeDisplayName(out));
+                }
+            }
+        }
+        if (recipe.fluidOutputs != null) {
+            for (FluidStack out : recipe.fluidOutputs) {
+                if (out != null && out.getFluid() != null) {
+                    return safeText(out.getLocalizedName());
+                }
+            }
+        }
+        return I18nUtil.tr("MyMod.gui.common.unknown");
+    }
+
+    private static int countItemStacks(ItemStack[] stacks) {
+        if (stacks == null || stacks.length == 0) return 0;
+        int count = 0;
+        for (ItemStack stack : stacks) {
+            if (stack != null) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private static int countFluidStacks(FluidStack[] stacks) {
+        if (stacks == null || stacks.length == 0) return 0;
+        int count = 0;
+        for (FluidStack stack : stacks) {
+            if (stack != null && stack.getFluid() != null) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private static String trimText(String text, int maxLen) {
+        String safe = safeText(text);
+        if (safe.length() <= maxLen) return safe;
+        return safe.substring(0, Math.max(0, maxLen - 3)) + "...";
+    }
+
+    private static String trimToPixelWidth(String text, int maxWidth) {
+        String safe = text != null ? text : "";
+        net.minecraft.client.gui.FontRenderer fr = Minecraft.getMinecraft().fontRenderer;
+        if (fr == null || fr.getStringWidth(safe) <= maxWidth) return safe;
+
+        String suffix = "...";
+        int suffixWidth = fr.getStringWidth(suffix);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < safe.length(); i++) {
+            char ch = safe.charAt(i);
+            String candidate = sb.toString() + ch;
+            if (fr.getStringWidth(candidate) + suffixWidth > maxWidth) break;
+            sb.append(ch);
+        }
+        return sb + suffix;
+    }
+
+    private static String safeText(String text) {
+        return text != null && !text.isEmpty() ? text : I18nUtil.tr("MyMod.gui.common.none");
+    }
+
+    private static int[] buildSubmittedSelections(int[] selections, int expectedCount) {
+        if (selections == null || expectedCount <= 0) {
+            return new int[0];
+        }
+        int size = Math.min(expectedCount, selections.length);
+        for (int i = 0; i < size; i++) {
+            if (selections[i] < 0) {
+                return new int[0];
+            }
+        }
+        return java.util.Arrays.copyOf(selections, size);
+    }
+
+    private static boolean isValidRecipeIndex(int index, int recipeCount) {
+        return recipeCount > 0 && index >= 0 && index < recipeCount;
+    }
+
+    private static int resolveChosenIndex(int clickedIndex, int selectedIndex, int recipeCount) {
+        if (isValidRecipeIndex(clickedIndex, recipeCount)) {
+            return clickedIndex;
+        }
+        if (isValidRecipeIndex(selectedIndex, recipeCount)) {
+            return selectedIndex;
+        }
+        return recipeCount > 0 ? 0 : -1;
+    }
+
+    private static int getMaxRecipeCount(List<List<RecipeEntry>> groups) {
+        if (groups == null || groups.isEmpty()) return 0;
+        int max = 0;
+        for (List<RecipeEntry> recipes : groups) {
+            if (recipes != null && recipes.size() > max) {
+                max = recipes.size();
+            }
+        }
+        return max;
+    }
+
+    private static String buildTitleText(ClientBatchState state) {
+        String productName = state.getCurrentProductName();
+        int current = state.currentConflictIndex();
+        int total = state.totalConflicts;
+        int remaining = current > 0 ? Math.max(0, total - current + 1) : Math.max(0, total);
+        return I18nUtil.tr("MyMod.gui.recipe_picker.title", productName, remaining);
+    }
+
+    private static String buildDefaultStatusText(ClientBatchState state) {
+        int recipeCount = state.getCurrentRecipes()
+            .size();
+        int current = state.currentConflictIndex();
+        int total = state.totalConflicts;
+        return recipeCount > 0
+            ? EnumChatFormatting.DARK_GRAY
+                + I18nUtil.tr("MyMod.gui.recipe_picker.status.default", current, total)
+            : EnumChatFormatting.RED + I18nUtil.tr("MyMod.gui.recipe_picker.status.default_empty");
+    }
+
+    public static class ClientBatchState {
+
+        public int startIndex;
+        public int totalConflicts;
+        public List<String> productNames;
+        public List<List<RecipeEntry>> recipeGroups;
+        public int[] selections;
+        public final int rowCapacity;
+        public int localIndex;
+        public int selectedRecipeIndex;
+        public String statusText;
+        public boolean awaitingServer;
+        public boolean inputLocked;
+
+        private ClientBatchState(int rowCapacity) {
+            this.startIndex = 1;
+            this.totalConflicts = 1;
+            this.productNames = new ArrayList<>();
+            this.recipeGroups = new ArrayList<>();
+            this.selections = new int[0];
+            this.rowCapacity = Math.max(1, rowCapacity);
+            this.localIndex = 0;
+            this.selectedRecipeIndex = -1;
+            this.statusText = "";
+            this.awaitingServer = false;
+            this.inputLocked = false;
+        }
+
+        static ClientBatchState from(PacketRecipeConflictBatch packet) {
+            int capacity = resolveRowCapacity(packet);
+            ClientBatchState state = new ClientBatchState(capacity);
+            return state.applyPacket(packet) ? state : null;
+        }
+
+        boolean applyPacket(PacketRecipeConflictBatch packet) {
+            if (packet == null || packet.productNames == null || packet.recipeGroups == null) return false;
+            if (packet.productNames.isEmpty() || packet.recipeGroups.isEmpty()) return false;
+
+            int count = Math.min(packet.productNames.size(), packet.recipeGroups.size());
+            if (count <= 0) return false;
+
+            int requiredCapacity = resolveRowCapacity(packet);
+            if (requiredCapacity > this.rowCapacity) {
+                return false;
+            }
+
+            List<String> names = new ArrayList<>(count);
+            List<List<RecipeEntry>> groups = new ArrayList<>(count);
+            for (int i = 0; i < count; i++) {
+                names.add(packet.productNames.get(i));
+                List<RecipeEntry> recipes = packet.recipeGroups.get(i);
+                groups.add(recipes != null ? recipes : new ArrayList<RecipeEntry>());
+            }
+
+            this.startIndex = Math.max(1, packet.startIndex);
+            this.totalConflicts = Math.max(1, packet.totalConflicts);
+            this.productNames = names;
+            this.recipeGroups = groups;
+            this.selections = new int[groups.size()];
+            java.util.Arrays.fill(this.selections, -1);
+            this.localIndex = 0;
+            this.selectedRecipeIndex = groups.get(0)
+                .isEmpty() ? -1 : 0;
+            this.awaitingServer = false;
+            this.inputLocked = false;
+            this.statusText = buildDefaultStatusText(this);
+            return true;
+        }
+
+        private static int resolveRowCapacity(PacketRecipeConflictBatch packet) {
+            if (packet == null) return 1;
+            int announcedMax = Math.max(0, packet.maxCandidatesPerGroup);
+            int packetMax = getMaxRecipeCount(packet.recipeGroups);
+            return Math.max(1, Math.max(announcedMax, packetMax));
+        }
+
+        int currentConflictIndex() {
+            return startIndex + localIndex;
+        }
+
+        String getCurrentProductName() {
+            if (localIndex < 0 || localIndex >= productNames.size()) {
+                return I18nUtil.tr("MyMod.gui.recipe_picker.unknown_product");
+            }
+            String name = productNames.get(localIndex);
+            return name != null ? name : I18nUtil.tr("MyMod.gui.recipe_picker.unknown_product");
+        }
+
+        List<RecipeEntry> getCurrentRecipes() {
+            if (localIndex < 0 || localIndex >= recipeGroups.size()) return new ArrayList<RecipeEntry>();
+            List<RecipeEntry> recipes = recipeGroups.get(localIndex);
+            return recipes != null ? recipes : new ArrayList<RecipeEntry>();
+        }
+    }
+}
