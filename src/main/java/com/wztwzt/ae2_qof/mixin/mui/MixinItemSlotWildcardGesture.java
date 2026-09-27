@@ -50,7 +50,8 @@ public abstract class MixinItemSlotWildcardGesture {
         CallbackInfoReturnable<com.cleanroommc.modularui.api.widget.Interactable.Result> cir) {
         try {
             if (button != 2) return;
-            if (!Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) && !Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) return;
+            // 4.0.0：按用户口径"**按鼠标中键打开**"——去掉原先的 Shift 要求（中键即打开本格设置）。
+            // 旧行为（Shift+中键写样板自带电路）已被"本格电路槽"取代：样板自带电路会在插入时自动填入本格。
             if (SmartWildcardClientState.machineX == Integer.MIN_VALUE) return; // 不在机器界面里
 
             ItemSlot self = (ItemSlot) (Object) this;
@@ -61,7 +62,7 @@ public abstract class MixinItemSlotWildcardGesture {
 
             net.minecraft.client.Minecraft.getMinecraft()
                 .displayGuiScreen(
-                    new GuiSlotCircuitPicker(
+                    new com.wztwzt.ae2_qof.client.gui.GuiSlotSettings(
                         SmartWildcardClientState.machineX,
                         SmartWildcardClientState.machineY,
                         SmartWildcardClientState.machineZ,
@@ -70,7 +71,7 @@ public abstract class MixinItemSlotWildcardGesture {
                             stack.getItem()
                                 .getItemStackDisplayName(stack))));
             MyMod.LOG.info(
-                "[AE2QoL] 样板槽手势：打开电路选择屏 slot={} pattern={}",
+                "[AE2QoL] 样板槽手势：打开「格设置」 slot={} pattern={}",
                 slot.getSlotIndex(),
                 stack.getItem()
                     .getItemStackDisplayName(stack));
