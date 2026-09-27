@@ -1,3 +1,66 @@
+## 工作区决策记录 2026-09-27 (40) - **3.37.0：修「通配匹配恒为 false」——本模组通配样板"从未成功过"的最后一个根因**
+
+> 用户实测 3.36.0 反馈：识别到了，但**只有原版模组的样板能展开**，我们那张「只能识别到铁板一个」
+> （因为 NEI 是按铁板转移的 ⇒ 只登记了模板那一张）。
+
+### 一、日志把范围收窄到"规则没问题、匹配函数在骗人"
+
+3.36.0 实测（`AE2-QoL-3.36.0.jar` 已由用户自行部署）：
+```
+规则 slot=0 mode=矿辞 matcher='ingot*' outMatcher='plate*' amount=1 excludes=[]
+智能通配样板展开：produced=0 matched=0 skippedMissingCounterpart=0 reason=no-material-matched  （24 条）
+```
+- `规则槽位越界` **0 条**、`模板重建后已重排规则槽位` 1 条 ⇒ 3.36.0 的**下标对齐生效**；
+- `matcher='ingot*'`、`outMatcher='plate*'` ⇒ **矿辞串与输出行都对了**；
+- 但 `matched=0`（= 材料集大小为 0）⇒ 规则"参与了推导却枚举不到任何材料"。
+
+### 二、根因 H：`SmartWildcardState.matches()` 构造出的正则**必然非法**，而异常被静默吞掉
+
+```java
+else regex.append(Pattern.quote(String.valueOf(c)));      // \Qi\E\Qn\E…
+return token.toLowerCase().matches(regex.toString().toLowerCase());   // ← 把正则串整体小写
+```
+`Pattern.quote` 产出的 `\Q…\E` 被 `toLowerCase()` 压成 `\q…\e`，Java 正则对 `\q` 直接抛
+`PatternSyntaxException: Illegal/unsupported escape sequence`，而当时的 `catch` **静默返回 false**。
+**最小 Java 用例实证**（`%TEMP%\ae2qol-regex-probe`）：
+```
+raw regex   = \Qi\E\Qn\E\Qg\E\Qo\E\Qt\E.*
+lowercased  = \qi\e\qn\e\qg\e\qo\e\qt\e.*
+   EXCEPTION swallowed -> false: PatternSyntaxException: Illegal/unsupported escape sequence
+matches(ingot*, ingotIron) = false
+```
+**影响面（全部同时失效，这解释了"从未成功过"）**：
+1. 展开器的材料枚举 → `materials` 恒空 → `no-material-matched` → 产出 0 → 回退模板那一张
+   （用户看到的"只能识别到铁板一个"）；
+2. `acceptsCandidate` 的**黑名单/白名单**判定恒 false ⇒ 排除功能其实一直是死的；
+3. `excludedByRule` 的**规则级排除**同样恒 false。
+
+### 三、修复
+
+`SmartWildcardState.matches` 改为**逐字符显式转义正则元字符**（不再用 `Pattern.quote` 拼串）
+＋ `Pattern.compile(..., CASE_INSENSITIVE)`（保留"不分大小写"语义），并且**异常不再静默**（记 WARN，
+把 pattern/token 打出来）。修好后用同一套最小用例复核：
+```
+ingot* vs ingotIron = true   | plate* vs plateIron = true | plateDouble* vs plateDoubleIron = true
+ingot* vs plateIron = false  | plate* vs ingotIron = false
+```
+全仓 grep 确认只有这一处犯了"对正则串整体 toLowerCase"的错（其余 `Pattern.quote` 用法都是直接
+`Pattern.compile`，未受影响）。
+
+### 四、验证与待测
+
+- 构建 `BUILD SUCCESSFUL`（无管道取码 `EXIT=0`）；产物 `build/libs/AE2-QoL-3.37.0.jar`
+  （1,759,863 字节，SHA256 `A96D4C3A378535B9DAF34811A371E902FBE65E4A6E4D53A07628B08AD2B84E03`）。
+- **待用户实测**：
+  1. 放进总成后日志出现 **`GT 通配样板注册：通配槽=1 注册 details=N`** 且 **N>0**，
+     以及 `GT 样板仓发现通配样板并展开：slot=… produced=N …`；
+  2. AE 合成监控/样板列表里能看到**整批**展开出来的样板（不再只有铁板那一张）；
+  3. 机器能按展开出的任意材料接单；
+  4. 回归：黑名单/排除项现在**开始真正生效**（以前是死的），若发现"某些材料被排除了"，
+     请检查该样板的总排除/规则级排除里是否有旧条目（那正是它们应有的效果）。
+
+---
+
 ## 工作区决策记录 2026-09-27 (39) - **3.36.0：修「界面行 / 规则槽 / 模板下标三者错位」+ 与两套通配模组互不干扰**
 
 > 用户实测 3.35.0 反馈：加号**只填输入不填输出**、放进去仍是"按样板自己的合成"、而且**原版 wildcardpattern

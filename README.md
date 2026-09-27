@@ -4,9 +4,23 @@
 
 为 **Minecraft 1.7.10 / GT New Horizons** 开发的 AE2 效率增强模组：NEI 样板上传、库存与合成状态提示、二合一终端、无线 AE 连接，以及 GT 仓室、电网与库存监控工具。
 
-**作者：wztwzt · 当前源码版本：3.36.0 · 对照整合包：GTNH 2.9.0-beta-3**
+**作者：wztwzt · 当前源码版本：3.37.0 · 对照整合包：GTNH 2.9.0-beta-3**
 
 本仓库用于个人存档，暂不开放分发。来源、署名与许可记录见 [CREDITS.md](CREDITS.md)。功能说明不代表所有兼容组合均已通过实机测试。
+
+## 本版变化：3.37.0（通配匹配恒为 false —— "从未成功过"的最后一个根因）
+
+- **修通配匹配函数**：`SmartWildcardState.matches` 旧实现把**整个正则串** `toLowerCase()`，把
+  `Pattern.quote` 产出的 `\Q…\E` 压成 `\q…\e` ⇒ Java 正则直接抛
+  `PatternSyntaxException: Illegal/unsupported escape sequence`，而 `catch` **静默返回 false**。
+  后果是本模组**所有**通配匹配恒为 false：展开器枚举不到任何材料（`no-material-matched` ⇒ 产出 0 ⇒
+  机器只认得模板那一张，也就是你看到的"只能识别到铁板一个"），**黑名单/白名单/规则级排除也一直是死的**。
+  现改为逐字符显式转义元字符 + `CASE_INSENSITIVE`，异常不再静默（记 WARN）。
+  （已用最小 Java 用例前后复核：修复前 `matches(ingot*, ingotIron)=false`，修复后 `true`。）
+- 说明：3.36.0 的下标对齐、3.35.0 的矿辞前缀与模板自愈都仍然有效（本轮日志显示 `matcher='ingot*'`、
+  `outMatcher='plate*'`、无槽位越界）；本版是**最后一个**卡点。
+- ⚠️ 回归提醒：黑名单/排除项从本版起**才真正生效**。若发现某些材料被排除，请检查该样板的总排除/
+  规则级排除里的旧条目 —— 那正是它们应有的效果。
 
 ## 本版变化：3.36.0（界面行 / 规则槽 / 模板下标对齐 + 与两套通配模组互不干扰）
 

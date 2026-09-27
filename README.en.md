@@ -4,9 +4,25 @@
 
 An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
-**Author: wztwzt · Current source version: 3.36.0 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.37.0 · Reference pack: GTNH 2.9.0-beta-3**
 
 This repository is for personal archival and is not currently offered for distribution. See [CREDITS.md](CREDITS.md) for attribution and licensing records. Feature descriptions are not a claim that every integration has passed in-game testing.
+
+## What's new in 3.37.0 (wildcard matching always returned false — the last reason it "never worked")
+
+- **Fixed the wildcard matcher**: `SmartWildcardState.matches` used to lowercase the **entire regex string**,
+  turning the `\Q…\E` quoting produced by `Pattern.quote` into `\q…\e`; Java then throws
+  `PatternSyntaxException: Illegal/unsupported escape sequence` and the `catch` **silently returned false**.
+  As a result **every** wildcard match in this mod was false: the expander could never enumerate materials
+  (`no-material-matched` → zero patterns → machines only knew the single template pattern, i.e. what you saw as
+  "only the iron plate is recognised"), and **blacklists, whitelists and per-rule excludes were dead too**.
+  It now escapes metacharacters explicitly and uses `CASE_INSENSITIVE`, and exceptions are no longer silent
+  (they log a WARN). Verified before/after with a minimal Java case: `matches(ingot*, ingotIron)` was `false`,
+  now `true`.
+- Note: 3.36.0's index alignment and 3.35.0's ore prefix / template self-heal remain valid (this round's log shows
+  `matcher='ingot*'`, `outMatcher='plate*'` and no out-of-range slots); this was the final blocker.
+- ⚠️ Regression notice: blacklists and excludes only take effect **from this version on**. If you see materials
+  being excluded, check that pattern's global/rule excludes — the old entries are finally doing their job.
 
 ## What's new in 3.36.0 (row / rule-slot / template-index alignment + no interference between the two wildcard mods)
 

@@ -266,7 +266,27 @@ public final class SmartWildcardState {
         return false;
     }
 
-    /** 支持 {@code *} 与 {@code ?} 的通配匹配（不分大小写，全串匹配）。 */
+    /** 除 {@code *} 与 {@code ?} 外需要转义的正则元字符。 */
+    private static final String REGEX_META = "\\^$.|+()[]{}";
+
+    /**
+     * 支持 {@code *} 与 {@code ?} 的通配匹配（不分大小写，全串匹配）。
+     *
+     * <p><b>3.37.0 修正（本模组"从未成功过"的最后一个根因）</b>：旧实现把**整个正则串**
+     * {@code toLowerCase()} 之后再匹配，而字符是用 {@link Pattern#quote} 逐个转义的，
+     * 于是 {@code \Qi\E\Qn\E…} 被压成 {@code \qi\e\qn\e…} —— Java 正则对 {@code \q} 直接抛
+     * {@code PatternSyntaxException: Illegal/unsupported escape sequence}，而当时的 {@code catch}
+     * **静默返回 false**。后果：本模组**所有**通配匹配恒为 false（展开器枚举不到任何材料 ⇒
+     * {@code reason=no-material-matched} ⇒ 产出 0；黑名单/白名单/规则排除也全是死的）。
+     * 实测复现（最小 Java 用例）：
+     * <pre>
+     * raw regex  = \Qi\E\Qn\E\Qg\E\Qo\E\Qt\E.*
+     * lowercased = \qi\e\qn\e\qg\e\qo\e\qt\e.*
+     * matches(ingot*, ingotIron) = false   （异常被吞）
+     * </pre>
+     * 现在改为**逐字符显式转义元字符** + {@link Pattern#CASE_INSENSITIVE}（保留"不分大小写"语义），
+     * 且异常不再静默（记 WARN）。
+     */
     public static boolean matches(String pattern, String token) {
         if (pattern == null || pattern.isEmpty() || token == null) return false;
         StringBuilder regex = new StringBuilder(pattern.length() + 8);
@@ -274,12 +294,19 @@ public final class SmartWildcardState {
             char c = pattern.charAt(i);
             if (c == '*') regex.append(".*");
             else if (c == '?') regex.append('.');
-            else regex.append(Pattern.quote(String.valueOf(c)));
+            else {
+                if (REGEX_META.indexOf(c) >= 0) regex.append('\\');
+                regex.append(c);
+            }
         }
         try {
-            return token.toLowerCase()
-                .matches(regex.toString().toLowerCase());
+            return Pattern.compile(regex.toString(), Pattern.CASE_INSENSITIVE)
+                .matcher(token)
+                .matches();
         } catch (Throwable t) {
+            // 绝不静默（本项目原则）：历史上正是这里的静默让"所有匹配恒 false"藏了十几轮
+            com.wztwzt.ae2_qof.MyMod.LOG
+                .warn("[AE2QoL] 通配匹配失败（pattern='{}' token='{}'）", pattern, token, t);
             return false;
         }
     }
