@@ -169,9 +169,19 @@ public final class SmartWildcardExpander {
         }
         final String inputPrefix = firstPrefix == null ? "" : firstPrefix;
 
-        // 2) 输出侧前缀：模板输出的矿辞名去掉模板材料名（模板材料名由模板输入的矿辞推出）
+        // 2) 输出侧前缀：**优先用规则里独立写的输出匹配**（3.23.0：编辑器每行可写「输出 plate*」），
+        //    规则没写才沿用原行为——模板输出的矿辞名去掉模板材料名（模板材料名由模板输入的矿辞推出）。
         String templateMaterial = templateMaterialName(templateIn, state);
-        String outputPrefix = templateOutputPrefix(templateOut, templateMaterial);
+        String outputPrefix = null;
+        for (SmartWildcardState.Rule rule : state.rulesView()) {
+            if (rule == null || rule.outMatcher == null || rule.outMatcher.isEmpty()) continue;
+            String rulePrefix = matcherLiteralPrefix(rule.outMatcher);
+            if (!rulePrefix.isEmpty()) {
+                outputPrefix = rulePrefix;
+                break;
+            }
+        }
+        if (outputPrefix == null) outputPrefix = templateOutputPrefix(templateOut, templateMaterial);
 
         // 3) 逐材料实例化
         List<ItemStack> out = new ArrayList<>();

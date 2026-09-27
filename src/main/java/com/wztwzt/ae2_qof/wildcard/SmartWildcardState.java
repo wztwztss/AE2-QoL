@@ -55,10 +55,23 @@ public final class SmartWildcardState {
         public int slot;
         /** true=矿辞模式（ingot*），false=显示名模式（*锭）。 */
         public boolean oreDictMode = true;
-        /** 匹配串，允许 * 与 ? 通配。 */
+        /** 输入匹配串，允许 * 与 ? 通配。 */
         public String matcher = "";
         /** 模板里该输入的每轮数量（用于实例化候选时的数量计算）。 */
         public long amount = 1L;
+
+        /**
+         * 输出侧匹配串（3.23.0 新增，用户确认"两者都要"）。
+         *
+         * <p>留空 = 维持原行为：输出由**模板输出**的矿辞名自动配对（去掉模板材料名再加候选材料名）。
+         * 填了 = 这一行独立指定输出（例如输入 {@code ingot*}、输出 {@code plate*}），
+         * 于是能表达"输入与输出不同材质前缀"这类 Wildcard 风格的手写规则。
+         */
+        public String outMatcher = "";
+        /** 输出侧模式（同 {@link #oreDictMode} 的语义）。 */
+        public boolean outOreDictMode = true;
+        /** 输出侧每轮数量；0 = 沿用模板输出槽的数量。 */
+        public long outAmount = 0L;
 
         public Rule() {}
 
@@ -69,8 +82,23 @@ public final class SmartWildcardState {
             this.amount = amount;
         }
 
+        public Rule(int slot, boolean oreDictMode, String matcher, long amount, String outMatcher,
+            boolean outOreDictMode, long outAmount) {
+            this(slot, oreDictMode, matcher, amount);
+            this.outMatcher = outMatcher == null ? "" : outMatcher;
+            this.outOreDictMode = outOreDictMode;
+            this.outAmount = outAmount;
+        }
+
         public Rule copy() {
-            return new Rule(slot, oreDictMode, matcher, amount);
+            return new Rule(
+                slot,
+                oreDictMode,
+                matcher,
+                amount,
+                outMatcher,
+                outOreDictMode,
+                outAmount);
         }
 
         NBTTagCompound write() {
@@ -79,6 +107,10 @@ public final class SmartWildcardState {
             tag.setBoolean(KEY_MODE, oreDictMode);
             tag.setString(KEY_MATCHER, matcher);
             tag.setLong(KEY_AMOUNT, amount);
+            // 3.23.0 输出侧（老样板没有这些键 ⇒ 读出来是空/默认，行为与从前一致）
+            tag.setString("OutMatcher", outMatcher == null ? "" : outMatcher);
+            tag.setBoolean("OutOreDict", outOreDictMode);
+            tag.setLong("OutAmount", outAmount);
             return tag;
         }
 
@@ -88,6 +120,10 @@ public final class SmartWildcardState {
             rule.oreDictMode = !tag.hasKey(KEY_MODE) || tag.getBoolean(KEY_MODE);
             rule.matcher = tag.getString(KEY_MATCHER);
             rule.amount = tag.hasKey(KEY_AMOUNT) ? tag.getLong(KEY_AMOUNT) : 1L;
+            // 3.23.0 输出侧（老样板没有这些键 ⇒ 空/默认，行为与从前完全一致）
+            rule.outMatcher = tag.hasKey("OutMatcher") ? tag.getString("OutMatcher") : "";
+            rule.outOreDictMode = !tag.hasKey("OutOreDict") || tag.getBoolean("OutOreDict");
+            rule.outAmount = tag.hasKey("OutAmount") ? tag.getLong("OutAmount") : 0L;
             return rule;
         }
     }
