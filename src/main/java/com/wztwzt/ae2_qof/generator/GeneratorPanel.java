@@ -55,27 +55,27 @@ public final class GeneratorPanel {
         Flow column = Flow.column()
             .childPadding(3)
             .size(292, 170);
-        column.child(new TextWidget<>(IKey.str("§b批量样板生成器（按 GT RecipeMap 生成具体样板）")).size(290, 10));
-        column.child(new TextWidget<>(IKey.str("§7配方设置：RecipeMap id 或其片段，如 rolling / gt.recipe.rolling")).size(290, 10));
-        column.child(row("§7配 方  Map", mapField));
-        column.child(new TextWidget<>(IKey.str("§7过滤器（留空 = 不启用；支持 * 与 ?；可匹配显示名或矿辞）")).size(290, 10));
-        column.child(row("§7输入排除", inBlack));
-        column.child(row("§7输出排除", outBlack));
-        column.child(row("§7输入矿辞", inOre));
-        column.child(row("§7输出矿辞", outOre));
-        column.child(row("§7NC 物品", ncItem));
-        column.child(row("§7替换规则", replField));
+        column.child(new TextWidget<>(IKey.str("批量样板生成器（按 GT RecipeMap 生成具体样板）")).size(290, 10));
+        column.child(new TextWidget<>(IKey.str("配方设置：RecipeMap id 或其片段，如 rolling / gt.recipe.rolling")).size(290, 10));
+        column.child(row("配 方  Map", mapField));
+        column.child(new TextWidget<>(IKey.str("过滤器（留空 = 不启用；支持 * 与 ?；可匹配显示名或矿辞）")).size(290, 10));
+        column.child(row("输入排除", inBlack));
+        column.child(row("输出排除", outBlack));
+        column.child(row("输入矿辞", inOre));
+        column.child(row("输出矿辞", outOre));
+        column.child(row("NC 物品", ncItem));
+        column.child(row("替换规则", replField));
         column.child(
-            new TextWidget<>(IKey.str("§8替换规则写法：源矿辞=目标矿辞，多条用 ; 分隔，如 dustCopper=dustTin")).size(290, 10));
+            new TextWidget<>(IKey.str("替换规则写法：源矿辞=目标矿辞，多条用 ; 分隔，如 dustCopper=dustTin")).size(290, 10));
         Flow capRow = Flow.row()
             .childPadding(3)
             .size(288, 20);
-        capRow.child(new TextWidget<>(IKey.str("§7数量上限")).size(56, 12))
+        capRow.child(new TextWidget<>(IKey.str("数量上限")).size(56, 12))
             .child(capField)
-            .child(new TextWidget<>(IKey.str("§7电压等级")).size(56, 12))
+            .child(new TextWidget<>(IKey.str("电压等级")).size(56, 12))
             .child(tierField)
             .child(new ButtonWidget<>().size(80, 14)
-                .overlay(IKey.str("§a生成样板"))
+                .overlay(IKey.str("生成样板"))
                 .tooltip(t -> {
                     t.addLine(IKey.str("服务端扫描该 RecipeMap 并按过滤器生成样板"));
                     t.addLine(IKey.str("产物进背包；放不下会掉在脚下"));
@@ -123,7 +123,7 @@ public final class GeneratorPanel {
         column.child(capRow);
         // 「预览数量」：同一套参数只统计不产出（对应参考模组的预览数量）
         column.child(new ButtonWidget<>().size(90, 14)
-            .overlay(IKey.str("§e预览数量"))
+            .overlay(IKey.str("预览数量"))
             .tooltip(t -> t.addLine(IKey.str("按当前参数只统计：会产出多少、跳过多少（不产生任何物品）")))
             .onMouseTapped(ctx -> {
                 if (!data.isClient()) return true;
@@ -147,7 +147,7 @@ public final class GeneratorPanel {
                 return true;
             }));
         column.child(
-            new TextWidget<>(IKey.str("§8结果会打在聊天栏与日志：seen/produced/skippedFluid/filtered/truncated")).size(290, 10));
+            new TextWidget<>(IKey.str("结果会打在聊天栏与日志：seen/produced/skippedFluid/filtered/truncated")).size(290, 10));
 
         panel.child(column);
         return panel;
@@ -192,7 +192,7 @@ public final class GeneratorPanel {
             .childPadding(3)
             .size(288, 18);
         flow.child(new TextWidget<>(IKey.str(label)).size(60, 14))
-            .child(field).size(180, 14));
+            .child(field.size(180, 14));
         return flow;
     }
 }
