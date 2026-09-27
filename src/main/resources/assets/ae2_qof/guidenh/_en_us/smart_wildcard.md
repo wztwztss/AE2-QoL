@@ -25,7 +25,7 @@ That is why every existing pattern buffer accepts it and machines match it norma
 ## Making one (three steps)
 
 1. Obtain the "Smart Wildcard Pattern" item (AE2 QoL creative tab; crafting recipe below).
-2. **Right-click** it to open the config screen (a single MUI2 page, top to bottom):
+2. **Right-click** it to open the config screen (MUI2 with **four tabs**: Rules / Coverage preview / Exclusions & non-consumed / Circuit; switching is instant):
    - **Rule table (9 rows)**: each row is `input matcher | amount | -> | output matcher | amount | clear | x2` and can be
      **hand-written**. The matcher carries its mode as a prefix — `ore:ingot*` = ore dictionary, `name:*Ingot` = display
      name (no prefix means ore dictionary), so the field explains itself. Leave the output empty to keep the template's
