@@ -166,14 +166,27 @@ public class ItemSmartWildcardPattern extends ItemEncodedPattern
     @Override
     public ItemStack onItemRightClick(ItemStack stack, World world, EntityPlayer player) {
         ItemStack result = super.onItemRightClick(stack, world, player);
-        // 3.23.0：改用 MUI2 的玩家背包 GUI 工厂打开（带容器屏由 MUI2 的 GuiContainerWrapper 处理，
-        // 因此 NEI 的加号仍然认这个界面）；旧的 openGui(GUI_ID) 路径已被它取代。
+        // 3.24.x：入口切到搬运进来的 Wild 界面（GTNH-MUI）。打开前先把我们的状态推进 Wild 的键，
+        // 这样界面一打开就是已配置的内容；它保存时再由 MessageUpdateWildcardConfig 的处理器拉回我们的模型。
         try {
             if (!world.isRemote && player != null) {
-                com.cleanroommc.modularui.factory.PlayerInventoryGuiFactory.INSTANCE.openFromMainHand(player);
+                SmartWildcardState state = SmartWildcardState.of(stack);
+                if (state != null) {
+                    com.wztwzt.ae2_qof.wildport.bridge.WildcardBridge.pushToWild(stack, state);
+                } else {
+                    MyMod.LOG.info("[AE2QoL] 通配样板尚未配置（无我们的 NBT），Wild 界面将以空配置打开");
+                }
+                player.openGui(
+                    MyMod.instance,
+                    com.wztwzt.ae2_qof.wildport.WildportIds.GUI_WILDCARD_PATTERN,
+                    world,
+                    player.inventory.currentItem,
+                    0,
+                    0);
+                MyMod.LOG.info("[AE2QoL] 已打开 Wild 通配样板界面（槽位 {}）", player.inventory.currentItem);
             }
         } catch (Throwable t) {
-            MyMod.LOG.warn("[AE2QoL] 打开通配样板编辑界面失败", t);
+            MyMod.LOG.warn("[AE2QoL] 打开 Wild 通配样板界面失败", t);
         }
         // 3.23.1：移除 M1 时期的"右键聊天摘要"——用户反馈它每次打开界面都在聊天栏刷屏
         //（rules=… / expand: produced=…）。配置信息现在由 MUI2 编辑器与物品 tooltip 承载，诊断信息进日志。

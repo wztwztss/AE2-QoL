@@ -52,12 +52,24 @@ public class MessageUpdateWildcardConfig implements IMessage {
             }
 
             ItemStack stack = player.inventory.getStackInSlot(message.slot);
-            if (stack == null || stack.getItem() != ModItems.wildcardPattern) {
+            // 3.24.x 适配：我们的物品不是它的 ModItems.wildcardPattern ⇒ 两种都接受。
+            // 否则用我们的样板打开这个界面、点保存会被这里**静默丢弃**（本项目铁则：不许静默）。
+            boolean ours = com.wztwzt.ae2_qof.wildcard.SmartWildcardState.isSmartWildcard(stack);
+            if (stack == null || (!ours && stack.getItem() != ModItems.wildcardPattern)) {
+                com.wztwzt.ae2_qof.MyMod.LOG.warn(
+                    "[AE2QoL] Wild 界面保存被拒绝：槽位 {} 不是通配样板（item={}）",
+                    message.slot,
+                    stack == null ? "null" : stack.getItem());
                 return null;
             }
 
             WildcardPatternGenerator.markAsWildcard(stack);
             WildcardPatternState.applyConfig(stack, message.config);
+            // 3.24.x：把 Wild 的配置拉回我们的模型 —— 机器侧（样板总成接管 / 索引期展开）走的是
+            // SmartWildcardExpander + 我们的子树，必须在这里同步，否则界面上改了机器侧看不到。
+            if (ours) {
+                com.wztwzt.ae2_qof.wildport.bridge.WildcardBridge.pullFromWild(stack);
+            }
             player.inventory.markDirty();
             return null;
         }
