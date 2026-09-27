@@ -48,6 +48,9 @@ public final class GeneratorPanel {
         TextFieldWidget tierField = new TextFieldWidget().setMaxLength(2)
             .size(30, 12);
         tierField.setText("");
+        // 替换规则：源矿辞=目标矿辞，多条用 ; 分隔（在编码样板时替换输入/输出，数量不变）
+        TextFieldWidget replField = new TextFieldWidget().setMaxLength(200)
+            .size(180, 12);
 
         Flow column = Flow.column()
             .childPadding(3)
@@ -61,6 +64,9 @@ public final class GeneratorPanel {
         column.child(row("§7输入矿辞", inOre));
         column.child(row("§7输出矿辞", outOre));
         column.child(row("§7NC 物品", ncItem));
+        column.child(row("§7替换规则", replField));
+        column.child(
+            new TextWidget<>(IKey.str("§8替换规则写法：源矿辞=目标矿辞，多条用 ; 分隔，如 dustCopper=dustTin")).size(290, 10));
         Flow capRow = Flow.row()
             .childPadding(3);
         capRow.child(new TextWidget<>(IKey.str("§7数量上限")).size(56, 12))
@@ -96,7 +102,9 @@ public final class GeneratorPanel {
                                 outOre.getText(),
                                 ncItem.getText(),
                                 cap,
-                                parseTier(tierField.getText())));
+                                parseTier(tierField.getText()),
+                                replField.getText(),
+                                false));
                         MyMod.LOG.info(
                             "[AE2QoL] 已发送样板生成请求：map={} cap={} inBlack={} outBlack={} inOre={} outOre={} nc={}",
                             mapField.getText(),
@@ -112,11 +120,53 @@ public final class GeneratorPanel {
                     return true;
                 }));
         column.child(capRow);
+        // 「预览数量」：同一套参数只统计不产出（对应参考模组的预览数量）
+        column.child(new ButtonWidget<>().size(90, 14)
+            .overlay(IKey.str("§e预览数量"))
+            .tooltip(t -> t.addLine(IKey.str("按当前参数只统计：会产出多少、跳过多少（不产生任何物品）")))
+            .onMouseTapped(ctx -> {
+                if (!data.isClient()) return true;
+                try {
+                    int cap = parseCap(capField.getText());
+                    ModNetwork.CHANNEL.sendToServer(
+                        new SmartPatternGenPacket(
+                            mapField.getText(),
+                            inBlack.getText(),
+                            outBlack.getText(),
+                            inOre.getText(),
+                            outOre.getText(),
+                            ncItem.getText(),
+                            cap,
+                            parseTier(tierField.getText()),
+                            replField.getText(),
+                            true));
+                } catch (Throwable t) {
+                    MyMod.LOG.warn("[AE2QoL] 发送预览数量请求失败", t);
+                }
+                return true;
+            }));
         column.child(
             new TextWidget<>(IKey.str("§8结果会打在聊天栏与日志：seen/produced/skippedFluid/filtered/truncated")).size(290, 10));
 
         panel.child(column);
         return panel;
+    }
+
+    /** 解析数量上限：空/非法/<=0 按默认 512，并记日志（与生成按钮同口径，不静默）。 */
+    private static int parseCap(String text) {
+        try {
+            String s = text == null ? "" : text.trim();
+            if (s.isEmpty()) return 512;
+            int v = Integer.parseInt(s);
+            if (v <= 0) {
+                MyMod.LOG.warn("[AE2QoL] 数量上限应 > 0，输入 {} 已按默认 512 处理", s);
+                return 512;
+            }
+            return v;
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 数量上限非法，已按默认 512 处理：{}", text);
+            return 512;
+        }
     }
 
     /** 解析电压等级输入：空串 = 不限（-1）；非法或越界同样按不限处理并记日志（不静默）。 */

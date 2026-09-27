@@ -153,6 +153,16 @@ public final class SmartPatternGenerator {
      * @param maxPatterns 上限（<=0 视为 512）
      */
     public static Result generate(String mapKeyword, Filters filters, int maxPatterns) {
+        return generate(mapKeyword, filters, maxPatterns, false);
+    }
+
+    /**
+     * 生成样板。
+     *
+     * @param dryRun {@code true} 时**只统计不产出**（对应参考模组的「预览数量」按钮）：
+     *               过滤器、上限、流体跳过都照常判定，但不会交给玩家任何物品。
+     */
+    public static Result generate(String mapKeyword, Filters filters, int maxPatterns, boolean dryRun) {
         Result result = new Result();
         Filters f = filters == null ? new Filters() : filters;
         int cap = maxPatterns <= 0 ? 512 : maxPatterns;
@@ -204,6 +214,11 @@ public final class SmartPatternGenerator {
                 }
                 if (result.patterns.size() >= cap) {
                     result.truncated++;
+                    continue;
+                }
+                if (dryRun) {
+                    // 只统计：仍走完过滤器与上限判定，但不编码、不产出（结果列表仅用于计数）
+                    result.patterns.add(template.copy());
                     continue;
                 }
                 ItemStack pattern = encode(template, recipe, repl);

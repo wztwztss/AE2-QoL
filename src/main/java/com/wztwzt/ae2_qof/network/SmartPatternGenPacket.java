@@ -37,18 +37,31 @@ public class SmartPatternGenPacket implements IMessage {
     private int maxPatterns = 512;
     /** 电压等级上限（0=ULV…；-1 = 不限）。 */
     private int maxTier = -1;
+    /** 替换规则（源矿辞=目标矿辞，多条用 ; 分隔）。 */
+    private String replacements = "";
+    /** true = 只统计不产出（「预览数量」）。 */
+    private boolean dryRun;
 
     public SmartPatternGenPacket() {}
 
     public SmartPatternGenPacket(String mapKeyword, String blacklistInput, String blacklistOutput,
         String requireInputOre, String requireOutputOre, String requireNonConsumed, int maxPatterns) {
         this(mapKeyword, blacklistInput, blacklistOutput, requireInputOre, requireOutputOre, requireNonConsumed,
-            maxPatterns, -1);
+            maxPatterns, -1, "", false);
     }
 
     public SmartPatternGenPacket(String mapKeyword, String blacklistInput, String blacklistOutput,
         String requireInputOre, String requireOutputOre, String requireNonConsumed, int maxPatterns, int maxTier) {
+        this(mapKeyword, blacklistInput, blacklistOutput, requireInputOre, requireOutputOre, requireNonConsumed,
+            maxPatterns, maxTier, "", false);
+    }
+
+    public SmartPatternGenPacket(String mapKeyword, String blacklistInput, String blacklistOutput,
+        String requireInputOre, String requireOutputOre, String requireNonConsumed, int maxPatterns, int maxTier,
+        String replacements, boolean dryRun) {
         this.maxTier = maxTier;
+        this.replacements = safe(replacements);
+        this.dryRun = dryRun;
         this.mapKeyword = safe(mapKeyword);
         this.blacklistInput = safe(blacklistInput);
         this.blacklistOutput = safe(blacklistOutput);
@@ -72,6 +85,8 @@ public class SmartPatternGenPacket implements IMessage {
         ByteBufUtils.writeUTF8String(buf, requireNonConsumed);
         buf.writeInt(maxPatterns);
         buf.writeInt(maxTier);
+        ByteBufUtils.writeUTF8String(buf, replacements);
+        buf.writeBoolean(dryRun);
     }
 
     @Override
@@ -85,6 +100,8 @@ public class SmartPatternGenPacket implements IMessage {
             requireNonConsumed = ByteBufUtils.readUTF8String(buf);
             maxPatterns = buf.readInt();
             maxTier = buf.readInt();
+            replacements = ByteBufUtils.readUTF8String(buf);
+            dryRun = buf.readBoolean();
         } catch (Throwable t) {
             MyMod.LOG.warn("[AE2QoL] 样板生成请求包解析失败（已忽略）", t);
         }
@@ -105,9 +122,19 @@ public class SmartPatternGenPacket implements IMessage {
                     filters.requireOutputOre = message.requireOutputOre;
                     filters.requireNonConsumed = message.requireNonConsumed;
                     filters.maxTier = message.maxTier;
+                    filters.replacements = message.replacements;
 
                     SmartPatternGenerator.Result result = SmartPatternGenerator
-                        .generate(message.mapKeyword, filters, message.maxPatterns);
+                        .generate(message.mapKeyword, filters, message.maxPatterns, message.dryRun);
+                    if (message.dryRun) {
+                        // 预览数量：只报统计，不产出任何物品
+                        player.addChatMessage(
+                            new ChatComponentText(
+                                (result.isEmpty() ? EnumChatFormatting.RED : EnumChatFormatting.YELLOW)
+                                    + "[AE2QoL] \u9884\u89c8\u6570\u91cf\uff1a"
+                                    + result.describe()));
+                        return;
+                    }
                     if (result.isEmpty()) {
                         player.addChatMessage(
                             new ChatComponentText(
