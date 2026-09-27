@@ -69,6 +69,19 @@ public class ItemSmartWildcardPattern extends ItemEncodedPattern
         return WildcardEditorPanel.build(data, syncManager);
     }
 
+    /**
+     * 按 MUI2 的要求覆写 {@code createScreen} 并传入本模组 modid。
+     *
+     * <p>不覆写时 MUI2 会打警告「should be overridden to pass your own mod id … or else it will crash」——
+     * 它用 owner 来区分同名面板，未来版本不传会直接崩，所以这里现在就给对。
+     */
+    @Override
+    public com.cleanroommc.modularui.screen.ModularScreen createScreen(
+        com.cleanroommc.modularui.factory.PlayerInventoryGuiData data,
+        com.cleanroommc.modularui.screen.ModularPanel panel) {
+        return new com.cleanroommc.modularui.screen.ModularScreen(MyMod.MODID, panel);
+    }
+
     public ItemSmartWildcardPattern register() {
         GameRegistry.registerItem(this, "smart_wildcard_pattern", MyMod.MODID);
         // 3.22.0：合成配方 = 1 张 AE2 空白样板 → 1 张智能通配样板（QoL 便利品，与参考模组同思路）。
@@ -162,42 +175,8 @@ public class ItemSmartWildcardPattern extends ItemEncodedPattern
         } catch (Throwable t) {
             MyMod.LOG.warn("[AE2QoL] 打开通配样板编辑界面失败", t);
         }
-        try {
-            if (!world.isRemote && player != null) {
-                SmartWildcardState state = SmartWildcardState.of(stack);
-                if (state == null) {
-                    player.addChatMessage(
-                        new net.minecraft.util.ChatComponentText(
-                            EnumChatFormatting.GRAY + "[AE2QoL] "
-                                + StatCollector.translateToLocal("ae2_qof.wildcard.tip.unconfigured")));
-                } else {
-                    // M1 自测入口：直接跑一次展开，把结果摘要打出来（M2 会换成可视化界面）。
-                    SmartWildcardExpander.Result expansion = SmartWildcardExpander.expand(stack, world);
-                    player.addChatMessage(
-                        new net.minecraft.util.ChatComponentText(
-                            EnumChatFormatting.AQUA + "[AE2QoL] rules=" + state.rules.size()
-                                + " blacklist="
-                                + state.blacklist.size()
-                                + " whitelist="
-                                + state.whitelist.size()
-                                + " circuit="
-                                + state.circuit
-                                + " nonConsumed="
-                                + state.nonConsumed.size()
-                                + " revision="
-                                + state.revision
-                                + " cap="
-                                + Config.smartWildcardExpandCap));
-                    player.addChatMessage(
-                        new net.minecraft.util.ChatComponentText(
-                            (expansion.isEmpty() ? EnumChatFormatting.RED : EnumChatFormatting.GREEN)
-                                + "[AE2QoL] expand: "
-                                + expansion.describe()));
-                }
-            }
-        } catch (Throwable t) {
-            MyMod.LOG.warn("[AE2QoL] 智能通配样板右键摘要失败", t);
-        }
+        // 3.23.1：移除 M1 时期的"右键聊天摘要"——用户反馈它每次打开界面都在聊天栏刷屏
+        //（rules=… / expand: produced=…）。配置信息现在由 MUI2 编辑器与物品 tooltip 承载，诊断信息进日志。
         return result;
     }
 }

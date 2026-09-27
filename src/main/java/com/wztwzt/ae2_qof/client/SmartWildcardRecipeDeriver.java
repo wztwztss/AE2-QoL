@@ -162,7 +162,21 @@ public final class SmartWildcardRecipeDeriver {
                 + " circuit="
                 + result.state.circuit;
             result.ok = !result.templateIn.isEmpty();
-            if (!result.ok) result.reason = "no-inputs";
+            if (!result.ok) {
+                result.reason = "no-inputs";
+                // 诊断：把配方 handler 与各类原始数量打出来，便于一眼定性"为什么没推导出东西"
+                // （例如 handler 不暴露原料、或整条配方只有流体、或所有原料都取不到物品）
+                MyMod.LOG.warn(
+                    "[AE2QoL] 推导未产生规则：handler={} recipeIndex={} ingredientStacks={} otherStacks={} resultStack={} skippedEmpty={} skippedFluid={}",
+                    handler.getClass()
+                        .getName(),
+                    recipeIndex,
+                    inputs == null ? -1 : inputs.size(),
+                    other == null ? -1 : other.size(),
+                    primary == null ? "null" : "present",
+                    skippedEmpty,
+                    skippedFluid);
+            }
             return result;
         } catch (Throwable t) {
             MyMod.LOG.warn("[AE2QoL] 从 NEI 配方推导规则失败", t);

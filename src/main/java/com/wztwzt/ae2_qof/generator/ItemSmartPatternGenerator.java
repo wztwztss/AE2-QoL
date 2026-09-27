@@ -64,6 +64,13 @@ public class ItemSmartPatternGenerator extends Item
         return stack;
     }
 
+    /** 按 MUI2 要求覆写并传入本模组 modid（不覆写会打警告，未来版本会崩）。 */
+    @Override
+    public com.cleanroommc.modularui.screen.ModularScreen createScreen(PlayerInventoryGuiData data,
+        ModularPanel panel) {
+        return new com.cleanroommc.modularui.screen.ModularScreen(MyMod.MODID, panel);
+    }
+
     public ItemSmartPatternGenerator register() {
         GameRegistry.registerItem(this, "smart_pattern_generator", MyMod.MODID);
         // 合成：1 张 AE2 空白样板 → 1 个生成器（与智能通配样板同思路，注册失败留日志、物品仍可从创造标签取）

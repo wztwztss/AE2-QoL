@@ -1,11 +1,16 @@
 package com.wztwzt.ae2_qof.wildcard;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import net.minecraft.item.ItemStack;
 
 import com.cleanroommc.modularui.api.drawable.IKey;
 import com.cleanroommc.modularui.factory.PlayerInventoryGuiData;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
+import com.cleanroommc.modularui.widget.ScrollWidget;
+import com.cleanroommc.modularui.widget.scroll.VerticalScrollData;
 import com.cleanroommc.modularui.widgets.ButtonWidget;
 import com.cleanroommc.modularui.widgets.TextWidget;
 import com.cleanroommc.modularui.widgets.layout.Flow;
@@ -15,79 +20,105 @@ import com.wztwzt.ae2_qof.network.ModNetwork;
 import com.wztwzt.ae2_qof.network.SmartWildcardRulesPacket;
 
 /**
- * 智能通配样板的 MUI2 配置界面（3.23.0）。
+ * 智能通配样板的 MUI2 配置界面（3.23.0；3.23.1 按用户反馈重做布局与配色）。
  *
- * <h2>这一版做了什么</h2>
- * <ul>
- * <li><b>9 行规则编辑表</b>（照参考模组的交互重写，不复制其代码）：每行
- * 「输入匹配 + 数量 → 输出匹配 + 数量」，可手写，也可由 NEI 加号一键填入；</li>
- * <li><b>模式的写法</b>：匹配串自带模式前缀 —— <code>ore:ingot*</code> 表示矿辞模式，
- * <code>name:*锭</code> 表示显示名模式（不写前缀按矿辞处理）。这样字段本身就是自解释的，
- * 不需要额外的模式开关，也不会出现"开关状态看不出来"的问题；</li>
- * <li><b>保存</b>：客户端解析整张表 → 组包 {@link SmartWildcardRulesPacket} 交服务端写入样板 NBT
- * （客户端不写 NBT；既有写回链路已带日志与校验）。</li>
- * </ul>
+ * <h2>这次修了什么（都有截图证据）</h2>
+ * <ol>
+ * <li><b>内容只画出标题/表头</b>：子 {@code Flow} 没有显式尺寸 ⇒ MUI2 按 0 高布局，9 行规则与后续内容全部不见。
+ * 现在**每个容器与每个子控件都写了 size**，并用 {@link ScrollWidget} 承载超高的内容（可滚动）。</li>
+ * <li><b>字色不清</b>：此前在浅色面板上用了 {@code §7}/{@code §b} 等颜色码，深灰字几乎看不清。
+ * 现在全部去掉颜色码，沿用 MUI2 默认的深色文字（与参考模组"浅底深字"一致），只在按钮标签上保留最简文字。</li>
+ * <li><b>按钮不全</b>：现在每行固定四个动作（预 / 筛 / x2 / 清），底部有 全部预览 / 保存，
+ * 黑名单区有 添加 / 清空 / 逐行删除，另有 电路 与 试算。</li>
+ * </ol>
  *
- * <h2>面板在两侧都会被构建</h2>
- * MUI2 的 {@code buildUI} 服务端与客户端都会执行，因此本类**只用两侧都存在的 MUI2 类**；
- * 只有"点击后发包"这种纯客户端动作才用 {@code data.isClient()} 守卫。
+ * <h2>不变的行为约定</h2>
+ * 匹配串用 {@code ore:ingot*} / {@code name:*锭} 前缀自解释模式；输出留空 = 沿用模板输出自动配对；
+ * 保存走既有 C2S 包由**服务端**写入样板 NBT；所有非法输入都按默认值处理并在日志留痕。
  */
 public final class WildcardEditorPanel {
 
     /** 规则行数（与参考模版一致）。 */
     public static final int ROWS = 9;
+    /** 行高（含文本字段）。 */
+    private static final int ROW_H = 14;
+    /** 预览最多列出的行数（其余在聊天栏与日志计数里）。 */
+    private static final int PREVIEW_ROWS = 6;
 
     private WildcardEditorPanel() {}
 
     public static ModularPanel build(PlayerInventoryGuiData data, PanelSyncManager syncManager) {
-        ModularPanel panel = new ModularPanel("ae2qol_wildcard_editor").size(340, 224);
+        ModularPanel panel = new ModularPanel("ae2qol_wildcard_editor").size(346, 244);
 
         ItemStack stack = data.getUsedItemStack();
         SmartWildcardState state = SmartWildcardState.of(stack);
         if (state == null) state = new SmartWildcardState();
-        // lambda 只能捕获有效 final ⇒ 取一个不变引用给下面的"保存"回调使用
         final SmartWildcardState base = state;
-        // 黑名单工作副本：必须在规则行循环**之前**声明（每行的「筛」按钮要往里加）
-        final java.util.List<String> blacklist = new java.util.ArrayList<>(base.blacklist);
+        final List<String> blacklist = new ArrayList<>(base.blacklist);
 
         TextFieldWidget[] inFields = new TextFieldWidget[ROWS];
         TextFieldWidget[] inAmounts = new TextFieldWidget[ROWS];
         TextFieldWidget[] outFields = new TextFieldWidget[ROWS];
         TextFieldWidget[] outAmounts = new TextFieldWidget[ROWS];
 
-        Flow column = Flow.column()
+        // 内容高度：标题(12)+写法(12)+表头(12)+9行*14+电路(14)+黑名单(14)+黑名单条目(≤6*12)
+        //           +预览标题(12)+预览条目(≤6*12)+底部按钮(16)+提示(12)
+        int previewNameCount = 0;
+        List<String> previewNames = new ArrayList<>();
+        SmartWildcardExpander.Result preview = null;
+        try {
+            if (stack != null) {
+                ItemStack previewSource = stack.copy();
+                base.write(previewSource);
+                preview = SmartWildcardExpander.expand(previewSource, data.getWorld());
+                for (ItemStack pattern : preview.patterns) {
+                    if (previewNames.size() >= PREVIEW_ROWS) break;
+                    String name = firstInputName(pattern);
+                    if (name != null) previewNames.add(name);
+                }
+            }
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 编辑器预览计算失败", t);
+        }
+        previewNameCount = previewNames.size();
+
+        int blackShown = Math.min(blacklist.size(), PREVIEW_ROWS);
+        int contentH = 12 + 12 + 12 + ROWS * ROW_H + 16 + 16 + blackShown * 12 + 12 + previewNameCount * 12 + 18 + 12 + 8;
+
+        Flow content = Flow.column()
             .childPadding(2)
-            .size(330, 200);
-        column.child(
-            new TextWidget<>(IKey.str("§b智能通配样板 · 规则（可手写；也可在 NEI 里按加号自动填入）")).size(320, 10));
-        column.child(new TextWidget<>(IKey.str("§7匹配串写法：§fore:ingot* §7= 矿辞模式，§fname:*锭 §7= 显示名模式")).size(320, 10));
+            .size(330, contentH);
 
+        // ===== 标题与写法说明（默认深色字，浅底清晰）=====
+        content.child(new TextWidget<>(IKey.str("智能通配样板 · 规则（可手写；也可在 NEI 里按加号自动填入）")).size(320, 12));
+        content.child(new TextWidget<>(IKey.str("写法：ore:ingot* = 矿辞模式，name:*锭 = 显示名模式；输出留空 = 自动配对")).size(320, 12));
+
+        // ===== 表头 =====
         Flow header = Flow.row()
-            .childPadding(2);
-        header.child(new TextWidget<>(IKey.str("§7#")).size(12, 10))
-            .child(new TextWidget<>(IKey.str("§7输入匹配")).size(78, 10))
-            .child(new TextWidget<>(IKey.str("§7数量")).size(24, 10))
-            .child(new TextWidget<>(IKey.str("§7→")).size(10, 10))
-            .child(new TextWidget<>(IKey.str("§7输出匹配")).size(78, 10))
-            .child(new TextWidget<>(IKey.str("§7数量")).size(24, 10))
-            .child(new TextWidget<>(IKey.str("§7操作")).size(40, 10));
-        column.child(header);
+            .childPadding(2)
+            .size(320, 12);
+        header.child(new TextWidget<>(IKey.str("#")).size(10, 12))
+            .child(new TextWidget<>(IKey.str("输入匹配")).size(76, 12))
+            .child(new TextWidget<>(IKey.str("数量")).size(24, 12))
+            .child(new TextWidget<>(IKey.str("→")).size(8, 12))
+            .child(new TextWidget<>(IKey.str("输出匹配")).size(76, 12))
+            .child(new TextWidget<>(IKey.str("数量")).size(24, 12))
+            .child(new TextWidget<>(IKey.str("操作")).size(88, 12));
+        content.child(header);
 
+        // ===== 9 行规则 =====
         for (int i = 0; i < ROWS; i++) {
-            SmartWildcardState.Rule rule = i < state.rules.size() ? state.rules.get(i) : null;
+            SmartWildcardState.Rule rule = i < base.rules.size() ? base.rules.get(i) : null;
 
             TextFieldWidget inField = new TextFieldWidget().setMaxLength(64)
-                .size(78, 12);
+                .size(76, 12);
             inField.setText(rule == null ? "" : formatMatcher(rule.oreDictMode, rule.matcher));
-
             TextFieldWidget inAmount = new TextFieldWidget().setMaxLength(9)
                 .size(24, 12);
             inAmount.setText(rule == null ? "1" : String.valueOf(Math.max(1L, rule.amount)));
-
             TextFieldWidget outField = new TextFieldWidget().setMaxLength(64)
-                .size(78, 12);
+                .size(76, 12);
             outField.setText(rule == null ? "" : formatMatcher(rule.outOreDictMode, rule.outMatcher));
-
             TextFieldWidget outAmount = new TextFieldWidget().setMaxLength(9)
                 .size(24, 12);
             outAmount.setText(rule == null || rule.outAmount <= 0 ? "" : String.valueOf(rule.outAmount));
@@ -98,32 +129,9 @@ public final class WildcardEditorPanel {
             outAmounts[i] = outAmount;
 
             final int index = i;
-            ButtonWidget<?> clear = new ButtonWidget<>().size(16, 12)
-                .overlay(IKey.str("§c清"))
-                .tooltip(t -> t.addLine(IKey.str("清空这一行（不会立即写回，点保存才生效）")))
-                .onMouseTapped(ctx -> {
-                    inFields[index].setText("");
-                    inAmounts[index].setText("1");
-                    outFields[index].setText("");
-                    outAmounts[index].setText("");
-                    return true;
-                });
-            ButtonWidget<?> double2 = new ButtonWidget<>().size(18, 12)
-                .overlay(IKey.str("§ex2"))
-                .tooltip(t -> t.addLine(IKey.str("把这一行的输入/输出数量翻倍")))
-                .onMouseTapped(ctx -> {
-                    inAmounts[index].setText(String.valueOf(parseLong(inAmounts[index].getText(), 1L) * 2L));
-                    long outNow = parseLong(outAmounts[index].getText(), parseLong(inAmounts[index].getText(), 1L));
-                    outAmounts[index].setText(String.valueOf(outNow * 2L));
-                    return true;
-                });
-            // 「预」= 只按这一行展开，把前几个候选打到聊天栏（不写回）
-            ButtonWidget<?> previewRow = new ButtonWidget<>().size(16, 12)
-                .overlay(IKey.str("§b预"))
-                .tooltip(t -> {
-                    t.addLine(IKey.str("只按这一行试算，把前几个候选打到聊天栏（不会写回）"));
-                    t.addLine(IKey.str("试算用的是与机器相同的展开器"));
-                })
+            ButtonWidget<?> previewRow = new ButtonWidget<>().size(20, 12)
+                .overlay(IKey.str("预"))
+                .tooltip(t -> t.addLine(IKey.str("只按这一行试算，结果打进聊天栏（不写回）")))
                 .onMouseTapped(ctx -> {
                     if (!data.isClient()) return true;
                     ae2qol$chat(
@@ -135,9 +143,8 @@ public final class WildcardEditorPanel {
                             outAmounts[index].getText()));
                     return true;
                 });
-            // 「筛」= 把这一行的输入匹配串加入黑名单（等于"这一整类都不要"）
-            ButtonWidget<?> excludeRow = new ButtonWidget<>().size(16, 12)
-                .overlay(IKey.str("§c筛"))
+            ButtonWidget<?> excludeRow = new ButtonWidget<>().size(20, 12)
+                .overlay(IKey.str("筛"))
                 .tooltip(t -> t.addLine(IKey.str("把这一行的输入匹配串加入黑名单（保存后生效）")))
                 .onMouseTapped(ctx -> {
                     String token = stripModePrefix(inFields[index].getText());
@@ -146,43 +153,64 @@ public final class WildcardEditorPanel {
                     }
                     return true;
                 });
+            ButtonWidget<?> double2 = new ButtonWidget<>().size(22, 12)
+                .overlay(IKey.str("x2"))
+                .tooltip(t -> t.addLine(IKey.str("这一行的输入/输出数量翻倍")))
+                .onMouseTapped(ctx -> {
+                    inAmounts[index].setText(String.valueOf(parseLong(inAmounts[index].getText(), 1L) * 2L));
+                    long outNow = parseLong(outAmounts[index].getText(), parseLong(inAmounts[index].getText(), 1L));
+                    outAmounts[index].setText(String.valueOf(outNow * 2L));
+                    return true;
+                });
+            ButtonWidget<?> clear = new ButtonWidget<>().size(22, 12)
+                .overlay(IKey.str("清"))
+                .tooltip(t -> t.addLine(IKey.str("清空这一行（点保存才写回）")))
+                .onMouseTapped(ctx -> {
+                    inFields[index].setText("");
+                    inAmounts[index].setText("1");
+                    outFields[index].setText("");
+                    outAmounts[index].setText("");
+                    return true;
+                });
 
             Flow row = Flow.row()
-                .childPadding(2);
-            row.child(new TextWidget<>(IKey.str("§7" + (i + 1))).size(12, 12))
+                .childPadding(2)
+                .size(320, ROW_H);
+            row.child(new TextWidget<>(IKey.str(String.valueOf(i + 1))).size(10, 12))
                 .child(inField)
                 .child(inAmount)
-                .child(new TextWidget<>(IKey.str("§7→")).size(10, 12))
+                .child(new TextWidget<>(IKey.str("→")).size(8, 12))
                 .child(outField)
                 .child(outAmount)
-                .child(clear)
-                .child(double2)
                 .child(previewRow)
-                .child(excludeRow);
-            column.child(row);
+                .child(excludeRow)
+                .child(double2)
+                .child(clear);
+            content.child(row);
         }
 
-        // ===== 电路号（1~24；留空 = 继承槽位/整机）=====
+        // ===== 内置电路 =====
         TextFieldWidget circuitField = new TextFieldWidget().setMaxLength(3)
             .size(30, 12);
         circuitField.setText(base.circuit >= 1 ? String.valueOf(base.circuit) : "");
         Flow circuitRow = Flow.row()
-            .childPadding(2);
-        circuitRow.child(new TextWidget<>(IKey.str("§7内置电路 1~24（留空 = 继承）")).size(160, 12))
+            .childPadding(2)
+            .size(320, 14);
+        circuitRow.child(new TextWidget<>(IKey.str("内置电路 1~24（留空 = 继承槽位/整机）")).size(180, 12))
             .child(circuitField);
-        column.child(circuitRow);
+        content.child(circuitRow);
 
-        // ===== 黑名单（总排除）=====
-        // 工作副本 blacklist 已在前面声明（规则行的「筛」按钮也要用）
+        // ===== 总排除（黑名单）=====
         TextFieldWidget blacklistField = new TextFieldWidget().setMaxLength(64)
-            .size(140, 12);
+            .size(150, 12);
         Flow blackRow = Flow.row()
-            .childPadding(2);
-        blackRow.child(new TextWidget<>(IKey.str("§7总排除（黑名单）")).size(90, 12))
+            .childPadding(2)
+            .size(320, 14);
+        blackRow.child(new TextWidget<>(IKey.str("总排除")).size(50, 12))
             .child(blacklistField)
             .child(new ButtonWidget<>().size(28, 12)
-                .overlay(IKey.str("§a加"))
-                .tooltip(t -> t.addLine(IKey.str("把左边文本框的内容加入黑名单（支持 * 与 ?）")))
+                .overlay(IKey.str("加"))
+                .tooltip(t -> t.addLine(IKey.str("加入黑名单（支持 * 与 ?）")))
                 .onMouseTapped(ctx -> {
                     String v = blacklistField.getText();
                     if (v != null && !v.trim()
@@ -195,155 +223,185 @@ public final class WildcardEditorPanel {
                     return true;
                 }))
             .child(new ButtonWidget<>().size(28, 12)
-                .overlay(IKey.str("§c清"))
+                .overlay(IKey.str("清空"))
                 .tooltip(t -> t.addLine(IKey.str("清空整个黑名单")))
                 .onMouseTapped(ctx -> {
                     blacklist.clear();
                     return true;
                 }))
-            .child(new TextWidget<>(IKey.str("§7现有 " + blacklist.size() + " 项")).size(70, 12));
-        column.child(blackRow);
+            .child(new TextWidget<>(IKey.str("现有 " + blacklist.size() + " 项")).size(60, 12));
+        content.child(blackRow);
 
-        // ===== 黑名单现有条目（逐行删除）=====
-        // 按**内容**删除而不是按下标：面板不会就地刷新，用下标会在删错行时误删
+        // 黑名单条目（逐行删除；按内容删，不按下标）
         int shownBlack = 0;
-        for (String token : new java.util.ArrayList<>(blacklist)) {
-            if (shownBlack >= 6) break;
+        for (String token : new ArrayList<>(blacklist)) {
+            if (shownBlack >= PREVIEW_ROWS) break;
             final String entry = token;
             Flow entryLine = Flow.row()
-                .childPadding(2);
-            entryLine.child(new TextWidget<>(IKey.str("§7- §c" + entry)).size(230, 10))
-                .child(new ButtonWidget<>().size(28, 10)
-                    .overlay(IKey.str("§c删"))
-                    .tooltip(t -> t.addLine(IKey.str("从黑名单移除「" + entry + "」（保存后生效）")))
+                .childPadding(2)
+                .size(320, 12);
+            entryLine.child(new TextWidget<>(IKey.str("- " + entry)).size(260, 12))
+                .child(new ButtonWidget<>().size(28, 12)
+                    .overlay(IKey.str("删"))
+                    .tooltip(t -> t.addLine(IKey.str("从黑名单移除（保存后生效）")))
                     .onMouseTapped(ctx -> {
                         if (blacklist.remove(entry)) {
                             MyMod.LOG.info("[AE2QoL] 黑名单移除：{}（保存后生效）", entry);
                         }
                         return true;
                     }));
-            column.child(entryLine);
+            content.child(entryLine);
             shownBlack++;
-        }
-        if (blacklist.size() > shownBlack) {
-            column.child(
-                new TextWidget<>(IKey.str("§8… 另有 " + (blacklist.size() - shownBlack) + " 项（保存后重新打开可见）"))
-                    .size(320, 10));
         }
 
         // ===== 覆盖预览 =====
-        // 构建期按"当前已保存的规则"展开一次，列出前若干条候选，每行一个「排除」（加入黑名单，保存后生效）。
-        // 注意：MUI2 要求服务端与客户端构建出**相同的控件树**，所以这里两侧都执行展开
-        // （展开只依赖矿辞表与 NBT，两端都能做），世界用 GuiData.getWorld()。
-        column.child(new TextWidget<>(IKey.str("§b覆盖预览（点「排除」把该候选加入黑名单，保存后生效）")).size(320, 10));
-        try {
-            ItemStack previewSource = stack == null ? null : stack.copy();
-            if (previewSource != null) {
-                base.write(previewSource);
-                SmartWildcardExpander.Result preview = SmartWildcardExpander
-                    .expand(previewSource, data.getWorld());
-                int shown = 0;
-                for (ItemStack candidatePattern : preview.patterns) {
-                    if (shown >= 6) break;
-                    String candidateName = firstInputName(candidatePattern);
-                    if (candidateName == null || candidateName.isEmpty()) continue;
-                    final String token = candidateName;
-                    Flow line = Flow.row()
-                        .childPadding(2);
-                    line.child(new TextWidget<>(IKey.str("§7- §f" + token)).size(230, 10))
-                        .child(new ButtonWidget<>().size(28, 10)
-                            .overlay(IKey.str("§c排除"))
-                            .tooltip(t -> t.addLine(IKey.str("把「" + token + "」加入黑名单")))
-                            .onMouseTapped(ctx -> {
-                                if (blacklist.add(token)) {
-                                    MyMod.LOG.info("[AE2QoL] 预览排除：已加入黑名单 {}（保存后生效）", token);
-                                }
-                                return true;
-                            }));
-                    column.child(line);
-                    shown++;
-                }
-                if (preview.patterns.size() > shown) {
-                    column.child(
-                        new TextWidget<>(IKey.str("§8… 另有 " + (preview.patterns.size() - shown) + " 项（保存后在游戏内查看完整列表）"))
-                            .size(320, 10));
-                }
-                if (preview.patterns.isEmpty()) {
-                    column.child(new TextWidget<>(IKey.str("§c当前没有覆盖任何候选：" + preview.describe())).size(320, 10));
-                }
+        content.child(new TextWidget<>(IKey.str("覆盖预览（点「排除」把该候选加入黑名单，保存后生效）")).size(320, 12));
+        for (String name : previewNames) {
+            final String token = name;
+            Flow line = Flow.row()
+                .childPadding(2)
+                .size(320, 12);
+            line.child(new TextWidget<>(IKey.str("- " + token)).size(260, 12))
+                .child(new ButtonWidget<>().size(28, 12)
+                    .overlay(IKey.str("排除"))
+                    .tooltip(t -> t.addLine(IKey.str("把「" + token + "」加入黑名单")))
+                    .onMouseTapped(ctx -> {
+                        if (blacklist.add(token)) {
+                            MyMod.LOG.info("[AE2QoL] 预览排除：已加入黑名单 {}（保存后生效）", token);
+                        }
+                        return true;
+                    }));
+            content.child(line);
+        }
+        if (preview != null) {
+            if (preview.patterns.isEmpty()) {
+                content.child(new TextWidget<>(IKey.str("当前没有覆盖任何候选：" + preview.describe())).size(320, 12));
+            } else if (preview.patterns.size() > previewNameCount) {
+                content.child(
+                    new TextWidget<>(IKey.str("… 另有 " + (preview.patterns.size() - previewNameCount) + " 项（点「全部预览」打到聊天栏）"))
+                        .size(320, 12));
             }
-        } catch (Throwable t) {
-            MyMod.LOG.warn("[AE2QoL] 编辑器预览失败", t);
-            column.child(new TextWidget<>(IKey.str("§c预览失败：" + t)).size(320, 10));
         }
 
-        // 保存：客户端解析整张表 → 走既有 C2S 包由服务端写入样板 NBT
-        ButtonWidget<?> save = new ButtonWidget<>().size(70, 14)
-            .overlay(IKey.str("§a保存规则"))
-            .tooltip(t -> t.addLine(IKey.str("把上面 9 行写进这张样板的 NBT（服务端写入）")))
+        // ===== 底部按钮：全部预览 / 保存 =====
+        Flow bottomRow = Flow.row()
+            .childPadding(2)
+            .size(320, 16);
+        bottomRow.child(new ButtonWidget<>().size(70, 14)
+            .overlay(IKey.str("全部预览"))
+            .tooltip(t -> t.addLine(IKey.str("把完整候选列表与计数打到聊天栏")))
             .onMouseTapped(ctx -> {
-                if (!data.isClient()) return true; // 只在客户端点击时发包
-                try {
-                    SmartWildcardState edited = new SmartWildcardState();
-                    // 电路：优先用界面里填的（1~24）；填了非法值就保持原样并记日志，不静默吞掉
-                    String circuitText = circuitField.getText() == null ? ""
-                        : circuitField.getText()
-                            .trim();
-                    if (circuitText.isEmpty()) {
-                        edited.circuit = base.circuit >= 1 ? base.circuit : -1;
-                    } else {
-                        long parsed = parseLong(circuitText, -1L);
-                        if (parsed >= 1 && parsed <= 24) {
-                            edited.circuit = (int) parsed;
-                        } else {
-                            edited.circuit = base.circuit;
-                            MyMod.LOG.warn("[AE2QoL] 编辑器里的电路号非法（应为 1~24）：{}，保持原值 {}", circuitText, base.circuit);
-                        }
-                    }
-                    edited.blacklist.addAll(blacklist);
-                    edited.whitelist.addAll(base.whitelist);
-                    edited.nonConsumed.addAll(base.nonConsumed);
-                    int used = 0;
-                    for (int i = 0; i < ROWS; i++) {
-                        String raw = inFields[i].getText();
-                        if (raw == null || raw.trim()
-                            .isEmpty()) continue;
-                        boolean oreMode = !raw.trim()
-                            .startsWith("name:");
-                        String matcher = stripModePrefix(raw);
-                        long amount = Math.max(1L, parseLong(inAmounts[i].getText(), 1L));
-                        String rawOut = outFields[i].getText();
-                        String outMatcher = rawOut == null ? "" : stripModePrefix(rawOut);
-                        boolean outOreMode = rawOut == null || !rawOut.trim()
-                            .startsWith("name:");
-                        long outAmount = Math.max(0L, parseLong(outAmounts[i].getText(), 0L));
-                        edited.rules
-                            .add(new SmartWildcardState.Rule(used, oreMode, matcher, amount, outMatcher, outOreMode, outAmount));
-                        used++;
-                    }
-                    ModNetwork.CHANNEL.sendToServer(new SmartWildcardRulesPacket(edited));
-                    MyMod.LOG.info("[AE2QoL] 通配样板编辑器已提交规则：rules={}（手写）", edited.rules.size());
-                } catch (Throwable t) {
-                    MyMod.LOG.warn("[AE2QoL] 通配样板编辑器保存失败", t);
-                }
+                if (!data.isClient()) return true;
+                ae2qol$chat(fullPreview(stack, base));
                 return true;
-            });
-        column.child(save);
-        column.child(
-            new TextWidget<>(IKey.str("§7提示：输出留空 = 沿用模板输出自动配对（同材质）；填了则按你写的输出匹配走。"))
-                .size(320, 10));
+            }))
+            .child(new ButtonWidget<>().size(70, 14)
+                .overlay(IKey.str("保存"))
+                .tooltip(t -> t.addLine(IKey.str("把上面 9 行与黑名单/电路写进这张样板（服务端写入）")))
+                .onMouseTapped(ctx -> {
+                    if (!data.isClient()) return true;
+                    saveRules(stack, base, blacklist, circuitField, inFields, inAmounts, outFields, outAmounts);
+                    return true;
+                }));
+        content.child(bottomRow);
+        content.child(new TextWidget<>(IKey.str("结果也会写进日志（生成/推导/写回都可追溯）")).size(320, 12));
 
-        panel.child(column);
+        // ===== 放进可滚动容器：内容超高也不会被裁掉 =====
+        ScrollWidget<?> scroll = new ScrollWidget<>(new VerticalScrollData());
+        scroll.size(336, 238);
+        scroll.getScrollArea()
+            .getScrollY()
+            .setScrollSize(contentH);
+        scroll.child(content);
+
+        panel.child(scroll);
         return panel;
     }
 
-    /** 只按某一行试算（不写回），把摘要与前几个候选名打成一行聊天文本（仅客户端调用）。 */
+    /** 保存：客户端解析整张表 → 既有 C2S 包 → 服务端写 NBT。 */
+    private static void saveRules(ItemStack stack, SmartWildcardState base, List<String> blacklist,
+        TextFieldWidget circuitField, TextFieldWidget[] inFields, TextFieldWidget[] inAmounts,
+        TextFieldWidget[] outFields, TextFieldWidget[] outAmounts) {
+        try {
+            SmartWildcardState edited = new SmartWildcardState();
+            String circuitText = circuitField.getText() == null ? ""
+                : circuitField.getText()
+                    .trim();
+            if (circuitText.isEmpty()) {
+                edited.circuit = base.circuit >= 1 ? base.circuit : -1;
+            } else {
+                long parsed = parseLong(circuitText, -1L);
+                if (parsed >= 1 && parsed <= 24) {
+                    edited.circuit = (int) parsed;
+                } else {
+                    edited.circuit = base.circuit;
+                    MyMod.LOG.warn("[AE2QoL] 编辑器里的电路号非法（应为 1~24）：{}，保持原值 {}", circuitText, base.circuit);
+                }
+            }
+            edited.blacklist.addAll(blacklist);
+            edited.whitelist.addAll(base.whitelist);
+            edited.nonConsumed.addAll(base.nonConsumed);
+            int used = 0;
+            for (int i = 0; i < ROWS; i++) {
+                String raw = inFields[i].getText();
+                if (raw == null || raw.trim()
+                    .isEmpty()) continue;
+                boolean oreMode = !raw.trim()
+                    .startsWith("name:");
+                String rawOut = outFields[i].getText();
+                edited.rules.add(
+                    new SmartWildcardState.Rule(
+                        used,
+                        oreMode,
+                        stripModePrefix(raw),
+                        Math.max(1L, parseLong(inAmounts[i].getText(), 1L)),
+                        rawOut == null ? "" : stripModePrefix(rawOut),
+                        rawOut == null || !rawOut.trim()
+                            .startsWith("name:"),
+                        Math.max(0L, parseLong(outAmounts[i].getText(), 0L))));
+                used++;
+            }
+            ModNetwork.CHANNEL.sendToServer(new SmartWildcardRulesPacket(edited));
+            MyMod.LOG.info("[AE2QoL] 通配样板编辑器已提交规则：rules={}（手写）", edited.rules.size());
+            ae2qol$chat("已提交保存：rules=" + edited.rules.size() + "，等待服务端写回（见日志）");
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 通配样板编辑器保存失败", t);
+            ae2qol$chat("保存失败：" + t);
+        }
+    }
+
+    /** 全部预览：把完整候选列表（名前 20 个）+ 计数打到聊天栏。 */
+    private static String fullPreview(ItemStack stack, SmartWildcardState base) {
+        try {
+            if (stack == null) return "没有可用的样板物品";
+            ItemStack temp = stack.copy();
+            base.write(temp);
+            SmartWildcardExpander.Result result = SmartWildcardExpander
+                .expand(temp, net.minecraft.client.Minecraft.getMinecraft().theWorld);
+            StringBuilder sb = new StringBuilder("[AE2QoL] ").append(result.describe());
+            int shown = 0;
+            for (ItemStack pattern : result.patterns) {
+                if (shown >= 20) break;
+                String name = firstInputName(pattern);
+                if (name == null) continue;
+                sb.append(" | ")
+                    .append(name);
+                shown++;
+            }
+            return sb.toString();
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 全部预览失败", t);
+            return "全部预览失败：" + t;
+        }
+    }
+
+    /** 只按某一行试算（不写回），返回一行聊天文本。 */
     private static String rowPreview(ItemStack baseStack, String inText, String inAmount, String outText,
         String outAmount) {
         try {
-            if (baseStack == null) return "§c没有可用的样板物品";
+            if (baseStack == null) return "没有可用的样板物品";
             String raw = inText == null ? "" : inText.trim();
-            if (raw.isEmpty()) return "§c这一行还没有输入匹配串";
+            if (raw.isEmpty()) return "这一行还没有输入匹配串";
             ItemStack temp = baseStack.copy();
             temp.stackSize = 1;
             SmartWildcardState state = new SmartWildcardState();
@@ -360,20 +418,20 @@ public final class WildcardEditorPanel {
             state.write(temp);
             SmartWildcardExpander.Result result = SmartWildcardExpander
                 .expand(temp, net.minecraft.client.Minecraft.getMinecraft().theWorld);
-            StringBuilder sb = new StringBuilder("§b[AE2QoL] 试算 " + result.describe());
+            StringBuilder sb = new StringBuilder("[AE2QoL] 试算 ").append(result.describe());
             int shown = 0;
             for (ItemStack pattern : result.patterns) {
                 if (shown >= 5) break;
                 String name = firstInputName(pattern);
                 if (name == null) continue;
-                sb.append("§7 | §f")
+                sb.append(" | ")
                     .append(name);
                 shown++;
             }
             return sb.toString();
         } catch (Throwable t) {
             MyMod.LOG.warn("[AE2QoL] 单行试算失败", t);
-            return "§c试算失败：" + t;
+            return "试算失败：" + t;
         }
     }
 
