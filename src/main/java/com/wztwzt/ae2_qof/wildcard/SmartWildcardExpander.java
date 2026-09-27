@@ -169,7 +169,10 @@ public final class SmartWildcardExpander {
             for (String oreName : OreDictionary.getOreNames()) {
                 if (oreName == null || !SmartWildcardState.matches(rule.matcher, oreName)) continue;
                 String material = oreName.length() > prefix.length() ? oreName.substring(prefix.length()) : "";
-                if (!material.isEmpty()) ruleMaterials.add(material);
+                if (material.isEmpty()) continue;
+                // 3.23.2 规则级排除：命中就**不进这条规则**的材料集（总排除在候选阶段另有一套，且优先）
+                if (excludedByRule(rule, oreName, material)) continue;
+                ruleMaterials.add(material);
             }
             if (firstPrefix == null) firstPrefix = prefix;
             materials = (materials == null) ? ruleMaterials : intersect(materials, ruleMaterials);
@@ -434,6 +437,20 @@ public final class SmartWildcardExpander {
         } catch (Throwable t) {
             return null;
         }
+    }
+
+    /**
+     * 规则级排除判定（3.23.2）：排除串可与**完整矿辞名**或**材料名**比较，两者都支持 {@code *} 与 {@code ?}。
+     * 例如规则 `ingot*` 上写 `Aluminium` 就只排除铝；写 `ingotAluminium` 也同样排除。
+     * 总排除（全局黑名单）在候选判定阶段另有一套，且**优先于**这里。
+     */
+    private static boolean excludedByRule(SmartWildcardState.Rule rule, String oreName, String material) {
+        if (rule == null || rule.excludes.isEmpty()) return false;
+        for (String ex : rule.excludes) {
+            if (ex == null || ex.isEmpty()) continue;
+            if (SmartWildcardState.matches(ex, oreName) || SmartWildcardState.matches(ex, material)) return true;
+        }
+        return false;
     }
 
     /** 匹配串里是否含通配符（{@code *} 或 {@code ?}）；没有则视为精确匹配。 */

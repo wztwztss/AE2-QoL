@@ -72,6 +72,16 @@ public final class WildcardEditorPanel {
         if (state == null) state = new SmartWildcardState();
         final SmartWildcardState base = state;
         final List<String> blacklist = new ArrayList<>(base.blacklist);
+        // 规则级排除与不消耗物品的工作副本：必须在**页签栏之前**声明（保存按钮的 lambda 要用到它们）
+        final List<List<String>> ruleExcludes = new ArrayList<>();
+        for (int i = 0; i < ROWS; i++) {
+            ruleExcludes.add(
+                i < base.rules.size() ? new ArrayList<>(base.rules.get(i).excludes) : new ArrayList<>());
+        }
+        // 不消耗物品在数据模型里是 List<ItemStack>（NBT 存真实物品），所以这里也用 ItemStack，
+        // 加入方式 = NEI/背包拖到「加」按钮上，或「手持加入」；不再用文本框输名字（那会与模型不符）。
+        final List<ItemStack> nonConsumed = new ArrayList<>();
+        nonConsumed.addAll(base.nonConsumed);
 
         TextFieldWidget[] inFields = new TextFieldWidget[ROWS];
         TextFieldWidget[] inAmounts = new TextFieldWidget[ROWS];
@@ -131,6 +141,8 @@ public final class WildcardEditorPanel {
                 saveRules(
                     base,
                     blacklist,
+                    ruleExcludes,
+                    nonConsumed,
                     inFields,
                     inAmounts,
                     outFields,
@@ -349,22 +361,28 @@ public final class WildcardEditorPanel {
             }
         }
 
-        // ===================== 页面 3：排除（骨架） =====================
+        // ===================== 页面 3：排除（总排除 / 规则级排除 / 不消耗物品） =====================
         Flow pageExclude = Flow.column()
             .childPadding(GAP)
             .size(352, 226)
             .setEnabledIf(w -> PAGE == 2);
-        pageExclude.child(new TextWidget<>(IKey.str("排除（总排除 / 规则级排除 / 不消耗物品，下一轮补齐）")).size(348, 10));
 
+        // 工作副本 ruleExcludes / nonConsumed 已在方法开头声明（保存按钮的 lambda 要用）
+
+        // ---- A. 总排除（全局黑名单，所有规则共用）----
+        pageExclude.child(new TextWidget<>(IKey.str("总排除：所有规则共用（优先于规则级排除）")).size(348, 10));
         TextFieldWidget blacklistField = new TextFieldWidget().setMaxLength(64)
-            .size(180, 16);
+            .size(170, 16);
         Flow blackRow = Flow.row()
             .childPadding(GAP)
             .size(348, 18);
-        blackRow.child(new TextWidget<>(IKey.str("总排除")).size(50, 16))
-            .child(blacklistField)
-            .child(new ButtonWidget<>().size(30, 16)
+        blackRow.child(blacklistField)
+            .child(new ButtonWidget<>().size(60, 16)
                 .overlay(IKey.str("加"))
+                .tooltip(tip -> {
+                    tip.addLine(IKey.str("加入总排除（支持 * 与 ?）"));
+                    tip.addLine(IKey.str("也可以把 NEI/背包里的物品直接拖到本按钮上"));
+                })
                 .onMouseTapped(ctx -> {
                     String v = blacklistField.getText();
                     if (v != null && !v.trim()
@@ -382,8 +400,156 @@ public final class WildcardEditorPanel {
                     blacklist.clear();
                     return true;
                 }))
-            .child(new TextWidget<>(IKey.str("现有 " + blacklist.size() + " 项")).size(70, 16));
+            .child(new TextWidget<>(IKey.str("现有 " + blacklist.size() + " 项")).size(60, 16));
         pageExclude.child(blackRow);
+        int shownBlack = 0;
+        for (String token : new ArrayList<>(blacklist)) {
+            if (shownBlack >= 6) break;
+            final String entry = token;
+            Flow entryLine = Flow.row()
+                .childPadding(GAP)
+                .size(348, 14);
+            entryLine.child(new TextWidget<>(IKey.str("- " + entry)).size(280, 12))
+                .child(new ButtonWidget<>().size(28, 12)
+                    .overlay(IKey.str("删"))
+                    .onMouseTapped(ctx -> {
+                        blacklist.remove(entry);
+                        MyMod.LOG.info("[AE2QoL] 总排除移除：{}（保存后生效）", entry);
+                        return true;
+                    }));
+            pageExclude.child(entryLine);
+            shownBlack++;
+        }
+        if (blacklist.size() > shownBlack) {
+            pageExclude.child(new TextWidget<>(IKey.str("… 另有 " + (blacklist.size() - shownBlack) + " 项")).size(348, 10));
+        }
+
+        // ---- B. 规则级排除（选中哪条规则就编辑哪条）----
+        pageExclude.child(new TextWidget<>(IKey.str("规则级排除：只对该条规则生效（点上面的规则号切换）")).size(348, 10));
+        Flow ruleSelector = Flow.row()
+            .childPadding(GAP)
+            .size(348, 18);
+        final int[] selected = { EXCLUDE_RULE };
+        Flow[] ruleBars = new Flow[ROWS + 1];
+        for (int r = -1; r < ROWS; r++) {
+            final int ruleNo = r + 1; // 0 = 总排除（不在此编辑）；1..9 = 规则号
+            if (ruleNo == 0) continue;
+            ruleSelector.child(new ButtonWidget<>().size(24, 16)
+                .overlay(IKey.str(String.valueOf(ruleNo)))
+                .onMouseTapped(ctx -> {
+                    EXCLUDE_RULE = ruleNo;
+                    selected[0] = ruleNo;
+                    return true;
+                }));
+        }
+        pageExclude.child(ruleSelector);
+        TextFieldWidget ruleExcludeField = new TextFieldWidget().setMaxLength(64)
+            .size(170, 16);
+        pageExclude.child(new TextWidget<>(IKey.str("当前编辑：规则 1~9（点上方数字切换；条目显示在下方）")).size(348, 10));
+        pageExclude.child(new TextWidget<>(IKey.str("提示：规则级排除同样支持 * 与 ?，例如在 ingot* 规则里写 Aluminium")).size(348, 10));
+        for (int i = 0; i < ROWS; i++) {
+            final int ruleIdx = i;
+            Flow bar = Flow.row()
+                .childPadding(GAP)
+                .size(348, 18);
+            bar.child(new TextWidget<>(IKey.str("规则 " + (i + 1))).size(46, 16))
+                .child(ruleExcludeField)
+                .child(new ButtonWidget<>().size(40, 16)
+                    .overlay(IKey.str("加"))
+                    .onMouseTapped(ctx -> {
+                        int target = Math.max(1, EXCLUDE_RULE) - 1;
+                        String v = ruleExcludeField.getText();
+                        if (v != null && !v.trim()
+                            .isEmpty()) {
+                            List<String> list = ruleExcludes.get(target);
+                            if (!list.contains(
+                                v.trim())) {
+                                list.add(
+                                    v.trim());
+                                MyMod.LOG
+                                    .info("[AE2QoL] 规则 {} 排除加入：{}（保存后生效）", target + 1, v.trim());
+                            }
+                            ruleExcludeField.setText("");
+                        }
+                        return true;
+                    }))
+                .child(new ButtonWidget<>().size(40, 16)
+                    .overlay(IKey.str("清空"))
+                    .onMouseTapped(ctx -> {
+                        ruleExcludes.get(ruleIdx)
+                            .clear();
+                        return true;
+                    }))
+                .child(new TextWidget<>(IKey.str("共 " + ruleExcludes.get(i).size() + " 项")).size(50, 16));
+            // 只显示当前选中规则的这一行（谓词逐帧求值）
+            bar.setEnabledIf(w -> EXCLUDE_RULE == ruleIdx + 1);
+            pageExclude.child(bar);
+        }
+
+        // ---- C. 不消耗物品（铸模/模头/透镜等；按显示名记录，NEI/背包可拖入）----
+        pageExclude.child(new TextWidget<>(IKey.str("不消耗物品：把物品拖到「加」按钮上，或用「手持加入」")).size(348, 10));
+        TextFieldWidget ncField = new TextFieldWidget().setMaxLength(64)
+            .size(0, 0);
+        Flow ncRow = Flow.row()
+            .childPadding(GAP)
+            .size(348, 18);
+        ncRow.child(new ButtonWidget<>().size(66, 16)
+            .overlay(IKey.str("加（拖入）"))
+            .tooltip(tip -> tip.addLine(IKey.str("把 NEI/背包里的物品拖到本按钮上即可加入")))
+            .onMouseTapped(ctx -> {
+                MyMod.LOG.info("[AE2QoL] 不消耗物品：「加」按钮被点击（加入方式是把物品拖到它上面，或用「手持加入」）");
+                return true;
+            }))
+            .child(new ButtonWidget<>().size(66, 16)
+                .overlay(IKey.str("手持加入"))
+                .tooltip(tip -> tip.addLine(IKey.str("把主手物品记为不消耗（铸模/模头/透镜等）")))
+                .onMouseTapped(ctx -> {
+                    if (!data.isClient()) return true;
+                    try {
+                        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getMinecraft();
+                        ItemStack held = mc.thePlayer == null ? null : mc.thePlayer.getCurrentEquippedItem();
+                        if (held == null) {
+                            MyMod.LOG.warn("[AE2QoL] 不消耗物品：主手为空，未加入");
+                            ae2qol$chat("主手没有物品");
+                        } else {
+                            nonConsumed.add(held.copy());
+                            MyMod.LOG.info(
+                                "[AE2QoL] 不消耗物品加入（手持）：{}（保存后生效）",
+                                held.getDisplayName());
+                            ae2qol$chat("已加入不消耗物品：" + held.getDisplayName() + "（点保存写回）");
+                        }
+                    } catch (Throwable t) {
+                        MyMod.LOG.warn("[AE2QoL] 不消耗物品加入失败", t);
+                    }
+                    return true;
+                }))
+            .child(new ButtonWidget<>().size(40, 16)
+                .overlay(IKey.str("清空"))
+                .onMouseTapped(ctx -> {
+                    nonConsumed.clear();
+                    return true;
+                }))
+            .child(new TextWidget<>(IKey.str("现有 " + nonConsumed.size() + " 项")).size(60, 16));
+        pageExclude.child(ncRow);
+        int shownNc = 0;
+        for (ItemStack item : new ArrayList<>(nonConsumed)) {
+            if (shownNc >= 6) break;
+            final ItemStack entry = item;
+            String label = item == null || item.getItem() == null ? "(空)" : item.getDisplayName();
+            Flow entryLine = Flow.row()
+                .childPadding(GAP)
+                .size(348, 14);
+            entryLine.child(new TextWidget<>(IKey.str("- " + label)).size(280, 12))
+                .child(new ButtonWidget<>().size(28, 12)
+                    .overlay(IKey.str("删"))
+                    .onMouseTapped(ctx -> {
+                        nonConsumed.remove(entry);
+                        MyMod.LOG.info("[AE2QoL] 不消耗物品移除：{}（保存后生效）", label);
+                        return true;
+                    }));
+            pageExclude.child(entryLine);
+            shownNc++;
+        }
 
         // ===================== 页面 4：电路 =====================
         Flow pageCircuit = Flow.column()
@@ -441,29 +607,33 @@ public final class WildcardEditorPanel {
     private static int[] lastCircuit;
 
     /** 保存：客户端解析四页内容 → 既有 C2S 包 → 服务端写 NBT。 */
-    private static void saveRules(SmartWildcardState base, List<String> blacklist, TextFieldWidget[] inFields,
-        TextFieldWidget[] inAmounts, TextFieldWidget[] outFields, TextFieldWidget[] outAmounts, boolean[] inOre,
-        boolean[] outOre, int baseCircuit) {
+    private static void saveRules(SmartWildcardState base, List<String> blacklist, List<List<String>> ruleExcludes,
+        List<ItemStack> nonConsumed, TextFieldWidget[] inFields, TextFieldWidget[] inAmounts,
+        TextFieldWidget[] outFields, TextFieldWidget[] outAmounts, boolean[] inOre, boolean[] outOre,
+        int baseCircuit) {
         try {
             SmartWildcardState edited = new SmartWildcardState();
             edited.circuit = lastCircuit != null ? lastCircuit[0] : baseCircuit;
             edited.blacklist.addAll(blacklist);
             edited.whitelist.addAll(base.whitelist);
-            edited.nonConsumed.addAll(base.nonConsumed);
+            // 不消耗物品用界面上的工作副本（含「手持加入」新加的），不再直接抄原值
+            edited.nonConsumed.addAll(nonConsumed);
             int used = 0;
             for (int i = 0; i < ROWS; i++) {
                 String raw = inFields[i].getText();
                 if (raw == null || raw.trim()
                     .isEmpty()) continue;
-                edited.rules.add(
-                    new SmartWildcardState.Rule(
-                        used,
-                        inOre[i],
-                        stripModePrefix(raw),
-                        Math.max(1L, parseLong(inAmounts[i].getText(), 1L)),
-                        outFields[i].getText() == null ? "" : stripModePrefix(outFields[i].getText()),
-                        outOre[i],
-                        Math.max(0L, parseLong(outAmounts[i].getText(), 0L))));
+                SmartWildcardState.Rule saved = new SmartWildcardState.Rule(
+                    used,
+                    inOre[i],
+                    stripModePrefix(raw),
+                    Math.max(1L, parseLong(inAmounts[i].getText(), 1L)),
+                    outFields[i].getText() == null ? "" : stripModePrefix(outFields[i].getText()),
+                    outOre[i],
+                    Math.max(0L, parseLong(outAmounts[i].getText(), 0L)));
+                // 3.23.2：规则级排除（按行号对应）一并写回，否则"能编辑却不保存"
+                saved.excludes.addAll(ruleExcludes.get(i));
+                edited.rules.add(saved);
                 used++;
             }
             ModNetwork.CHANNEL.sendToServer(new SmartWildcardRulesPacket(edited));
