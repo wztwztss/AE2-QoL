@@ -171,6 +171,52 @@ public final class WildcardEditorPanel {
             .child(new TextWidget<>(IKey.str("§7现有 " + blacklist.size() + " 项")).size(70, 12));
         column.child(blackRow);
 
+        // ===== 覆盖预览 =====
+        // 构建期按"当前已保存的规则"展开一次，列出前若干条候选，每行一个「排除」（加入黑名单，保存后生效）。
+        // 注意：MUI2 要求服务端与客户端构建出**相同的控件树**，所以这里两侧都执行展开
+        // （展开只依赖矿辞表与 NBT，两端都能做），世界用 GuiData.getWorld()。
+        column.child(new TextWidget<>(IKey.str("§b覆盖预览（点「排除」把该候选加入黑名单，保存后生效）")).size(320, 10));
+        try {
+            ItemStack previewSource = stack == null ? null : stack.copy();
+            if (previewSource != null) {
+                base.write(previewSource);
+                SmartWildcardExpander.Result preview = SmartWildcardExpander
+                    .expand(previewSource, data.getWorld());
+                int shown = 0;
+                for (ItemStack candidatePattern : preview.patterns) {
+                    if (shown >= 6) break;
+                    String candidateName = firstInputName(candidatePattern);
+                    if (candidateName == null || candidateName.isEmpty()) continue;
+                    final String token = candidateName;
+                    Flow line = Flow.row()
+                        .childPadding(2);
+                    line.child(new TextWidget<>(IKey.str("§7- §f" + token)).size(230, 10))
+                        .child(new ButtonWidget<>().size(28, 10)
+                            .overlay(IKey.str("§c排除"))
+                            .tooltip(t -> t.addLine(IKey.str("把「" + token + "」加入黑名单")))
+                            .onMouseTapped(ctx -> {
+                                if (blacklist.add(token)) {
+                                    MyMod.LOG.info("[AE2QoL] 预览排除：已加入黑名单 {}（保存后生效）", token);
+                                }
+                                return true;
+                            }));
+                    column.child(line);
+                    shown++;
+                }
+                if (preview.patterns.size() > shown) {
+                    column.child(
+                        new TextWidget<>(IKey.str("§8… 另有 " + (preview.patterns.size() - shown) + " 项（保存后在游戏内查看完整列表）"))
+                            .size(320, 10));
+                }
+                if (preview.patterns.isEmpty()) {
+                    column.child(new TextWidget<>(IKey.str("§c当前没有覆盖任何候选：" + preview.describe())).size(320, 10));
+                }
+            }
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 编辑器预览失败", t);
+            column.child(new TextWidget<>(IKey.str("§c预览失败：" + t)).size(320, 10));
+        }
+
         // 保存：客户端解析整张表 → 走既有 C2S 包由服务端写入样板 NBT
         ButtonWidget<?> save = new ButtonWidget<>().size(70, 14)
             .overlay(IKey.str("§a保存规则"))
@@ -229,6 +275,23 @@ public final class WildcardEditorPanel {
 
         panel.child(column);
         return panel;
+    }
+
+    /** 取一张"展开出来的具体样板"的第一个输入物品的显示名（用于预览行与排除词）。 */
+    private static String firstInputName(ItemStack patternStack) {
+        try {
+            if (patternStack == null || patternStack.getTagCompound() == null) return null;
+            net.minecraft.nbt.NBTTagList in = patternStack.getTagCompound()
+                .getTagList("in", net.minecraftforge.common.util.Constants.NBT.TAG_COMPOUND);
+            if (in.tagCount() == 0) return null;
+            ItemStack first = ItemStack.loadItemStackFromNBT(in.getCompoundTagAt(0));
+            if (first == null || first.getItem() == null) return null;
+            return String.valueOf(
+                first.getItem()
+                    .getItemStackDisplayName(first));
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
     /** 把规则里的匹配串还原成字段文本（带模式前缀，自解释）。 */
