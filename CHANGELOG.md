@@ -1,3 +1,51 @@
+## 工作区决策记录 2026-09-27 (45) - **4.0.0：每个样板格独立电路槽 + 9 个催化剂位（鼠标中键打开）**
+
+### 一、要解决的问题（用户实测）
+同舱放两张通配样板时，**后放进来的会把先前那张的电路覆盖掉** ⇒ 实际等于"一个舱室只能放一张通配样板"。
+根因：电路存在**样板**里，索引期由 `SmartWildcardCircuit.apply(...)` 写进**机器唯一**的虚拟电路槽。
+
+### 二、口径（用户 2026-09-27 晚逐条拍板）
+1. **保留**样板自带电路与不消耗物品、**保留**整机电路控件（不删任何东西）；
+2. 新增"**每格设置**"：该格独立电路 + 9 个催化剂位，**鼠标中键**点样板格打开（一屏弹窗）；
+3. 取值三级：**玩家手改的每格值 > 样板自带（插入时自动填入本格） > 整机设置**；
+4. 样板自带电路**插入时自动填入本格**，**不再去改机器全局电路槽**（全局旋钮从此归玩家手动）；
+5. 催化剂：「每次我单独放，合成的时候被推进总线，合成完返回」⇒ 每格 **9 格**；该格 push 时随该格输入
+   推进总线；不进样板 `in` 列表（AE 不会去凑）；按 GT notConsumed 语义不消耗；合成后收回本格；
+6. 上线范围：**一次交付，但催化剂的 push 先在 GT 2714 与 MK.III 32108 启用**（PH 的缓冲参与配方树判定，风险最高）。
+
+### 三、本版已完成
+- **数据层**：`wildcard/SlotSettings.java`（电路 + 9 催化位 + 手改标记，稀疏 NBT）、
+  `SlotSettingsStore.java`（按槽位下标、`autoFillCircuitFromPattern`、`effectiveCircuit`、save/load）、
+  `ISlotSettingsHolder.java`；
+- **宿主挂载**（机器 NBT 键 `ae2qolSlotMeta`，注入各机器自己的 `saveNBTData/loadNBTData`）：
+  GT 2714/2715、GTNL 21504/21505、PH 22069 + MK.II 22179 + MK.III 32108（PH 一处 mixin 覆盖三台）；
+- **网络三件包**：`SlotSettingsPacket`（C2S 整格写入，带距离校验 + 机型校验 + 日志）、
+  `SlotSettingsRequestPacket`（C2S 打开时回读）、`SlotSettingsSyncPacket`（S2C 权威状态）；
+- **中键弹窗** `client/gui/GuiSlotSettings.java`：`GuiContainer + 9 个真实催化格`（NEI 拖入天然可用）
+  + 电路 1~24/继承 + 清除本格 + 关闭；**浅底深字、不用 § 颜色码**；手势由"Shift+中键"改为"**中键**"；
+- **电路生效方式**（替换掉写全局槽的旧路径）：`wildcard/SlotCircuitBaker.bake(...)` 把本格电路烧进
+  **该格展开出的具体样板**的 `in` 列表（`gt.integrated_circuit`，无则补一条）——GTNH 原生机制，三族通用；
+  bake **先 `copy()` 再改**，保护展开 LRU 缓存；
+- **GT 催化剂注入**：覆写 `SmartWildcardPatternSlot.insertItemsAndFluids(...)`，在父类放进该格缓冲后，
+  把该格 9 格里**尚未存在**的催化剂按指纹**幂等镜像**进槽位 `itemInventory`。
+  **为什么不做"移出→回收"**：javap 确证 GT/GTNL 的 `refund(...)` 是把缓冲 `poweredInsert` **回 AE**，
+  自建三步搬运在中断时会丢/复制；镜像方案让催化剂**源头始终留在那 9 格**，机器侧按 notConsumed 不消耗。
+
+### 四、本版**未**完成（如实记录，下一批）
+- **MK.III（PH 32108）的催化剂注入**：需要先挖准 `BufferedDualInputHatch$DualInvBuffer` 与样板格的映射，
+  且该缓冲参与 `recipeLocked/inTree/lock` 配方树判定 ⇒ **不盲改**（避免污染机器缓冲）；
+- **GTNL 21504 与 PH 22069/MK.II 的催化剂**：按口径下批再开（本轮它们只享"按格电路 + 催化位数据"）。
+
+### 五、验证与待测
+- 构建 `BUILD SUCCESSFUL`（无管道取码 `EXIT=0`）；产物 `build/libs/AE2-QoL-4.0.0.jar`
+  （1,803,176 字节，SHA256 `DBE51C604EDD2154EA12B94F297D9EA6A937C30855D30F8F7FDE3C19B32DB9E0`）。
+- **待用户实测**：① 同舱放两张样板，中键分别设 1 号与 2 号电路 ⇒ 两张都能按各自电路合成（不再互相覆盖）；
+  ② 样板自带电路的样板插进去后，中键打开应看到**本格已自动填入该号**；③ 整机那个电路控件**不再被我们改动**；
+  ④ GT 2714 上放催化剂（如模头）→ 配方能用且不被消耗；⑤ 中键弹窗里 9 格可放入/取出/NEI 拖入；
+  ⑥ 回归：3.43.0 已验收的识别/下单/合成行为不变。
+
+---
+
 ## 工作区决策记录 2026-09-27 (44) - **3.43.0：修根因 L——原版 WildcardPattern 的 mixin 把我们的具体样板当通配样板，解码成"预览 details"**
 
 > 由 3.42.0-diag 的**配对打印**一击命中，证据与修法都写在 `docs/AGENT_CHECKPOINT.md` 4.1a。
