@@ -4,9 +4,26 @@
 
 An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
-**Author: wztwzt · Current source version: 3.21.4 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.29.0 · Reference pack: GTNH 2.9.0-beta-3**
 
 This repository is for personal archival and is not currently offered for distribution. See [CREDITS.md](CREDITS.md) for attribution and licensing records. Feature descriptions are not a claim that every integration has passed in-game testing.
+
+## What's new in 3.26.x – 3.29.0 (Pattern Generator UI ported from AE2PatternGen + dual entry for the wildcard pattern)
+
+- **The Pattern Generator now uses AE2PatternGen's own UI** (per the request to "just copy it over first, then change it"): its whole
+  UI subsystem was ported into `apgport/` — **65 files / 9,983 lines** (main window `GuiPatternGen`, recipe picker `GuiRecipePicker`,
+  storage/detail panels, `GuiComboBox`, filter widgets, 9 filters, `GTRecipeSource`, `PatternEncoder`, the cache/storage subsystem,
+  18 network packets). Every ported file keeps its **MIT** attribution header.
+- **Behaviour changed to ours**: generating **no longer consumes AE2 Blank Patterns**, **no longer writes into its virtual storage**,
+  and the patterns go **straight into your inventory** (overflow is dropped at your feet); chat and log report
+  encoded / stored / dropped counts in full.
+- **The wildcard pattern has two entries again**: plain right-click = the Wild window (rules/exclusions/preview + NEI drag-in +
+  **one-click `+` transfer**); **Shift+right-click** = our own four-tab editor (which carries the **built-in circuit 1..24** and the
+  **non-consumed items** pages).
+- **Clear feedback after a write-back**: the state is pushed to Wild's tags as well and the chat says "close and reopen once to see it".
+- **Fixed**: the save guard rejecting brand-new patterns (the root cause of "nothing transfers"); missing widget sizes in the
+  generator and wildcard editors; leftover `§` colour codes; the NEI `+` button not recognising GTNH-MUI windows; and **two
+  startup-crash-level duplicate network channel names** (now the separate `_wild` / `_apg` channels).
 
 ## What's new in 3.25.x (UI ported wholesale from WildcardPatternforGTNH)
 
