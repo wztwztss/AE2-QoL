@@ -39,6 +39,28 @@ import gregtech.nei.GTNEIDefaultHandler;
  */
 public final class SmartWildcardRecipeDeriver {
 
+    /**
+     * 判断 NEI 里一个堆是不是"流体幻影"。
+     *
+     * <p><b>为什么不能再用 {@code GTNEIDefaultHandler.IFluidAlternativeStack}</b>：用 javap 核对 GT
+     * 5.09.54.133 的 jar 后确认，该接口由 {@code GTNEIDefaultHandler$FixedPositionedStack}（GT NEI handler
+     * 用来装**所有**原料的那个类）实现 ⇒ 这个 instanceof 对每个物品原料都为真。用户实测因此出现
+     * 「2 个物品原料 → skippedFluid=2 → 输入为空 → 加号推导 no-inputs」。
+     *
+     * <p>正确判据：流体在 GT 的 NEI 里以 {@code gregtech.common.items.ItemFluidDisplay} 这个占位物品呈现
+     * （GT jar 里同时存在 {@code FluidDisplayStackMode} 可佐证），所以只认它。
+     */
+    private static boolean isFluidPhantom(PositionedStack positioned) {
+        try {
+            if (positioned == null || positioned.item == null || positioned.item.getItem() == null) return false;
+            return positioned.item.getItem() instanceof gregtech.common.items.ItemFluidDisplay;
+        } catch (Throwable t) {
+            // 判定失败不静默：记一次并当作物品处理（宁可多给一条规则，也不要整条配方变成"无输入"）
+            MyMod.LOG.warn("[AE2QoL] 流体幻影判定异常（按物品处理）", t);
+            return false;
+        }
+    }
+
     /** 推导结果：纯数据，可直接进包/进界面。 */
     public static final class Result {
 
@@ -79,7 +101,7 @@ public final class SmartWildcardRecipeDeriver {
                 for (PositionedStack positioned : inputs) {
                     if (positioned == null) continue;
                     // ② 流体幻影：GT 用它把流体伪装成物品输入
-                    if (positioned instanceof GTNEIDefaultHandler.IFluidAlternativeStack) {
+                    if (isFluidPhantom(positioned)) {
                         skippedFluid++;
                         continue;
                     }
@@ -140,7 +162,7 @@ public final class SmartWildcardRecipeDeriver {
 
             for (PositionedStack positioned : outputs) {
                 if (positioned == null) continue;
-                if (positioned instanceof GTNEIDefaultHandler.IFluidAlternativeStack) continue;
+                if (isFluidPhantom(positioned)) continue;
                 ItemStack stack = pickStack(positioned);
                 if (stack == null || stack.getItem() == null) continue;
                 ItemStack templateStack = stack.copy();

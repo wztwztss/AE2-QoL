@@ -1,3 +1,35 @@
+## 工作区决策记录 2026-09-26 (34) - **3.24.0：三个真 bug 修复（流体误判 / 展开诊断 / 拖入命中测试）**
+
+> 用户实测 3.23.5 后又给了截图与日志，据此定位并修掉三个**确定性**缺陷。界面本身按用户拍板的路线
+> （**整窗移植 WildcardPatternforGTNH 的窗口 + GTNH-MUI**）在后续版本重做，本记录只含这三个修复。
+
+### 一、流体幻影误判（导致加号推导 `no-inputs`）
+
+- **现象**：用户日志 `推导未产生规则：handler=gregtech.nei.GTNEIDefaultHandler recipeIndex=0
+  ingredientStacks=2 otherStacks=1 skippedFluid=2` —— 配方只有 **2 个物品原料**，却**两个都被判成流体**。
+- **根因（javap 取证）**：GT 5.09.54.133 的 `gregtech.nei.GTNEIDefaultHandler$IFluidAlternativeStack` 接口
+  被 `GTNEIDefaultHandler$FixedPositionedStack` 实现 —— 而后者是 GT NEI handler 用来装**所有**原料的类
+  ⇒ 原来的 `positioned instanceof IFluidAlternativeStack` 对**每个**原料都为真。
+- **修复**：改判 `positioned.item.getItem() instanceof gregtech.common.items.ItemFluidDisplay`
+  （GT 用这个占位物品表示流体，jar 里同时存在 `FluidDisplayStackMode` 佐证）；判定异常时记 WARN 并**按物品处理**
+  （宁可多给一条规则，也不要把整条配方变成"无输入"）。
+
+### 二、展开失败 `reason=no-material-matched` 无法定性
+
+- **现象**：用户样板有 3 条矿辞规则，展开却是 `produced=0 matched=0 reason=no-material-matched`。
+- **修复**：展开失败时逐条打印规则的 `slot / 模式 / 匹配串 / 输出匹配 / 数量 / 排除项`，
+  并区分两种完全不同的原因 —— "所有规则都没参与推导（无规则 / 空串 / 槽位越界 / 无通配符的精确匹配）"
+  与 "规则跑了但材料交集为空"。
+
+### 三、NEI 拖入恒 `hovered=null`
+
+- **现象**：`NEI 拖入未消费（没有落在匹配框上）：hovered=null mouse=(104,101)`。
+- **根因**：MUI2 的悬停状态在 `drawScreen` 期间计算，NEI 的拖放事件在帧外到达时取不到。
+- **修复**：新增**坐标命中测试**兜底 —— 遍历候选控件，用 `IWidget.getArea()`（继承 `java.awt.Rectangle`，
+  逐帧更新的绝对区域）判断落点；两条都失败时把鼠标坐标与所有候选区域一并记进日志，便于一次定位。
+
+---
+
 ## 工作区决策记录 2026-09-26 (33) - **3.23.1 → 3.23.4：通配样板界面按用户设计稿重做（四页签）**
 
 > 用户实测 3.23.0 后给出四条反馈（附截图与日志）：① 界面「完全不能用」——只画出标题/表头，9 行规则与后续内容全不见；

@@ -781,8 +781,33 @@ public final class WildcardEditorPanel {
      * 没有矿辞 ⇒ 写成显示名并把该行切到**名称模式**。返回是否消费了这次拖放（未消费则 NEI 继续走默认行为）。
      */
     public static boolean applyDropToHovered(Object hoveredWidget, ItemStack stack) {
+        return applyDropToHovered(hoveredWidget, Integer.MIN_VALUE, Integer.MIN_VALUE, stack);
+    }
+
+    /**
+     * NEI 拖入（带鼠标坐标）。
+     *
+     * <p><b>为什么需要坐标</b>：用户实测日志里出现 `NEI 拖入未消费（没有落在匹配框上）：hovered=null mouse=(104,101)`
+     * —— MUI2 的悬停状态是在 {@code drawScreen} 期间算的，NEI 的拖放事件在帧外到达时取不到 ✗。
+     * 所以这里再加一条**坐标命中测试**：逐个候选控件读 {@code IWidget.getArea()}（绝对区域，逐帧更新）判断落点。
+     * 两条都失败时，把鼠标坐标与所有候选区域一起记进日志，便于一次定位（本项目的"不许静默"原则）。
+     */
+    public static boolean applyDropToHovered(Object hoveredWidget, int mouseX, int mouseY, ItemStack stack) {
         try {
-            if (hoveredWidget == null || stack == null || stack.getItem() == null) return false;
+            if (stack == null || stack.getItem() == null) return false;
+            if (hoveredWidget == null || (!DROP_TARGETS.containsKey(hoveredWidget)
+                && !DROP_APPEND_TARGETS.containsKey(hoveredWidget))) {
+                Object hit = hitTest(mouseX, mouseY);
+                if (hit != null) {
+                    hoveredWidget = hit;
+                } else if (mouseX == Integer.MIN_VALUE) {
+                    return false;
+                } else {
+                    MyMod.LOG
+                        .info("[AE2QoL] NEI 拖入命中测试失败：mouse=({}, {}) 候选区域={}", mouseX, mouseY, describeAreas());
+                    return false;
+                }
+            }
             // 拖到「加（拖入）」按钮上 = 追加到对应列表（目前是不消耗物品；黑名单用「手持加入」）
             List<ItemStack> appendTo = DROP_APPEND_TARGETS.get(hoveredWidget);
             if (appendTo != null) {
@@ -839,6 +864,51 @@ public final class WildcardEditorPanel {
             MyMod.LOG.warn("[AE2QoL] NEI 拖入处理失败", t);
             return false;
         }
+    }
+
+    /** 坐标命中测试：返回落在 (mx,my) 里的候选控件（先匹配框，再「加（拖入）」按钮）。 */
+    private static Object hitTest(int mx, int my) {
+        if (mx == Integer.MIN_VALUE) return null;
+        Object found = hitTestMap(DROP_TARGETS, mx, my);
+        return found != null ? found : hitTestMap(DROP_APPEND_TARGETS, mx, my);
+    }
+
+    private static Object hitTestMap(java.util.Map<Object, ?> map, int mx, int my) {
+        for (Object widget : map.keySet()) {
+            if (!(widget instanceof com.cleanroommc.modularui.api.widget.IWidget w)) continue;
+            try {
+                com.cleanroommc.modularui.widget.sizer.Area a = w.getArea();
+                if (a != null && mx >= a.x() && mx < a.x() + a.w() && my >= a.y() && my < a.y() + a.h()) return widget;
+            } catch (Throwable ignored) {
+                // 个别控件取区域失败不影响其它候选
+            }
+        }
+        return null;
+    }
+
+    /** 把候选控件的绝对区域拼成一行（命中测试失败时的诊断输出）。 */
+    private static String describeAreas() {
+        StringBuilder sb = new StringBuilder();
+        for (Object widget : DROP_TARGETS.keySet()) {
+            if (!(widget instanceof com.cleanroommc.modularui.api.widget.IWidget w)) continue;
+            try {
+                com.cleanroommc.modularui.widget.sizer.Area a = w.getArea();
+                if (a != null) {
+                    sb.append('[')
+                        .append(a.x())
+                        .append(',')
+                        .append(a.y())
+                        .append(' ')
+                        .append(a.w())
+                        .append('x')
+                        .append(a.h())
+                        .append(']');
+                }
+            } catch (Throwable ignored) {
+                // 诊断输出尽力而为
+            }
+        }
+        return sb.toString();
     }
 
     /** 聊天栏回执（仅客户端）。 */

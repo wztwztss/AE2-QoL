@@ -54,7 +54,7 @@ public class SmartWildcardNeiDragHandler implements INEIGuiHandler {
             if (screen == null) return false;
             Object hovered = screen.getContext()
                 .getHovered();
-            boolean consumed = WildcardEditorPanel.applyDropToHovered(hovered, draggedStack);
+            boolean consumed = WildcardEditorPanel.applyDropToHovered(hovered, mouseX, mouseY, draggedStack);
             if (!consumed) {
                 MyMod.LOG.info(
                     "[AE2QoL] NEI 拖入未消费（没有落在匹配框上）：hovered={} mouse=({}, {})",

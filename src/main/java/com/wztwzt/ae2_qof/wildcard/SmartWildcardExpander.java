@@ -178,6 +178,28 @@ public final class SmartWildcardExpander {
             materials = (materials == null) ? ruleMaterials : intersect(materials, ruleMaterials);
         }
         if (materials == null || materials.isEmpty()) {
+            // 诊断（用户实测：3 条矿辞规则却 produced=0，光看 reason 无法定性）：
+            // 把每条规则的 slot / 模式 / 匹配串 / 输出匹配 / 排除项逐条打出来，
+            // 并区分"所有规则都被跳过"与"规则跑了但材料集为空"这两种完全不同的原因。
+            if (materials == null) {
+                MyMod.LOG.warn(
+                    "[AE2QoL] 展开失败诊断：没有任何规则参与材料推导（无规则 / 匹配串为空 / 槽位越界 / 无通配符的精确匹配），rules={} inSize={}",
+                    state.rules.size(),
+                    templateIn.tagCount());
+            } else {
+                MyMod.LOG.warn("[AE2QoL] 展开失败诊断：材料交集为空（各规则匹配不到共同材料），逐条规则：");
+            }
+            for (SmartWildcardState.Rule rule : state.rulesView()) {
+                if (rule == null) continue;
+                MyMod.LOG.warn(
+                    "[AE2QoL]   规则 slot={} mode={} matcher='{}' outMatcher='{}' amount={} excludes={}",
+                    rule.slot,
+                    rule.oreDictMode ? "矿辞" : "显示名",
+                    rule.matcher,
+                    rule.outMatcher,
+                    rule.amount,
+                    rule.excludes);
+            }
             return new Result(new ArrayList<>(), 0, 0, false, "no-material-matched");
         }
         final String inputPrefix = firstPrefix == null ? "" : firstPrefix;
