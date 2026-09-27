@@ -429,12 +429,13 @@ public final class SmartWildcardExpander {
         try {
             if (SAMPLE_LOGGED.getAndIncrement() >= 3) return;
             MyMod.LOG.info(
-                "[AE2QoL] 展开样本：material={} prefix={} in={} out={} 产出out={}",
+                "[AE2QoL] 展开样本：material={} prefix={} in={} out={} 产出out={} concrete@{}",
                 material,
                 chosenPrefix,
                 displayNameOf(inStack),
                 displayNameOf(outStack),
-                firstOutputNameOf(concrete));
+                firstOutputNameOf(concrete),
+                Integer.toHexString(System.identityHashCode(concrete)));
         } catch (Throwable t) {
             // 诊断失败不刷屏
         }

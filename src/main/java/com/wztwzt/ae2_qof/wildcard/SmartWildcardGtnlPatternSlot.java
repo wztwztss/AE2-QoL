@@ -66,7 +66,11 @@ public class SmartWildcardGtnlPatternSlot extends SuperCraftingInputHatchME.Patt
                 if (!(concrete.getItem() instanceof ICraftingPatternItem)) continue;
                 ICraftingPatternDetails details =
                     ((ICraftingPatternItem) concrete.getItem()).getPatternForItem(concrete, world);
-                if (details != null) this.expanded.add(details);
+                if (details != null) {
+                    // 3.42.0-diag：配对打印（同上）
+                    com.wztwzt.ae2_qof.wildcard.SmartWildcardDiag.logDecodePair("GTNL", concrete, details);
+                    this.expanded.add(details);
+                }
             }
             if (this.expanded.isEmpty()) {
                 MyMod.LOG.warn("[AE2QoL] GTNL 通配槽位展开为空：{}", this.expandSummary);

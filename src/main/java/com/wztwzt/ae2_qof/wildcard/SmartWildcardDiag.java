@@ -2,6 +2,7 @@ package com.wztwzt.ae2_qof.wildcard;
 
 import java.util.List;
 
+import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.common.util.ForgeDirection;
 
@@ -35,6 +36,73 @@ import appeng.api.storage.data.IAEItemStack;
 public final class SmartWildcardDiag {
 
     private SmartWildcardDiag() {}
+
+    /** 3.42.0-diag：配对打印上限（每 JVM 3 条）。 */
+    private static final java.util.concurrent.atomic.AtomicInteger PAIR_LOGGED =
+        new java.util.concurrent.atomic.AtomicInteger();
+
+    /**
+     * **配对打印**（3.42.0-diag）：把"具体样板自己的 out"与"它解码出的 details"三者并列，
+     * 用来定死"输出在哪一步从『金板』变成『铁板』"。
+     *
+     * <p>为什么要这三项：
+     * <ul>
+     * <li>{@code concrete 自己的 out} —— 生成阶段写进 NBT 的值（3.41.0 的 `展开样本` 已证其正确且各不同）；</li>
+     * <li>{@code details.getPattern()} 的 out + **是否与 concrete 同一对象** —— 若同一对象却输出不同，
+     * 说明我们对 details 的读取方式有问题；若不是同一对象，说明 AE2 另建了一份样板；</li>
+     * <li>{@code details.getOutputs()[0]} —— AE2 最终认定的输出（注册进合成表的就是它）。</li>
+     * </ul>
+     */
+    public static void logDecodePair(String where, ItemStack concrete, ICraftingPatternDetails details) {
+        try {
+            if (PAIR_LOGGED.getAndIncrement() >= 3) return;
+            ItemStack self = null;
+            try {
+                self = details == null ? null : details.getPattern();
+            } catch (Throwable ignored) {}
+            String out0 = "?";
+            try {
+                IAEItemStack[] outs = details == null ? null : details.getOutputs();
+                if (outs != null && outs.length > 0 && outs[0] != null) out0 = nameOf(outs[0]);
+            } catch (Throwable ignored) {}
+            MyMod.LOG.info(
+                "[AE2QoL] 配对样本（{}）：concrete@{} out={} ‖ details={} details.getPattern()@{} out={} 与concrete同一对象={} ‖ details.getOutputs()[0]={}",
+                where,
+                id(concrete),
+                firstOutNameOf(concrete),
+                details == null ? "null"
+                    : details.getClass()
+                        .getSimpleName(),
+                id(self),
+                firstOutNameOf(self),
+                self == concrete,
+                out0);
+        } catch (Throwable t) {
+            // 诊断失败不刷屏
+        }
+    }
+
+    /** 读某个样板物品 NBT 里 out 列表第一个物品的显示名（读不到时给出可辨识的原因）。 */
+    public static String firstOutNameOf(ItemStack stack) {
+        try {
+            if (stack == null) return "stack=null";
+            net.minecraft.nbt.NBTTagCompound tag = stack.getTagCompound();
+            if (tag == null) return "no-tag";
+            net.minecraft.nbt.NBTTagList outs = tag
+                .getTagList("out", net.minecraftforge.common.util.Constants.NBT.TAG_COMPOUND);
+            if (outs.tagCount() == 0) return "out-empty";
+            ItemStack first = ItemStack.loadItemStackFromNBT(outs.getCompoundTagAt(0));
+            return first == null || first.getItem() == null ? "unparsable"
+                : String.valueOf(first.getDisplayName());
+        } catch (Throwable t) {
+            return "err:" + t.getClass()
+                .getSimpleName();
+        }
+    }
+
+    private static String id(Object o) {
+        return o == null ? "null" : Integer.toHexString(System.identityHashCode(o));
+    }
 
     /** 描述一批 details 的输出：去重后的种类数 + 前 {@code sample} 个样本（含 craftable/priority）。 */
     public static String describe(List<ICraftingPatternDetails> details, int sample) {

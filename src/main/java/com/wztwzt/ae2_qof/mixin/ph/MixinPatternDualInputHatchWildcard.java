@@ -117,6 +117,8 @@ public abstract class MixinPatternDualInputHatchWildcard {
                     if (!(concrete.getItem() instanceof ICraftingPatternItem patternItem)) continue;
                     ICraftingPatternDetails details = patternItem.getPatternForItem(concrete, world);
                     if (details == null) continue;
+                    // 3.42.0-diag：配对打印（concrete 的 out / details 自带 pattern 的 out / details.getOutputs()[0]）
+                    com.wztwzt.ae2_qof.wildcard.SmartWildcardDiag.logDecodePair("PH", concrete, details);
                     craftingTracker.addCraftingOption((ICraftingProvider) (Object) this, details);
                     allDetails.add(details);
                     registered++;
