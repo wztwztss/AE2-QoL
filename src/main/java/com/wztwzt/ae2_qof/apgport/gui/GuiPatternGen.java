@@ -67,7 +67,7 @@ public class GuiPatternGen {
 
         // 3.22.0-fix46：机器编码框改成"输机器名片段 + Tab 循环候选"，并在右侧留出「改」按钮
         // （MUI1 自绘界面里系统输入法不可用 ⇒ 用原版输入框的对话框才能打中文，见 GuiTextInputDialog）
-        final String[] mapHint = { EnumChatFormatting.GRAY + "输机器名片段（中文/英文/关键字皆可）后按 Tab 循环候选" };
+        final String[] mapHint = { EnumChatFormatting.GRAY + "输片段后 Tab 循环候选" };
         final int[] recipeFieldYHolder = new int[1];
         // 各过滤器框「改」按钮的 y 位置（同样等所有字段声明后再统一建，避开"引用后面声明的变量"）
         final int[] yOutOreHolder = new int[1];
@@ -390,11 +390,13 @@ public class GuiPatternGen {
             int btnTBX = btnGBX + btnW + btnGap;
             ButtonWidget btnTable = new ButtonWidget();
             btnTable.setSynced(false, false);
-            btnTable.setPos(btnTBX, btnY);
-            btnTable.setSize(70, btnH);
+            // 3.22.0-fix52：按钮从底部按钮行**移到提示行右端**并加宽到 92px
+            //（原来 70px 装不下"对照表"三个字会被挤成两行，且放在生成样板右侧会越出窗口）
+            btnTable.setPos(2 + fullFieldW - 92, recipeFieldYHolder[0] + 25);
+            btnTable.setSize(92, 14);
             btnTable.setBackground(com.gtnewhorizons.modularui.api.ModularUITextures.VANILLA_BUTTON_NORMAL);
             TextWidget btnTableText = new TextWidget("对照表");
-            btnTableText.setPos(btnTBX + 18, btnY + 6);
+            btnTableText.setPos(2 + fullFieldW - 92 + 32, recipeFieldYHolder[0] + 25 + 3);
             btnTable.setOnClick((cd, w) -> {
                 try {
                     net.minecraft.client.Minecraft.getMinecraft()

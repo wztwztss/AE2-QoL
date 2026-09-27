@@ -52,6 +52,11 @@ public class GuiRecipeMapTable extends GuiScreen {
         this.search.setMaxStringLength(64);
         this.search.setText(this.filter);
         this.search.setFocused(true);
+        // 3.22.0-fix52：搜索框改成"浅底深字"，与主界面（浅色面板）同风格；
+        // 关掉原版黑底，由 drawScreen 自己铺浅色底
+        this.search.setEnableBackgroundDrawing(false);
+        this.search.setTextColor(0x202020);
+        this.search.setDisabledTextColour(0x808080);
         this.buttonList.add(new GuiButton(1, left + 120, top + 122, 60, 18, "上一页"));
         this.buttonList.add(new GuiButton(2, left + 184, top + 122, 60, 18, "下一页"));
         this.buttonList.add(new GuiButton(3, left + 300, top + 122, 60, 18, "返回"));
@@ -141,6 +146,16 @@ public class GuiRecipeMapTable extends GuiScreen {
         int left = cx - 190;
         int top = this.height / 2 - 110;
         int pages = Math.max(1, (this.rows.size() + ROWS_PER_PAGE - 1) / ROWS_PER_PAGE);
+        // 3.22.0-fix52：补**浅底面板 + 灰色描边**，与主界面（浅色面板）同风格；不然字看不清、也不融入
+        int panelL = left - 8;
+        int panelT = top - 26;
+        int panelR = left + 388;
+        int panelB = top + 150;
+        drawRect(panelL, panelT, panelR, panelB, 0xF2F2F2);
+        drawRect(panelL, panelT, panelR, panelT + 1, 0x808080);
+        drawRect(panelL, panelB - 1, panelR, panelB, 0x808080);
+        drawRect(panelL, panelT, panelL + 1, panelB, 0x808080);
+        drawRect(panelR - 1, panelT, panelR, panelB, 0x808080);
         this.drawString(this.fontRendererObj, "机器 ↔ 编码 对照表（点整行 = 填入关键字并返回）", left, top - 14, 0x202020);
         this.drawString(this.fontRendererObj, "搜索", left, top + 5, 0x202020);
         this.drawString(
@@ -148,7 +163,7 @@ public class GuiRecipeMapTable extends GuiScreen {
             "共 " + this.rows.size() + " 条 · 第 " + (this.page + 1) + "/" + pages + " 页",
             left + 250,
             top + 5,
-            0x505050);
+            0x303030);
 
         int tableTop = top + 24;
         // 表头
@@ -170,15 +185,23 @@ public class GuiRecipeMapTable extends GuiScreen {
                 hover ? 0xCFE4FF : ((i % 2 == 0) ? 0xF2F2F2 : 0xE8E8E8));
             this.drawString(this.fontRendererObj, clip(RecipeMapNames.chineseName(id), 118), left + 4, y + 3, 0x202020);
             this.drawString(this.fontRendererObj, clip(RecipeMapNames.englishName(id), 122), left + 124, y + 3, 0x303030);
-            this.drawString(this.fontRendererObj, clip(id, 128), left + 250, y + 3, 0x505050);
+            // 3.22.0-fix52：关键字列原来是 0x505050（浅底上偏糊），改深色
+            this.drawString(this.fontRendererObj, clip(id, 128), left + 250, y + 3, 0x202020);
         }
         if (this.search != null) {
+            // 搜索框：浅底 + 深字 + 描边（原版黑底已关闭）
+            drawRect(
+                this.search.xPosition - 2,
+                this.search.yPosition - 2,
+                this.search.xPosition + this.search.width + 2,
+                this.search.yPosition + this.search.height + 2,
+                0xFFFFFF);
             drawRect(
                 this.search.xPosition - 1,
                 this.search.yPosition - 1,
                 this.search.xPosition + this.search.width + 1,
                 this.search.yPosition + this.search.height + 1,
-                0xF2F2F2);
+                0x808080);
             this.search.drawTextBox();
         }
         super.drawScreen(mouseX, mouseY, partialTicks);
