@@ -90,23 +90,6 @@ public final class ModNetwork {
             Side.SERVER);
 
         // 3.22.0 M3：机器样板槽上的手势（Shift+中键弹电路选择屏）写回
-        // 4.0.0：中键「格设置」（按样板格的独立电路槽 + 9 个催化剂位）
-        CHANNEL.registerMessage(
-            SlotSettingsPacket.Handler.class,
-            SlotSettingsPacket.class,
-            discriminator++,
-            Side.SERVER);
-        CHANNEL.registerMessage(
-            SlotSettingsRequestPacket.Handler.class,
-            SlotSettingsRequestPacket.class,
-            discriminator++,
-            Side.SERVER);
-        CHANNEL.registerMessage(
-            SlotSettingsSyncPacket.Handler.class,
-            SlotSettingsSyncPacket.class,
-            discriminator++,
-            Side.CLIENT);
-
         CHANNEL.registerMessage(
             SmartWildcardSlotCircuitPacket.Handler.class,
             SmartWildcardSlotCircuitPacket.class,

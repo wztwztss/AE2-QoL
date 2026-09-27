@@ -57,45 +57,7 @@ import gregtech.common.tileentities.machines.MTEHatchCraftingInputME;
  * </ul>
  */
 @Mixin(value = MTEHatchCraftingInputME.class, remap = false)
-public abstract class MixinMTEHatchCraftingInputMEWildcard
-    implements com.wztwzt.ae2_qof.wildcard.ISlotSettingsHolder {
-
-    // ================= 4.0.0：按样板格的独立设置（电路 + 9 催化剂位） =================
-    // 为什么要挂在本 mixin 上：GT/GTNL/PH 三族都声明了 saveNBTData/loadNBTData(NBTTagCompound)，
-    // 在这里加一个 @Unique 字段并注入这两个方法即可持久化，不必新增 mixin 与配置项。
-
-    @Unique
-    private com.wztwzt.ae2_qof.wildcard.SlotSettingsStore ae2qol$slotSettings;
-
-    @Override
-    public com.wztwzt.ae2_qof.wildcard.SlotSettingsStore ae2qol$slotSettings() {
-        if (this.ae2qol$slotSettings == null) {
-            this.ae2qol$slotSettings = new com.wztwzt.ae2_qof.wildcard.SlotSettingsStore();
-        }
-        return this.ae2qol$slotSettings;
-    }
-
-    @Inject(method = "saveNBTData", at = @At("TAIL"), remap = false)
-    private void ae2qol$saveSlotSettings(NBTTagCompound tag, CallbackInfo ci) {
-        try {
-            tag.setTag(
-                com.wztwzt.ae2_qof.wildcard.SlotSettingsStore.NBT_KEY,
-                ae2qol$slotSettings().save());
-        } catch (Throwable t) {
-            MyMod.LOG.warn("[AE2QoL] 保存按格设置（GT）失败", t);
-        }
-    }
-
-    @Inject(method = "loadNBTData", at = @At("TAIL"), remap = false)
-    private void ae2qol$loadSlotSettings(NBTTagCompound tag, CallbackInfo ci) {
-        try {
-            this.ae2qol$slotSettings = new com.wztwzt.ae2_qof.wildcard.SlotSettingsStore();
-            this.ae2qol$slotSettings.load(
-                tag.getCompoundTag(com.wztwzt.ae2_qof.wildcard.SlotSettingsStore.NBT_KEY));
-        } catch (Throwable t) {
-            MyMod.LOG.warn("[AE2QoL] 读取按格设置（GT）失败", t);
-        }
-    }
+public abstract class MixinMTEHatchCraftingInputMEWildcard {
 
     @Shadow
     @Final
@@ -185,9 +147,8 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard
                     } else {
                         wildcardSlots.add(wrapped);
                         MyMod.LOG.info("[AE2QoL] GT 样板仓发现通配样板并展开：slot={} {}", i, wrapped.expandSummary());
-                        // 4.0.0：**不再写机器全局电路槽**（旧 M3 行为会互相覆盖：同舱两张样板时后索引者覆盖前者）。
-                        // 现在改为"样板自带电路自动填入本格 + 本格电路烧进该格具体样板的 in 列表"（见 rebuild）。
-                        wrapped.ae2qol$setSlotIndex(i);
+                        // M3：样板自带电路 → 写入本机虚拟电路槽（样板自带 > 槽位 > 整机；没有设置就**不动**机器）
+                        this.ae2qol$applyPatternCircuit(wrapped, i);
                     }
                     continue;
                 }
@@ -303,8 +264,6 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard
                 return;
             }
             SmartWildcardPatternSlot wrapped = new SmartWildcardPatternSlot(slot, (MTEHatchCraftingInputME) (Object) this);
-            // 4.0.0：先登记槽位下标，rebuild 里才能取到"这一格"的电路设置
-            wrapped.ae2qol$setSlotIndex(index);
             // 3.34.0：与 provideCrafting 同一处修正 —— 重包后必须重新展开，否则换样板/读档后永远注册 0 条
             wrapped.rebuild(this.ae2qol$world());
             this.internalInventory[index] = wrapped;
