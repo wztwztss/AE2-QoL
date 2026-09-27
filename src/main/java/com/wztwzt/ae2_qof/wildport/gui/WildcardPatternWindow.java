@@ -1094,8 +1094,32 @@ public final class WildcardPatternWindow {
         field.setTextAlignment(Alignment.CenterLeft);
         field.setMaxLength(256);
         field.setPos(x + 44, y);
-        field.setSize(width - 44, 18);
+        // 空出 20px 给右侧的"改"按钮（MUI1 自绘界面里系统输入法无法启用 ⇒ 见 GuiTextInputDialog）
+        field.setSize(width - 44 - 20, 18);
         addPageWidget(builder, state, field, previewPage);
+
+        // 「改」按钮：打开**原版输入框**对话框，中文可正常输入/粘贴；回车写回本框并触发原 setter。
+        ButtonWidget editButton = button("改");
+        editButton.setPos(x + width - 18, y);
+        editButton.setSize(18, 18);
+        editButton.setOnClick((clickData, widget) -> {
+            try {
+                net.minecraft.client.Minecraft.getMinecraft()
+                    .displayGuiScreen(
+                        new com.wztwzt.ae2_qof.client.gui.GuiTextInputDialog(
+                            label,
+                            getter.get(),
+                            value -> {
+                                String v = value == null ? "" : value;
+                                setter.accept(v);
+                                field.setText(v);
+                                field.markForUpdate();
+                            }));
+            } catch (Throwable t) {
+                com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 打开文本输入对话框失败", t);
+            }
+        });
+        addPageWidget(builder, state, editButton, previewPage);
     }
 
     private static ButtonWidget button(String text) {
