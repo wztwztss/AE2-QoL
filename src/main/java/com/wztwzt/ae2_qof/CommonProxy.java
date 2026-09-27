@@ -65,6 +65,8 @@ public class CommonProxy {
     public static ItemNetworkDataStick networkDataStick;
     /** 3.22.0：智能通配样板（继承 AE2 原版 ItemEncodedPattern ⇒ 所有样板总成都能识别）。 */
     public static com.wztwzt.ae2_qof.wildcard.ItemSmartWildcardPattern smartWildcardPattern;
+    /** 3.23.0：批量样板生成器（按 GT RecipeMap 产出具体样板）。 */
+    public static com.wztwzt.ae2_qof.generator.ItemSmartPatternGenerator smartPatternGenerator;
 
     public void preInit(FMLPreInitializationEvent event) {
         // ===== fix39: 已移除 RFB childDelegations 注入 =====
@@ -153,6 +155,15 @@ public class CommonProxy {
             MyMod.LOG.info("[AE2QoL] 智能通配样板已注册：smart_wildcard_pattern（3.22.0 M1）");
         } catch (Throwable t) {
             MyMod.LOG.error("[DIAG] ItemSmartWildcardPattern registration FAILED", t);
+            t.printStackTrace(System.err);
+        }
+        // 3.23.0：批量样板生成器（吞并 AE2PatternGen 的主要功能入口）
+        try {
+            smartPatternGenerator = new com.wztwzt.ae2_qof.generator.ItemSmartPatternGenerator();
+            smartPatternGenerator.register();
+            MyMod.LOG.info("[AE2QoL] 批量样板生成器已注册：smart_pattern_generator（3.23.0）");
+        } catch (Throwable t) {
+            MyMod.LOG.error("[DIAG] ItemSmartPatternGenerator registration FAILED", t);
             t.printStackTrace(System.err);
         }
         try {
