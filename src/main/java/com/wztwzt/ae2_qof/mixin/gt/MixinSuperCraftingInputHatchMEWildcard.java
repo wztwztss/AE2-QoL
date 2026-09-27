@@ -67,6 +67,25 @@ public abstract class MixinSuperCraftingInputHatchMEWildcard {
     @Unique
     private long ae2qol$lastRegisterLogTick = Long.MIN_VALUE;
 
+    /** 3.36.0：外来（原版 WildcardPattern）样板的诊断日志限频。 */
+    @Unique
+    private long ae2qol$lastForeignLogTick = Long.MIN_VALUE;
+
+    /** 3.36.0：该槽位里是不是**别的模组**（原版 WildcardPattern）的通配样板（只用于诊断）。 */
+    @Unique
+    private boolean ae2qol$isForeignWildcard(SuperCraftingInputHatchME.PatternSlot<SuperCraftingInputHatchME> slot) {
+        try {
+            ItemStack pattern = ((MixinGtnlPatternSlotAccess) (Object) slot).getAe2qolSlotPattern();
+            if (pattern == null || pattern.getItem() == null) return false;
+            return pattern.getItem()
+                .getClass()
+                .getName()
+                .startsWith("com.myname.wildcardpattern");
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
     // ================= ① 索引期展开与注册 =================
 
     @Inject(method = "provideCrafting", at = @At("HEAD"), cancellable = true, remap = false)
@@ -79,6 +98,7 @@ public abstract class MixinSuperCraftingInputHatchMEWildcard {
         try {
             final List<SuperCraftingInputHatchME.PatternSlot<SuperCraftingInputHatchME>> plainSlots = new ArrayList<>();
             final List<SuperCraftingInputHatchME.PatternSlot<SuperCraftingInputHatchME>> wildcardSlots = new ArrayList<>();
+            int foreign = 0;
             for (int i = 0; i < this.internalInventory.length; i++) {
                 SuperCraftingInputHatchME.PatternSlot<SuperCraftingInputHatchME> slot = this.internalInventory[i];
                 if (slot == null) {
@@ -130,6 +150,21 @@ public abstract class MixinSuperCraftingInputHatchMEWildcard {
                     continue;
                 }
                 plainSlots.add(slot);
+                if (ae2qol$isForeignWildcard(slot)) foreign++;
+            }
+
+            // 3.36.0 **互不干扰**：本机没有"我们的已配置通配样板"时完全不介入（不注册、不 cancel），
+            // 交回 GTNL 本体 / 原版 WildcardPattern 模组的处理器；否则两套完全接管的处理器叠加会把
+            // 对方的展开结果一起压成一张（用户实测：两套模组的样板放同一个总成，都只识别到一个）。
+            if (wildcardSlots.isEmpty()) {
+                long now = System.currentTimeMillis();
+                if (foreign > 0 && now - this.ae2qol$lastForeignLogTick > 15000L) {
+                    this.ae2qol$lastForeignLogTick = now;
+                    MyMod.LOG.info(
+                        "[AE2QoL] GTNL 总成检测到原版 WildcardPattern 的样板 {} 张，本机没有我们的通配样板 ⇒ 不介入",
+                        foreign);
+                }
+                return;
             }
 
             int registered = 0;
@@ -177,6 +212,16 @@ public abstract class MixinSuperCraftingInputHatchMEWildcard {
         try {
             if (patternDetails == null) return;
             if (this.patternDetailsPatternSlotMap.get(patternDetails) != null) return;
+            // 3.36.0 **反向自愈**：共享映射可能被第三方（原版 WildcardPattern 的 removeIf）清掉，
+            // 先自查我们的展开结果，命中就补回映射并**放行原方法**，而不是把我们的样板永久拒收。
+            for (SmartWildcardGtnlPatternSlot wildcardSlot : this.ae2qol$wildcards.values()) {
+                if (wildcardSlot != null && wildcardSlot.expandedDetails()
+                    .contains(patternDetails)) {
+                    this.patternDetailsPatternSlotMap.put(patternDetails, wildcardSlot);
+                    MyMod.LOG.warn("[AE2QoL] GTNL 总成映射被外部清掉，已就地补回并放行：details={}", patternDetails);
+                    return;
+                }
+            }
             MyMod.LOG.warn("[AE2QoL] GTNL pushPattern 反查失败：details 不在映射中，已返回 false（否则 GTNL 会 NPE 并打崩 CPU tick）");
             cir.setReturnValue(false);
         } catch (Throwable t) {

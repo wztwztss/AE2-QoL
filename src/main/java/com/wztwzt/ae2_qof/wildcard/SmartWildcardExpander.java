@@ -376,6 +376,17 @@ public final class SmartWildcardExpander {
     }
 
     /**
+     * 供桥/界面用：**直接从单个物品**反推矿辞前缀（与 {@link #oreInfo} 同口径）。
+     *
+     * <p>3.36.0 新增：桥要把"输出行"填成 {@code plate*}，必须按**该行自己的模板输出物品**取前缀
+     * （而不是笼统用模板级推导），否则多输出的配方会把前缀填错。
+     */
+    public static String orePrefixOfStack(ItemStack stack) {
+        OrePrefixInfo info = oreInfo(stack);
+        return info == null ? null : info.prefix;
+    }
+
+    /**
      * 供**界面显示**用的输出侧矿辞前缀（3.35.0，用户要求"输出行也要看得见，像 {@code plate*}"）。
      *
      * <p>刻意复用展开器自己的模板推导（{@link #templateMaterialName} + {@link #templateOutputPrefix}），

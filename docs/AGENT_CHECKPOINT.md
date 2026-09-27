@@ -13,8 +13,10 @@
 |---|---|
 |工具平台|DeepSeek Harness（DSH Web GUI）|
 |模型信息|DeepSeek-V4.1-Flash|
-|工作分支|master；本轮起点 `d0f4950`（3.34.0 交付），工作树干净、与 origin/master 同步（未推送）|
-|启动时间|2026-09-27（Asia/Shanghai，缺陷修复轮：3.35.0，紧接 3.34.0 实测反馈）|
+|工作分支|master；本轮起点 `a2043f3`（3.35.0 交付），工作树干净、与 origin/master 同步（未推送）|
+|启动时间|2026-09-27（Asia/Shanghai，缺陷修复轮：3.36.0，紧接 3.35.0 实测反馈）|
+|本次会话目标|**修 3.35.0 实机暴露的下标错位与两模组互扰 = 3.36.0**。用户实测反馈：加号只填输入不填输出、放进去仍按样板自己合成、**原版 wildcardpattern 的样板放同一总成也只识别到一个**。日志（3.35.0 会话）证据：`规则槽位越界：slot=1 inSize=1 matcher=ingot*`、`展开失败诊断：材料交集为空`、`produced=0 reason=no-material-matched`（16 条）、推送多为"输入 1 条、输出 0 条"。**根因 F**：机器侧 `rule.slot`＝模板输入下标（模板 `[电路,铁锭]` ⇒ slot=1），而桥旧实现**按"有规则的条目"排行**，电路行从未进界面 ⇒ 行号≠模板下标；自愈又从"只有规则行"重建模板 ⇒ `in=1` ⇒ slot=1 越界 ⇒ 规则被丢 ⇒ 材料集空 ⇒ 产出 0 ⇒ 机器回退模板；输出条目也落不到正确的行；`pullFromWild` 还用"已收集规则数"当 slot ⇒ 每保存一次漂移一次。**根因 G-3**：javap 实证原版 WildcardPattern 的 `MTEHatchCraftingInputMEMixin` 同样在 `provideCrafting` HEAD + `ci.cancel()` 全量接管，并对**共享的** `patternDetailsPatternSlotMap` 做 `removeIf` 清理；我们旧实现**无条件 cancel** 会把对方的展开压成一张。修复：① 桥改为**以模板行为单位**（界面行=模板槽位，非规则行占位空行保行号；输出行按该行自己的模板输出推 `plate*`；`pullFromWild` 用行号当 slot；模板重建后 `remapRuleSlots` 重排并留日志）；② GT/GTNL 处理器**先扫描**，本机没有我们的已配置样板时**完全不介入**（＋外来样板限频诊断）；③ 两处 `pushPattern` 守卫加**反向自愈**（共享映射被第三方清掉时补回并放行）。产物 `build/libs/AE2-QoL-3.36.0.jar`（1,759,609 B，SHA256 `D7D18D82…`）。**待实测 5 项**（CHANGELOG 记录 (39) 第四节）|
+|上一轮（历史）|工具：DeepSeek Harness｜模型：DeepSeek-V4.1-Flash：3.35.0（矿辞前缀本地化键 + 原生模板被删 + 输出行），`a2043f3` 已部署；用户实测后报"加号只填输入、输出不填、两套模组的样板都只识别一个"。|
 |本次会话目标|**修 3.34.0 实机暴露的两个更深根因 + 一处界面差距 = 3.35.0**。用户实测给了 4 张截图并要求「你自己也去查一下日志吧」。日志计数给出决定性证据：`GT 通配槽位展开为空…reason=template-in-out-missing` **23 次**（⇒ 3.34.0 的判据/接线**已生效**，卡在展开产出 0）、`NEI 加号：已就地把推导结果写进 Wild 窗口（槽位 7…）`＋`写回成功（指定槽位）：slot=7 rules=1`（⇒ 3.34.0 的加号修复**已生效**）。三个根因：**E-1** `OrePrefixes.getOreprefixKey()` 返回的是 GT **本地化键**（javap 实证常量池含 `gt.oreprefix.`，值形如 `gt.oreprefix.ingot`）⇒ 规则被写成 `gt.oreprefix.ingot*`（用户截图里那串 `gt.orepr...`），**永不匹配矿辞名**；三处调用点（推导器 / 展开器 `oreInfo` / MUI2 编辑器拖入）全中。**E-2** 搬进来的 Wild 代码在首次初始化时 `tag.removeTag("in"/"out")`（参考实现自己的数据模型），而本模组展开器以原生 `in`/`out` 当模板 ⇒ 模板被删 ⇒ 产出恒 0 ⇒ 回退注册模板那一张 = 用户看到的「AE 直接按这个样板自己的合成」。**E-3** 输出行永远空白（`pushToWild` 用 `rule.outMatcher`，推导器不填）。修复：① 新增 `SmartWildcardExpander.oreDictPrefixOf`（矿辞名减材料名反推前缀，与 `matcherLiteralPrefix` 互逆）并统一三处；② `cleanupLegacyPatternSlots` 对我们的样板不再删（原版 mod 行为不变）＋新增 `WildcardBridge.ensureNativeTemplate` 模板自愈（四个机器入口 + push/pull + AE 真身），**存量坏样板免重配**；③ `displayOutputPrefix` + `derivedOutputMatcher` 让输出行显示 `plate*`。产物 `build/libs/AE2-QoL-3.35.0.jar`（1,756,835 B，SHA256 `0F3699B9…`）。**待实测 5 项**（见 CHANGELOG 记录 (38) 第五节）|
 |上一轮（历史）|工具：DeepSeek Harness｜模型：DeepSeek-V4.1-Flash：3.34.0（通配样板三类静默失效 + 加号写回 + 两页签 + mui 手势），`d0f4950` 已部署，用户实测后报「矿辞串是 gt.orepr…、放进去 AE 按样板自己合成」。|
 |上一轮会话目标（3.34.0 轮）|**修用户实测 3.33.0 报的三条 + 一条我侦察到的静默失效 = 3.34.0**：① 有规则的通配样板放进**任何**总成都不被识别（GT / GTNL / PH 22069 / MK.II / 我们的 MK.III 全试）；② Wild 窗口里 NEI 加号无效（配方不落界面）；③ 电路与不消耗物品**没有独立页**（用户拍板：电路改独立页 4 列×6 行 + 撤掉 3.33.0 底部电路带；不消耗物品复用自带 NEI 拖入控件并写自己的 `NonConsumed`）；④ `mui.MixinItemSlotWildcardGesture` 注入失败（Shift+中键电路选择器从未生效）。流程：加载 skill → 只读侦察（实例 jar SHA256 / 日志计数 / 原版 mod 字节码）→ **三轮 `ask_user_question` 把问题确认到 99%（用户拍板 16 项）** → 方案确认 → 实施 → 构建 → 文档 → 提交/部署。**根因**：C = ①GT/GTNL 的槽位 `rebuild()` **全仓零调用者**（结构性，与玩家数据无关）+ ②四处入口判据要求"已有我们的 NBT"而该子树只在 Wild 窗口保存时写入（实测 `pullFromWild` 全场 2 次且都是"规则 0 条"），且 3.32.0 的懒同步写在 `expand()` 内部 ⇒ 对"缺 NBT"永远不可达，判否分支还**静默**；A = 加号写到"背包里第一张样板"而非窗口那张 + 界面不刷新 + 窗口旧内存态在保存时把刚写入的规则覆盖成 0；D = 回调类型写成 `CallbackInfo`，而 `ItemSlot.onMousePressed` 返回 `Interactable$Result`。产物 `build/libs/AE2-QoL-3.34.0.jar`（1,753,773 B，SHA256 `EB5FBC22…`），字节码已核对（`rebuild` 调用点、`SmartWildcardGate` 调用、`CallbackInfoReturnable`）。**待用户实测 6 项**（见 CHANGELOG 记录 (37) 第五节）|
@@ -34,6 +36,23 @@ GTNH 2.9.0-beta-3（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 ## 三、全局已完成清单
 
 > 按完成时间倒序排列，均标注产出文件路径。历史结论保留原貌，不等于本版验证结果。
+
+**3.36.0 交付（界面行/规则槽/模板下标对齐 + 与两套通配模组互不干扰，2026-09-27）**：3.35.0 实测反馈驱动。
+**先确认 3.35.0 已生效**：`NEI 推导规则明细：#0 ore:ingot*`（矿辞前缀修好）、
+`通配样板模板自愈：已从 Wild 的行数据重建原生模板（in=1 out=1）`（自愈能跑）。
+**根因 F（核心）**：界面行 / 规则槽 / 模板输入下标**三套编号错位** —— `rule.slot` 是**模板输入下标**
+（模板 `[电路,铁锭]` ⇒ slot=1），而 `pushToWild` 旧实现**按"有规则的条目"推行**（电路行从未进界面），
+自愈又从"只有规则行"重建模板 ⇒ `in=1` ⇒ `slot=1` **越界被丢**（日志：`规则槽位越界`、`材料交集为空`、
+`produced=0` ×16），输出条目也落不到正确的行；`pullFromWild` 还用"已收集规则数"当 slot ⇒ 每保存一次漂移一次
+（日志"规则 2 条"）。**根因 G-3**：javap 实证原版 WildcardPattern 的 `MTEHatchCraftingInputMEMixin`
+同样 HEAD + `ci.cancel()` 全量接管 `provideCrafting`，并对**共享的** `patternDetailsPatternSlotMap` 做
+`removeIf` 清理 ⇒ 我们旧实现的无条件 cancel 会把对方的展开一起压成一张（用户实测吻合）。
+修复：① 桥**以模板行为单位**（界面行=模板槽位、非规则行占位空行保行号、输出行按该行模板输出推 `plate*`、
+`pullFromWild` 用行号当 slot、`remapRuleSlots` 重建后重排并记 INFO）；② GT/GTNL 处理器**先扫描**，
+本机没有我们的已配置样板时**完全不介入**（＋`ae2qol$isForeignWildcard` 限频诊断）；③ 两处 `pushPattern`
+守卫加**反向自愈**（第三方清掉共享映射时补回并放行，而不是拒收）。构建 `BUILD SUCCESSFUL`（`EXIT=0`）；
+产物 `build/libs/AE2-QoL-3.36.0.jar`（1,759,609 B，SHA256 `D7D18D82…`）；字节码核对通过；包内版本 3.36.0。
+**待实测 5 项**（CHANGELOG 记录 (39) 第四节）。
 
 **3.35.0 交付（通配样板终于能展开：矿辞前缀取错 + 原生模板被删，2026-09-27）**：3.34.0 实测反馈驱动。
 **先确认 3.34.0 已生效**：日志 `reason=template-in-out-missing` 23 次 ⇒ 判据与 `rebuild(world)` 接线通了；
@@ -360,7 +379,16 @@ CHANGELOG/README 章节缺失（本轮未追写）；`CHANGELOG.md` 末尾与 `z
 > （`63153ed` / `d783448` / `223c8c5`），工作树干净。本节条目保留"待用户实测"性质——
 > **提交不等于游戏内验收通过**。
 
-### 4.1 3.35.0 待游戏内验收（2026-09-27，最新）
+### 4.1 3.36.0 待游戏内验收（2026-09-27，最新）
+
+- ① 加号后窗口**同一行**：输入 `ingot*`、输出 `plate*`；
+- ② 放进 GT 样板输入总成：日志出现 **`GT 通配样板注册：通配槽=1 注册 details=N`** 且 **N>0**，机器能接单；
+  不再出现 `规则槽位越界` / `材料交集为空`；
+- ③ 旧样板：`模板自愈…` 后若触发重排，应看到 `模板重建后已重排规则槽位`；
+- ④ **两套模组各放一张**在同一总成：我们的能展开，**原版 mod 的也照常展开**（互不干扰）；
+- ⑤ 仍未识别时，请提供该总成的日志段（已埋好"外来样板识别"打点）。
+
+### 4.2 3.35.0 待游戏内验收（已被 3.36.0 覆盖，保留供追溯）
 
 - ① Wild 窗口里按 NEI 加号：**输入行出现 `ingot*`、输出行出现 `plate*`**（不再是 `gt.orepr...`）；
 - ② 日志出现 `NEI 推导规则明细：#0 ore:ingot* / …`；

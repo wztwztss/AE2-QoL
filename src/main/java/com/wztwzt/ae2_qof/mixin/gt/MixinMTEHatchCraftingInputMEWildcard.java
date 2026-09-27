@@ -79,6 +79,25 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard {
     @Unique
     private long ae2qol$lastRegisterLogTick = Long.MIN_VALUE;
 
+    /** 3.36.0：外来（原版 WildcardPattern）样板的诊断日志限频。 */
+    @Unique
+    private long ae2qol$lastForeignLogTick = Long.MIN_VALUE;
+
+    /** 3.36.0：该槽位里是不是**别的模组**（原版 WildcardPattern）的通配样板（只用于诊断）。 */
+    @Unique
+    private boolean ae2qol$isForeignWildcard(MTEHatchCraftingInputME.PatternSlot<MTEHatchCraftingInputME> slot) {
+        try {
+            ItemStack pattern = ((MixinPatternSlotAccess) (Object) slot).getAe2qolSlotPattern();
+            if (pattern == null || pattern.getItem() == null) return false;
+            return pattern.getItem()
+                .getClass()
+                .getName()
+                .startsWith("com.myname.wildcardpattern");
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
     // ================= ① 索引期展开与注册 =================
 
     @Inject(method = "provideCrafting", at = @At("HEAD"), cancellable = true, remap = false)
@@ -93,6 +112,7 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard {
             // 阶段一：只收集，不做任何注册（展开/解码可能抛异常，避免半截状态）
             final List<MTEHatchCraftingInputME.PatternSlot<MTEHatchCraftingInputME>> plainSlots = new ArrayList<>();
             final List<MTEHatchCraftingInputME.PatternSlot<MTEHatchCraftingInputME>> wildcardSlots = new ArrayList<>();
+            int foreign = 0;
             for (int i = 0; i < this.internalInventory.length; i++) {
                 MTEHatchCraftingInputME.PatternSlot<MTEHatchCraftingInputME> slot = this.internalInventory[i];
                 if (slot == null) {
@@ -129,6 +149,23 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard {
                     continue;
                 }
                 plainSlots.add(slot);
+                if (ae2qol$isForeignWildcard(slot)) foreign++;
+            }
+
+            // 3.36.0 **互不干扰**：本机若一张"我们的已配置通配样板"都没有，则**完全不介入** ——
+            // 不注册、不 cancel，直接交回 GT 本体 / 原版 WildcardPattern 模组的处理器。
+            // 旧实现无条件 cancel 并全量注册（对不是我们的槽位只注册 getPatternDetails() 一张），
+            // 在"两套模组同时装着、同一总成各放一张"的场景下会把对方的展开结果一起压成一张
+            // （用户实测：原版模组的样板也只能识别到一个）。
+            if (wildcardSlots.isEmpty()) {
+                long now = System.currentTimeMillis();
+                if (foreign > 0 && now - this.ae2qol$lastForeignLogTick > 15000L) {
+                    this.ae2qol$lastForeignLogTick = now;
+                    MyMod.LOG.info(
+                        "[AE2QoL] GT 样板仓检测到原版 WildcardPattern 的样板 {} 张，本机没有我们的通配样板 ⇒ 不介入（其展开由对方处理器负责）",
+                        foreign);
+                }
+                return;
             }
 
             // 阶段二：注册（非通配槽沿用原逻辑；通配槽逐个注册展开产物）
@@ -181,6 +218,20 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard {
         try {
             if (patternDetails == null) return;
             if (this.patternDetailsPatternSlotMap.get(patternDetails) != null) return; // 命中：放行原方法
+            // 3.36.0 **反向自愈**：映射可能被第三方清掉 —— 原版 WildcardPattern 的处理器在它自己的
+            // provideCrafting 开头会对这张共享映射做 removeIf（javap 实证：Map.values().removeIf(...)），
+            // 它一旦清掉我们展开出的 key，这里就会误判"反查失败"并把我们的样板永久拒收。
+            // 于是先自查我们的展开结果：命中就**就地补回映射并放行原方法**，而不是直接返回 false。
+            for (SmartWildcardPatternSlot wildcardSlot : this.ae2qol$wildcards.values()) {
+                if (wildcardSlot != null && wildcardSlot.expandedDetails()
+                    .contains(patternDetails)) {
+                    this.patternDetailsPatternSlotMap.put(patternDetails, wildcardSlot);
+                    MyMod.LOG.warn(
+                        "[AE2QoL] GT 样板仓映射被外部清掉，已就地补回并放行：details={} slot 已重新绑定",
+                        patternDetails);
+                    return;
+                }
+            }
             ItemStack pattern = null;
             try {
                 pattern = patternDetails.getPattern();

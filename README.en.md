@@ -4,9 +4,31 @@
 
 An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
-**Author: wztwzt · Current source version: 3.35.0 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.36.0 · Reference pack: GTNH 2.9.0-beta-3**
 
 This repository is for personal archival and is not currently offered for distribution. See [CREDITS.md](CREDITS.md) for attribution and licensing records. Feature descriptions are not a claim that every integration has passed in-game testing.
+
+## What's new in 3.36.0 (row / rule-slot / template-index alignment + no interference between the two wildcard mods)
+
+- **Fixed "the + only fills the input row, the output row stays empty, and the machine still crafts the pattern
+  itself"**: the real cause was **three mismatched numbering schemes** — a machine-side rule slot is an index into
+  the **template input list** (the template can be `[circuit, iron ingot]`), while the UI used to emit one row per
+  **rule**, so the circuit row never reached the UI. The template self-heal then rebuilt a shorter template
+  (`in=1`), the rule's `slot=1` went **out of range and was dropped** (logs: `槽位越界` + `材料交集为空` +
+  `produced=0`), and output entries could not land on the right row. Now one UI row = one template slot: the input
+  row gets the matcher for that slot, the **output row shows the prefix derived from that same row's template
+  output** (`plate*`), non-rule rows (circuit) keep a blank placeholder row to preserve indices, saving uses the
+  **row number as the slot index**, and after a template rebuild the slots are renumbered (and logged).
+- **Fixed "with both mods' patterns in one hatch, only one pattern is recognised"**: the original WildcardPattern
+  mod and this mod both take over `MTEHatchCraftingInputME.provideCrafting` at HEAD with `ci.cancel()` (proven with
+  javap); the old code cancelled **unconditionally** and re-registered everything, flattening the other mod's
+  expansion to a single pattern. Now, when a machine holds none of our configured patterns we **do not interfere at
+  all** (GT/the original mod handle it), and we only take over when our own patterns are present.
+- **New reverse self-heal**: the shared details→slot map is cleaned by the original mod's `removeIf`; the
+  `pushPattern` guard now checks our own expansion first, **restores the mapping and lets the original method run**
+  instead of permanently rejecting our patterns.
+- Note: the 3.35.0 results still hold (ore prefix now `ingot*`, template self-heal works); this release fixes the
+  index-model mismatch and the cross-mod interference they exposed.
 
 ## What's new in 3.35.0 (the wildcard pattern finally expands: wrong ore prefix + deleted native template)
 

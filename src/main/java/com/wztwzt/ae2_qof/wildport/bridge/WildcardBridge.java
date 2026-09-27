@@ -71,8 +71,12 @@ public final class WildcardBridge {
             return false; // 模板还在，什么都不做
         }
         try {
-            java.util.List<ItemStack> inputs = templateStacks(WildcardPatternState.getInputEntries(stack));
-            java.util.List<ItemStack> outputs = templateStacks(WildcardPatternState.getOutputEntries(stack));
+            java.util.List<com.wztwzt.ae2_qof.wildport.crafting.WildcardPatternEntry> inEntries =
+                WildcardPatternState.getInputEntries(stack);
+            java.util.List<com.wztwzt.ae2_qof.wildport.crafting.WildcardPatternEntry> outEntries =
+                WildcardPatternState.getOutputEntries(stack);
+            java.util.List<ItemStack> inputs = templateStacks(inEntries);
+            java.util.List<ItemStack> outputs = templateStacks(outEntries);
             if (inputs.isEmpty() || outputs.isEmpty()) {
                 logHealOnce(
                     stack,
@@ -84,6 +88,10 @@ public final class WildcardBridge {
             tag.setTag(KEY_IN, com.wztwzt.ae2_qof.network.SmartWildcardRulesPacket.buildList(inputs));
             tag.setTag(KEY_OUT, com.wztwzt.ae2_qof.network.SmartWildcardRulesPacket.buildList(outputs));
             tag.setBoolean("crafting", false);
+            // 3.36.0：重建时**丢弃了没有 stack 的占位行**（例如电路行在旧数据里根本没有 stack），
+            // 行号会整体前移 ⇒ 必须同步把规则里的 slot 重排，否则展开器会报"规则槽位越界"而静默丢规则
+            // （3.35.0 实测：`规则槽位越界：slot=1 inSize=1 matcher=ingot*`）。
+            remapRuleSlots(stack, inEntries);
             com.wztwzt.ae2_qof.wildcard.SmartWildcardExpander.clearCache();
             logHealOnce(
                 stack,
@@ -94,6 +102,56 @@ public final class WildcardBridge {
             MyMod.LOG.warn("[AE2QoL] 模板自愈异常（该样板继续按现有 NBT 处理）", t);
             return false;
         }
+    }
+
+    /**
+     * 模板重建后重排规则槽位（3.36.0）：新下标 = "该行之前有 stack 的行数"。
+     *
+     * <p>只改真正需要改的规则，并**记一条 INFO**（本项目原则：改数据必须可见）。
+     */
+    private static void remapRuleSlots(ItemStack stack,
+        java.util.List<com.wztwzt.ae2_qof.wildport.crafting.WildcardPatternEntry> inEntries) {
+        try {
+            com.wztwzt.ae2_qof.wildcard.SmartWildcardState state =
+                com.wztwzt.ae2_qof.wildcard.SmartWildcardState.of(stack);
+            if (state == null || state.rules.isEmpty()) return;
+            // 原行号 → 新下标（只数有 stack 的行）
+            java.util.Map<Integer, Integer> remap = new java.util.HashMap<>();
+            int next = 0;
+            for (int row = 0; row < inEntries.size(); row++) {
+                if (hasTemplateStack(inEntries.get(row))) {
+                    remap.put(Integer.valueOf(row), Integer.valueOf(next));
+                    next++;
+                }
+            }
+            boolean changed = false;
+            StringBuilder detail = new StringBuilder();
+            for (com.wztwzt.ae2_qof.wildcard.SmartWildcardState.Rule rule : state.rules) {
+                if (rule == null) continue;
+                Integer mapped = remap.get(Integer.valueOf(rule.slot));
+                if (mapped != null && mapped.intValue() != rule.slot) {
+                    detail.append(" slot ")
+                        .append(rule.slot)
+                        .append("→")
+                        .append(mapped);
+                    rule.slot = mapped.intValue();
+                    changed = true;
+                }
+            }
+            if (changed) {
+                state.writeAndBumpRevision(stack);
+                MyMod.LOG.info("[AE2QoL] 模板重建后已重排规则槽位（{}），避免展开器因「槽位越界」丢规则", detail.toString());
+            }
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 重排规则槽位失败（展开可能丢失部分规则）", t);
+        }
+    }
+
+    private static boolean hasTemplateStack(com.wztwzt.ae2_qof.wildport.crafting.WildcardPatternEntry entry) {
+        if (entry == null) return false;
+        ItemStack stack = entry.getStack();
+        if (stack == null) stack = entry.getDisplayStack();
+        return stack != null && stack.getItem() != null;
     }
 
     /** 行数据 → 模板 stack 列表（按行序，只保留有效 stack）。 */
@@ -147,24 +205,40 @@ public final class WildcardBridge {
             List<String> ruleIncludes = new ArrayList<>();
             List<String> ruleExcludes = new ArrayList<>();
 
-            for (int i = 0; i < SmartWildcardEditorRows(); i++) {
-                SmartWildcardState.Rule rule = i < state.rules.size() ? state.rules.get(i) : null;
+            // 3.36.0 **下标对齐（核心修正）**：界面的一行 = 模板的一个槽位（模板输入下标），
+            // 而不再是"第 i 条规则"。原因：机器侧 rule.slot 指的是**模板输入列表下标**，
+            // 模板里可能有非规则槽（典型是编程电路）；按规则推行的旧实现会让
+            // "界面行号 / 规则序号 / 模板下标"三套编号互相错位 ⇒ 保存一次就漂移一次，
+            // 自愈重建模板时还会丢行，最终表现为 `规则槽位越界` + `材料交集为空` + 输出行空白
+            // （3.35.0 实机证据）。现在：每行都产出恰好一个 entry（占位行留空），行号即模板下标。
+            int rows = Math.max(
+                SmartWildcardEditorRows(),
+                Math.max(inTemplate.tagCount(), outTemplate.tagCount()));
+            for (int row = 0; row < rows; row++) {
+                SmartWildcardState.Rule rule = ruleForSlot(state, row);
                 if (rule != null) {
                     WildcardPatternEntry in = entry(rule, rule.matcher, rule.oreDictMode, rule.amount, inTemplate,
-                        rule.slot);
-                    if (in != null) inputs.add(in);
-                    // 3.35.0：规则没显式指定输出时，**用展开器同一套推导**把输出前缀显示出来
-                    // （用户要求"输出行也要看得见，像 plate*"；否则输出行永远是空的，界面无法解释展开结果）
+                        row);
+                    if (in == null) in = WildcardPatternEntry.fromStack(null);
+                    inputs.add(in);
+                    // 3.35.0/3.36.0：规则没显式指定输出时，用**该行自己的模板输出**推前缀（如 plate*），
+                    // 让界面显示与展开行为一致；推不出才退回模板级推导。
                     String outMatcher = rule.outMatcher;
-                    if (outMatcher == null || outMatcher.isEmpty()) outMatcher = derivedOutputMatcher(stack, state);
+                    if (outMatcher == null || outMatcher.isEmpty()) {
+                        outMatcher = derivedOutputMatcherForRow(stack, state, row);
+                    }
                     WildcardPatternEntry out = entry(rule, outMatcher, rule.outOreDictMode,
                         rule.outAmount > 0 ? rule.outAmount : rule.amount, outTemplate,
-                        rule.slot < outTemplate.tagCount() ? rule.slot : -1);
-                    if (out != null) outputs.add(out);
+                        row < outTemplate.tagCount() ? row : -1);
+                    if (out == null) out = WildcardPatternEntry.fromStack(null);
+                    outputs.add(out);
                     // 包含留空（我们的模型没有"必须包含"这一级），排除用我们的规则级排除
                     ruleIncludes.add("");
                     ruleExcludes.add(join(rule.excludes));
                 } else {
+                    // 非规则槽（电路等）：**占位行留空**，只保住行号；它保持模板原样由展开器处理
+                    inputs.add(WildcardPatternEntry.fromStack(null));
+                    outputs.add(WildcardPatternEntry.fromStack(null));
                     ruleIncludes.add("");
                     ruleExcludes.add("");
                 }
@@ -226,8 +300,11 @@ public final class WildcardBridge {
                 String inMatcher = inTag == null ? "" : inTag.getString("Matcher");
                 String outMatcher = outTag == null ? "" : outTag.getString("Matcher");
                 if (inMatcher.isEmpty() && outMatcher.isEmpty()) continue;
+                // 3.36.0：**用行号 i 当 rule.slot**（界面行 = 模板输入下标，由 pushToWild 保证对齐）。
+                // 旧实现用 next.rules.size()（已收集规则数）当 slot ⇒ 行里有空行/删行时下标就漂移，
+                // 每保存一次偏一次，最终展开器报"槽位越界"并静默丢规则。
                 SmartWildcardState.Rule rule = new SmartWildcardState.Rule(
-                    next.rules.size(),
+                    i,
                     inTag == null || inTag.getBoolean("Mode"),
                     inMatcher,
                     inTag == null ? 1L : Math.max(1L, inTag.getLong("Amount")),
@@ -261,6 +338,37 @@ public final class WildcardBridge {
             MyMod.LOG.warn("[AE2QoL] 桥（Wild → 我们的）失败：本次界面修改未写回我们的模型", t);
             return false;
         }
+    }
+
+    /**
+     * 输出行显示用的匹配串（3.36.0：**按该行自己的模板输出**推前缀，例如 {@code plate*}）。
+     *
+     * @return 例如 {@code plate*}；该行没有模板输出或推不出时退回模板级推导，仍推不出返回 null（该行留空）
+     */
+    private static String derivedOutputMatcherForRow(ItemStack stack, SmartWildcardState state, int row) {
+        try {
+            NBTTagCompound tag = stack == null ? null : stack.getTagCompound();
+            if (tag != null) {
+                NBTTagList outTemplate = tag.getTagList(KEY_OUT, TAG_COMPOUND);
+                if (row >= 0 && row < outTemplate.tagCount()) {
+                    ItemStack outStack = ItemStack.loadItemStackFromNBT(outTemplate.getCompoundTagAt(row));
+                    String prefix = com.wztwzt.ae2_qof.wildcard.SmartWildcardExpander.orePrefixOfStack(outStack);
+                    if (prefix != null && !prefix.isEmpty()) return prefix + "*";
+                }
+            }
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 推导第 " + row + " 行输出前缀失败（退回模板级推导）", t);
+        }
+        return derivedOutputMatcher(stack, state);
+    }
+
+    /** 找 slot == row 的规则（我们的模型里一条规则对应一个模板输入槽）。 */
+    private static SmartWildcardState.Rule ruleForSlot(SmartWildcardState state, int row) {
+        if (state == null) return null;
+        for (SmartWildcardState.Rule rule : state.rules) {
+            if (rule != null && rule.slot == row) return rule;
+        }
+        return null;
     }
 
     /** 行数（与编辑器一致：9）。写成方法是为了让这里的数字只有一处来源。 */
