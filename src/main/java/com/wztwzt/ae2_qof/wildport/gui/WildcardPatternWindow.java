@@ -1067,8 +1067,32 @@ public final class WildcardPatternWindow {
         field.setTextAlignment(Alignment.CenterLeft);
         field.setMaxLength(256);
         field.setPos(x + 44, y);
-        field.setSize(width - 44, 18);
+        // 3.22.0-fix49：与预览页/去重页同口径 —— 让出 20px 给右侧「改」按钮
+        // （MUI1 自绘界面里系统输入法不可用 ⇒ 必须走原版输入框才能打中文，见 GuiTextInputDialog）
+        field.setSize(width - 44 - 20, 18);
         addDedupeWidget(builder, state, field);
+
+        ButtonWidget dedupeEdit = button("改");
+        dedupeEdit.setPos(x + width - 18, y);
+        dedupeEdit.setSize(18, 18);
+        dedupeEdit.setOnClick((clickData, widget) -> {
+            try {
+                net.minecraft.client.Minecraft.getMinecraft()
+                    .displayGuiScreen(
+                        new com.wztwzt.ae2_qof.client.gui.GuiTextInputDialog(
+                            label,
+                            getter.get(),
+                            value -> {
+                                String v = value == null ? "" : value;
+                                setter.accept(v);
+                                field.setText(v);
+                                field.markForUpdate();
+                            }));
+            } catch (Throwable t) {
+                com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 打开文本输入对话框失败（去重页）", t);
+            }
+        });
+        addDedupeWidget(builder, state, dedupeEdit);
     }
 
     private static void addPreviewTextField(

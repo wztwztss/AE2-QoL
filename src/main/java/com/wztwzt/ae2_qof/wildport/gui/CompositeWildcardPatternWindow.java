@@ -461,8 +461,30 @@ public final class CompositeWildcardPatternWindow {
         field.setTextAlignment(Alignment.CenterLeft);
         field.setMaxLength(256);
         field.setPos(18, 104);
-        field.setSize(330, 18);
+        // 3.22.0-fix49：让出 20px 给「改」按钮（MUI1 自绘界面里系统输入法不可用 ⇒ 走原版输入框）
+        field.setSize(330 - 20, 18);
         addPageWidget(builder, state, field, Page.EXCLUDE);
+
+        ButtonWidget excludeEdit = button("改");
+        excludeEdit.setPos(18 + 330 - 18, 104);
+        excludeEdit.setSize(18, 18);
+        excludeEdit.setOnClick((clickData, widget) -> {
+            try {
+                net.minecraft.client.Minecraft.getMinecraft()
+                    .displayGuiScreen(
+                        new com.wztwzt.ae2_qof.client.gui.GuiTextInputDialog(
+                            tr("gui.wildcardpattern.global_exclude"),
+                            state.excludeDraft,
+                            value -> {
+                                state.excludeDraft = value == null ? "" : value;
+                                field.setText(state.excludeDraft);
+                                field.markForUpdate();
+                            }));
+            } catch (Throwable t) {
+                com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 打开文本输入对话框失败（复合窗排除页）", t);
+            }
+        });
+        addPageWidget(builder, state, excludeEdit, Page.EXCLUDE);
 
         ButtonWidget add = button("+");
         add.setPos(356, 104);
@@ -674,8 +696,31 @@ public final class CompositeWildcardPatternWindow {
         field.setTextAlignment(Alignment.CenterLeft);
         field.setMaxLength(256);
         field.setPos(x + 44, y);
-        field.setSize(width - 44, 18);
+        // 3.22.0-fix49：让出 20px 给「改」按钮（中文输入入口）
+        field.setSize(width - 44 - 20, 18);
         addPageWidget(builder, state, field, page);
+
+        ButtonWidget editBtn = button("改");
+        editBtn.setPos(x + width - 18, y);
+        editBtn.setSize(18, 18);
+        editBtn.setOnClick((clickData, widget) -> {
+            try {
+                net.minecraft.client.Minecraft.getMinecraft()
+                    .displayGuiScreen(
+                        new com.wztwzt.ae2_qof.client.gui.GuiTextInputDialog(
+                            label,
+                            getter.get(),
+                            value -> {
+                                String v = value == null ? "" : value;
+                                setter.accept(v);
+                                field.setText(v);
+                                field.markForUpdate();
+                            }));
+            } catch (Throwable t) {
+                com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 打开文本输入对话框失败（复合窗）", t);
+            }
+        });
+        addPageWidget(builder, state, editBtn, page);
     }
 
     private static void addPager(
