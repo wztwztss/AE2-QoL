@@ -191,6 +191,7 @@
 - ⏳ 待做：C2S 包、中键弹窗（9 催化位）、展开期把本格电路烧进具体样板 `in` 列表、停止写全局电路槽、
   三族 push 注入与自建回收。
 ### 4.7 分期建议（历史建议，用户已选择"一次做完"；4.4 的风险请一并权衡）
+- **A 期（原建议）**：
   ① 机器侧按格数据 `ae2qolSlotMeta`（电路 + 9 催化位，稀疏保存）；
   ② **样板自带电路插入时自动填入本格**；**不再写机器全局电路槽**；
   ③ **把本格电路烧进该格展开出的具体样板的 `in` 列表**（`gt.integrated_circuit` damage=号）——
@@ -199,7 +200,31 @@
 - **B 期（催化剂真正参与合成）**：三族（GT / GTNL / PH 家族）push 注入 + **我们自己的回收**
   （把未消耗的催化剂取回本格那 9 格，不走 GT 的 refund）。A 期已把数据与界面铺好，B 期只做机制。
 
-## 五、待用户答复
+### 4.8 催化剂机制上线范围（用户 2026-09-27 晚拍板）
+**一次交付，但催化剂的"push 注入 + 自建回收"先在 GT 2714 与 MK.III 32108 两台启用**；
+GTNL 21504 与 PH 22069/MK.II 先只享"按格电路 + 催化位数据"，验证通过后再打开（PH 的缓冲参与
+`recipeLocked/inTree/lock` 配方树判定，风险最高）。
+实施要求：注入/回收全程**打日志**（推出哪些、回收哪些、失败原因），并做**可重入保护**
+（合成取消/区块卸载/机器拆除时不能丢也不能复制催化剂）。
+
+### 4.9 剩余实施清单（4.0.0，按顺序）
+1. **C2S 包**：扩展现有 `network/SmartWildcardSlotCircuitPacket`（它已能按坐标定位机器）为"格设置"包：
+   `{x,y,z,slot,circuit,catalysts[9]}`；服务端 `instanceof ISlotSettingsHolder` → 写 + `markDirty()` + 日志。
+2. **中键弹窗**：把 `client/gui/GuiSlotCircuitPicker` 升级为"格设置"屏（电路 1~24 + 继承 + 9 催化位 + 清除/关闭）；
+   **用 0xRRGGBB 原色，不用 § 颜色码**（旧屏用了 `EnumChatFormatting`，升级时一并去掉）。
+3. **展开期把本格电路烧进具体样板**：`SmartWildcardPatternSlot`/`SmartWildcardGtnlPatternSlot` 的 rebuild 里
+   用 `SlotSettingsStore.effectiveCircuit(slot, patternCircuit)` 取号，克隆每张 concrete 并改写其 `in` 列表里的
+   `gt.integrated_circuit`（无则添加）；**同时删除 `SmartWildcardCircuit.apply` 对机器全局电路槽的写入**。
+4. **催化剂 push + 回收**（先 GT + MK.III）：GT 覆写 `SmartWildcardPatternSlot.insertItemsAndFluids`；
+   MK.III 在 PH 基类 `pushPattern` 上加 mixin 并**只对 32108/`MTEPatternCraftingBufferMKIII` 生效**；
+   未消耗物从槽位 `itemInventory`（GT）/`DualInvBuffer.mStoredItemInternalSingle`（PH，需 accessor）取回本格。
+5. 构建 → 文档 → 提交 → 等用户退游戏部署。
+
+## 五、用户已答复（2026-09-27 晚）
+1. §4.1「样板自带电路插入时自动填入本格、**不再写全局电路槽**」= **确认执行**；
+2. §2.6 线框稿 = **通过**（一屏、9 催化位、浅底深字、不用 § 颜色码）；
+3. §4.8 催化剂上线范围 = **先 GT 2714 + MK.III**；
+4. 旧问（保留追溯）："旧机制降级"与否、线框稿是否通过 —— 均已由上述三条取代。
 1. §4.1 的"旧机制降级"是否照推荐执行？
 2. §2.6 线框稿是否通过（通过后即按"五处一起做"实施）？
 
