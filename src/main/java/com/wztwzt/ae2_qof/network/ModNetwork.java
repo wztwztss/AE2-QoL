@@ -225,5 +225,12 @@ public final class ModNetwork {
             SmartDoublingStatePacket.class,
             discriminator++,
             Side.CLIENT);
+
+        // 3.22.0-feat1：创造模式 Ctrl+中键 复制方块完整 NBT（C2S；服务端校验创造模式 / 体积上限 / 敏感方块两步确认）
+        CHANNEL.registerMessage(
+            BlockCopyRequestPacket.Handler.class,
+            BlockCopyRequestPacket.class,
+            discriminator++,
+            Side.SERVER);
     }
 }
