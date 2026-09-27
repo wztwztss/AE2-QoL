@@ -154,13 +154,25 @@
 ⇒ 两张样板互相覆盖（"后放进去的会覆盖前面的"）。现在按 §4.1 的最终口径：**不再抄到整机，改抄到本格**。
 
 ### 4.2 技术风险（实施前必须先验证，记录备查）
-1. **催化剂的"合成完返回"**：要求机器把未消耗的催化剂**退回该格催化位**（不是回 AE）。
-   实施前必须核实三族宿主各自的返还路径：GT `PatternSlot.refund(...)`、
-   GTNL `SuperCraftingInputHatchME` 的对应逻辑、PH/MK.III 的 `IDualInputInventoryWithPattern` 实现；
-   返还目标要先落到"该格催化位"再谈其它。
-2. **存储体量**：每格 9 个 ItemStack × 144 格 = 最多 1296 个堆。只存**非空项**、按下标稀疏保存；
-   界面只在"该格设置"弹窗里展示这 9 格（机器主界面**不铺开**，否则装不下）。
-3. **push 注入点**：三族槽位的 `insertItemsAndFluids` 路径都要能拿到"本格设置"，且不能污染样板的 `in` 列表。
+> **2026-09-27 首次只读核实结果（javap）**：
+> 1. **GT `PatternSlot.refund(AENetworkProxy, BaseActionSource, boolean)` 是把 `itemInventory` 里的东西
+>    `Platform.poweredInsert(...)` 回 AE 网络的**（不是退回"本格"）⇒ 想让催化剂"合成完回到那 9 格"，
+>    **不能依赖 GT 的 refund**，必须由我们自己做"回收"（把机器总线/槽位里的催化剂取回本格 9 格）；
+> 2. **GT `insertItemsAndFluids(MEInventoryCrafting)`** 逐槽读 `getAEStackInSlot` 后分流到 `insertItem/insertFluid`
+>    ⇒ GT 侧注入点就是我们自己的 `SmartWildcardPatternSlot`（可覆写，最干净）；
+> 3. **PH 家族**：`PatternDualInputHatch` 只有若干内部类（`$Inst/$DA/$1..$4/...`），
+>    样板推入走的是 GT 的 `IDualInputHatchWithPattern` / `IDualInputInventoryWithPattern` 体系 ⇒
+>    PH/MK.III 的注入点与回收点还需要继续挖掘（下一步只读任务）。
+
+### 4.3 实施分期（建议，等用户确认）
+- **A 期（可先出包，解决"两张样板互相覆盖"这个主痛点）**：
+  ① 机器侧按格数据 `ae2qolSlotMeta`（电路 + 9 催化位，稀疏保存）；
+  ② **样板自带电路插入时自动填入本格**；**不再写机器全局电路槽**；
+  ③ **把本格电路烧进该格展开出的具体样板的 `in` 列表**（`gt.integrated_circuit` damage=号）——
+     这是 GTNH 原生"样板带电路"机制，**五处宿主天然通用、不依赖各自的 push 钩子**；
+  ④ 中键弹窗（电路 1~24/继承 + 9 催化位 + 清除/关闭）+ 一次轻量 C2S 包（服务端鉴权 + `markDirty()`）。
+- **B 期（催化剂真正参与合成）**：三族（GT / GTNL / PH 家族）push 注入 + **我们自己的回收**
+  （把未消耗的催化剂取回本格那 9 格，不走 GT 的 refund）。A 期已把数据与界面铺好，B 期只做机制。
 
 ## 五、待用户答复
 1. §4.1 的"旧机制降级"是否照推荐执行？
