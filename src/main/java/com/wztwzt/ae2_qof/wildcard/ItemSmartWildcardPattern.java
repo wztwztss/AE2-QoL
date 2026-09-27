@@ -166,31 +166,46 @@ public class ItemSmartWildcardPattern extends ItemEncodedPattern
     @Override
     public ItemStack onItemRightClick(ItemStack stack, World world, EntityPlayer player) {
         ItemStack result = super.onItemRightClick(stack, world, player);
-        // 3.24.x：入口切到搬运进来的 Wild 界面（GTNH-MUI）。打开前先把我们的状态推进 Wild 的键，
-        // 这样界面一打开就是已配置的内容；它保存时再由 MessageUpdateWildcardConfig 的处理器拉回我们的模型。
+        // 3.26.x：**两个入口**（用户要求把"电路 1~24"与"不消耗物品"重新给出入口）——
+        //   · 直接右键：搬运进来的 Wild 界面（9 行规则表 / 排除 / 预览 + NEI 拖入 + 加号）
+        //   · Shift+右键：我们原有的四页签 MUI2 编辑器（含**内置电路**与**不消耗物品**两页）
+        // Wild 窗口没有这两页，所以旧界面保留为备选而不是删掉（它也不再是无入口的死代码）。
+        final boolean shift = player != null && player.isSneaking();
         try {
-            if (player != null) {
-                // 自检发现的坑：**两侧都要推**。只推服务端的话，客户端手上的还是旧 NBT，
-                // 新界面打开就会是空的（服务端改 NBT 不会自动同步给客户端那张样板）。
-                SmartWildcardState state = SmartWildcardState.of(stack);
-                if (state != null) {
-                    com.wztwzt.ae2_qof.wildport.bridge.WildcardBridge.pushToWild(stack, state);
-                } else {
-                    MyMod.LOG.info("[AE2QoL] 通配样板尚未配置（无我们的 NBT），Wild 界面将以空配置打开");
+            if (!shift) {
+                // 打开前先把我们的状态推进 Wild 的键，界面一打开就是已配置内容；
+                // 它保存时再由 MessageUpdateWildcardConfig 的处理器拉回我们的模型。
+                if (player != null) {
+                    // 自检发现的坑：**两侧都要推**。只推服务端的话，客户端手上的还是旧 NBT，
+                    // 新界面打开就会是空的（服务端改 NBT 不会自动同步给客户端那张样板）。
+                    SmartWildcardState state = SmartWildcardState.of(stack);
+                    if (state != null) {
+                        com.wztwzt.ae2_qof.wildport.bridge.WildcardBridge.pushToWild(stack, state);
+                    } else {
+                        MyMod.LOG.info("[AE2QoL] 通配样板尚未配置（无我们的 NBT），Wild 界面将以空配置打开");
+                    }
                 }
-            }
-            if (!world.isRemote && player != null) {
-                player.openGui(
-                    MyMod.instance,
-                    com.wztwzt.ae2_qof.wildport.WildportIds.GUI_WILDCARD_PATTERN,
-                    world,
-                    player.inventory.currentItem,
-                    0,
-                    0);
-                MyMod.LOG.info("[AE2QoL] 已打开 Wild 通配样板界面（槽位 {}）", player.inventory.currentItem);
+                if (!world.isRemote && player != null) {
+                    player.openGui(
+                        MyMod.instance,
+                        com.wztwzt.ae2_qof.wildport.WildportIds.GUI_WILDCARD_PATTERN,
+                        world,
+                        player.inventory.currentItem,
+                        0,
+                        0);
+                    MyMod.LOG.info("[AE2QoL] 已打开 Wild 通配样板界面（槽位 {}）", player.inventory.currentItem);
+                }
+            } else if (!world.isRemote && player != null) {
+                com.cleanroommc.modularui.factory.PlayerInventoryGuiFactory.INSTANCE.openFromMainHand(player);
+                MyMod.LOG.info("[AE2QoL] 已打开四页签编辑器（Shift+右键）：含内置电路 1~24 与不消耗物品页");
+                player.addChatMessage(
+                    new net.minecraft.util.ChatComponentText(
+                        "\u00a7a[AE2QoL] \u5df2\u6253\u5f00\u56db\u9875\u7b7e\u7f16\u8f91\u5668\uff08\u542b\u7535\u8def 1~24 \u4e0e\u4e0d\u6d88\u8017\u7269\u54c1\uff09"
+                            + "\uff1b\u4e0d\u6309 Shift \u53f3\u952e\u5219\u6253\u5f00 Wild \u754c\u9762"));
             }
         } catch (Throwable t) {
-            MyMod.LOG.warn("[AE2QoL] 打开 Wild 通配样板界面失败", t);
+            MyMod.LOG.warn("[AE2QoL] 打开通配样板界面失败（shift={}）", shift);
+            MyMod.LOG.warn("[AE2QoL] 打开通配样板界面异常详情", t);
         }
         // 3.23.1：移除 M1 时期的"右键聊天摘要"——用户反馈它每次打开界面都在聊天栏刷屏
         //（rules=… / expand: produced=…）。配置信息现在由 MUI2 编辑器与物品 tooltip 承载，诊断信息进日志。
