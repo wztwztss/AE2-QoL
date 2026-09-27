@@ -129,6 +129,48 @@ public final class WildcardEditorPanel {
             column.child(row);
         }
 
+        // ===== 电路号（1~24；留空 = 继承槽位/整机）=====
+        TextFieldWidget circuitField = new TextFieldWidget().setMaxLength(3)
+            .size(30, 12);
+        circuitField.setText(base.circuit >= 1 ? String.valueOf(base.circuit) : "");
+        Flow circuitRow = Flow.row()
+            .childPadding(2);
+        circuitRow.child(new TextWidget<>(IKey.str("§7内置电路 1~24（留空 = 继承）")).size(160, 12))
+            .child(circuitField);
+        column.child(circuitRow);
+
+        // ===== 黑名单（总排除）=====
+        final java.util.List<String> blacklist = new java.util.ArrayList<>(base.blacklist);
+        TextFieldWidget blacklistField = new TextFieldWidget().setMaxLength(64)
+            .size(140, 12);
+        Flow blackRow = Flow.row()
+            .childPadding(2);
+        blackRow.child(new TextWidget<>(IKey.str("§7总排除（黑名单）")).size(90, 12))
+            .child(blacklistField)
+            .child(new ButtonWidget<>().size(28, 12)
+                .overlay(IKey.str("§a加"))
+                .tooltip(t -> t.addLine(IKey.str("把左边文本框的内容加入黑名单（支持 * 与 ?）")))
+                .onMouseTapped(ctx -> {
+                    String v = blacklistField.getText();
+                    if (v != null && !v.trim()
+                        .isEmpty() && !blacklist.contains(
+                            v.trim())) {
+                        blacklist.add(
+                            v.trim());
+                        blacklistField.setText("");
+                    }
+                    return true;
+                }))
+            .child(new ButtonWidget<>().size(28, 12)
+                .overlay(IKey.str("§c清"))
+                .tooltip(t -> t.addLine(IKey.str("清空整个黑名单")))
+                .onMouseTapped(ctx -> {
+                    blacklist.clear();
+                    return true;
+                }))
+            .child(new TextWidget<>(IKey.str("§7现有 " + blacklist.size() + " 项")).size(70, 12));
+        column.child(blackRow);
+
         // 保存：客户端解析整张表 → 走既有 C2S 包由服务端写入样板 NBT
         ButtonWidget<?> save = new ButtonWidget<>().size(70, 14)
             .overlay(IKey.str("§a保存规则"))
@@ -137,8 +179,22 @@ public final class WildcardEditorPanel {
                 if (!data.isClient()) return true; // 只在客户端点击时发包
                 try {
                     SmartWildcardState edited = new SmartWildcardState();
-                    edited.circuit = base.circuit >= 1 ? base.circuit : -1;
-                    edited.blacklist.addAll(base.blacklist);
+                    // 电路：优先用界面里填的（1~24）；填了非法值就保持原样并记日志，不静默吞掉
+                    String circuitText = circuitField.getText() == null ? ""
+                        : circuitField.getText()
+                            .trim();
+                    if (circuitText.isEmpty()) {
+                        edited.circuit = base.circuit >= 1 ? base.circuit : -1;
+                    } else {
+                        long parsed = parseLong(circuitText, -1L);
+                        if (parsed >= 1 && parsed <= 24) {
+                            edited.circuit = (int) parsed;
+                        } else {
+                            edited.circuit = base.circuit;
+                            MyMod.LOG.warn("[AE2QoL] 编辑器里的电路号非法（应为 1~24）：{}，保持原值 {}", circuitText, base.circuit);
+                        }
+                    }
+                    edited.blacklist.addAll(blacklist);
                     edited.whitelist.addAll(base.whitelist);
                     edited.nonConsumed.addAll(base.nonConsumed);
                     int used = 0;
