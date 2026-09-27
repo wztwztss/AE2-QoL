@@ -47,6 +47,8 @@ public final class WildcardEditorPanel {
         if (state == null) state = new SmartWildcardState();
         // lambda 只能捕获有效 final ⇒ 取一个不变引用给下面的"保存"回调使用
         final SmartWildcardState base = state;
+        // 黑名单工作副本：必须在规则行循环**之前**声明（每行的「筛」按钮要往里加）
+        final java.util.List<String> blacklist = new java.util.ArrayList<>(base.blacklist);
 
         TextFieldWidget[] inFields = new TextFieldWidget[ROWS];
         TextFieldWidget[] inAmounts = new TextFieldWidget[ROWS];
@@ -115,6 +117,35 @@ public final class WildcardEditorPanel {
                     outAmounts[index].setText(String.valueOf(outNow * 2L));
                     return true;
                 });
+            // 「预」= 只按这一行展开，把前几个候选打到聊天栏（不写回）
+            ButtonWidget<?> previewRow = new ButtonWidget<>().size(16, 12)
+                .overlay(IKey.str("§b预"))
+                .tooltip(t -> {
+                    t.addLine(IKey.str("只按这一行试算，把前几个候选打到聊天栏（不会写回）"));
+                    t.addLine(IKey.str("试算用的是与机器相同的展开器"));
+                })
+                .onMouseTapped(ctx -> {
+                    if (!data.isClient()) return true;
+                    ae2qol$chat(
+                        rowPreview(
+                            stack,
+                            inFields[index].getText(),
+                            inAmounts[index].getText(),
+                            outFields[index].getText(),
+                            outAmounts[index].getText()));
+                    return true;
+                });
+            // 「筛」= 把这一行的输入匹配串加入黑名单（等于"这一整类都不要"）
+            ButtonWidget<?> excludeRow = new ButtonWidget<>().size(16, 12)
+                .overlay(IKey.str("§c筛"))
+                .tooltip(t -> t.addLine(IKey.str("把这一行的输入匹配串加入黑名单（保存后生效）")))
+                .onMouseTapped(ctx -> {
+                    String token = stripModePrefix(inFields[index].getText());
+                    if (!token.isEmpty() && blacklist.add(token)) {
+                        MyMod.LOG.info("[AE2QoL] 第 {} 行已加入黑名单：{}（保存后生效）", index + 1, token);
+                    }
+                    return true;
+                });
 
             Flow row = Flow.row()
                 .childPadding(2);
@@ -125,7 +156,9 @@ public final class WildcardEditorPanel {
                 .child(outField)
                 .child(outAmount)
                 .child(clear)
-                .child(double2);
+                .child(double2)
+                .child(previewRow)
+                .child(excludeRow);
             column.child(row);
         }
 
@@ -140,7 +173,7 @@ public final class WildcardEditorPanel {
         column.child(circuitRow);
 
         // ===== 黑名单（总排除）=====
-        final java.util.List<String> blacklist = new java.util.ArrayList<>(base.blacklist);
+        // 工作副本 blacklist 已在前面声明（规则行的「筛」按钮也要用）
         TextFieldWidget blacklistField = new TextFieldWidget().setMaxLength(64)
             .size(140, 12);
         Flow blackRow = Flow.row()
@@ -275,6 +308,58 @@ public final class WildcardEditorPanel {
 
         panel.child(column);
         return panel;
+    }
+
+    /** 只按某一行试算（不写回），把摘要与前几个候选名打成一行聊天文本（仅客户端调用）。 */
+    private static String rowPreview(ItemStack baseStack, String inText, String inAmount, String outText,
+        String outAmount) {
+        try {
+            if (baseStack == null) return "§c没有可用的样板物品";
+            String raw = inText == null ? "" : inText.trim();
+            if (raw.isEmpty()) return "§c这一行还没有输入匹配串";
+            ItemStack temp = baseStack.copy();
+            temp.stackSize = 1;
+            SmartWildcardState state = new SmartWildcardState();
+            state.rules.add(
+                new SmartWildcardState.Rule(
+                    0,
+                    !raw.startsWith("name:"),
+                    stripModePrefix(raw),
+                    Math.max(1L, parseLong(inAmount, 1L)),
+                    outText == null ? "" : stripModePrefix(outText),
+                    outText == null || !outText.trim()
+                        .startsWith("name:"),
+                    Math.max(0L, parseLong(outAmount, 0L))));
+            state.write(temp);
+            SmartWildcardExpander.Result result = SmartWildcardExpander
+                .expand(temp, net.minecraft.client.Minecraft.getMinecraft().theWorld);
+            StringBuilder sb = new StringBuilder("§b[AE2QoL] 试算 " + result.describe());
+            int shown = 0;
+            for (ItemStack pattern : result.patterns) {
+                if (shown >= 5) break;
+                String name = firstInputName(pattern);
+                if (name == null) continue;
+                sb.append("§7 | §f")
+                    .append(name);
+                shown++;
+            }
+            return sb.toString();
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 单行试算失败", t);
+            return "§c试算失败：" + t;
+        }
+    }
+
+    /** 聊天栏回执（仅客户端；调用点都在 data.isClient() 守卫内）。 */
+    private static void ae2qol$chat(String message) {
+        try {
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getMinecraft();
+            if (mc != null && mc.thePlayer != null) {
+                mc.thePlayer.addChatMessage(new net.minecraft.util.ChatComponentText(message));
+            }
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 聊天栏回执失败", t);
+        }
     }
 
     /** 取一张"展开出来的具体样板"的第一个输入物品的显示名（用于预览行与排除词）。 */
