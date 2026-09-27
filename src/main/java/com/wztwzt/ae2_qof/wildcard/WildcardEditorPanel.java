@@ -82,6 +82,8 @@ public final class WildcardEditorPanel {
         // 加入方式 = NEI/背包拖到「加」按钮上，或「手持加入」；不再用文本框输名字（那会与模型不符）。
         final List<ItemStack> nonConsumed = new ArrayList<>();
         nonConsumed.addAll(base.nonConsumed);
+        // 拖入落点表按本次打开重建（旧控件已随界面销毁）
+        NON_CONSUMED_REF = nonConsumed;
 
         TextFieldWidget[] inFields = new TextFieldWidget[ROWS];
         TextFieldWidget[] inAmounts = new TextFieldWidget[ROWS];
@@ -493,13 +495,16 @@ public final class WildcardEditorPanel {
         Flow ncRow = Flow.row()
             .childPadding(GAP)
             .size(348, 18);
-        ncRow.child(new ButtonWidget<>().size(66, 16)
+        ButtonWidget<?> ncAddButton = new ButtonWidget<>().size(66, 16)
             .overlay(IKey.str("加（拖入）"))
             .tooltip(tip -> tip.addLine(IKey.str("把 NEI/背包里的物品拖到本按钮上即可加入")))
             .onMouseTapped(ctx -> {
                 MyMod.LOG.info("[AE2QoL] 不消耗物品：「加」按钮被点击（加入方式是把物品拖到它上面，或用「手持加入」）");
                 return true;
-            }))
+            });
+        // 注册为 NEI 拖放落点：拖到它上面 = 把该物品记为不消耗
+        DROP_APPEND_TARGETS.put(ncAddButton, nonConsumed);
+        ncRow.child(ncAddButton)
             .child(new ButtonWidget<>().size(66, 16)
                 .overlay(IKey.str("手持加入"))
                 .tooltip(tip -> tip.addLine(IKey.str("把主手物品记为不消耗（铸模/模头/透镜等）")))
@@ -764,6 +769,10 @@ public final class WildcardEditorPanel {
     private static final boolean[] OUT_ORE = new boolean[ROWS];
     /** NEI 拖放落点：匹配框控件 → {行号, 侧(0=输入,1=输出)}（每次打开面板重建）。 */
     private static final java.util.Map<Object, int[]> DROP_TARGETS = new java.util.HashMap<>();
+    /** NEI 拖放落点：「加（拖入）」按钮 → 它要追加到的列表（目前是不消耗物品）。 */
+    private static final java.util.Map<Object, List<ItemStack>> DROP_APPEND_TARGETS = new java.util.HashMap<>();
+    /** 不消耗物品的工作副本引用（拖入时要用；每次打开面板重设）。 */
+    private static List<ItemStack> NON_CONSUMED_REF;
 
     /**
      * NEI 把物品拖到某个匹配框上时调用（由 {@code SmartWildcardNeiDragHandler} 转发）。
@@ -774,6 +783,16 @@ public final class WildcardEditorPanel {
     public static boolean applyDropToHovered(Object hoveredWidget, ItemStack stack) {
         try {
             if (hoveredWidget == null || stack == null || stack.getItem() == null) return false;
+            // 拖到「加（拖入）」按钮上 = 追加到对应列表（目前是不消耗物品；黑名单用「手持加入」）
+            List<ItemStack> appendTo = DROP_APPEND_TARGETS.get(hoveredWidget);
+            if (appendTo != null) {
+                appendTo.add(stack.copy());
+                MyMod.LOG.info(
+                    "[AE2QoL] NEI 拖入：不消耗物品加入 {}（保存后生效）",
+                    stack.getItem()
+                        .getItemStackDisplayName(stack));
+                return true;
+            }
             int[] pos = DROP_TARGETS.get(hoveredWidget);
             if (pos == null) return false;
             if (!(hoveredWidget instanceof TextFieldWidget field)) return false;

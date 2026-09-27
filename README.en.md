@@ -8,6 +8,29 @@ An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI patte
 
 This repository is for personal archival and is not currently offered for distribution. See [CREDITS.md](CREDITS.md) for attribution and licensing records. Feature descriptions are not a claim that every integration has passed in-game testing.
 
+## What's new in 3.23.4 (UI rebuilt to your design: four tabs + NEI drag-in)
+
+- **Four tabs**: Rules / Coverage preview / Exclusions & non-consumed / Circuit. MUI2 has **no** `TabWidget`, so it is
+  "tab buttons + four page containers + `setEnabledIf(page predicate)`" (the predicate is evaluated every frame, so
+  switching is instant and both sides build an identical widget tree).
+- **Rules page**: 9 rows × (wide input field + **mode toggle** (on = ore dictionary, off = display name) + amount + → +
+  output field + mode + amount + Preview/Filter/x2/Clear), **row height 20px, spacing 4px**; bottom row
+  Preview all / Clear page / Reload / Save.
+- **Coverage preview page**: search (filters as you type), paging and a per-row "Exclude" that adds to the global
+  blacklist; the header reports produced/matched/skipped **in readable Chinese** together with the reason.
+- **Exclusions page**: global blacklist (add / clear / delete row) + **per-rule exclusions for rules 1..9** (click a
+  number to switch) + **non-consumed items** (via "Add held item" or by **dragging an item onto the "Add (drop)" button**,
+  each row deletable).
+- **NEI drag into matcher fields**: drag an item from NEI/inventory **straight onto an input or output field** — if it has
+  an ore dictionary entry the field becomes `<prefix>*` in ore mode; otherwise it becomes the display name in name mode.
+  A drop that misses a field is not consumed (NEI keeps its default) and logs an INFO line saying why.
+- **Fixes**: ① only the title/header used to render — the cause was child containers **without an explicit size**, which
+  MUI2 lays out as zero height; ② unreadable text — all `§` colour codes removed in favour of the default dark text on
+  the light panel; ③ chat spam on every open (old self-test output) — removed; ④ the real
+  **`reason=no-material-matched`** bug — rules without a wildcard were used to derive materials and emptied the
+  intersection, so the whole pattern expanded to nothing; such rules are now treated as **exact matches**; ⑤
+  `createScreen` is now overridden with this mod's id as MUI2 requires, silencing the "or else it will crash" warning.
+
 ## What's new in 3.23.0 (wildcard editor rebuilt on MUI2 + Pattern Generator)
 
 - **Rebuilt UI (MUI2)**: the Smart Wildcard Pattern now uses a Cleanroom ModularUI 2 screen (container-backed, so
