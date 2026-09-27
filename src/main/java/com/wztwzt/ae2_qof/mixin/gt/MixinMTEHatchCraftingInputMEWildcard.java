@@ -57,7 +57,45 @@ import gregtech.common.tileentities.machines.MTEHatchCraftingInputME;
  * </ul>
  */
 @Mixin(value = MTEHatchCraftingInputME.class, remap = false)
-public abstract class MixinMTEHatchCraftingInputMEWildcard {
+public abstract class MixinMTEHatchCraftingInputMEWildcard
+    implements com.wztwzt.ae2_qof.wildcard.ISlotSettingsHolder {
+
+    // ================= 4.0.0：按样板格的独立设置（电路 + 9 催化剂位） =================
+    // 为什么要挂在本 mixin 上：GT/GTNL/PH 三族都声明了 saveNBTData/loadNBTData(NBTTagCompound)，
+    // 在这里加一个 @Unique 字段并注入这两个方法即可持久化，不必新增 mixin 与配置项。
+
+    @Unique
+    private com.wztwzt.ae2_qof.wildcard.SlotSettingsStore ae2qol$slotSettings;
+
+    @Override
+    public com.wztwzt.ae2_qof.wildcard.SlotSettingsStore ae2qol$slotSettings() {
+        if (this.ae2qol$slotSettings == null) {
+            this.ae2qol$slotSettings = new com.wztwzt.ae2_qof.wildcard.SlotSettingsStore();
+        }
+        return this.ae2qol$slotSettings;
+    }
+
+    @Inject(method = "saveNBTData", at = @At("TAIL"), remap = false)
+    private void ae2qol$saveSlotSettings(NBTTagCompound tag, CallbackInfo ci) {
+        try {
+            tag.setTag(
+                com.wztwzt.ae2_qof.wildcard.SlotSettingsStore.NBT_KEY,
+                ae2qol$slotSettings().save());
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 保存按格设置（GT）失败", t);
+        }
+    }
+
+    @Inject(method = "loadNBTData", at = @At("TAIL"), remap = false)
+    private void ae2qol$loadSlotSettings(NBTTagCompound tag, CallbackInfo ci) {
+        try {
+            this.ae2qol$slotSettings = new com.wztwzt.ae2_qof.wildcard.SlotSettingsStore();
+            this.ae2qol$slotSettings.load(
+                tag.getCompoundTag(com.wztwzt.ae2_qof.wildcard.SlotSettingsStore.NBT_KEY));
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 读取按格设置（GT）失败", t);
+        }
+    }
 
     @Shadow
     @Final

@@ -49,7 +49,43 @@ import appeng.api.networking.crafting.ICraftingProviderHelper;
  * 用 {@code slot.slotIndex} 会错位。
  */
 @Mixin(value = SuperCraftingInputHatchME.class, remap = false)
-public abstract class MixinSuperCraftingInputHatchMEWildcard {
+public abstract class MixinSuperCraftingInputHatchMEWildcard
+    implements com.wztwzt.ae2_qof.wildcard.ISlotSettingsHolder {
+
+    // ================= 4.0.0：按样板格的独立设置（电路 + 9 催化剂位），与 GT 侧同一套 =================
+
+    @Unique
+    private com.wztwzt.ae2_qof.wildcard.SlotSettingsStore ae2qol$slotSettings;
+
+    @Override
+    public com.wztwzt.ae2_qof.wildcard.SlotSettingsStore ae2qol$slotSettings() {
+        if (this.ae2qol$slotSettings == null) {
+            this.ae2qol$slotSettings = new com.wztwzt.ae2_qof.wildcard.SlotSettingsStore();
+        }
+        return this.ae2qol$slotSettings;
+    }
+
+    @Inject(method = "saveNBTData", at = @At("TAIL"), remap = false)
+    private void ae2qol$saveSlotSettings(NBTTagCompound tag, CallbackInfo ci) {
+        try {
+            tag.setTag(
+                com.wztwzt.ae2_qof.wildcard.SlotSettingsStore.NBT_KEY,
+                ae2qol$slotSettings().save());
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 保存按格设置（GTNL）失败", t);
+        }
+    }
+
+    @Inject(method = "loadNBTData", at = @At("TAIL"), remap = false)
+    private void ae2qol$loadSlotSettings(NBTTagCompound tag, CallbackInfo ci) {
+        try {
+            this.ae2qol$slotSettings = new com.wztwzt.ae2_qof.wildcard.SlotSettingsStore();
+            this.ae2qol$slotSettings.load(
+                tag.getCompoundTag(com.wztwzt.ae2_qof.wildcard.SlotSettingsStore.NBT_KEY));
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 读取按格设置（GTNL）失败", t);
+        }
+    }
 
     /** public 字段（javap 查实，非 final）。 */
     @Shadow

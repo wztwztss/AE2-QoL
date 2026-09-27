@@ -25,6 +25,7 @@
     "TileDriveMixin",
     "client.MixinTextureMap",
     "ph.MixinPatternDualInputHatchAccess",
+    "ph.MixinPatternDualInputHatchSlotSettings",
     "ph.MixinPatternDualInputHatchWildcard"
   ],
   "client": [

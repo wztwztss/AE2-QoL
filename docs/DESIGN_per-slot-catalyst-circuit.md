@@ -164,8 +164,33 @@
 >    样板推入走的是 GT 的 `IDualInputHatchWithPattern` / `IDualInputInventoryWithPattern` 体系 ⇒
 >    PH/MK.III 的注入点与回收点还需要继续挖掘（下一步只读任务）。
 
-### 4.3 实施分期（建议，等用户确认）
-- **A 期（可先出包，解决"两张样板互相覆盖"这个主痛点）**：
+### 4.4 三族推入/回收点调研结论（只读 javap，2026-09-27）
+| 宿主 | 推入方法 | 注入方式 | 未消耗物容器 | 回收 |
+|---|---|---|---|---|
+| GT 2714/2715 | `PatternSlot.insertItemsAndFluids(MEInventoryCrafting)` | **覆写我们自己的 `SmartWildcardPatternSlot`** | 槽位 `List<ItemStack> itemInventory`（protected final） | `refund(...)` **回 AE**，不可用 ⇒ 自建 |
+| GTNL 21504/21505 | `PatternSlot.insertItemsAndFluids(InventoryCrafting)`（签名与 GT 不同！） | **覆写 `SmartWildcardGtnlPatternSlot`** | 同上（public final） | 同上（`refund` 也回 AE） |
+| PH 22069 / MK.II / MK.III | `PatternDualInputHatch.pushPattern(details, InventoryCrafting)`（`BufferedDualInputHatch.pushPatternCM` 转调它） | **基类一处 mixin 即覆盖三台**（MK.III = `MTEPatternCraftingBufferMKIII extends PatternDualInputHatch`，不覆写这些方法） | `BufferedDualInputHatch$DualInvBuffer.mStoredItemInternalSingle`（protected，需 accessor） | 同上（`refundAll` 回 AE） |
+
+**自建回收的三个真实风险（用户批准"一次做完"时还不知道，务必先看）**：
+① "移出 → 推入 → 回收"三步之间若中断（区块卸载/机器被拆/合成取消），催化剂**可能丢失或复制** ⇒ 必须加日志 + 可重入保护；
+② **PH 的缓冲参与 `recipeLocked/inTree/lock` 配方树判定**，额外塞进去的催化剂可能干扰它的分类 ⇒ PH 侧风险最高；
+③ 催化剂**只有在配方确实声明 notConsumed 时**才该注入，否则会被当消耗品吃掉。
+
+### 4.5 已识别的构建期坑（本轮实际踩到）
+- **PH 在编译期的包名是 `reobf.proghatches...`**（不是 `proghatches...`）：`dependencies.gradle` 里是
+  `compileOnly(project.files("libs/programmablehatches-0.2.0p24.jar"))`，jar 内类以 `reobf.` 前缀提供。
+  写 `import proghatches....` 会直接编译失败（"程序包不存在" + "Mixin has no targets"）⇒ 新写 PH 相关代码必须用 `reobf.proghatches...`。
+
+### 4.6 已完成的实现（4.0.0 进行中）
+- ✅ `wildcard/SlotSettings.java`（按格数据：电路 + 9 催化位 + `circuitExplicit`，稀疏 NBT）
+- ✅ `wildcard/SlotSettingsStore.java`（按槽位下标的容器 + `autoFillCircuitFromPattern` + `effectiveCircuit` + save/load）
+- ✅ `wildcard/ISlotSettingsHolder.java`（宿主接口）
+- ✅ 三族宿主挂载：GT/GTNL 复用既有 `MixinMTEHatchCraftingInputMEWildcard` / `MixinSuperCraftingInputHatchMEWildcard`
+  （加 `@Unique` 字段 + 注入各自 `saveNBTData/loadNBTData`）；PH 新增 `mixin/ph/MixinPatternDualInputHatchSlotSettings`
+  （一处覆盖 22069 / MK.II / 32108）并登记进 `mixins.ae2_qof.json`。`compileJava` 已通过。
+- ⏳ 待做：C2S 包、中键弹窗（9 催化位）、展开期把本格电路烧进具体样板 `in` 列表、停止写全局电路槽、
+  三族 push 注入与自建回收。
+### 4.7 分期建议（历史建议，用户已选择"一次做完"；4.4 的风险请一并权衡）
   ① 机器侧按格数据 `ae2qolSlotMeta`（电路 + 9 催化位，稀疏保存）；
   ② **样板自带电路插入时自动填入本格**；**不再写机器全局电路槽**；
   ③ **把本格电路烧进该格展开出的具体样板的 `in` 列表**（`gt.integrated_circuit` damage=号）——
