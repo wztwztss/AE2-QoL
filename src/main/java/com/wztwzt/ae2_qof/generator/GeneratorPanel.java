@@ -68,7 +68,8 @@ public final class GeneratorPanel {
         column.child(
             new TextWidget<>(IKey.str("§8替换规则写法：源矿辞=目标矿辞，多条用 ; 分隔，如 dustCopper=dustTin")).size(290, 10));
         Flow capRow = Flow.row()
-            .childPadding(3);
+            .childPadding(3)
+            .size(288, 20);
         capRow.child(new TextWidget<>(IKey.str("§7数量上限")).size(56, 12))
             .child(capField)
             .child(new TextWidget<>(IKey.str("§7电压等级")).size(56, 12))

@@ -54,7 +54,13 @@ public class MessageUpdateWildcardConfig implements IMessage {
             ItemStack stack = player.inventory.getStackInSlot(message.slot);
             // 3.24.x 适配：我们的物品不是它的 ModItems.wildcardPattern ⇒ 两种都接受。
             // 否则用我们的样板打开这个界面、点保存会被这里**静默丢弃**（本项目铁则：不许静默）。
-            boolean ours = com.wztwzt.ae2_qof.wildcard.SmartWildcardState.isSmartWildcard(stack);
+            // 注意：**不能**用 SmartWildcardState.isSmartWildcard(stack) —— 它要求"已经有我们的 NBT"
+            //（实现是 stack.hasTagCompound() && hasKey(KEY_ROOT)），而**全新未配置**的样板没有 NBT
+            // ⇒ 会被判成"不是通配样板"、保存被拒。用户实测日志：
+            //   [AE2QoL] Wild 界面保存被拒绝：槽位 6 不是通配样板（item=ItemSmartWildcardPattern）
+            // 这正是"界面里改了却无法转移"的直接原因。正确判据 = 物品是不是我们的那个实例。
+            boolean ours = stack != null
+                && stack.getItem() == com.wztwzt.ae2_qof.CommonProxy.smartWildcardPattern;
             if (stack == null || (!ours && stack.getItem() != ModItems.wildcardPattern)) {
                 com.wztwzt.ae2_qof.MyMod.LOG.warn(
                     "[AE2QoL] Wild 界面保存被拒绝：槽位 {} 不是通配样板（item={}）",
