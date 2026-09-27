@@ -49,10 +49,10 @@ public abstract class MixinGuiOverlayButton {
      */
     @Inject(method = "updateEnabled()V", at = @At("TAIL"))
     private void ae2qol$forceEnabledForMergedTerminalPerFrame(CallbackInfo ci) {
-        // 3.22.0：通配样板配置界面同样需要强制可用（GT 处理配方的 overlay identifier 不是 crafting，
-        // NEI 会把按钮算成 disabled ⇒ 点击不会被派发）
+        // 3.22.0/3.23.0：通配样板编辑器（MUI2 的带容器屏 GuiContainerWrapper）同样需要强制可用
+        // （GT 处理配方的 overlay identifier 不是 crafting，NEI 会把按钮算成 disabled ⇒ 点击不会被派发）
         if (firstGui != null && (firstGui instanceof GuiMergedTerminal
-            || firstGui instanceof com.wztwzt.ae2_qof.client.gui.GuiSmartWildcard)) {
+            || firstGui instanceof com.cleanroommc.modularui.screen.GuiContainerWrapper)) {
             ((net.minecraft.client.gui.GuiButton) (Object) this).enabled = true;
         }
     }
@@ -65,6 +65,48 @@ public abstract class MixinGuiOverlayButton {
         if (firstGui == null || !(firstGui instanceof GuiMergedTerminal)) {
             // 3.22.0：通配样板界面里的加号 = 「从当前 NEI 配方推导通配规则（含配方模板）」，
             // 不落 AE2 原版填充。推导结果交给界面，用户确认后由 C2S 包在服务端写入样板 NBT。
+            // 3.23.0：通配样板编辑器（MUI2 带容器屏）里的加号 = 「按当前 NEI 配方推导规则与模板 + 立即写回样板」。
+            // 说明：MUI2 面板是构建期生成的，不能像旧的自绘界面那样即时刷新 ⇒ 这里直接落库，
+            // 并用聊天栏回执 + 日志让用户与维护者都能一眼确认结果（符合"不留静默"原则）。
+            if (firstGui instanceof com.cleanroommc.modularui.screen.GuiContainerWrapper) {
+                ae2qol$inOverlayFill = true;
+                try {
+                    RecipeHandlerRef ref = ((GuiRecipeButton) (Object) this).handlerRef;
+                    if (ref != null && ref.handler != null && ref.recipeIndex >= 0) {
+                        com.wztwzt.ae2_qof.client.SmartWildcardRecipeDeriver.Result derived =
+                            com.wztwzt.ae2_qof.client.SmartWildcardRecipeDeriver.derive(
+                                ref.handler,
+                                ref.recipeIndex,
+                                net.minecraft.client.Minecraft.getMinecraft().theWorld);
+                        if (derived != null && derived.ok) {
+                            com.wztwzt.ae2_qof.client.SmartWildcardClientState.setDerived(derived);
+                            com.wztwzt.ae2_qof.network.ModNetwork.CHANNEL.sendToServer(
+                                new com.wztwzt.ae2_qof.network.SmartWildcardRulesPacket(
+                                    derived.state,
+                                    derived.templateIn,
+                                    derived.templateOut));
+                            com.wztwzt.ae2_qof.MyMod.LOG
+                                .info("[AE2QoL] NEI 加号推导并写回通配样板：{}", derived.summary);
+                            ae2qol$chat("\u00a7a[AE2QoL] \u5df2\u6309 NEI \u914d\u65b9\u5199\u5165\uff1a" + derived.summary);
+                        } else {
+                            com.wztwzt.ae2_qof.MyMod.LOG.warn(
+                                "[AE2QoL] NEI 加号推导失败（未产生规则）：{}",
+                                derived == null ? "null" : derived.reason);
+                            ae2qol$chat(
+                                "\u00a7c[AE2QoL] \u63a8\u5bfc\u5931\u8d25\uff1a"
+                                    + (derived == null ? "null" : derived.reason));
+                        }
+                    } else {
+                        com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 加号被按下但拿不到配方上下文（handlerRef 为空）");
+                    }
+                } catch (Throwable t) {
+                    com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 通配编辑器加号处理异常", t);
+                } finally {
+                    ae2qol$inOverlayFill = false;
+                }
+                ci.cancel();
+                return;
+            }
             if (firstGui instanceof com.wztwzt.ae2_qof.client.gui.GuiSmartWildcard) {
                 ae2qol$inOverlayFill = true;
                 try {
@@ -122,8 +164,21 @@ public abstract class MixinGuiOverlayButton {
     @Inject(method = "canFillCraftingGrid()Z", at = @At("HEAD"), cancellable = true)
     private void ae2qol$alwaysFillableForMergedTerminal(CallbackInfoReturnable<Boolean> cir) {
         if (firstGui != null && (firstGui instanceof GuiMergedTerminal
-            || firstGui instanceof com.wztwzt.ae2_qof.client.gui.GuiSmartWildcard)) {
+            || firstGui instanceof com.cleanroommc.modularui.screen.GuiContainerWrapper)) {
             cir.setReturnValue(true);
+        }
+    }
+
+    /** 聊天栏回执（仅客户端）：加号推导/写回的结果反馈，避免"点了没反应"的观感。 */
+    @org.spongepowered.asm.mixin.Unique
+    private void ae2qol$chat(String message) {
+        try {
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getMinecraft();
+            if (mc != null && mc.thePlayer != null) {
+                mc.thePlayer.addChatMessage(new net.minecraft.util.ChatComponentText(message));
+            }
+        } catch (Throwable t) {
+            com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 聊天栏回执失败", t);
         }
     }
 }
