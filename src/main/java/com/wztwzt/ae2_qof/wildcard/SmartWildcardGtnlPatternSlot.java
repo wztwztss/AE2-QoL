@@ -31,9 +31,39 @@ public class SmartWildcardGtnlPatternSlot extends SuperCraftingInputHatchME.Patt
 
     private final List<ICraftingPatternDetails> expanded = new ArrayList<>();
     private String expandSummary = "";
+    /** 4.0.0：本槽所在机器（不依赖父类字段名，构造时自己存一份）。 */
+    private final SuperCraftingInputHatchME ae2qol$parent;
+    /** 4.0.0：本槽下标（按格设置要用；由 mixin 包裹时登记）。 */
+    private int ae2qol$slotIndex = -1;
+
+    public void ae2qol$setSlotIndex(int index) {
+        this.ae2qol$slotIndex = index;
+    }
+
+    /**
+     * 取本格最终生效的电路号（4.0.0，口径与 GT 侧一致）：样板自带电路**自动填入本格**，
+     * 本格值（含玩家手改）优先；都没有返回 -1（不烧电路，交给整机设置）。
+     */
+    private int ae2qol$resolveSlotCircuit() {
+        try {
+            int patternCircuit = -1;
+            SmartWildcardState state = SmartWildcardState.of(this.pattern);
+            if (state != null) patternCircuit = state.circuit;
+            if (this.ae2qol$parent instanceof ISlotSettingsHolder holder) {
+                SlotSettingsStore store = holder.ae2qol$slotSettings();
+                store.autoFillCircuitFromPattern(this.ae2qol$slotIndex, patternCircuit);
+                return store.effectiveCircuit(this.ae2qol$slotIndex, patternCircuit);
+            }
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 读取本格电路（GTNL）失败（按继承处理）", t);
+        }
+        return -1;
+    }
 
     public SmartWildcardGtnlPatternSlot(ItemStack pattern, SuperCraftingInputHatchME parent, int index) {
         super(pattern, parent, index);
+        this.ae2qol$parent = parent;
+        this.ae2qol$slotIndex = index;
     }
 
     /** 由 GTNL 已有槽位包一个：把它的 NBT 交给它的构造器，库存/流体原样恢复。 */
@@ -44,6 +74,8 @@ public class SmartWildcardGtnlPatternSlot extends SuperCraftingInputHatchME.Patt
             nbtOf(original),
             parent,
             index);
+        this.ae2qol$parent = parent;
+        this.ae2qol$slotIndex = index;
     }
 
     private static NBTTagCompound nbtOf(SuperCraftingInputHatchME.PatternSlot<?> original) {
@@ -61,13 +93,17 @@ public class SmartWildcardGtnlPatternSlot extends SuperCraftingInputHatchME.Patt
         try {
             SmartWildcardExpander.Result result = SmartWildcardExpander.expand(this.pattern, world);
             this.expandSummary = result.describe();
+            // 4.0.0：本格电路（样板自带自动填入本格；不再写机器全局电路槽）
+            int effectiveCircuit = ae2qol$resolveSlotCircuit();
             for (ItemStack concrete : result.patterns) {
                 if (concrete == null || concrete.getItem() == null) continue;
                 if (!(concrete.getItem() instanceof ICraftingPatternItem)) continue;
-                ICraftingPatternDetails details = SmartWildcardDecoder.decode(concrete, world);
+                // 把本格电路烧进这一张的 in 列表（bake 内部先 copy，保护展开缓存）
+                ItemStack baked = SlotCircuitBaker.bake(concrete, effectiveCircuit);
+                ICraftingPatternDetails details = SmartWildcardDecoder.decode(baked, world);
                 if (details != null) {
                     // 3.42.0-diag：配对打印（同上）
-                    com.wztwzt.ae2_qof.wildcard.SmartWildcardDiag.logDecodePair("GTNL", concrete, details);
+                    com.wztwzt.ae2_qof.wildcard.SmartWildcardDiag.logDecodePair("GTNL", baked, details);
                     this.expanded.add(details);
                 }
             }

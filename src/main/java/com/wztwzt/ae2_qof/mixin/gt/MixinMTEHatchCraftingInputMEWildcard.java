@@ -185,8 +185,9 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard
                     } else {
                         wildcardSlots.add(wrapped);
                         MyMod.LOG.info("[AE2QoL] GT 样板仓发现通配样板并展开：slot={} {}", i, wrapped.expandSummary());
-                        // M3：样板自带电路 → 写入本机虚拟电路槽（样板自带 > 槽位 > 整机；没有设置就**不动**机器）
-                        this.ae2qol$applyPatternCircuit(wrapped, i);
+                        // 4.0.0：**不再写机器全局电路槽**（旧 M3 行为会互相覆盖：同舱两张样板时后索引者覆盖前者）。
+                        // 现在改为"样板自带电路自动填入本格 + 本格电路烧进该格具体样板的 in 列表"（见 rebuild）。
+                        wrapped.ae2qol$setSlotIndex(i);
                     }
                     continue;
                 }
@@ -302,6 +303,8 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard
                 return;
             }
             SmartWildcardPatternSlot wrapped = new SmartWildcardPatternSlot(slot, (MTEHatchCraftingInputME) (Object) this);
+            // 4.0.0：先登记槽位下标，rebuild 里才能取到"这一格"的电路设置
+            wrapped.ae2qol$setSlotIndex(index);
             // 3.34.0：与 provideCrafting 同一处修正 —— 重包后必须重新展开，否则换样板/读档后永远注册 0 条
             wrapped.rebuild(this.ae2qol$world());
             this.internalInventory[index] = wrapped;

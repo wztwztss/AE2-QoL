@@ -56,6 +56,30 @@ public abstract class MixinPatternDualInputHatchWildcard {
     @org.spongepowered.asm.mixin.Shadow
     public abstract boolean isActive();
 
+    /**
+     * 找这张样板在本机器的**样板格下标**（4.0.0 按格设置要用）。
+     *
+     * <p>先用引用相等（同一张样板被重复放置时不会串格），再退化为 {@code equals}；找不到返回 -1
+     * （调用方会按"继承"处理，不烧电路）。失败记日志，不静默。
+     */
+    @org.spongepowered.asm.mixin.Unique
+    private int ae2qol$slotIndexOf(ItemStack pattern) {
+        try {
+            ItemStack[] array = ((MixinPatternDualInputHatchAccess) (Object) this).getAe2qolPattern();
+            if (array == null) return -1;
+            for (int i = 0; i < array.length; i++) {
+                if (array[i] == pattern) return i;
+            }
+            for (int i = 0; i < array.length; i++) {
+                if (array[i] != null && array[i].equals(pattern)) return i;
+            }
+            MyMod.LOG.warn("[AE2QoL] PH 仓取样板下标失败（该格按继承处理电路）");
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] PH 仓取样板下标异常（该格按继承处理电路）", t);
+        }
+        return -1;
+    }
+
     /** 3.40.0：注册/诊断日志限频（初值 0，别用 Long.MIN_VALUE —— now-last 会溢出成负数）。 */
     @org.spongepowered.asm.mixin.Unique
     private long ae2qol$lastRegisterLogTick = 0L;
@@ -89,23 +113,25 @@ public abstract class MixinPatternDualInputHatchWildcard {
                 wildcardSlots++;
                 SmartWildcardExpander.Result result = SmartWildcardExpander.expand(slot, world);
                 if (result.truncated) truncated++;
-                // M3：样板自带电路 → 写入本机虚拟电路槽（PH 总成 / MK.II / 我们的 MK.III 同一处生效；
-                // 样板没自带电路时**不动**机器原有电路，整机层留给玩家自己设置）
+                // 4.0.0：**不再写机器全局电路槽**（旧 M3 行为会互相覆盖：同舱两张样板时后索引者覆盖前者）。
+                // 改为按用户口径 —— 样板自带电路自动填入本格（这里只有样板这一层，故直接取本格设置；
+                // 玩家在"格设置"弹窗里手改的值由 SlotSettingsStore.effectiveCircuit 优先返回），
+                // 再把该号烧进这一格的每张具体样板 in 列表。
+                int slotCircuit = -1;
                 try {
-                    SmartWildcardState wildcardState = SmartWildcardState.of(slot);
-                    if (wildcardState != null && wildcardState.circuit >= 1) {
-                        gregtech.api.interfaces.metatileentity.IMetaTileEntity mte =
-                            (gregtech.api.interfaces.metatileentity.IMetaTileEntity) (Object) this;
-                        int target = com.wztwzt.ae2_qof.wildcard.SmartWildcardCircuit.resolve(
-                            wildcardState.circuit,
-                            -1,
-                            com.wztwzt.ae2_qof.wildcard.SmartWildcardCircuit.readMachineCircuit(mte));
-                        if (target >= 1) {
-                            com.wztwzt.ae2_qof.wildcard.SmartWildcardCircuit.apply(mte, target, "PH 样板仓");
-                        }
+                    if (((Object) this) instanceof com.wztwzt.ae2_qof.wildcard.ISlotSettingsHolder holder) {
+                        com.wztwzt.ae2_qof.wildcard.SlotSettingsStore store = holder.ae2qol$slotSettings();
+                        int patternCircuit = -1;
+                        SmartWildcardState wildcardState = SmartWildcardState.of(slot);
+                        if (wildcardState != null) patternCircuit = wildcardState.circuit;
+                        // PH 的一次 provideCrafting 会遍历全部样板格；这里用"该样板自己的下标"作为格号，
+                        // 取不到时退回 -1（不烧电路，交回整机设置）。
+                        int slotIndex = ae2qol$slotIndexOf(slot);
+                        store.autoFillCircuitFromPattern(slotIndex, patternCircuit);
+                        slotCircuit = store.effectiveCircuit(slotIndex, patternCircuit);
                     }
                 } catch (Throwable t) {
-                    MyMod.LOG.warn("[AE2QoL] 写入 PH 仓内置电路失败", t);
+                    MyMod.LOG.warn("[AE2QoL] 读取 PH 仓本格电路失败（按继承处理）", t);
                 }
                 if (result.isEmpty()) {
                     // 空状态必须可解释（本项目原则）：把原因打进日志
@@ -115,11 +141,13 @@ public abstract class MixinPatternDualInputHatchWildcard {
                 for (ItemStack concrete : result.patterns) {
                     if (concrete == null || concrete.getItem() == null) continue;
                     if (!(concrete.getItem() instanceof ICraftingPatternItem patternItem)) continue;
+                    // 把本格电路烧进这一张的 in 列表（bake 内部先 copy，保护展开缓存）
+                    ItemStack baked = com.wztwzt.ae2_qof.wildcard.SlotCircuitBaker.bake(concrete, slotCircuit);
                     ICraftingPatternDetails details = com.wztwzt.ae2_qof.wildcard.SmartWildcardDecoder
-                        .decode(concrete, world);
+                        .decode(baked, world);
                     if (details == null) continue;
                     // 3.42.0-diag：配对打印（concrete 的 out / details 自带 pattern 的 out / details.getOutputs()[0]）
-                    com.wztwzt.ae2_qof.wildcard.SmartWildcardDiag.logDecodePair("PH", concrete, details);
+                    com.wztwzt.ae2_qof.wildcard.SmartWildcardDiag.logDecodePair("PH", baked, details);
                     craftingTracker.addCraftingOption((ICraftingProvider) (Object) this, details);
                     allDetails.add(details);
                     registered++;

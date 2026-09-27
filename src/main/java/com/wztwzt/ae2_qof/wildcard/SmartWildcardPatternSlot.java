@@ -42,7 +42,36 @@ import gregtech.common.tileentities.machines.MTEHatchCraftingInputME;
  */
 public class SmartWildcardPatternSlot extends MTEHatchCraftingInputME.PatternSlot<MTEHatchCraftingInputME> {
 
-    /** 本槽展开出来的全部具体样板（顺序稳定，供反查与对账）。 */
+    /** 本槽在机器里的下标（4.0.0：按格设置要用它取"这一格"的数据）。 */
+    private int ae2qol$slotIndex = -1;
+
+    public void ae2qol$setSlotIndex(int index) {
+        this.ae2qol$slotIndex = index;
+    }
+
+    /**
+     * 取本格**最终生效**的电路号（4.0.0）：
+     * <ol>
+     * <li>先把样板自带电路**自动填入本格**（用户口径：自动识别到本格，而不是去改机器全局槽）；</li>
+     * <li>再按「本格值（含玩家手改） → 样板自带」取值；都没有返回 -1（不烧电路，交给整机设置）。</li>
+     * </ol>
+     * 失败只记日志并回落 -1（本项目原则：不允许静默，但也不许因为设置层出问题就打断展开）。
+     */
+    private int ae2qol$resolveSlotCircuit() {
+        try {
+            int patternCircuit = -1;
+            SmartWildcardState state = SmartWildcardState.of(this.pattern);
+            if (state != null) patternCircuit = state.circuit;
+            if (this.parentMTE instanceof ISlotSettingsHolder holder) {
+                SlotSettingsStore store = holder.ae2qol$slotSettings();
+                store.autoFillCircuitFromPattern(this.ae2qol$slotIndex, patternCircuit);
+                return store.effectiveCircuit(this.ae2qol$slotIndex, patternCircuit);
+            }
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 读取本格电路失败（按继承处理）", t);
+        }
+        return -1;
+    }
     private final List<ICraftingPatternDetails> expanded = new ArrayList<>();
     /** 最近一次展开的可读摘要（空结果时进日志，符合本项目「空状态必须可解释」原则）。 */
     private String expandSummary = "";
@@ -90,6 +119,8 @@ public class SmartWildcardPatternSlot extends MTEHatchCraftingInputME.PatternSlo
         try {
             SmartWildcardExpander.Result result = SmartWildcardExpander.expand(this.pattern, world);
             this.expandSummary = result.describe();
+            // 4.0.0：本格电路（用户口径：样板自带电路**自动填入本格**，且**不再去改机器全局电路槽**）
+            int effectiveCircuit = ae2qol$resolveSlotCircuit();
             for (ItemStack concrete : result.patterns) {
                 if (concrete == null || concrete.getItem() == null) continue;
                 if (!(concrete.getItem() instanceof ICraftingPatternItem) && concrete.getItem() != null) {
@@ -101,10 +132,12 @@ public class SmartWildcardPatternSlot extends MTEHatchCraftingInputME.PatternSlo
                             .getName());
                     continue;
                 }
-                ICraftingPatternDetails details = SmartWildcardDecoder.decode(concrete, world);
+                // 把本格电路烧进这一张的 in 列表（bake 内部先 copy，绝不改动展开缓存里的对象）
+                ItemStack baked = SlotCircuitBaker.bake(concrete, effectiveCircuit);
+                ICraftingPatternDetails details = SmartWildcardDecoder.decode(baked, world);
                 if (details != null) {
                     // 3.42.0-diag：配对打印（concrete 的 out / details.getPattern() 的 out / details.getOutputs()[0]）
-                    com.wztwzt.ae2_qof.wildcard.SmartWildcardDiag.logDecodePair("GT", concrete, details);
+                    com.wztwzt.ae2_qof.wildcard.SmartWildcardDiag.logDecodePair("GT", baked, details);
                     this.expanded.add(details);
                 }
             }
