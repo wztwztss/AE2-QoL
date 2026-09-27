@@ -25,15 +25,20 @@ That is why every existing pattern buffer accepts it and machines match it norma
 ## Making one (three steps)
 
 1. Obtain the "Smart Wildcard Pattern" item (AE2 QoL creative tab; crafting recipe below).
-2. **Right-click** it to open the config screen (three pages + a circuit page):
-   - **Rules**: the rules currently stored on this pattern;
-   - **Preview**: every concrete candidate this pattern covers, each with an **Exclude** button on the right —
-     one click puts it into this pattern's **blacklist**; the preview uses the **same expander** as the machine,
-     so anything shown here really is craftable;
-   - **Blacklist**: add/remove exclusion strings manually (`*` and `?` supported);
-   - **Circuit**: pick 1..24 (or "Clear (inherit)") and record non-consumed items such as molds, extruder shapes or lenses.
-3. Open the recipe you want to cover in NEI (e.g. the rolling machine's "1 ingot → 1 plate") and press **+**:
-   the screen derives rules **and** the recipe template on the spot; press **Save** and the server writes them into the pattern.
+2. **Right-click** it to open the config screen (a single MUI2 page, top to bottom):
+   - **Rule table (9 rows)**: each row is `input matcher | amount | -> | output matcher | amount | clear | x2` and can be
+     **hand-written**. The matcher carries its mode as a prefix — `ore:ingot*` = ore dictionary, `name:*Ingot` = display
+     name (no prefix means ore dictionary), so the field explains itself. Leave the output empty to keep the template's
+     automatic material pairing, or fill it to use your own output matcher;
+   - **Built-in circuit**: 1..24 (empty = inherit from the slot/machine; an invalid value keeps the old one and logs a WARN);
+   - **Global exclusion (blacklist)**: a text field plus Add / Clear, `*` and `?` supported;
+   - **Coverage preview**: expands the current rules once and lists the first candidates, each with an **Exclude** button
+     that puts that candidate into the **blacklist** (effective after saving). The preview uses the **same expander** as
+     the machine, so anything shown is really craftable; when there is no candidate the **reason is shown**
+     (e.g. `reason=no-material-matched`).
+3. Open the recipe you want to cover in NEI (e.g. the rolling machine's "1 ingot -> 1 plate") and press **+**:
+   the rules and recipe template are derived on the spot and **written back immediately** (chat replies
+   `已按 NEI 配方写入：in=… oreRules=…`, and the log records the same); after hand-editing the table press **Save**.
 
 Then drop that pattern into any pattern buffer.
 

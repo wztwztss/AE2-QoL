@@ -8,6 +8,26 @@ An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI patte
 
 This repository is for personal archival and is not currently offered for distribution. See [CREDITS.md](CREDITS.md) for attribution and licensing records. Feature descriptions are not a claim that every integration has passed in-game testing.
 
+## What's new in 3.23.0 (wildcard editor rebuilt on MUI2 + Pattern Generator)
+
+- **Rebuilt UI (MUI2)**: the Smart Wildcard Pattern now uses a Cleanroom ModularUI 2 screen (container-backed, so
+  **NEI's + still works**). Instead of "a few buttons and a lot of empty space" it is a **single-page editor**:
+  a **9-row rule table** (`input matcher | amount | -> | output matcher | amount | clear | x2`, with `ore:` / `name:`
+  prefixes making the mode self-explanatory), a **built-in circuit 1..24** field (empty = inherit from slot/machine;
+  an invalid value keeps the old one and logs a WARN), a **global blacklist** (add / clear), a **coverage preview**
+  (lists candidates, each with an Exclude button; shows the reason when nothing matches) and **Save**.
+- **NEI + button**: pressing + while the editor is open derives rules and the recipe template and **writes them back
+  immediately** (chat and log both confirm).
+- **New item: Pattern Generator** (cyan pattern icon, crafted from one AE2 Blank Pattern): bulk-produce concrete
+  patterns from a **GT RecipeMap** with input/output blacklists, input/output ore filters, an NC (non-consumed) item
+  filter and a cap. Results go into your inventory (overflow is dropped at your feet) and both chat and log report
+  `seen / produced / skippedFluid / filtered / truncated` — **full counts, never a silent shortfall**. Its core is
+  **adapted from AE2PatternGen (MIT)** and keeps that project's copyright and licence notice; see
+  `docs/THIRD_PARTY_NOTES.md`.
+- **Licence hygiene**: an audit confirmed **no reference-mod code** was copied; the AE2 texture copied into the repo
+  earlier (an LGPL asset) has been **removed** in favour of a runtime name reference; the `LICENSE` copyright line is
+  now `wztwzt` (still MIT); and research notes about other people's source were moved out of the repo and ignored.
+
 ## What's new in 3.22.0 (Smart Wildcard Pattern)
 
 - **New item: Smart Wildcard Pattern** (crafted from one AE2 Blank Pattern): **one pattern covers a whole recipe class** —
