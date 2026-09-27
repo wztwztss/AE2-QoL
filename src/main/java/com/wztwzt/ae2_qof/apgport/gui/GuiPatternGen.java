@@ -99,7 +99,9 @@ public class GuiPatternGen {
                     com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 打开机器编码输入对话框失败", t);
                 }
             });
-            scrollable.widget(btnEdit);
+            // 注意：**不要在这里再加一次 scrollable.widget(btnEdit)** ——
+            // MUI1 的 ModularWindow 用 ImmutableBiMap 存 widget，同一个实例加两次会在 build() 时抛
+            // IllegalArgumentException: Multiple entries with same value（3.22.0-fix49 实测踩到，生成器界面因此打不开）。
         }
         TextWidget mapHintText = new TextWidget(mapHint[0]);
         mapHintText.setPos(6, refY + 29);
