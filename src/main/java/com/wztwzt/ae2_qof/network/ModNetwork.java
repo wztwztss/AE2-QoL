@@ -96,6 +96,13 @@ public final class ModNetwork {
             discriminator++,
             Side.SERVER);
 
+        // 3.23.0：批量样板生成请求（服务端按 RecipeMap 扫描并产出样板，产物进背包/脚下）
+        CHANNEL.registerMessage(
+            SmartPatternGenPacket.Handler.class,
+            SmartPatternGenPacket.class,
+            discriminator++,
+            Side.SERVER);
+
         CHANNEL.registerMessage(
             SmartDoublingTogglePacket.Handler.class,
             SmartDoublingTogglePacket.class,
