@@ -135,9 +135,14 @@ public final class SmartWildcardRecipeDeriver {
                         if (parsed != null) {
                             for (OrePrefixes.ParsedOreDictName name : parsed) {
                                 if (name == null || name.prefix == null) continue;
-                                String key = name.prefix.getOreprefixKey();
-                                if (key == null || key.isEmpty() || name.material == null || name.material.isEmpty())
-                                    continue;
+                                if (name.material == null || name.material.isEmpty()) continue;
+                                // 3.35.0 修正：**不能**用 name.prefix.getOreprefixKey() —— javap 实证它返回的是
+                                // 本地化键（gt.oreprefix.ingot），拼出来的规则永远匹配不上矿辞名（矿辞名是 ingotIron），
+                                // 3.34.0 实测表现就是界面显示 gt.orepr... 且展开产出恒 0。
+                                // 改为从真实矿辞名反推前缀（ingotIron − Iron ⇒ ingot），与展开器同一套口径。
+                                String key = com.wztwzt.ae2_qof.wildcard.SmartWildcardExpander
+                                    .oreDictPrefixOf(stack, name.material);
+                                if (key == null || key.isEmpty()) continue;
                                 matcher = key + "*";
                                 break;
                             }
@@ -198,6 +203,10 @@ public final class SmartWildcardRecipeDeriver {
                     primary == null ? "null" : "present",
                     skippedEmpty,
                     skippedFluid);
+            } else {
+                // 3.35.0：把**每条规则的匹配串**打进日志 —— 3.34.0 就是缺这一行才让
+                // "matcher 被写成 GT 本地化键（gt.oreprefix.ingot）" 一直藏到用户截图才暴露。
+                MyMod.LOG.info("[AE2QoL] NEI 推导规则明细：{}", describeRules(result.state));
             }
             return result;
         } catch (Throwable t) {
@@ -205,6 +214,24 @@ public final class SmartWildcardRecipeDeriver {
             result.ok = false;
             result.reason = "exception: " + t;
             return result;
+        }
+    }
+
+    /** 规则明细（诊断用，格式 {@code #0 ore:ingot*}）。任何异常都要能看见，绝不返回空串。 */
+    private static String describeRules(SmartWildcardState state) {
+        try {
+            StringBuilder sb = new StringBuilder();
+            for (SmartWildcardState.Rule rule : state.rules) {
+                if (sb.length() > 0) sb.append(" / ");
+                sb.append('#')
+                    .append(rule.slot)
+                    .append(' ')
+                    .append(rule.oreDictMode ? "ore:" : "name:")
+                    .append(rule.matcher);
+            }
+            return sb.length() == 0 ? "(无规则)" : sb.toString();
+        } catch (Throwable t) {
+            return "(规则明细生成失败: " + t + ")";
         }
     }
 

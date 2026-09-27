@@ -4,9 +4,33 @@
 
 An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
-**Author: wztwzt · Current source version: 3.34.0 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.35.0 · Reference pack: GTNH 2.9.0-beta-3**
 
 This repository is for personal archival and is not currently offered for distribution. See [CREDITS.md](CREDITS.md) for attribution and licensing records. Feature descriptions are not a claim that every integration has passed in-game testing.
+
+## What's new in 3.35.0 (the wildcard pattern finally expands: wrong ore prefix + deleted native template)
+
+- **The ore-dictionary string produced by "+" was not an ore name at all**: `OrePrefixes.getOreprefixKey()`
+  returns GT's **localisation key** (proven with javap: the constant pool literally contains `gt.oreprefix.`,
+  so it returns e.g. `gt.oreprefix.ingot`). Building a rule from it yields `gt.oreprefix.ingot*`, which
+  **never matches any ore dictionary name** (those look like `ingotIron`) — that truncated `gt.orepr...` in
+  the UI was this bug. Rules are now derived from the **real ore dictionary name** (`ingotIron` minus `Iron`
+  gives `ingot`), the same convention the expander uses, which also handles multi-segment prefixes such as
+  `crushedPurifiedIron`. All three call sites (NEI "+" derivation, the expander, NEI drag-in) were unified,
+  and the deriver now logs **every derived rule** for diagnosis.
+- **Fixed "AE crafts the pattern itself instead of the expanded wildcard patterns"**: the ported Wild code
+  **deletes the item's native `in`/`out`** on first initialisation (that is the reference implementation's own
+  data model), while this mod's expander **uses native `in`/`out` as the template** — with the template gone,
+  expansion always produced zero (23 occurrences of `reason=template-in-out-missing` in testing) and machines
+  fell back to the single template pattern. Now: (1) our patterns are no longer stripped (the original
+  WildcardPattern mod's items keep their original behaviour); (2) a **template self-heal** rebuilds and writes
+  the template back from the Wild row data, so **patterns already broken in your save do not need to be
+  reconfigured**.
+- **The output row is no longer blank**: when a rule does not specify an output, the prefix derived by the
+  expander itself (e.g. `plate`) is displayed as `plate*`, matching the expected "input `ingot*` → output `plate*`".
+- Note: the 3.34.0 fixes did work (the machine side now reaches our code and "+" writes into the window in
+  place); this release fixes the two deeper causes they exposed. Only from this release does the expansion
+  path actually reach "produce N patterns" for the first time.
 
 ## What's new in 3.34.0 (wildcard pattern not recognised by any hatch + NEI "+" + dedicated Circuit / Non-consumed pages)
 

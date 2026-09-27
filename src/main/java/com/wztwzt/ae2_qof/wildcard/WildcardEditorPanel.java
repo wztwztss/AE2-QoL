@@ -829,7 +829,11 @@ public final class WildcardEditorPanel {
                 if (parsed != null) {
                     for (gregtech.api.enums.OrePrefixes.ParsedOreDictName name : parsed) {
                         if (name == null || name.prefix == null) continue;
-                        String key = name.prefix.getOreprefixKey();
+                        if (name.material == null || name.material.isEmpty()) continue;
+                        // 3.35.0 修正：getOreprefixKey() 返回的是本地化键（gt.oreprefix.ingot），不能当矿辞前缀；
+                        // 从真实矿辞名反推（ingotIron − Iron ⇒ ingot），与展开器/推导器同一套口径。
+                        String key = com.wztwzt.ae2_qof.wildcard.SmartWildcardExpander
+                            .oreDictPrefixOf(stack, name.material);
                         if (key != null && !key.isEmpty()) {
                             orePrefix = key;
                             break;

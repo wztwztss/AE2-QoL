@@ -38,7 +38,7 @@ public final class WildcardPatternState {
         if (!tag.hasKey(KEY_OUTPUT_COMPONENTS, NBT.TAG_LIST)) {
             tag.setTag(KEY_OUTPUT_COMPONENTS, importPatternList(tag.getTagList("out", NBT.TAG_COMPOUND)));
         }
-        cleanupLegacyPatternSlots(tag);
+        cleanupLegacyPatternSlots(stack, tag);
     }
 
     public static void initializeFromPattern(ItemStack stack) {
@@ -130,9 +130,23 @@ public final class WildcardPatternState {
         copyIfPresent(config, tag, KEY_SELECTED_MATERIAL);
     }
 
-    private static void cleanupLegacyPatternSlots(NBTTagCompound tag) {
+    /**
+     * 参考实现的"旧槽清理"：把原生 {@code in}/{@code out} 删掉，改用本类自己的组件列表。
+     *
+     * <p><b>3.35.0 修正（致命）</b>：**对我们的通配样板跳过这个删除**。本模组的展开器
+     * （{@code SmartWildcardExpander.doExpand}）以原生 {@code in}/{@code out} 当模板来逐候选克隆，
+     * 删掉就等于把模板扔掉 —— 3.34.0 实机证据：{@code reason=template-in-out-missing} 出现 **23 次**、
+     * 展开产出恒 0，机器于是"直接按这个样板自己的合成"。
+     *
+     * <p>**刻意只对 {@code CommonProxy.smartWildcardPattern} 生效**：原版 WildcardPattern 模组的物品
+     * 保持它原本的行为（用户明确要求两侧互不干扰；实例里两个模组同时装着）。
+     */
+    private static void cleanupLegacyPatternSlots(ItemStack stack, NBTTagCompound tag) {
         if (tag.hasKey(KEY_GENERATED_PATTERN_ID)) {
             return;
+        }
+        if (stack != null && stack.getItem() == com.wztwzt.ae2_qof.CommonProxy.smartWildcardPattern) {
+            return; // 我们的样板：原生 in/out 是展开器的模板，绝不能删
         }
         tag.removeTag("in");
         tag.removeTag("out");

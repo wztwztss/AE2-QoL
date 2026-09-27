@@ -1,3 +1,86 @@
+## 工作区决策记录 2026-09-27 (38) - **3.35.0：修「加号推出的矿辞串是 GT 本地化键 / 样板原生模板被删」——通配样板放进总成终于能展开**
+
+> 用户实测 3.34.0 后给了 4 张截图 + 一句"你自己也去查一下日志吧"。工具：DeepSeek Harness（DSH Web GUI）｜模型：DeepSeek-V4.1-Flash。
+> 只读取证（日志计数 + javap 三段字节码）→ 提问确认（4 项拍板）→ 实施。
+
+### 一、3.34.0 的修复**已经生效**（先确认前进的部分）
+
+- 机器侧链路这次真的走到了：日志 `GT 通配槽位展开为空，已回退注册模板那一张：slot=0 produced=0 …`
+  **23 次**、`GT 通配样板槽位已重建` ⇒ 3.34.0 的"判据 + `rebuild(world)` 接线"生效；
+- 加号也真的写进窗口了：`NEI 加号：已就地把推导结果写进 Wild 窗口（槽位 7，in=2 out=1 oreRules=1 … circuit=1）`
+  ＋ `通配样板写回成功（指定槽位）：slot=7 rules=1` ⇒ 3.34.0 的"目标槽位 + 就地刷新"生效。
+- **卡点**：`reason=template-in-out-missing` ⇒ 展开器拿到的**模板（物品原生 `in`/`out`）是空的**。
+
+### 二、根因 E-1：三处把 **GT 的本地化键**当矿辞前缀用（这是"加号推不出可用规则"的真因）
+
+`OrePrefixes.getOreprefixKey()` 返回的**不是**矿辞前缀，而是**本地化键**。javap 实证：
+```
+public java.lang.String getOreprefixKey(IOreMaterial);
+  getDefaultLocalNameFormatForItem(m).toLowerCase().replace(" ", "_").replace("%material", "material")
+  … 常量池里就是 String gt.oreprefix.
+```
+⇒ 返回值形如 `gt.oreprefix.ingot`，拼出来的规则是 `gt.oreprefix.ingot*` ——
+**永远匹配不上任何矿辞名**（矿辞名是 `ingotIron`）。用户体验就是界面行里那串被截断的 `gt.orepr...`
+（截图 1），而期望值是 `ingot*`（截图 4）。**三处调用点全中**：
+`client/SmartWildcardRecipeDeriver:138`（NEI 加号推导）、`wildcard/SmartWildcardExpander:454`（展开器的
+`oreInfo`，影响输出前缀推导）、`wildcard/WildcardEditorPanel:832`（MUI2 编辑器的 NEI 拖入）。
+
+**修复**：新增 `SmartWildcardExpander.oreDictPrefixOf(stack, material)` —— 从**真实矿辞名**反推前缀
+（`ingotIron` − 材料 `Iron` ⇒ `ingot`），与展开器的 `matcherLiteralPrefix` 正好互逆，因此
+`crushedPurifiedIron` / `plateDoubleIron` 这类多段前缀也能切对；三处调用点统一改用它。
+`getOreprefixKey()` 只在"明显不是本地化键"（不以 `gt.` 开头且不含 `.`）时才作兜底，命中陷阱打**一条 WARN**。
+另外推导器新增 `NEI 推导规则明细` 日志（把每条 matcher 打出来）——3.34.0 就是因为缺这一行，
+这个 bug 一直藏到用户截图才暴露。
+
+### 三、根因 E-2：搬进来的 Wild 代码**把我们样板的原生 `in`/`out` 删掉了**（"AE 直接按这个样板自己的合成"的真因）
+
+`wildport/item/WildcardPatternState.ensureInitialized` → `cleanupLegacyPatternSlots`：
+没有 `WildcardGeneratedPatternId` 时执行 `tag.removeTag("in"); tag.removeTag("out")` ——
+那是**参考实现自己的数据模型**（把行数据搬进 `WildcardInputComponents` 后删原生编码槽）。
+而本模组的展开器**以原生 `in`/`out` 当模板**逐候选克隆 ⇒ 物品第一次被 Wild 代码碰到
+（开窗保存、按加号都会）模板就没了 ⇒ `template-in-out-missing` ⇒ 产出 0 ⇒ 回退注册模板那一张
+⇒ 表现就是"AE 直接用这张样板自己的合成"。
+
+**修复（两半，缺一不可）**：
+1. **不再删**：`cleanupLegacyPatternSlots(stack, tag)` 增加对我们的样板的早退（`CommonProxy.smartWildcardPattern`）。
+   **刻意只对我们生效** —— 原版 WildcardPattern 模组的物品保持原行为（用户要求两侧互不干扰）。
+2. **模板自愈**：新增 `WildcardBridge.ensureNativeTemplate(stack)` —— 原生 `in`/`out` 缺失时，从 Wild 的行数据
+   重建（`importPatternList → fromPatternSlot → fromStack` **保留了原始 stack**，已实证）并写回物品，
+   每张样板只记一次日志。调用点：`SmartWildcardExpander.expand()`（四个机器入口共用）、`pushToWild`、
+   `pullFromWild`（保存路径）、`MixinDualityInterface`（对**真身**自愈后再复制，否则只在副本上生效）。
+   ⇒ **用户存档里已经坏掉的样板不必重配**，第一次被展开时自动救回。
+
+### 四、根因 E-3：界面输出行永远是空的（与截图 4 的差距）
+
+`WildcardBridge.pushToWild` 的输出 entry 取 `rule.outMatcher`，而推导器不填它 ⇒ 输出行空白；
+用户期望的 `plate*` 只存在于展开器内部，界面上看不到。
+
+**修复**：规则没填 `outMatcher` 时，用 `SmartWildcardExpander.displayOutputPrefix(stack, state)`（**复用展开器
+自己的** `templateMaterialName` + `templateOutputPrefix`，单一来源，避免"显示与行为不一致"）推出
+`plate` 并显示为 `plate*`；该值也会经 Wild 的键回到 `rule.outMatcher`（等价，展开行为不变）。
+
+### 五、验证与待测
+
+- 构建：`gradlew build --offline -x spotlessJavaCheck -x spotlessCheck` **无管道取码 `EXIT=0`**、
+  `BUILD SUCCESSFUL`。产物 `build/libs/AE2-QoL-3.35.0.jar`（1,756,835 字节，
+  SHA256 `0F3699B927DF9C3EE731F2985A511A6342DB5A0C45C46D1A6F9B998BF44B3F98`）。
+- 字节码核对：`oreDictPrefixOf` 已入包且被 `oreInfo` 调用；`SmartWildcardExpander` 内只剩
+  `legacyPrefixKeyOrNull` 里那一处 `getOreprefixKey`（且被"本地化键"判据挡住）；
+  `WildcardBridge.ensureNativeTemplate` / `derivedOutputMatcher` 均在；`expand()` 里调用自愈；
+  包内 `mcmod.info` 版本 = 3.35.0。
+- **待用户实测**（本轮验收）：
+  1. 右键样板 → Wild 窗口里按 NEI 加号：**输入行出现 `ingot*`、输出行出现 `plate*`**（不再是 `gt.orepr...`）；
+  2. 日志出现 `NEI 推导规则明细：#0 ore:ingot* / …`；
+  3. 把样板放进 GT 样板输入总成：日志应出现 **`GT 通配样板注册：通配槽=1 注册 details=N 映射总数=…`** 且 **N>0**
+     （不再只有 `展开为空`），机器能接单；
+  4. **存量旧样板**（已被删过 in/out 的那张）应出现 `通配样板模板自愈：已从 Wild 的行数据重建原生模板`，
+     然后同样能展开；
+  5. 对照组：原版 WildcardPattern 模组的样板在原版总成里仍正常；未配置的通配样板仍按模板工作。
+- **诚实边界**：本轮修完后展开路径是**第一次真正跑到"产出 N 张"**；若仍有产出偏少/配对不对，
+  下一轮按 `注册 details=N` 与 `produced/matched` 诊断收敛。回退注册模板那张的兜底保留（机器不会变哑）。
+
+---
+
 ## 工作区决策记录 2026-09-27 (37) - **3.34.0：修「通配样板放进总成不被识别 / NEI 加号无效 / 电路与不消耗物品没有独立页」**
 
 > 用户实测 3.33.0 的三条报障 + 一条我侦察发现的静默失效。工具：DeepSeek Harness（DSH Web GUI）｜模型：DeepSeek-V4.1-Flash。

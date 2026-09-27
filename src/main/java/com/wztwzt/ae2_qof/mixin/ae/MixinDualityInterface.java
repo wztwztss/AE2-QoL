@@ -89,6 +89,8 @@ public abstract class MixinDualityInterface implements ISmartDoublingMedium {
             //（原生只登记模板那一张，表现为"通配没生效、机器按模板走"）。
             if (!com.wztwzt.ae2_qof.wildcard.SmartWildcardGate
                 .isConfiguredWildcard(stack, "AE2 ME 接口 slot=" + slot)) return;
+            // 3.35.0：先对**真身**做一次模板自愈，再复制 —— 否则下面的展开只是在副本上生效，物品本身永远缺模板
+            com.wztwzt.ae2_qof.wildport.bridge.WildcardBridge.ensureNativeTemplate(stack);
 
             net.minecraft.item.ItemStack single = stack.copy();
             single.stackSize = 1;

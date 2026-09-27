@@ -13,10 +13,12 @@
 |---|---|
 |工具平台|DeepSeek Harness（DSH Web GUI）|
 |模型信息|DeepSeek-V4.1-Flash|
-|工作分支|master；本轮起点 `e12ae06`（3.33.0 交付），工作树干净、与 origin/master 同步|
-|启动时间|2026-09-27（Asia/Shanghai，缺陷修复轮：3.34.0）|
-|本次会话目标|**修用户实测 3.33.0 报的三条 + 一条我侦察到的静默失效 = 3.34.0**：① 有规则的通配样板放进**任何**总成都不被识别（GT / GTNL / PH 22069 / MK.II / 我们的 MK.III 全试）；② Wild 窗口里 NEI 加号无效（配方不落界面）；③ 电路与不消耗物品**没有独立页**（用户拍板：电路改独立页 4 列×6 行 + 撤掉 3.33.0 底部电路带；不消耗物品复用自带 NEI 拖入控件并写自己的 `NonConsumed`）；④ `mui.MixinItemSlotWildcardGesture` 注入失败（Shift+中键电路选择器从未生效）。流程：加载 skill → 只读侦察（实例 jar SHA256 / 日志计数 / 原版 mod 字节码）→ **三轮 `ask_user_question` 把问题确认到 99%（用户拍板 16 项）** → 方案确认 → 实施 → 构建 → 文档 → 提交/部署。**根因**：C = ①GT/GTNL 的槽位 `rebuild()` **全仓零调用者**（结构性，与玩家数据无关）+ ②四处入口判据要求"已有我们的 NBT"而该子树只在 Wild 窗口保存时写入（实测 `pullFromWild` 全场 2 次且都是"规则 0 条"），且 3.32.0 的懒同步写在 `expand()` 内部 ⇒ 对"缺 NBT"永远不可达，判否分支还**静默**；A = 加号写到"背包里第一张样板"而非窗口那张 + 界面不刷新 + 窗口旧内存态在保存时把刚写入的规则覆盖成 0；D = 回调类型写成 `CallbackInfo`，而 `ItemSlot.onMousePressed` 返回 `Interactable$Result`。产物 `build/libs/AE2-QoL-3.34.0.jar`（1,753,773 B，SHA256 `EB5FBC22…`），字节码已核对（`rebuild` 调用点、`SmartWildcardGate` 调用、`CallbackInfoReturnable`）。**待用户实测 6 项**（见 CHANGELOG 记录 (37) 第五节）|
-|上一轮（历史）|工具：DeepSeek Harness｜模型：DeepSeek-V4.1-Flash：3.31.0～3.33.0（GUI handler 顶掉、写回判据、底部电路带），`e12ae06` 已部署到 b3 实例；用户实测后报本轮三条缺陷。|
+|工作分支|master；本轮起点 `d0f4950`（3.34.0 交付），工作树干净、与 origin/master 同步（未推送）|
+|启动时间|2026-09-27（Asia/Shanghai，缺陷修复轮：3.35.0，紧接 3.34.0 实测反馈）|
+|本次会话目标|**修 3.34.0 实机暴露的两个更深根因 + 一处界面差距 = 3.35.0**。用户实测给了 4 张截图并要求「你自己也去查一下日志吧」。日志计数给出决定性证据：`GT 通配槽位展开为空…reason=template-in-out-missing` **23 次**（⇒ 3.34.0 的判据/接线**已生效**，卡在展开产出 0）、`NEI 加号：已就地把推导结果写进 Wild 窗口（槽位 7…）`＋`写回成功（指定槽位）：slot=7 rules=1`（⇒ 3.34.0 的加号修复**已生效**）。三个根因：**E-1** `OrePrefixes.getOreprefixKey()` 返回的是 GT **本地化键**（javap 实证常量池含 `gt.oreprefix.`，值形如 `gt.oreprefix.ingot`）⇒ 规则被写成 `gt.oreprefix.ingot*`（用户截图里那串 `gt.orepr...`），**永不匹配矿辞名**；三处调用点（推导器 / 展开器 `oreInfo` / MUI2 编辑器拖入）全中。**E-2** 搬进来的 Wild 代码在首次初始化时 `tag.removeTag("in"/"out")`（参考实现自己的数据模型），而本模组展开器以原生 `in`/`out` 当模板 ⇒ 模板被删 ⇒ 产出恒 0 ⇒ 回退注册模板那一张 = 用户看到的「AE 直接按这个样板自己的合成」。**E-3** 输出行永远空白（`pushToWild` 用 `rule.outMatcher`，推导器不填）。修复：① 新增 `SmartWildcardExpander.oreDictPrefixOf`（矿辞名减材料名反推前缀，与 `matcherLiteralPrefix` 互逆）并统一三处；② `cleanupLegacyPatternSlots` 对我们的样板不再删（原版 mod 行为不变）＋新增 `WildcardBridge.ensureNativeTemplate` 模板自愈（四个机器入口 + push/pull + AE 真身），**存量坏样板免重配**；③ `displayOutputPrefix` + `derivedOutputMatcher` 让输出行显示 `plate*`。产物 `build/libs/AE2-QoL-3.35.0.jar`（1,756,835 B，SHA256 `0F3699B9…`）。**待实测 5 项**（见 CHANGELOG 记录 (38) 第五节）|
+|上一轮（历史）|工具：DeepSeek Harness｜模型：DeepSeek-V4.1-Flash：3.34.0（通配样板三类静默失效 + 加号写回 + 两页签 + mui 手势），`d0f4950` 已部署，用户实测后报「矿辞串是 gt.orepr…、放进去 AE 按样板自己合成」。|
+|上一轮会话目标（3.34.0 轮）|**修用户实测 3.33.0 报的三条 + 一条我侦察到的静默失效 = 3.34.0**：① 有规则的通配样板放进**任何**总成都不被识别（GT / GTNL / PH 22069 / MK.II / 我们的 MK.III 全试）；② Wild 窗口里 NEI 加号无效（配方不落界面）；③ 电路与不消耗物品**没有独立页**（用户拍板：电路改独立页 4 列×6 行 + 撤掉 3.33.0 底部电路带；不消耗物品复用自带 NEI 拖入控件并写自己的 `NonConsumed`）；④ `mui.MixinItemSlotWildcardGesture` 注入失败（Shift+中键电路选择器从未生效）。流程：加载 skill → 只读侦察（实例 jar SHA256 / 日志计数 / 原版 mod 字节码）→ **三轮 `ask_user_question` 把问题确认到 99%（用户拍板 16 项）** → 方案确认 → 实施 → 构建 → 文档 → 提交/部署。**根因**：C = ①GT/GTNL 的槽位 `rebuild()` **全仓零调用者**（结构性，与玩家数据无关）+ ②四处入口判据要求"已有我们的 NBT"而该子树只在 Wild 窗口保存时写入（实测 `pullFromWild` 全场 2 次且都是"规则 0 条"），且 3.32.0 的懒同步写在 `expand()` 内部 ⇒ 对"缺 NBT"永远不可达，判否分支还**静默**；A = 加号写到"背包里第一张样板"而非窗口那张 + 界面不刷新 + 窗口旧内存态在保存时把刚写入的规则覆盖成 0；D = 回调类型写成 `CallbackInfo`，而 `ItemSlot.onMousePressed` 返回 `Interactable$Result`。产物 `build/libs/AE2-QoL-3.34.0.jar`（1,753,773 B，SHA256 `EB5FBC22…`），字节码已核对（`rebuild` 调用点、`SmartWildcardGate` 调用、`CallbackInfoReturnable`）。**待用户实测 6 项**（见 CHANGELOG 记录 (37) 第五节）|
+|更早一轮（3.31.0～3.33.0）|工具：DeepSeek Harness｜模型：DeepSeek-V4.1-Flash：3.31.0～3.33.0（GUI handler 顶掉、写回判据、底部电路带），`e12ae06` 已部署到 b3 实例；用户实测后报本轮三条缺陷。|
 |上一轮启动时间（历史）|2026-09-26（Asia/Shanghai，新功能轮：编程样板输入总成 MK.III）|
 |上一轮会话目标（历史，3.20.x 轮）|**新增「编程样板输入总成 MK.III」**：ProgrammableHatches「编程样板输入总成」（MTE 22069）的扩容克隆版，样板槽 36 → **144**，样板窗改成 9 列 × 9 可见行的可滚动网格，只在装了 PH 时存在。严格按用户协议推进：先反复提问确认需求（7 项产品决策全部由用户拍板）→ 只读取证（PH 源码 + 实例 jar 字节码 + AE2/GT/MUI2 三层 API）→ 用户说「确认方案，开始修改」后才动代码。**3.20.0 首次实测失败**（可选依赖守卫把 PH 的 modid 误写成包名前缀 `proghatches`，物品从未注册且无日志），已定位并修复为 **3.20.1**（真实 modid + 关键类判据 + 三条分支日志），产物 `build/libs/AE2-QoL-3.20.1.jar`（SHA256 `D0F00177…`）**已部署到 b3 实例**（mods 内仅一份）。**已实测通过（用户：「样板确实扩充了没问题」）；日志证据见 CHANGELOG 记录 (23) 第六节。**随后按用户「你正常修就行，修完推」又完成 **3.20.2**：修 GuideNH 指南页 5 页 × 中英的 `icon:`/`item_ids:` 错误（GT 机器真实注册名是 `gregtech:gt.blockmachines:<MTE ID>`，原写成了 `ae2_qof:<机器名>`），并做了全量对照审计；产物 `build/libs/AE2-QoL-3.20.2.jar`（SHA256 `3B7189EF…`）。**3.20.2 未部署到实例**（纯资源修正）。随后用户报「库存统计终端打开无法连接 AE / 没有 nexus 的连接 UI / 无法实时修改」→ 完成 **3.20.3**：终端 GUI 双端构建重写（`GenericListSyncHandler`+`DynamicSyncedWidget` 快照渲染）、发信器枚举 API 修正（`node.getMachine()`）、列表改可滚动并取消 5 行上限、编辑值全走 SyncValue、新增 Nexus 缺失回退面板；产物 `build/libs/AE2-QoL-3.20.3.jar`（SHA256 `85BB3AE7…`）+ **3.20.4**（同版本行为不变，仅给两个列表收集器补"首次失败 WARN"，让"列表为空"与"枚举出错"可区分；SHA256 `1AF11606…`）；**3.20.4 已部署到实例（mods 内仅一份）**。随后按用户「优化 UI + 加高亮与传送（参照自适应电网终端）+ 修汉化」完成 **3.21.0**：行内【高亮】【传送】两按钮（客户端回调发坐标、服务端重新解析并做会话+BUILD 双鉴权）、高亮 10 秒自动清除、传送支持跨维度与安全落点、物品名与行内缩写全部汉化；产物 `build/libs/AE2-QoL-3.21.0.jar`（SHA256 `5590DCC0…`）；**3.21.0 待游戏内验收 5 项**。随后用户拍板「覆盖板列表只看本终端所连网络」→ 完成 **3.21.1**（改用 `CoverRegistry.getByNetwork(terminal.getNetworkId())`；被过滤数量经 SyncValue 下发，空列表时显示"另有 N 个属于其他网络"；扫描收拢进 `CoverScan` 共用一次遍历）；产物 `build/libs/AE2-QoL-3.21.1.jar`（SHA256 `74BBBA2A…`）。用户实机截图又报两处：**行内名称整列空白 + 发信器数量改不动** → **3.21.2** 修复（① MUI2 `ButtonWidget extends SingleChildWidget`，`child()` 会 dispose 旧子控件 ⇒ 名称被数值挤掉，改走 `overlay(IKey)`；② 按钮内文本吞点击（PH `NonInteractiveText` 同坑）⇒ 点行打不开编辑；③ `LevelType` 常量实为 `ITEM_LEVEL`/`ENERGY_LEVEL` ⇒ 类型恒显示"未知"，改前缀匹配）；产物 `build/libs/AE2-QoL-3.21.2.jar`（SHA256 `09BDD665…`）。随后用户报「智能倍增在**云上专用服务端**不生效（开关能勾住、合成仍一次一轮），同一 jar 单人正常」→ 完成 **3.21.3**：根因是三处开关 mixin 在 `mixins.ae2_qof.json` 的 **client 段**，而 `BooleanSyncValue.allowC2S()` 要求服务端存在同名同步处理器 ⇒ 专用服务端上写入被 MUI2 静默丢弃（两条丢弃分支都不打日志）⇒ 服务端开关恒 false ⇒ CPU 静默回退一次一轮；单人正常是因为同一客户端 JVM 里 client 段 mixin 也变换了该类。修复：改为「客户端只报坐标 → 服务端重定位并校验后写入 + S2C 权威回读」，并补上应用/未生效诊断；产物 `build/libs/AE2-QoL-3.21.3.jar`（SHA256 `B5A4E791…`），**已被用户实测确认生效**（服务端日志出现「智能倍增开关 = true …（样板介质=true）」）。用户随后反馈"倍增有效果但不是一键全发、而是几万几万一发" ⇒ 取证为**设计上限**（功率钳制显式封顶 4096 轮，#51 的 O(P) 探测与 #73 的客户端淹没都要求分批）⇒ 完成 **3.21.4**：`Config.smartDoublingPushCap`（键 `smart_doubling_push_cap`，默认 4096，热加载 + 配置页 + `/ae2qof status`），并把 3.21.3 诊断"关闭开关未清期望登记"的误报修掉；产物 `build/libs/AE2-QoL-3.21.4.jar`（SHA256 `8DB5EBBC…`）。随后用户提出**新需求：一个比现有两个参考模组更好用的通配样板**（NEI 加号自动推导 + 每槽电路）→ 调研 + 需求确认 12 项后进入 **3.22.0**，**M1 已完成并提交**（数据模型/展开器/物品/AE2 接口接管/自测命令 + `smart_wildcard_expand_cap`），M2（NEI 加号 + 可视化）与 M3（每槽电路）**未交付**。|
 |上一轮（更早）|工具：DeepSeek Harness｜模型：DeepSeek-V4.1-Flash：fix50/51/52+54 三问题定位与修复，正式版 `3.19.0-fix54` 已部署到 b3 实例并推送到 `origin/master`。|
@@ -32,6 +34,29 @@ GTNH 2.9.0-beta-3（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 ## 三、全局已完成清单
 
 > 按完成时间倒序排列，均标注产出文件路径。历史结论保留原貌，不等于本版验证结果。
+
+**3.35.0 交付（通配样板终于能展开：矿辞前缀取错 + 原生模板被删，2026-09-27）**：3.34.0 实测反馈驱动。
+**先确认 3.34.0 已生效**：日志 `reason=template-in-out-missing` 23 次 ⇒ 判据与 `rebuild(world)` 接线通了；
+`NEI 加号：已就地把推导结果写进 Wild 窗口（槽位 7…）` ＋ `写回成功（指定槽位）：slot=7 rules=1` ⇒
+加号目标槽位与就地刷新通了。剩三个根因：**E-1** `OrePrefixes.getOreprefixKey()` 返回的是 GT **本地化键**
+（javap 实证：实现里 `getDefaultLocalNameFormatForItem().toLowerCase().replace(" ","_").replace("%material","material")`，
+常量池含 `gt.oreprefix.`）⇒ 规则被写成 `gt.oreprefix.ingot*`（界面里那串 `gt.orepr...`），
+**永不匹配任何矿辞名**（矿辞名 `ingotIron`）；三处调用点全中（`SmartWildcardRecipeDeriver:138`、
+`SmartWildcardExpander.oreInfo:454`、`WildcardEditorPanel:832`）。**E-2** `wildport/item/WildcardPatternState`
+的 `cleanupLegacyPatternSlots` 在首次初始化时 `tag.removeTag("in"/"out")`（参考实现的数据模型），
+而本模组展开器**以原生 in/out 当模板** ⇒ 模板被删 ⇒ 产出恒 0 ⇒ 回退注册模板那一张
+＝「AE 直接按这个样板自己的合成」。**E-3** 输出行永远空白。修复：① 新增
+`SmartWildcardExpander.oreDictPrefixOf(stack, material)`（矿辞名减材料名反推前缀，与 `matcherLiteralPrefix` 互逆，
+多段前缀也正确）并统一三处，`getOreprefixKey()` 只在"明显非本地化键"时兜底 + WARN；推导器补
+`NEI 推导规则明细` 日志；② `cleanupLegacyPatternSlots` 对**我们的**样板不再删 in/out（原版 mod 物品行为不变）
+＋新增 `WildcardBridge.ensureNativeTemplate` **模板自愈**（`importPatternList→fromPatternSlot→fromStack`
+保留了原始 stack，已实证），调用点＝`expand()`（四个机器入口共用）/`pushToWild`/`pullFromWild`/
+`MixinDualityInterface`（对真身自愈后再复制）⇒ **存量坏样板免重配**；③ `displayOutputPrefix` +
+`derivedOutputMatcher` 让输出行显示 `plate*`。构建 `BUILD SUCCESSFUL`（无管道取码 `EXIT=0`）；
+产物 `build/libs/AE2-QoL-3.35.0.jar`（1,756,835 B，SHA256 `0F3699B9…`）；字节码核对：
+`oreDictPrefixOf` 入包且被 `oreInfo` 调用、`SmartWildcardExpander` 内只剩被判据挡住的 `getOreprefixKey`、
+`ensureNativeTemplate`/`derivedOutputMatcher` 在包内、包内版本 3.35.0。**待实测 5 项**
+（CHANGELOG 记录 (38) 第五节）。**诚实边界**：本版起展开路径才第一次真正跑到"产出 N 张"。
 
 **3.34.0 交付（用户实测三条报障 + 一条静默失效，2026-09-27）**：① **问题 C（核心）**：有规则的通配样板放进
 GT 样板输入仓 / GTNL 超级总成 / PH 22069 / MK.II / 我们的 MK.III **全部不识别**（样板放得进槽位、机器无动作、无提示，
@@ -335,7 +360,17 @@ CHANGELOG/README 章节缺失（本轮未追写）；`CHANGELOG.md` 末尾与 `z
 > （`63153ed` / `d783448` / `223c8c5`），工作树干净。本节条目保留"待用户实测"性质——
 > **提交不等于游戏内验收通过**。
 
-### 4.1 3.34.0 待游戏内验收（2026-09-27，最新）
+### 4.1 3.35.0 待游戏内验收（2026-09-27，最新）
+
+- ① Wild 窗口里按 NEI 加号：**输入行出现 `ingot*`、输出行出现 `plate*`**（不再是 `gt.orepr...`）；
+- ② 日志出现 `NEI 推导规则明细：#0 ore:ingot* / …`；
+- ③ 样板放进 GT 样板输入总成（以及 GTNL / PH 22069 / MK.II / MK.III）：日志应出现
+  **`GT 通配样板注册：通配槽=1 注册 details=N 映射总数=…`** 且 **N>0**（不再只有 `展开为空`），机器能接单；
+- ④ **存量旧样板**（in/out 已被旧版删掉的）应出现 `通配样板模板自愈：已从 Wild 的行数据重建原生模板`，
+  随后同样能展开（不必重配）；
+- ⑤ 对照组：原版 WildcardPattern 模组的样板在原版总成里仍正常；未配置的通配样板仍按模板工作。
+
+### 4.2 3.34.0 待游戏内验收（已被 3.35.0 覆盖，保留供追溯）
 
 - ① Wild 窗口（右键样板）里按 NEI 加号 ⇒ **9 行当场出现配方**（整页替换），关掉重开仍在；
 - ② 电路页签：点号**当场高亮**、「清除（继承）」可用；

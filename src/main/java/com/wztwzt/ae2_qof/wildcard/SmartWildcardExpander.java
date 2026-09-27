@@ -121,6 +121,15 @@ public final class SmartWildcardExpander {
         if (wildcard == null || !SmartWildcardState.isSmartWildcard(wildcard)) {
             return new Result(new ArrayList<>(), 0, 0, false, "not-a-smart-wildcard");
         }
+        // 3.35.0：**模板自愈**。搬进来的 Wild 代码会在首次初始化时把原生 in/out 删掉（它自己改用
+        // WildcardInputComponents 存行数据），而本展开器以原生 in/out 当模板 ⇒ 3.34.0 实测
+        // reason=template-in-out-missing 出现 23 次、产出恒 0。这里在展开前尝试从行数据重建一次
+        // （存量样板一并救回，不需要玩家重配）。失败只记日志、继续按现有 NBT 走。
+        try {
+            com.wztwzt.ae2_qof.wildport.bridge.WildcardBridge.ensureNativeTemplate(wildcard);
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 通配样板模板自愈失败（继续按现有 NBT 展开）", t);
+        }
         SmartWildcardState state = SmartWildcardState.of(wildcard);
         if (state == null || !state.isConfigured()) {
             return new Result(new ArrayList<>(), 0, 0, false, "no-rules");
@@ -366,6 +375,29 @@ public final class SmartWildcardExpander {
         return null;
     }
 
+    /**
+     * 供**界面显示**用的输出侧矿辞前缀（3.35.0，用户要求"输出行也要看得见，像 {@code plate*}"）。
+     *
+     * <p>刻意复用展开器自己的模板推导（{@link #templateMaterialName} + {@link #templateOutputPrefix}），
+     * 保证界面显示的就是展开时真正会用的那个前缀，而不是另写一套算法导致"显示与行为不一致"。
+     *
+     * @return 例如 {@code plate}；模板缺失或推不出时返回 null（调用方负责显示原文/留痕）
+     */
+    public static String displayOutputPrefix(ItemStack wildcard, SmartWildcardState state) {
+        try {
+            if (wildcard == null || state == null) return null;
+            NBTTagCompound tag = wildcard.getTagCompound();
+            if (tag == null) return null;
+            NBTTagList templateIn = tag.getTagList("in", Constants.NBT.TAG_COMPOUND);
+            NBTTagList templateOut = tag.getTagList("out", Constants.NBT.TAG_COMPOUND);
+            if (templateIn.tagCount() == 0 || templateOut.tagCount() == 0) return null;
+            return templateOutputPrefix(templateOut, templateMaterialName(templateIn, state));
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 推导输出侧显示前缀失败（输出行留空）", t);
+            return null;
+        }
+    }
+
     private static List<String> candidateTokens(String material, String inputPrefix, String outputPrefix,
         ItemStack inStack, ItemStack outStack) {
         List<String> tokens = new ArrayList<>(6);
@@ -435,12 +467,77 @@ public final class SmartWildcardExpander {
     }
 
     /**
+     * 从**真实矿辞名**反推前缀：矿辞 {@code ingotIron} + 材料名 {@code Iron} ⇒ 前缀 {@code ingot}。
+     *
+     * <p><b>3.35.0 修正（本轮致命 bug）</b>：GT 的 {@code OrePrefixes.getOreprefixKey()} 返回的是
+     * **本地化键**而不是矿辞前缀 —— javap 实证它的实现是
+     * {@code getDefaultLocalNameFormatForItem(m).toLowerCase().replace(" ","_").replace("%material","material")}，
+     * 而 {@code OrePrefixes} 的常量池里正是字符串 {@code gt.oreprefix.} ⇒ 返回 {@code gt.oreprefix.ingot}。
+     * 拿它拼规则会得到 {@code gt.oreprefix.ingot*}，**永远匹配不上任何矿辞名**（矿辞名形如 {@code ingotIron}）⇒
+     * 展开产出恒为 0。3.34.0 实机表现完全吻合：界面行显示 {@code gt.orepr...}，机器侧一律
+     * {@code produced=0}。本方法改用「矿辞名去掉材料名后缀」这一**构造上自洽**的口径（与
+     * {@link #matcherLiteralPrefix} 正好互逆），因此多段前缀（{@code crushedPurifiedIron}、
+     * {@code plateDoubleIron}）也能切对。
+     *
+     * @param material {@code OrePrefixes.detectPrefix} 给出的材料名（如 {@code Iron}）；空则返回 null
+     * @return 矿辞前缀（如 {@code ingot}）；取不到返回 null（调用方负责留痕，不静默）
+     */
+    public static String oreDictPrefixOf(ItemStack stack, String material) {
+        if (stack == null || stack.getItem() == null || material == null || material.isEmpty()) return null;
+        try {
+            int[] ids = OreDictionary.getOreIDs(stack);
+            if (ids != null) {
+                for (int id : ids) {
+                    String oreName = OreDictionary.getOreName(id);
+                    if (oreName == null || oreName.length() <= material.length()) continue;
+                    int cut = oreName.length() - material.length();
+                    if (oreName.regionMatches(true, cut, material, 0, material.length())) {
+                        String head = oreName.substring(0, cut);
+                        if (!head.isEmpty()) return head;
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 从矿辞名反推前缀失败（该物品按无矿辞处理）", t);
+        }
+        return null;
+    }
+
+    /** 只打一次的"GT 前缀 API 陷阱"提示（避免热路径刷屏）。 */
+    private static volatile boolean prefixApiPitfallLogged;
+
+    /**
+     * 兜底：只有在 {@code getOreprefixKey()} 明显**不是**本地化键（不以 {@code gt.} 开头、不含 {@code .}）时才采用。
+     * 命中陷阱时打一条 WARN（本项目原则：不许静默），然后交回调用方走别的兜底。
+     */
+    private static String legacyPrefixKeyOrNull(gregtech.api.enums.OrePrefixes prefix) {
+        try {
+            String key = prefix.getOreprefixKey();
+            if (key == null || key.isEmpty()) return null;
+            if (key.startsWith("gt.") || key.indexOf('.') >= 0) {
+                if (!prefixApiPitfallLogged) {
+                    prefixApiPitfallLogged = true;
+                    MyMod.LOG.warn(
+                        "[AE2QoL] OrePrefixes.getOreprefixKey() 返回的是本地化键（{}）而不是矿辞前缀，已忽略；"
+                            + "矿辞前缀改由矿辞名反推",
+                        key);
+                }
+                return null;
+            }
+            return key;
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    /**
      * 取「矿辞前缀 + 材料名」。
      *
      * <p><b>3.22.0 修正</b>：原先按“第一个大写字母”切分矿辞名，对 {@code dustSmallIron}、
      * {@code plateDoubleIron}、{@code crushedPurifiedIron} 这类**多段前缀**会切错
      * （会切成 prefix={@code dust} + material={@code SmallIron}），表现只是“候选变少/不对”，很难查。
      * 现在优先用 GT 权威 API {@code OrePrefixes.detectPrefix(ItemStack)}（按 VALUES 最长前缀匹配 + 特例修正），
+     * 前缀一律走 {@link #oreDictPrefixOf}（**3.35.0 起不再用 getOreprefixKey 当矿辞前缀**），
      * 失败才回退到老的切分法并记一条 WARN（不静默）。
      */
     private static OrePrefixInfo oreInfo(ItemStack stack) {
@@ -450,9 +547,10 @@ public final class SmartWildcardExpander {
                 gregtech.api.enums.OrePrefixes.detectPrefix(stack);
             if (parsed != null) {
                 for (gregtech.api.enums.OrePrefixes.ParsedOreDictName name : parsed) {
-                    if (name == null || name.prefix == null) continue;
-                    String key = name.prefix.getOreprefixKey();
-                    if (key == null || key.isEmpty() || name.material == null || name.material.isEmpty()) continue;
+                    if (name == null || name.prefix == null || name.material == null || name.material.isEmpty()) continue;
+                    String key = oreDictPrefixOf(stack, name.material);
+                    if (key == null || key.isEmpty()) key = legacyPrefixKeyOrNull(name.prefix);
+                    if (key == null || key.isEmpty()) continue;
                     return new OrePrefixInfo(key, name.material);
                 }
             }
