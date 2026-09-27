@@ -1,3 +1,59 @@
+## 工作区决策记录 2026-09-27 (43) - **3.41.0：输出前缀改为"存在性驱动"——修掉 `输出种类=1` 的真正上游**
+
+> 用户实测 3.40.0 后报"完全没修，和刚才一模一样"。日志取证：**加载的确是 3.40.0**、
+> `输出种类=1` 依旧，而我 3.40.0 新加的"输出槽没找到可替换项"WARN **一次都没出现**（计数 0）。
+
+### 一、为什么 3.40.0 那一条修在"永远不执行的代码路径"上
+
+3.40.0 修的是 `buildConcretePattern` 里**输出槽的替换判据**（`info.material.equals(material)` → 前缀匹配）。
+但那段代码整体被包在 **`if (outStack != null)`** 里，而 `outStack` 只在
+`outputPrefix != null && !outputPrefix.isEmpty()` 时才会被求值：
+```java
+ItemStack outStack = null;
+if (outputPrefix != null && !outputPrefix.isEmpty()) {
+    outStack = firstOreStack(outputPrefix + material);
+    if (outStack == null) { skipped++; continue; }
+}
+```
+⇒ **`outputPrefix` 为空时，整段（含替换与那条新 WARN）都不会执行**，几百张具体样板于是**原样保留模板输出
+（铁板）**——这既解释了 `输出种类=1`，也解释了"新 WARN 计数为 0"这条关键反证。
+
+### 二、根因 J：`outputPrefix` 为什么是空的 —— 材料名判等遇上 GT 的 `*Any*` 双矿辞名
+
+旧路径 `templateOutputPrefix(templateOut, templateMaterial)` 要求"模板输出槽解析出的**材料名** == 模板输入的
+材料名"。而 GT 板材**同时注册两个矿辞名**：`plateIron` 与 `plateAnyIron`（用户早先的截图里就能看到），
+`oreInfo` 取到哪个取决于注册顺序：
+- 取到 `plateIron` ⇒ 材料 `Iron` ⇒ 判等通过 ⇒ 前缀 `plate`（能工作，但不保证）；
+- 取到 `plateAnyIron` ⇒ 材料 `AnyIron` ⇒ **判等失败** ⇒ 该方法返回 **null** ⇒ `outputPrefix` 空 ⇒ 输出永不改写。
+
+### 三、修复：不再猜材料名，改为"这个矿辞真实存在吗"
+
+1. **候选前缀**（新 `collectOutputPrefixCandidates`）：从模板每个输出槽的**全部矿辞名**里收集前缀候选 ——
+   ① 以模板材料名结尾的，头即前缀（`plateIron` → `plate`）；
+   ② 兜底按"第一个大写字母"切（`plateAnyIron` → `plate`）。规则里显式写的输出匹配（如 `plate*`）优先。
+2. **逐材料选前缀**：在候选里挑**第一个"前缀+材料"在矿辞表里真实存在**的（`plateAnyCopper` 不存在 ⇒ 自动
+   回落到 `plateCopper` ✓）。这使判据**与材料名解析无关**，从此免疫 `*Any*` 双矿辞名。
+3. **候选为空时明确留痕**（新 `logNoOutputPrefixOnce`，打出模板材料与模板输出的全部矿辞名）——此时产不出
+   任何具体样板，机器退回"只认模板那一张"，属于可见的降级而不是静默。
+4. **窗口的"输出不填充"同源**：`displayOutputPrefix`（加号/桥给界面填输出行用的）改用同一套候选，
+   不再走会返回 null 的 `templateOutputPrefix`。
+5. **展开样本诊断**（新 `logSampleOnce`，每 JVM 只打 3 条）：
+   `展开样本：material=Copper prefix=plate in=铜锭 out=铜板 产出out=铜板` —— 直接给出"材料 → 前缀 → 产出输出"，
+   下一次不用再靠推测。
+
+### 四、验证与待测
+
+- 构建 `BUILD SUCCESSFUL`（无管道取码 `EXIT=0`）；产物 `build/libs/AE2-QoL-3.41.0.jar`
+  （1,766,805 字节，SHA256 `FCA5FECAA52FAF0047C26EEB5B639E10AC1F874E1C27DA97D729295800C23705`）；
+  字节码核对：`collectOutputPrefixCandidates` / `logNoOutputPrefixOnce` / `logSampleOnce` / `firstOutputNameOf` 均已入包。
+- **待用户实测**（这次日志自带"自证"）：
+  1. 日志应出现 **`展开样本：material=… prefix=plate in=… out=… 产出out=…`** 三行，且三行的 `material/产出out` **各不相同**；
+  2. 注册行应变成 **`输出种类=396`**（不再是 1）；
+  3. AE 终端里各种板材可合成、可下单；GT 样板仓下单后能真正合成；
+  4. 若出现 `展开时找不到任何可用的输出前缀`（WARN），请把那行发我 —— 它自带模板输出的全部矿辞名，能直接定位。
+
+---
+
 ## 工作区决策记录 2026-09-27 (42) - **3.40.0：修「几百张具体样板全部输出同一块铁板」——"锭→板"塌成一张的真凶**
 
 > 用户按上一轮要求用 3.39.0-diag 复现（三台机器各放一次）后退出游戏，日志一次命中。

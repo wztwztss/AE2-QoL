@@ -4,9 +4,28 @@
 
 An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
-**Author: wztwzt · Current source version: 3.40.0 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.41.0 · Reference pack: GTNH 2.9.0-beta-3**
 
 This repository is for personal archival and is not currently offered for distribution. See [CREDITS.md](CREDITS.md) for attribution and licensing records. Feature descriptions are not a claim that every integration has passed in-game testing.
+
+## What's new in 3.41.0 (output prefix is now existence-driven — the real upstream of "every pattern outputs the same plate")
+
+- **Why 3.40.0 had no effect**: it fixed the *output-slot replacement test*, but that whole block sits inside
+  `if (outStack != null)`, and `outStack` is only computed when the **output prefix is non-empty**. The decisive
+  counter-evidence was in the log: the new "replacement slot not found" WARN **never fired**, proving the block was
+  never entered.
+- **The real cause**: the output prefix was derived by comparing **material names** ("template output material"
+  vs "template input material"), but GT plates register **both** `plateIron` and `plateAnyIron`, so resolution could
+  yield `AnyIron`, the comparison failed, the prefix came back empty, and **outputs were never rewritten** — every
+  concrete pattern kept the template's iron plate.
+- **Fix**: stop guessing material names and go **existence-driven** — collect prefix candidates from every
+  ore-dictionary name of each template output slot (`plateIron` → `plate`; `plateAnyIron` also falls back to
+  `plate`), then per material pick the first prefix whose `prefix + material` actually exists in the ore dictionary
+  (`plateAnyCopper` does not exist, so it falls back to `plateCopper`). An explicit output matcher in the rule still
+  wins. An empty candidate set now logs a WARN (visible degradation); the window's "output row stays empty" had the
+  same root cause and is fixed too.
+- **Self-verifying log**: `展开样本：material=Copper prefix=plate in=… out=… 产出out=…` (three lines per JVM), so
+  the next round needs no guesswork.
 
 ## What's new in 3.40.0 (every expanded pattern produced the same iron plate)
 

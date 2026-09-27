@@ -225,19 +225,28 @@ public final class SmartWildcardExpander {
         }
         final String inputPrefix = firstPrefix == null ? "" : firstPrefix;
 
-        // 2) 输出侧前缀：**优先用规则里独立写的输出匹配**（3.23.0：编辑器每行可写「输出 plate*」），
-        //    规则没写才沿用原行为——模板输出的矿辞名去掉模板材料名（模板材料名由模板输入的矿辞推出）。
+        // 2) 输出侧候选前缀
         String templateMaterial = templateMaterialName(templateIn, state);
-        String outputPrefix = null;
+        // 2) 输出侧候选前缀（3.41.0 **修正**）：
+        //    旧实现用 templateOutputPrefix(templateOut, templateMaterial)，靠"模板输出槽的材料名 == 模板输入的材料名"
+        //    来选前缀；而 GT 板材同时注册 plateIron 与 plateAnyIron，解析出的材料名可能是 AnyIron ⇒ 判等失败 ⇒
+        //    返回 **null** ⇒ 下面"逐材料找输出"整段被跳过 ⇒ **几百张具体样板全部保留模板输出（铁板）**。
+        //    这正是 3.39/3.40 两轮实测的 `输出种类=1`（而且 3.40.0 新加的"替换未命中 WARN"也不会触发，
+        //    因为整段都没进）。现在改为**存在性驱动**：候选前缀 = 规则显式写的输出前缀 + 从每个模板输出槽的
+        //    矿辞名里剥掉模板材料名/首个大写字母得到的头；逐材料挑第一个"前缀+材料"在矿辞表里真实存在的。
+        java.util.LinkedHashSet<String> outPrefixCandidates = new java.util.LinkedHashSet<>();
         for (SmartWildcardState.Rule rule : state.rulesView()) {
             if (rule == null || rule.outMatcher == null || rule.outMatcher.isEmpty()) continue;
             String rulePrefix = matcherLiteralPrefix(rule.outMatcher);
             if (!rulePrefix.isEmpty()) {
-                outputPrefix = rulePrefix;
+                outPrefixCandidates.add(rulePrefix);
                 break;
             }
         }
-        if (outputPrefix == null) outputPrefix = templateOutputPrefix(templateOut, templateMaterial);
+        collectOutputPrefixCandidates(templateOut, templateMaterial, outPrefixCandidates);
+        if (outPrefixCandidates.isEmpty()) {
+            logNoOutputPrefixOnce(state, templateOut, templateMaterial);
+        }
 
         // 3) 逐材料实例化
         List<ItemStack> out = new ArrayList<>();
@@ -253,22 +262,150 @@ public final class SmartWildcardExpander {
                 skipped++;
                 continue;
             }
+            // 输出：在候选前缀里挑第一个"前缀+材料"真实存在的矿辞（plate + Copper ⇒ plateCopper）
             ItemStack outStack = null;
-            if (outputPrefix != null && !outputPrefix.isEmpty()) {
-                outStack = firstOreStack(outputPrefix + material);
-                if (outStack == null) {
-                    skipped++;
-                    continue;
+            String chosenPrefix = null;
+            for (String candidatePrefix : outPrefixCandidates) {
+                ItemStack candidate = firstOreStack(candidatePrefix + material);
+                if (candidate != null) {
+                    chosenPrefix = candidatePrefix;
+                    outStack = candidate;
+                    break;
                 }
             }
-            List<String> tokens = candidateTokens(material, inputPrefix, outputPrefix, inStack, outStack);
+            if (outStack == null) {
+                skipped++;
+                continue;
+            }
+            List<String> tokens = candidateTokens(material, inputPrefix, chosenPrefix, inStack, outStack);
             if (!state.acceptsCandidate(tokens)) continue;
 
-            ItemStack concrete = buildConcretePattern(wildcard, templateIn, templateOut, state, material, outputPrefix,
+            ItemStack concrete = buildConcretePattern(wildcard, templateIn, templateOut, state, material, chosenPrefix,
                 inStack, outStack);
-            if (concrete != null) out.add(concrete);
+            if (concrete != null) {
+                out.add(concrete);
+                logSampleOnce(material, chosenPrefix, inStack, outStack, concrete);
+            }
         }
         return new Result(out, materials.size(), skipped, truncated, null);
+    }
+
+    /**
+     * 收集"随材料变化"的输出前缀候选（3.41.0）。
+     *
+     * <p>两条来源，按顺序加入（{@link java.util.LinkedHashSet} 保序、自动去重）：
+     * <ol>
+     * <li>矿辞名以**模板材料名**结尾 ⇒ 头即前缀（{@code plateIron} → {@code plate}）；</li>
+     * <li>兜底：按"第一个大写字母"切（{@code plateAnyIron} → {@code plate}），
+     * 这一步专门覆盖 GT 的 {@code *Any*} 双矿辞名，否则材料名会被算成 {@code AnyIron}。</li>
+     * </ol>
+     */
+    private static void collectOutputPrefixCandidates(NBTTagList templateOut, String templateMaterial,
+        java.util.Set<String> out) {
+        for (int i = 0; i < templateOut.tagCount(); i++) {
+            ItemStack stack = ItemStack.loadItemStackFromNBT(templateOut.getCompoundTagAt(i));
+            if (stack == null || stack.getItem() == null) continue;
+            int[] ids;
+            try {
+                ids = OreDictionary.getOreIDs(stack);
+            } catch (Throwable t) {
+                MyMod.LOG.warn("[AE2QoL] 读取模板输出槽的矿辞失败（该槽跳过）", t);
+                continue;
+            }
+            if (ids == null) continue;
+            for (int id : ids) {
+                String ore = OreDictionary.getOreName(id);
+                if (ore == null || ore.isEmpty()) continue;
+                if (templateMaterial != null && !templateMaterial.isEmpty()
+                    && ore.length() > templateMaterial.length()
+                    && ore.regionMatches(
+                        true,
+                        ore.length() - templateMaterial.length(),
+                        templateMaterial,
+                        0,
+                        templateMaterial.length())) {
+                    String head = ore.substring(0, ore.length() - templateMaterial.length());
+                    if (!head.isEmpty()) out.add(head);
+                }
+                int cut = 0;
+                while (cut < ore.length() && !Character.isUpperCase(ore.charAt(cut))) cut++;
+                if (cut > 0 && cut < ore.length()) out.add(ore.substring(0, cut));
+            }
+        }
+    }
+
+    /** 候选前缀为空时明确留痕（此时产不出任何具体样板，机器会退回"只认模板那一张"）。 */
+    private static final java.util.Set<String> NO_PREFIX_LOGGED = Collections
+        .synchronizedSet(new LinkedHashSet<String>());
+
+    private static void logNoOutputPrefixOnce(SmartWildcardState state, NBTTagList templateOut,
+        String templateMaterial) {
+        try {
+            StringBuilder oreNames = new StringBuilder();
+            for (int i = 0; i < templateOut.tagCount(); i++) {
+                ItemStack stack = ItemStack.loadItemStackFromNBT(templateOut.getCompoundTagAt(i));
+                if (stack == null || stack.getItem() == null) continue;
+                int[] ids = OreDictionary.getOreIDs(stack);
+                if (ids == null) continue;
+                for (int id : ids) {
+                    if (oreNames.length() > 0) oreNames.append(", ");
+                    oreNames.append(OreDictionary.getOreName(id));
+                }
+            }
+            String key = "noprefix|" + templateMaterial + "|" + oreNames;
+            if (!NO_PREFIX_LOGGED.add(key)) return;
+            if (NO_PREFIX_LOGGED.size() > 64) NO_PREFIX_LOGGED.clear();
+            MyMod.LOG.warn(
+                "[AE2QoL] 展开时找不到任何可用的输出前缀（本机将只认模板那一张）：模板材料='{}' 模板输出矿辞=[{}] 规则数={}",
+                templateMaterial,
+                oreNames,
+                state == null ? -1 : state.rules.size());
+        } catch (Throwable t) {
+            // 诊断失败不刷屏
+        }
+    }
+
+    /** 展开样本诊断（每 JVM 只打 3 条）：直接给出"材料 → 选中的前缀 → 产出输出"。 */
+    private static final java.util.concurrent.atomic.AtomicInteger SAMPLE_LOGGED =
+        new java.util.concurrent.atomic.AtomicInteger();
+
+    private static void logSampleOnce(String material, String chosenPrefix, ItemStack inStack, ItemStack outStack,
+        ItemStack concrete) {
+        try {
+            if (SAMPLE_LOGGED.getAndIncrement() >= 3) return;
+            MyMod.LOG.info(
+                "[AE2QoL] 展开样本：material={} prefix={} in={} out={} 产出out={}",
+                material,
+                chosenPrefix,
+                displayNameOf(inStack),
+                displayNameOf(outStack),
+                firstOutputNameOf(concrete));
+        } catch (Throwable t) {
+            // 诊断失败不刷屏
+        }
+    }
+
+    private static String displayNameOf(ItemStack stack) {
+        try {
+            return stack == null || stack.getItem() == null ? "null"
+                : String.valueOf(stack.getItem()
+                    .getItemStackDisplayName(stack));
+        } catch (Throwable t) {
+            return "?";
+        }
+    }
+
+    /** 读具体样板自己的 out 列表第一个物品名（验证改写是否真的落进 NBT）。 */
+    private static String firstOutputNameOf(ItemStack concrete) {
+        try {
+            NBTTagCompound tag = concrete == null ? null : concrete.getTagCompound();
+            if (tag == null) return "no-tag";
+            NBTTagList outList = tag.getTagList("out", Constants.NBT.TAG_COMPOUND);
+            if (outList.tagCount() == 0) return "out-empty";
+            return displayNameOf(ItemStack.loadItemStackFromNBT(outList.getCompoundTagAt(0)));
+        } catch (Throwable t) {
+            return "?";
+        }
     }
 
     /**
@@ -467,7 +604,22 @@ public final class SmartWildcardExpander {
             NBTTagList templateIn = tag.getTagList("in", Constants.NBT.TAG_COMPOUND);
             NBTTagList templateOut = tag.getTagList("out", Constants.NBT.TAG_COMPOUND);
             if (templateIn.tagCount() == 0 || templateOut.tagCount() == 0) return null;
-            return templateOutputPrefix(templateOut, templateMaterialName(templateIn, state));
+            // 3.41.0：与展开时同一套"存在性驱动"候选（旧实现走 templateOutputPrefix，
+            // 遇到 GT 的 plateAnyIron 会返回 null ⇒ 窗口输出行空白，即用户报的"输出不填充"）
+            java.util.LinkedHashSet<String> candidates = new java.util.LinkedHashSet<>();
+            for (SmartWildcardState.Rule rule : state.rulesView()) {
+                if (rule == null || rule.outMatcher == null || rule.outMatcher.isEmpty()) continue;
+                String rulePrefix = matcherLiteralPrefix(rule.outMatcher);
+                if (!rulePrefix.isEmpty()) {
+                    candidates.add(rulePrefix);
+                    break;
+                }
+            }
+            collectOutputPrefixCandidates(templateOut, templateMaterialName(templateIn, state), candidates);
+            for (String candidate : candidates) {
+                if (candidate != null && !candidate.isEmpty()) return candidate;
+            }
+            return null;
         } catch (Throwable t) {
             MyMod.LOG.warn("[AE2QoL] 推导输出侧显示前缀失败（输出行留空）", t);
             return null;

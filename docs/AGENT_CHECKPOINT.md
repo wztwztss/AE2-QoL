@@ -13,9 +13,11 @@
 |---|---|
 |工具平台|DeepSeek Harness（DSH Web GUI）|
 |模型信息|DeepSeek-V4.1-Flash|
-|工作分支|master；本轮起点 `5408941`（3.39.0-diag 交付并部署），工作树干净、与 origin/master 同步（未推送）|
-|启动时间|2026-09-27（Asia/Shanghai，缺陷修复轮：3.40.0，紧接 3.39.0-diag 实测）|
-|本次会话目标|**修「几百张具体样板全部输出同一块铁板」= 3.40.0（本轮为整条通配样板链的真凶）**。用户按上轮要求用 3.39.0-diag 在三台机器各复现一次后退出游戏。日志一击命中：三族注册行全部 **`输出种类=1 样本=[铁板, 铁板, 铁板]`**，AE 回读 **`AE 合成表条目=388；抽样 3 条命中 3 条`** ⇒ AE **并没有挡我们**（上轮怀疑的"注册侧/网格"方向被排除），是**我们的数据错**。**根因 I**：`SmartWildcardExpander.buildConcretePattern` 替换输出槽的判据写成了 `oreInfo(模板输出).material.equals(候选材料)` —— 模板输出的材料名恒为 `Iron`，于是**只有候选恰好是铁时才替换**，其余几百张**全部沿用模板输出（铁板）**；这也解释了 GT 样板仓"能看到全部样板、能下单但不合成"（AE 按各材料算计划、机器收到的却全是铁板 ⇒ `insertItemsAndFluids` 走不通 ⇒ GT 记 `SOMETHING_STUCK` 返回 false ⇒ 任务卡住）。修复：新增 `matchesOutputPrefix(stack, prefix)`（该槽的某个矿辞名以本规则输出前缀开头，如 `plate` 命中 `plateIron`/`plateAnyIron`）只替换第一个命中槽、副产物保持模板原样、未命中限频 WARN（不静默）；3.39.0-diag 的诊断保留但改为只在限频触发时才算。产物 `build/libs/AE2-QoL-3.40.0.jar`（1,764,914 B，SHA256 `D4EAC917…`）。**待实测 4 项**（CHANGELOG 记录 (42) 第四节）|
+|工作分支|master；本轮起点 `6e5cf04`（3.40.0 交付并部署），工作树干净、与 origin/master 同步（未推送）|
+|启动时间|2026-09-27（Asia/Shanghai，缺陷修复轮：3.41.0，紧接 3.40.0 "完全没修"反馈）|
+|本次会话目标|**修 `输出种类=1` 的真正上游 = 3.41.0**。用户实测 3.40.0 报"完全没修，一模一样"。日志取证：**加载的确实是 3.40.0**、`输出种类=1` 依旧，而 3.40.0 新加的"输出槽没找到可替换项"WARN **一次都没出现（计数 0）**——这条反证说明**那段代码根本没执行**：替换逻辑整体在 `if (outStack != null)` 内，而 `outStack` 只在 `outputPrefix` 非空时求值。**根因 J**：`templateOutputPrefix` 用"模板输出**材料名** == 模板输入材料名"选前缀，而 GT 板材**同时注册 `plateIron` 与 `plateAnyIron`**，取到后者时材料名被解析成 `AnyIron` ⇒ 判等失败 ⇒ 返回 null ⇒ `outputPrefix` 空 ⇒ 输出永不改写 ⇒ 几百张全保留模板输出（铁板）。修复：`collectOutputPrefixCandidates` 从模板输出槽**全部矿辞名**收集前缀候选（`plateIron`→`plate`，`plateAnyIron` 兜底切 `plate`），逐材料挑**第一个"前缀+材料"在矿辞表真实存在**的（`plateAnyCopper` 不存在则回落 `plateCopper`）；候选为空时 `logNoOutputPrefixOnce` WARN；`displayOutputPrefix`（窗口输出行）改用同一套；新增 `logSampleOnce` 每 JVM 3 条 `展开样本：material=… prefix=… in=… out=… 产出out=…` 自证。产物 `build/libs/AE2-QoL-3.41.0.jar`（1,766,805 B，SHA256 `FCA5FECA…`）。**待实测 4 项**（CHANGELOG 记录 (43) 第四节）|
+|上一轮（历史）|工具：DeepSeek Harness｜模型：DeepSeek-V4.1-Flash：3.40.0（输出槽替换判据），`6e5cf04` 已部署；用户实测"完全没修"。|
+|上一轮会话目标（3.40.0 轮）|**修「几百张具体样板全部输出同一块铁板」= 3.40.0**。用户按上轮要求用 3.39.0-diag 在三台机器各复现一次后退出游戏。日志一击命中：三族注册行全部 **`输出种类=1 样本=[铁板, 铁板, 铁板]`**，AE 回读 **`AE 合成表条目=388；抽样 3 条命中 3 条`** ⇒ AE **并没有挡我们**（上轮怀疑的"注册侧/网格"方向被排除），是**我们的数据错**。**根因 I**：`SmartWildcardExpander.buildConcretePattern` 替换输出槽的判据写成了 `oreInfo(模板输出).material.equals(候选材料)` —— 模板输出的材料名恒为 `Iron`，于是**只有候选恰好是铁时才替换**，其余几百张**全部沿用模板输出（铁板）**；这也解释了 GT 样板仓"能看到全部样板、能下单但不合成"（AE 按各材料算计划、机器收到的却全是铁板 ⇒ `insertItemsAndFluids` 走不通 ⇒ GT 记 `SOMETHING_STUCK` 返回 false ⇒ 任务卡住）。修复：新增 `matchesOutputPrefix(stack, prefix)`（该槽的某个矿辞名以本规则输出前缀开头，如 `plate` 命中 `plateIron`/`plateAnyIron`）只替换第一个命中槽、副产物保持模板原样、未命中限频 WARN（不静默）；3.39.0-diag 的诊断保留但改为只在限频触发时才算。产物 `build/libs/AE2-QoL-3.40.0.jar`（1,764,914 B，SHA256 `D4EAC917…`）。**待实测 4 项**（CHANGELOG 记录 (42) 第四节）|
 |上一轮（历史）|工具：DeepSeek Harness｜模型：DeepSeek-V4.1-Flash：3.39.0-diag（诊断包：输出种类数 + AE 合成表回读），`5408941` 已部署；用户复现后交付日志。|
 |上一轮会话目标（3.38.0 轮）|**修「两套通配模组互斥（都只剩一张）」= 3.38.0**。用户实测 3.37.0 后报"现在是都只能识别到一个，之前原版可以正常识别全部锭出板"。**先确认好消息**：3.37.0 日志 `produced=512 matched=4393`／`produced=396` ⇒ 我们自己的展开**已经成功**（3.35.0 矿辞前缀＋3.36.0 下标对齐＋3.37.0 匹配函数三处全生效）。**回归真因**：用户无意中跑出 A/B/A 对照 —— 3.35.0（我们总是 `ci.cancel()`）两边都只剩一张 → 3.36.0（我们展开失败⇒未接管）**原版恢复全部** → 3.37.0（展开修好⇒又接管）两边又都只剩一张 ⇒ **`CallbackInfo.cancel()` 是共享标志：我们 cancel 掉 `provideCrafting`，同机原版 WildcardPattern 的展开会被一并跳过**。3.36.0 那次"互不干扰"只是碰巧（因为没触发接管），机制并未修对。修复：GT/GTNL/AE2 ME 接口三处**只追加、永不 cancel**（去掉 `cancellable` 与全部 `ci.cancel()`；不再替对方注册普通槽位）；顺带修两个**从未打印过**的限频日志（哨兵 `Long.MIN_VALUE` ⇒ `now-last` 溢出成负 ⇒ 条件永不成立，与检查点记过的 `RowCache` 哨兵坑同类），初值改 `0L`。字节码核对：三个 mixin 的 `CallbackInfo.cancel` 次数**均为 0**。产物 `build/libs/AE2-QoL-3.38.0.jar`（1,759,116 B，SHA256 `4F80BEBD…`）。**待实测 4 项**（CHANGELOG 记录 (41) 第四节）|
 |上一轮（历史）|工具：DeepSeek Harness｜模型：DeepSeek-V4.1-Flash：3.37.0（通配匹配恒 false 的根因），`a6f911d` 已部署；用户实测后报"两套模组都只剩一张铁板"。|
@@ -42,6 +44,15 @@ GTNH 2.9.0-beta-3（Minecraft 1.7.10 Forge + Java 17/25）环境下的 AE2 附�
 ## 三、全局已完成清单
 
 > 按完成时间倒序排列，均标注产出文件路径。历史结论保留原貌，不等于本版验证结果。
+
+**3.41.0 交付（输出前缀改"存在性驱动" = `输出种类=1` 的真正上游，2026-09-27）**：3.40.0 实测"完全没修"驱动。
+日志反证：3.40.0 已加载、`输出种类=1` 依旧，而新版 WARN"输出槽没找到可替换项"计数 **0** ⇒ 那段代码从未执行
+（替换逻辑在 `if (outStack != null)` 内，而 `outStack` 需要 `outputPrefix` 非空）。根因 J：`templateOutputPrefix`
+用材料名判等，GT 板材的 `plateAnyIron` 使材料名解析成 `AnyIron` ⇒ 判等失败 ⇒ 前缀 null ⇒ 输出永不改写。
+修复：`collectOutputPrefixCandidates` 收集前缀候选（全部矿辞名 + 首个大写字母兜底）+ 逐材料按
+"前缀+材料是否真实存在"选择（`plateAnyCopper` 不存在则回落 `plateCopper`）；候选为空 WARN；窗口输出行同源修复；
+`logSampleOnce` 自证三行。构建 `BUILD SUCCESSFUL`（`EXIT=0`）；产物 `build/libs/AE2-QoL-3.41.0.jar`
+（1,766,805 B，SHA256 `FCA5FECA…`）。**待实测 4 项**（CHANGELOG (43)）。
 
 **3.40.0 交付（修「几百张具体样板全部输出同一块铁板」= 整条通配链的真凶，2026-09-27）**：3.39.0-diag 实测驱动。
 诊断日志一击命中：三族注册行全部 `输出种类=1 样本=[铁板,…]`；AE 回读 `AE 合成表条目=388；命中 3/3`
@@ -414,7 +425,14 @@ CHANGELOG/README 章节缺失（本轮未追写）；`CHANGELOG.md` 末尾与 `z
 > （`63153ed` / `d783448` / `223c8c5`），工作树干净。本节条目保留"待用户实测"性质——
 > **提交不等于游戏内验收通过**。
 
-### 4.1 3.40.0 待游戏内验收（2026-09-27，最新）
+### 4.1 3.41.0 待游戏内验收（2026-09-27，最新）
+
+- ① 日志出现 **3 条** `展开样本：material=… prefix=plate in=… out=… 产出out=…`，且三行的 `material/产出out` **各不相同**；
+- ② 注册行变成 **`输出种类=396`**（不再是 1）；
+- ③ AE 终端里各种板材可合成、可下单；GT 样板仓下单后能真正合成；
+- ④ 若出现 `展开时找不到任何可用的输出前缀`（WARN），把那行发我（它自带模板输出的全部矿辞名）。
+
+### 4.2 3.40.0 待游戏内验收（已被 3.41.0 覆盖，保留供追溯）
 
 - ① 日志注册行变成 **`输出种类=396`**（不再是 1），样本里能看到**不同材料**的板；
 - ② AE 终端里**各种板材都可合成、能下单**；
