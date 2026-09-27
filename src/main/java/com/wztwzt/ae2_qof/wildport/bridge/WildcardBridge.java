@@ -99,7 +99,9 @@ public final class WildcardBridge {
      * 写完 {@code writeAndBumpRevision} 并清展开器缓存，让机器侧立刻看到新配置。
      */
     public static boolean pullFromWild(ItemStack stack) {
-        if (stack == null || !SmartWildcardState.isSmartWildcard(stack)) return false;
+        // 3.32.0：判据改成「物品实例」而不是「已有我们的 NBT」—— 否则**全新样板**（只有界面键、我们的子树还没写）
+        // 会被提前挡掉，这正是"手动配好保存后机器识别不到"的一种成因。
+        if (stack == null || stack.getItem() != com.wztwzt.ae2_qof.CommonProxy.smartWildcardPattern) return false;
         try {
             SmartWildcardState current = SmartWildcardState.of(stack);
             SmartWildcardState next = new SmartWildcardState();

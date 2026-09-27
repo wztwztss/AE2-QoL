@@ -106,6 +106,18 @@ public final class SmartWildcardExpander {
      * @return 展开结果（永不返回 null；无结果时 {@link Result#reason} 说明原因）
      */
     public static Result expand(ItemStack wildcard, World world) {
+        if (wildcard != null && !SmartWildcardState.isSmartWildcard(wildcard)) {
+            // 3.32.0：**展开前懒同步** —— 这张样板若只有搬运界面的键（说明玩家在 Wild 窗口里配过、保存过），
+            // 而我们的子树还没写，就就地拉一次。用户实测"手动配好保存后机器识别不到" ⇒ 靠保存包那一步不可靠，
+            // 这里补一条**读路径上的兜底**（拉不到就照旧按"不是通配样板"处理，并记日志，不静默）。
+            try {
+                if (com.wztwzt.ae2_qof.wildport.bridge.WildcardBridge.pullFromWild(wildcard)) {
+                    MyMod.LOG.info("[AE2QoL] 展开前懒同步：已从 Wild 界面的键拉回我们的配置（该物品此前只有界面键）");
+                }
+            } catch (Throwable t) {
+                MyMod.LOG.warn("[AE2QoL] 展开前懒同步失败（按原逻辑继续）", t);
+            }
+        }
         if (wildcard == null || !SmartWildcardState.isSmartWildcard(wildcard)) {
             return new Result(new ArrayList<>(), 0, 0, false, "not-a-smart-wildcard");
         }

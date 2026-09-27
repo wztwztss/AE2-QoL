@@ -184,8 +184,18 @@ public class SmartWildcardRulesPacket implements IMessage {
                     }
                     // 3.23.0：MUI2 编辑器（PlayerInventoryGuiFactory）打开时容器是 MUI2 的 ModularContainer，
                     // 目标样板就是玩家手持的那张 ⇒ 直接写主手物品（同样是服务端权威写入 + 记日志）。
-                    ItemStack held = player.getCurrentEquippedItem();
-                    if (held == null || !SmartWildcardState.isSmartWildcard(held)) {
+                    // 3.32.0：**不要只看主手** —— Wild 窗口是 ModularUIContainer，打开时主手未必指着那张样板
+                    //（用户实测日志：通配样板写回失败：…主手也不是通配样板（container=ModularUIContainer））。
+                    // 改为**在背包里找**我们的通配样板；判据用物品实例（全新样板没有我们的 NBT，不能用 isSmartWildcard）。
+                    ItemStack held = null;
+                    for (ItemStack candidate : player.inventory.mainInventory) {
+                        if (candidate != null
+                            && candidate.getItem() == com.wztwzt.ae2_qof.CommonProxy.smartWildcardPattern) {
+                            held = candidate;
+                            break;
+                        }
+                    }
+                    if (held == null) {
                         MyMod.LOG.warn(
                             "[AE2QoL] 通配样板写回失败：既不是通配样板容器，主手也不是通配样板（container={}）",
                             player.openContainer == null ? "null"
