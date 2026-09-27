@@ -396,3 +396,7 @@ ae2_qof.wildcard.tip.non_consumed=Pattern carries %s non-consumed item(s)
 ae2_qof.wildcard.tip.cap=Per-pattern expansion cap: %s
 ae2_qof.wildcard.gui.rules_header=Current rules (press + in NEI to derive)
 ae2_qof.wildcard.gui.no_rules=No rules yet: open a recipe in NEI and press + to derive
+
+# ===== 3.23.0: Pattern generator =====
+item.ae2_qof.smart_pattern_generator.name=Pattern Generator
+ae2_qof.generator.tip=Right-click to open: bulk-generate concrete patterns from a GT RecipeMap (optional filters)

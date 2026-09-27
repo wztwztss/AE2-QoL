@@ -397,3 +397,7 @@ ae2_qof.wildcard.tip.non_consumed=样板自带不消耗物品 %s 种
 ae2_qof.wildcard.tip.cap=单张样板展开上限 %s
 ae2_qof.wildcard.gui.rules_header=本样板当前规则（在 NEI 里按加号可自动推导）
 ae2_qof.wildcard.gui.no_rules=还没有规则：在 NEI 里对着配方按加号即可自动推导
+
+# ===== 3.23.0：批量样板生成器 =====
+item.ae2_qof.smart_pattern_generator.name=批量样板生成器
+ae2_qof.generator.tip=右键打开：按 GT RecipeMap 批量生成具体样板（过滤器可选）
