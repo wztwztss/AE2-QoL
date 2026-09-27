@@ -217,6 +217,16 @@ public class SmartWildcardRulesPacket implements IMessage {
                     }
                     com.wztwzt.ae2_qof.wildcard.SmartWildcardExpander.clearCache();
                     player.inventory.markDirty();
+                    // 3.28.0：写回后把同一状态也推到 Wild 的键 —— Wild 窗口是**构建期**读 NBT 的，无法就地刷新，
+                    // 所以明确告诉玩家「关掉重开一次即可看到」，绝不静默（本项目铁则）。
+                    try {
+                        com.wztwzt.ae2_qof.wildport.bridge.WildcardBridge.pushToWild(held, state);
+                        player.addChatMessage(
+                            new net.minecraft.util.ChatComponentText(
+                                "\u00a7a[AE2QoL] \u5df2\u5199\u5165\u6837\u677f\uff1b\u82e5 Wild \u754c\u9762\u5f00\u7740\uff0c\u8bf7\u5173\u6389\u91cd\u5f00\u4e00\u6b21\u5373\u53ef\u770b\u5230"));
+                    } catch (Throwable t) {
+                        MyMod.LOG.warn("[AE2QoL] 写回后推送到 Wild 键失败（Wild 界面里的内容可能未同步）", t);
+                    }
                     MyMod.LOG.info(
                         "[AE2QoL] 通配样板写回成功（MUI2 编辑器）：player={} rules={} blacklist={} circuit={} revision={}",
                         player.getCommandSenderName(),
