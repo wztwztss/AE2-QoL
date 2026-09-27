@@ -154,6 +154,16 @@ public final class SmartWildcardExpander {
                     rule.matcher);
                 continue;
             }
+            // 没有通配符的规则 = 精确匹配（本来就只命中一个矿辞）：
+            // 它既推不出材料名（前缀就是整串），也不该参与材料交集 —— 否则会把整个展开推成空集，
+            // 这正是用户实测到的 reason=no-material-matched。这类槽位保持模板原样。
+            if (!hasWildcard(rule.matcher)) {
+                MyMod.LOG.info(
+                    "[AE2QoL] 规则为精确匹配（无通配符），该槽保持模板不变：slot={} matcher={}",
+                    rule.slot,
+                    rule.matcher);
+                continue;
+            }
             Set<String> ruleMaterials = new LinkedHashSet<>();
             String prefix = matcherLiteralPrefix(rule.matcher);
             for (String oreName : OreDictionary.getOreNames()) {
@@ -233,8 +243,10 @@ public final class SmartWildcardExpander {
                 NBTTagCompound slot = (NBTTagCompound) templateIn.getCompoundTagAt(i)
                     .copy();
                 SmartWildcardState.Rule rule = ruleForSlot(state, i);
+                // 精确匹配的规则不替换该槽（理由见 doExpand 第 1) 步的注释）
+                boolean exactRule = rule != null && !hasWildcard(rule.matcher);
                 long amount = rule == null ? readAmount(slot) : Math.max(1L, rule.amount);
-                ItemStack stack = rule == null ? ItemStack.loadItemStackFromNBT(slot) : inStack.copy();
+                ItemStack stack = (rule == null || exactRule) ? ItemStack.loadItemStackFromNBT(slot) : inStack.copy();
                 if (stack == null) continue;
                 stack.stackSize = (int) Math.min(Integer.MAX_VALUE, amount);
                 NBTTagCompound slotTag = new NBTTagCompound();
@@ -422,6 +434,11 @@ public final class SmartWildcardExpander {
         } catch (Throwable t) {
             return null;
         }
+    }
+
+    /** 匹配串里是否含通配符（{@code *} 或 {@code ?}）；没有则视为精确匹配。 */
+    private static boolean hasWildcard(String matcher) {
+        return matcher != null && (matcher.indexOf('*') >= 0 || matcher.indexOf('?') >= 0);
     }
 
     /** 匹配串里的字面前缀（`ingot*` → `ingot`；无通配符时按整串前缀处理）。 */
