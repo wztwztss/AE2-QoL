@@ -34,7 +34,8 @@ AE2 QoL 为 Applied Energistics 2（GTNH 版）提供一系列效率增强功能
 | 19 | GT 无线 EU 网格 | 输入/输出仓室无线传输 EU，跨维度供电 | [GT 无线 EU 网格](wireless_eu_grid.md) |
 | 20 | 自适应电网系统 | 数据棒配置网络，多仓室自动适配电压/电流/频率 | [自适应电网](adaptive_grid.md) |
 | 21 | 库存统计终端 | 集中查看/修改 AE2 发信器与库存覆盖板，免电 Nexus 无线连接 | [库存统计终端](stock_monitor_terminal.md) |
-| 22 | 智能通配样板 | 一张样板覆盖一整类配方：NEI 点加号自动推导规则、内置编程电路、预览里逐条排除 | [智能通配样板](smart_wildcard.md) |
+| 22 | 智能通配样板 | 一张样板覆盖一整类配方：9 行可手写规则表 + NEI 加号自动推导 + 内置编程电路 + 预览逐条排除 | [智能通配样板](smart_wildcard.md) |
+| 23 | 批量样板生成器 | 按 GT RecipeMap 批量产出具体样板（输入/输出黑名单、矿辞、NC 物品过滤，全量计数） | [批量样板生成器](pattern_generator.md) |
 
 ## 快速上手
 

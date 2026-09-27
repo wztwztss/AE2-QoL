@@ -34,7 +34,8 @@ AE2 QoL brings a set of quality-of-life enhancements to Applied Energistics 2 (G
 | 19 | GT Wireless EU Grid | Input/output hatches wirelessly transfer EU, cross-dimensional power | [Wireless EU Grid](wireless_eu_grid.md) |
 | 20 | Adaptive Energy Grid | Data Stick configures network; hatches auto-adapt V/A/frequency | [Adaptive Grid](adaptive_grid.md) |
 | 21 | Stock Monitor Terminal | Centrally view/edit AE2 level emitters and stock monitor covers, power-free with Nexus wireless | [Stock Monitor Terminal](stock_monitor_terminal.md) |
-| 22 | Smart Wildcard Pattern | One pattern covers a whole recipe class: derive rules with NEI's +, built-in circuit, per-candidate exclusions | [Smart Wildcard Pattern](smart_wildcard.md) |
+| 22 | Smart Wildcard Pattern | One pattern covers a whole recipe class: 9 hand-editable rule rows + NEI's + derivation + built-in circuit + per-candidate exclusions | [Smart Wildcard Pattern](smart_wildcard.md) |
+| 23 | Pattern Generator | Bulk-produce concrete patterns from a GT RecipeMap (input/output blacklists, ore names, NC items; full counts) | [Pattern Generator](pattern_generator.md) |
 
 ## Quick Start
 
