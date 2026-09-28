@@ -13,9 +13,10 @@
 |---|---|
 |工具平台|DeepSeek Harness（DSH Web GUI）|
 |模型信息|DeepSeek-V4.1-Flash|
-|工作分支|master；本轮起点 `6e5cf04`（3.20.0-fix37 交付并部署），工作树干净、与 origin/master 同步（未推送）|
-|启动时间|2026-09-27（Asia/Shanghai，缺陷修复轮：3.20.0-fix38，紧接 3.20.0-fix37 "完全没修"反馈）|
-|本次会话目标|**修 `输出种类=1` 的真正上游 = 3.20.0-fix38**。用户实测 3.20.0-fix37 报"完全没修，一模一样"。日志取证：**加载的确实是 3.20.0-fix37**、`输出种类=1` 依旧，而 3.20.0-fix37 新加的"输出槽没找到可替换项"WARN **一次都没出现（计数 0）**——这条反证说明**那段代码根本没执行**：替换逻辑整体在 `if (outStack != null)` 内，而 `outStack` 只在 `outputPrefix` 非空时求值。**根因 J**：`templateOutputPrefix` 用"模板输出**材料名** == 模板输入材料名"选前缀，而 GT 板材**同时注册 `plateIron` 与 `plateAnyIron`**，取到后者时材料名被解析成 `AnyIron` ⇒ 判等失败 ⇒ 返回 null ⇒ `outputPrefix` 空 ⇒ 输出永不改写 ⇒ 几百张全保留模板输出（铁板）。修复：`collectOutputPrefixCandidates` 从模板输出槽**全部矿辞名**收集前缀候选（`plateIron`→`plate`，`plateAnyIron` 兜底切 `plate`），逐材料挑**第一个"前缀+材料"在矿辞表真实存在**的（`plateAnyCopper` 不存在则回落 `plateCopper`）；候选为空时 `logNoOutputPrefixOnce` WARN；`displayOutputPrefix`（窗口输出行）改用同一套；新增 `logSampleOnce` 每 JVM 3 条 `展开样本：material=… prefix=… in=… out=… 产出out=…` 自证。产物 `build/libs/AE2-QoL-3.20.0-fix38.jar`（1,766,805 B，SHA256 `FCA5FECA…`）。**待实测 4 项**（CHANGELOG 记录 (43) 第四节）|
+|工作分支|master；本轮起点 `5f89641`（3.23.1 交付并部署），工作树干净、与 origin/master 同步（未推送）；本轮产出 **3.23.2**|
+|启动时间|2026-09-28（Asia/Shanghai，回退/删除轮：**3.23.2**，紧接用户对 3.23.1「复制方块的结果完全不对、箱子里的东西不能一起复制」的反馈）|
+|本次会话目标|**按用户要求先只读调查、再删除自研的「创造模式 Ctrl+中键复制方块完整 NBT」= 3.23.2**。用户反馈：「你这获取的东西完全不是正确的，箱子里放东西也不能一起复制，mc原版就有中键复制，只是让你加上nbt，这个功能好像原版就有，你调查一下，如果有的话就删除吧」。**只读取证结论**（证据 = RFG 反编译源码 + 实例 jar 字节码）：① **原版/Forge 1.7.10 没有这个能力**——`Minecraft.func_147112_ai()`（middleClickMouse）本体已被 Forge 掏空，只剩 `ForgeHooks.onPickBlock(...)` + 创造模式槽位同步；`ForgeHooks.onPickBlock` 无 Ctrl 分支、无 TileEntity 写入；`ItemBlock.placeBlockAt` 无 `BlockEntityTag` 还原；MC+Forge 共 1833 个 `.java` 里字符串 `BlockEntityTag` 出现 **0 次**（该机制 1.8 才有）；② **本整合包私货 SNL 已自带完整同款**——`MixinMinecraft.onBeforePickBlock`（`@Inject(method="func_147112_ai", at=HEAD, cancellable=true)`）→ `ClientUtils.onBeforePickBlock` 按 Ctrl 分流 → `onPickBlockNBTRange` → C2S `GetTileEntityNBTRequestPacket` → S2C `TileEntityNBTPacket.apply()` 生成带 `BlockEntityTag` + `(+NBT)` lore 的物品（**仅创造模式**入快捷栏），放置由 SNL 的 `MixinForgeHook.preOnPlaceItemIntoWorldRewrite` 写回；③ Hodgepodge `modernPickBlock=true` **只做生存模式选取、无 NBT**（排除）。**我们的实现为什么错**：Ctrl 分支挂在 Forge `InputEvent.MouseInputEvent`（**不可取消**）上，`return true` 只跳过自家 AE2 取物补发，**拦不住 SNL**，两条链路同时写同一个快捷栏格 ⇒ 用户看到的错乱。**处理**：`git revert --no-commit 5f89641 0bcc12d`（**-552 行**：删 `blockcopy/BlockCopyService.java`、`network/BlockCopyRequestPacket.java`、`mixin/mc/MixinItemBlockOnItemUse.java`、`ModNetwork` 包注册、`PickBlockCompatHandler` 的 Ctrl 分支；**保留 fix54 的 `ae2qol$sendPickBlockIfApplicable()`**），版本 `3.22.0-fix53` → **`3.23.2`**（`gradle.properties` + `mcmod.info` 两处条目），文档同 commit：CHANGELOG 记录 (50)、`MOD_MAP.md` 已废弃方案行、`mixin_notes.md` 已知风险第 9 条、README/README.en 本版变化。产物 `build/libs/AE2-QoL-3.23.2.jar`（**1,796,713 B**，SHA256 `54423272EA385938FF88EB21927A7442271D46FCCFC266E800FC1CA8BB027A8D`），清 `build\classes|tmp\mixins|libs` 后全量构建 `BUILD SUCCESSFUL`（无管道取码 `EXIT=0`），产物内三个类与 mixin json/refmap 里的相关条目**均已消失**。**待用户实测 4 项**（CHANGELOG (50) §七）。**部署待用户完全退出游戏后执行**。|
+|上一轮会话目标（3.20.0-fix38 轮，历史）|**修 `输出种类=1` 的真正上游 = 3.20.0-fix38**。用户实测 3.20.0-fix37 报"完全没修，一模一样"。日志取证：**加载的确实是 3.20.0-fix37**、`输出种类=1` 依旧，而 3.20.0-fix37 新加的"输出槽没找到可替换项"WARN **一次都没出现（计数 0）**——这条反证说明**那段代码根本没执行**：替换逻辑整体在 `if (outStack != null)` 内，而 `outStack` 只在 `outputPrefix` 非空时求值。**根因 J**：`templateOutputPrefix` 用"模板输出**材料名** == 模板输入材料名"选前缀，而 GT 板材**同时注册 `plateIron` 与 `plateAnyIron`**，取到后者时材料名被解析成 `AnyIron` ⇒ 判等失败 ⇒ 返回 null ⇒ `outputPrefix` 空 ⇒ 输出永不改写 ⇒ 几百张全保留模板输出（铁板）。修复：`collectOutputPrefixCandidates` 从模板输出槽**全部矿辞名**收集前缀候选（`plateIron`→`plate`，`plateAnyIron` 兜底切 `plate`），逐材料挑**第一个"前缀+材料"在矿辞表真实存在**的（`plateAnyCopper` 不存在则回落 `plateCopper`）；候选为空时 `logNoOutputPrefixOnce` WARN；`displayOutputPrefix`（窗口输出行）改用同一套；新增 `logSampleOnce` 每 JVM 3 条 `展开样本：material=… prefix=… in=… out=… 产出out=…` 自证。产物 `build/libs/AE2-QoL-3.20.0-fix38.jar`（1,766,805 B，SHA256 `FCA5FECA…`）。**待实测 4 项**（CHANGELOG 记录 (43) 第四节）|
 |上一轮（历史）|工具：DeepSeek Harness｜模型：DeepSeek-V4.1-Flash：3.20.0-fix37（输出槽替换判据），`6e5cf04` 已部署；用户实测"完全没修"。|
 |上一轮会话目标（3.20.0-fix37 轮）|**修「几百张具体样板全部输出同一块铁板」= 3.20.0-fix37**。用户按上轮要求用 3.20.0-fix36 在三台机器各复现一次后退出游戏。日志一击命中：三族注册行全部 **`输出种类=1 样本=[铁板, 铁板, 铁板]`**，AE 回读 **`AE 合成表条目=388；抽样 3 条命中 3 条`** ⇒ AE **并没有挡我们**（上轮怀疑的"注册侧/网格"方向被排除），是**我们的数据错**。**根因 I**：`SmartWildcardExpander.buildConcretePattern` 替换输出槽的判据写成了 `oreInfo(模板输出).material.equals(候选材料)` —— 模板输出的材料名恒为 `Iron`，于是**只有候选恰好是铁时才替换**，其余几百张**全部沿用模板输出（铁板）**；这也解释了 GT 样板仓"能看到全部样板、能下单但不合成"（AE 按各材料算计划、机器收到的却全是铁板 ⇒ `insertItemsAndFluids` 走不通 ⇒ GT 记 `SOMETHING_STUCK` 返回 false ⇒ 任务卡住）。修复：新增 `matchesOutputPrefix(stack, prefix)`（该槽的某个矿辞名以本规则输出前缀开头，如 `plate` 命中 `plateIron`/`plateAnyIron`）只替换第一个命中槽、副产物保持模板原样、未命中限频 WARN（不静默）；3.20.0-fix36 的诊断保留但改为只在限频触发时才算。产物 `build/libs/AE2-QoL-3.20.0-fix37.jar`（1,764,914 B，SHA256 `D4EAC917…`）。**待实测 4 项**（CHANGELOG 记录 (42) 第四节）|
 |上一轮（历史）|工具：DeepSeek Harness｜模型：DeepSeek-V4.1-Flash：3.20.0-fix36（诊断包：输出种类数 + AE 合成表回读），`5408941` 已部署；用户复现后交付日志。|
@@ -672,6 +673,15 @@ GT 2714「能下单但不合成」（注册进去的是预览 details，不是�
 
 ## 五、待办任务队列（优先级从高到低）
 
+### ★ 当前（3.23.2 轮，2026-09-28）
+
+- [x] 只读取证「原版/整合包是否已有带 NBT 的中键取物」⇒ **整合包 SNL 自带**（详见 CHANGELOG 记录 (50)、`docs/mixin_notes.md` 已知风险第 9 条）。
+- [x] `git revert` 删除 3.23.0/3.23.1 自研实现（-552 行），**保留 fix54 的 AE2 取物补发**；版本 → `3.23.2`；全量构建 + 产物核对通过。
+- [ ] **部署 3.23.2 到 `GT_New_Horizons_2.9.0-beta-3_Java_17-26` 实例**（等用户完全退出游戏；按 skill 3.3 五步流程）。
+- [ ] **待用户实测 4 项**：① 创造模式 Ctrl+中键点"装了东西的箱子" ⇒ 物品 lore 多 `(+NBT)` 一行；② 放下 ⇒ 内容原样回来（SNL 写回）；③ 普通中键行为不变（远程取物、**无** NBT）；④ 生存模式 fix54 的 AE2 取物补发仍正常（弹「要合成多少个」）。
+- [ ] **文档债（本轮未清，如实登记）**：fix44–fix53（对照表 / 中文输入对话框 / UI 修整 / Wild 重开）与 3.23.0/3.23.1 **没有**逐条 CHANGELOG 记录，README 也停在 fix43 之前；需要时单独一轮补齐。
+- [ ] 未推送：`git push` 待用户指示。
+
 ### ★ 当前主线：v7 材质接入（fix45/fix46，已提交，待实测）
 
 **已完成**
@@ -854,6 +864,16 @@ PatternUploadTarget.java、PatternRecipeMatcher.java、PatternRouteKey.java、Pa
 ---
 
 ## 九、历史会话操作日志
+
+### 2026-09-28 · 3.23.2：删除自研「Ctrl+中键复制方块 NBT」（整合包 SNL 已自带同款）
+
+- 工具平台：DeepSeek Harness（DSH Web GUI）｜模型：DeepSeek-V4.1-Flash
+- 流程：加载 skill `ae2qol-workflow` → 只读取证（RFG 反编译源码 / 实例 272 个 jar 逐类扫常量池 / `javap -v -p -c`）→ `ask_user_question` 5 项拍板（删干净 / 版本 3.23.2 / 用 `git revert` / 构建提交后待用户退游戏再部署 / 写坑位记录）→ 实施 → 构建 → 产物核对 → 文档同步 → 提交。
+- 关键取证手段与教训：
+  1. **`findstr` 扫 jar 无效**（jar 条目是 deflate 压缩，常量池字符串根本搜不到）——本轮先据此得出"没有任何 jar 引用 `BlockEntityTag`"的**错误**结论；改用 `System.IO.Compression.ZipFile` 逐条解压 `.class` 后按 ASCII 找字符串，才拿到正确结果（SNL + Hodgepodge 命中）。
+  2. 判断"谁注入了哪个方法"：`javap -v` 看 `@Inject(method=[...], at=..., cancellable=...)` 的注解常量池（SNL 用的是 **SRG 名 `func_147112_ai`**），再结合 `config/hodgepodge.cfg` 的开关；**不要**只凭"原版应该有"的直觉。
+  3. 原版基线取证：把 `build/rfg/mcp_patched_ated_minecraft-sources.jar` 解到**临时目录**（**绝不落在工作区根目录**，坑位 #15）后再 grep；结论是 `BlockEntityTag` 全树 0 次。
+- 结论与产物：见「一、当前会话元数据」的「本次会话目标」行与 CHANGELOG 记录 (50)。
 
 ### 2026-09-25（续） · 三问题实测回填 + 问题 1 根因查明 + 诊断构建
 

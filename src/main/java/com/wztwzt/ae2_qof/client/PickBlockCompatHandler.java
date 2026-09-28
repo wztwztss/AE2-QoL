@@ -75,57 +75,12 @@ public final class PickBlockCompatHandler {
             this.middleDown = down;
             if (!down) return; // 只处理"按下"那一瞬间
 
-            // 3.22.0-feat1：创造模式 Ctrl+中键 = 复制方块完整 NBT（独占；普通中键仍走原来的取物补发）
-            if (ae2qol$tryCopyBlockWithNbt()) return;
-
             ae2qol$sendPickBlockIfApplicable();
         } catch (Throwable t) {
             if (!warnLogged) {
                 warnLogged = true;
                 MyMod.LOG.warn("[AE2QoL] pick-block compat hook failed: {}", t.toString());
             }
-        }
-    }
-
-    /**
-     * 创造模式 Ctrl+中键：请求服务端复制"带完整 NBT 的方块物品"（3.22.0-feat1）。
-     *
-     * <p>为什么在这里做：本整合包的 SNL 在 {@code Minecraft.middleClickMouse()} HEAD 注入并 cancel，
-     * 普通中键取物已被它接管；本类本来就是"另取触发点"（Forge {@code MouseInputEvent}）的落点，
-     * Ctrl+中键在这里优先判断最省事，也不必与 SNL 抢同一个注入点。
-     *
-     * @return true 表示本次中键已被本功能消费（不再走取物补发）
-     */
-    private boolean ae2qol$tryCopyBlockWithNbt() {
-        try {
-            final Minecraft mc = Minecraft.getMinecraft();
-            if (mc == null || mc.thePlayer == null) return false;
-            if (!mc.thePlayer.capabilities.isCreativeMode) return false; // 仅创造模式
-            if (!org.lwjgl.input.Keyboard.isKeyDown(org.lwjgl.input.Keyboard.KEY_LCONTROL)
-                && !org.lwjgl.input.Keyboard.isKeyDown(org.lwjgl.input.Keyboard.KEY_RCONTROL)) {
-                return false;
-            }
-            final net.minecraft.util.MovingObjectPosition hit = mc.objectMouseOver;
-            if (hit == null
-                || hit.typeOfHit != net.minecraft.util.MovingObjectPosition.MovingObjectType.BLOCK) {
-                return false;
-            }
-            com.wztwzt.ae2_qof.network.ModNetwork.CHANNEL.sendToServer(
-                new com.wztwzt.ae2_qof.network.BlockCopyRequestPacket(
-                    mc.thePlayer.dimension,
-                    hit.blockX,
-                    hit.blockY,
-                    hit.blockZ));
-            MyMod.LOG.info(
-                "[AE2QoL] Ctrl+中键：已请求复制方块完整 NBT（dim={} @ {},{},{}）",
-                mc.thePlayer.dimension,
-                hit.blockX,
-                hit.blockY,
-                hit.blockZ);
-            return true;
-        } catch (Throwable t) {
-            MyMod.LOG.warn("[AE2QoL] Ctrl+中键复制方块请求失败（已记日志）", t);
-            return false;
         }
     }
 

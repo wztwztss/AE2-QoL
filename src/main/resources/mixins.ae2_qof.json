@@ -25,8 +25,7 @@
     "TileDriveMixin",
     "client.MixinTextureMap",
     "ph.MixinPatternDualInputHatchAccess",
-    "ph.MixinPatternDualInputHatchWildcard",
-    "mc.MixinItemBlockOnItemUse"
+    "ph.MixinPatternDualInputHatchWildcard"
   ],
   "client": [
     "nei.MixinRecipeHandlerRef",

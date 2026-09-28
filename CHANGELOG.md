@@ -34,7 +34,87 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
-## 工作区决策记录 2026-09-27 (49) - **3.22.0-fix45：把两个参考模组的 lang 条目并入本模组（删掉它们后界面不再出现生键名）**
+## 工作区决策记录 2026-09-28 (50) - **3.23.2：删除 3.23.0/3.23.1 自研「Ctrl+中键复制方块完整 NBT」——整合包 SNL 已自带同款且更完整**
+
+### 一、用户诉求与实测现象
+- 起因（3.23.0 需求）：创造模式下 Ctrl+中键复制方块**完整 NBT**（含方块全部数据）。
+- 3.23.1 交付后的用户反馈：**「你这获取的东西完全不是正确的，箱子里放东西也不能一起复制，mc原版就有中键复制，
+  只是让你加上nbt，这个功能好像原版就有，你调查一下，如果有的话就删除吧」**。
+
+### 二、只读取证：这个能力**整合包早已自带**，而原版/Forge 1.7.10 **从来没有**
+1. **原版/Forge 1.7.10 没有带 NBT 的中键取物**（证据 = RFG 反编译源码 + 全树字符串扫描）：
+   - `Minecraft.func_147112_ai()`（= `middleClickMouse`，`build/rfg/mcp_patched_ated_minecraft-sources.jar`
+     解出的 `net/minecraft/client/Minecraft.java` 第 2441–2456 行）：方法体**已被 Forge 掏空**，只剩
+     `ForgeHooks.onPickBlock(...)` 调用 + 创造模式槽位同步，**没有任何 Ctrl/NBT 分支**；
+   - `net/minecraftforge/common/ForgeHooks.java` 第 219–277 行 `onPickBlock(...)`：只做 `block.getPickBlock()`
+     + 快捷栏查重 + 创造模式塞空格，**无 Ctrl 判断、无 TileEntity 写入**；
+   - `net/minecraft/item/ItemBlock.java` 第 229–244 行 `placeBlockAt(...)`：**没有 `BlockEntityTag` 还原**
+     （该机制 1.8 才引入）；
+   - 全树扫描：MC+Forge 共 **1833 个 `.java`**（含 `net/minecraftforge`），字符串 `BlockEntityTag` 出现 **0 次**。
+2. **本整合包由私货 SNL 自带完整同款**（`【私货】sciencenotleisure-0.2.7-pre3-dev-290.37+082483e468.jar`，
+   证据 = 实例 jar 字节码 `javap -v -p -c`）：
+   - `com/science/gtnl/mixins/early/minecraft/MixinMinecraft.onBeforePickBlock`：
+     `@Inject(method=["func_147112_ai"], at=HEAD, cancellable=true)` → 调
+     `ClientUtils.onBeforePickBlock(player, world, false)`，返回 true 就 `ci.cancel()`（**中键整个归它**）；
+   - `ClientUtils.onBeforePickBlock`：`Keyboard.isKeyDown(29)` 或 `isKeyDown(157)`（左右 Ctrl）→
+     **`onPickBlockNBTRange(player, world, 1000.0D, ·)`**；否则 → `onPickBlockRange(...)`（远程取物、**无** NBT）；
+   - `onPickBlockNBTRange` → C2S `GetTileEntityNBTRequestPacket(x,y,z,blockID,blockMeta)` → 服务端读该坐标
+     TileEntity 并 `writeToNBT` → S2C `TileEntityNBTPacket.apply()`：`new ItemStack(Block.getBlockById(id),1,meta)`
+     + setTag `{BlockEntityTag:<TE 完整 NBT>, display:{Lore:["§5§o(+NBT)"]}}`，且**仅创造模式**
+     （`capabilities.field_75098_d`）经 `ItemUtils.placeItemInHotbar(...)` 进快捷栏；
+   - 放置写回：`com/science/gtnl/mixins/early/forge/MixinForgeHook.preOnPlaceItemIntoWorldRewrite`
+     （改写 `ForgeHooks.onPlaceItemIntoWorld`）在放置成功后把 `BlockEntityTag` 写进新 TE（补 x/y/z）
+     —— 等于把 1.8 的 `ItemBlock.placeBlockAt` 行为搬到 ForgeHooks。
+   ⇒ **创造模式 Ctrl+中键 = 1000 格远程取物 + 容器/机器的全部数据**（物品带 `(+NBT)` 一行），放下即还原。
+3. **排除干扰项**：Hodgepodge 的 `MixinForgeHooks_ModernPickBlock`（`config/hodgepodge.cfg` 第 1359–1360 行
+   `B:modernPickBlock=true`）**只做生存模式快捷栏选取**，字节码里**没有任何 NBT 写入** ⇒ 与本需求无关。
+
+### 三、我们的实现为什么"完全不对"（根因）
+`client/PickBlockCompatHandler` 的 Ctrl 分支挂在 Forge `InputEvent.MouseInputEvent` 上，而**该事件不可取消**：
+第 79 行的 `return true` 只跳过**自家**的 AE2 取物补发，**拦不住** SNL 的 `middleClickMouse`。于是 Ctrl+中键时
+两条链路**同时写同一个快捷栏格**：SNL 给的是正确的 `BlockEntityTag` 物品，我们给的是只有自家 mixin 认得的
+`ae2qol_blockcopy` 死键物品（mixin 一旦未生效，放下就是空箱子）⇒ 用户看到「拿到的东西完全不对」
+「箱子里的东西没带过来」。
+
+### 四、修法（整体删除，不留半截功能）
+`git revert --no-commit 5f89641 0bcc12d` 撤掉两个功能提交（`0bcc12d` 3.23.0、`5f89641` 3.23.1），**-552 行**：
+- 整体删除：`blockcopy/BlockCopyService.java`（266 行）、`network/BlockCopyRequestPacket.java`（131 行）、
+  `mixin/mc/MixinItemBlockOnItemUse.java`（98 行）；
+- `src/main/resources/mixins.ae2_qof.json`：移除 `"mc.MixinItemBlockOnItemUse"`；
+- `network/ModNetwork.java`：移除 `BlockCopyRequestPacket` 的 C2S 注册（-7 行）；
+- `client/PickBlockCompatHandler.java`：移除 `ae2qol$tryCopyBlockWithNbt()` 与调用点（-45 行），
+  **保留 fix54 的 `ae2qol$sendPickBlockIfApplicable()`**（AE2 世界中键取物补发 = 独立需求，用户已验收通过）。
+- 本记录同时充当 3.23.0/3.23.1 的撤销记录：**这两个版本没有单独的 CHANGELOG 条目**（当时未写文档），
+  其内容随本次删除一并撤回，不再补记。
+
+### 五、防回归（已写进 `docs/mixin_notes.md` 已知风险第 9 条与 `docs/MOD_MAP.md` 已废弃方案行）
+- **本整合包「中键取物（含 NBT）」的主人是 SNL**：创造模式 Ctrl+中键已能满足「复制方块完整数据 + 放置还原」，
+  **不要再自研、也不要抢 `Minecraft.middleClickMouse` 的注入点**。
+- 判断"谁注入了哪个方法"用 `javap -v` 看 `@Inject(method=[...])` + 读 `config/*.cfg`；
+  **不要用 `findstr` 扫 jar**（jar 条目是 deflate 压缩，常量池字符串搜不到——本轮先据此得出了
+  "没有任何 jar 引用 BlockEntityTag"的**错误**结论，改用 `System.IO.Compression.ZipFile` 解压后按 ASCII
+  扫常量池才拿到正确结果）。
+
+### 六、验证与产物
+- 构建：清 `build\classes`、`build\tmp\mixins`、`build\libs` 后
+  `.\gradlew.bat build --offline -x spotlessJavaCheck -x spotlessCheck` ⇒ **`BUILD SUCCESSFUL`（无管道取码 `EXIT=0`）**；
+- 产物核对（`jar tf` + 解包到临时目录）：`blockcopy/BlockCopyService.class`、
+  `network/BlockCopyRequestPacket.class`、`mixin/mc/MixinItemBlockOnItemUse.class` **均已不在包内**；
+  包内 `mixins.ae2_qof.json` 与 `mixins.ae2_qof.refmap.json` 里**没有任何** `ItemBlock`/`MixinItemBlockOnItemUse` 残留；
+  仓库内（除本文档与 `MOD_MAP`/`mixin_notes` 的说明文字外）无 `BlockCopy|blockcopy` 残留；
+- 产物：`build/libs/AE2-QoL-3.23.2.jar`，**1,796,713 字节**，
+  SHA256 `54423272EA385938FF88EB21927A7442271D46FCCFC266E800FC1CA8BB027A8D`（版本号：`gradle.properties`
+  与 `mcmod.info` 两处条目同改 3.23.2）；
+- 部署：**待用户完全退出游戏后部署到 `GT_New_Horizons_2.9.0-beta-3_Java_17-26` 实例**
+  （按 skill 3.3 流程：确认进程退出 → 移出旧 jar 到 `_ae2qol_jar_backup` → 复制 → 比对 SHA256 → 确认 mods 内只剩一份）。
+
+### 七、待用户实测（4 项）
+1. 创造模式对**装了东西的箱子**按 **Ctrl+中键** ⇒ 快捷栏里出现该箱子物品，且物品 lore 多出 **`(+NBT)`** 一行；
+2. 把该物品**放下** ⇒ 箱子里的东西原样回来（SNL 的放置写回）；
+3. **普通中键（不按 Ctrl）**行为不变：仍是远程取物、**不带** NBT；
+4. **生存模式**下我们 fix54 的 AE2 取物补发仍正常（对"网络无存量 + 有样板"的方块按中键应弹「要合成多少个」）。
+
+
 
 ### 一、问题（用户实测）
 用户删除了参考模组 `WildcardPatternforGTNH` 与 `AE2PatternGen` 之后，通配窗口变成一片**生键名**

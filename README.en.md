@@ -4,7 +4,24 @@
 
 An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
-**Author: wztwzt · Current source version: 3.20.0-fix38 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.23.2 · Reference pack: GTNH 2.9.0-beta-3**
+
+## What's new in 3.23.2 (removed our own "Ctrl + middle-click copy block NBT" — the pack already ships it)
+
+- **The whole 3.23.0/3.23.1 implementation is gone** (`blockcopy/BlockCopyService`, `network/BlockCopyRequestPacket`,
+  `mixin/mc/MixinItemBlockOnItemUse`, its packet registration in `ModNetwork`, and the Ctrl branch in
+  `client/PickBlockCompatHandler`).
+- **Why**: vanilla/Forge 1.7.10 never had NBT-carrying pick block (`ForgeHooks.onPickBlock` has no Ctrl/NBT branch,
+  `ItemBlock.placeBlockAt` has no `BlockEntityTag` restore), but this pack's bundled **SNL** mod already implements it:
+  **Ctrl + middle-click** in creative = 1000-block remote pick of the block **with its complete NBT** (chests and other
+  containers included — the item gets a `(+NBT)` lore line) and the data is restored when you place it. Ours hung off
+  Forge `InputEvent.MouseInputEvent`, which **cannot be cancelled**, so it could not stop SNL and instead **fought it
+  for the same hotbar slot**, overwriting the correct result — exactly what the user reported ("what I get is completely
+  wrong, chest contents are not carried over").
+- **Kept**: the fix54 AE2 world pick-block resend in `PickBlockCompatHandler` (a separate, already-accepted feature).
+- Evidence (bytecode level) is in `CHANGELOG.md` record (50), `docs/mixin_notes.md` known-risk item 9, and the
+  deprecated-approach row in `docs/MOD_MAP.md`. **Bottom line: in this pack, middle-click picking (with NBT) belongs to
+  SNL — do not reimplement it and do not hook `Minecraft.middleClickMouse`.**
 
 This repository is for personal archival and is not currently offered for distribution. See [CREDITS.md](CREDITS.md) for attribution and licensing records. Feature descriptions are not a claim that every integration has passed in-game testing.
 

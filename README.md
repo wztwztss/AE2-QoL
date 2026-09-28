@@ -4,7 +4,21 @@
 
 为 **Minecraft 1.7.10 / GT New Horizons** 开发的 AE2 效率增强模组：NEI 样板上传、库存与合成状态提示、二合一终端、无线 AE 连接，以及 GT 仓室、电网与库存监控工具。
 
-**作者：wztwzt · 当前源码版本：3.20.0-fix43 · 对照整合包：GTNH 2.9.0-beta-3**
+**作者：wztwzt · 当前源码版本：3.23.2 · 对照整合包：GTNH 2.9.0-beta-3**
+
+## 本版变化：3.23.2（删除自研的「Ctrl+中键复制方块 NBT」—— 整合包 SNL 已自带同款）
+
+- **删除了 3.23.0/3.23.1 引入的整套实现**（`blockcopy/BlockCopyService`、`network/BlockCopyRequestPacket`、
+  `mixin/mc/MixinItemBlockOnItemUse`、`ModNetwork` 里的包注册、`client/PickBlockCompatHandler` 的 Ctrl 分支）。
+- **为什么删**：原版/Forge 1.7.10 **本来没有**带 NBT 的中键取物（`ForgeHooks.onPickBlock` 无 Ctrl/NBT 分支、
+  `ItemBlock.placeBlockAt` 无 `BlockEntityTag` 还原），但本整合包的**私货 SNL 已自带完整同款**——
+  创造模式 **Ctrl+中键** = 1000 格远程取物 + 方块（含箱子等容器）的**全部 NBT**，物品上会多一行 `(+NBT)`，
+  放下即还原。我们那套挂在 Forge `InputEvent.MouseInputEvent` 上、**该事件不可取消**，拦不住 SNL 却会
+  **抢同一个快捷栏格**，反而把正确结果顶掉 ⇒ 用户实测「拿到的东西完全不对、箱子里的东西没带过来」。
+- **保留** `PickBlockCompatHandler` 里 fix54 的 **AE2 世界中键取物补发**（独立需求，用户已验收通过）。
+- 证据（含字节码）见 `CHANGELOG.md` 记录 (50)、`docs/mixin_notes.md` 已知风险第 9 条、`docs/MOD_MAP.md`
+  的已废弃方案行。**结论：中键取物（含 NBT）在本整合包归 SNL，不要再自研、也不要抢它的注入点。**
+- （说明）本 README 未逐版记录 fix44–fix53（对照表 / 中文输入对话框 / UI 修整等），细节见 `CHANGELOG.md`。
 
 ## 本版变化：3.20.0-fix43（自绘界面的文本框加「改」按钮 —— 走原版输入框，中文可用）
 

@@ -145,6 +145,23 @@
    于是"普通流体元件能搬、多通道元件只搬物品"这种不对称很容易被误判成元件自身的问题。
    本模组用 fix51 的 `tickingRequest` RETURN 注入为无限磁盘补搬其余通道。
 
+9. **本整合包「中键取物（含 NBT）」的主人是 SNL，不要再自研也不要抢注入点（3.23.2 删除教训）**：
+   `【私货】sciencenotleisure` 的 `MixinMinecraft.onBeforePickBlock` 在 `Minecraft.func_147112_ai`
+   （= `middleClickMouse`，SRG 名）HEAD 注入并 `ci.cancel()`，它自己按 **Ctrl** 分流：
+   Ctrl 按下 → `ClientUtils.onPickBlockNBTRange(...)`（1000 格远程取物 + C2S `GetTileEntityNBTRequestPacket`
+   取服务端 TE 的**完整 NBT** → S2C `TileEntityNBTPacket.apply()` 生成带 `BlockEntityTag`
+   与 `(+NBT)` lore 的物品，**仅创造模式**入快捷栏），否则 → `onPickBlockRange(...)`（无 NBT）；
+   放置写回在 SNL 的 `MixinForgeHook.preOnPlaceItemIntoWorldRewrite`（改写 `ForgeHooks.onPlaceItemIntoWorld`）。
+   **原版/Forge 1.7.10 本身没有这个能力**：`ForgeHooks.onPickBlock` 无 Ctrl/NBT 分支，
+   `ItemBlock.placeBlockAt` 无 `BlockEntityTag` 还原，全树 `BlockEntityTag` 出现 0 次（1.8 才引入）；
+   Hodgepodge 的 `MixinForgeHooks_ModernPickBlock`（`config/hodgepodge.cfg` 的 `B:modernPickBlock=true`）
+   **只做生存模式快捷栏选取**，与 NBT 无关。
+   3.23.0/3.23.1 我们自研的那套（`mixin/mc/MixinItemBlockOnItemUse` + `blockcopy/*` + `BlockCopyRequestPacket`）
+   已在 **3.23.2 整体删除**：Forge `InputEvent.MouseInputEvent` **不可取消**，`return true` 只跳过自家逻辑、
+   拦不住 SNL，结果两条链路同时写同一个快捷栏格（用户实测「拿到的东西完全不对、箱子里的东西没带过来」）。
+   **取证方法备忘**：判断"谁注入了哪个方法"要看 `javap -v` 的 `@Inject(method=[...])` 与 `config/*.cfg`；
+   **不要用 `findstr` 扫 jar**（条目 deflate 压缩，字符串搜不到，会得出错误结论）。
+
 ---
 
 ## 按功能域汇总
