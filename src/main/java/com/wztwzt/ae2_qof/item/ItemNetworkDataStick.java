@@ -69,9 +69,9 @@ public class ItemNetworkDataStick extends Item {
     public static boolean hasData(ItemStack stack) {
         if (stack == null || !(stack.getItem() instanceof ItemNetworkDataStick)) return false;
         NBTTagCompound nbt = stack.getTagCompound();
-        boolean result = nbt != null && nbt.hasKey(NBT_OWNER) && nbt.hasKey(NBT_FREQUENCY);
-        LOG.debug("[AE2QoL] hasData: result={}", result);
-        return result;
+        // 3.23.2-fix1：这里原先有一行 LOG.debug("hasData: result={}")，而本方法在**热路径**上被高频调用
+        // （tooltip/渲染/右键判定，实测单个客户端会话刷了 4146 条），且它只是复述返回值、无诊断价值 ⇒ 删除。
+        return nbt != null && nbt.hasKey(NBT_OWNER) && nbt.hasKey(NBT_FREQUENCY);
     }
 
     public static UUID getOwner(ItemStack stack) {

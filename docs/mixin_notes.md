@@ -162,6 +162,20 @@
    **取证方法备忘**：判断"谁注入了哪个方法"要看 `javap -v` 的 `@Inject(method=[...])` 与 `config/*.cfg`；
    **不要用 `findstr` 扫 jar**（条目 deflate 压缩，字符串搜不到，会得出错误结论）。
 
+10. **专用服务器上"加载到客户端类"会直接抛错 —— 服务端方法里绝不能出现客户端类型（3.23.2-fix1 踩到）**：
+   Forge 的 `SideTransformer` 在 SERVER 侧拒绝加载 `@SideOnly(CLIENT)` 的类，报
+   `Attempted to load class <notch 名> for invalid side SERVER`（`GuiScreen` = `bdw`），外层表现为
+   `NoClassDefFoundError: net/minecraft/client/gui/GuiScreen`。
+   **触发点不是"类加载"而是"第一次执行到引用该类的指令"**（HotSpot 的校验是惰性的）——本轮异常栈因此指向
+   `getServerGuiElement` 里那条 `xxxWindow.createWindow(...)` 调用（**没有** `createWindow` 帧）。
+   ⇒ **规则**：`IGuiHandler.getServerGuiElement` 里**只准建"服务端安全"的容器**（原版 `Container`，或 MUI1 的
+   `ModularUIContainer` + 空 `ModularWindow`）；**窗口构建（`createWindow`）只能在 `getClientGuiElement` 里做**。
+   本仓踩坑实例：Wild 通配窗口 / 批量样板生成器两个搬运界面（MUI1）在服务端也建窗口，而窗口类里有
+   `Minecraft.getMinecraft().displayGuiScreen(new GuiTextInputDialog(...))`（fix43 的「改」按钮）⇒
+   专用服务器上右键**完全没反应**，单机却一切正常（CLIENT 侧不受 `SideTransformer` 约束）。
+   排查要点：**客户端日志一条错都没有**，必须看**服务端**日志才会出现上述 `NoClassDefFoundError`。
+   修法见 `merged/ServerSafeModularContainer`（3.23.2-fix1）。
+
 ---
 
 ## 按功能域汇总

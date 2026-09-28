@@ -34,6 +34,92 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-09-28 (52) - **3.23.2-fix1：修「专用服务器上右键打不开 Wild 窗口/批量生成器界面」（服务端加载到客户端类）**
+
+### 一、用户现象
+「智能通配样板和样板生成器，在服务器上无法打开 ui」。用户在**远程托管服务器**（`play.simpfun.cn:37395`）上
+手持这两个物品右键 ⇒ **完全没反应**；**单机正常**；同一服务器上**其它我们的界面都能打开**
+（库存统计终端 32107 / 自适应电网终端 / 覆盖板 GUI / 合并终端）。客户端版本与服务端**同为 3.23.2**
+（客户端那份 `【私货】AE2-QoL-3.23.2.jar` 与本仓 `build/libs/AE2-QoL-3.23.2.jar` **SHA256 一致**）。
+
+### 二、根因（服务端日志一击命中）
+```text
+[Server thread/WARN] [ae2_qof/]: [AE2QoL] 打开通配样板界面失败（shift=false）
+java.lang.NoClassDefFoundError: net/minecraft/client/gui/GuiScreen
+  at ...wildport.gui.WildcardGuiHandler.getServerGuiElement(WildcardGuiHandler.java:28)
+  at ...merged.MergedGuiHandler.delegateUi(MergedGuiHandler.java:106)
+  at cpw.mods.fml.common.network.NetworkRegistry.getRemoteGuiContainer(NetworkRegistry.java:243)
+  at cpw.mods.fml.common.network.internal.FMLNetworkHandler.openGui(FMLNetworkHandler.java:75)
+  at net.minecraft.entity.player.EntityPlayer.openGui(EntityPlayer.java:2209)
+  at ...wildcard.ItemSmartWildcardPattern.func_77659_a(ItemSmartWildcardPattern.java:189)
+Caused by: java.lang.RuntimeException: Attempted to load class bdw for invalid side SERVER
+  at cpw.mods.fml.common.asm.transformers.SideTransformer.transform(SideTransformer.java:50)
+```
+（生成器同理：`apgport.gui.GuiHandler.getServerGuiElement(GuiHandler.java:27)` ← `ItemSmartPatternGenerator.func_77659_a:62`。）
+
+两个搬运界面（MUI1：Wild 窗口 / 批量生成器）的 `getServerGuiElement` **也调用各自的 `createWindow(...)`**
+去构建完整窗口，而那些窗口类里含**客户端专用**代码（fix43 起「改」按钮＝`Minecraft.getMinecraft()
+.displayGuiScreen(new GuiTextInputDialog(...))`，`GuiTextInputDialog extends GuiScreen`）：
+`WildcardPatternWindow` 6 处、`CompositeWildcardPatternWindow` 4 处、`GuiPatternGen` 6 处、
+`GuiRecipePicker` 17 处、`GuiComboBox` 7 处。**专用服务器**上 Forge 的 `SideTransformer` 拒绝加载客户端类
+（`bdw` = `GuiScreen` 的 notch 名）⇒ 异常发生在 FML 取「服务端容器」那一步 ⇒ 容器取不到 ⇒
+**开窗包 `S2DOpenWindow` 根本不发** ⇒ 客户端「右键完全没反应」。
+**单机为什么正常**：单机是 CLIENT 侧，`SideTransformer` 不拦客户端类。
+**其它界面为什么正常**：它们走 MUI2（`com.cleanroommc.modularui`）或原版容器；这两个是我们**仅有**的 MUI1 界面。
+
+补充取证（用于确定改法）：
+- 触发点在**第一次执行到引用该类的指令**，不是"类加载"——异常栈因此指向 `getServerGuiElement` 里的
+  `createWindow` 调用而**没有** `createWindow` 帧（HotSpot 校验是惰性的）；
+- 这两个界面**零槽位**：`ItemSlot / SlotWidget / SlotGroup / PlayerInventory / addSlotToContainer`
+  在其 gui 包内计数为 **0**，MUI1 的 `ModularUIContainer` 构造器自身也不加背包槽（javap 实证）
+  ⇒ 服务端用「空窗口容器」与客户端完整窗口的**槽位集合一致**（都是空）；
+- 这两个界面**不使用 MUI1 同步**（零 `SyncHandler/SyncValue/syncManager`），跨端走自家通道 `_wild` / `_apg`
+  ⇒ 服务端不需要 MUI1 同步上下文；
+- MUI1 的 `ModularWindow` / `ModularWindow$Builder` / `UIBuildContext` / `ModularUIContainer`
+  类常量池里 `net/minecraft/client/` 引用数为 **0**（已扫）⇒ 服务端可安全加载；
+- **整合包自带先例**：GT 的 `gtPlusPlus/core/handler/GuiHandler.getServerGuiElement` 也只 `new ContainerXXX(...)`。
+
+### 三、修法（方案 A：服务端只建"空窗口容器"，窗口只在客户端建）
+1. 新增 `src/main/java/com/wztwzt/ae2_qof/merged/ServerSafeModularContainer.java`：
+   `slotless(player)` = `new ModularUIContainer(new ModularUIContext(new UIBuildContext(player), () -> {}),
+   ModularWindow.builder(176,166).build())`；异常记 WARN（含堆栈）并返回 null —— **不静默**，
+   以便区分"服务端没能建容器"与"包没发出去"。
+2. `wildport/gui/WildcardGuiHandler.getServerGuiElement`：两个 id 分支都改为只 `return ServerSafeModularContainer.slotless(player)`；
+   **不再调用** `WildcardPatternWindow.createWindow` / `CompositeWildcardPatternWindow.createWindow`。
+3. `apgport/gui/GuiHandler.getServerGuiElement`：`GUI_ID(101)` / `GUI_ID_STORAGE(102)` 同样处理；
+   顺手把每次右键都刷的两条 `[AE2PatternGen] …Side=SERVER/CLIENT` **INFO 降为 `FMLLog.fine`（DEBUG）**。
+4. **`getClientGuiElement` 一字未改**（客户端照旧构建完整窗口）；两个物品的右键入口未改
+   （`openGui` 本身是对的，问题在 handler 内部）；fix53 的「保存后重开」链路（`MessageReopenWildGui`
+   走同一条服务端 `openGui`）**自动一并修好**。
+5. 同 commit 顺带：`item/ItemNetworkDataStick.hasData(...)` 里那行热路径 `LOG.debug("hasData: result={}")`
+   **删除**（实测单个客户端会话刷 **4146** 条，只复述返回值、无诊断价值）。
+
+### 四、验证与产物
+- 构建：清 `build\classes|tmp\mixins|libs` 后 `.\gradlew.bat build --offline -x spotlessJavaCheck -x spotlessCheck`
+  ⇒ **`BUILD SUCCESSFUL`（无管道取码 `EXIT=0`）**；
+- **产物字节码核对**（解包到临时目录后 `javap -c`）：
+  `WildcardGuiHandler.getServerGuiElement` 只剩 `invokestatic ServerSafeModularContainer.slotless`；
+  `apgport GuiHandler.getServerGuiElement` 只剩 `FMLLog.fine` + `slotless`（**无** `createWindow`/`GuiPatternGen`）；
+  新类只引用 `ModularUIContext / UIBuildContext / ModularWindow.builder(II) / ModularWindow$Builder.build() /
+  ModularUIContainer`，**没有任何客户端类**；
+- 产物：`build/libs/AE2-QoL-3.23.2-fix1.jar`，**1,797,885 字节**，
+  SHA256 `FB5BBC5DAF05660CF0FFF7458A6212439D4CD421A4B5C9E2D085852D48A9501F`；
+- 版本号：`gradle.properties` / `mcmod.info`（两条目）→ `3.23.2-fix1`。
+
+### 五、待用户实测（**必须在服务器上**；本次只能部署到本地实例）
+1. 专用服务器上右键 **智能通配样板** ⇒ Wild 窗口能打开；右键 **批量样板生成器** ⇒ 生成器界面能打开；
+2. **服务端日志**不再出现 `NoClassDefFoundError: net/minecraft/client/gui/GuiScreen` /
+   `Attempted to load class bdw for invalid side SERVER`；
+3. 窗口内既有功能照常：Wild 的「改」→ 确认 → **能重开**；生成器里 `[对照表]` 选行 → 能回到生成器；
+4. 单机两个界面照常；库存统计终端 / 自适应电网 / 覆盖板 / 合并终端不受影响；
+5. 日志里 `[AE2QoL] hasData: result=…` 归零；`[AE2PatternGen] getServerGuiElement …` 不再出现在 INFO。
+
+### 六、风险与回退
+- 风险：服务端空窗口与客户端完整窗口若**槽位集合不同**会导致槽位错位 —— 已核实两边都是 **0 槽位**，风险低；
+- 回退：`git revert <本提交>`；或单独恢复 `WildcardGuiHandler` / `apgport/gui/GuiHandler` 的旧 `getServerGuiElement`；
+- 若第 1 条在服务器上仍失败，请把**服务端日志**再给一次：新代码会打
+  `[AE2QoL] 服务端无槽位容器创建失败：…`（那时改用"纯原版 `Container`"的 B 方案）。
+
 ## 工作区决策记录 2026-09-28 (51) - **文档轮（无代码变更）：Wireless Nexus 的许可是 LGPL-3.0 + 吞并可行性审计**
 
 ### 一、用户问题

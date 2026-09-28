@@ -15,7 +15,7 @@
 |模型信息|DeepSeek-V4.1-Flash|
 |工作分支|master；本轮起点 `5f89641`（3.23.1 交付并部署），工作树干净、与 origin/master 同步（未推送）；本轮产出 **3.23.2**|
 |启动时间|2026-09-28（Asia/Shanghai，回退/删除轮：**3.23.2**，紧接用户对 3.23.1「复制方块的结果完全不对、箱子里的东西不能一起复制」的反馈）|
-|本次会话目标|**按用户要求先只读调查、再删除自研的「创造模式 Ctrl+中键复制方块完整 NBT」= 3.23.2**。用户反馈：「你这获取的东西完全不是正确的，箱子里放东西也不能一起复制，mc原版就有中键复制，只是让你加上nbt，这个功能好像原版就有，你调查一下，如果有的话就删除吧」。**只读取证结论**（证据 = RFG 反编译源码 + 实例 jar 字节码）：① **原版/Forge 1.7.10 没有这个能力**——`Minecraft.func_147112_ai()`（middleClickMouse）本体已被 Forge 掏空，只剩 `ForgeHooks.onPickBlock(...)` + 创造模式槽位同步；`ForgeHooks.onPickBlock` 无 Ctrl 分支、无 TileEntity 写入；`ItemBlock.placeBlockAt` 无 `BlockEntityTag` 还原；MC+Forge 共 1833 个 `.java` 里字符串 `BlockEntityTag` 出现 **0 次**（该机制 1.8 才有）；② **本整合包私货 SNL 已自带完整同款**——`MixinMinecraft.onBeforePickBlock`（`@Inject(method="func_147112_ai", at=HEAD, cancellable=true)`）→ `ClientUtils.onBeforePickBlock` 按 Ctrl 分流 → `onPickBlockNBTRange` → C2S `GetTileEntityNBTRequestPacket` → S2C `TileEntityNBTPacket.apply()` 生成带 `BlockEntityTag` + `(+NBT)` lore 的物品（**仅创造模式**入快捷栏），放置由 SNL 的 `MixinForgeHook.preOnPlaceItemIntoWorldRewrite` 写回；③ Hodgepodge `modernPickBlock=true` **只做生存模式选取、无 NBT**（排除）。**我们的实现为什么错**：Ctrl 分支挂在 Forge `InputEvent.MouseInputEvent`（**不可取消**）上，`return true` 只跳过自家 AE2 取物补发，**拦不住 SNL**，两条链路同时写同一个快捷栏格 ⇒ 用户看到的错乱。**处理**：`git revert --no-commit 5f89641 0bcc12d`（**-552 行**：删 `blockcopy/BlockCopyService.java`、`network/BlockCopyRequestPacket.java`、`mixin/mc/MixinItemBlockOnItemUse.java`、`ModNetwork` 包注册、`PickBlockCompatHandler` 的 Ctrl 分支；**保留 fix54 的 `ae2qol$sendPickBlockIfApplicable()`**），版本 `3.22.0-fix53` → **`3.23.2`**（`gradle.properties` + `mcmod.info` 两处条目），文档同 commit：CHANGELOG 记录 (50)、`MOD_MAP.md` 已废弃方案行、`mixin_notes.md` 已知风险第 9 条、README/README.en 本版变化。产物 `build/libs/AE2-QoL-3.23.2.jar`（**1,796,713 B**，SHA256 `54423272EA385938FF88EB21927A7442271D46FCCFC266E800FC1CA8BB027A8D`），清 `build\classes|tmp\mixins|libs` 后全量构建 `BUILD SUCCESSFUL`（无管道取码 `EXIT=0`），产物内三个类与 mixin json/refmap 里的相关条目**均已消失**。**待用户实测 4 项**（CHANGELOG (50) §七）。**已于 2026-09-28 部署到实例**（旧 3.23.1 移入 `_ae2qol_jar_backup`，实例内 SHA256 与本地一致，`mods` 内仅一份；重启后生效）。**同日追加（只读）**：Wireless Nexus 许可审计（实测 **LGPL-3.0**，非 MIT）+ 吞并可行性审计，全部只写文档、未动代码 ⇒ 见 CHANGELOG 记录 (51)、`docs/DESIGN_wireless_nexus_merge_audit.md`、`docs/THIRD_PARTY_NOTES.md` §六。|
+|本次会话目标|**按用户要求先只读调查、再删除自研的「创造模式 Ctrl+中键复制方块完整 NBT」= 3.23.2**。用户反馈：「你这获取的东西完全不是正确的，箱子里放东西也不能一起复制，mc原版就有中键复制，只是让你加上nbt，这个功能好像原版就有，你调查一下，如果有的话就删除吧」。**只读取证结论**（证据 = RFG 反编译源码 + 实例 jar 字节码）：① **原版/Forge 1.7.10 没有这个能力**——`Minecraft.func_147112_ai()`（middleClickMouse）本体已被 Forge 掏空，只剩 `ForgeHooks.onPickBlock(...)` + 创造模式槽位同步；`ForgeHooks.onPickBlock` 无 Ctrl 分支、无 TileEntity 写入；`ItemBlock.placeBlockAt` 无 `BlockEntityTag` 还原；MC+Forge 共 1833 个 `.java` 里字符串 `BlockEntityTag` 出现 **0 次**（该机制 1.8 才有）；② **本整合包私货 SNL 已自带完整同款**——`MixinMinecraft.onBeforePickBlock`（`@Inject(method="func_147112_ai", at=HEAD, cancellable=true)`）→ `ClientUtils.onBeforePickBlock` 按 Ctrl 分流 → `onPickBlockNBTRange` → C2S `GetTileEntityNBTRequestPacket` → S2C `TileEntityNBTPacket.apply()` 生成带 `BlockEntityTag` + `(+NBT)` lore 的物品（**仅创造模式**入快捷栏），放置由 SNL 的 `MixinForgeHook.preOnPlaceItemIntoWorldRewrite` 写回；③ Hodgepodge `modernPickBlock=true` **只做生存模式选取、无 NBT**（排除）。**我们的实现为什么错**：Ctrl 分支挂在 Forge `InputEvent.MouseInputEvent`（**不可取消**）上，`return true` 只跳过自家 AE2 取物补发，**拦不住 SNL**，两条链路同时写同一个快捷栏格 ⇒ 用户看到的错乱。**处理**：`git revert --no-commit 5f89641 0bcc12d`（**-552 行**：删 `blockcopy/BlockCopyService.java`、`network/BlockCopyRequestPacket.java`、`mixin/mc/MixinItemBlockOnItemUse.java`、`ModNetwork` 包注册、`PickBlockCompatHandler` 的 Ctrl 分支；**保留 fix54 的 `ae2qol$sendPickBlockIfApplicable()`**），版本 `3.22.0-fix53` → **`3.23.2`**（`gradle.properties` + `mcmod.info` 两处条目），文档同 commit：CHANGELOG 记录 (50)、`MOD_MAP.md` 已废弃方案行、`mixin_notes.md` 已知风险第 9 条、README/README.en 本版变化。产物 `build/libs/AE2-QoL-3.23.2.jar`（**1,796,713 B**，SHA256 `54423272EA385938FF88EB21927A7442271D46FCCFC266E800FC1CA8BB027A8D`），清 `build\classes|tmp\mixins|libs` 后全量构建 `BUILD SUCCESSFUL`（无管道取码 `EXIT=0`），产物内三个类与 mixin json/refmap 里的相关条目**均已消失**。**待用户实测 4 项**（CHANGELOG (50) §七）。**已于 2026-09-28 部署到实例**（旧 3.23.1 移入 `_ae2qol_jar_backup`，实例内 SHA256 与本地一致，`mods` 内仅一份；重启后生效）。**同日追加（只读）**：Wireless Nexus 许可审计（实测 **LGPL-3.0**，非 MIT）+ 吞并可行性审计，全部只写文档、未动代码 ⇒ 见 CHANGELOG 记录 (51)、`docs/DESIGN_wireless_nexus_merge_audit.md`、`docs/THIRD_PARTY_NOTES.md` §六。**再追加**：用户报「服务器上打不开 Wild/生成器界面」⇒ 依服务端日志定位为**服务端加载到客户端类**（`SideTransformer` 拒绝 `GuiScreen`）⇒ **3.23.2-fix1** 修复并部署本地实例，见 CHANGELOG 记录 (52)。|
 |上一轮会话目标（3.20.0-fix38 轮，历史）|**修 `输出种类=1` 的真正上游 = 3.20.0-fix38**。用户实测 3.20.0-fix37 报"完全没修，一模一样"。日志取证：**加载的确实是 3.20.0-fix37**、`输出种类=1` 依旧，而 3.20.0-fix37 新加的"输出槽没找到可替换项"WARN **一次都没出现（计数 0）**——这条反证说明**那段代码根本没执行**：替换逻辑整体在 `if (outStack != null)` 内，而 `outStack` 只在 `outputPrefix` 非空时求值。**根因 J**：`templateOutputPrefix` 用"模板输出**材料名** == 模板输入材料名"选前缀，而 GT 板材**同时注册 `plateIron` 与 `plateAnyIron`**，取到后者时材料名被解析成 `AnyIron` ⇒ 判等失败 ⇒ 返回 null ⇒ `outputPrefix` 空 ⇒ 输出永不改写 ⇒ 几百张全保留模板输出（铁板）。修复：`collectOutputPrefixCandidates` 从模板输出槽**全部矿辞名**收集前缀候选（`plateIron`→`plate`，`plateAnyIron` 兜底切 `plate`），逐材料挑**第一个"前缀+材料"在矿辞表真实存在**的（`plateAnyCopper` 不存在则回落 `plateCopper`）；候选为空时 `logNoOutputPrefixOnce` WARN；`displayOutputPrefix`（窗口输出行）改用同一套；新增 `logSampleOnce` 每 JVM 3 条 `展开样本：material=… prefix=… in=… out=… 产出out=…` 自证。产物 `build/libs/AE2-QoL-3.20.0-fix38.jar`（1,766,805 B，SHA256 `FCA5FECA…`）。**待实测 4 项**（CHANGELOG 记录 (43) 第四节）|
 |上一轮（历史）|工具：DeepSeek Harness｜模型：DeepSeek-V4.1-Flash：3.20.0-fix37（输出槽替换判据），`6e5cf04` 已部署；用户实测"完全没修"。|
 |上一轮会话目标（3.20.0-fix37 轮）|**修「几百张具体样板全部输出同一块铁板」= 3.20.0-fix37**。用户按上轮要求用 3.20.0-fix36 在三台机器各复现一次后退出游戏。日志一击命中：三族注册行全部 **`输出种类=1 样本=[铁板, 铁板, 铁板]`**，AE 回读 **`AE 合成表条目=388；抽样 3 条命中 3 条`** ⇒ AE **并没有挡我们**（上轮怀疑的"注册侧/网格"方向被排除），是**我们的数据错**。**根因 I**：`SmartWildcardExpander.buildConcretePattern` 替换输出槽的判据写成了 `oreInfo(模板输出).material.equals(候选材料)` —— 模板输出的材料名恒为 `Iron`，于是**只有候选恰好是铁时才替换**，其余几百张**全部沿用模板输出（铁板）**；这也解释了 GT 样板仓"能看到全部样板、能下单但不合成"（AE 按各材料算计划、机器收到的却全是铁板 ⇒ `insertItemsAndFluids` 走不通 ⇒ GT 记 `SOMETHING_STUCK` 返回 false ⇒ 任务卡住）。修复：新增 `matchesOutputPrefix(stack, prefix)`（该槽的某个矿辞名以本规则输出前缀开头，如 `plate` 命中 `plateIron`/`plateAnyIron`）只替换第一个命中槽、副产物保持模板原样、未命中限频 WARN（不静默）；3.20.0-fix36 的诊断保留但改为只在限频触发时才算。产物 `build/libs/AE2-QoL-3.20.0-fix37.jar`（1,764,914 B，SHA256 `D4EAC917…`）。**待实测 4 项**（CHANGELOG 记录 (42) 第四节）|
@@ -673,6 +673,27 @@ GT 2714「能下单但不合成」（注册进去的是预览 details，不是�
 
 ## 五、待办任务队列（优先级从高到低）
 
+### ★ 当前（3.23.2-fix1 轮，2026-09-28）
+
+- [x] **修「专用服务器上右键打不开 Wild 窗口 / 批量样板生成器界面」**。根因（**服务端日志实证**）：这两个界面是搬运来的
+      **MUI1** 窗口，其 `getServerGuiElement`（服务端那一半）**也调用 `createWindow(...)`**，而窗口类里含客户端专用代码
+      （fix43 起「改」按钮 = `Minecraft.getMinecraft().displayGuiScreen(new GuiTextInputDialog(...))`）⇒ 专用服务器上
+      Forge `SideTransformer` 拒绝加载客户端类（`NoClassDefFoundError: net/minecraft/client/gui/GuiScreen` /
+      `Attempted to load class bdw for invalid side SERVER`）⇒ FML 取不到容器 ⇒ **开窗包不发** ⇒ 客户端「完全没反应」；
+      单机是 CLIENT 侧故正常；其它界面走 MUI2/原版容器故正常。
+- [x] 修法（方案 A）：新增 `merged/ServerSafeModularContainer.slotless(player)`（空 `ModularWindow` + 零槽位 `ModularUIContainer`，
+      异常记 WARN 不静默）；`wildport/gui/WildcardGuiHandler` 与 `apgport/gui/GuiHandler` 的 `getServerGuiElement` 只返回它，
+      **窗口只在 `getClientGuiElement` 构建**；顺手降级 `[AE2PatternGen] …Side=SERVER/CLIENT` 两条 INFO 为 DEBUG，
+      并删除 `ItemNetworkDataStick.hasData` 热路径调试日志（实测单个会话 4146 条）。
+- [x] 构建 `BUILD SUCCESSFUL`（无管道取码 `EXIT=0`）+ **产物字节码核对**（服务端方法只剩 `slotless`/`FMLLog.fine`，
+      无 `createWindow`/窗口类）。产物 `build/libs/AE2-QoL-3.23.2-fix1.jar`（**1,797,885 B**，
+      SHA256 `FB5BBC5DAF05660CF0FFF7458A6212439D4CD421A4B5C9E2D085852D48A9501F`）。版本 → `3.23.2-fix1`。
+- [ ] **待用户实测（必须在专用服务器上）**：① 右键两个物品都能开窗；② 服务端日志不再有 `NoClassDefFoundError: GuiScreen`；
+      ③ Wild「改」→确认→能重开、生成器对照表选行→能回生成器；④ 单机与其它界面不受影响；⑤ `hasData`/`[AE2PatternGen]` INFO 噪声归零。
+      **服务端 jar 需用户自行上传**（托管机我只部署了本地实例）。
+- [ ] 回退方式：`git revert <本提交>`；若服务器上仍失败，看服务端是否有
+      `[AE2QoL] 服务端无槽位容器创建失败：…`（那时改用纯原版 `Container` 的 B 方案）。
+
 ### ★ 当前（3.23.2 轮，2026-09-28）
 
 - [x] 只读取证「原版/整合包是否已有带 NBT 的中键取物」⇒ **整合包 SNL 自带**（详见 CHANGELOG 记录 (50)、`docs/mixin_notes.md` 已知风险第 9 条）。
@@ -868,6 +889,21 @@ PatternUploadTarget.java、PatternRecipeMatcher.java、PatternRouteKey.java、Pa
 ---
 
 ## 九、历史会话操作日志
+
+### 2026-09-28 · 3.23.2-fix1：修「专用服务器上右键打不开 Wild 窗口 / 批量生成器界面」
+
+- 工具平台：DeepSeek Harness（DSH Web GUI）｜模型：DeepSeek-V4.1-Flash
+- 流程：加载 skill → Stage 0（`ask_user_question` 两轮：服务器类型/版本一致性/现象/其它界面/单机对照/服务端日志可得性）
+  → 用户给出**服务端日志**（一击命中根因，不需要猜）→ Stage 1 只读源码取证（两个 handler + `MergedGuiHandler` +
+  窗口类的客户端引用计数 + MUI1 类常量池扫描 + GT/gtpp 先例）→ 方案选择（用户选 A）→ 实施 → 构建 → 产物字节码核对 → 文档 → 提交。
+- 根因与修法见本文件「★ 当前（3.23.2-fix1 轮）」与 CHANGELOG 记录 (52)。
+- **本次最有价值的三条可复用经验**：
+  1. **专用服务器独有的失败，客户端日志会一条错都没有** —— 必须拿服务端日志；本轮初次只读客户端侧（有"Wild 界面将以空配置打开"
+     的误导性线索）几乎要走偏。
+  2. **`SideTransformer` 的拒绝发生在"第一次执行到引用客户端类的指令"**（不是类加载），所以异常栈指向**调用点**那一行、
+     并且**没有**被调方法的帧 —— 这是判断"是加载被调用类出问题"的重要特征。
+  3. **修法先找整合包自带先例**：GT 的 `gtPlusPlus/core/handler/GuiHandler.getServerGuiElement` 只 new 纯容器，
+     证明"服务端不建 GUI"才是本项目环境的正确姿势。
 
 ### 2026-09-28（同日追加）· 只读审计：Wireless Nexus 的许可与吞并可行性（**未动代码**）
 

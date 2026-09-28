@@ -4,7 +4,26 @@
 
 An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
-**Author: wztwzt · Current source version: 3.23.2 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.23.2-fix1 · Reference pack: GTNH 2.9.0-beta-3**
+
+## What's new in 3.23.2-fix1 (the Wild-pattern / pattern-generator UIs would not open on a dedicated server)
+
+- **Symptom**: on a dedicated (multiplayer) server, right-clicking the **Smart Wildcard Pattern** or the
+  **Smart Pattern Generator** did nothing at all; single-player worked; every other UI of this mod
+  (stock monitor terminal, adaptive grid, covers, merged terminal) opened fine.
+- **Root cause**: both UIs are ported **MUI1** windows and their `getServerGuiElement` (the server half) *also*
+  called `createWindow(...)` to build the full window — and those window classes contain **client-only** code
+  (the "edit" buttons added in fix43 do `Minecraft.getMinecraft().displayGuiScreen(new GuiTextInputDialog(...))`).
+  On a dedicated server Forge's `SideTransformer` refuses to load client-only classes
+  (`NoClassDefFoundError: net/minecraft/client/gui/GuiScreen` / `Attempted to load class bdw for invalid side SERVER`),
+  so FML could not obtain the server container and **never sent the open-window packet**.
+  Single-player is the CLIENT side, which is why it never showed up there.
+- **Fix**: the server half no longer builds any window — it returns an empty, slot-less MUI1 container
+  (new `merged/ServerSafeModularContainer`); **the window itself is only built client-side in `getClientGuiElement`**.
+  These UIs have no slots at all and use no MUI1 sync, so both sides agree (empty slot set).
+  Also downgraded two per-right-click INFO lines to DEBUG and removed a hot-path debug log.
+- Client-side behaviour is unchanged (tab candidates, lookup table, the text-input dialog, save-and-reopen).
+  You need to upload the new jar to the server yourself.
 
 ## What's new in 3.23.2 (removed our own "Ctrl + middle-click copy block NBT" — the pack already ships it)
 

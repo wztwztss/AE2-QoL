@@ -4,7 +4,25 @@
 
 为 **Minecraft 1.7.10 / GT New Horizons** 开发的 AE2 效率增强模组：NEI 样板上传、库存与合成状态提示、二合一终端、无线 AE 连接，以及 GT 仓室、电网与库存监控工具。
 
-**作者：wztwzt · 当前源码版本：3.23.2 · 对照整合包：GTNH 2.9.0-beta-3**
+**作者：wztwzt · 当前源码版本：3.23.2-fix1 · 对照整合包：GTNH 2.9.0-beta-3**
+
+## 本版变化：3.23.2-fix1（修「专用服务器上右键打不开 Wild 窗口 / 批量样板生成器界面」）
+
+- **现象**：在专用服务器（多人）上，手持**智能通配样板**或**批量样板生成器**右键**完全没反应**；单机却正常；
+  同一服务器上其它界面（库存统计终端 / 自适应电网 / 覆盖板 / 合并终端）都能打开。
+- **根因**：这两个界面是搬运来的 **MUI1** 窗口，而它们的 `getServerGuiElement`（服务端那一半）**也调用了
+  `createWindow(...)` 去构建完整窗口**；窗口类里含**客户端专用**代码（fix43 起「改」按钮＝
+  `Minecraft.getMinecraft().displayGuiScreen(new GuiTextInputDialog(...))`）。专用服务器上 Forge 的
+  `SideTransformer` 拒绝加载客户端类（`NoClassDefFoundError: net/minecraft/client/gui/GuiScreen` /
+  `Attempted to load class bdw for invalid side SERVER`）⇒ FML 取不到服务端容器 ⇒ **开窗包根本不发**。
+  单机是 CLIENT 侧，所以一直没暴露。
+- **修法**：服务端**不再构建窗口**，改为返回一个「空窗口 + 零槽位」的 MUI1 容器
+  （新增 `merged/ServerSafeModularContainer`）；**窗口本体只在 `getClientGuiElement`（客户端）里构建**。
+  这两个界面本来就**没有任何槽位**、也不使用 MUI1 同步，所以两端槽位集合一致（都为空）。
+  顺带把 `[AE2PatternGen] getServerGuiElement …` 的两条每次右键都刷的 INFO 降为 DEBUG，
+  并删掉 `hasData` 在热路径上的调试日志。
+- 客户端窗口的一切行为**未改**（Tab 候选、对照表、「改」对话框、保存后重开都不变）；
+  服务端需自行上传新 jar（托管服务器我无法直接写）。
 
 ## 本版变化：3.23.2（删除自研的「Ctrl+中键复制方块 NBT」—— 整合包 SNL 已自带同款）
 
