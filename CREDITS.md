@@ -36,7 +36,17 @@
 - **合规动作**：保留原 modid `aeinfinitycell` / 包名 / 存储路径（数据无缝兼容）；本文件署名；
   `assets/aeinfinitycell/LICENSE` 随 jar 附原 MIT 文本副本；AppEU 可选集成未随迁（反射点静默跳过）。
 
-### 8. 其他参考模组
+### 8. Applied Energistics: Wireless Nexus（`ae_wireless_nexus`，作者 DancingSnow）— 无线枢纽（**当前为外部依赖，未吞并**）
+- **用途**：命名无线 ME 网络（无线控制器 / 无线连接器 / 无线工具）+ GT 仓室的无线接入。当前由整合包**独立安装**
+  （实例 `mods\【私货】ae_wireless_nexus-1.0.2.jar`），**本 jar 内不含其任何代码或素材**。
+- **许可证：LGPL-3.0**（2026-09-28 核实：仓库根 `LICENSE` 为 LGPL-3.0 全文，上游 `master/LICENSE` 交叉验证一致；
+  `src/main/resources/LICENSE` 只是**未填写**的 MIT 模板占位，**不构成授权**；上游没有 `LICENSE-template`）。
+  ⚠️ **注意**：不能因为同作者的 `AE2InfinityCell` 是 MIT 就把它当 MIT。
+- **合规动作（若将来吞并才需要）**：保留作者署名与 LGPL-3.0 + GPL-3.0 全文；被吞并部分继续以 LGPL 授权并公开源码、
+  不混淆、不限制修改与反向工程；本文件与 `docs/THIRD_PARTY_NOTES.md` §六 记录改动。
+- **审计报告**：`docs/DESIGN_wireless_nexus_merge_audit.md`（规模、注册/存档契约、依赖、mixin 共存、风险与步骤，2026-09-28）。
+
+### 9. 其他参考模组
 - `GT-Not-Leisure`、`GT5-Unofficial`、`GTLCore`、`Programmable-Hatches`、`ExtendedAE_Plus`、`ExampleMod1.7.10` 等——开发时参考 GT 版本兼容与通用模组写法。
 
 ---

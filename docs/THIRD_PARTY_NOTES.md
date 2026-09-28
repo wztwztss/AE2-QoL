@@ -14,6 +14,7 @@
 | **Applied Energistics 2 (GTNH)** | 编译期/运行期**链接**（AE2 是本模组的硬依赖） | **LGPL-3.0** | 不再分发其代码/素材 ⇒ 无 LGPL 义务。**原先复制的一张贴图已移除**（见 §二） |
 | **ModularUI 2 (Cleanroom)** | 编译期 `compileOnly` + 运行期由整合包提供；界面用它构建 | **LGPL-3.0** | 同上：不随本模组分发 ⇒ 无义务 |
 | **GT5-Unofficial / ProgrammableHatches / GTNL** | 编译期 `compileOnly`，按官方 API 调用；不复制其代码 | 各自许可（GT 为 LGPL-3.0） | 不随本模组分发 ⇒ 无义务 |
+| **Applied Energistics: Wireless Nexus 1.0.2**（`ae_wireless_nexus`，作者 DancingSnow） | **当前只是外部依赖**（实例自行安装，本 jar 内**不含**其代码）。2026-09-28 做了**只读吞并可行性审计**，用户决定「先只记录事实，暂不动代码」 | **LGPL-3.0**（仓库根 `LICENSE`；上游同文件交叉验证；**无 MIT 依据**） | **暂无需**（未分发其代码）。一旦吞并，必须履行 LGPL-3.0 §4 的四件套 —— 详见 §六 与 `docs/DESIGN_wireless_nexus_merge_audit.md` |
 
 ## 二、已采取的规避措施（有据可查）
 
@@ -70,3 +71,34 @@ foreach ($k in 'WildcardInputComponents','WildcardGeneratedPatternId','Composite
   本模组据此重写，并按本仓库原则补上了展开上限、非静默日志与 NEI 加号自动推导。
 - **AE2PatternGen**（MIT）—— "按过滤器批量生成样板"的功能设计参照了它。
 - **AE2 / ModularUI 2 / GT5-Unofficial / ProgrammableHatches / GTNL** —— 本模组赖以运行的依赖，按其公开 API 调用。
+
+---
+
+## 六、Applied Energistics: Wireless Nexus —— **LGPL-3.0**（2026-09-28 审计，未吞并）
+
+### 6.1 许可结论（有据可查）
+| 证据 | 结果 |
+|---|---|
+| 参考树根 `LICENSE`（7,652 B） | **GNU LGPL v3（2007-06-29 全文）**；SHA256 `E3A994D82E644B03A792A930F574002658412F62407F5FEE083F2555C5F23118` |
+| 上游 `master/LICENSE` | HTTP 200，**同为 LGPL-3.0 全文** |
+| `src/main/resources/LICENSE`（也被打进 jar 根） | GTNH 模板的**未填写** MIT 占位（`Copyright (c) [year] [fullname]`）⇒ **不构成有效授权** |
+| 上游 `LICENSE-template` | **HTTP 404（不存在）** —— 对比同作者的 `AE2InfinityCell` 当时有 MIT 模板，故那次判 MIT 成立，**本次不成立** |
+| 逐文件头 | 全量 `.java` 无任何 copyright/license/SPDX 声明 |
+
+⇒ **应按 LGPL-3.0 对待，不存在当 MIT 搬的依据。**（作者同为 `DancingSnow`，但**不能**用 `AE2InfinityCell` 的 MIT 结论推广到本模组。）
+
+### 6.2 若将来吞并，必须履行的 LGPL-3.0 §4（Combined Work）四件套
+1. **显著声明**：写明使用了该 Library、且该部分及其使用受 LGPL-3.0 覆盖；
+2. **随附 LGPL-3.0 与 GPL-3.0 全文**；
+3. 运行期若显示版权声明，需含该部分的版权声明；
+4. 提供被吞并部分的 **Corresponding Source（含我们的修改，继续以 LGPL 授权、公开可得）**，
+   并保持用户可替换/重新链接该部分；**不得限制修改与反向工程、不得混淆该部分**。
+
+⇒ 我们自己的代码可继续 MIT，但被吞并部分**不得改写成 MIT**；整个 jar 是 **MIT + LGPL-3.0 混合**。
+
+### 6.3 技术可行性（细节见 `docs/DESIGN_wireless_nexus_merge_audit.md`）
+- 规模小：**39 个类 / 2,693 行** + 13 个资源 + 10 个 GuideNH 页；私货 jar 与上游源码**逐类一致**（只多构建期 `Tags`），未被改过。
+- 运行期依赖齐备：`backhand-1.8.14`（`BackhandUtils.getOffhandItem` 已 javap 确认）、`+unimixins-all` 提供 GTNHMixins。
+- 4 个硬坑：① 同名 modid 双注册（实例那份独立 mod 必须先删）；② 存档契约（方块名/TileEntity 名/`ae_wireless_nexus.networks`）必须一字不改，
+  且注意 `registerBlock` **两参重载**取的是"当前活跃 mod 容器"（本项目坑位 #20）；③ 本项目**此前没有 late mixin 注册面**，需按路线 A/B 补；
+  ④ 两个同目标类 mixin（`BaseMetaTileEntity` / `CommonMetaTileEntity`）需逐方法审计共存。

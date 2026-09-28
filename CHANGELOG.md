@@ -34,6 +34,53 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-09-28 (51) - **文档轮（无代码变更）：Wireless Nexus 的许可是 LGPL-3.0 + 吞并可行性审计**
+
+### 一、用户问题
+「`E:\wzt\MC\modcreater\reference_src_290b3\Applied-Energistics-Wireless-Nexus-1.0.2` 看一下这个模组的版权，是什么，
+我们是否可以完整吞并这个模组」。
+
+### 二、版权结论：**LGPL-3.0（GNU LGPL v3）**，不是 MIT
+
+| 证据 | 结果 |
+|---|---|
+| 参考树根 `LICENSE`（7,652 B） | LGPL-3.0（2007-06-29）全文；SHA256 `E3A994D82E644B03A792A930F574002658412F62407F5FEE083F2555C5F23118` |
+| 上游 `master/LICENSE` | HTTP 200，**同为 LGPL-3.0 全文**（交叉验证一致） |
+| `src/main/resources/LICENSE`（也被打进 jar 根，1,068 B） | GTNH 模板的**未填写** MIT 占位（`Copyright (c) [year] [fullname]`）⇒ **不构成有效授权** |
+| 上游 `LICENSE-template` | **HTTP 404**（不存在）——对比同作者 `AE2InfinityCell` 当时有 MIT 模板，故那次判 MIT 成立、**本次不成立** |
+| 逐文件头声明 | 全量 `.java` 无任何 copyright / license / SPDX 行 |
+
+**⇒ 该模组应按 LGPL-3.0 对待；不存在"当 MIT 搬"的依据。**（不能因为同作者的 `AE2InfinityCell` 是 MIT 就推广过来。）
+
+### 三、能不能完整吞并：**技术上可以，法律上必须付 LGPL 成本**
+- **法律**：并进本模组的 jar = LGPL-3.0 §4 **Combined Work** ⇒ 必须做到四件套：① 显著声明"使用了该 Library 且受 LGPL-3.0 覆盖"；
+  ② 随附 **LGPL-3.0 与 GPL-3.0 全文**；③ 运行期版权声明含该部分；④ 提供该部分的对应源码（含我们的修改、**继续以 LGPL 授权**、公开可得）
+  并保持可替换/可重链接；**不得限制修改与反向工程、不得混淆该部分**。我们自己的代码仍可 MIT，但**被吞并部分不能改写成 MIT**。
+- **技术**：规模小（**39 个类 / 2,693 行** + 13 个资源 + 10 个 GuideNH 页）；私货 jar 与上游源码**逐类一致**（只多构建期 `Tags`，未被改过）；
+  运行期依赖齐备（`backhand-1.8.14` 的 `BackhandUtils.getOffhandItem` 已 javap 确认；`+unimixins-all-1.7.10-0.3.1` 提供 GTNHMixins）。
+- **4 个硬坑**：① 实例已独立安装同名 modid ⇒ 吞并后**必须先删**那份，否则双注册；② 存档契约需一字不改
+  （方块 `wireless_controller`/`wireless_connector`、TileEntity `ae_wireless_nexus.*`、`WorldSavedData` 键 `ae_wireless_nexus.networks`），
+  且 `registerBlock` 用的是**两参重载**、域取自"当前活跃 mod 容器"（本项目坑位 #20）；③ 本项目**此前没有 late mixin 注册面**，
+  需按审计 §3.4 的 A（照上游引入 GTNHMixins，抽取件放 `libs/`）或 B（MANIFEST 追加配置 + 自写 plugin）补；
+  ④ Nexus 的 `BaseMetaTileEntity` / `CommonMetaTileEntity` mixin 与我们既有 mixin **同目标类**，需逐方法审计共存。
+
+### 四、本轮实际做了什么（**只写文档，未动任何代码/资源**）
+- 新增 `docs/DESIGN_wireless_nexus_merge_audit.md`（完整审计：证据、注册/存档契约、依赖、mixin 注入点与共存分析、吞并步骤草案、风险与待决策）；
+- `docs/THIRD_PARTY_NOTES.md`：§一 表格新增一行（LGPL-3.0、当前仅外部依赖、未分发其代码）+ 新增 §六（许可结论 + §4 四件套 + 技术可行性）；
+- `CREDITS.md`：新增第 8 条（原「其他参考模组」顺延为第 9 条）；
+- 本文档记录 (51)。
+- **无版本号变更**（本轮无代码变更，与记录 (12) 同类）。
+
+### 五、用户拍板与本轮之后的状态
+- 用户选择：**先只记录事实、暂不动代码**；动机 = **想减少一个 mod 文件**；若吞并则**保留原 modid `ae_wireless_nexus`**（存档无缝）；
+  分发范围 = **以后可能公开** ⇒ 合规按最保守口径准备。
+- 待办（等用户下次决定）：① 是否真的要吞并（收益 = 少一个 jar；成本 = LGPL §4 合规 + mixin 共存风险）；
+  ② 若吞并，先按审计 §3.4 选 A/B 并做 mixin 逐方法比对；③ 是否改为先去问 DancingSnow 要 MIT/双许可；
+  ④ 若实施，版本按"加功能"升到 **3.24.0**。
+- **本轮无构建、无部署**：产物仍是已部署的 `3.23.2`（见记录 (50)）。
+
+
+
 ## 工作区决策记录 2026-09-28 (50) - **3.23.2：删除 3.23.0/3.23.1 自研「Ctrl+中键复制方块完整 NBT」——整合包 SNL 已自带同款且更完整**
 
 ### 一、用户诉求与实测现象
@@ -118,6 +165,8 @@
 4. **生存模式**下我们 fix54 的 AE2 取物补发仍正常（对"网络无存量 + 有样板"的方块按中键应弹「要合成多少个」）。
 
 
+
+## 工作区决策记录 2026-09-27 (49) - **3.22.0-fix45：把两个参考模组的 lang 条目并入本模组（删掉它们后界面不再出现生键名）**
 
 ### 一、问题（用户实测）
 用户删除了参考模组 `WildcardPatternforGTNH` 与 `AE2PatternGen` 之后，通配窗口变成一片**生键名**
