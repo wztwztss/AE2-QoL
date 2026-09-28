@@ -105,8 +105,11 @@
 - 产物：`build/libs/AE2-QoL-3.23.2.jar`，**1,796,713 字节**，
   SHA256 `54423272EA385938FF88EB21927A7442271D46FCCFC266E800FC1CA8BB027A8D`（版本号：`gradle.properties`
   与 `mcmod.info` 两处条目同改 3.23.2）；
-- 部署：**待用户完全退出游戏后部署到 `GT_New_Horizons_2.9.0-beta-3_Java_17-26` 实例**
-  （按 skill 3.3 流程：确认进程退出 → 移出旧 jar 到 `_ae2qol_jar_backup` → 复制 → 比对 SHA256 → 确认 mods 内只剩一份）。
+- 部署：**已部署到 `GT_New_Horizons_2.9.0-beta-3_Java_17-26` 实例**（2026-09-28）。按 skill 3.3 流程执行：
+  ① 前置判据（`Get-CimInstance` 过滤命令行含实例路径 / `launchwrapper` / `net.minecraft`）**未命中** ⇒ 允许动 mods；
+  ② 旧 `AE2-QoL-3.23.1.jar` **移出**（未删除）到 `_ae2qol_jar_backup\prev-AE2-QoL-3.23.1.jar`；
+  ③ 复制新 jar；④ 实例内 SHA256 `54423272EA385938FF88EB21927A7442271D46FCCFC266E800FC1CA8BB027A8D` 与本地**一致**；
+  ⑤ `mods` 内 AE2-QoL 数量 = **1**。（新 jar 只在下一次启动时加载。）
 
 ### 七、待用户实测（4 项）
 1. 创造模式对**装了东西的箱子**按 **Ctrl+中键** ⇒ 快捷栏里出现该箱子物品，且物品 lore 多出 **`(+NBT)`** 一行；
