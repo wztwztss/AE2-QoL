@@ -34,6 +34,64 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-02 (56) - **3.25.0（提交 1/2）：线程引擎 + 维护仓「线程」页**
+
+### 一、用户口径（Stage 0 拍板）
+TST 式 **N 条线程**：各自匹配配方、各自计时、各自扣料与落地产物；只匹配到一个配方时就跑 **N 份相同配方**、每份各有自己的并行；
+**沿用「万能维护仓」的线程字段**（上限 64）、**以"装了我们的维护仓且线程>1"为开关**、**电力不够自动降线程**、**替掉旧的跨配方合并逻辑**；
+必须在 **机器 UI 或 WAILA 里看见每条线程的进度**（线框稿已确认：汇总一行 + 只列活跃线程的可滚动列表，可见 8 行，空闲折叠计数；浅底深字）。
+
+### 二、架构取证（决定实现骨架）
+- GT 机器只有**一套**进度/耗电/产物字段（`MTEMultiBlockBase.runMachine()` / `checkProcessing()`）⇒ "N 条线程各自进度"必须在机器之外维护；
+- 各家族共享的"算配方"入口是 **`MTEMultiBlockBase.doCheckRecipe()`**（GT 原生 `checkProcessing()` L1103 调它；
+  TST 的机器如 `TST_HephaestusAtelier:512`、`GT_TileEntity_IndustrialMagicMatrix:559` 也调它）；GT 原生实现**只跑一个配方**（遍历双输入仓，第一个成功即 return）；
+- 共享的"推进/落地"入口是 **`incrementProgressTime()`**（每 tick）与 `addItemOutputs/addFluidOutputs`（完成时）；
+- ⇒ 拦截点定为 `doCheckRecipe`（计算）+ `incrementProgressTime`（推进），"应用结果"那一步不动（各家族自己写）。
+
+### 三、实现
+- **新增 `hatch/thread/Ae2qolThreadEngine.java`**：每台机器一份引擎（`WeakHashMap`），**64 条线程槽**，每槽记
+  `状态/总时长/剩余/本线程并行/每 tick 耗电/产物/图标`；汇总（活跃数、最长剩余、总并行、总耗电）；
+  **`applyPowerLimit(可用EU)`：缺电时从尾部把装不下的线程降级为 `缺电降级`，而不是整台停机**（用户口径）；
+  开关 = 找到该机器里的 `AE2MaintenanceHatchUniversal` 且 `getEffectiveThreads() > 1`；
+  另带 **维护仓→主机反查表**（维护仓在 GT 里没有指向主机的后向引用）与给 UI 的行快照 `Row`（**PacketBuffer 序列化**，
+  与库存统计终端的 `GenericListSyncHandler` 写法一致；`equals/hashCode` 做值语义，避免同步每 tick 狂发包）。
+- **`mixin/gt/MixinMTEMultiBlockBase.java`**（原 `shouldCheckMaintenance()` 恒 false 保留）：
+  ① `@Inject(doCheckRecipe, HEAD, cancellable)`：接管时**循环 N 次调用 GT 原始的 `doCheckRecipe()`**
+  （`@Invoker` + `computing` 递归防护），每条线程各自消耗自己的输入份额；随后把 `processingLogic` 改写成
+  **外壳结果**（产物留空、时长=最长线程剩余、耗电=活跃线程求和）；
+  ② `@Inject(incrementProgressTime, HEAD)`：每 tick 递减各线程，**完成时用 GT 自己的 `addItemOutputs/addFluidOutputs` 落地产物**，
+  并**立刻为该线程找下一个配方**（这就是"错峰"）；同时按可用电量降线程（只在降级数量变化时记一行日志，不刷屏也不静默）；
+  ③ 只要还有线程在跑就把 `mMaxProgresstime` 顶到最长线程剩余（保证机器不提前结算）；`mEUt` 按活跃线程求和（沿用 GT 的负数约定）。
+- **`mixin/gt/MixinProcessingLogicSpeed.java`**：旧的"跨配方合并接管"分支**摘除**（职责归线程引擎），
+  该方法标 `@Deprecated` 留作对照（下一轮清理）；并行/速度仍按原样喂给 GT 自己的计算。
+- **`hatch/AE2MaintenanceHatchUniversal.java`**：界面分成**「参数」/「线程」两页**（右侧标签条，沿用 MK.III 样板窗做法），
+  线程页 = **汇总一行（活跃 x/N · 总并行 · 总耗电 EU/t）+ 表头 + 只列活跃线程的可滚动列表（8 行，含编号/产物图标/进度条+剩余t/本线程并行/状态）+ 空闲与缺电降级折叠行**；
+  数据走 **MUI2 实时同步**（`IntSyncValue/LongSyncValue` + `GenericListSyncHandler` + `DynamicSyncedWidget`，实时、只对打开界面的玩家，不新增网络包）。
+- 语言键：中/英各新增 21 条 `ae2_qof.threads.*`（页签、汇总、表头、状态、剩余）。
+
+### 四、构建与产物
+- `.\gradlew.bat build --offline -x spotlessJavaCheck -x spotlessCheck` ⇒ **`BUILD SUCCESSFUL`（`EXIT=0`）**；
+- 产物 `build/libs/AE2-QoL-3.25.0.jar`，**1,838,052 字节**，
+  SHA256 `3637B089D9D31E7EE8AAB29E418EC3B06B78185545DA29E88DAFA10772DBBCA6`；
+- 版本号：`gradle.properties` / `mcmod.info`（两条目）→ **3.25.0**（加功能升 0.1）。
+
+### 五、风险与已知边界（务必配合实测）
+1. **产物落地**用 GT 自己的 `addItemOutputs/addFluidOutputs`，算配方时 GT 已校验输出空间；但**多条线程同时起跑**时，
+   它们看到的是同一份"当前输出空间"，若总产出超过输出总线容量，完成时的落地可能装不下 ⇒ 已加 **WARN** 留痕（不静默丢）；
+2. **完全自研配方循环**的机器（例如 PH 的 `IngredientDistributor`，用自家 calculator）不走 `doCheckRecipe` ⇒ **本引擎不生效**（已与用户确认"能覆盖才覆盖"）；
+3. 覆写 `onPostTick` 且**不调 `super`** 的机器不会走到 `runMachine`/`incrementProgressTime` ⇒ 同样不生效（逐类核对留待 Phase 2）；
+4. 旧的跨配方方法仍留在文件里（`@Deprecated`，无调用点），下一轮清理。
+
+### 六、待实测（Phase 1 验收，3-4 台典型机器）
+① 装了我们的维护仓、线程设为 4~8 的 GT 多方块：打开维护仓 → **「线程」页**应看到汇总与逐条进度在跑；
+② 线程=1 或拆掉维护仓 ⇒ 完全回到 GT 原生行为（可逆性）；
+③ 只放一种输入 ⇒ 应看到 **N 条线程跑同一配方**、每条各自进度；混放多种输入 ⇒ 不同线程跑不同配方（错峰）；
+④ 拉低电力 ⇒ 活跃线程数下降且状态显示"缺电降级"，**机器不停机**；
+⑤ 产物/耗电与 GT 原生单线程对照（同配方下总产出与总耗电应约为 N 倍，且**不得出现凭空多出/吞掉物品**）。
+
+### 七、下一步
+- **提交 2/2（WAILA）**：常态 1 行汇总 + 最慢 2 条，潜行展开最多 8 条；因 WAILA 读客户端 TE，需新增**每 10 tick 的降频 S2C 小包** + 客户端按坐标小表（方块移除/区块卸载清理）。
+
 ## 工作区决策记录 2026-10-02 (55) - **3.24.0-fix2：修「样板剪贴板剪切/粘贴后，机器的样板窗不立即刷新」**
 
 ### 一、现象（用户实测 + 截图）

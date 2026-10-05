@@ -127,6 +127,27 @@ ae2_qof.gui.hatch.parallel=并行数:
 ae2_qof.gui.hatch.speed=速度:
 ae2_qof.gui.hatch.circuit_slot=插入任意电路板设置上限:
 ae2_qof.gui.hatch.threads=线程:
+
+# ===== 3.25.0 线程：维护仓「线程」页（浅底深字，不使用 § 码）=====
+ae2_qof.threads.tab.params=参数
+ae2_qof.threads.tab.threads=线程
+ae2_qof.threads.active=活跃
+ae2_qof.threads.parallel_sum=总并行
+ae2_qof.threads.power_sum=总耗电
+ae2_qof.threads.idle=空闲
+ae2_qof.threads.power_down=缺电降级
+ae2_qof.threads.header.no=#
+ae2_qof.threads.header.output=产物
+ae2_qof.threads.header.progress=进度
+ae2_qof.threads.header.parallel=并行
+ae2_qof.threads.header.state=状态
+ae2_qof.threads.remain_short=剩
+ae2_qof.threads.state.running=运行中
+ae2_qof.threads.state.idle=空闲
+ae2_qof.threads.state.starved=输入不足
+ae2_qof.threads.state.power_down=缺电降级
+ae2_qof.threads.state.output_full=输出已满
+ae2_qof.threads.state.off=机器未运行
 ae2_qof.modname=AE2 QoL
 
 # ===== 自适应电网系统 =====

@@ -673,6 +673,24 @@ GT 2714「能下单但不合成」（注册进去的是预览 details，不是�
 
 ## 五、待办任务队列（优先级从高到低）
 
+### ★ 当前（3.25.0 线程任务 · 提交 1/2 已完成待提交，2026-10-02）
+
+- 口径（Stage 0 拍板）：TST 式 N 条线程各自匹配/计时/扣料/产物；单配方时跑 N 份相同配方、每份各有并行；沿用维护仓线程字段（上限 64）；
+  以"装了我们的维护仓且线程>1"为开关；**电力不够自动降线程**；替掉旧跨配方合并；**必须能看见每条线程进度**。
+- 取证结论：GT 机器只有一套进度/耗电/产物字段；各家族共享入口 = `doCheckRecipe()`（GT 原生 `checkProcessing():1103`；TST `HephaestusAtelier:512` 等）
+  与 `incrementProgressTime()`/`addItemOutputs`/`addFluidOutputs` ⇒ 拦截点就定这两处。
+- 已实现（构建通过）：`hatch/thread/Ae2qolThreadEngine`（64 槽状态 + 汇总 + 缺电降级策略 + 维护仓→主机反查 + `Row` 快照的 PacketBuffer 序列化）；
+  `MixinMTEMultiBlockBase`（`doCheckRecipe` HEAD 接管并循环调 GT 原始实现；`incrementProgressTime` HEAD 推进/落地/补配方；外壳写入）；
+  `MixinProcessingLogicSpeed` 旧接管分支摘除（标 `@Deprecated` 待清理）；维护仓新增「线程」页（汇总+表头+活跃列表+空闲折叠，MUI2 实时同步）；
+  中英 lang 各 +21 条 `ae2_qof.threads.*`；版本 3.25.0。
+- 产物：`build/libs/AE2-QoL-3.25.0.jar`（1,838,052 B，SHA256 `3637B089D9D31E7EE8AAB29E418EC3B06B78185545DA29E88DAFA10772DBBCA6`）。
+- [ ] 提交 1/2（引擎 + 线程页）后 **待用户实测**：① 线程页能看到逐条进度在跑；② 线程=1/拆仓 ⇒ 回原生行为；
+      ③ 单输入 ⇒ N 条跑同一配方、混放 ⇒ 错峰不同配方；④ 拉低电力 ⇒ 活跃数下降 + 显示"缺电降级"且不停机；
+      ⑤ 与 GT 原生对照：同配方下总产出/总耗电≈N 倍且**不凭空多出/吞掉物品**。
+- [ ] **提交 2/2 = WAILA**：常态 1 行汇总 + 最慢 2 条，潜行展开最多 8 条；需新增每 10 tick 的降频 S2C 小包 + 客户端按坐标小表（卸载清理）。
+- [ ] **未解决（另开一轮）**：P2「样板网格第一列显示不全」（已排除"左滚动条"猜测；等局部放大图）。
+- [ ] 旧 `ae2qol$crossRecipeProcess` 死代码清理。
+
 ### ★ 当前（3.24.0-fix2 轮，2026-10-02）
 
 - 用户实测反馈：**剪切/粘贴后机器的样板窗不立即刷新**（关窗重开也没用，必须走开再回来）；AE2 接口终端/下单侧一直即时正确。
@@ -949,6 +967,17 @@ PatternUploadTarget.java、PatternRecipeMatcher.java、PatternRouteKey.java、Pa
 ---
 
 ## 九、历史会话操作日志
+
+### 2026-10-02 · 3.25.0 提交 1/2：线程引擎 + 维护仓「线程」页
+
+- Stage 0（4 轮提问）→ 用户拍板：沿用维护仓线程字段/上限 64/**每线程独立进度**/**第三方也要生效**/**缺电自动降线程**/替掉旧逻辑；
+  另追加要求"**必须能看见每条线程的进度**"⇒ 先出线框稿（维护仓页 + WAILA），用户敲定后开工，**分两个提交：先 GUI，后 WAILA**。
+- 取证：各家族共享 `doCheckRecipe()`（GT 原生 `checkProcessing():1103`；TST `HephaestusAtelier:512`、`GT_TileEntity_IndustrialMagicMatrix:559`）
+  与 `incrementProgressTime()`；GT 原生一次只跑一个配方 ⇒ 线程只能在机器之外维护，机器那套字段当"外壳"。
+- 实现：引擎（64 槽状态/汇总/缺电降级/维护仓→主机反查/`Row` PacketBuffer 序列化）+ 两个注入点 + 维护仓两页界面（MUI2 实时同步）+ 中英 lang。
+- 踩坑（值得记）：MUI2 的 `GenericListSyncHandler` 序列化器是 **PacketBuffer** 形式（`static void write(PacketBuffer, T)` / `static T read(PacketBuffer)`），
+  不是 NBT；`Row` 必须做值语义 `equals/hashCode`，否则每 tick 都判定"变了"而狂发包。另：`@Shadow` GT 的 `processingLogic` 是 **final** 字段，必须带 `@Final`。
+- 版本 3.25.0；构建 `BUILD SUCCESSFUL`（`EXIT=0`）；产物 `AE2-QoL-3.25.0.jar`（1,838,052 B，SHA256 `3637B089…`）。
 
 ### 2026-10-02 · 3.24.0-fix2：修「剪切/粘贴后样板窗不立即刷新」（客户端 TE 副本没有下发通道）
 

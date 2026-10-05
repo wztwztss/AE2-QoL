@@ -4,7 +4,22 @@
 
 An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
-**Author: wztwzt · Current source version: 3.24.0-fix2 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.25.0 · Reference pack: GTNH 2.9.0-beta-3**
+
+## What's new in 3.25.0 (thread engine + the hatch's "Threads" page)
+
+- **New thread engine**: any multiblock that has this mod's *Universal Maintenance Hatch* with **threads > 1** can run
+  **N independent threads in the same tick** — each matches its own recipe, keeps its own timer, consumes its own inputs
+  and lands its own outputs; with a single matching recipe it simply runs **N copies of it**, each with its own parallel
+  count (cap 64). **When power runs short, threads are dropped instead of stopping the machine.** Set threads to 1 or
+  remove the hatch and the machine behaves exactly like vanilla GT again.
+- **Progress is visible**: the hatch GUI now has a **"Threads" page** (Settings / Threads, right-hand tab strip) with a
+  summary line (active x/N · total parallel · total draw EU/t) plus one row per active thread (index / output icon /
+  progress bar + remaining ticks / this thread's parallel / state); idle threads are folded into a counter line.
+  Live-synced through MUI2, no new network packet.
+- **Known limit**: machines with a fully custom recipe loop that bypasses GT's `doCheckRecipe()` (e.g. PH's
+  `IngredientDistributor`) are not covered by this engine.
+- WAILA output (summary + sneak-to-expand) lands in the next version.
 
 ## What's new in 3.24.0-fix2 (pattern window now refreshes right after cut/paste)
 

@@ -102,10 +102,11 @@ public abstract class MixinProcessingLogicSpeed {
             speedBoostSupplier = () -> speed;
         }
 
-        // 跨配方分支（仅线程 > 1 且处于普通路径时接管）
-        if (uh.getEffectiveThreads() > 1) {
-            cir.setReturnValue(ae2qol$crossRecipeProcess(uh));
-        }
+        // 3.25.0：原先这里的"跨配方合并接管"（threads > 1 时 cir.setReturnValue(crossRecipeProcess(uh))）
+        // 已被**线程引擎**取代（MixinMTEMultiBlockBase + hatch/thread/Ae2qolThreadEngine）。
+        // 旧实现把多个配方**合并成一个结果**、并绕开了 GT 的 applyRecipe（扣料/产出/保护都在里面），
+        // 既不符合"每线程各自独立计时/扣料/产物"的语义，也不受 GT 校验保护 ⇒ 已停用。
+        // 本混入现在只负责把维护仓的"并行数 / 速度"喂给 GT 自己的计算（这两项语义不变）。
     }
 
     private AE2MaintenanceHatchUniversal findUniversalHatch(MTEMultiBlockBase multi) {
@@ -121,7 +122,12 @@ public abstract class MixinProcessingLogicSpeed {
      * 跨配方并行：同一 tick 内处理多个不同配方。
      * 输入共享 + 额度递减（ParallelHelper.build 原地扣输入）。
      * 机器端只消费 ProcessingLogic 输出字段，无需合成 GTRecipe。
+     *
+     * <p><b>3.25.0 起已停用（dead code，待下一轮清理）</b>：调用点已改为线程引擎
+     * （{@code MixinMTEMultiBlockBase} + {@code hatch/thread/Ae2qolThreadEngine}）。
+     * 保留本方法只为对照排查，**不会被调用**。
      */
+    @Deprecated
     private CheckRecipeResult ae2qol$crossRecipeProcess(AE2MaintenanceHatchUniversal uh) {
         try {
             // 1. 准备输入——与原版 process() 一致：prepareCatalyst 结果写回 this.inputItems

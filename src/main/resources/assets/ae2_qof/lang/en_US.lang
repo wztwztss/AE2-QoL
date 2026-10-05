@@ -127,6 +127,27 @@ ae2_qof.gui.hatch.parallel=Parallel:
 ae2_qof.gui.hatch.speed=Speed:
 ae2_qof.gui.hatch.circuit_slot=Insert Any Circuit to set limits:
 ae2_qof.gui.hatch.threads=Threads:
+
+# ===== 3.25.0 threads: the hatch's "Threads" page =====
+ae2_qof.threads.tab.params=Settings
+ae2_qof.threads.tab.threads=Threads
+ae2_qof.threads.active=Active
+ae2_qof.threads.parallel_sum=Total parallel
+ae2_qof.threads.power_sum=Total draw
+ae2_qof.threads.idle=Idle
+ae2_qof.threads.power_down=Power-limited
+ae2_qof.threads.header.no=#
+ae2_qof.threads.header.output=Output
+ae2_qof.threads.header.progress=Progress
+ae2_qof.threads.header.parallel=Parallel
+ae2_qof.threads.header.state=State
+ae2_qof.threads.remain_short=left 
+ae2_qof.threads.state.running=Running
+ae2_qof.threads.state.idle=Idle
+ae2_qof.threads.state.starved=Starved
+ae2_qof.threads.state.power_down=Power-limited
+ae2_qof.threads.state.output_full=Output full
+ae2_qof.threads.state.off=Machine off
 ae2_qof.modname=AE2 QoL
 
 # ===== Adaptive Network System =====
