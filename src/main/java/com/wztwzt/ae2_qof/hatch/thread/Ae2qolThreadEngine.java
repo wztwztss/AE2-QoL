@@ -289,6 +289,88 @@ public final class Ae2qolThreadEngine {
         return dropped;
     }
 
+    // ================= 3.25.0-fix12：电力预算闸（替换上面用错数据源的旧逻辑） =================
+
+    /** 上一次记下的"能源仓能力 EU/t"（`getMaxInputEu()`）。 */
+    public long lastBudget = -1;
+    /** 是否已因电力不足暂停"起步新线程"（直到预算变大才解除）。 */
+    public boolean powerBlocked = false;
+    /** 触发暂停时的预算值（预算变大即解除，避免每 tick 反复起/降造成机器状态闪"电力不足"）。 */
+    public long blockedAtBudget = -1;
+
+    /**
+     * 电力预算闸（每 tick 一次，**在推进/起步之前**调用）。
+     * <p>旧实现的病根：用 {@code base.getStoredEU()}（机器内部缓存）当"可用电力"，而 GT 多方块
+     * 平时根本不缓存 EU（每 tick 直接能源仓拉走）⇒ 恒为 0 ⇒ 每条线程一起步就被降级，
+     * 且每 1~2 秒在"降级/恢复"间横跳，机器状态一直闪"电力不足"。
+     * <p>现在：① 预算 = {@code getMaxInputEu()}（能源仓能提供的最大 EU/t，GT 自己的口径）；
+     * ② **只在确有线程在跑且超预算时**才从尾部降级；③ 预算变好才解除封锁并让被暂停的槽重新参与。
+     *
+     * @return 本次因预算不足被降级的线程条数（供日志）
+     */
+    public int updatePowerBudget(long budget) {
+        // 安全阀（fix12）：预算获取失败/为 0 时**不做任何电力干预** ——
+        // 宁可让 GT 自己去报"电力不足"，也不能因为我们读不到能源仓就把线程全锁死。
+        if (budget <= 0) {
+            lastBudget = budget;
+            return 0;
+        }
+        if (lastBudget < 0 || budget > lastBudget) {
+            if (powerBlocked) {
+                for (int i = 0; i < threadCount(); i++) {
+                    if (slots[i].state == ST_POWER) {
+                        slots[i].clearRun();
+                        slots[i].state = ST_IDLE;
+                    }
+                }
+                powerBlocked = false;
+                blockedAtBudget = -1;
+            }
+        }
+        lastBudget = budget;
+        int dropped = 0;
+        while (totalEutPerTick() > budget) {
+            int victim = -1;
+            for (int i = threadCount() - 1; i >= 0; i--) {
+                if (slots[i].isRunning()) {
+                    victim = i;
+                    break;
+                }
+            }
+            if (victim < 0) break;
+            Slot s = slots[victim];
+            s.state = ST_POWER;
+            s.remain = 0;
+            s.parallel = 0;
+            s.eutPerTick = 0;
+            dropped++;
+        }
+        return dropped;
+    }
+
+    /** 起步闸：预算已被吃满或已封锁时，本 tick 不再起步新线程（预算未知/为 0 时**不拦**）。 */
+    public boolean powerAllowsMore(long budget) {
+        if (budget <= 0) return true;
+        if (powerBlocked) return false;
+        long need = totalEutPerTick();
+        return need > 0 && need < budget || need == 0 && budget > 0;
+    }
+
+    /** 刚起步的那条若把总量推过预算 ⇒ 把它退回暂停并封锁后续起步（直到预算变大）。 */
+    public void noteOvershoot(long budget, int slotIndex) {
+        if (budget <= 0) return; // 预算未知 ⇒ 不干预
+        if (totalEutPerTick() <= budget) return;
+        if (slotIndex >= 0 && slotIndex < slots.length) {
+            Slot s = slots[slotIndex];
+            s.state = ST_POWER;
+            s.remain = 0;
+            s.parallel = 0;
+            s.eutPerTick = 0;
+        }
+        powerBlocked = true;
+        blockedAtBudget = budget;
+    }
+
     /** 维护仓被拆掉或线程数改回 1 时，清空全部线程状态（回到 GT 原生行为）。 */
     public void clearAll() {
         for (Slot slot : slots) {

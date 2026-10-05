@@ -94,6 +94,14 @@ public abstract class MixinMTEMultiBlockBase {
     @Shadow
     public abstract java.util.ArrayList<FluidStack> getStoredFluids();
 
+    /**
+     * 能源仓能提供的最大 EU/t（3.25.0-fix12 用作"可用电力预算"）。
+     * <p>⚠️ 不能用 {@code getStoredEU()}：GT 多方块平时不缓存 EU（每 tick 直接从能源仓拉走），
+     * 那个值恒为 0，正是"只要开多线程就闪电力不足"的元凶。
+     */
+    @Shadow
+    public abstract long getMaxInputEu();
+
     /** GT 原始的"算一个配方"实现（不经过本注入的接管分支，见 {@code computing} 标志）。 */
     @Invoker("doCheckRecipe")
     protected abstract CheckRecipeResult ae2qol$gtDoCheckRecipe();
@@ -328,11 +336,12 @@ public abstract class MixinMTEMultiBlockBase {
         ae2qol$lastProgress = mProgresstime;
 
         IGregTechTileEntity base = self.getBaseMetaTileEntity();
-        long stored = 0;
-        if (base != null) {
-            stored = Math.max(0L, base.getStoredEU());
-        }
-        int dropped = engine.applyPowerLimit(stored);
+        // fix12：预算 = 能源仓能力（getMaxInputEu()）。**不能**用 getStoredEU()
+        // —— GT 多方块平时不缓存 EU（每 tick 直接从能源仓拉走），那个值恒为 0，
+        // 正是"只要开多线程就闪电力不足 / 每 1~2 秒横跳"的元凶。
+        long budget = Math.max(0L, self.getMaxInputEu());
+        long demandBefore = engine.totalEutPerTick();
+        int dropped = engine.updatePowerBudget(budget);
         if (dropped != ae2qol$lastDropped) {
             if (dropped > 0) {
                 MyMod.LOG.info(
@@ -341,8 +350,8 @@ public abstract class MixinMTEMultiBlockBase {
                     ae2qol$posText(base),
                     dropped,
                     engine.activeCount(),
-                    engine.totalEutPerTick(),
-                    stored);
+                    demandBefore,
+                    budget);
             } else {
                 MyMod.LOG.info(
                     "[AE2QoL] 线程引擎：{} @ {} 电力恢复，降级线程已恢复（活跃 {} 条）",
@@ -384,9 +393,13 @@ public abstract class MixinMTEMultiBlockBase {
                 if (startedThisTick) {
                     continue; // 预算用完：本槽保持空闲，等后续 tick 再起
                 }
+                if (!engine.powerAllowsMore(budget)) {
+                    continue; // fix12：预算已吃满/已封锁 ⇒ 本 tick 不再起步（避免"起了又被降"的横跳）
+                }
                 CheckRecipeResult result = ae2qol$checkOne();
                 if (result != null && result.wasSuccessful()) {
                     ae2qol$fillSlotFromLogic(slot);
+                    engine.noteOvershoot(budget, i); // fix12：这一条若超预算 ⇒ 退回暂停并封锁起步
                     startedThisTick = true;
                 } else {
                     boolean noRecipe = (result == null || result == CheckRecipeResultRegistry.NO_RECIPE);
@@ -404,9 +417,11 @@ public abstract class MixinMTEMultiBlockBase {
                     int idx = (engine.startCursor + k) % count;
                     Ae2qolThreadEngine.Slot slot = engine.slot(idx);
                     if (slot.isRunning() || slot.state == Ae2qolThreadEngine.ST_POWER) continue;
+                    if (!engine.powerAllowsMore(budget)) break; // fix12：预算吃满 ⇒ 本 tick 停止补位
                     CheckRecipeResult result = ae2qol$checkOne();
                     if (result != null && result.wasSuccessful()) {
                         ae2qol$fillSlotFromLogic(slot);
+                        engine.noteOvershoot(budget, idx); // fix12：超预算即退回暂停
                         startedThisTick = true;
                         engine.startCursor = (idx + 1) % count;
                     } else {
