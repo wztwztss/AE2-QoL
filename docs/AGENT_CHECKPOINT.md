@@ -673,6 +673,26 @@ GT 2714「能下单但不合成」（注册进去的是预览 details，不是�
 
 ## 五、待办任务队列（优先级从高到低）
 
+### ★ 当前（3.24.0-fix2 轮，2026-10-02）
+
+- 用户实测反馈：**剪切/粘贴后机器的样板窗不立即刷新**（关窗重开也没用，必须走开再回来）；AE2 接口终端/下单侧一直即时正确。
+  同轮另报：**样板网格第一列显示不全**（未解决，见下）。
+- 根因（实证）：窗里格子读的是**客户端自己 TE 的 `pattern[]`**（`MTEPatternCraftingBufferMKIII:422-424` 把
+  `new ItemStackHandler(acc.getAe2qolPattern())` 交给 `ModularSlot`；`Arrays.asList(array)` 绑数组对象）；
+  剪贴板只改服务端数组 + 通知 AE；**GT 5.09.54.133 没有下发入口**（实例 jar 字节码：无 `issueClientUpdate`、
+  `issueTileUpdate()` 是 `Code: 0: return` 空实现、`BaseMetaTileEntity` 不实现 `getDescriptionPacket`）
+  ⇒ 客户端只能靠**区块包**更新。
+- 修法（用户选"方案 A"）：新增 `ph/PatternClientSync`（原版 `S35PacketUpdateTileEntity` 只发给**跟踪该区块**的玩家）；
+  `PatternSlotPersistence.load` 改**原地写入**（槽数一致时不换数组）；剪切/粘贴后各下发一次（复制不改机器，故不下发）。
+- 产物 `build/libs/AE2-QoL-3.24.0-fix2.jar`（**1,821,856 B**，
+  SHA256 `04804B36C311F99400E6D7E3695291CA9D9F74201969209E8C618B4B1C813BA2`）；构建 `BUILD SUCCESSFUL`；
+  字节码核对 `new S35PacketUpdateTileEntity(IIIILNBTTagCompound;)`。
+- [ ] **待用户实测**：剪切 → 不关窗不走开 → 打开窗应为空；粘贴同理；复制不应改机器；
+      若仍不刷新，看日志 `[AE2QoL] 样板同步：… 已下发给 N 名…`，**N=0 即"区块跟踪者"判定没命中**（需改半径广播）。
+- [ ] **未解决（另开一轮）**：样板网格**第一列显示不全**。已量清几何（面板 168 / 滚动区 `size(162,162)`@`pos(3,3)` / 内容 162），
+      并用字节码**推翻**"左滚动条压第一列"（`new VerticalScrollData()` → `axisStart=false` ⇒ 滚动条在**右**侧）；
+      用户说红框那条竖条是**两个 UI 之间的背景** ⇒ 仍缺一张**局部放大图**才能定案，故本轮未改。
+
 ### ★ 当前（3.24.0-fix1 轮，2026-10-02）
 
 - 由来：用户追问「你材质，和本地化键都做了吗，tooltips 写了吗」⇒ 逐项自查后确认 **本地化键 ✅（中/英各 25 条）**、
@@ -929,6 +949,20 @@ PatternUploadTarget.java、PatternRecipeMatcher.java、PatternRouteKey.java、Pa
 ---
 
 ## 九、历史会话操作日志
+
+### 2026-10-02 · 3.24.0-fix2：修「剪切/粘贴后样板窗不立即刷新」（客户端 TE 副本没有下发通道）
+
+- 用户实测：剪切/粘贴后机器的样板窗格子不刷新；**关窗重开无效**、**走开再回来才正确**；AE2 侧一直即时正确。
+- 取证（只读）：① 窗里格子读客户端 TE 的 `pattern[]`（`MKIII:422-424` + `ModularSlot`，`Arrays.asList(array)` 绑数组对象）；
+  ② 剪贴板只改服务端数组 + `onPatternChange()`/`refresh()`（只影响 AE）；③ 实例 GT jar 字节码：**无 `issueClientUpdate`**、
+  `issueTileUpdate()` 是 `Code: 0: return`、`BaseMetaTileEntity` 不实现 `getDescriptionPacket` ⇒ 没有下发通道；
+  ④ 1.7.10 区块包内含 TE 完整 NBT ⇒ 只有区块重载能刷新。
+- 实现（用户选"方案 A"）：`ph/PatternClientSync`（原版 `S35PacketUpdateTileEntity` → 只发区块跟踪者）+
+  `PatternSlotPersistence.load` 改原地写入 + 剪切/粘贴后各调一次；版本 `3.24.0-fix1` → **`3.24.0-fix2`**。
+- 验证：`BUILD SUCCESSFUL`（`EXIT=0`）；`javap -c` 实证 `new S35PacketUpdateTileEntity(IIIILNBTTagCompound;)`；
+  产物 `AE2-QoL-3.24.0-fix2.jar`（1,821,856 B，SHA256 `04804B36…`）。
+- 同轮另一问题（**未解决**）：样板网格第一列显示不全 —— 已排除"左滚动条"猜测（字节码证明滚动条在右侧），
+  等用户局部放大图再定案。**教训**：先用字节码把假设打掉，比在界面上盲改省事。
 
 ### 2026-10-02 · 3.24.0-fix1：样板剪贴板补图标染色（用户追问材质/本地化/tooltip）
 

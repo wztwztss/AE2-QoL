@@ -34,6 +34,62 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-02 (55) - **3.24.0-fix2：修「样板剪贴板剪切/粘贴后，机器的样板窗不立即刷新」**
+
+### 一、现象（用户实测 + 截图）
+用样板剪贴板**剪切**（或**粘贴**）之后，机器的**样板窗格子**仍旧显示旧样板；**把窗关掉重开也不行**，
+必须**走开再回来（区块重载）**才正确；而 **AE2 接口终端 / 下单侧一直是即时正确的**。
+用户给的验收标准：**不关窗、不走开**，剪切完成后那台机器的格子应**立刻变空**。
+
+### 二、根因链（全部有证据）
+1. 样板窗的格子读的是**客户端自己 TE 里的 `pattern[]`**：`MTEPatternCraftingBufferMKIII.java:422-424`
+   把 `new ItemStackHandler(acc.getAe2qolPattern())` 交给 `ModularSlot`（L441 / L462）；MUI2 的
+   `ItemStackHandler(ItemStack[])` 内部是 `Arrays.asList(该数组)` ⇒ **绑的是那个数组对象**；
+2. 样板剪贴板只在**服务端**改数组，随后调 `onPatternChange()` / `refresh()` —— 这两者只影响 **AE 侧**，
+   所以"AE 接口终端/下单即时正确"与"窗里不刷新"同时成立；
+3. GT 5.09.54.133 **没有**给外部用的"通知客户端刷新本机数据"入口（实例 `gregtech-5.09.54.133.jar` 字节码实证）：
+   `IGregTechTileEntity` 无 `issueClientUpdate`；`issueTileUpdate()` 是 **default 空实现**（`Code: 0: return`）；
+   `BaseMetaTileEntity` 只覆写 `readFromNBT`/`writeToNBT`/`receiveClientEvent`，**不实现** `getDescriptionPacket`；
+4. ⇒ 客户端那份数组只能靠**区块包**（1.7.10 区块包内含 TE 的完整 NBT）更新 ⇒ **只有"走开再回来"生效**；
+   "重开窗口无效"也随之解释：重开的窗仍读同一份陈旧数组。
+
+### 三、修法（用户选定「方案 A：原版 TE 数据包直推」）
+- 新增 `ph/PatternClientSync.java`：动作完成后构造**原版** `S35PacketUpdateTileEntity`
+  （第四参数 1，内容 = `((TileEntity) base).writeToNBT(nbt)`），只发给**正在跟踪该区块**的玩家
+  （`PlayerManager.isPlayerWatchingChunk(player, chunkX, chunkZ)`）。客户端收到后走
+  `TileEntity.onDataPacket → readFromNBT` —— **与区块重载完全同一条应用路径**
+  （GT 自己的 `IGregTechTileEntity` 注释即 `@see TileEntity#onDataPacket(NetworkManager, S35PacketUpdateTileEntity)`）
+  ⇒ 不需要新网络包、不需要客户端处理器，也不会出现"自行解析 NBT"的语义偏差；
+- `ph/PatternSlotPersistence.load` 改为**长度一致时原地写入**（不替换数组对象）：这样**已经打开的窗口**里那份
+  `Arrays.asList(数组)` 视图也能立刻看到新值（否则只有重开窗才刷新）；
+- 调用点：`item/ItemPatternClipboard` 的**剪切**与**粘贴**后各下发一次；**复制**只改剪贴板、不改机器 ⇒ 无需下发。
+
+### 四、风险与边界
+- 载荷是这台机器的**整份 TE NBT**（含 `BUFFER_*` 与样板，与区块重载同内容）；由玩家手动动作触发、频率极低；
+- 只发给区块跟踪者（不广播全服）；下发失败**只记 WARN**，不影响服务端数据、AE 侧与业务流程；
+- 选它而不是自建分片包：分片包要额外写分片/缺片校验/客户端应用，收益只是省流量（备选方案 B，未采用）。
+
+### 五、验证与产物
+- 构建：`.\gradlew.bat build --offline -x spotlessJavaCheck -x spotlessCheck` ⇒ **`BUILD SUCCESSFUL`（`EXIT=0`）**；
+- 产物：`build/libs/AE2-QoL-3.24.0-fix2.jar`，**1,821,856 字节**，
+  SHA256 `04804B36C311F99400E6D7E3695291CA9D9F74201969209E8C618B4B1C813BA2`；
+- 产物核对：`ph/PatternClientSync.class` 已入包；字节码实证 `new S35PacketUpdateTileEntity(IIIILNBTTagCompound;)`；
+  包内 `mcmod.info` 两条目均为 `3.24.0-fix2`。
+
+### 六、待用户实测
+1. **剪切**：对 MK.III（或 MK.IV）剪切 → **不关窗、不走开** → 打开该机器样板窗 ⇒ 格子**应已是空的**；
+2. **粘贴**：粘贴后立刻开窗 ⇒ 应已是新样板；
+3. **复制**：机器状态不应有任何变化（回归检查）；
+4. AE2 接口终端/下单侧保持即时正确；
+5. 若仍不刷新：看日志有没有 `[AE2QoL] 样板同步：… 的 TE 数据已下发给 N 名跟踪该区块的玩家`；
+   **N=0 说明"区块跟踪者"判定没命中**（那就要改用半径广播），按这条日志即可分辨。
+
+### 七、未解决（另开一轮）
+同一轮里用户还报了**「样板网格第一列显示不全」**。已量清几何（面板 `WIDTH=168`、滚动区 `size(162,162)` 且 `pos(3,3)`、
+内容宽 162），并用字节码**推翻了"左侧滚动条压住第一列"的猜测**：`new VerticalScrollData()` → `this(false,-1)`
+⇒ `axisStart=false` ⇒ `drawScrollbar` 里 `x = area.w() - thickness`，滚动条画在**右**侧。
+用户补充"红框那条竖条是**两个 UI 之间的背景**"，仍缺一张局部图定案 ⇒ **本轮不改**，等局部截图后再动。
+
 ## 工作区决策记录 2026-10-02 (54) - **3.24.0-fix1：给「样板剪贴板」补图标染色（用户追问"材质/本地化/tooltip"后自查出的缺口）**
 
 ### 一、用户追问与逐项自查（只读取证）

@@ -4,7 +4,21 @@
 
 An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
-**Author: wztwzt · Current source version: 3.24.0-fix1 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.24.0-fix2 · Reference pack: GTNH 2.9.0-beta-3**
+
+## What's new in 3.24.0-fix2 (pattern window now refreshes right after cut/paste)
+
+- **Symptom**: after cutting (or pasting) with the Pattern Clipboard, the machine's pattern window kept showing the old
+  patterns; **closing and reopening the window did not help** — you had to walk away and come back (chunk reload).
+  The AE2 interface terminal / crafting side was always correct.
+- **Cause**: the window slots render from the **client-side copy of the machine's pattern array**, while the clipboard
+  only mutates the server array and notifies AE. GT 5.09.54.133 has no "refresh this machine on clients" hook
+  (`issueTileUpdate()` is an empty default, and there is no `issueClientUpdate`), so the client copy could only be
+  updated by a chunk reload.
+- **Fix**: after cut/paste the server now pushes the machine's **TE data with a vanilla `S35PacketUpdateTileEntity`
+  to the players tracking that chunk** (the client applies it through the very same path a chunk reload uses), and
+  loading writes **in place** when the slot count matches so an already-open window updates immediately too.
+  Copy only changes the clipboard, so it needs no push.
 
 ## What's new in 3.24.0-fix1 (icon tint for the Pattern Clipboard)
 

@@ -1,5 +1,7 @@
 package com.wztwzt.ae2_qof.ph;
 
+import java.util.Arrays;
+
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 
@@ -75,7 +77,17 @@ public final class PatternSlotPersistence {
     public static void load(PatternDualInputHatch mte, int slots, NBTTagCompound aNBT) {
         MixinPatternDualInputHatchAccess acc = (MixinPatternDualInputHatchAccess) mte;
 
-        ItemStack[] patterns = new ItemStack[slots];
+        ItemStack[] patterns = acc.getAe2qolPattern();
+        // 3.24.0-fix2：长度一致时**原地写入**，不替换数组对象。
+        // 原因：样板窗把 Arrays.asList(pattern) 交给 MUI2 的 ItemStackHandler（见 MTEPatternCraftingBufferMKIII
+        // 的 createPatternWindow2），那份视图绑的是**数组对象本身**；若这里换成新数组，
+        // 已经打开的窗口仍指向旧数组 ⇒ 即使 TE 数据已经下发到客户端也看不到变化。
+        boolean replacedPatterns = (patterns == null || patterns.length != slots);
+        if (replacedPatterns) {
+            patterns = new ItemStack[slots];
+        } else {
+            Arrays.fill(patterns, null);
+        }
         NBTTagCompound tag = aNBT.getCompoundTag("patternSlots");
         if (tag != null) {
             for (int i = 0; i < slots; i++) {
@@ -84,10 +96,16 @@ public final class PatternSlotPersistence {
                 }
             }
         }
-        acc.setAe2qolPattern(patterns);
+        if (replacedPatterns) {
+            acc.setAe2qolPattern(patterns);
+        }
 
         int[] src = aNBT.getIntArray("multiplier");
-        int[] multiplier = new int[slots];
+        int[] multiplier = acc.getAe2qolMultiplier();
+        boolean replacedMultiplier = (multiplier == null || multiplier.length != slots);
+        if (replacedMultiplier) {
+            multiplier = new int[slots];
+        }
         for (int i = 0; i < slots; i++) {
             multiplier[i] = 1;
         }
@@ -96,7 +114,9 @@ public final class PatternSlotPersistence {
                 multiplier[i] = Math.max(src[i], 1);
             }
         }
-        acc.setAe2qolMultiplier(multiplier);
+        if (replacedMultiplier) {
+            acc.setAe2qolMultiplier(multiplier);
+        }
 
         acc.setAe2qolAdditionalConnection(aNBT.getBoolean("additionalConnection"));
         if (aNBT.hasKey("customName")) {

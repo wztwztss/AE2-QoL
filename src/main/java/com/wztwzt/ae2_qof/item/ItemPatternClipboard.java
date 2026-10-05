@@ -17,6 +17,7 @@ import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.mixin.ph.MixinPatternDualInputHatchAccess;
 import com.wztwzt.ae2_qof.ph.MTEPatternCraftingBufferMKIII;
 import com.wztwzt.ae2_qof.ph.MTEPatternCraftingBufferMKIV;
+import com.wztwzt.ae2_qof.ph.PatternClientSync;
 
 import appeng.api.networking.crafting.ICraftingPatternDetails;
 import cpw.mods.fml.common.registry.GameRegistry;
@@ -199,12 +200,17 @@ public class ItemPatternClipboard extends Item {
         if (clearSource) {
             clearMachine(acc, patterns.length);
             machine.refresh();
+            // 3.24.0-fix2：把改动后的 TE 数据推给跟踪该区块的玩家。
+            // 不做这一步，客户端那份 pattern[]（样板窗渲染用的就是它）会一直停在旧值，
+            // 只有区块重载才会更新 —— 用户实测"剪切后格子不立刻消失"就是这个原因。
+            PatternClientSync.notifyClients(machine);
             MyMod.LOG.info(
                 "[AE2QoL] 样板剪贴板：剪切 {} 张样板（源 {} 已清空，玩家={}）",
                 count,
                 clip.getString(CLIP_SRC),
                 player.getCommandSenderName());
         } else {
+            // 复制只改剪贴板、不改机器 ⇒ 无需下发 TE 数据（机器状态本来就没变）
             MyMod.LOG.info(
                 "[AE2QoL] 样板剪贴板：复制 {} 张样板（源 {}，玩家={}）",
                 count,
@@ -263,6 +269,8 @@ public class ItemPatternClipboard extends Item {
         acc.setAe2qolPatternDetailCache(new ICraftingPatternDetails[target]);
         acc.invokeAe2qolOnPatternChange();
         machine.refresh();
+        // 3.24.0-fix2：同上，把新的样板下发到目标机器所在区块的客户端
+        PatternClientSync.notifyClients(machine);
 
         int clipSlots = clip.getInteger(CLIP_SLOTS);
         tell(player, EnumChatFormatting.GREEN + t(LANG + "pasted") + " " + format(count, target));
