@@ -63,7 +63,9 @@ public final class ThreadStatusBroadcaster {
             packet.rowPercent[i] = row.percent;
             packet.rowRemain[i] = row.remain;
             packet.rowParallel[i] = row.parallel;
-            packet.rowName[i] = row.icon == null ? "" : row.icon.getDisplayName();
+            // G4：WAILA 那一行也遵循"物品优先、否则流体名"，纯流体配方不再显示成 "-"
+            packet.rowName[i] = row.icon != null ? row.icon.getDisplayName()
+                : (row.fluid != null ? row.fluid.getLocalizedName() : "");
         }
 
         PlayerManager playerManager = server.getPlayerManager();

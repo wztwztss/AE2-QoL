@@ -34,6 +34,42 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-05 (61) - **3.25.0-fix4：真流体产物图标（G4）+ 扣料校验闸（先只告警）+ WAILA 线程行（G5）**
+
+### 一、G5 WAILA 线程行（用户选定方案 b）
+`mixin/gt/MixinBaseMetaTileEntityWaila` 改为**零参数处理器 + MixinExtras
+`@Local(argsOnly = true, index = 1) List<String>`** 取 tip 列表 ⇒ 不再引用任何 waila 类型，
+从而不会重演上次的 `InvalidInjectionException: Invalid descriptor`（那是"只写前两个参数"导致的）。
+`compileJava` 通过、且**已核对** `@Local` 在编译基线中可用（`libs/modularui2-2.88` 同套 MixinExtras）。
+
+### 二、G4 真流体产物图标
+- `Ae2qolThreadEngine.Row` 增加 `FluidStack fluid` 字段（含值语义 equals/hashCode），
+  并在 `PacketBuffer` 序列化里用 `writeNBTTagCompoundToBuffer(fluid.writeToNBT(...))` /
+  `FluidStack.loadFluidStackFromNBT(readNBTTagCompoundFromBuffer())` 传输；
+- `activeRows()` 口径：**物品优先**，没有物品输出（如蒸馏水这类纯流体配方）才用第一个流体输出；
+- GUI `threadRow`：`row.icon != null` → `ItemDrawable`；否则 `row.fluid != null` →
+  **MUI2 的 `com.cleanroommc.modularui.drawable.FluidDrawable`**（API 已用不含中文路径的 javap 副本确认：
+  `FluidDrawable(FluidStack)` / `setFluid` / 实现 `IDrawable`）；
+- `ThreadStatusBroadcaster`：WAILA 那一行的名字也改为"物品名优先、否则 `fluid.getLocalizedName()`"，
+  纯流体配方不再显示成 `-`。
+
+### 三、扣料校验闸（**先只告警**，不改行为）
+- 在 `ae2qol$checkOne()`（= `doCheckRecipe()` + `postCheckRecipe()`）里对
+  **输入总线 + 双输入仓**（`mInputBusses` / `mDualInputHatches`，Programmable-Hatches 的"限制输入仓"就是后者）
+  取"物品总量指纹"，比较启动线程前后：**未减少**即说明"扣料对下一次计算不可见"，打一条 `WARN`（每台机器只报一次）。
+- **为什么先只告警不当场拦**：ME 输入等"虚拟供给"机器的本机库存本来就不会变，直接拦会误伤正常机器；
+  真正的防护是 P0 的"**每 tick 最多启动一条线程**"。本条负责把可疑情况**留痕**（本项目铁律：绝不静默）。
+- **踩到的两个坑（值得记）**：
+  1. 在 **GT 类型**上调用 MC 接口方法必须写 **SRG 名**：`bus.func_70302_i_()`（getSizeInventory）、
+     `bus.func_70301_a(i)`（getStackInSlot）—— 这是坑位 #1 的又一次复现；
+  2. 混入里用 `this.mInputBusses/mDualInputHatches` 前必须**先 `@Shadow` 它们**（否则 `cannot find symbol`）；
+     另外 `IDualInputHatch.inventories()` 返回**通配迭代器**，要用 `var` 承接。
+
+### 四、待回填 / 仍未做
+- 构建与产物：待回填；
+- 仍待办：**P1 并行/速度设定被忽略**的取证与修复；**G6** 线程状态广播改中央 server tick 驱动；
+  CHANGELOG (60) 的产物数字；MOD_MAP/README/AGENT_CHECKPOINT 同步。
+
 ## 工作区决策记录 2026-10-05 (60) - **3.25.0-fix3：恢复主机 UI 输出显示（G1）+ 恢复耗电记账与 WAILA 耗电（G2）**
 
 ### 一、用户实测反馈（接着 (59)）

@@ -385,11 +385,14 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
             new TextWidget<>(IKey.str(String.format("%2d", row.index))).size(14, 11)
                 .color(0xFF303030));
 
-        // 产物图标：没有图标（输入不足/空闲）时留空位，保持列对齐
+        // 产物图标：物品优先；纯流体配方用 MUI2 的 FluidDrawable 画**真流体图标**（G4）；
+        // 两者都没有（输入不足/空闲）就留空位，保持列对齐
         com.cleanroommc.modularui.widget.Widget<?> iconWidget =
             new com.cleanroommc.modularui.widget.Widget<>().size(16, 11);
         if (row.icon != null) {
             iconWidget.background(new com.cleanroommc.modularui.drawable.ItemDrawable(row.icon));
+        } else if (row.fluid != null) {
+            iconWidget.background(new com.cleanroommc.modularui.drawable.FluidDrawable(row.fluid));
         }
         r.child(iconWidget);
 

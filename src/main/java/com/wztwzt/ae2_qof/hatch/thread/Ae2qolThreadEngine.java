@@ -290,14 +290,22 @@ public final class Ae2qolThreadEngine {
         public final int remain;
         public final int parallel;
         public final ItemStack icon;
+        /**
+         * G4（3.25.0-fix4）：**纯流体配方**用它画"真流体图标"（GUI 走 MUI2 的
+         * {@code com.cleanroommc.modularui.drawable.FluidDrawable}）。
+         * 口径：**物品优先**，没有物品输出才用流体；两者都没有就留空位。
+         */
+        public final net.minecraftforge.fluids.FluidStack fluid;
 
-        public Row(int index, int state, int percent, int remain, int parallel, ItemStack icon) {
+        public Row(int index, int state, int percent, int remain, int parallel, ItemStack icon,
+            net.minecraftforge.fluids.FluidStack fluid) {
             this.index = index;
             this.state = state;
             this.percent = percent;
             this.remain = remain;
             this.parallel = parallel;
             this.icon = icon == null ? null : icon.copy();
+            this.fluid = fluid == null ? null : fluid.copy();
         }
 
         /** 值语义：MUI2 列表同步器要求 equals/hashCode，否则每 tick 都会判定"变了"而狂发包。 */
@@ -309,7 +317,8 @@ public final class Ae2qolThreadEngine {
                 && percent == other.percent
                 && remain == other.remain
                 && parallel == other.parallel
-                && ItemStack.areItemStacksEqual(icon, other.icon);
+                && ItemStack.areItemStacksEqual(icon, other.icon)
+                && (fluid == null ? other.fluid == null : fluid.isFluidEqual(other.fluid));
         }
 
         @Override
@@ -320,6 +329,8 @@ public final class Ae2qolThreadEngine {
             h = 31 * h + remain;
             h = 31 * h + parallel;
             h = 31 * h + (icon == null ? 0 : icon.getItemDamageForDisplay() ^ icon.stackSize);
+            h = 31 * h + (fluid == null ? 0 : fluid.getFluid()
+                .hashCode() ^ fluid.amount);
             return h;
         }
 
@@ -337,6 +348,10 @@ public final class Ae2qolThreadEngine {
             if (row.icon != null) {
                 buf.writeItemStackToBuffer(row.icon);
             }
+            buf.writeBoolean(row.fluid != null);
+            if (row.fluid != null) {
+                buf.writeNBTTagCompoundToBuffer(row.fluid.writeToNBT(new NBTTagCompound()));
+            }
         }
 
         public static Row read(net.minecraft.network.PacketBuffer buf) throws java.io.IOException {
@@ -346,7 +361,10 @@ public final class Ae2qolThreadEngine {
             int remain = buf.readInt();
             int parallel = buf.readInt();
             ItemStack icon = buf.readBoolean() ? buf.readItemStackFromBuffer() : null;
-            return new Row(index, state, percent, remain, parallel, icon);
+            net.minecraftforge.fluids.FluidStack fluid = buf.readBoolean()
+                ? net.minecraftforge.fluids.FluidStack.loadFluidStackFromNBT(buf.readNBTTagCompoundFromBuffer())
+                : null;
+            return new Row(index, state, percent, remain, parallel, icon, fluid);
         }
     }
 
@@ -357,7 +375,12 @@ public final class Ae2qolThreadEngine {
         for (int i = 0; i < count; i++) {
             Slot s = slots[i];
             if (s.isRunning() || s.state == ST_OUTPUT_FULL) {
-                rows.add(new Row(i + 1, s.state, s.percent(), s.remain, s.parallel, s.icon));
+                // G4：物品优先；纯流体配方（如蒸馏水）没有物品，就用第一个流体输出画图标
+                net.minecraftforge.fluids.FluidStack fluid = null;
+                if (s.icon == null && s.fluids != null && s.fluids.length > 0) {
+                    fluid = s.fluids[0];
+                }
+                rows.add(new Row(i + 1, s.state, s.percent(), s.remain, s.parallel, s.icon, fluid));
             }
         }
         return rows;

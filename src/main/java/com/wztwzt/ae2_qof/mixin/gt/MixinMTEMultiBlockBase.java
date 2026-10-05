@@ -83,6 +83,13 @@ public abstract class MixinMTEMultiBlockBase {
     @Shadow
     public FluidStack[] mOutputFluids;
 
+    /** 扣料校验闸要用的两个输入列表（GT 里都是 public 字段）。 */
+    @Shadow
+    public java.util.ArrayList<gregtech.api.metatileentity.implementations.MTEHatchInputBus> mInputBusses;
+
+    @Shadow
+    public java.util.ArrayList<gregtech.common.tileentities.machines.IDualInputHatch> mDualInputHatches;
+
     /** GT 原始的"算一个配方"实现（不经过本注入的接管分支，见 {@code computing} 标志）。 */
     @Invoker("doCheckRecipe")
     protected abstract CheckRecipeResult ae2qol$gtDoCheckRecipe();
@@ -104,11 +111,68 @@ public abstract class MixinMTEMultiBlockBase {
     @Invoker("postCheckRecipe")
     protected abstract CheckRecipeResult ae2qol$gtPostCheckRecipe(CheckRecipeResult result, ProcessingLogic logic);
 
+    /** 扣料校验闸的"只报一次"标记（避免刷屏；先只报不改行为）。 */
+    private boolean ae2qol$gateWarned = false;
+
+    /**
+     * 输入指纹（扣料校验闸用）：**输入总线 + 双输入仓**（Programmable-Hatches 那类"限制输入仓"就是双输入仓）
+     * 里的物品总量。取不到（接口差异/异常）返回 -1，调用方据此放弃本次判断 —— 指纹只是诊断，绝不影响主流程。
+     */
+    private long ae2qol$inputFingerprint() {
+        long sum = 0;
+        try {
+            for (gregtech.api.metatileentity.implementations.MTEHatchInputBus bus : this.mInputBusses) {
+                if (bus == null) continue;
+                // 坑位 #1：GT 类型上的 MC 接口方法要用 **SRG 名**
+                // （getSizeInventory → func_70302_i_，getStackInSlot → func_70301_a）
+                int size = bus.func_70302_i_();
+                for (int i = 0; i < size; i++) {
+                    ItemStack stack = bus.func_70301_a(i);
+                    if (stack != null) sum += stack.stackSize;
+                }
+            }
+            for (gregtech.common.tileentities.machines.IDualInputHatch hatch : this.mDualInputHatches) {
+                if (hatch == null) continue;
+                // inventories() 返回的是通配迭代器（Iterator<? extends IDualInputInventory>）⇒ 用 var 承接
+                var it = hatch.inventories();
+                while (it != null && it.hasNext()) {
+                    gregtech.common.tileentities.machines.IDualInputInventory inv = it.next();
+                    if (inv == null) continue;
+                    ItemStack[] items = inv.getItemInputs();
+                    if (items == null) continue;
+                    for (ItemStack stack : items) {
+                        if (stack != null) sum += stack.stackSize;
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+            return -1;
+        }
+        return sum;
+    }
+
     /** 跑一次 GT 的「算配方 + 收尾」，返回已定稿的结果（EU/时长/outputs 才是最终值）。 */
     private CheckRecipeResult ae2qol$checkOne() {
+        long before = ae2qol$inputFingerprint();
         CheckRecipeResult result = ae2qol$gtDoCheckRecipe();
         if (result != null && result.wasSuccessful()) {
             result = ae2qol$gtPostCheckRecipe(result, processingLogic);
+            // 扣料校验闸（3.25.0-fix4，**先只告警**）：算完一条线程后输入理应减少；
+            // 若没减少，说明"扣料对下一次计算不可见" —— 那正是刷物品的温床（用户实测的 16× 产出即此）。
+            // 这里刻意**不改行为**：ME 输入等"虚拟供给"机器的本机库存本来就不会变，直接拦会误伤；
+            // 真正的防护是"每 tick 最多启动一条线程"（P0）。本条只负责把可疑情况留痕，绝不静默。
+            long after = ae2qol$inputFingerprint();
+            if (before >= 0 && after >= 0 && after >= before && !ae2qol$gateWarned) {
+                ae2qol$gateWarned = true;
+                MTEMultiBlockBase self = (MTEMultiBlockBase) (Object) this;
+                MyMod.LOG.warn(
+                    "[AE2QoL] 线程引擎：{} @ {} 启动线程后输入未见减少（{} → {}）——疑似不扣料的虚拟输入仓；"
+                        + "若出现产出倍增请把本行发我。当前由「每 tick 最多一条线程」兜底",
+                    self.getMetaName(),
+                    ae2qol$posText(self.getBaseMetaTileEntity()),
+                    before,
+                    after);
+            }
         }
         return result;
     }
