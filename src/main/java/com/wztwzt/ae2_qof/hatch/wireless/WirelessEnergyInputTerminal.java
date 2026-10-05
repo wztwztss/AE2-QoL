@@ -40,10 +40,17 @@ public class WirelessEnergyInputTerminal extends MTEHatchEnergy {
     //           5=IV(8,192), 6=LuV(32,768), 7=ZPM(131,072), 8=UV(524,288),
     //           9=UHV(2,097,152), 10=UEV(8,388,608), 11=UIV(33,554,432),
     //           12=UMV(134,217,728), 13=UXV(536,870,912), 14=MAX(2,147,483,647)
-    private int voltageTier = 0;
+    /**
+     * 3.25.0-fix15（用户要求「把这个也整成 MAX 的外观」）：默认档位改为 **MAX（14）**。
+     * <p>原先默认 0 = ULV，于是 WAILA 显示"电压输入: 8 (ULV)"——那和输出终端（MAX 等级）看起来不对等。
+     * 该字段**不写 NBT**（每次加载回到默认值），所以改默认值即可让所有终端默认呈现 MAX；
+     * 玩家仍可在终端界面里自行调低档位（可配置性保留）。
+     */
+    private int voltageTier = 14;
     // 电流档位: 0=1A, 1=64A, 2=4,096A, 3=262,144A(262KA),
     //           4=16,777,216A(16MA), 5=1,073,741,824A(1GA)
-    private int ampTier = 0;
+    /** 同上：默认取最高电流档（1GA），与"超级能源仓"的定位一致。 */
+    private int ampTier = 5;
 
     private static final long[] AMP_TIERS = { 1, 64, 4096, 262144, 16777216, 1073741824 };
     private static final String[] AMP_LABELS = { "1A", "64A", "4,096A", "262KA", "16MA", "1GA" };
