@@ -361,7 +361,7 @@ gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiv.desc.2=需要安装 Program
 
 # ===== 样板剪贴板（3.24.0；只在装 PH 时注册）=====
 item.ae2_qof.pattern_clipboard.name=样板剪贴板
-ae2_qof.clipboard.tooltip.0=右键空中：切换模式（复制 / 粘贴 / 剪切）
+ae2_qof.clipboard.tooltip.0=§d右键空中：切换模式（复制 / 粘贴 / 剪切）—— 图标为紫色，与通配样板「绿」、生成器「青」区分
 ae2_qof.clipboard.tooltip.1=右键机器：按当前模式执行（只支持本模组的 MK.III / MK.IV）
 ae2_qof.clipboard.tooltip.2=潜行 + 右键空中：查看剪贴板状态
 ae2_qof.clipboard.mode=模式：

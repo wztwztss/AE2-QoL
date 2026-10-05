@@ -673,6 +673,22 @@ GT 2714「能下单但不合成」（注册进去的是预览 details，不是�
 
 ## 五、待办任务队列（优先级从高到低）
 
+### ★ 当前（3.24.0-fix1 轮，2026-10-02）
+
+- 由来：用户追问「你材质，和本地化键都做了吗，tooltips 写了吗」⇒ 逐项自查后确认 **本地化键 ✅（中/英各 25 条）**、
+  **tooltip ✅（MK.IV 机器 tooltip + 3 行 desc；剪贴板三行用法 + 当前模式）**，但**材质有缺口**：
+  ① 剪贴板物品**漏了染色**（会显示成未染色的 AE2 编码样板，与真样板无法区分）；
+  ② MK.III/MK.IV **没有专属贴图**（外观继承 PH 基类覆盖层，三台机器长相一致）。
+- 用户决定：**只补剪贴板染色**，MK.IV 外观不改（登记为外观约定）。
+- 已做：`ItemPatternClipboard.getColorFromItemStack` → **紫 `0xC77DFF`**；lang 中/英 `clipboard.tooltip.0` 加 `§d` 标记与三色说明；
+  版本 → **`3.24.0-fix1`**；CHANGELOG 记录 (54)、MOD_MAP 外观约定、README×2。
+- 产物：`build/libs/AE2-QoL-3.24.0-fix1.jar`（**1,819,553 B**，
+  SHA256 `72C21052A3DC465C9FE5E5BF1469ADA69BE965CF6A87C03339D602AEF0028AD6`），构建 `BUILD SUCCESSFUL`（`EXIT=0`）。
+- **坑位复现**：用源码方法名 grep 1.7.10 编译产物查不到方法 —— 产物里是 **SRG 名**
+  （`getColorFromItemStack`→`func_82790_a`、`addInformation`→`func_77624_a`、`onItemRightClick`→`func_77659_a`、
+  `onItemUse`→`func_77648_a`）。核对要用 SRG 名或看 `-c` 的 `ldc` 常量。
+- [ ] 部署（待确认游戏未运行）＋ 用户实测：剪贴板图标应为**紫色**，与绿（通配样板）/青（生成器）区分。
+
 ### ★ 当前（3.24.0 轮，2026-10-02）
 
 - [x] **新增 MK.IV（360 样板槽）**：`ph/MTEPatternCraftingBufferMKIV.java` = MK.III 的复制品，只改
@@ -913,6 +929,16 @@ PatternUploadTarget.java、PatternRecipeMatcher.java、PatternRouteKey.java、Pa
 ---
 
 ## 九、历史会话操作日志
+
+### 2026-10-02 · 3.24.0-fix1：样板剪贴板补图标染色（用户追问材质/本地化/tooltip）
+
+- 用户追问后逐项自查：**本地化键 ✅**（3.24.0 新增中/英各 25 条，已在 jar 内核到）、**tooltip ✅**（MK.IV 机器
+  tooltip + 3 行 desc；剪贴板 addInformation 三行用法 + 当前模式）、**材质 ❌ 缺口**（剪贴板漏染色；MK.III/MK.IV 无专属贴图）。
+- 按用户选择只补剪贴板染色：`getColorFromItemStack` → 紫 `0xC77DFF`（绿/青已被通配样板、生成器占用），
+  lang tooltip 首行加 `§d`；版本 `3.24.0` → `3.24.0-fix1`；MK.IV 外观不改并登记为外观约定。
+- 验证：`BUILD SUCCESSFUL`；`javap -c` 实证 `func_82790_a`（SRG 名 = getColorFromItemStack）字节码为
+  `ldc // int 13073919` = `0xC77DFF`；包内 mcmod.info 两条目与 lang 均已是新值。
+- 教训：**核对 1.7.10 产物必须用 SRG 名**（或看 `ldc` 常量），按源码方法名 grep 会误判为"方法没编进去"。
 
 ### 2026-10-02 · 3.24.0：新增 MK.IV（360 槽）+ 修「样板不进存档」+ 样板剪贴板
 

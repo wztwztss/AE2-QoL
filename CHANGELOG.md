@@ -34,6 +34,38 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-02 (54) - **3.24.0-fix1：给「样板剪贴板」补图标染色（用户追问"材质/本地化/tooltip"后自查出的缺口）**
+
+### 一、用户追问与逐项自查（只读取证）
+用户问「你材质，和本地化键都做了吗，tooltips 写了吗」。逐项核对结果：
+
+| 项 | 结论 | 证据 |
+|---|---|---|
+| **本地化键** | ✅ **已做** | 3.24.0 新增中/英各 **25 条**（MK.IV 7 条 + 剪贴板 18 条），已在**构建产物 jar 内**核对到 |
+| **tooltip** | ✅ **已做** | MK.IV：GT 机器 tooltip + 3 行 `desc`；剪贴板：`addInformation` 三行用法 + **当前模式**（切模式后 tooltip 会变） |
+| **材质** | ❌ **有缺口**（本轮补一半） | ① 剪贴板 `setTextureName(appliedenergistics2:ItemEncodedPattern)` 但**漏了染色** ⇒ 显示为未染色的 AE2 编码样板原图，与真样板几乎无法区分（本模组另两个物品都染色：通配样板绿 `0x5CE65C`、批量生成器青 `0x5CE6E6`）；② **MK.III 本就没有贴图代码**，外观继承 PH 基类的 `getTexturesActive/getTexturesInactive`（`BlockIcons.OVERLAY_ME_CRAFTING_INPUT_BUFFER`）⇒ 复制的 MK.IV 外观与 MK.III、乃至 PH 原版机器**完全相同** |
+
+### 二、本轮改动（用户选择"只补剪贴板染色"）
+- `item/ItemPatternClipboard` 新增 `getColorFromItemStack` → **紫 `0xC77DFF`**（注释写明与绿/青的取值依据）；
+- lang 中/英 `ae2_qof.clipboard.tooltip.0` 首行加 `§d` 标记，并注明三色区分（紫=剪贴板 / 绿=通配样板 / 青=生成器）；
+- 版本 `3.24.0` → **`3.24.0-fix1`**（`gradle.properties` + `mcmod.info` 两条目）。
+- **不改** MK.IV 外观（用户决定，理由：PH 家族机器本就同款外观，硬换 GT 现成覆盖层反而会与其它 ME 机器撞脸）；
+  已登记为**外观约定**（见 README / 本节）：MK.IV 靠**显示名与 tooltip** 区分；要专属外观需另行提供 16×16 素材。
+
+### 三、坑位复现（值得记）
+核对编译产物时我用 `javap | Select-String getColorFromItemStack` **查不到该方法**，一度以为没编进去 ——
+真实原因是 **1.7.10 编译产物里方法名是 SRG 名**：
+`getColorFromItemStack` → **`func_82790_a`**、`addInformation` → `func_77624_a`、
+`onItemRightClick` → `func_77659_a`、`onItemUse` → `func_77648_a`。
+**教训**：核对 1.7.10 字节码要么用 SRG 名，要么直接看 `-c` 里的 `ldc` 常量，不能按源码方法名 grep（本项目老坑的又一次复现）。
+
+### 四、验证与产物
+- 构建：`.\gradlew.bat build --offline -x spotlessJavaCheck -x spotlessCheck` ⇒ **`BUILD SUCCESSFUL`（`EXIT=0`）**；
+- 产物：`build/libs/AE2-QoL-3.24.0-fix1.jar`，**1,819,553 字节**，
+  SHA256 `72C21052A3DC465C9FE5E5BF1469ADA69BE965CF6A87C03339D602AEF0028AD6`；
+- 产物核对：`func_82790_a` 字节码 = `ldc #88 // int 13073919`（**= 0xC77DFF 紫** ✅）；
+  包内 `mcmod.info` 两条目均为 `3.24.0-fix1`；包内 `zh_CN.lang` 的 `clipboard.tooltip.0` 已带 `§d` 与新文案。
+
 ## 工作区决策记录 2026-10-02 (53) - **3.24.0：新增「编程样板输入总成 MK.IV」（360 槽）+ 修 MK.III「样板不进存档」+ 新增「样板剪贴板」**
 
 ### 一、用户诉求（三条，逐条对应下面的实现）

@@ -177,6 +177,12 @@
 | **样板剪贴板（3.24.0）** | `src/main/java/com/wztwzt/ae2_qof/item/ItemPatternClipboard.java` | 右键空中切换模式（复制/粘贴/剪切）、潜行+右键空中看状态、右键机器执行；**只在 MK.III/MK.IV 上生效**；**全部逻辑在服务端、不新增网络包**（样板数据不过网，避开单包上限）；剪贴板存玩家 `PlayerPersisted` 的 `ae2qolPatternClipboard`（跨维度、退出重进都在）；剪切 = 先确认写入剪贴板再清空源 |
 | **MK.IV / 剪贴板的注册点** | `src/main/java/com/wztwzt/ae2_qof/ph/PhIntegration.java` | 同一 PH 守卫内：MK.IV 构造 + 配方（X = MK.III）+ `InterfaceTerminalRegistry.register(MKIV.Inst.class)` + `mkivStack`；剪贴板物品也在此注册（引用 PH 类型，必须"守卫之后再加载"） |
 
+**外观约定（3.24.0-fix1 登记，非缺陷）**：MK.III 与 MK.IV **都没有专属贴图** —— 两者都继承 PH 基类的
+`getTexturesActive/getTexturesInactive`（`BlockIcons.OVERLAY_ME_CRAFTING_INPUT_BUFFER`），因此与 PH 原版机器外观相同，
+只能靠**显示名 / tooltip** 区分；要专属外观需新增 16×16 素材（未做）。
+「样板剪贴板」物品按名引用 AE2 编码样板贴图 + **紫色染色 `0xC77DFF`**（`getColorFromItemStack`；
+通配样板 = 绿 `0x5CE65C`、批量生成器 = 青 `0x5CE6E6`）。
+
 **与既有功能的接口**：样板上传/撤回（`network/UploadPatternPacket`、`RecallPatternPacket`）、
 供应器定位（`util/ProviderLocator`）、二合一终端（`merged/ContainerMergedTerminal`）全部按
 `IInterfaceViewable.rows()*rowSize()` 取容量 ⇒ 144 槽自动生效，**这些文件本轮未改动**。

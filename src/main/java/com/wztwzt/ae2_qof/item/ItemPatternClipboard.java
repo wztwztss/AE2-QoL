@@ -92,6 +92,17 @@ public class ItemPatternClipboard extends Item {
         return this;
     }
 
+    /**
+     * 紫色染色（3.24.0-fix1）：贴图本体仍是 AE2 原版编码样板（运行时按名引用、不分发其素材），
+     * 由 1.7.10 的 ItemRenderer 用这里返回的颜色相乘着色。
+     * 取值依据：通配样板 = 绿 {@code 0x5CE65C}、批量生成器 = 青 {@code 0x5CE6E6}，
+     * 本物品用**紫** {@code 0xC77DFF} 与之区分（否则三者与真样板图标无法一眼分开）。
+     */
+    @Override
+    public int getColorFromItemStack(ItemStack stack, int renderPass) {
+        return 0xC77DFF;
+    }
+
     // ===================== 模式切换 / 状态查询 =====================
 
     @Override

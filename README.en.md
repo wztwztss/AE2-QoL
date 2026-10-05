@@ -4,7 +4,16 @@
 
 An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
-**Author: wztwzt · Current source version: 3.24.0 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.24.0-fix1 · Reference pack: GTNH 2.9.0-beta-3**
+
+## What's new in 3.24.0-fix1 (icon tint for the Pattern Clipboard)
+
+- The previous release missed this: the **Pattern Clipboard item had no tint**, so its icon looked exactly like an
+  untinted AE2 encoded pattern and could not be told apart from a real one. It is now **purple** (this mod's Wild
+  pattern is **green** and the Generator is **cyan**), and the first tooltip line carries the matching purple marker.
+- One **appearance note** (not a defect) is recorded too: MK.IV looks identical to MK.III — both inherit PH's ME
+  pattern-buffer overlay and have no dedicated texture, so tell them apart by **name / tooltip**; a dedicated look
+  would require new 16×16 art.
 
 ## What's new in 3.24.0 (new 360-slot MK.IV + fixed "patterns are not saved" + a pattern clipboard)
 

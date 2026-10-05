@@ -360,7 +360,7 @@ gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiv.desc.2=Requires Programmabl
 
 # ===== Pattern clipboard (3.24.0; registered only with PH) =====
 item.ae2_qof.pattern_clipboard.name=Pattern Clipboard
-ae2_qof.clipboard.tooltip.0=Right-click air: cycle mode (copy / paste / cut)
+ae2_qof.clipboard.tooltip.0=§dRight-click air: cycle mode (copy / paste / cut) — purple icon, distinct from Wild (green) and Generator (cyan)
 ae2_qof.clipboard.tooltip.1=Right-click a machine: run the current mode (MK.III / MK.IV only)
 ae2_qof.clipboard.tooltip.2=Sneak + right-click air: show clipboard status
 ae2_qof.clipboard.mode=Mode: 
