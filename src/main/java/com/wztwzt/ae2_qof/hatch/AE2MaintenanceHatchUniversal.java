@@ -227,9 +227,10 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
                 .addPage(pageParams)
                 .addPage(pageThreads));
 
+        // G3（3.25.0-fix3）：标签条从"面板右缘外侧"改到**左侧竖直条**（用户要求"按钮放左边"）。
         panel.child(
             new Column().coverChildren()
-                .pos(260 - 3, -1)
+                .pos(-32 + 3, -1)
                 .child(
                     new com.cleanroommc.modularui.widgets.PageButton(0, tabController)
                         .tab(com.cleanroommc.modularui.drawable.GuiTextures.TAB_RIGHT, 0)
@@ -369,46 +370,48 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
 
         ThreadRowList() {
             size(248, 88);
+            // G7：**必须显式指定滚动方向**，否则 ListWidget 不认自己是可滚列表 —— 超过 8 条就翻不动。
+            // 照抄本仓库能滚的范例 AdaptiveNetTerminal.java:938。
+            scrollDirection(com.cleanroommc.modularui.api.GuiAxis.Y);
         }
     }
 
     private static IWidget threadRow(Ae2qolThreadEngine.Row row) {
-        Flow r = Flow.row().coverChildren().childPadding(2);
+        // G4：固定行高（让 ListWidget 能算出内容高度 ⇒ 滚动条范围正确，见 G7）
+        Flow r = Flow.row().height(11)
+            .childPadding(2);
 
         r.child(
-            new TextWidget<>(IKey.str(String.format("%2d", row.index))).size(16, 11)
+            new TextWidget<>(IKey.str(String.format("%2d", row.index))).size(14, 11)
                 .color(0xFF303030));
 
         // 产物图标：没有图标（输入不足/空闲）时留空位，保持列对齐
         com.cleanroommc.modularui.widget.Widget<?> iconWidget =
-            new com.cleanroommc.modularui.widget.Widget<>().size(12, 11);
+            new com.cleanroommc.modularui.widget.Widget<>().size(16, 11);
         if (row.icon != null) {
             iconWidget.background(new com.cleanroommc.modularui.drawable.ItemDrawable(row.icon));
         }
         r.child(iconWidget);
 
-        r.child(new TextWidget<>(IKey.str(progressBar(row.percent))).size(52, 11).color(0xFF2E7D32));
+        r.child(new TextWidget<>(IKey.str(progressBar(row.percent))).size(40, 11).color(0xFF2E7D32));
+        r.child(new TextWidget<>(IKey.str(row.percent + "%")).size(34, 11).color(0xFF303030));
         r.child(
-            new TextWidget<>(
-                IKey.str(
-                    row.percent + "%"
-                        + (row.remain > 0 ? " " + StatCollector.translateToLocal("ae2_qof.threads.remain_short")
-                            + row.remain + "t" : ""))).size(72, 11)
-                                .color(0xFF303030));
+            new TextWidget<>(IKey.str(row.remain > 0 ? row.remain + "t" : "-")).size(40, 11)
+                .color(0xFF606060));
         r.child(
-            new TextWidget<>(IKey.str(String.valueOf(row.parallel))).size(48, 11)
+            new TextWidget<>(IKey.str(row.parallel > 0 ? String.valueOf(row.parallel) : "-")).size(52, 11)
                 .color(0xFF0066CC));
         r.child(
-            new TextWidget<>(IKey.dynamic(() -> stateText(row.state))).size(44, 11)
+            new TextWidget<>(IKey.dynamic(() -> stateText(row.state))).size(48, 11)
                 .color(0xFF8A5A00));
         return r;
     }
 
-    /** 纯文本进度条（不引入新控件；浅底深字，不使用 § 码）。 */
+    /** 纯文本进度条（不引入新控件；浅底深字，不使用 § 码）。行宽只够 6 格。 */
     private static String progressBar(int percent) {
-        int filled = Math.max(0, Math.min(10, percent / 10));
-        StringBuilder sb = new StringBuilder(10);
-        for (int i = 0; i < 10; i++) {
+        int filled = Math.max(0, Math.min(6, percent / 17));
+        StringBuilder sb = new StringBuilder(6);
+        for (int i = 0; i < 6; i++) {
             sb.append(i < filled ? '\u2588' : '\u2591');
         }
         return sb.toString();
