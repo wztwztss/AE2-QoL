@@ -673,7 +673,29 @@ GT 2714「能下单但不合成」（注册进去的是预览 details，不是�
 
 ## 五、待办任务队列（优先级从高到低）
 
-### ★ 当前（3.25.0-fix12 已部署，2026-10-05）
+### ★ 当前（3.25.0-fix14 已部署，2026-10-05）
+
+- **现场版本**：实例 `mods\【私货】AE2-QoL-3.25.0-fix14.jar`（1,854,492 B，
+  SHA256 `0E3628E5C80016E12CCD06CDD221624A37A15DC384766FC43562568A33C912D5`，与本地构建一致；
+  旧 fix12 已移入 `_ae2qol_jar_backup\prev-…`；`mods` 内 AE2-QoL 仅 1 份）。**需重启加载**。
+- **本版内容（fix13 + fix14）**：
+  1. **fix13**：线程页底部补全"空闲 / 输入不足 / 输出已满 / 缺电降级"四项计数（此前只看得到两项，
+     15 条不跑的线程去向不可见）；
+  2. **fix14**：**「无线电网输出终端」(#32110) 现在会被 GT 认成动力仓** —— 根因是它原先
+     `extends MTEHatchEnergy`（能源仓＝输入基类）且 `maxEUOutput/maxAmperesOut` 都返回 `Long.MAX_VALUE`，
+     而 GT `addDynamoToMachineList` 的硬条件是 `instanceof MTEHatchDynamo && maxAmperesOut() <= 4`。
+     现改为：基类 `MTEHatchDynamo`、`maxEUOutput()=V[mTier]`、`maxAmperesOut()=4`、
+     **注册等级 EV(5) → MAX(15)**（否则机器→终端上限只有 8192 EU/t）、贴图索引夹取；
+     **无线推送侧不受影响**（`onPreTick` 只读自身缓存）。输入终端(#32111) 无需改动。
+- [ ] **待用户实测（重启后）**：① 多方块接受该终端为动力仓；② WAILA 不再 `Invalid Voltage Tier`（MAX 级 / 4A）；
+  ③ 发电正常灌入无线电网；④ 线程页底部四项计数；⑤ **P0 核心仍未验**：线程=1 与 16 产出一致；
+  ⑥ 16 条线程在**足够电力/原料**时能否都跑起来（当前 4096 并行下第一条就吃满 ⇒ 只跑 1 条属预期）。
+- [ ] 未结：**WAILA 线程行**（方案 a：compileOnly waila + 写全 4 参数，先验证启动不崩）；
+  **线程页显示"正在做的配方 + 进度%"**（学 GTOLib `Thread{recipe,progress,duration,use}`）；
+  可选：线程数按等级翻倍、`duplicateCheck`、"独立线程(错峰)"开关。
+- ⚠️ **安全**：P0 验收通过前，**产线保持线程=1**。
+
+### ★ 历史（3.25.0-fix12 已部署，2026-10-05）
 
 - **现场版本**：实例 `mods\【私货】AE2-QoL-3.25.0-fix12.jar`（1,854,148 B，
   SHA256 `D24284515F16BB9E15FE2794DE67373310F3EC41620E502B27EA4DEBC741B285`，与本地构建一致；

@@ -64,8 +64,15 @@ if (aMetaTileEntity instanceof MTEHatchDynamo hatch && hatch.maxAmperesOut() <= 
    EV 级只有 `2048×4 = 8192 EU/t`；MAX 级是 1e13 量级 ⇒ 等于不设限（同时消除 `Invalid Voltage Tier`）；
 4. 贴图索引加夹取 `overlayIndex()`（等级提到 MAX 后 `mTier+1` 可能越界）。
 
-### 四、验证（待回填）
-- 构建与产物：待回填。
+### 四、验证
+- 构建：`BUILD SUCCESSFUL`（`EXIT=0`）；
+- 产物：`build/libs/AE2-QoL-3.25.0-fix14.jar`（**1,854,492 B**，
+  SHA256 `0E3628E5C80016E12CCD06CDD221624A37A15DC384766FC43562568A33C912D5`）；
+- **已部署（用户批准「现在就部署 fix14」）**：`mods\【私货】AE2-QoL-3.25.0-fix14.jar`（实例 SHA256 与本地一致；
+  旧 fix12 已移入 `_ae2qol_jar_backup\prev-…`；`mods` 内仅 1 份；部署前确认无 MC 进程）
+  ⇒ **fix13（线程页底部计数）+ fix14 一起进入实例**。**需重启游戏加载**；
+- **待实测**：① 多方块结构接受该终端为动力仓；② WAILA 不再显示 `Invalid Voltage Tier`（电压 = MAX 级、电流 4）；
+  ③ 机器发电正常灌入无线电网（吞吐不受影响）；④ 线程页底部四项计数。
 
 ## 工作区决策记录 2026-10-05 (72) - **3.25.0-fix13：线程页底部补全状态计数（非活跃线程的去向可见）**
 
