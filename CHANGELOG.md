@@ -59,8 +59,12 @@
   - 两者相等 ⇒ 设定生效，问题在别处（显示口径 / 输入快照）；
   - 两者不等 ⇒ 被机器自身并行或批处理覆盖，再按机器适配。
 
-### 三、验证（待回填）
-- 构建与产物：待回填。
+### 三、验证
+- 构建：`BUILD SUCCESSFUL`（`EXIT=0`）；
+- **最终产物**：`build/libs/AE2-QoL-3.25.0-fix4.jar`，**1,852,926 字节**，
+  SHA256 `5B12CE4FD4DFB7F7A270503BB65471546CCE0DBE4B2281B7BE45577D0498E9B0`
+  （包内 `mcmod.info` 两条目 `3.25.0-fix4`、`ThreadStatusTicker`/`ThreadStatusBroadcaster` 均已入包、
+  WAILA 混入已登记）。**尚未部署**（等用户同意）。
 
 ## 工作区决策记录 2026-10-05 (61) - **3.25.0-fix4：真流体产物图标（G4）+ 扣料校验闸（先只告警）+ WAILA 线程行（G5）**
 
@@ -121,7 +125,8 @@
   ⇒ 显示恢复且**不会重复落地产物**（不刷物品）。
 
 ### 四、待回填 / 未做
-- 构建与产物：待回填；
+- 构建与产物：`BUILD SUCCESSFUL`（`EXIT=0`）；产物 `build/libs/AE2-QoL-3.25.0-fix3.jar`（**1,848,907 字节**，
+  SHA256 `53909F3DA47B24812F00858463B9E4CC925BCBE1B8B21C653C76DA404A24E408`；后被 fix4 取代）；
 - 仍未做（下一轮 fix4）：G4 的**真流体图标**（引擎 `Row` 加流体字段 + PacketBuffer 序列化 + `FluidDrawable`）、
   G5 WAILA 线程行（零参数 + `@Local` 修签名）、**扣料校验闸**（需先确认 `mInputBusses` 的 SRG 名）、
   **P1 并行/速度设定被忽略**、G6 广播改中央 server tick 驱动。
