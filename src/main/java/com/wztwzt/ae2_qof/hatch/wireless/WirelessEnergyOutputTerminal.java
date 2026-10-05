@@ -24,13 +24,13 @@ import gregtech.api.enums.Textures;
 import gregtech.api.interfaces.ITexture;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.metatileentity.implementations.MTEHatchEnergy;
+import gregtech.api.metatileentity.implementations.MTEHatchDynamo;
 import gregtech.api.render.TextureFactory;
 import gregtech.common.misc.WirelessNetworkManager;
 
 import com.wztwzt.ae2_qof.item.ItemNetworkDataStick;
 
-public class WirelessEnergyOutputTerminal extends MTEHatchEnergy {
+public class WirelessEnergyOutputTerminal extends MTEHatchDynamo {
 
     private UUID ownerUuid;
 
@@ -75,16 +75,25 @@ public class WirelessEnergyOutputTerminal extends MTEHatchEnergy {
         return super.getTexture(aBaseMetaTileEntity, side, facing, aColorIndex, aActive, aRedstone);
     }
 
+    /**
+     * 叠加层贴图索引（3.25.0-fix14）：等级提到 MAX 后 `mTier + 1` 可能越界，这里夹取一次。
+     */
+    private int overlayIndex() {
+        int idx = mTier + 1;
+        int len = Textures.BlockIcons.OVERLAYS_ENERGY_OFF_WIRELESS.length;
+        return idx < len ? idx : len - 1;
+    }
+
     @Override
     public ITexture[] getTexturesActive(ITexture aBaseTexture) {
         return new ITexture[] { aBaseTexture,
-            TextureFactory.of(Textures.BlockIcons.OVERLAYS_ENERGY_OFF_WIRELESS[mTier + 1]) };
+            TextureFactory.of(Textures.BlockIcons.OVERLAYS_ENERGY_OFF_WIRELESS[overlayIndex()]) };
     }
 
     @Override
     public ITexture[] getTexturesInactive(ITexture aBaseTexture) {
         return new ITexture[] { aBaseTexture,
-            TextureFactory.of(Textures.BlockIcons.OVERLAYS_ENERGY_OFF_WIRELESS[mTier + 1]) };
+            TextureFactory.of(Textures.BlockIcons.OVERLAYS_ENERGY_OFF_WIRELESS[overlayIndex()]) };
     }
 
     @Override
@@ -102,9 +111,17 @@ public class WirelessEnergyOutputTerminal extends MTEHatchEnergy {
         return 0;
     }
 
+    /**
+     * 3.25.0-fix14：**对 GT 必须报"合法电压"**。
+     * <p>GT 的 {@code MTEMultiBlockBase.addDynamoToMachineList} 只认
+     * {@code instanceof MTEHatchDynamo} 且 {@code maxAmperesOut() <= 4} 的部件；
+     * 原先这里返回 {@code Long.MAX_VALUE}（工具提示显示 `Invalid Voltage Tier`，结构判定直接失败）。
+     * 现在按等级报 {@code V[mTier]} —— 与 GT 自己的动力仓 {@code MTEHatchDynamo.maxEUOutput()} 一致。
+     * <p>⚠️ 我们的**无线推送不受此限**：{@code onPreTick} 只把本仓内部缓存推给全局电网，不读这个值。
+     */
     @Override
     public long maxEUOutput() {
-        return Long.MAX_VALUE;
+        return V[mTier];
     }
 
     @Override
@@ -112,9 +129,14 @@ public class WirelessEnergyOutputTerminal extends MTEHatchEnergy {
         return Long.MAX_VALUE / 2;
     }
 
+    /**
+     * 3.25.0-fix14：GT 的结构判定**硬条件**是 {@code maxAmperesOut() <= 4}
+     * （见 {@code MTEMultiBlockBase.addDynamoToMachineList}），所以这里必须回到 ≤4；
+     * 原先返回 {@code Long.MAX_VALUE} 是"识别不了"的第二个原因（且 UI 里 cast 成 int 会变成 -1）。
+     */
     @Override
     public long maxAmperesOut() {
-        return Long.MAX_VALUE;
+        return 4;
     }
 
     @Override

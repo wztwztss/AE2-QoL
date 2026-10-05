@@ -34,6 +34,39 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-05 (73) - **3.25.0-fix14：让「无线电网输出终端」被 GT 认成动力仓（基类用错 + 数值非法）**
+
+### 一、用户反馈
+> "这个舱室目前不会被识别为动力仓"（WAILA 显示 `无线电网输出终端 #32110`，
+> `电压输出 9.22e18 (Invalid Voltage Tier)`、`电流 9.22e18`，多方块结构不接受它）
+
+### 二、根因（GT 源码级，两个条件**都不满足**）
+`MTEMultiBlockBase.addDynamoToMachineList`（L2275）：
+```java
+if (aMetaTileEntity instanceof MTEHatchDynamo hatch && hatch.maxAmperesOut() <= 4) { … mDynamoHatches.add(hatch); }
+```
+| 条件 | 我们的 `WirelessEnergyOutputTerminal`（改前） | |
+|---|---|---|
+| `instanceof MTEHatchDynamo` | **`extends MTEHatchEnergy`**（能源仓＝**输入**基类） | ❌ |
+| `maxAmperesOut() <= 4` | 报 `Long.MAX_VALUE`（9.22e18） | ❌ |
+
+旁证：GT 自己的 `MTEHatchDynamo` 全是"合法小数值"——`maxEUOutput()=V[mTier]`、`maxEUStore()=512+V[tier+1]*2`、
+`isValidSlot=false`；`9.22e18` 超出 GT 电压表，故工具提示出现 `Invalid Voltage Tier`（同一根因）。
+另核对：`addEnergyInputToMachineList`（L2234）**只查 `instanceof MTEHatchEnergy`**（无安培限制）
+⇒ 我们的**输入**终端（32111）本来就合规，无需改。
+
+### 三、修法（用户批准 ①②④ + 等级提到 MAX）
+1. `WirelessEnergyOutputTerminal`：**基类 `MTEHatchEnergy` → `MTEHatchDynamo`**（类名/ID 32110 不变 ⇒ **存档无需迁移**）；
+2. `maxEUOutput()` → **`V[mTier]`**（合法电压，与 GT 动力仓一致）；`maxAmperesOut()` → **4**（GT 结构判定硬条件）；
+   `maxEUStore()` **保持超大缓存** —— 因为我们的无线推送只看自身缓存：
+   `onPreTick` 每 4 tick 把 `getStoredEU()` 推给 `WirelessNetworkManager` 再清空 ⇒ **无线吞吐不受这两个值影响**；
+3. 注册等级 **EV(5) → MAX(15)**：被 GT 认成合法动力仓后，"机器→终端"的送入上限 = `V[mTier] × 4A`，
+   EV 级只有 `2048×4 = 8192 EU/t`；MAX 级是 1e13 量级 ⇒ 等于不设限（同时消除 `Invalid Voltage Tier`）；
+4. 贴图索引加夹取 `overlayIndex()`（等级提到 MAX 后 `mTier+1` 可能越界）。
+
+### 四、验证（待回填）
+- 构建与产物：待回填。
+
 ## 工作区决策记录 2026-10-05 (72) - **3.25.0-fix13：线程页底部补全状态计数（非活跃线程的去向可见）**
 
 ### 一、用户实测截图（fix12 生效的证据）

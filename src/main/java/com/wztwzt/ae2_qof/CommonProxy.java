@@ -466,7 +466,11 @@ public class CommonProxy {
                 32110,
                 "wireless_energy_output_terminal",
                 "Wireless Energy Output Terminal",
-                5);
+                // 3.25.0-fix14：等级从 EV(5) 提到 MAX(15)。
+                // 原因：要被 GT 认成"动力仓"就必须是合法动力仓（`instanceof MTEHatchDynamo` + `maxAmperesOut() <= 4`），
+                // 于是"机器→终端"的送入上限 = V[mTier] × 4A；用 MAX 等级才不至于把吞吐压回 EV 级（V[EV]×4 = 8192 EU/t）。
+                // 终端的**无线推送侧不受影响**（onPreTick 直接把内部缓存推给全局电网）。
+                15);
             GameRegistry.addShapedRecipe(
                 wirelessEnergyOutputTerminal.getStackForm(1L),
                 "wrw",
