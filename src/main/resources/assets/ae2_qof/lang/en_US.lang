@@ -350,6 +350,35 @@ gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.desc.0=144 pattern slots (
 gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.desc.1=Up to 32 item + 32 fluid inputs per order, 24 isolated buffers.
 gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.desc.2=Only exists when ProgrammableHatches is installed; crafted by upgrading the original buffer.
 
+# ===== Programmable Crafting Input Buffer MK.IV (3.24.0; 360 slots; PH-only) =====
+gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiv.name=Programmable Crafting Input Buffer MK.IV
+gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiv.tooltip=§6Programmable Crafting Input Buffer MK.IV\n§7360 pattern slots (10x the original 36)\n§7Up to 32 item + 32 fluid inputs per order\n§724 isolated internal buffers\n§8[AE2 QoL + ProgrammableHatches]
+gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiv.desc=AE-direct item/fluid pattern buffer for multiblocks (360 slots)
+gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiv.desc.0=360 pattern slots (10x the original 36), in a scrollable pattern window.
+gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiv.desc.1=Up to 32 item + 32 fluid inputs per order, 24 isolated buffers.
+gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiv.desc.2=Requires ProgrammableHatches; crafted by upgrading MK.III (144 slots) with circuits.
+
+# ===== Pattern clipboard (3.24.0; registered only with PH) =====
+item.ae2_qof.pattern_clipboard.name=Pattern Clipboard
+ae2_qof.clipboard.tooltip.0=Right-click air: cycle mode (copy / paste / cut)
+ae2_qof.clipboard.tooltip.1=Right-click a machine: run the current mode (MK.III / MK.IV only)
+ae2_qof.clipboard.tooltip.2=Sneak + right-click air: show clipboard status
+ae2_qof.clipboard.mode=Mode: 
+ae2_qof.clipboard.mode.copy=Copy
+ae2_qof.clipboard.mode.paste=Paste
+ae2_qof.clipboard.mode.cut=Cut
+ae2_qof.clipboard.amount=%s patterns / %s slots
+ae2_qof.clipboard.copied=Copied
+ae2_qof.clipboard.pasted=Pasted
+ae2_qof.clipboard.cut=Cut (source machine cleared)
+ae2_qof.clipboard.empty=Clipboard is empty (use Copy or Cut on a pattern buffer first)
+ae2_qof.clipboard.not_ours=Target is not one of our pattern buffers (MK.III / MK.IV)
+ae2_qof.clipboard.bad_mode=Invalid mode, ignored
+ae2_qof.clipboard.copy_failed=Copy failed: source machine's pattern array is invalid (see log)
+ae2_qof.clipboard.paste_failed=Paste failed: target machine's pattern array is invalid (see log)
+ae2_qof.clipboard.status=Clipboard: 
+ae2_qof.clipboard.truncated=Clipboard has %s patterns but the target only has %s slots; the rest was not moved
+
 # ===== Stock Monitor Terminal (keys added in 3.20.3) =====
 ae2_qof.terminal.status.bound=§a● Bound to wireless network
 ae2_qof.terminal.status.unbound=§7● Not connected

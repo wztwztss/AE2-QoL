@@ -37,6 +37,11 @@ public class AE2QoLCreativeTab extends CreativeTabs {
         if (mkiii != null) {
             list.add(mkiii.copy());
         }
+        // 3.24.0：MK.IV（360 样板槽）同样是 GT 机器，也要显式追加；未装 PH 时为 null。
+        ItemStack mkiv = com.wztwzt.ae2_qof.ph.PhIntegration.mkivStack;
+        if (mkiv != null) {
+            list.add(mkiv.copy());
+        }
     }
 
     @Override

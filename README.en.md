@@ -4,7 +4,27 @@
 
 An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
-**Author: wztwzt · Current source version: 3.23.2-fix1 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.24.0 · Reference pack: GTNH 2.9.0-beta-3**
+
+## What's new in 3.24.0 (new 360-slot MK.IV + fixed "patterns are not saved" + a pattern clipboard)
+
+- **New: Programmable Crafting Input Buffer MK.IV** — an expanded MK.III with **360 pattern slots** (MTE ID 32109,
+  9 columns × 40 scrollable rows; 24 isolated buffers and everything else identical to MK.III).
+  Recipe = **MK.III ×1 + master/advanced circuits** (i.e. upgrade the 144-slot one).
+  **MK.III keeps its 144 slots and ID 32108**; both machines coexist, so existing saves are untouched.
+- **Fixed an existing bug: patterns and multipliers were never persisted** for these machines. PH implements
+  `saveNBTData/loadNBTData` only in its own inner class (`PatternDualInputHatch$Inst`), and our block entity is a
+  cross-package subclass that is not on that chain — so **patterns vanished after a world reload**. Both machines
+  now save/load with PH's exact keys (patterns, multipliers, optimization toggles, custom name, AE proxy state),
+  and a 144-slot save can be read safely by the 360-slot machine.
+- **New item: Pattern Clipboard** (only present when ProgrammableHatches is installed) — right-click air to cycle
+  mode (copy / paste / cut), right-click a machine to run it, sneak + right-click air for status.
+  It only works on your MK.III / MK.IV. The clipboard lives in your player data (survives dimension changes and
+  relogs), which makes "144 → 360 migration" and temporary backups easy. "Cut" writes to the clipboard first and
+  only clears the source after that succeeds (on failure the source is left untouched, with a log entry).
+  The transfer **never goes through a network packet** (the server reads/writes by coordinates), so the 1.7.10
+  packet size limit is a non-issue.
+- Version: `gradle.properties` / `mcmod.info` → **3.24.0**.
 
 ## What's new in 3.23.2-fix1 (the Wild-pattern / pattern-generator UIs would not open on a dedicated server)
 

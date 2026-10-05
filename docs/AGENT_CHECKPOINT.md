@@ -673,6 +673,30 @@ GT 2714「能下单但不合成」（注册进去的是预览 details，不是�
 
 ## 五、待办任务队列（优先级从高到低）
 
+### ★ 当前（3.24.0 轮，2026-10-02）
+
+- [x] **新增 MK.IV（360 样板槽）**：`ph/MTEPatternCraftingBufferMKIV.java` = MK.III 的复制品，只改
+      `PATTERN_SLOTS=360`（`TOTAL_ROWS` 自动 40）、`MTE_ID=32109`、内部名 `…me.mkiv`；MK.III 保持 144/32108 不动。
+      注册在 `PhIntegration`（同一 PH 守卫），配方 **X = MK.III ×1** + 大师/高级电路，并把 `MKIV.Inst` 注册进
+      AE2 接口终端注册表；创造页追加 `mkivStack`。
+- [x] **修既有 bug：MK.III/MK.IV「样板不进存档」**。根因：PH 只在 `PatternDualInputHatch$Inst` 里读写
+      `patternSlots`/`multiplier`，我们的方块实体是**跨包子类、不在那条链上** ⇒ 重进世界样板全丢。
+      修法：新增 `ph/PatternSlotPersistence`（PH 键名兼容）+ 给 `MixinPatternDualInputHatchAccess` 加 5 个
+      `@Accessor`（customName/additionalConnection/allowopt/normalopt/saved）与 1 个 `@Invoker`
+      （updateValidGridProxySides）；两台机器的 `loadNBTData`/`saveNBTData` 都接上。
+- [x] **新增「样板剪贴板」物品**（`item/ItemPatternClipboard.java`，只在装 PH 时注册）：右键空中切模式
+      （复制/粘贴/剪切）、潜行+右键空中看状态、右键机器执行；只对 MK.III/MK.IV 生效；**全部服务端逻辑、不新增网络包**
+      （样板数据不过网）；剪贴板存玩家 `PlayerPersisted`（跨维度、退出重进都在）；剪切 = 先写入剪贴板成功再清空源。
+- [x] 构建 `BUILD SUCCESSFUL`（无管道取码 `EXIT=0`）+ 产物核对（新类入包；`javap -constants` 实证
+      `MTE_ID=32109`/`PATTERN_SLOTS=360`/`TOTAL_ROWS=40`；两台机器均有 save/load；包内 lang 含新键）。
+      产物 `build/libs/AE2-QoL-3.24.0.jar`（**1,819,391 B**，
+      SHA256 `42756A0AA120D07504B989D008DA1FA6CDA66B5A44A3E6D521AC6DC997ACC4AF`，含更新后的指南页）。版本 → `3.24.0`。
+- [ ] **待用户实测**：① 创造页能看到 MK.IV、用 MK.III×1+电路能合成；② MK.IV 装到多方块上，AE2 接口终端与
+      本模组终端都能看见它、样板窗 9×9 可滚动 40 行；③ 剪贴板「复制 → 粘贴」把 144 张样板与倍率搬到 MK.IV；
+      ④ **存档修复验收**：MK.III 与 MK.IV 各放几张样板 → 退出 → 重进 ⇒ 两台都还在；
+      ⑤ 对非我们机器右键剪贴板应提示"目标不是本模组的样板总成"且无改动。
+- [ ] **部署**：等用户完全退出游戏后部署本地实例（服务端那份需用户自己上传）。
+
 ### ★ 当前（3.23.2-fix1 轮，2026-09-28）
 
 - [x] **修「专用服务器上右键打不开 Wild 窗口 / 批量样板生成器界面」**。根因（**服务端日志实证**）：这两个界面是搬运来的
@@ -889,6 +913,27 @@ PatternUploadTarget.java、PatternRecipeMatcher.java、PatternRouteKey.java、Pa
 ---
 
 ## 九、历史会话操作日志
+
+### 2026-10-02 · 3.24.0：新增 MK.IV（360 槽）+ 修「样板不进存档」+ 样板剪贴板
+
+- 工具平台：DeepSeek Harness（DSH Web GUI）｜模型：DeepSeek-V4.1-Flash
+- 由来：用户先讨论 Apeiron 的功能对比（二合一输出总成、并行手法），最后定下"**自己做 MK.IV（360 槽）+ 用剪切/粘贴工具搬家**"，
+  并要求**顺手修 MK.III 疑似不写档**。三条一起交付在 3.24.0。
+- 关键取证（决定做法）：
+  1. **PH 的存读档只在它自己的内部类 `PatternDualInputHatch$Inst`**（`PatternDualInputHatch.java:533/558`），
+     我们的方块实体是跨包子类 ⇒ **从未保存 `pattern`/`multiplier`**（全仓与 GT 侧都没有别的写入者）⇒ 这就是"样板丢"的根因；
+  2. PH 的键名/语义：`patternSlots` 的 `i0..iN`（`ItemStack.writeToNBT`）+ `multiplier`（**最小 1**）+
+     `customName`/`additionalConnection`/`restrictToInt`/`allowopt`/`normalopt`/`saved` + `getProxy()` 读写；
+     `allowopt` 在 PH 里**默认 true**（老档缺键时不能按 `getBoolean` 的 false 处理）；
+  3. `PATTERN_SLOTS` 是 `public static final` 且被**私有** `ae2qol$ensureSlots()` 引用 ⇒ **继承覆盖常量无效**，只能复制类；
+  4. `getProxy()` 是 `IGridProxyable` 的公开方法、`refresh()` 也是 public，但 `updateValidGridProxySides()` 是 private
+     ⇒ 需要 `@Invoker`；5 个伴生字段是包私有/private ⇒ 需要 `@Accessor`。
+- 实现要点（详见 CHANGELOG 记录 (53) 与 `docs/MOD_MAP.md` 的 MK.III/MK.IV 段）：
+  `PatternSlotPersistence`（共享存读档）+ accessor 扩展 + MK.IV 类 + `PhIntegration` 注册（MK.IV 与剪贴板）+
+  `AE2QoLCreativeTab` 追加 + 中英 lang + 指南/文档同步 + 版本 3.24.0。
+- 验证：构建一次通过；`jar tf` 新类全在；`javap -constants` 实证 32109/360/40；两台机器均有 save/load；包内 lang 有新键。
+- **未做/留给下一轮**：①②③（样板剪贴板只支持我们的机器，PH 自己的机器暂不支持）；④MK.III 的 144 那台
+  上线前建议先备份世界（虽然本次已按 PH 键名补齐存读档，但属于"动过的已验证代码"）。
 
 ### 2026-09-28 · 3.23.2-fix1：修「专用服务器上右键打不开 Wild 窗口 / 批量生成器界面」
 

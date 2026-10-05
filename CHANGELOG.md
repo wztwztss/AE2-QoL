@@ -34,6 +34,84 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-02 (53) - **3.24.0：新增「编程样板输入总成 MK.IV」（360 槽）+ 修 MK.III「样板不进存档」+ 新增「样板剪贴板」**
+
+### 一、用户诉求（三条，逐条对应下面的实现）
+1. **样板总成从 144 槽扩到 360 槽**；做法选「**新做 MK.IV**，玩家自己把 MK.III 换成 MK.IV」（不就地改 MK.III）。
+2. 迁移手段：**做一个剪切/粘贴工具**（因为换机器不会自动带数据）。
+3. 附带发现并同意修：**MK.III 疑似"样板不进存档"**（见 §三），本轮一起修。
+
+### 二、MK.IV（新机器）
+- `ph/MTEPatternCraftingBufferMKIV.java`：**MK.III 的复制品**，只改 `PATTERN_SLOTS 144 → 360`
+  （`TOTAL_ROWS` 自动 40、`GRID_COLS=9`/可见 9 行滚动不变）、`MTE_ID = **32109**`、
+  `MTE_NAME = ae2qof.hatch.input.buffered.me.mkiv`，其余（24 缓冲、每缓冲 32 物品 + 32 流体、
+  tier 10、内部 `Inst`、样板窗布局与"改"按钮等）与 MK.III **逐字一致**。
+- `ph/PhIntegration.register()`：同一 PH 守卫内注册 MK.IV，配方 **`cCc/CXC/cCc`，X = MK.III ×1**
+  （C = 大师电路、c = 高级电路）⇒ 玩家的路径就是"拿 144 那台 + 电路"；并把
+  `MTEPatternCraftingBufferMKIV.Inst.class` 注册进 **AE2 接口终端注册表**（漏了它 AE2 接口终端与本模组
+  样板终端都看不见这台机器 —— 与 MK.III 同一个坑）；创造页 `AE2QoLCreativeTab` 追加 `mkivStack`。
+- ⚠️ 为什么不能"继承 MK.III 再覆盖常量"：`PATTERN_SLOTS` 是 `public static final int` 且被
+  **私有方法** `ae2qol$ensureSlots()` 直接引用（编译期内联 + 私有方法只认本类常量）⇒ 只能独立复制。
+
+### 三、修 MK.III「样板不进存档」（既有 bug，根因如下）
+- **根因**：PH 只在自己的内部类 `PatternDualInputHatch$Inst` 里实现 `saveNBTData/loadNBTData`
+  （写 `patternSlots` 的 `i0..iN` + `multiplier`）；而我们的方块实体是
+  `MTEPatternCraftingBufferMKIII$Inst`，**直接继承 `PatternDualInputHatch`、不在那条继承链上**
+  ⇒ 基类链只保存 `BUFFER_*` 等缓冲，**`pattern`/`multiplier` 从来没有被写过**
+  （全仓搜索：除 PH 自己那个内部类外，没有任何代码写这两个键）。
+- **修法**：新增 `ph/PatternSlotPersistence.java`（我们的、PH 键名兼容的存读档），并给
+  `MixinPatternDualInputHatchAccess` 增加 5 个 `@Accessor`（`customName`/`additionalConnection`/
+  `allowopt`/`normalopt`/`saved`）+ 1 个 `@Invoker`（`updateValidGridProxySides`），
+  把 PH 的伴生状态（含 AE 代理 `getProxy().readFromNBT/writeToNBT`）也一并持久化。
+  MK.III 与 MK.IV 都接上（`loadNBTData` 读 + `ensureSlots()` 自愈；新增 `saveNBTData` 写）。
+  读档按目标槽位重建数组 ⇒ **144 的旧档可被 360 新机器安全读入**（前 144 原位、其余留空、倍率补 1）。
+- 兼容性：键名与语义完全照 PH ⇒ 两个模组的存档可互读；`allowopt` 在 PH 里默认 true，
+  故老档缺该键时按 true 处理（不照抄 PH 的 `getBoolean` 默认 false，避免把开关误关）。
+
+### 四、样板剪贴板（`item/ItemPatternClipboard.java`）
+- **用法**：右键空中 = 循环切换模式（复制 / 粘贴 / 剪切，聊天栏提示）；**潜行 + 右键空中** = 查看状态；
+  **右键机器** = 按当前模式执行。
+- **只在我们的 MK.III / MK.IV 上生效**（`instanceof` 判定，不误伤 PH 自己的机器与其它模组）。
+- **全部逻辑在服务端、不新增网络包**：1.7.10 里右键方块会走服务端 `onItemUse`、右键空中走
+  `onItemRightClick`（两端都调，故用 `world.isRemote` 只让服务端改状态）⇒ **"点哪台机器"由服务端按坐标解析，
+  样板数据根本不经过网络**，天然避开 1.7.10 的单包上限（360 张样板 NBT 上百 KB，塞一个包必炸）。
+- **剪贴板存玩家存档** `PlayerPersisted`（`EntityPlayer.getEntityData()`）下的 `ae2qolPatternClipboard`
+  ⇒ 跨维度、退出重进都在，可当临时备份；内容与 PH 存读档同格式（`patternSlots` + `multiplier`）。
+- **剪切的安全性**：读取 → 写入玩家剪贴板 → **确认写入之后**才清空源；写失败则源不动并打 WARN。
+- **粘贴**：按目标槽位重建数组（超出部分明确提示"未搬入"，不静默截断）、倍率一并搬运、
+  复位两个缓存数组并 `onPatternChange()` + `refresh()`（与样板窗改完槽位后的动作一致）。
+- 物品在 `PhIntegration.register()` 里注册（**只在装 PH 时存在**）：它引用 PH 类型，必须与两台机器同一套
+  "守卫之后再加载"的纪律；物品贴图按名引用 AE2 的样板贴图（不分发素材，与通配样板同一做法）。
+
+### 五、验证与产物
+- 构建：清 `build\classes|tmp\mixins|libs` 后 `.\gradlew.bat build --offline -x spotlessJavaCheck -x spotlessCheck`
+  ⇒ **`BUILD SUCCESSFUL`（无管道取码 `EXIT=0`）**；
+- **产物核对**（`jar tf` + 解包后 `javap`）：
+  `ph/MTEPatternCraftingBufferMKIV.class`、`…MKIV$Inst.class`、`ph/PatternSlotPersistence.class`、
+  `item/ItemPatternClipboard.class`、`mixin/ph/MixinPatternDualInputHatchAccess.class` **均已入包**；
+  `javap -constants` 实证 MK.IV：`MTE_ID = 32109`、`PATTERN_SLOTS = 360`、`TOTAL_ROWS = 40`；
+  **MK.III 与 MK.IV 均已有 `saveNBTData` + `loadNBTData`**；包内 `zh_CN.lang` 含 `me.mkiv.*` 与
+  `item.ae2_qof.pattern_clipboard.name` 等键；
+- 产物：`build/libs/AE2-QoL-3.24.0.jar`，**1,819,391 字节**，
+  SHA256 `42756A0AA120D07504B989D008DA1FA6CDA66B5A44A3E6D521AC6DC997ACC4AF`（含更新后的指南页）；
+- 版本号：`gradle.properties` / `mcmod.info`（两条目）→ **3.24.0**（按"加功能升 0.1"）。
+
+### 六、待用户实测（进游戏后）
+1. **MK.IV 存在且能合成**：创造页能看到「编程样板输入总成 MK.IV」；用 MK.III ×1 + 大师/高级电路 合成；
+2. **MK.IV 装到多方块上**：AE2 接口终端与本模组样板终端都能看见它；样板窗 9 列 × 9 可见行、可滚动 40 行；
+3. **搬家流程**：样板剪贴板 右键空中 切到「复制」→ 右键 MK.III → 切到「粘贴」→ 右键 MK.IV
+   ⇒ 144 张样板与倍率原样出现在 MK.IV 前 144 槽；随后可「剪切」清空 MK.III（或手动清）；
+4. **存档修复验证（关键）**：往 MK.III **与** MK.IV 各放几张样板 → 退出世界 → 重进 ⇒ **两台都还在**
+   （这是本轮修的 bug 的验收点）；
+5. 反例保护：对非我们机器（例如 PH 原版总成 / 普通方块）右键应提示"目标不是本模组的样板总成"，
+   且不产生任何改动。
+
+### 七、风险与回退
+- 风险：① `32109` 已按 b3 全表 + 我们已用号核对，若整合包里还有别的私货模组占用它会在启动时报错（日志会点名）；
+  ② `rows()` 变 40 会让 AE 接口终端多 24 行（AE 条目按像素滚动，需实测滚动条）；
+  ③ 剪贴板内容存玩家存档，360 张样板的 NBT 体积较大（数十~上百 KB），属正常范围；
+- 回退：`git revert <本提交>`；或单独把 `PhIntegration` 里的 MK.IV/剪贴板注册段落去掉（MK.III 与其余功能不受影响）。
+
 ## 工作区决策记录 2026-09-28 (52) - **3.23.2-fix1：修「专用服务器上右键打不开 Wild 窗口/批量生成器界面」（服务端加载到客户端类）**
 
 ### 一、用户现象

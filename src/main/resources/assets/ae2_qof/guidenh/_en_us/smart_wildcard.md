@@ -48,7 +48,8 @@ Then drop that pattern into any pattern buffer.
 ## Supported buffers
 
 - GT **Crafting Input Buffer / Bus (ME)** (2714 / 2715; the slave follows the master)
-- **PH family**: Programmable Crafting Input Buffer (22069), MK.II (22179) and this mod's **MK.III (32108)** (144 slots)
+- **PH family**: Programmable Crafting Input Buffer (22069), MK.II (22179) and this mod's **MK.III (32108, 144 slots)** and **MK.IV (32109, 360 slots)**
+  - To move patterns between them use the **Pattern Clipboard** (right-click air to cycle copy / paste / cut, right-click a machine to run it, sneak + right-click air for status)
 - **GTNL Super Crafting Input Hatch** (21504 / 21505)
 - **AE2 ME Interface** (block / cable part)
 

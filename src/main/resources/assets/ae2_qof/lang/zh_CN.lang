@@ -351,6 +351,35 @@ gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.desc.0=144 个样板槽（
 gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.desc.1=每份订单最多 32 物品 + 32 流体，24 个彼此隔离的缓冲区。
 gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.desc.2=需要安装 ProgrammableHatches 才会出现，由原总成升级合成。
 
+# ===== 编程样板输入总成 MK.IV（3.24.0；360 槽；同样只在装 PH 时注册）=====
+gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiv.name=编程样板输入总成 MK.IV
+gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiv.tooltip=§6编程样板输入总成 MK.IV\n§7360 个样板槽（原版的 10 倍）\n§7每份订单最多 32 物品 + 32 流体\n§724 个彼此隔离的内部缓冲区\n§8[AE2 QoL + ProgrammableHatches]
+gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiv.desc=同时支持物品与流体的 AE 直连样板仓室（360 槽扩容版）
+gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiv.desc.0=360 个样板槽（原版 36 的 10 倍），样板窗为可滚动网格。
+gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiv.desc.1=每份订单最多 32 物品 + 32 流体，24 个彼此隔离的缓冲区。
+gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiv.desc.2=需要安装 ProgrammableHatches；由 MK.III（144 槽）加电路升级合成。
+
+# ===== 样板剪贴板（3.24.0；只在装 PH 时注册）=====
+item.ae2_qof.pattern_clipboard.name=样板剪贴板
+ae2_qof.clipboard.tooltip.0=右键空中：切换模式（复制 / 粘贴 / 剪切）
+ae2_qof.clipboard.tooltip.1=右键机器：按当前模式执行（只支持本模组的 MK.III / MK.IV）
+ae2_qof.clipboard.tooltip.2=潜行 + 右键空中：查看剪贴板状态
+ae2_qof.clipboard.mode=模式：
+ae2_qof.clipboard.mode.copy=复制
+ae2_qof.clipboard.mode.paste=粘贴
+ae2_qof.clipboard.mode.cut=剪切
+ae2_qof.clipboard.amount=%s 张 / 共 %s 槽
+ae2_qof.clipboard.copied=已复制
+ae2_qof.clipboard.pasted=已粘贴
+ae2_qof.clipboard.cut=已剪切（源机器已清空）
+ae2_qof.clipboard.empty=剪贴板是空的（先用「复制」或「剪切」从一台样板总成取）
+ae2_qof.clipboard.not_ours=目标不是本模组的样板总成（MK.III / MK.IV）
+ae2_qof.clipboard.bad_mode=模式异常，已忽略
+ae2_qof.clipboard.copy_failed=复制失败：源机器的样板数组异常（详见日志）
+ae2_qof.clipboard.paste_failed=粘贴失败：目标机器的样板数组异常（详见日志）
+ae2_qof.clipboard.status=剪贴板：
+ae2_qof.clipboard.truncated=剪贴板有 %s 张，目标只有 %s 槽，超出部分未搬入
+
 # ===== 库存统计终端（3.20.3：修复“只有两行字”时新增的键）=====
 ae2_qof.terminal.status.bound=§a● 已连接无线网络
 ae2_qof.terminal.status.unbound=§7● 未连接网络

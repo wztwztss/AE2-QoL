@@ -51,8 +51,8 @@ import reobf.proghatches.gt.metatileentity.PatternDualInputHatch;
  *
  * <p>与原型的差别只有「样板槽数量」和随之而来的样板窗形状：
  * <ul>
- * <li>样板槽 **144**（原型 36 = PH 写死的数组长度），对应 AE2 接口终端 16 行 × 9 列；</li>
- * <li>样板窗改成 9 列 × 9 可见行的**可滚动网格**（滚动覆盖 16 行），并加了按屏幕裁剪的停靠逻辑；</li>
+ * <li>样板槽 **360**（原型 36 = PH 写死的数组长度，本机是它的 10 倍），对应 AE2 接口终端 40 行 × 9 列；</li>
+ * <li>样板窗改成 9 列 × 9 可见行的**可滚动网格**（滚动覆盖 40 行），并加了按屏幕裁剪的停靠逻辑；</li>
  * <li>输入结构与 MK.II 一致（{@code page() == 2}：每缓冲 32 物品 + 32 流体、24 个隔离缓冲）；</li>
  * <li>其余（AE 频道/收单/缓冲隔离/电路处理/倍率/退款/Waila/NBT）**全部继承 PH 原实现**。</li>
  * </ul>
@@ -60,19 +60,19 @@ import reobf.proghatches.gt.metatileentity.PatternDualInputHatch;
  * <p>容量替换的关键证据与坑位见 {@link MixinPatternDualInputHatchAccess} 与
  * {@link #ae2qol$ensureSlots()} / {@link #loadNBTData(NBTTagCompound)} 的注释。
  */
-public class MTEPatternCraftingBufferMKIII extends PatternDualInputHatch {
+public class MTEPatternCraftingBufferMKIV extends PatternDualInputHatch {
 
-    /** GT MetaTileEntity ID。32108 已在 reference_src_290b3 全表核对过未被占用（备选 32109）。 */
-    public static final int MTE_ID = 32108;
+    /** GT MetaTileEntity ID。32109 已在 reference_src_290b3 全表 + 实例模组清单核对过未被占用。 */
+    public static final int MTE_ID = 32109;
 
     /** MTE 内部名：同时决定显示名 lang 键 {@code gt.blockmachines.<mName>.name}。 */
-    public static final String MTE_NAME = "ae2qof.hatch.input.buffered.me.mkiii";
+    public static final String MTE_NAME = "ae2qof.hatch.input.buffered.me.mkiv";
 
     /** 本机所有 lang 键的前缀（GT 的 {@code getLocalNameKey()} 用的是同一套前缀）。 */
     private static final String AE2QOL_LANG_PREFIX = "gt.blockmachines." + MTE_NAME + ".";
 
-    /** 样板槽总数 = 36 的 4 倍。 */
-    public static final int PATTERN_SLOTS = 144;
+    /** 样板槽总数 = 36 的 10 倍。 */
+    public static final int PATTERN_SLOTS = 360;
 
     /**
      * 样板窗网格列数。同时是 {@link #rowSize()}：
@@ -83,7 +83,7 @@ public class MTEPatternCraftingBufferMKIII extends PatternDualInputHatch {
     /** 样板窗同时可见的行数（其余靠滚动）。9 行 = 162px，在最保守的 480×270 逻辑分辨率下也放得下。 */
     public static final int VISIBLE_ROWS = 9;
 
-    /** 样板窗滚动区总行数 = 144 / 9 = 16。 */
+    /** 样板窗滚动区总行数 = 360 / 9 = 40。 */
     public static final int TOTAL_ROWS = PATTERN_SLOTS / GRID_COLS;
 
     /** 每个缓冲区的输入槽组数量，与 MK.II 一致（page=2 → 32 物品 + 32 流体）。 */
@@ -101,7 +101,7 @@ public class MTEPatternCraftingBufferMKIII extends PatternDualInputHatch {
     // ===================== 构造器 =====================
 
     /** 注册用（模板实例）构造器，签名与 PH 的注册写法一致。 */
-    public MTEPatternCraftingBufferMKIII(int id, String name, String nameRegional, int tier, boolean mMultiFluid,
+    public MTEPatternCraftingBufferMKIV(int id, String name, String nameRegional, int tier, boolean mMultiFluid,
         int bufferNum, boolean sf, int page, String... optional) {
         super(id, name, nameRegional, tier, mMultiFluid, bufferNum, sf, page, optional);
         this.ae2qol$bufferNum = bufferNum;
@@ -109,7 +109,7 @@ public class MTEPatternCraftingBufferMKIII extends PatternDualInputHatch {
     }
 
     /** 真实方块实体（{@link Inst}）用构造器，签名与 PH 的同名父类构造器一致。 */
-    public MTEPatternCraftingBufferMKIII(String aName, byte aTier, int aSlots, String[] aDescription,
+    public MTEPatternCraftingBufferMKIV(String aName, byte aTier, int aSlots, String[] aDescription,
         ITexture[][][] aTextures, boolean aMultiFluid, int aBufferNum) {
         super(aName, aTier, aSlots, aDescription, aTextures, aMultiFluid, aBufferNum);
         this.ae2qol$bufferNum = aBufferNum;
@@ -157,16 +157,16 @@ public class MTEPatternCraftingBufferMKIII extends PatternDualInputHatch {
     @Override
     public void loadNBTData(NBTTagCompound aNBT) {
         super.loadNBTData(aNBT);
-        // 3.24.0：补读「样板 + 倍率 + 伴生状态」——修的是既有 bug。
+        // 3.24.0：补读「样板 + 倍率 + 伴生状态」。
         // PH 只在它自己的内部类 PatternDualInputHatch$Inst 里读写 patternSlots/multiplier，
         // 而我们的方块实体是本类的内部类 Inst（直接继承 PatternDualInputHatch，**不在 PH 那条链上**）
-        // ⇒ 修复前：重进世界/重载区块后，机器里的样板与倍率全部丢失。详见 ph/PatternSlotPersistence。
+        // ⇒ 本机从第一天起就自带这一步，避免重进世界后样板丢失。详见 ph/PatternSlotPersistence。
         if (aNBT.hasKey("patternSlots")) {
             PatternSlotPersistence.load(this, PATTERN_SLOTS, aNBT);
         }
         // PH 的 loadNBTData 里有 `if (multiplier.length < 36) multiplier = new int[36];`：它会用 NBT 里的
         // 倍率数组覆盖字段，长度不足 36 时重建成 36。对新机器而言首次读档必然走这条分支，
-        // 于是 144 槽的倍率数组被缩回 36 —— 之后样板窗里第 37 格往后的倍率读写就会数组越界。
+        // 于是 360 槽的倍率数组被缩回 36 —— 之后样板窗里第 37 格往后的倍率读写就会数组越界。
         // 所以在 super 之后必须重新补齐（pattern 本身不会被 PH 替换，只是顺手一起校验）。
         ae2qol$ensureSlots();
     }
@@ -187,7 +187,7 @@ public class MTEPatternCraftingBufferMKIII extends PatternDualInputHatch {
         return INPUT_PAGE;
     }
 
-    /** AE2 接口终端行数：16 行 × 9 列 = 144（AE2 条目按像素滚动，16 行能滚到底）。 */
+    /** AE2 接口终端行数：40 行 × 9 列 = 360（AE2 条目按像素滚动，40 行能滚到底）。 */
     @Override
     public int rows() {
         return TOTAL_ROWS;
@@ -233,7 +233,7 @@ public class MTEPatternCraftingBufferMKIII extends PatternDualInputHatch {
     /** 模板构造器用的描述（英文兜底，正常显示走 {@link #getDescription()} 的懒翻译）。 */
     public static String[] defaultDescription() {
         return new String[] { "AE-direct pattern buffer for multiblocks",
-            "144 pattern slots (4x the original 36)", "32 item + 32 fluid inputs per buffer, 24 buffers",
+            "360 pattern slots (10x the original 36)", "32 item + 32 fluid inputs per buffer, 24 buffers",
             "[AE2 QoL + ProgrammableHatches]" };
     }
 
@@ -250,7 +250,7 @@ public class MTEPatternCraftingBufferMKIII extends PatternDualInputHatch {
     }
 
     /** 照 PH 的写法把 {@code supportsFluids()} / {@code page()} 委托给外层模板实例。 */
-    public class Inst extends MTEPatternCraftingBufferMKIII {
+    public class Inst extends MTEPatternCraftingBufferMKIV {
 
         public Inst(String aName, byte aTier, int aSlots, String[] aDescription, ITexture[][][] aTextures,
             boolean aMultiFluid, int aBufferNum) {
@@ -259,12 +259,12 @@ public class MTEPatternCraftingBufferMKIII extends PatternDualInputHatch {
 
         @Override
         public boolean supportsFluids() {
-            return MTEPatternCraftingBufferMKIII.this.supportsFluids();
+            return MTEPatternCraftingBufferMKIV.this.supportsFluids();
         }
 
         @Override
         public int page() {
-            return MTEPatternCraftingBufferMKIII.this.page();
+            return MTEPatternCraftingBufferMKIV.this.page();
         }
     }
 
@@ -272,7 +272,7 @@ public class MTEPatternCraftingBufferMKIII extends PatternDualInputHatch {
 
     /**
      * 覆写 PH 的样板窗：PH 原版是固定 4 列 × 9 行（36 格）的小窗，本实现改成
-     * 9 列 × 9 可见行、滚动覆盖 16 行（144 格），并把停靠位置按屏幕裁剪。
+     * 9 列 × 9 可见行、滚动覆盖 40 行（360 格），并把停靠位置按屏幕裁剪。
      * 结构（三页 tab：样板 / 单独倍率 / 批量倍率 + 退款）与 PH 保持一致。
      */
     @Override
@@ -426,7 +426,7 @@ public class MTEPatternCraftingBufferMKIII extends PatternDualInputHatch {
         // 槽组要在槽位引用它之前注册；rowSize 传网格宽度（9），shift 优先级 -1 与 PH 一致
         syncManager.registerSlotGroup("pattern_inv", GRID_COLS, -1);
 
-        // 滚动内容：9 列 × 16 行 = 144。可见区只有 9 行，其余靠 ScrollWidget 滚动。
+        // 滚动内容：9 列 × 40 行 = 360。可见区只有 9 行，其余靠 ScrollWidget 滚动。
         ParentWidget<?> content1 = new ParentWidget<>().size(18 * GRID_COLS, SCROLL_H);
         ParentWidget<?> content2 = new ParentWidget<>().size(18 * GRID_COLS, SCROLL_H);
 

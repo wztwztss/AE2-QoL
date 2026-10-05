@@ -59,4 +59,44 @@ public interface MixinPatternDualInputHatchAccess {
     /** PH 的 {@code private void refundAll() throws Exception}：把内部缓冲全部退回 AE。 */
     @Invoker("refundAll")
     void invokeAe2qolRefundAll() throws Exception;
+
+    // ===== 3.24.0：为 MK.III / MK.IV 的存读档补齐 PH 的伴生状态访问器 =====
+    // 这些字段在 PH 里是包私有/private，而我们的方块实体是它的**跨包子类**
+    // （reobf.proghatches.* vs com.wztwzt.ae2_qof.ph）⇒ 只能经 accessor 读写。
+    // 键名与语义完全照 PH 的 PatternDualInputHatch$Inst.saveNBTData/loadNBTData，
+    // 保证两个模组的存档可以互读。详见 ph/PatternSlotPersistence。
+
+    @Accessor("customName")
+    String getAe2qolCustomName();
+
+    @Accessor("customName")
+    void setAe2qolCustomName(String value);
+
+    @Accessor("additionalConnection")
+    boolean getAe2qolAdditionalConnection();
+
+    @Accessor("additionalConnection")
+    void setAe2qolAdditionalConnection(boolean value);
+
+    @Accessor("allowopt")
+    boolean getAe2qolAllowOpt();
+
+    @Accessor("allowopt")
+    void setAe2qolAllowOpt(boolean value);
+
+    @Accessor("normalopt")
+    boolean getAe2qolNormalOpt();
+
+    @Accessor("normalopt")
+    void setAe2qolNormalOpt(boolean value);
+
+    @Accessor("saved")
+    long getAe2qolSaved();
+
+    @Accessor("saved")
+    void setAe2qolSaved(long value);
+
+    /** PH 的 {@code private void updateValidGridProxySides()}：读档后按连接状态重算 AE 代理可用面。 */
+    @Invoker("updateValidGridProxySides")
+    void invokeAe2qolUpdateValidGridProxySides();
 }

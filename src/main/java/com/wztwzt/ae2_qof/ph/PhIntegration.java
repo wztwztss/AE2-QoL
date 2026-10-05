@@ -34,6 +34,18 @@ public final class PhIntegration {
     public static ItemStack mkiiiStack;
 
     /**
+     * 注册成功后的 **MK.IV**（360 样板槽，3.24.0 新增）物品堆，用途同 {@link #mkiiiStack}。
+     * MK.IV 与 MK.III 并存：MK.III 保持 144 槽不动（已存在的存档/机器零风险），MK.IV 是其扩容版。
+     */
+    public static ItemStack mkivStack;
+
+    /**
+     * 样板剪贴板物品（3.24.0）。**只在装了 PH 时注册**：它的全部逻辑都作用在 PH 家族的样板总成上，
+     * 类里引用了 PH 类型，因此必须与 MK.III/MK.IV 遵循同一套「守卫之后再加载」的纪律。
+     */
+    public static com.wztwzt.ae2_qof.item.ItemPatternClipboard patternClipboard;
+
+    /**
      * ProgrammableHatches 的**真实 modid**。来源是它的 {@code @Mod(modid = MyMod.MODID)}：
      * {@code MyMod.MODID = "programmablehatches"}`，与 jar 内 `mcmod.info` 一致。
      *
@@ -108,6 +120,56 @@ public final class PhIntegration {
                     + " 行 × "
                     + MTEPatternCraftingBufferMKIII.GRID_COLS
                     + " 列）");
+
+            // ===== 3.24.0：MK.IV（360 样板槽）=====
+            // 与 MK.III 并存、互不影响：同一套 PH 基类/mixin/界面部件，只把样板槽从 144 提到 360。
+            // 配方以 **MK.III 为基底**（cCc/CXC/cCc）⇒ 玩家的升级路径就是「拿 144 那台 + 大师/高级电路」。
+            MTEPatternCraftingBufferMKIV mte4 = new MTEPatternCraftingBufferMKIV(
+                MTEPatternCraftingBufferMKIV.MTE_ID,
+                MTEPatternCraftingBufferMKIV.MTE_NAME,
+                "Programmable Crafting Input Buffer MK.IV",
+                MTEPatternCraftingBufferMKIV.TIER,
+                true,
+                MTEPatternCraftingBufferMKIV.BUFFER_NUM,
+                true,
+                MTEPatternCraftingBufferMKIV.INPUT_PAGE,
+                MTEPatternCraftingBufferMKIV.defaultDescription());
+
+            GameRegistry.addShapedRecipe(
+                mte4.getStackForm(1L),
+                "cCc",
+                "CXC",
+                "cCc",
+                'X',
+                mte.getStackForm(1L),
+                'C',
+                ItemList.Circuit_Master.get(1),
+                'c',
+                ItemList.Circuit_Advanced.get(1));
+
+            mkivStack = mte4.getStackForm(1L);
+
+            // 与 MK.III 同理：AE2 的接口终端注册表按**精确类名**查表，漏掉这一步 AE2 接口终端与
+            // 本模组样板终端都会看不见 MK.IV。
+            Api.INSTANCE.registries()
+                .interfaceTerminal()
+                .register(MTEPatternCraftingBufferMKIV.Inst.class);
+
+            MyMod.LOG.info(
+                "[AE2QoL] PH 编程样板输入总成 MK.IV 已注册：id=" + MTEPatternCraftingBufferMKIV.MTE_ID
+                    + "，样板槽="
+                    + MTEPatternCraftingBufferMKIV.PATTERN_SLOTS
+                    + "（"
+                    + MTEPatternCraftingBufferMKIV.TOTAL_ROWS
+                    + " 行 × "
+                    + MTEPatternCraftingBufferMKIV.GRID_COLS
+                    + " 列）");
+
+            // ===== 3.24.0：样板剪贴板（144 → 360 搬家 / 备份）=====
+            // 物品在这里注册而不是 CommonProxy：它引用了 PH 家族类型，必须与上面两台机器同一套守卫纪律。
+            patternClipboard = new com.wztwzt.ae2_qof.item.ItemPatternClipboard();
+            patternClipboard.register();
+            MyMod.LOG.info("[AE2QoL] 样板剪贴板已注册：pattern_clipboard（复制 / 粘贴 / 剪切 MK.III·MK.IV 的全部样板）");
         } catch (Throwable t) {
             // 注册失败不影响本模组其它功能；吞掉会让「物品不出现」变成无痕迹故障，所以必须记日志
             MyMod.LOG.error("[AE2QoL] 编程样板输入总成 MK.III 注册失败（已跳过该物品）", t);

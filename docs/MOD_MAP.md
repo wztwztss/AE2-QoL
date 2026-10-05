@@ -152,10 +152,16 @@
 
 ---
 
-## 编程样板输入总成 MK.III（3.20.0 新增 · ProgrammableHatches 可选依赖）
+## 编程样板输入总成 MK.III / MK.IV（3.20.0 新增 MK.III；**3.24.0 新增 MK.IV** · ProgrammableHatches 可选依赖）
 
-> 目标：把 PH「编程样板输入总成」（`hatch.input.buffered.me`，MTE 22069）扩容克隆成一台新机器，
-> 样板槽 36 → **144**，仅在安装 PH 时存在。**不改动 PH 本体**。
+> 目标：把 PH「编程样板输入总成」（`hatch.input.buffered.me`，MTE 22069）扩容克隆成新机器，
+> 样板槽 36 → **144（MK.III）** / 36 → **360（MK.IV）**，仅在安装 PH 时存在。**不改动 PH 本体**。
+>
+> **3.24.0 的两件事**：① 新增 **MK.IV**（360 槽，MTE ID **32109**，配方 = MK.III ×1 + 大师/高级电路；
+> MK.III 保持 144 与 32108 不动）；② 修掉**两台机器"样板不进存档"**的既有 bug：
+> PH 只在它自己的内部类 `PatternDualInputHatch$Inst` 里读写 `patternSlots`/`multiplier`，
+> 而我们的方块实体直接继承 `PatternDualInputHatch`、**不在那条链上** ⇒ 修复前重进世界样板全丢。
+> 修法见下面新增的 `PatternSlotPersistence` 行。
 
 | 类别 | 文件路径 | 说明 |
 |---|---|---|
@@ -166,6 +172,10 @@
 | 注册调用点 | `src/main/java/com/wztwzt/ae2_qof/CommonProxy.java` → `init` 末尾 | `PhIntegration.register()` |
 | 创造页 | `src/main/java/com/wztwzt/ae2_qof/AE2QoLCreativeTab.java` → `displayAllReleventItems` | GT 机器走 `sBlockMachines` meta 值，`setCreativeTab` 管不到，需显式追加 |
 | 语言文件 | `assets/ae2_qof/lang/zh_CN.lang` + `en_US.lang` | `gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.name/.tooltip/.desc*`（显示名走 GT 的 `getLocalNameKey()`） |
+| **MK.IV 主体（3.24.0）** | `src/main/java/com/wztwzt/ae2_qof/ph/MTEPatternCraftingBufferMKIV.java` | **MK.III 的复制品**，只改 `PATTERN_SLOTS = 360`（`TOTAL_ROWS` 自动 40）、`MTE_ID = 32109`、内部名 `ae2qof.hatch.input.buffered.me.mkiv`。**为什么复制而不是继承**：`PATTERN_SLOTS` 是 `public static final int` 且被私有 `ae2qol$ensureSlots()` 直接引用（编译期内联 + 私有方法只认本类常量）⇒ 子类覆盖常量无效 |
+| **样板/倍率存读档（3.24.0 修复）** | `src/main/java/com/wztwzt/ae2_qof/ph/PatternSlotPersistence.java` | 键名与语义**完全照 PH**：`patternSlots`（`i0..iN`）+ `multiplier`（最小 1）+ `customName`/`additionalConnection`/`restrictToInt`/`allowopt`/`normalopt`/`saved` + `getProxy().writeToNBT/readFromNBT`。读档按**目标槽位**重建数组 ⇒ 144 旧档能被 360 新机器安全读入。MK.III / MK.IV 的 `loadNBTData`/`saveNBTData` 都调它 |
+| **样板剪贴板（3.24.0）** | `src/main/java/com/wztwzt/ae2_qof/item/ItemPatternClipboard.java` | 右键空中切换模式（复制/粘贴/剪切）、潜行+右键空中看状态、右键机器执行；**只在 MK.III/MK.IV 上生效**；**全部逻辑在服务端、不新增网络包**（样板数据不过网，避开单包上限）；剪贴板存玩家 `PlayerPersisted` 的 `ae2qolPatternClipboard`（跨维度、退出重进都在）；剪切 = 先确认写入剪贴板再清空源 |
+| **MK.IV / 剪贴板的注册点** | `src/main/java/com/wztwzt/ae2_qof/ph/PhIntegration.java` | 同一 PH 守卫内：MK.IV 构造 + 配方（X = MK.III）+ `InterfaceTerminalRegistry.register(MKIV.Inst.class)` + `mkivStack`；剪贴板物品也在此注册（引用 PH 类型，必须"守卫之后再加载"） |
 
 **与既有功能的接口**：样板上传/撤回（`network/UploadPatternPacket`、`RecallPatternPacket`）、
 供应器定位（`util/ProviderLocator`）、二合一终端（`merged/ContainerMergedTerminal`）全部按
