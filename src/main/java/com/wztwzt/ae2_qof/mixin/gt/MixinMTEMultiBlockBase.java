@@ -91,6 +91,15 @@ public abstract class MixinMTEMultiBlockBase {
     /** 上一次因缺电降级的条数：只在变化时记日志（避免每 tick 刷屏，但绝不静默）。 */
     private int ae2qol$lastDropped = 0;
 
+    /**
+     * 上一次观察到的机器进度（{@code mProgresstime}）。
+     * <p>3.25.1：线程推进改为**跟随这个字段的增量**，而不是假定 1/tick —— 因为 NH-Utilities 等加速机制
+     * 是「直接改写 {@code multiBlockBase.mProgresstime} 并跳过 updateEntity」的
+     * （证据：NH-Utilities `BaseMetaTileEntityAcceleration_Mixin.tickAcceleration`：
+     * {@code multiBlockBase.mProgresstime = Math.min(maxProgress, currentProgress + rate); return true;}）。
+     */
+    private int ae2qol$lastProgress = 0;
+
     // ===================== 计算入口 =====================
 
     /**
@@ -186,6 +195,12 @@ public abstract class MixinMTEMultiBlockBase {
         }
         engine.trimToThreadCount();
 
+        // F1：算出本 tick 的**有效进度增量**（正常 1；被加速器直接跳字段时就是它跳的量）。
+        // 这样所有"跳进度"的加速机制都自动对线程生效，不需要逐个模组适配。
+        int delta = mProgresstime - ae2qol$lastProgress;
+        if (delta < 1) delta = 1;
+        ae2qol$lastProgress = mProgresstime;
+
         IGregTechTileEntity base = self.getBaseMetaTileEntity();
         long stored = 0;
         if (base != null) {
@@ -218,7 +233,7 @@ public abstract class MixinMTEMultiBlockBase {
             for (int i = 0; i < count; i++) {
                 Ae2qolThreadEngine.Slot slot = engine.slot(i);
                 if (!slot.isRunning()) continue;
-                slot.remain--;
+                slot.remain -= delta;
                 if (slot.remain > 0) continue;
 
                 // 线程完成：先落地产物（用 GT 自己的 API，输出空间在算配方时已由 GT 校验过）
@@ -251,12 +266,20 @@ public abstract class MixinMTEMultiBlockBase {
         }
 
         // 外壳维护：只要还有线程在跑，就把机器的"总时长"顶到最长线程的剩余，保证机器不会提前结算
+        // F2：只许**向外扩展**总时长，绝不缩短 —— 否则会把加速器刚跳上去的进度又压回去（这是加速失效的直接原因）
         int maxRemain = engine.maxRemain();
         if (maxRemain > 0) {
-            mMaxProgresstime = mProgresstime + maxRemain;
+            int want = mProgresstime + maxRemain;
+            if (want > mMaxProgresstime) {
+                mMaxProgresstime = want;
+            }
         }
+        // F4：只有拿到可靠的正数才改写 mEUt；拿不到就**保留家族/GT 自己算好的值**，
+        // 宁可少算自己的份额，也不能出现"耗电 0"的免电路径。
         long need = engine.totalEutPerTick();
-        mEUt = (int) -Math.min(Integer.MAX_VALUE, need);
+        if (need > 0) {
+            mEUt = (int) -Math.min(Integer.MAX_VALUE, need);
+        }
         // 3.25.0 提交 2/2：每 tick 推进后也让广播器有机会发一次（内部自行节流）
         ThreadStatusBroadcaster.maybeBroadcast(self, engine);
     }

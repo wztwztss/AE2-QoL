@@ -387,19 +387,19 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
         }
         r.child(iconWidget);
 
-        r.child(new TextWidget<>(IKey.str(progressBar(row.percent))).size(64, 11).color(0xFF2E7D32));
+        r.child(new TextWidget<>(IKey.str(progressBar(row.percent))).size(52, 11).color(0xFF2E7D32));
         r.child(
             new TextWidget<>(
                 IKey.str(
                     row.percent + "%"
                         + (row.remain > 0 ? " " + StatCollector.translateToLocal("ae2_qof.threads.remain_short")
-                            + row.remain + "t" : ""))).size(28, 11)
+                            + row.remain + "t" : ""))).size(72, 11)
                                 .color(0xFF303030));
         r.child(
-            new TextWidget<>(IKey.str(String.valueOf(row.parallel))).size(52, 11)
+            new TextWidget<>(IKey.str(String.valueOf(row.parallel))).size(48, 11)
                 .color(0xFF0066CC));
         r.child(
-            new TextWidget<>(IKey.dynamic(() -> stateText(row.state))).size(64, 11)
+            new TextWidget<>(IKey.dynamic(() -> stateText(row.state))).size(44, 11)
                 .color(0xFF8A5A00));
         return r;
     }

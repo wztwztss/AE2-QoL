@@ -34,6 +34,51 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-05 (58) - **3.25.0-fix1：线程引擎跟随机器进度（修"加速机制失效"）+ 耗电不再写 0 + 线程页列宽**
+
+### 一、用户实测反馈（8 张截图）
+线程页确实跑起来了（16/16 活跃、逐条进度、关闭后回到 0/1 空闲），但暴露：
+① **并行/速度设定被整体忽略**（改 1000→10 产出与耗时完全不变；现象是"按电力与原料自适应最大并行"）；
+② **加速火把 / 时间之瓶等加速机制全部失效**；
+③ **总耗电恒 0 EU/t**；
+④ **WAILA 完全没有"线程"行**；
+⑤ 线程页列宽不足（"15%" 与 "剩108t" 叠在进度条上）。
+
+### 二、根因（逐条，含证据）
+- **② 加速失效**：用户指出时间之瓶来自 **NH-Utilities** 且"所有加速机制都类似"⇒ 读其源码实证：
+  `BaseMetaTileEntityAcceleration_Mixin.tickAcceleration()` 对普通 GT 多方块走**快路径**——
+  `multiBlockBase.mProgresstime = Math.min(maxProgress, currentProgress + tickAcceleratedRate); return true;`
+  即**直接改写 `mProgresstime` 并跳过该 TE 的 updateEntity**（不跑 tick）。
+  而我们的引擎把"推进"写在 `incrementProgressTime` 里、且**每 tick 无条件把 `mMaxProgresstime` 重写成"最长线程剩余"**
+  ⇒ 既无视它跳的进度，又把它跳上去的进度压回去 ⇒ 加速完全失效（**双重**原因）。
+- **④ WAILA 一行都没有**：日志硬证据（`fml-client-latest.log` 11:45:20）：
+  `[mixin/ggfab] Mixin apply for mod ae2_qof failed mixins.ae2_qof.json:gt.MixinBaseMetaEntityWaila … InvalidInjectionException: Invalid descriptor`
+  ⇒ 我把注入处理器写成 `(ItemStack, List<String>, CallbackInfo)`（以为可省略尾部参数），而目标
+  `getWailaBody(ItemStack, List, IWailaDataAccessor, IWailaConfigHandler)` 有 4 个参数 ⇒ **整个混入没有被应用**。
+  与"加速跳过 tick"无关，是我的签名错误。
+- **③ 耗电 0**：我在 `doCheckRecipe()` 返回后立刻读 `processingLogic.getCalculatedEut()`，而 GT 的顺序是
+  `doCheckRecipe → postCheckRecipe → 才取 getCalculatedEut()`（见 GT `checkProcessing()` 与 `setEnergyUsage`）。
+- **① 并行/速度被忽略**：**根因仍未定**（本轮未取证完；待查该机器 `setupProcessingLogic` 是否自设
+  `maxParallelSupplier`、以及 `64000 = 1000 × 批处理 64` 是否成立）。**已明确记录为未结项**，下一轮继续。
+
+### 三、本轮改动
+- `mixin/gt/MixinMTEMultiBlockBase.java`：
+  - **F1** 新增 `ae2qol$lastProgress`，每 tick 计算 **`delta = mProgresstime - 上次观察值`**（下限 1、处理完成归零），
+    线程按 `remain -= delta` 推进 ⇒ 任何"跳进度"式加速（NH-Utilities 等）自动对线程生效，无需逐个模组适配；
+  - **F2** 总时长改为**只许向外扩展**：`if (mProgresstime + maxRemain > mMaxProgresstime) mMaxProgresstime = …`，
+    不再无条件重写（这是把加速进度压回去的直接原因）；
+  - **F4** `mEUt` **只有拿到正值才改写**，拿不到就保留家族/GT 自己算好的值 ⇒ 杜绝"耗电显示 0"的免电路径。
+- `hatch/AE2MaintenanceHatchUniversal.java`：**F5** 线程行分列宽度重排（进度条 52 / 进度+剩余 72 / 并行 48 / 状态 44），
+  不再叠字。
+- `mixin/gt/MixinBaseMetaTileEntityWaila.java`：**暂时停用注入**（保留代码与注释，说明两种正确修法），
+  避免启动时报 `InvalidInjectionException`；WAILA 的正式修法待用户选择依赖方案后实施。
+- 版本号：`gradle.properties` / `mcmod.info`（两条目）→ **3.25.0-fix1**。
+
+### 四、未结项（下一轮）
+1. **WAILA**：二选一修签名——(a) 加 compileOnly 的 waila 依赖写全 4 参数；(b) 处理器零参数 + MixinExtras `@Local(argsOnly=true,index=1)` 取 tip 列表；
+2. **并行/速度被忽略**：查 `setupProcessingLogic`/批处理 ×64/`maxParallelSupplier` 三处；
+3. **F3**：把广播从"机器 tick"迁到**中央 server tick 驱动**（加速时机器 tick 会稀疏，WAILA 需要稳定节拍）。
+
 ## 工作区决策记录 2026-10-02 (57) - **3.25.0（提交 2/2）：WAILA 显示线程进度**
 
 ### 一、口径（线框稿已确认）

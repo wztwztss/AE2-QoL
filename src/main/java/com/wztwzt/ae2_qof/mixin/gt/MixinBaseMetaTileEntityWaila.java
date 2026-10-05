@@ -45,11 +45,23 @@ public abstract class MixinBaseMetaTileEntityWaila {
     /** 潜行展开几条（与 {@link ThreadStatusPacket#MAX_ROWS} 一致）。 */
     private static final int SNEAK_ROWS = ThreadStatusPacket.MAX_ROWS;
 
-    @Inject(method = "getWailaBody", at = @At("RETURN"))
-    private void ae2qol$appendThreadLines(ItemStack itemStack, List<String> currentTip, CallbackInfo ci) {
+    /**
+     * <b>3.25.0-fix1 起暂时停用（等待签名修法）</b>：实测日志（fml-client-latest.log 11:45:20）明确报
+     * {@code InvalidInjectionException: Invalid descriptor on ... MixinBaseMetaTileEntityWaila} ——
+     * 目标 {@code getWailaBody(ItemStack, List, IWailaDataAccessor, IWailaConfigHandler)} 有 4 个参数，
+     * 而这里按"可省略尾部参数"只写了前两个 ⇒ **整个混入没被应用**（所以 WAILA 一行都没有）。
+     * <p>正确修法二选一（待用户拍板）：
+     * <ol>
+     * <li>加 compileOnly 的 waila 依赖 → 写全 4 个参数（最直白）；</li>
+     * <li>处理器只留 {@code CallbackInfo}，用 {@code @Local(argsOnly = true, index = 1)} 取那条 tip 列表
+     * （不需要 waila 类型，但依赖 MixinExtras 的 {@code @Local}）。</li>
+     * </ol>
+     * 在修好之前**不声明 @Inject**：混入类仍登记在配置里但不注入任何东西，避免启动时报错。
+     */
+    @SuppressWarnings("unused")
+    private void ae2qol$appendThreadLines(ItemStack itemStack, List<String> currentTip) {
         TileEntity self = (TileEntity) (Object) this;
         World world = self.getWorldObj();
-        // 只在客户端追加：服务端的 talk 由 GT 自己的信息通道负责，这里不掺和
         if (world == null || !world.isRemote) return;
 
         ThreadStatusPacket packet = ThreadStatusPacket
