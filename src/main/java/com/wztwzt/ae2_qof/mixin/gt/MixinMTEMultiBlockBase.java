@@ -102,6 +102,10 @@ public abstract class MixinMTEMultiBlockBase {
     @Shadow
     public abstract long getMaxInputEu();
 
+    /** 机器的动力仓列表（3.25.0-fix16：我们要绕过 GT 的 `maxAmperesOut() <= 4` 判定，自己把终端塞进来）。 */
+    @Shadow
+    public java.util.ArrayList<gregtech.api.metatileentity.implementations.MTEHatchDynamo> mDynamoHatches;
+
     /** GT 原始的"算一个配方"实现（不经过本注入的接管分支，见 {@code computing} 标志）。 */
     @Invoker("doCheckRecipe")
     protected abstract CheckRecipeResult ae2qol$gtDoCheckRecipe();
@@ -122,6 +126,29 @@ public abstract class MixinMTEMultiBlockBase {
      */
     @Invoker("postCheckRecipe")
     protected abstract CheckRecipeResult ae2qol$gtPostCheckRecipe(CheckRecipeResult result, ProcessingLogic logic);
+
+    /**
+     * 3.25.0-fix16：让「无线电网输出终端」能报 **21 亿 A** 而不被 GT 的结构判定挡掉。
+     * <p>GT 原判定（{@code addDynamoToMachineList}）：
+     * {@code if (mte instanceof MTEHatchDynamo hatch && hatch.maxAmperesOut() <= 4)} —— 那个 `<= 4` 是为普通
+     * 动力仓设的上限，会把我们报 2,147,483,647A 的终端拒之门外。这里在 HEAD 直接替 GT 收下该部件并取消原判定。
+     * <p>吞吐换算：{@code 电压 × 电流 = 2,147,483,640 × 2,147,483,647 ≈ 4.61e18 EU/t}
+     * （仍 < Long.MAX = 9.22e18，**不会溢出**；也正好等于终端缓存容量）。
+     * <p>⚠️ {@code addEnergyOutputMultipleDynamos} 会把**所有**动力仓的"电压×安培"累加 ⇒
+     * **同一台机器不要放两个这种终端**（两个就到 9.2e18，long 会溢出）。
+     */
+    @Inject(method = "addDynamoToMachineList", at = @At("HEAD"), cancellable = true)
+    private void ae2qol$acceptSuperDynamo(IGregTechTileEntity aTileEntity, int aBaseCasingIndex,
+        CallbackInfoReturnable<Boolean> cir) {
+        if (aTileEntity == null) return;
+        gregtech.api.interfaces.metatileentity.IMetaTileEntity mte = aTileEntity.getMetaTileEntity();
+        if (!(mte instanceof com.wztwzt.ae2_qof.hatch.wireless.WirelessEnergyOutputTerminal hatch)) return;
+        MTEMultiBlockBase self = (MTEMultiBlockBase) (Object) this;
+        hatch.updateTexture(aBaseCasingIndex);
+        hatch.updateCraftingIcon(self.getMachineCraftingIcon());
+        mDynamoHatches.add(hatch);
+        cir.setReturnValue(true);
+    }
 
     /** 扣料校验闸的"只报一次"标记（避免刷屏；先只报不改行为）。 */
     private boolean ae2qol$gateWarned = false;

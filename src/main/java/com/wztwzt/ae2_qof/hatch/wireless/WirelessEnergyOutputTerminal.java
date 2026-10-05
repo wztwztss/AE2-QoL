@@ -130,13 +130,16 @@ public class WirelessEnergyOutputTerminal extends MTEHatchDynamo {
     }
 
     /**
-     * 3.25.0-fix14：GT 的结构判定**硬条件**是 {@code maxAmperesOut() <= 4}
-     * （见 {@code MTEMultiBlockBase.addDynamoToMachineList}），所以这里必须回到 ≤4；
-     * 原先返回 {@code Long.MAX_VALUE} 是"识别不了"的第二个原因（且 UI 里 cast 成 int 会变成 -1）。
+     * 3.25.0-fix16（用户要求）：电流改为 **2,147,483,647A（21 亿）**。
+     * <p>GT 的结构判定硬条件本来是 `maxAmperesOut() <= 4`，我们已在
+     * {@code MixinMTEMultiBlockBase.ae2qol$acceptSuperDynamo} 里为该终端**绕过**该判定（HEAD 注入 + cancel）。
+     * <p>换算：`电压 × 电流 = 2,147,483,640 × 2,147,483,647 ≈ 4.61e18 EU/t`
+     * ⇒ **不溢出**（< Long.MAX = 9.22e18），且正好等于终端缓存容量（`Long.MAX/2`）。
+     * <p>⚠️ 别写 9.2e18：`2.1e9 × 9.2e18` 会溢出成负数，GT 的 `aTotal = 安培 × 电压` 会算出垃圾值。
      */
     @Override
     public long maxAmperesOut() {
-        return 4;
+        return 2_147_483_647L;
     }
 
     @Override

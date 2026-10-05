@@ -34,6 +34,39 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-05 (75) - **3.25.0-fix16：输出终端电流改为 21 亿 A（mixin 绕过 GT 的 ≤4A 判定）**
+
+### 一、用户提问与结论
+> "为什么电流写的4A，不能写21亿或者9.2E吗" → "那我目前到底能输入到电网的功率是多少"
+
+**改动前的实际上限**（全部有代码依据）：
+| 环节 | 数值 | 依据 |
+|---|---|---|
+| 对外电压 | 2,147,483,640（MAX） | GT `GTValues.V[14]`（`Integer.MAX_VALUE - 7`；V[15] 是 GT 的"错误档"占位 8.59e9） |
+| 对外电流 | 4A | 我们 fix14 为过 GT 判定而写 |
+| **机器→终端上限** | `2,147,483,640 × 4 = ` **8,589,934,560 EU/t** | `MTEMultiBlockBase.addEnergyOutputMultipleDynamos`：`aTotal = aDynamo.maxAmperesOut() * aVoltage`（多动力仓累加） |
+| **终端→电网（我们侧）** | **无额外速率上限** | `onPreTick` 每 4 tick 把终端缓存**全部**推给 `WirelessNetworkManager.addEUToGlobalEnergyMap(uuid, stored)` 再清空 |
+| 终端缓存 | 4.61e18 EU（`Long.MAX/2`） | `maxEUStore()` |
+
+### 二、本轮改动（用户选「真写成 21 亿 A」）
+1. `WirelessEnergyOutputTerminal.maxAmperesOut()`：`4` → **`2_147_483_647`**（21 亿）。
+   吞吐变为 `2,147,483,640 × 2,147,483,647 ≈ 4.61e18 EU/t`（**不溢出**：< `Long.MAX = 9.22e18`，且正好等于缓存容量）。
+2. **绕开 GT 判定**：`MixinMTEMultiBlockBase` 在 `addDynamoToMachineList` 的 **HEAD** 注入
+   `ae2qol$acceptSuperDynamo`：若部件是我们的输出终端，则按 GT 原逻辑 `updateTexture` + `updateCraftingIcon`
+   + 塞进 `@Shadow mDynamoHatches`，然后 `cir.setReturnValue(true)` 取消原判定（原判定硬卡 `maxAmperesOut() <= 4`）。
+   （`updateTexture` / `updateCraftingIcon` 均为 `public final`，可直接调用 —— 已核对 GT 源码。）
+3. ⚠️ **风险须知（已写进代码注释）**：`addEnergyOutputMultipleDynamos` 会把所有动力仓的"电压×安培"**累加**，
+   两个这种终端就是 9.2e18 ⇒ **long 溢出** ⇒ **同一台机器只放一个**。
+   ❌ 9.2e18 A 更不能写（`2.1e9 × 9.2e18` 直接溢出）。
+
+### 三、更正我上一轮的一个误判
+我曾说"输入终端档位表错位（V[14] 是 UXV 却标成 MAX）"——**查 GT 源码后确认是我错了**：
+`V[13] = 536,870,912 (UXV)`、**`V[14] = 2,147,483,640 (MAX)`**、`V[15] = 8,589,934,592`（GT 的"错误档"占位）。
+⇒ 输入终端 `voltageTier = 14` **本来就是正确的 MAX**，标签无误，无需改动。
+
+### 四、验证（待回填）
+- 构建与产物：待回填。
+
 ## 工作区决策记录 2026-10-05 (74) - **3.25.0-fix15：输入终端默认档位改为 MAX（与输出终端的 MAX 外观对齐）**
 
 ### 一、用户要求与现象
