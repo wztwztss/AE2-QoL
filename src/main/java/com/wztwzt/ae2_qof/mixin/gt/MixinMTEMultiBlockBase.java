@@ -76,6 +76,13 @@ public abstract class MixinMTEMultiBlockBase {
     @Shadow
     public int mEUt;
 
+    /** G1：机器"当前操作产物"字段 —— 我们只用来**显示**（结算前会主动置空，避免重复落地）。 */
+    @Shadow
+    public ItemStack[] mOutputItems;
+
+    @Shadow
+    public FluidStack[] mOutputFluids;
+
     /** GT 原始的"算一个配方"实现（不经过本注入的接管分支，见 {@code computing} 标志）。 */
     @Invoker("doCheckRecipe")
     protected abstract CheckRecipeResult ae2qol$gtDoCheckRecipe();
@@ -87,6 +94,24 @@ public abstract class MixinMTEMultiBlockBase {
     /** GT 自己的产物落地（流体）。 */
     @Invoker("addFluidOutputs")
     protected abstract boolean ae2qol$addFluidOutputs(FluidStack[] fluids);
+
+    /**
+     * GT 的收尾处理（G2）：GT 在 {@code checkProcessing()} 里的顺序是
+     * {@code doCheckRecipe() → postCheckRecipe(result, processingLogic) → 才取 getCalculatedEut() 写 mEUt}。
+     * 我原来在读 EU 之前漏了这一步，于是每条线程的 `getCalculatedEut()` 都读到 0
+     * ⇒ 外壳 EU=0 ⇒ 家族把 mEUt 写成 0 ⇒ WAILA/主界面的耗电整段消失（用户实测）。
+     */
+    @Invoker("postCheckRecipe")
+    protected abstract CheckRecipeResult ae2qol$gtPostCheckRecipe(CheckRecipeResult result, ProcessingLogic logic);
+
+    /** 跑一次 GT 的「算配方 + 收尾」，返回已定稿的结果（EU/时长/outputs 才是最终值）。 */
+    private CheckRecipeResult ae2qol$checkOne() {
+        CheckRecipeResult result = ae2qol$gtDoCheckRecipe();
+        if (result != null && result.wasSuccessful()) {
+            result = ae2qol$gtPostCheckRecipe(result, processingLogic);
+        }
+        return result;
+    }
 
     /** 上一次因缺电降级的条数：只在变化时记日志（避免每 tick 刷屏，但绝不静默）。 */
     private int ae2qol$lastDropped = 0;
@@ -139,7 +164,7 @@ public abstract class MixinMTEMultiBlockBase {
                     continue;
                 }
                 if (startsLeft <= 0) continue; // 预算用完：保持空闲，等后续 tick
-                CheckRecipeResult result = ae2qol$gtDoCheckRecipe();
+                CheckRecipeResult result = ae2qol$checkOne();
                 if (result != null && result.wasSuccessful()) {
                     ae2qol$fillSlotFromLogic(slot);
                     started++;
@@ -180,10 +205,17 @@ public abstract class MixinMTEMultiBlockBase {
 
     /** 外壳：产物留空（产物由每条线程完成时自行落地）、时长=最长线程剩余、耗电=活跃线程求和。 */
     private void ae2qol$writeEnvelope(Ae2qolThreadEngine engine) {
+        // 注意：产物**必须留空**（G1 另行把"待落地产物并集"写进 mOutputItems 仅供显示，
+        // 并在结算前置空）—— 否则 GT 结算时会把这些产物再落地一次 = 刷物品。
         processingLogic.overwriteOutputItems();
         processingLogic.overwriteOutputFluids();
         processingLogic.overwriteCalculatedDuration(Math.max(1, engine.maxRemain()));
-        processingLogic.overwriteCalculatedEut(engine.totalEutPerTick());
+        // G2：只有拿到正值才写 EU；拿不到就保留 processingLogic 里**已经定稿的那个值**
+        // （家族随后会用它写 mEUt）⇒ 绝不再出现"耗电 0"的假象。
+        long totalEut = engine.totalEutPerTick();
+        if (totalEut > 0) {
+            processingLogic.overwriteCalculatedEut(totalEut);
+        }
     }
 
     // ===================== 推进入口 =====================
@@ -267,7 +299,7 @@ public abstract class MixinMTEMultiBlockBase {
                 if (startedThisTick) {
                     continue; // 预算用完：本槽保持空闲，等后续 tick 再起
                 }
-                CheckRecipeResult result = ae2qol$gtDoCheckRecipe();
+                CheckRecipeResult result = ae2qol$checkOne();
                 if (result != null && result.wasSuccessful()) {
                     ae2qol$fillSlotFromLogic(slot);
                     startedThisTick = true;
@@ -284,7 +316,7 @@ public abstract class MixinMTEMultiBlockBase {
                 for (int i = 0; i < count && !startedThisTick; i++) {
                     Ae2qolThreadEngine.Slot slot = engine.slot(i);
                     if (slot.isRunning() || slot.state == Ae2qolThreadEngine.ST_POWER) continue;
-                    CheckRecipeResult result = ae2qol$gtDoCheckRecipe();
+                    CheckRecipeResult result = ae2qol$checkOne();
                     if (result != null && result.wasSuccessful()) {
                         ae2qol$fillSlotFromLogic(slot);
                         startedThisTick = true;
@@ -299,6 +331,16 @@ public abstract class MixinMTEMultiBlockBase {
             }
         } finally {
             engine.endComputing();
+        }
+
+        // G1（3.25.0-fix3）：把"活跃线程待落地的产物并集"写回机器字段，**仅供 GT 主界面/WAILA 显示**。
+        // 关键：如果**本 tick 将要结算**（进度即将到达上限），必须先把它们置空 ——
+        // 否则 GT 在结算时会再 addItemOutputs 一次，就变成重复产出（刷物品）。
+        if (mProgresstime + 1 >= mMaxProgresstime) {
+            mOutputItems = null;
+            mOutputFluids = null;
+        } else {
+            ae2qol$fillDisplayOutputs(engine);
         }
 
         // 外壳维护：只要还有线程在跑，就把机器的"总时长"顶到最长线程的剩余，保证机器不会提前结算
@@ -333,5 +375,51 @@ public abstract class MixinMTEMultiBlockBase {
     private static String ae2qol$posText(IGregTechTileEntity base) {
         if (base == null) return "?";
         return base.getXCoord() + "," + base.getYCoord() + "," + base.getZCoord();
+    }
+
+    /**
+     * G1：把活跃线程的待落地产物合并成"当前操作产物"，只用于显示（GT 主界面 / WAILA）。
+     * 不参与结算 —— 结算路径上（见 tick 里的"将要结算"分支）会先被置空。
+     */
+    private void ae2qol$fillDisplayOutputs(Ae2qolThreadEngine engine) {
+        java.util.List<ItemStack> items = new java.util.ArrayList<>();
+        java.util.List<FluidStack> fluids = new java.util.ArrayList<>();
+        int count = engine.threadCount();
+        for (int i = 0; i < count; i++) {
+            Ae2qolThreadEngine.Slot slot = engine.slot(i);
+            if (!slot.isRunning()) continue;
+            if (slot.items != null) {
+                for (ItemStack stack : slot.items) {
+                    if (stack != null) ae2qol$mergeItem(items, stack);
+                }
+            }
+            if (slot.fluids != null) {
+                for (FluidStack stack : slot.fluids) {
+                    if (stack != null) ae2qol$mergeFluid(fluids, stack);
+                }
+            }
+        }
+        mOutputItems = items.isEmpty() ? null : items.toArray(new ItemStack[0]);
+        mOutputFluids = fluids.isEmpty() ? null : fluids.toArray(new FluidStack[0]);
+    }
+
+    private static void ae2qol$mergeItem(java.util.List<ItemStack> list, ItemStack stack) {
+        for (ItemStack existing : list) {
+            if (existing.isItemEqual(stack) && ItemStack.areItemStackTagsEqual(existing, stack)) {
+                existing.stackSize = (int) Math.min(Integer.MAX_VALUE, (long) existing.stackSize + stack.stackSize);
+                return;
+            }
+        }
+        list.add(stack.copy());
+    }
+
+    private static void ae2qol$mergeFluid(java.util.List<FluidStack> list, FluidStack stack) {
+        for (FluidStack existing : list) {
+            if (existing.getFluid() == stack.getFluid() && FluidStack.areFluidStackTagsEqual(existing, stack)) {
+                existing.amount = (int) Math.min(Integer.MAX_VALUE, (long) existing.amount + stack.amount);
+                return;
+            }
+        }
+        list.add(stack.copy());
     }
 }

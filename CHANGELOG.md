@@ -34,6 +34,34 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-05 (60) - **3.25.0-fix3：恢复主机 UI 输出显示（G1）+ 恢复耗电记账与 WAILA 耗电（G2）**
+
+### 一、用户实测反馈（接着 (59)）
+补报：① **主机 UI 里"生产中/输出"那一栏直接没有了**；② **WAILA 里看不到耗电**。
+（另：线程页重叠、>8 条滚不动、参数页标签位置 —— 已在 `46f2ef2` 一并修完：列宽重排 + 行固定高度 +
+`scrollDirection(GuiAxis.Y)` + 标签条移到左侧。）
+
+### 二、根因
+- **G1**：我在"外壳"里把**产物清空**（`overwriteOutputItems/overwriteOutputFluids` 空数组）以防重复结算，
+  而 GT 的主界面正是读 `mOutputItems/mOutputFluids` 来显示"生产中" ⇒ 显示栏空了。
+- **G2**：GT 的顺序是 `doCheckRecipe() → postCheckRecipe(result, processingLogic) → 才取 getCalculatedEut() 写 mEUt`；
+  我在 `doCheckRecipe()` 一返回就读 EU ⇒ **每线程都读到 0** ⇒ 外壳 EU=0 ⇒ 家族把 `mEUt` 写成 0
+  ⇒ WAILA/主界面的耗电整段消失（GT 对 0 耗电是隐藏不显示的）。
+
+### 三、修法
+- **G2**：新增 `@Invoker("postCheckRecipe")`，并加 `ae2qol$checkOne()` = `doCheckRecipe()` + `postCheckRecipe()`
+  （三处计算入口统一走它）；`ae2qol$writeEnvelope` 里 **只有 `totalEut > 0` 才写 EU**，
+  否则保留 `processingLogic` 里已定稿的值 ⇒ 家族写出的 `mEUt` 是真实值。
+- **G1**：每 tick 把"**活跃线程待落地产物的并集**"写回 `mOutputItems/mOutputFluids`（**仅显示**）；
+  而当 `mProgresstime + 1 >= mMaxProgresstime`（**本 tick 将要结算**）时**先置空**再让 GT 结算
+  ⇒ 显示恢复且**不会重复落地产物**（不刷物品）。
+
+### 四、待回填 / 未做
+- 构建与产物：待回填；
+- 仍未做（下一轮 fix4）：G4 的**真流体图标**（引擎 `Row` 加流体字段 + PacketBuffer 序列化 + `FluidDrawable`）、
+  G5 WAILA 线程行（零参数 + `@Local` 修签名）、**扣料校验闸**（需先确认 `mInputBusses` 的 SRG 名）、
+  **P1 并行/速度设定被忽略**、G6 广播改中央 server tick 驱动。
+
 ## 工作区决策记录 2026-10-05 (59) - **3.25.0-fix2（P0）：堵住多线程刷物品（每 tick 只起一条线程）**
 
 ### 一、用户实测（关键安全反馈）
