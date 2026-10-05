@@ -296,12 +296,25 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
             Ae2qolThreadEngine engine = engine();
             return engine == null ? 0 : engine.countState(Ae2qolThreadEngine.ST_POWER);
         });
+        // 3.25.0-fix13：底部要把"非活跃线程的去向"全列出来 ——
+        // 原先只显示"空闲/缺电降级"，于是"输入不足/输出已满"的线程去向在界面上完全看不见
+        // （用户实测：活跃 1/16、空闲 0，但另外 15 条其实卡在"输入不足"）。
+        IntSyncValue starvedSync = new IntSyncValue(() -> {
+            Ae2qolThreadEngine engine = engine();
+            return engine == null ? 0 : engine.countState(Ae2qolThreadEngine.ST_STARVED);
+        });
+        IntSyncValue outputFullSync = new IntSyncValue(() -> {
+            Ae2qolThreadEngine engine = engine();
+            return engine == null ? 0 : engine.countState(Ae2qolThreadEngine.ST_OUTPUT_FULL);
+        });
         syncManager.syncValue("ae2qol_threads_active", activeSync);
         syncManager.syncValue("ae2qol_threads_total", totalSync);
         syncManager.syncValue("ae2qol_threads_parallel", parallelSumSync);
         syncManager.syncValue("ae2qol_threads_power", powerSumSync);
         syncManager.syncValue("ae2qol_threads_idle", idleSync);
         syncManager.syncValue("ae2qol_threads_powerdown", powerDownSync);
+        syncManager.syncValue("ae2qol_threads_starved", starvedSync);
+        syncManager.syncValue("ae2qol_threads_outputfull", outputFullSync);
 
         // 活跃线程列表：服务端快照 → 客户端按快照重建控件（变长列表的标准做法）
         com.cleanroommc.modularui.value.sync.GenericListSyncHandler<Ae2qolThreadEngine.Row> rows =
@@ -347,7 +360,13 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
             new TextWidget<>(
                 IKey.dynamic(
                     () -> StatCollector.translateToLocal("ae2_qof.threads.idle") + " " + idleSync.getValue()
-                        + "   "
+                        + "  "
+                        + StatCollector.translateToLocal("ae2_qof.threads.state.starved") + " "
+                        + starvedSync.getValue()
+                        + "  "
+                        + StatCollector.translateToLocal("ae2_qof.threads.state.output_full") + " "
+                        + outputFullSync.getValue()
+                        + "  "
                         + StatCollector.translateToLocal("ae2_qof.threads.power_down") + " "
                         + powerDownSync.getValue())).size(248, 12)
                             .color(0xFF888888));
