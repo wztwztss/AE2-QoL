@@ -687,7 +687,14 @@ GT 2714「能下单但不合成」（注册进去的是预览 details，不是�
 - [ ] 提交 1/2（引擎 + 线程页）后 **待用户实测**：① 线程页能看到逐条进度在跑；② 线程=1/拆仓 ⇒ 回原生行为；
       ③ 单输入 ⇒ N 条跑同一配方、混放 ⇒ 错峰不同配方；④ 拉低电力 ⇒ 活跃数下降 + 显示"缺电降级"且不停机；
       ⑤ 与 GT 原生对照：同配方下总产出/总耗电≈N 倍且**不凭空多出/吞掉物品**。
-- [ ] **提交 2/2 = WAILA**：常态 1 行汇总 + 最慢 2 条，潜行展开最多 8 条；需新增每 10 tick 的降频 S2C 小包 + 客户端按坐标小表（卸载清理）。
+- [x] **提交 2/2 = WAILA 已实现**：`network/ThreadStatusPacket`（每 10 tick 降频 S2C，只发跟踪该区块的玩家，汇总 + 剩余最多的 8 条 + 产物显示名；
+      客户端按 `dim:x:y:z` 存小表、2 秒未更新即失效）+ `hatch/thread/ThreadStatusBroadcaster` + `mixin/gt/MixinBaseMetaTileEntityWaila`
+      （注入 `BaseMetaTileEntity.getWailaBody` 的 RETURN；常态 2 条、潜行 8 条；不引用 waila 类型）+ `ModNetwork` 注册（Side.CLIENT）+
+      两份 `mixins.ae2_qof.json` 同时登记 + lang `ae2_qof.threads.waila.summary`。最终产物 `AE2-QoL-3.25.0.jar`
+      （1,847,373 B，SHA256 `962073123F746F708CED0661C3B98989F7B4736961DB209A1C68908E5D926FB5`，包内已核对 json/lang/类俱全）。
+- [ ] **待用户实测（提交 1/2 与 2/2 一起）**：① 线程页逐条进度；② 线程=1/拆仓 ⇒ 回原生行为；③ 单输入 ⇒ N 条同配方、混放 ⇒ 错峰；
+      ④ 低电 ⇒ 降线程不停机；⑤ 与 GT 原生对照不凭空多/吞物品；⑥ WAILA 常态 2 条 + Shift 展开 8 条、停转/拆仓后自行消失。
+- [ ] **部署**：等用户完全退出游戏并明确同意（提交 1/2 与 2/2 一起部署）。
 - [ ] **未解决（另开一轮）**：P2「样板网格第一列显示不全」（已排除"左滚动条"猜测；等局部放大图）。
 - [ ] 旧 `ae2qol$crossRecipeProcess` 死代码清理。
 

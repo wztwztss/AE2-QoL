@@ -34,6 +34,44 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-02 (57) - **3.25.0（提交 2/2）：WAILA 显示线程进度**
+
+### 一、口径（线框稿已确认）
+常态：**1 行汇总**（活跃 x/N · 总并行 · 总耗电 EU/t）+ **最慢的 2 条**线程；**潜行(Shift) 展开到最多 8 条**；
+取不到快照时**一行都不追加**（不影响其它 WAILA 信息）。
+
+### 二、取证（决定注入点）
+- GT 自己的 Waila 提供器 `gregtech/crossmod/waila/GregtechTEWailaDataProvider.getWailaBody(...)` 会调用
+  `((IGregtechWailaProvider) tile).getWailaBody(itemStack, currenttip, accessor, config)`，而 `tile` 就是
+  **`BaseMetaTileEntity`**（其 `getWailaBody` 在 GT 源码 :617）⇒ 在它的 **RETURN** 追加行即可覆盖**所有 GT 机器**（含第三方，它们同样被它包着）。
+- **本模组编译依赖里没有 waila** ⇒ 注入方法只声明目标参数的前两个（`ItemStack` 与 `List<String>`，原版/JDK 类型）
+  加 `CallbackInfo`（Mixin 允许省略尾部参数），**不引用 `IWailaDataAccessor`**；潜行判断直接用客户端玩家 `isSneaking()`。
+- **WAILA 读的是客户端那份 TE**，而 GT 没有下发入口（3.24.0-fix2 的取证）⇒ 必须自建通道。
+
+### 三、实现
+- **新增 `network/ThreadStatusPacket.java`**（S2C）：汇总（活跃/总数/总并行/总耗电）+ **最多 8 条**明细
+  （编号/状态/百分比/剩余/并行/**产物显示名**，不带 ItemStack）；**每 10 tick 一次、只发给正在跟踪该区块的玩家**；
+  客户端按 `dim:x:y:z` 存小表，**超过 2 秒未更新即失效**（机器被拆/停转/离开视距后自动不再显示，无需额外的卸载钩子）。
+- **新增 `hatch/thread/ThreadStatusBroadcaster.java`**：按 10 tick 节流组包（**只取剩余最多的 8 条**，与潜行展开上限一致），
+  发送对象与区块包一致（`PlayerManager.isPlayerWatchingChunk`）。
+- **新增 `mixin/gt/MixinBaseMetaTileEntityWaila.java`**：`@Inject(getWailaBody, RETURN)` 追加行（常态 2 条、潜行 8 条）；
+  **已在两份 `mixins.ae2_qof.json`（`src/main/resources/` 与仓库根）同时登记**（本项目坑位：两份必须一致，漏登记会**静默失效**）。
+- `mixin/gt/MixinMTEMultiBlockBase.java`：在"计算"与"每 tick 推进"两处调用广播器（内部自行节流）。
+- `network/ModNetwork.java`：注册 `ThreadStatusPacket`（`Side.CLIENT`，沿用 `discriminator++`）。
+- lang：中/英各 +1 条 `ae2_qof.threads.waila.summary`。
+
+### 四、构建与最终产物（含 WAILA，取代 (56) 里记录的中间产物数字）
+- `.\gradlew.bat build --offline -x spotlessJavaCheck -x spotlessCheck` ⇒ **`BUILD SUCCESSFUL`（`EXIT=0`）**；
+- 产物 `build/libs/AE2-QoL-3.25.0.jar`，**1,847,373 字节**，
+  SHA256 `962073123F746F708CED0661C3B98989F7B4736961DB209A1C68908E5D926FB5`；
+- 包内核对：`ThreadStatusPacket`(+`$Handler`)、`ThreadStatusBroadcaster`、`MixinBaseMetaTileEntityWaila` 均已入包；
+  **包内 `mixins.ae2_qof.json` 已登记 WAILA 混入**；包内 lang 含 `ae2_qof.threads.waila.summary`。
+
+### 五、待实测（与提交 1/2 一起）
+① 看那台机器的 WAILA：常态应出现「线程 活跃 x/N 总并行 总耗电」+ 最慢 2 条（产物名/百分比/剩余/并行/状态）；
+② **按住 Shift** 应展开到最多 8 条；③ 拆掉维护仓或线程改回 1 ⇒ 这行**消失**（快照失效）；
+④ 停转的机器 2 秒后这行自动消失（不残留脏数据）。
+
 ## 工作区决策记录 2026-10-02 (56) - **3.25.0（提交 1/2）：线程引擎 + 维护仓「线程」页**
 
 ### 一、用户口径（Stage 0 拍板）

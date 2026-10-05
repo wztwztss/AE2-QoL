@@ -19,6 +19,7 @@
     "gt.MixinGtnlPatternSlotAccess",
     "gt.MixinSuperCraftingInputHatchMEWildcard",
     "gt.MixinMTEMultiBlockBase",
+    "gt.MixinBaseMetaTileEntityWaila",
     "gt.MixinCommonBaseMetaTileEntityMultiblockRegistry",
     "gt.MixinProcessingLogicSpeed",
     "gt.MixinBaseMetaTileEntityIdMigration",

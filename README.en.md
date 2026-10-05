@@ -19,7 +19,9 @@ An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI patte
   Live-synced through MUI2, no new network packet.
 - **Known limit**: machines with a fully custom recipe loop that bypasses GT's `doCheckRecipe()` (e.g. PH's
   `IngredientDistributor`) are not covered by this engine.
-- WAILA output (summary + sneak-to-expand) lands in the next version.
+- **Also visible via WAILA**: one summary line (active x/N · total parallel · total draw EU/t) plus the two slowest
+  threads; **hold Shift to expand up to 8 rows** (output name / percent / remaining ticks / that thread's parallel /
+  state). The line disappears when the machine stops or the hatch is removed.
 
 ## What's new in 3.24.0-fix2 (pattern window now refreshes right after cut/paste)
 

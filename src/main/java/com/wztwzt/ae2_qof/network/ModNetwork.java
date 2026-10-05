@@ -60,6 +60,13 @@ public final class ModNetwork {
 
         CHANNEL.registerMessage(SwapPatternPacket.Handler.class, SwapPatternPacket.class, discriminator++, Side.CLIENT);
 
+        // 3.25.0：线程状态降频小包（只为 WAILA；每 10 tick 一次、只发给跟踪该区块的玩家）
+        CHANNEL.registerMessage(
+            ThreadStatusPacket.Handler.class,
+            ThreadStatusPacket.class,
+            discriminator++,
+            Side.CLIENT);
+
         CHANNEL.registerMessage(ExtractItemPacket.Handler.class, ExtractItemPacket.class, discriminator++, Side.SERVER);
 
         CHANNEL.registerMessage(

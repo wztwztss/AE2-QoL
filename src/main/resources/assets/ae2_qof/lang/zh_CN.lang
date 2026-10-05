@@ -129,9 +129,9 @@ ae2_qof.gui.hatch.circuit_slot=插入任意电路板设置上限:
 ae2_qof.gui.hatch.threads=线程:
 
 # ===== 3.25.0 线程：维护仓「线程」页（浅底深字，不使用 § 码）=====
-ae2_qof.threads.tab.params=参数
-ae2_qof.threads.tab.threads=线程
+ae2_qof.threads.tab.params=参数ae2_qof.threads.tab.threads=线程
 ae2_qof.threads.active=活跃
+ae2_qof.threads.waila.summary=线程
 ae2_qof.threads.parallel_sum=总并行
 ae2_qof.threads.power_sum=总耗电
 ae2_qof.threads.idle=空闲

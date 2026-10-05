@@ -139,6 +139,9 @@ public final class Ae2qolThreadEngine {
     /** "正在由引擎回调 GT 原逻辑"标志：防止递归进入引擎（见 MixinMTEMultiBlockBase 的 HEAD 注入）。 */
     private boolean computing;
 
+    /** 降频广播计数器（每 10 tick 发一次 WAILA 用的线程状态小包，见 ThreadStatusBroadcaster）。 */
+    public int broadcastCounter;
+
     private Ae2qolThreadEngine(MTEMultiBlockBase machine) {
         this.machine = machine;
         for (int i = 0; i < MAX_THREADS; i++) {

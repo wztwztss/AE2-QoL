@@ -132,6 +132,7 @@ ae2_qof.gui.hatch.threads=Threads:
 ae2_qof.threads.tab.params=Settings
 ae2_qof.threads.tab.threads=Threads
 ae2_qof.threads.active=Active
+ae2_qof.threads.waila.summary=Threads
 ae2_qof.threads.parallel_sum=Total parallel
 ae2_qof.threads.power_sum=Total draw
 ae2_qof.threads.idle=Idle

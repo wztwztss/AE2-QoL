@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.hatch.thread.Ae2qolThreadEngine;
+import com.wztwzt.ae2_qof.hatch.thread.ThreadStatusBroadcaster;
 
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 import gregtech.api.logic.ProcessingLogic;
@@ -137,6 +138,8 @@ public abstract class MixinMTEMultiBlockBase {
                 return lastFail;
             }
             ae2qol$writeEnvelope(engine);
+            // 3.25.0 提交 2/2：顺带把线程状态降频推给客户端（WAILA 用；内部每 10 tick 一次）
+            ThreadStatusBroadcaster.maybeBroadcast((MTEMultiBlockBase) (Object) this, engine);
             return CheckRecipeResultRegistry.SUCCESSFUL;
         } finally {
             engine.endComputing();
@@ -254,6 +257,8 @@ public abstract class MixinMTEMultiBlockBase {
         }
         long need = engine.totalEutPerTick();
         mEUt = (int) -Math.min(Integer.MAX_VALUE, need);
+        // 3.25.0 提交 2/2：每 tick 推进后也让广播器有机会发一次（内部自行节流）
+        ThreadStatusBroadcaster.maybeBroadcast(self, engine);
     }
 
     // ===================== 小工具 =====================
