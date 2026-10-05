@@ -46,20 +46,16 @@ public abstract class MixinBaseMetaTileEntityWaila {
     private static final int SNEAK_ROWS = ThreadStatusPacket.MAX_ROWS;
 
     /**
-     * <b>3.25.0-fix1 起暂时停用（等待签名修法）</b>：实测日志（fml-client-latest.log 11:45:20）明确报
-     * {@code InvalidInjectionException: Invalid descriptor on ... MixinBaseMetaTileEntityWaila} ——
-     * 目标 {@code getWailaBody(ItemStack, List, IWailaDataAccessor, IWailaConfigHandler)} 有 4 个参数，
-     * 而这里按"可省略尾部参数"只写了前两个 ⇒ **整个混入没被应用**（所以 WAILA 一行都没有）。
-     * <p>正确修法二选一（待用户拍板）：
-     * <ol>
-     * <li>加 compileOnly 的 waila 依赖 → 写全 4 个参数（最直白）；</li>
-     * <li>处理器只留 {@code CallbackInfo}，用 {@code @Local(argsOnly = true, index = 1)} 取那条 tip 列表
-     * （不需要 waila 类型，但依赖 MixinExtras 的 {@code @Local}）。</li>
-     * </ol>
-     * 在修好之前**不声明 @Inject**：混入类仍登记在配置里但不注入任何东西，避免启动时报错。
+     * 3.25.0-fix4（G5）：**用零参数处理器 + {@code @Local(argsOnly = true, index = 1)} 取 tip 列表**。
+     * <p>为什么这么写：目标是 {@code getWailaBody(ItemStack, List, IWailaDataAccessor, IWailaConfigHandler)}（4 个参数），
+     * 而本模组**没有 waila 编译依赖**，写不出后两个参数的类型；上一版按"可省略尾部参数"只写前两个，
+     * 结果被 Mixin 判为 {@code InvalidInjectionException: Invalid descriptor}（日志实证）⇒ 整个混入没被应用。
+     * 现在处理器不声明任何目标参数，改用 MixinExtras 的 {@code @Local} 按**参数序号**取到那条 tip 列表
+     * （{@code index = 1} 即第二个参数），全程不引用 waila 类型。
      */
-    @SuppressWarnings("unused")
-    private void ae2qol$appendThreadLines(ItemStack itemStack, List<String> currentTip) {
+    @Inject(method = "getWailaBody", at = @At("RETURN"))
+    private void ae2qol$appendThreadLines(CallbackInfo ci,
+        @com.llamalad7.mixinextras.sugar.Local(argsOnly = true, index = 1) List<String> currentTip) {
         TileEntity self = (TileEntity) (Object) this;
         World world = self.getWorldObj();
         if (world == null || !world.isRemote) return;
