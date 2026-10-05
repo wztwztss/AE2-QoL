@@ -123,6 +123,13 @@ public abstract class MixinMTEMultiBlockBase {
         try {
             CheckRecipeResult lastFail = CheckRecipeResultRegistry.NO_RECIPE;
             int started = 0;
+            // P0（3.25.0-fix2）：**每次只允许启动一条新线程**。
+            // 根因：同一 tick 内连续调用 N 次 GT 的 doCheckRecipe() 时，每次都读到**同一份尚未被扣减的输入快照**
+            // （Programmable-Hatches 那类"限制输入仓/虚拟供给"的扣料不会在同 tick 内对下一次计算可见），
+            // 于是 N 次计算都按同一份输入算出 N 份产出 ⇒ 用户实测"16 线程输出 ≈16×100 倍而输入只扣 100 倍"。
+            // 现在改为"排队起步"：本次只起一条，其余空闲线程由后续 tick 逐条起（16 条 ≈ 16 tick ≈ 0.8 秒），
+            // 每次计算都发生在上一线程扣料生效之后。这同时也更符合"错峰"语义。
+            int startsLeft = 1;
             int count = engine.threadCount();
             for (int i = 0; i < count; i++) {
                 Ae2qolThreadEngine.Slot slot = engine.slot(i);
@@ -131,10 +138,12 @@ public abstract class MixinMTEMultiBlockBase {
                     if (slot.isRunning()) started++;
                     continue;
                 }
+                if (startsLeft <= 0) continue; // 预算用完：保持空闲，等后续 tick
                 CheckRecipeResult result = ae2qol$gtDoCheckRecipe();
                 if (result != null && result.wasSuccessful()) {
                     ae2qol$fillSlotFromLogic(slot);
                     started++;
+                    startsLeft--;
                 } else {
                     boolean noRecipe = (result == null || result == CheckRecipeResultRegistry.NO_RECIPE);
                     slot.clearRun();
@@ -230,6 +239,7 @@ public abstract class MixinMTEMultiBlockBase {
         engine.beginComputing();
         try {
             int count = engine.threadCount();
+            boolean startedThisTick = false;
             for (int i = 0; i < count; i++) {
                 Ae2qolThreadEngine.Slot slot = engine.slot(i);
                 if (!slot.isRunning()) continue;
@@ -250,15 +260,41 @@ public abstract class MixinMTEMultiBlockBase {
                     ae2qol$addFluidOutputs(slot.fluids);
                 }
 
-                // 立刻补下一个配方（错峰的关键）
+                // 立刻补下一个配方（错峰的关键）。
+                // P0：**每 tick 只允许起一条新线程** —— 同 tick 内连续两次 doCheckRecipe() 会读到
+                // 同一份"尚未扣减"的输入快照（虚拟/限制输入仓的扣料同 tick 内不可见）⇒ N 份产出只扣 1 份料。
                 slot.clearRun();
+                if (startedThisTick) {
+                    continue; // 预算用完：本槽保持空闲，等后续 tick 再起
+                }
                 CheckRecipeResult result = ae2qol$gtDoCheckRecipe();
                 if (result != null && result.wasSuccessful()) {
                     ae2qol$fillSlotFromLogic(slot);
+                    startedThisTick = true;
                 } else {
                     boolean noRecipe = (result == null || result == CheckRecipeResultRegistry.NO_RECIPE);
                     slot.clearRun();
                     slot.state = noRecipe ? Ae2qolThreadEngine.ST_STARVED : Ae2qolThreadEngine.ST_OUTPUT_FULL;
+                }
+            }
+
+            // P0（续）：尚未起步的空闲槽（首次开机、或上一条完成后来不及接续）每 tick 补**一条**，
+            // 于是 16 条线程在约 16 tick（0.8 秒）内逐步到位 —— 每条计算都在上一条扣料生效之后。
+            if (!startedThisTick) {
+                for (int i = 0; i < count && !startedThisTick; i++) {
+                    Ae2qolThreadEngine.Slot slot = engine.slot(i);
+                    if (slot.isRunning() || slot.state == Ae2qolThreadEngine.ST_POWER) continue;
+                    CheckRecipeResult result = ae2qol$gtDoCheckRecipe();
+                    if (result != null && result.wasSuccessful()) {
+                        ae2qol$fillSlotFromLogic(slot);
+                        startedThisTick = true;
+                    } else {
+                        boolean noRecipe = (result == null || result == CheckRecipeResultRegistry.NO_RECIPE);
+                        slot.clearRun();
+                        slot.state = noRecipe ? Ae2qolThreadEngine.ST_STARVED
+                            : Ae2qolThreadEngine.ST_OUTPUT_FULL;
+                        break; // 这一条起不来，本 tick 不再试（避免把同一份输入反复试探）
+                    }
                 }
             }
         } finally {
