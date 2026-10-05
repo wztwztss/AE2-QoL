@@ -322,8 +322,16 @@ public final class Ae2qolThreadEngine {
          */
         public final net.minecraftforge.fluids.FluidStack fluid;
 
+        /**
+         * 维护仓里**设定的并行数**（3.25.0-fix7）：用于把并行口径讲清楚 ——
+         * GT 的 {@code getCurrentParallels()}（= {@link #parallel}）是**实际执行数**，
+         * 实测 = 设定值 × 该机器的批处理倍数（蒸馏塔：设定 1000 → 实际 64000，即 ×64；
+         * 溶解罐：设定 4096 → 被输入/电力上限压到 106）。
+         */
+        public final int setting;
+
         public Row(int index, int state, int percent, int remain, int parallel, ItemStack icon,
-            net.minecraftforge.fluids.FluidStack fluid) {
+            net.minecraftforge.fluids.FluidStack fluid, int setting) {
             this.index = index;
             this.state = state;
             this.percent = percent;
@@ -331,6 +339,7 @@ public final class Ae2qolThreadEngine {
             this.parallel = parallel;
             this.icon = icon == null ? null : icon.copy();
             this.fluid = fluid == null ? null : fluid.copy();
+            this.setting = setting;
         }
 
         /** 值语义：MUI2 列表同步器要求 equals/hashCode，否则每 tick 都会判定"变了"而狂发包。 */
@@ -343,7 +352,8 @@ public final class Ae2qolThreadEngine {
                 && remain == other.remain
                 && parallel == other.parallel
                 && ItemStack.areItemStacksEqual(icon, other.icon)
-                && (fluid == null ? other.fluid == null : fluid.isFluidEqual(other.fluid));
+                && (fluid == null ? other.fluid == null : fluid.isFluidEqual(other.fluid))
+                && setting == other.setting;
         }
 
         @Override
@@ -356,6 +366,7 @@ public final class Ae2qolThreadEngine {
             h = 31 * h + (icon == null ? 0 : icon.getItemDamageForDisplay() ^ icon.stackSize);
             h = 31 * h + (fluid == null ? 0 : fluid.getFluid()
                 .hashCode() ^ fluid.amount);
+            h = 31 * h + setting;
             return h;
         }
 
@@ -377,6 +388,7 @@ public final class Ae2qolThreadEngine {
             if (row.fluid != null) {
                 buf.writeNBTTagCompoundToBuffer(row.fluid.writeToNBT(new NBTTagCompound()));
             }
+            buf.writeInt(row.setting);
         }
 
         public static Row read(net.minecraft.network.PacketBuffer buf) throws java.io.IOException {
@@ -389,7 +401,8 @@ public final class Ae2qolThreadEngine {
             net.minecraftforge.fluids.FluidStack fluid = buf.readBoolean()
                 ? net.minecraftforge.fluids.FluidStack.loadFluidStackFromNBT(buf.readNBTTagCompoundFromBuffer())
                 : null;
-            return new Row(index, state, percent, remain, parallel, icon, fluid);
+            int setting = buf.readInt();
+            return new Row(index, state, percent, remain, parallel, icon, fluid, setting);
         }
     }
 
@@ -405,9 +418,16 @@ public final class Ae2qolThreadEngine {
                 if (s.icon == null && s.fluids != null && s.fluids.length > 0) {
                     fluid = s.fluids[0];
                 }
-                rows.add(new Row(i + 1, s.state, s.percent(), s.remain, s.parallel, s.icon, fluid));
+                rows.add(
+                    new Row(i + 1, s.state, s.percent(), s.remain, s.parallel, s.icon, fluid, parallelSetting()));
             }
         }
         return rows;
+    }
+
+    /** 维护仓里设定的并行数（GUI 用它把「设定 × 批处理 = 实际」讲清楚）。 */
+    public int parallelSetting() {
+        AE2MaintenanceHatchUniversal hatch = hatch();
+        return hatch == null ? 0 : hatch.getEffectiveParallel();
     }
 }

@@ -90,6 +90,10 @@ public abstract class MixinMTEMultiBlockBase {
     @Shadow
     public java.util.ArrayList<gregtech.common.tileentities.machines.IDualInputHatch> mDualInputHatches;
 
+    /** GT 自己汇总的"输入仓里的流体"（扣料闸要把流体也算进指纹）。 */
+    @Shadow
+    public abstract java.util.ArrayList<FluidStack> getStoredFluids();
+
     /** GT 原始的"算一个配方"实现（不经过本注入的接管分支，见 {@code computing} 标志）。 */
     @Invoker("doCheckRecipe")
     protected abstract CheckRecipeResult ae2qol$gtDoCheckRecipe();
@@ -143,6 +147,21 @@ public abstract class MixinMTEMultiBlockBase {
                     for (ItemStack stack : items) {
                         if (stack != null) sum += stack.stackSize;
                     }
+                    // 3.25.0-fix7：双输入仓的**流体**也要算
+                    FluidStack[] fluids = inv.getFluidInputs();
+                    if (fluids != null) {
+                        for (FluidStack stack : fluids) {
+                            if (stack != null) sum += stack.amount;
+                        }
+                    }
+                }
+            }
+            // 3.25.0-fix7：**输入仓的流体**同样要算 —— 否则吃流体的机器（实测蒸馏塔）两次读数恒为 0，
+            // 会被误判成"启动线程后输入未见减少"（假警报）。
+            java.util.ArrayList<FluidStack> stored = getStoredFluids();
+            if (stored != null) {
+                for (FluidStack stack : stored) {
+                    if (stack != null) sum += stack.amount;
                 }
             }
         } catch (Throwable ignored) {
@@ -161,8 +180,10 @@ public abstract class MixinMTEMultiBlockBase {
             // 若没减少，说明"扣料对下一次计算不可见" —— 那正是刷物品的温床（用户实测的 16× 产出即此）。
             // 这里刻意**不改行为**：ME 输入等"虚拟供给"机器的本机库存本来就不会变，直接拦会误伤；
             // 真正的防护是"每 tick 最多启动一条线程"（P0）。本条只负责把可疑情况留痕，绝不静默。
+            // 3.25.0-fix7：**两次读数都为 0 时不判定** —— 那说明这台机器没有可观测的输入
+            // （纯流体/ME 供给等），不能据此说"没扣料"（实测蒸馏塔就是被这样误报的）。
             long after = ae2qol$inputFingerprint();
-            if (before >= 0 && after >= 0 && after >= before && !ae2qol$gateWarned) {
+            if (before > 0 && after >= 0 && after >= before && !ae2qol$gateWarned) {
                 ae2qol$gateWarned = true;
                 MTEMultiBlockBase self = (MTEMultiBlockBase) (Object) this;
                 MyMod.LOG.warn(

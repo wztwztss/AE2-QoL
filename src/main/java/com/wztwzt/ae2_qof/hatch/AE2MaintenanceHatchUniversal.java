@@ -382,7 +382,7 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
             .childPadding(2);
 
         r.child(
-            new TextWidget<>(IKey.str(String.format("%2d", row.index))).size(14, 11)
+            new TextWidget<>(IKey.str(String.format("%2d", row.index))).size(12, 11)
                 .color(0xFF303030));
 
         // 产物图标：物品优先；纯流体配方用 MUI2 的 FluidDrawable 画**真流体图标**（G4）；
@@ -396,25 +396,43 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
         }
         r.child(iconWidget);
 
-        r.child(new TextWidget<>(IKey.str(progressBar(row.percent))).size(40, 11).color(0xFF2E7D32));
-        r.child(new TextWidget<>(IKey.str(row.percent + "%")).size(34, 11).color(0xFF303030));
+        r.child(new TextWidget<>(IKey.str(progressBar(row.percent))).size(28, 11).color(0xFF2E7D32));
+        r.child(new TextWidget<>(IKey.str(row.percent + "%")).size(26, 11).color(0xFF303030));
         r.child(
-            new TextWidget<>(IKey.str(row.remain > 0 ? row.remain + "t" : "-")).size(40, 11)
+            new TextWidget<>(IKey.str(row.remain > 0 ? row.remain + "t" : "-")).size(32, 11)
                 .color(0xFF606060));
+        // 3.25.0-fix7：并行口径 —— GT 的"实际并行"= 设定 × 批处理（实测蒸馏塔 1000→64000 即 ×64）
         r.child(
-            new TextWidget<>(IKey.str(row.parallel > 0 ? String.valueOf(row.parallel) : "-")).size(52, 11)
+            new TextWidget<>(IKey.str(parallelText(row))).size(88, 11)
                 .color(0xFF0066CC));
         r.child(
-            new TextWidget<>(IKey.dynamic(() -> stateText(row.state))).size(48, 11)
+            new TextWidget<>(IKey.dynamic(() -> stateText(row.state))).size(42, 11)
                 .color(0xFF8A5A00));
         return r;
     }
 
-    /** 纯文本进度条（不引入新控件；浅底深字，不使用 § 码）。行宽只够 6 格。 */
+    /**
+     * 并行列的显示口径（3.25.0-fix7）：把"设定 × 批处理 = 实际"讲清楚，
+     * 这样用户一眼就能看出"设定到底有没有生效"（fix5 时期的困惑正来自这里）。
+     * 不整除时退化为"设定→实际"（说明被输入/电力上限压低），取不到设定就只显示实际值。
+     */
+    private static String parallelText(Ae2qolThreadEngine.Row row) {
+        int actual = row.parallel;
+        int setting = row.setting;
+        if (setting > 0 && actual > 0 && actual != setting) {
+            if (actual % setting == 0) {
+                return setting + "\u00d7" + (actual / setting) + "=" + actual;
+            }
+            return setting + "\u2192" + actual;
+        }
+        return actual > 0 ? String.valueOf(actual) : "-";
+    }
+
+    /** 纯文本进度条（不引入新控件；浅底深字，不使用 § 码）。行宽只够 4 格（并行列要显示"设定×批=实际"，得让位）。 */
     private static String progressBar(int percent) {
-        int filled = Math.max(0, Math.min(6, percent / 17));
-        StringBuilder sb = new StringBuilder(6);
-        for (int i = 0; i < 6; i++) {
+        int filled = Math.max(0, Math.min(4, percent / 25));
+        StringBuilder sb = new StringBuilder(4);
+        for (int i = 0; i < 4; i++) {
             sb.append(i < filled ? '\u2588' : '\u2591');
         }
         return sb.toString();
