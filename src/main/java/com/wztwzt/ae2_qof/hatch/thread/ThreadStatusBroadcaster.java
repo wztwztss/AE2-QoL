@@ -27,6 +27,20 @@ public final class ThreadStatusBroadcaster {
 
     private ThreadStatusBroadcaster() {}
 
+    /**
+     * G6：**中央 server tick 驱动**的入口 —— 对所有已启用的引擎各发一次。
+     * 节流交给调用方（ticker 每 10 tick 调一次）；这里把每台机器的计数清零后走原路径，避免重复实现发送逻辑。
+     */
+    public static void broadcastAll() {
+        for (Ae2qolThreadEngine engine : Ae2qolThreadEngine.allEngines()) {
+            if (engine == null || !engine.isEnabled()) continue;
+            MTEMultiBlockBase machine = engine.machine();
+            if (machine == null) continue;
+            engine.broadcastCounter = 0;
+            maybeBroadcast(machine, engine);
+        }
+    }
+
     /** 由 {@code MixinMTEMultiBlockBase} 在"计算"与"每 tick 推进"两处调用；内部自行节流。 */
     public static void maybeBroadcast(MTEMultiBlockBase machine, Ae2qolThreadEngine engine) {
         if (machine == null || engine == null || !engine.isEnabled()) return;

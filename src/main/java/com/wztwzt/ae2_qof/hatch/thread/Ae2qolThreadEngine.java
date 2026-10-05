@@ -86,6 +86,22 @@ public final class Ae2qolThreadEngine {
         return machine == null ? null : peek(machine);
     }
 
+    /**
+     * G6（3.25.0-fix4）：中央 ticker 用 —— 取所有引擎的**快照**（防并发修改）。
+     * <p>为什么需要：NH-Utilities 等加速机制会**跳过 {@code updateEntity}**，
+     * 挂在"机器 tick"上的广播会稀疏甚至停发；改由 server tick 统一驱动才稳。
+     */
+    public static java.util.List<Ae2qolThreadEngine> allEngines() {
+        synchronized (ENGINES) {
+            return new java.util.ArrayList<>(ENGINES.values());
+        }
+    }
+
+    /** 该引擎对应的机器（中央 ticker 发送时需要）。 */
+    public MTEMultiBlockBase machine() {
+        return machine;
+    }
+
     /** 只在已经存在时取（tick 热路径用，避免为不需要的机器建表）。 */
     public static Ae2qolThreadEngine peek(MTEMultiBlockBase machine) {
         synchronized (ENGINES) {

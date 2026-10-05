@@ -245,8 +245,7 @@ public abstract class MixinMTEMultiBlockBase {
                 return lastFail;
             }
             ae2qol$writeEnvelope(engine);
-            // 3.25.0 提交 2/2：顺带把线程状态降频推给客户端（WAILA 用；内部每 10 tick 一次）
-            ThreadStatusBroadcaster.maybeBroadcast((MTEMultiBlockBase) (Object) this, engine);
+            // G6：广播已改由中央 server tick（ThreadStatusTicker）驱动，这里不再发（避免双倍流量）
             return CheckRecipeResultRegistry.SUCCESSFUL;
         } finally {
             engine.endComputing();
@@ -422,8 +421,8 @@ public abstract class MixinMTEMultiBlockBase {
         if (need > 0) {
             mEUt = (int) -Math.min(Integer.MAX_VALUE, need);
         }
-        // 3.25.0 提交 2/2：每 tick 推进后也让广播器有机会发一次（内部自行节流）
-        ThreadStatusBroadcaster.maybeBroadcast(self, engine);
+        // G6：广播改由中央 server tick（ThreadStatusTicker）驱动 —— 加速机制会跳过机器 tick，
+        // 挂在机器 tick 上会稀疏/停发；这里不再自行发包，避免双倍流量。
     }
 
     // ===================== 小工具 =====================

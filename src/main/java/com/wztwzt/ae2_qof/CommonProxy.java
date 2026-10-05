@@ -254,6 +254,11 @@ public class CommonProxy {
         cpw.mods.fml.common.FMLCommonHandler.instance().bus().register(
             com.wztwzt.ae2_qof.wireless.link.WirelessBlockLinkManager.instance());
 
+        // G6（3.25.0-fix4）：线程状态的降频广播改由**中央 server tick** 驱动
+        // （加速机制会跳过机器 updateEntity，挂在机器 tick 上会稀疏/停发）
+        cpw.mods.fml.common.FMLCommonHandler.instance().bus().register(
+            new com.wztwzt.ae2_qof.hatch.thread.ThreadStatusTicker());
+
         try {
             maintenanceHatchUniversal = new AE2MaintenanceHatchUniversal(
                 32000,

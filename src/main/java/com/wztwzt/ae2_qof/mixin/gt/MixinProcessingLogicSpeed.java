@@ -109,6 +109,50 @@ public abstract class MixinProcessingLogicSpeed {
         // 本混入现在只负责把维护仓的"并行数 / 速度"喂给 GT 自己的计算（这两项语义不变）。
     }
 
+    /** P1 诊断的"只报一次"标记。 */
+    private boolean ae2qol$parallelLogged = false;
+
+    @Shadow
+    public abstract int getCurrentParallels();
+
+    /**
+     * P1 诊断（3.25.0-fix4）：**只报一次**，把"维护仓设定值"与"本次实际采用值"并排打出来。
+     * <p>为什么需要：用户实测"并行 1000 改 10，产出/耗时完全不变"，看起来像设定被忽略；
+     * 但启动日志证明我们的 {@code process() HEAD} 注入**确实被应用**（`@Inject::ae2qol$hatchControl`），
+     * 所以需要这一行来区分两种情况：
+     * <ul>
+     * <li>设定值 = 实际值 ⇒ 设定生效，问题在别处（如批处理 ×64 的显示口径、或输入快照被多条线程共享）；</li>
+     * <li>设定值 ≠ 实际值 ⇒ 设定被机器自身的并行/批处理覆盖，需要按机器适配。</li>
+     * </ul>
+     */
+    @Inject(method = "process", at = @At("RETURN"))
+    private void ae2qol$logParallelOnce(CallbackInfoReturnable<CheckRecipeResult> cir) {
+        if (ae2qol$parallelLogged) return;
+        if (!(machine instanceof MTEMultiBlockBase multi)) return;
+        AE2MaintenanceHatchUniversal uh = findUniversalHatch(multi);
+        if (uh == null) return;
+        ae2qol$parallelLogged = true;
+        int setting = uh.getEffectiveParallel();
+        int actual = getCurrentParallels();
+        com.wztwzt.ae2_qof.MyMod.LOG.info(
+            "[AE2QoL] 并行设定诊断：{} @ {} 维护仓设定={} 实测本次并行={}（两者不符即为被机器自身并行/批处理覆盖，请把这行发我）",
+            multi.getMetaName(),
+            ae2qol$posText(multi),
+            setting,
+            actual);
+    }
+
+    private static String ae2qol$posText(MTEMultiBlockBase multi) {
+        if (multi.getBaseMetaTileEntity() == null) return "?";
+        return multi.getBaseMetaTileEntity()
+            .getXCoord() + ","
+            + multi.getBaseMetaTileEntity()
+                .getYCoord()
+            + ","
+            + multi.getBaseMetaTileEntity()
+                .getZCoord();
+    }
+
     private AE2MaintenanceHatchUniversal findUniversalHatch(MTEMultiBlockBase multi) {
         for (MTEHatchMaintenance hatch : multi.mMaintenanceHatches) {
             if (hatch instanceof AE2MaintenanceHatchUniversal) {

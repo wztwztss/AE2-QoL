@@ -34,6 +34,34 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-05 (62) - **3.25.0-fix4（续）：G6 广播改中央 server tick + P1 并行诊断**
+
+### 一、G6：线程状态广播改由**中央 server tick** 驱动
+- 新增 `hatch/thread/ThreadStatusTicker.java`：`@SubscribeEvent` 订阅 `TickEvent.ServerTickEvent`，
+  每 `10` tick 调一次 `ThreadStatusBroadcaster.broadcastAll()`；
+- `ThreadStatusBroadcaster.broadcastAll()`：遍历 `Ae2qolThreadEngine.allEngines()`（引擎新增的快照 API + `machine()`），
+  对每台已启用的机器把计数清零后走原发送路径（不重复实现发送逻辑）；
+- 在 `CommonProxy` 的 FML 总线注册处（紧跟 `WirelessBlockLinkManager` 之后）注册该 ticker；
+- **移除** `MixinMTEMultiBlockBase` 里原先的两处 `maybeBroadcast(...)`（避免双倍流量）。
+- **为什么必须改**：NH-Utilities 等加速机制对普通 GT 多方块走"直接跳 `mProgresstime` 并 `return true` /
+  跳过 `updateEntity`"的快路径 ⇒ 挂在机器 tick 上的广播会稀疏甚至停发，WAILA 那行就不稳。
+
+### 二、P1（并行/速度设定被忽略）——先定性，不盲改
+- **已有证据**：启动日志（11:45:33）显示我们的 `MixinProcessingLogicSpeed` **确实被应用**
+  （`Mixing gt.MixinProcessingLogicSpeed … into gregtech.api.logic.ProcessingLogic` +
+  `@Inject::ae2qol$hatchControl` 注册成功）⇒ "设定被忽略"**不是**注入没生效。
+- **新的判断（更可能）**：`64000 = 1000 × 批处理 64`（用户 WAILA 显示"批量处理 已开启"），
+  而"改 1000→10 无变化"很可能是 **P0 那个根因的表象** —— 同一 tick 内多条线程都看到"未被扣减的完整输入"，
+  于是每条都被**输入量**顶到上限，看起来就像"按电力与原料自适应"。
+  该根因已由 P0（每 tick 只起一条线程）消除，**需要重新实测**才能判断 P1 是否仍存在。
+- **因此本轮只加诊断、不改行为**：在 `MixinProcessingLogicSpeed` 增加一次性的
+  `process()` RETURN 注入，打印「维护仓设定值 vs 本次实测并行值」：
+  - 两者相等 ⇒ 设定生效，问题在别处（显示口径 / 输入快照）；
+  - 两者不等 ⇒ 被机器自身并行或批处理覆盖，再按机器适配。
+
+### 三、验证（待回填）
+- 构建与产物：待回填。
+
 ## 工作区决策记录 2026-10-05 (61) - **3.25.0-fix4：真流体产物图标（G4）+ 扣料校验闸（先只告警）+ WAILA 线程行（G5）**
 
 ### 一、G5 WAILA 线程行（用户选定方案 b）
