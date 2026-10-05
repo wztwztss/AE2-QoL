@@ -34,6 +34,45 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-05 (63) - **3.25.0-fix5（紧急）：回退 WAILA 的 `@Local` 注入 —— 它导致启动即崩**
+
+### 一、现象（用户报"游戏一直在崩溃"）
+崩溃报告 `crash-2026-10-05_13.51.01-client.txt`（以及 13.49/13.50 共 4 份）：
+`Description: Initializing game`，顶层 `LoaderException: java.lang.NoClassDefFoundError: gregtech/api/metatileentity/BaseMetaTileEntity`。
+
+### 二、根因（**是 fix4 的 G5 引入的，我的责任**）
+报告里紧跟的因果链：
+```
+Caused by: org.spongepowered.asm.mixin.injection.throwables.InjectionError: Critical injection failure:
+    Callback method ae2qol$appendThreadLines(...)
+Suppressed: com.llamalad7.mixinextras.sugar.impl.SugarApplicationException:
+    Failed to validate sugar @Local(argsOnly = true, index = 1) List on method ...
+```
+- 本包的 **unimixins 0.3.1 不接受这种 `@Local` 写法**（sugar 校验失败）；
+- 而注入失败在此被当作**致命**错误（`Critical injection failure`）⇒ `BaseMetaTileEntity` 的**类转换中断**
+  ⇒ 后续连 `gregtech/api/metatileentity/BaseMetaTileEntity` 都 `NoClassDefFoundError` ⇒ **启动即崩**。
+- 结论：**`@Local` 方案（fix4 的 G5 方案 b）在本包不可用**，必须改为
+  **加 compileOnly 的 waila 依赖 + 写全 4 个参数**（方案 a，不使用 MixinExtras sugar）。
+
+### 三、修复（本轮，最小且立即恢复可启动）
+- `mixin/gt/MixinBaseMetaTileEntityWaila`：**移除 `@Inject` 与 `@Local`**，方法体保留作参考、不再注入
+  ⇒ WAILA 只是**少几行**，绝不再影响类转换与启动。
+- 版本号 → **3.25.0-fix5**（`gradle.properties` + `mcmod.info` 两条目）。
+
+### 四、教训（记入坑位）
+**带 sugar（`@Local`/`@ModifyExpressionValue` 等 MixinExtras）的注入一旦校验失败，在本包是"致命"而非"跳过"**：
+它会打断目标类（这里是 GT 的 `BaseMetaTileEntity`）的类转换，导致**整个游戏起不来**。
+⇒ 以后用 sugar 类注入必须先确认该写法在本包被接受（或先用 `require = 0` 试水），
+且**部署前必须有一次“能启动到主菜单”的实机验证**（本轮的漏检点）。
+
+### 五、下一步
+- 按方案 (a) 重做 WAILA 线程行：在 `dependencies.gradle` 加 compileOnly 的 waila 依赖，处理器写全
+  `(ItemStack, List<String>, IWailaDataAccessor, IWailaConfigHandler)`；**先只在本机启动验证不崩**，再谈功能。
+- 其余 fix4 内容（P0/G1/G2/G3/G4/G6/扣料闸/P1 诊断）**与本次崩溃无关**，保持不动。
+
+### 六、验证（待回填）
+- 构建与产物：待回填。
+
 ## 工作区决策记录 2026-10-05 (62) - **3.25.0-fix4（续）：G6 广播改中央 server tick + P1 并行诊断**
 
 ### 一、G6：线程状态广播改由**中央 server tick** 驱动

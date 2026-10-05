@@ -46,16 +46,21 @@ public abstract class MixinBaseMetaTileEntityWaila {
     private static final int SNEAK_ROWS = ThreadStatusPacket.MAX_ROWS;
 
     /**
-     * 3.25.0-fix4（G5）：**用零参数处理器 + {@code @Local(argsOnly = true, index = 1)} 取 tip 列表**。
-     * <p>为什么这么写：目标是 {@code getWailaBody(ItemStack, List, IWailaDataAccessor, IWailaConfigHandler)}（4 个参数），
-     * 而本模组**没有 waila 编译依赖**，写不出后两个参数的类型；上一版按"可省略尾部参数"只写前两个，
-     * 结果被 Mixin 判为 {@code InvalidInjectionException: Invalid descriptor}（日志实证）⇒ 整个混入没被应用。
-     * 现在处理器不声明任何目标参数，改用 MixinExtras 的 {@code @Local} 按**参数序号**取到那条 tip 列表
-     * （{@code index = 1} 即第二个参数），全程不引用 waila 类型。
+     * 3.25.0-fix5：**再次停用注入 —— 这次是因为它让游戏启动即崩**。
+     * <p>实测崩溃（`crash-2026-10-05_13.51.01-client.txt`，Description: Initializing game）：
+     * <pre>
+     * InjectionError: Critical injection failure: Callback method ae2qol$appendThreadLines(...)
+     * Suppressed: SugarApplicationException: Failed to validate sugar @Local(argsOnly = true, index = 1) List
+     * → LoaderException: NoClassDefFoundError: gregtech/api/metatileentity/BaseMetaTileEntity
+     * </pre>
+     * 即：本包的 unimixins 0.3.1 **不接受这种 `@Local` 写法**，而注入失败被当作**致命**错误
+     * ⇒ `BaseMetaTileEntity` 的类转换中断 ⇒ 连 GT 的类都加载不了 ⇒ 启动崩溃。
+     * <p>因此这里恢复成"**不注入**"（方法体保留作参考，不再声明 {@code @Inject}）。
+     * WAILA 线程行的正式方案改为**加 compileOnly 的 waila 依赖 + 写全 4 个参数**
+     * （不使用 MixinExtras 的 sugar），等下一轮实施；在那之前 WAILA 只是**少几行**，不影响启动。
      */
-    @Inject(method = "getWailaBody", at = @At("RETURN"))
-    private void ae2qol$appendThreadLines(CallbackInfo ci,
-        @com.llamalad7.mixinextras.sugar.Local(argsOnly = true, index = 1) List<String> currentTip) {
+    @SuppressWarnings("unused")
+    private void ae2qol$appendThreadLines(ItemStack itemStack, List<String> currentTip) {
         TileEntity self = (TileEntity) (Object) this;
         World world = self.getWorldObj();
         if (world == null || !world.isRemote) return;
