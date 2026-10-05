@@ -64,8 +64,14 @@
 `V[13] = 536,870,912 (UXV)`、**`V[14] = 2,147,483,640 (MAX)`**、`V[15] = 8,589,934,592`（GT 的"错误档"占位）。
 ⇒ 输入终端 `voltageTier = 14` **本来就是正确的 MAX**，标签无误，无需改动。
 
-### 四、验证（待回填）
-- 构建与产物：待回填。
+### 四、验证
+- 构建：`BUILD SUCCESSFUL`（`EXIT=0`）；
+- 产物：`build/libs/AE2-QoL-3.25.0-fix16.jar`（**1,854,979 B**，
+  SHA256 `80B54F58E18E275279B2BF1C8027F45950DA291F0227E41EFD8A5BC2D92C0CE9`）；
+- **已部署（用户批准「现在就部署 fix16」）**：`mods\【私货】AE2-QoL-3.25.0-fix16.jar`（实例 SHA256 与本地一致；
+  旧 fix15 已移入 `_ae2qol_jar_backup\prev-…`；`mods` 内仅 1 份；部署前确认无 MC 进程）。**需重启加载**；
+- ⚠️ **本版含 mixin 变更**，按铁则**重启后第一件事看启动日志**：若出现 `InvalidInjectionException`
+  或 `Mixin apply for mod ae2_qof failed` ⇒ 立刻回退（备份已在 `_ae2qol_jar_backup\prev-【私货】AE2-QoL-3.25.0-fix15.jar`）。
 
 ## 工作区决策记录 2026-10-05 (74) - **3.25.0-fix15：输入终端默认档位改为 MAX（与输出终端的 MAX 外观对齐）**
 

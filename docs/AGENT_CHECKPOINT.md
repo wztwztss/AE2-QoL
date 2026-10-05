@@ -673,7 +673,29 @@ GT 2714「能下单但不合成」（注册进去的是预览 details，不是�
 
 ## 五、待办任务队列（优先级从高到低）
 
-### ★ 当前（3.25.0-fix15 已部署，2026-10-05）
+### ★ 当前（3.25.0-fix16 已部署，2026-10-05）
+
+- **现场版本**：实例 `mods\【私货】AE2-QoL-3.25.0-fix16.jar`（1,854,979 B，
+  SHA256 `80B54F58E18E275279B2BF1C8027F45950DA291F0227E41EFD8A5BC2D92C0CE9`，与本地构建一致；
+  旧 fix15 已移入 `_ae2qol_jar_backup\prev-…`；`mods` 内 AE2-QoL 仅 1 份）。**需重启加载**。
+- **本版内容**：
+  - fix13：线程页底部补全"空闲/输入不足/输出已满/缺电降级"计数；
+  - fix14：输出终端换基类 `MTEHatchDynamo` ⇒ 被 GT 认成动力仓（`maxEUOutput()=V[mTier]`、等级 MAX）；
+  - fix15：输入终端默认档位 `voltageTier=14(MAX)` / `ampTier=5(1GA)`（WAILA 显示 MAX）；
+  - **fix16**：输出终端 `maxAmperesOut()=2,147,483,647`（21 亿 A）⇒ 吞吐 `V[MAX]×2.1e9 ≈ 4.61e18 EU/t`；
+    并用 **`MixinMTEMultiBlockBase.ae2qol$acceptSuperDynamo`（HEAD 注入 + cancel）绕过 GT 的 `<= 4A` 判定**，
+    照 GT 原逻辑做 `updateTexture/updateCraftingIcon/mDynamoHatches`。
+- **关键换算（已核 GT 源码）**：`GTValues.V[13]=UXV(536,870,912)`、**`V[14]=MAX(2,147,483,640)`**、
+  `V[15]=8,589,934,592`（GT 的"错误档"占位，不可用）。**同一台机器只放一个**输出终端
+  （`addEnergyOutputMultipleDynamos` 会累加各动力仓的 电压×安培，两个即溢出）；**9.2e18 A 绝不可写**。
+- [ ] **待用户实测（重启后）**：① **启动日志无 `InvalidInjectionException`**（本版含 mixin 变更，出问题立即回退）；
+  ② 输出终端仍被认作动力仓、WAILA 电流显示 21 亿；③ 实际送电上限提升；④ 输入终端显示 MAX；
+  ⑤ 线程页底部四项计数；⑥ **P0 核心仍未验**：线程=1 与 16 产出一致。
+- [ ] 未结：**WAILA 线程行**（方案 a：compileOnly waila + 写全 4 参数，先验证启动不崩）；
+  **线程页显示"正在做的配方 + 进度%"**（学 GTOLib `Thread{recipe,progress,duration,use}`）。
+- ⚠️ **安全**：P0 验收通过前，**产线保持线程=1**。
+
+### ★ 历史（3.25.0-fix15 已部署，2026-10-05）
 
 - **现场版本**：实例 `mods\【私货】AE2-QoL-3.25.0-fix15.jar`（1,854,494 B，
   SHA256 `F411F6905C2402C033BAE9CA0AC816658077606BA4BE2097DEB54B6BAAA35409`，与本地构建一致；
