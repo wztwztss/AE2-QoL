@@ -683,7 +683,7 @@ GT 2714「能下单但不合成」（注册进去的是预览 details，不是�
   `MixinMTEMultiBlockBase`（`doCheckRecipe` HEAD 接管并循环调 GT 原始实现；`incrementProgressTime` HEAD 推进/落地/补配方；外壳写入）；
   `MixinProcessingLogicSpeed` 旧接管分支摘除（标 `@Deprecated` 待清理）；维护仓新增「线程」页（汇总+表头+活跃列表+空闲折叠，MUI2 实时同步）；
   中英 lang 各 +21 条 `ae2_qof.threads.*`；版本 3.25.0。
-- 产物：`build/libs/AE2-QoL-3.25.0.jar`（1,838,052 B，SHA256 `3637B089D9D31E7EE8AAB29E418EC3B06B78185545DA29E88DAFA10772DBBCA6`）。
+- 产物：`build/libs/AE2-QoL-3.25.0.jar`（1,838,048 B，SHA256 `838865CEF407596EB1857CCF336789F90C9B02B6EC6940ED5AC1CEA3A519AFD0`，包内 mcmod.info 两条目均为 3.25.0）。
 - [ ] 提交 1/2（引擎 + 线程页）后 **待用户实测**：① 线程页能看到逐条进度在跑；② 线程=1/拆仓 ⇒ 回原生行为；
       ③ 单输入 ⇒ N 条跑同一配方、混放 ⇒ 错峰不同配方；④ 拉低电力 ⇒ 活跃数下降 + 显示"缺电降级"且不停机；
       ⑤ 与 GT 原生对照：同配方下总产出/总耗电≈N 倍且**不凭空多出/吞掉物品**。

@@ -71,8 +71,9 @@ TST 式 **N 条线程**：各自匹配配方、各自计时、各自扣料与落
 
 ### 四、构建与产物
 - `.\gradlew.bat build --offline -x spotlessJavaCheck -x spotlessCheck` ⇒ **`BUILD SUCCESSFUL`（`EXIT=0`）**；
-- 产物 `build/libs/AE2-QoL-3.25.0.jar`，**1,838,052 字节**，
-  SHA256 `3637B089D9D31E7EE8AAB29E418EC3B06B78185545DA29E88DAFA10772DBBCA6`；
+- 产物 `build/libs/AE2-QoL-3.25.0.jar`，**1,838,048 字节**，
+  SHA256 `838865CEF407596EB1857CCF336789F90C9B02B6EC6940ED5AC1CEA3A519AFD0`
+  （注：首次构建时 `mcmod.info` 尚未改成 3.25.0，重建后包内两条目均为 `3.25.0`，以上为最终产物）；
 - 版本号：`gradle.properties` / `mcmod.info`（两条目）→ **3.25.0**（加功能升 0.1）。
 
 ### 五、风险与已知边界（务必配合实测）
