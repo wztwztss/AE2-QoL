@@ -158,6 +158,15 @@ public final class Ae2qolThreadEngine {
     /** 降频广播计数器（每 10 tick 发一次 WAILA 用的线程状态小包，见 ThreadStatusBroadcaster）。 */
     public int broadcastCounter;
 
+    /**
+     * 线程起步的**轮转游标**（3.25.0-fix6）。
+     * <p>为什么需要：越早的"空闲槽补位"是"从 0 找第一个空闲槽、失败就 break"，
+     * 于是一个**持续失败**的槽（例如刚完成那条线程的槽）会把后面所有空闲槽永远挡在门外
+     * ⇒ 用户实测"设了 16 线程却只跑 1 条"。改成轮转后，每 tick 从上次的下一个槽继续试，
+     * 坏槽最多只消耗一次尝试，不会阻塞其余线程。
+     */
+    public int startCursor;
+
     private Ae2qolThreadEngine(MTEMultiBlockBase machine) {
         this.machine = machine;
         for (int i = 0; i < MAX_THREADS; i++) {

@@ -259,8 +259,9 @@ public abstract class MixinMTEMultiBlockBase {
         slot.total = duration;
         slot.remain = duration;
         slot.parallel = Math.max(1, processingLogic.getCurrentParallels());
-        // setEnergyUsage 用负数写 mEUt（见 GT 源码 L1318），这里统一存正数便于求和
-        slot.eutPerTick = (int) Math.min(Integer.MAX_VALUE, Math.max(0L, -processingLogic.getCalculatedEut()));
+        // GT 的 getCalculatedEut() 返回的是**正数**（GT 自己在 setEnergyUsage 里才取负写 mEUt）
+        // 3.25.0-fix6：这里原先写成 -getCalculatedEut() ⇒ 被 max(0,…) 夹成 0 ⇒ "总耗电 0 EU/t"。
+        slot.eutPerTick = (int) Math.min(Integer.MAX_VALUE, Math.max(0L, processingLogic.getCalculatedEut()));
         slot.items = processingLogic.getOutputItems();
         slot.fluids = processingLogic.getOutputFluids();
         slot.icon = ae2qol$firstItem(slot.items);
@@ -373,22 +374,27 @@ public abstract class MixinMTEMultiBlockBase {
                 }
             }
 
-            // P0（续）：尚未起步的空闲槽（首次开机、或上一条完成后来不及接续）每 tick 补**一条**，
-            // 于是 16 条线程在约 16 tick（0.8 秒）内逐步到位 —— 每条计算都在上一条扣料生效之后。
+            // P0（续）：尚未起步的空闲槽每 tick 补**一条**（16 条约 16 tick 到齐）。
+            // 3.25.0-fix6：改成**轮转游标** —— 原先是"从 0 找第一个空闲槽，失败就 break"，
+            // 于是刚完成那条线程的槽只要一次失败，就会把后面所有空闲槽永远挡住
+            // ⇒ 用户实测"设 16 线程却只跑 1 条"（活跃 1/16、空闲 14）。现在坏槽最多消耗一次尝试。
             if (!startedThisTick) {
-                for (int i = 0; i < count && !startedThisTick; i++) {
-                    Ae2qolThreadEngine.Slot slot = engine.slot(i);
+                for (int k = 0; k < count && !startedThisTick; k++) {
+                    int idx = (engine.startCursor + k) % count;
+                    Ae2qolThreadEngine.Slot slot = engine.slot(idx);
                     if (slot.isRunning() || slot.state == Ae2qolThreadEngine.ST_POWER) continue;
                     CheckRecipeResult result = ae2qol$checkOne();
                     if (result != null && result.wasSuccessful()) {
                         ae2qol$fillSlotFromLogic(slot);
                         startedThisTick = true;
+                        engine.startCursor = (idx + 1) % count;
                     } else {
                         boolean noRecipe = (result == null || result == CheckRecipeResultRegistry.NO_RECIPE);
                         slot.clearRun();
                         slot.state = noRecipe ? Ae2qolThreadEngine.ST_STARVED
                             : Ae2qolThreadEngine.ST_OUTPUT_FULL;
-                        break; // 这一条起不来，本 tick 不再试（避免把同一份输入反复试探）
+                        // 游标越过这个失败槽，下个 tick 从下一个槽继续（**不 break**，避免一个坏槽堵住全部）
+                        engine.startCursor = (idx + 1) % count;
                     }
                 }
             }
