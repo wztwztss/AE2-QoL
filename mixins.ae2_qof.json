@@ -26,7 +26,8 @@
     "TileDriveMixin",
     "client.MixinTextureMap",
     "ph.MixinPatternDualInputHatchAccess",
-    "ph.MixinPatternDualInputHatchWildcard"
+    "ph.MixinPatternDualInputHatchWildcard",
+    "ph.MixinPatternDualInputHatchProgrammingCircuit"
   ],
   "client": [
     "nei.MixinRecipeHandlerRef",
@@ -37,7 +38,6 @@
     "nei.MixinNEIRecipeWidget",
     "nei.MixinPanelWidgetClick",
     "nei.MixinGuiRecipe",
-    "mui.MixinItemSlotWildcardGesture",
     "ae.MixinGuiCraftConfirm",
     "ae.MixinGuiInterface",
     "ae.MixinGuiSuperInterface",

@@ -34,6 +34,45 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-05 (79) - **3.25.0-fix20：宿主侧适配 PH 编程工具箱（任何终端放进 PH 仓的样板都改写电路）**
+
+### 一、用户任务
+> "GT-Not-Good（1.3.1）也提供了一个类似我们二合一终端的三合一终端（FC Ultra Terminal），但它没有适配 Program 模组的编程工具箱、无法自动添加编程电路；把功能写在咱们模组、**软依赖**，两个模组都装了才自动支持，缺一个就跳过。"
+
+### 二、取证（只读）
+1. **他们的转写入口**：`com.xyp.gtnotgood.ae2thing.network.CPacketTransferRecipe$Handler.onMessage`
+   → `IPatternTerminalAdapter.transfer(...)`（服务端一处覆盖其全部终端；另有 `ContainerQuickEncodingTerminal` 的 sync action 路径）。
+2. **我们已有可复用件**：`client/NeiRecipeCapture.phWrap(...)`（**反射**调 `reobf.proghatches.item.ItemProgrammingCircuit`，无编译依赖）；
+   4.1.0 的 `MixinPatternDualInputHatchWildcard.ae2qol$wrapProgrammingCircuits(...)`（但**只走通配样板**那条路）。
+3. **软依赖机制现成**：我们的 `mixins.ae2_qof.json` 本来就是 `"required": false`（L2）⇒ 目标类缺失时混入自动跳过。
+4. **PH 侧唯一的样板写入口**（源码确证）：`PatternDualInputHatch.setInventorySlotContents` L239-240 `pattern[index] = stack;`
+   （`pattern` 是 `private ItemStack[] pattern = new ItemStack[36]`，我们已有 `MixinPatternDualInputHatchAccess` 的 `@Accessor` 拿数组）；
+   **读档路径 L538 直接写数组**，不经过该写入口。
+
+### 三、方案选择（用户拍板）
+- 走**宿主侧（B2）**：不碰第三方终端的内部结构、不依赖其报文/物品类 ⇒ 对方升级也不会弄坏我们；范围 = **所有进入 PH 家族的样板**（含 GT-Not-Good、GT 原生终端等）。
+- 被否决的 B1（索引期像通配样板那样"追加"一份改写副本）：同一产物会出现**两个来源**，AE 可能挑中未改写那张 ⇒ **时好时坏**。
+- 用户口径：**只处理新插入的样板，不动旧样板** ⇒ 本轮**不做读档期扫描**。
+
+### 四、改动
+1. 新增 `ph/PhCircuitWrap`：GT 电路识别（`gt.integrated_circuit*`）、编程器电路识别（**已是则原样保留，绝不二次包装**）、
+   `programmingCircuitTag(...)`（复用 4.1.0 的写法：`wrap` + `writeToNBT` + `Count/Cnt=1`）、`wrapPlainPattern(...)`
+   （**不需要改写就返回原对象**：零分配零副作用；异常 ⇒ WARN 且原样放行）。
+   判"是否我们的通配样板"用**纯判据** `SmartWildcardState.isSmartWildcard`（只读 NBT），
+   刻意**不用** `SmartWildcardGate` 的统一门——后者在缺我们 NBT 时会**懒同步写入**，会在"放样板"这条路径上产生玩家可见副作用。
+2. 新增 `mixin/ph/MixinPatternDualInputHatchProgrammingCircuit`：`setInventorySlotContents` 的 **RETURN** 注入，
+   先让 PH 原实现照常跑完，再把落在 `pattern[]` 里的引用换成改写副本（**不 cancel**，比 HEAD+cancel 更保守）。
+3. **两份** `mixins.ae2_qof.json`（`src/main/resources` 与仓库根）**同步登记**该混入（坑位：两份必须一致）。
+4. 首次改写打一条 INFO（此后不重复），符合"不许静默失效"铁律。
+
+### 五、已知边界（诚实登记）
+- **只识别 GT 编程电路**：AE 样板里**没有"不消耗物品"标记** ⇒ 第三方终端写进来的普通不消耗催化剂无法判断，
+  那部分仍需玩家用 PH 编程工具箱手动转写（与我们 4.1.0 在通配路径上的能力差异源于**信息不足**，不是遗漏）。
+- 不改 GT 2714 / GTNL 21504 宿主（它们没有编程器模式）；不改读档结果（用户口径）。
+
+### 六、验证（待回填）
+- 构建与产物：待回填。
+
 ## 工作区决策记录 2026-10-05 (78) - **3.25.0-fix19：每 tick 路径减负（线程页轮询/显示产物/扣料闸）**
 
 ### 一、用户提问
