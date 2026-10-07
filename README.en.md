@@ -4,6 +4,12 @@
 
 An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI pattern uploading, network stock and crafting hints, merged terminals, wireless AE links, and GT energy/stock-management tools.
 
+> ⚠️ **Install on BOTH client and server** (stated explicitly since 3.25.0-fix17):
+> the mod registers GT machines and hatches (Universal Maintenance Hatch 32000, adaptive power grid 32102–32106/32110/32111,
+> stock monitor terminal 32107 …), registers its own network channel and runs the thread engine **server-side**.
+> Client-only installs will show the GUIs but the features will not work; server-only installs leave clients without them.
+> (If a Modrinth page marks this mod as client-only, that metadata is wrong — this note is authoritative.)
+
 **Author: wztwzt · Current source version: 3.25.0 · Reference pack: GTNH 2.9.0-beta-3**
 
 ## What's new in 3.25.0 (thread engine + the hatch's "Threads" page)

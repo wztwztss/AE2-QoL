@@ -205,6 +205,10 @@ public class SmartDoublingTogglePacket implements IMessage {
             }
 
             if (msg.mode == MODE_SET) {
+                // 3.25.0-fix17（性能/日志优化）：**先读旧值**，只有状态真的变化才记录。
+                // 原实现每次收到设置包都打一条 INFO —— 而客户端在每次打开/交互界面时都会回一份设置，
+                // 于是服务端日志被"智能倍增开关 = true"刷屏（用户反馈 14:22~14:31 每几秒一条）。
+                boolean before = sdm.isSmartDoublingEnabled();
                 sdm.setSmartDoubling(msg.enabled);
                 if (msg.enabled) {
                     markExpectEnabled(msg.dim, msg.x, msg.y, msg.z);
@@ -217,10 +221,19 @@ public class SmartDoublingTogglePacket implements IMessage {
                     te.markDirty();
                 } catch (Throwable ignored) {}
                 boolean isProvider = mte instanceof ICraftingProvider;
-                MyMod.LOG.info(
-                    "[AE2QoL] 智能倍增开关 = {} @ {} d{} [{}, {}, {}]（样板介质={}）player={}",
-                    msg.enabled, mte.getClass().getSimpleName(), msg.dim, msg.x, msg.y, msg.z, isProvider,
-                    player.getCommandSenderName());
+                if (before != msg.enabled) {
+                    MyMod.LOG.debug(
+                        "[AE2QoL] 智能倍增开关 {} → {} @ {} d{} [{}, {}, {}]（样板介质={}）player={}",
+                        before,
+                        msg.enabled,
+                        mte.getClass().getSimpleName(),
+                        msg.dim,
+                        msg.x,
+                        msg.y,
+                        msg.z,
+                        isProvider,
+                        player.getCommandSenderName());
+                }
                 if (msg.enabled && !isProvider) {
                     MyMod.LOG.warn(
                         "[AE2QoL] {} 未实现 ICraftingProvider，isSmartDoublingEnabled() 会恒为 false，开关不会生效",

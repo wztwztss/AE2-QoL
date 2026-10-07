@@ -34,6 +34,27 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-05 (76) - **3.25.0-fix17：减噪（智能倍增/并行诊断/上传日志）+ 上传"重复全网同步"取证 + 双端安装说明**
+
+### 一、用户反馈与我的核对（三条）
+| # | 反馈 | 核对结论 |
+|---|---|---|
+| ① | `[AE2QoL] 智能倍增开关 = true …` 高频刷屏（14:22~14:31 每几秒一条） | **成立**。根因：`SmartDoublingTogglePacket.applyAtCoords` **每次**收到设置包都打一条 INFO；而客户端在每次打开/交互界面时都会回补一份设置 ⇒ 服务端被刷屏 |
+| ② | `[ae2_qof] [Upload] pattern inserted into provider` 多次，疑似每次插入触发全网扫描 | **不完全成立**：该字符串**在本模组源码中不存在**（全仓检索无匹配）；且我们的插入路径 `apgport/ItemPatternGenerator` **本来就是批量的** —— 循环内只 `setInventorySlotContents`，**循环结束后只调用一次** `inv.markDirty()`（L202）。真正存在的是每次上传各一条 `[Upload] strategy*` INFO |
+| ③ | Modrinth 标记"客户端专用"，服务端却有行为日志 | **前提需更正**：本模组**必须双端安装**（GT 机器/仓室、网络通道、线程引擎都在服务端跑）；Modrinth 页面标记不准 |
+
+### 二、改动（本轮）
+1. **① 智能倍增日志**：`SmartDoublingTogglePacket` 改为**先读旧值、仅状态变化时**记录，并从 INFO **降为 DEBUG**。
+2. **并行诊断减噪**：`MixinProcessingLogicSpeed.ae2qol$logParallelOnce` 增加 `actual <= 0 ⇒ return` ——
+   不再对"这次没跑"的机器打 0（世界加载时那上百条 `实测本次并行=0` 消失），且**不消耗**"只报一次"的机会。
+3. **② 上传日志降级**：`ClientProxy`（6 处 `[Upload] strategy*`）与 `client/event/MergedTerminalPanelHandler`
+   （3 处 `[Upload] …`）的 **INFO → DEBUG**；**插入路径本身不改**（已批量，避免无谓回归风险）。
+4. **③ 文档**：`README.md` / `README.en.md` 开头加**"必须同时安装在客户端与服务端"**的醒目说明（并注明 Modrinth 元数据不准）；
+   `mcmod.info` 两个条目描述末尾补 `Install on BOTH client and server.`
+
+### 三、验证（待回填）
+- 构建与产物：待回填。
+
 ## 工作区决策记录 2026-10-05 (75) - **3.25.0-fix16：输出终端电流改为 21 亿 A（mixin 绕过 GT 的 ≤4A 判定）**
 
 ### 一、用户提问与结论

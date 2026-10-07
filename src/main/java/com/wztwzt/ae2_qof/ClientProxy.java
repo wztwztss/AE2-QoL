@@ -129,7 +129,7 @@ public class ClientProxy extends CommonProxy {
                     }
                 }
                 if (validIds.size() == 1) {
-                    MyMod.LOG.info("[Upload] strategy1: single provider, id={}", validIds.get(0));
+                    MyMod.LOG.debug("[Upload] strategy1: single provider, id={}", validIds.get(0));
                     ClientState.set(null, validIds.get(0));
                     // fix41：单目标也带上稳定位置，避免该机器被拆装/重载后 ID 失效
                     ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(validIds.get(0), validKeys.get(0)));
@@ -137,13 +137,13 @@ public class ClientProxy extends CommonProxy {
                 }
 
                 // 策略2: 查已记住的 Provider 名字
-                MyMod.LOG.info("[Upload] strategy2 check: recipeMap={}, rememberedProviders size={}",
+                MyMod.LOG.debug("[Upload] strategy2 check: recipeMap={}, rememberedProviders size={}",
                     message.recipeMap, ClientState.rememberedProviders.size());
                 if (message.recipeMap != null && !message.recipeMap.isEmpty()) {
                     ClientState.lastRecipeMap = message.recipeMap;
 
                     String rememberedName = ClientState.getRememberedProviderName(message.recipeMap);
-                    MyMod.LOG.info("[Upload] strategy2: recipeMap='{}', rememberedName='{}'",
+                    MyMod.LOG.debug("[Upload] strategy2: recipeMap='{}', rememberedName='{}'",
                         message.recipeMap, rememberedName);
                     if (rememberedName != null) {
                         long matchId = 0;
@@ -173,16 +173,16 @@ public class ClientProxy extends CommonProxy {
                                 }
                             }
                         }
-                        MyMod.LOG.info("[Upload] strategy2: matchCount={}, matchId={}", matchCount, matchId);
+                        MyMod.LOG.debug("[Upload] strategy2: matchCount={}, matchId={}", matchCount, matchId);
                         if (matchCount == 1) {
-                            MyMod.LOG.info("[Upload] strategy2: remembered provider '{}', id={}", rememberedName, matchId);
+                            MyMod.LOG.debug("[Upload] strategy2: remembered provider '{}', id={}", rememberedName, matchId);
                             ClientState.set(rememberedName, matchId);
                             ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(matchId, matchKey));
                             return;
                         }
                     }
                 } else {
-                    MyMod.LOG.info("[Upload] strategy2: recipeMap is null or empty, skip remembered check");
+                    MyMod.LOG.debug("[Upload] strategy2: recipeMap is null or empty, skip remembered check");
                 }
 
                 // 策略3: 打开搜索界面

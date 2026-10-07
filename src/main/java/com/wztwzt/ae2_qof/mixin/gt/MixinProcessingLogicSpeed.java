@@ -131,9 +131,13 @@ public abstract class MixinProcessingLogicSpeed {
         if (!(machine instanceof MTEMultiBlockBase multi)) return;
         AE2MaintenanceHatchUniversal uh = findUniversalHatch(multi);
         if (uh == null) return;
+        int actual = getCurrentParallels();
+        // 3.25.0-fix17（减噪）：**只在真的跑起来时**才记这一行。
+        // 原实现打在 RETURN 上、不分成败 ⇒ 世界加载时上百台空闲机器各打一条"实测本次并行=0"，把日志刷满
+        //（用户实测 09:47 一大批全 0）。actual == 0 视为"这次没跑"，且**不消耗**"只报一次"的机会。
+        if (actual <= 0) return;
         ae2qol$parallelLogged = true;
         int setting = uh.getEffectiveParallel();
-        int actual = getCurrentParallels();
         com.wztwzt.ae2_qof.MyMod.LOG.info(
             "[AE2QoL] 并行设定诊断：{} @ {} 维护仓设定={} 实测本次并行={}（两者不符即为被机器自身并行/批处理覆盖，请把这行发我）",
             multi.getMetaName(),

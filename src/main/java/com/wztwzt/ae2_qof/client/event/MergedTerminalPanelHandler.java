@@ -504,7 +504,7 @@ public class MergedTerminalPanelHandler {
             .getStack();
         if (patternStack == null) {
             // OUT 槽为空（未编码/编码失败/样板被回读逻辑消费），无法上传
-            com.wztwzt.ae2_qof.MyMod.LOG.info("[Upload] OUT slot empty, nothing to upload");
+            com.wztwzt.ae2_qof.MyMod.LOG.debug("[Upload] OUT slot empty, nothing to upload");
             return;
         }
 
@@ -556,10 +556,10 @@ public class MergedTerminalPanelHandler {
             }
         } catch (Throwable ignored) {}
         if (inputs.length == 0 && outputs.length == 0) {
-            com.wztwzt.ae2_qof.MyMod.LOG.info("[Upload] no recipeMap and pattern unreadable, abort");
+            com.wztwzt.ae2_qof.MyMod.LOG.debug("[Upload] no recipeMap and pattern unreadable, abort");
             return;
         }
-        com.wztwzt.ae2_qof.MyMod.LOG.info("[Upload] requesting providers by inputs/outputs, forceGui={}", forceGui);
+        com.wztwzt.ae2_qof.MyMod.LOG.debug("[Upload] requesting providers by inputs/outputs, forceGui={}", forceGui);
         ModNetwork.CHANNEL.sendToServer(new RequestProvidersListPacket(inputs, outputs, forceGui));
     }
 
