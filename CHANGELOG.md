@@ -34,6 +34,38 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-05 (80) - **3.25.0-fix21：修 fix20 的 PH 钩子没生效（坑位 #1：SRG 名）**
+
+### 一、用户实测反馈（fix20 未达效果）
+> "FC Ultra Terminal 新写样板 → 放进 MK.III **他直接没有电路**" → 追问后确认：
+> 打开 FC Ultra Terminal 的"保留不消耗物品"开关后，**样板里有 GT 电路了**，但**放进 MK.III 后没有被转换成编程器电路**。
+
+### 二、根因（**我的 fix20 钩子根本没生效**，日志实证）
+```
+[09:15:40] [mixin/ae2_qof] Mixing ph.MixinPatternDualInputHatchProgrammingCircuit … into reobf.proghatches…
+[09:15:40] [mixin/ae2_qof] **Mixin apply for mod ae2_qof failed** …MixinPatternDualInputHatchProgrammingCircuit…
+```
+`setInventorySlotContents` 是 **MC `IInventory` 接口方法**，在 PH 的运行期 jar 里是 **SRG 名 `func_70299_a`**；
+而 fix20 里写的是 MCP 名 + `remap = false` ⇒ Mixin **找不到方法、注入失败**（本项目**坑位 #1** 的又一次复现）。
+
+### 三、修法（fix21）
+同一个钩子**挂两个名字**，各自 `require = 0`（对不上不报错、不崩溃）：
+- `@Inject(method = "func_70299_a", …)`（SRG，当前 PH 实际使用的名字）
+- `@Inject(method = "setInventorySlotContents", …)`（MCP，兜底）
+两者都命中也不会**双重包装**：第二次进来时样板里已无 GT 电路（只剩编程器电路），
+`PhCircuitWrap.wrapPlainPattern` 会原样返回（首次改写时仍有一条 INFO 日志，便于确认是否生效）。
+
+### 四、顺带确认的事实（供后续参考）
+- GT-Not-Good 的转写链路 `QuickTerminalRecipeTransferHandler.overlayRecipe`：
+  `L73 transferInputs = (!crafting && terminal.shouldKeepNonConsumables()) ? retainSupportedNonConsumables(namedInputs) : namedInputs;`
+  —— **只有打开它界面上的 `keepNonConsumables` 开关**，`stackSize==0` 的电路幻影才会被保留进样板
+  （L117 注释与 L124 判据：`copy.stackSize == 0 && copy.getItem() instanceof ItemIntegratedCircuit`）；
+  否则会被后面的 zero filtering 丢掉 ⇒ 表现为"样板里直接没有电路"。
+  ⇒ **正确用法：在 FC Ultra Terminal 里打开该开关**，再由我们把它转成 PH:编程器电路。
+
+### 五、验证（待回填）
+- 构建与产物：待回填。
+
 ## 工作区决策记录 2026-10-05 (79) - **3.25.0-fix20：宿主侧适配 PH 编程工具箱（任何终端放进 PH 仓的样板都改写电路）**
 
 ### 一、用户任务

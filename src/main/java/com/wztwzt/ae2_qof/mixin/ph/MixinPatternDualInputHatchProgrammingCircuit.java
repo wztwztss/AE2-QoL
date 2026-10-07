@@ -37,8 +37,31 @@ import reobf.proghatches.gt.metatileentity.PatternDualInputHatch;
 @Mixin(value = PatternDualInputHatch.class, remap = false)
 public abstract class MixinPatternDualInputHatchProgrammingCircuit {
 
-    @Inject(method = "setInventorySlotContents", at = @At("RETURN"), remap = false)
-    private void ae2qol$wrapProgrammingCircuitsOnInsert(int index, ItemStack stack, CallbackInfo ci) {
+    /**
+     * 3.25.0-fix21：**同一个钩子挂两个名字**（这是修 fix20 没生效的根因）。
+     *
+     * <p>fix20 只写了 MCP 名 {@code setInventorySlotContents} + {@code remap = false}，而该方法在 PH 的
+     * 运行期 jar 里是 **SRG 名**（{@code func_70299_a}，因为它是 MC {@code IInventory} 接口方法）
+     * ⇒ Mixin 报 <i>Mixin apply failed</i>，钩子根本没生效（用户实测"有电路但没被转换"，日志实证
+     * {@code [mixin/ae2_qof] Mixin apply for mod ae2_qof failed ...MixinPatternDualInputHatchProgrammingCircuit}）。
+     * 这就是本项目坑位 #1。
+     *
+     * <p>现在两个名字各挂一个注入器、都设 {@code require = 0}（对不上不报错、不崩）：
+     * 哪份 PH/整合包用哪个名字都能生效；**两个都命中也不会双重包装** —— 第二次进来时样板里已经没有
+     * GT 电路（只剩编程器电路），{@link PhCircuitWrap#wrapPlainPattern} 会原样返回。
+     */
+    @Inject(method = "func_70299_a", at = @At("RETURN"), remap = false, require = 0)
+    private void ae2qol$wrapOnInsertSrg(int index, ItemStack stack, CallbackInfo ci) {
+        ae2qol$wrapOnInsert(index, stack);
+    }
+
+    /** MCP 名版本（若某天 PH 直接以 MCP 名编译/被打包，这一条会生效）。 */
+    @Inject(method = "setInventorySlotContents", at = @At("RETURN"), remap = false, require = 0)
+    private void ae2qol$wrapOnInsertMcp(int index, ItemStack stack, CallbackInfo ci) {
+        ae2qol$wrapOnInsert(index, stack);
+    }
+
+    private void ae2qol$wrapOnInsert(int index, ItemStack stack) {
         try {
             ItemStack wrapped = PhCircuitWrap.wrapPlainPattern(stack);
             if (wrapped == stack) return; // 无需改写（非样板/通配样板/没有 GT 电路）
