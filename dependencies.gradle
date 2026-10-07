@@ -48,6 +48,10 @@ dependencies {
     compileOnly(project.files("libs/Thaumcraft-1.7.10-4.2.3.5.jar"))
     compileOnly(project.files("libs/eternalsingularity-1.4.3.jar"))
     compileOnly(project.files("libs/guidenh-1.3.29.jar"))
+    // 3.25.0-fix22：GT-Not-Good（gtnotgood）——**软依赖**，只为让 Mixin 注解处理器能解析
+    // `com.xyp.gtnotgood.ae2thing.nei.QuickTerminalRecipeTransferHandler`（运行期是否安装由 required:false 兜底）。
+    // 我们**不引用它的任何类型**（getStack/getIndex 全走反射），所以它只需存在于编译期。
+    compileOnly(project.files("libs/gtnotgood-1.3.1.jar"))
     implementation(project.files("libs/NotEnoughEnergistics-1.7.41.jar"))
     compileOnly(project.files("libs/sciencenotleisure-0.2.7-pre3-dev-290.jar"))
     compileOnly(project.files("libs/gregtech-5.09.54.133.jar"))
