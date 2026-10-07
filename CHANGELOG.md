@@ -34,6 +34,39 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-05 (81) - **3.25.0-fix22：GT-Not-Good 终端"写样板时"注入 PH 编程器电路（复刻 PH 工具箱语义）**
+
+### 一、用户口径（本轮定稿）
+> "我要的不是改（宿主侧改写），而是**不开启对方开关**的时候，玩家**携带 PH 编程样板工具箱**，**编写样板的时候直接添加编程电路**。"
+
+并确认：① 判据用 **PH 语义**（`ItemProgrammingToolkit.holding()` —— 工具箱**被激活/手持**，10 tick 内）；② **两条都做**：零尺寸电路/催化剂 → 编程器电路 + 兜底模式补一块归零电路。
+
+### 二、取证（决定实现位置与方式）
+| 事实 | 证据 |
+|---|---|
+| PH 两个判据是**客户端专用**，且 `holding()` 判"最近 10 tick 被激活过"（不是背包里有） | `ItemProgrammingToolkit.java` L82/L88 均 `@SideOnly(Side.CLIENT)`；`holding()` = `\|lastholdingtick − ticker\| ≤ 10`；`addEmptyProgCiruit()` = `mode == 2` |
+| 他们的转写管道 | `QuickTerminalRecipeTransferHandler.overlayRecipe`：L73（`shouldKeepNonConsumables` 开关）→ L83/84 `NEIUtils.clearNull` → **L95 `collectStacks(transferInputs)`** / **L103 `collectStacks(transferOutputs)`** → `new RecipeTransferPayload(...)` → L109 `terminal.transferRecipe(payload, interfaceSearch)` |
+| **挂钩点**：`collectStacks` | L180 `private static IAEStack<?>[] collectStacks(List<OrderStack<?>> ordered)`：**返回纯 AE2 类型**、入参是 `List` ⇒ 我们**不引用他们任何类**（软依赖 + 不怕对方改内部结构）；零尺寸幻影就在这个列表里（`order.getStack()` 反射取） |
+| 区分输入/输出 | 用"进入 `overlayRecipe` 后第几次调用 `collectStacks`"（第一次=输入）——比按 INVOKE 描述符匹配稳，对方重排代码也不会错 |
+
+### 三、改动（新增 2 个类 + 1 个方法 + 登记）
+1. **新增** `ph/PhToolkitGate`：反射 `ItemProgrammingToolkit.holding()` / `addEmptyProgCiruit()`；
+   取不到（未装 PH / 专用服务端）⇒ 记一条 INFO 后恒为 false（**不静默、不崩**）；调用失败 ⇒ WARN 一次。
+2. **新增** `mixin/gtng/MixinQuickTerminalRecipeTransferHandler`（`@Mixin(targets = "com.xyp.gtnotgood.ae2thing.nei.QuickTerminalRecipeTransferHandler", remap = false)`）：
+   - `overlayRecipe` HEAD ⇒ 计数清零；`collectStacks` HEAD ⇒ 存下列表并标记"本次是输入/输出"；
+   - `collectStacks` RETURN ⇒ **仅当输入调用 + `holding()` 为真**：把 `stackSize == 0` 的条目换成
+     `ItemProgrammingCircuit.wrap(目标)` 的 AE 栈并写回**原槽位**；一块都没有且 `addEmptyProgCiruit()` 为真 ⇒ 第一个空槽补**归零电路**；
+   - 首次注入打一条 INFO；异常 ⇒ WARN 且原样放行。
+3. `ph/PhCircuitWrap` 增加 `wrapAsProgrammingCircuit(ItemStack)`（`target == null` ⇒ 归零电路）。
+4. **两份** `mixins.ae2_qof.json` 同步登记（登记在 **client** 段：目标是 NEI/客户端 GUI 类，专用服务端不加载）。
+
+### 四、与 fix20/fix21 的关系
+fix20/fix21 的**宿主侧改写保留**作为兜底（只有当样板里真的留下 GT 电路时才触发）；
+本方案在**终端转写那一刻**就注入，因此**不需要**玩家打开 GT-Not-Good 的"保留不消耗物品"开关。
+
+### 五、验证（待回填）
+- 构建与产物：待回填。
+
 ## 工作区决策记录 2026-10-05 (80) - **3.25.0-fix21：修 fix20 的 PH 钩子没生效（坑位 #1：SRG 名）**
 
 ### 一、用户实测反馈（fix20 未达效果）

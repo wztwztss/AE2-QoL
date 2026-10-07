@@ -138,6 +138,14 @@ public final class PhCircuitWrap {
         return slotTag;
     }
 
+    /**
+     * 3.25.0-fix22：把目标**包成一个编程器电路物品**（不是 NBT 条目）。
+     * <p>{@code target == null} ⇒ PH 的"归零电路"（工具箱兜底模式补的那块）。
+     */
+    public static ItemStack wrapAsProgrammingCircuit(ItemStack target) {
+        return reobf.proghatches.item.ItemProgrammingCircuit.wrap(target);
+    }
+
     private static void logOnce(int wrapped) {
         if (loggedOnce) return;
         loggedOnce = true;
