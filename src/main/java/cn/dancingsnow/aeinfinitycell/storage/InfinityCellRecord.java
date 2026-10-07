@@ -31,6 +31,15 @@ public final class InfinityCellRecord {
         return clampToLong(amount(items, key));
     }
 
+    /**
+     * 3.25.0-fix18（性能）：把"枚举时手里已经有的 BigInteger"按与 {@link #getItemAmount} **完全同一口径**
+     * 夹到 long。存在理由：`addAvailable` 原来对**正在遍历的同一个 map** 再做一次 `getItemAmount(key)`，
+     * 白付一次哈希查找 + `ItemStackKey.hashCode` 重算，而值就在 `entry.getValue()` 里。
+     */
+    public long clampAmount(BigInteger amount) {
+        return clampToLong(amount);
+    }
+
     public long getFluidAmount(FluidStackKey key) {
         return clampToLong(amount(fluids, key));
     }

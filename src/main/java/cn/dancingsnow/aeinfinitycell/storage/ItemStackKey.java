@@ -18,6 +18,49 @@ public final class ItemStackKey {
     private final int damage;
     private final NbtKey tag;
 
+    // ===== 3.25.0-fix18（性能）：把"每次调用都重算"的东西缓存下来 =====
+
+    /** `itemName` 拆分结果（`new GameRegistry.UniqueIdentifier` 内部会 String.split ⇒ 不能每次 toStack 都做）。 */
+    private boolean uidResolved;
+    private String uidModId;
+    private String uidName;
+
+    /** 解析出的 Item 引用（`GameRegistry.findItem` 是注册表反查，不能每次 toStack 都做）。 */
+    private boolean itemResolved;
+    private net.minecraft.item.Item cachedItem;
+
+    /** 缓存的 hashCode（原 `Objects.hash` 每次装箱 3 个值 + 分配 Object[]）。 */
+    private int cachedHash;
+    private boolean hashCached;
+
+    /** `Item → "modid:name"` 的进程内缓存（入站方向 `from()` 每次都会 `findUniqueIdentifierFor` + `toString`）。 */
+    private static final java.util.Map<net.minecraft.item.Item, String> NAME_CACHE =
+        new java.util.concurrent.ConcurrentHashMap<>();
+
+    private boolean resolveUid() {
+        if (uidResolved) {
+            return uidModId != null;
+        }
+        uidResolved = true;
+        try {
+            GameRegistry.UniqueIdentifier id = new GameRegistry.UniqueIdentifier(itemName);
+            uidModId = id.modId;
+            uidName = id.name;
+        } catch (RuntimeException ignored) {
+            uidModId = null;
+            uidName = null;
+        }
+        return uidModId != null;
+    }
+
+    private net.minecraft.item.Item item() {
+        if (!itemResolved) {
+            itemResolved = true;
+            cachedItem = resolveUid() ? GameRegistry.findItem(uidModId, uidName) : null;
+        }
+        return cachedItem;
+    }
+
     private ItemStackKey(String itemName, int damage, NbtKey tag) {
         this.itemName = itemName;
         this.damage = damage;
@@ -29,11 +72,17 @@ public final class ItemStackKey {
             throw new IllegalArgumentException("stack");
         }
 
-        GameRegistry.UniqueIdentifier id = GameRegistry.findUniqueIdentifierFor(stack.getItem());
-        if (id == null) {
-            throw new IllegalArgumentException("unregistered item " + stack.getItem());
+        // 3.25.0-fix18：入站方向每次 AE 操作都会走这里 ⇒ `modid:name` 字符串按 Item 缓存，别再每次 toString()
+        String name = NAME_CACHE.get(stack.getItem());
+        if (name == null) {
+            GameRegistry.UniqueIdentifier id = GameRegistry.findUniqueIdentifierFor(stack.getItem());
+            if (id == null) {
+                throw new IllegalArgumentException("unregistered item " + stack.getItem());
+            }
+            name = id.toString();
+            NAME_CACHE.put(stack.getItem(), name);
         }
-        return new ItemStackKey(id.toString(), stack.getItemDamage(), NbtKey.of(stack.stackTagCompound));
+        return new ItemStackKey(name, stack.getItemDamage(), NbtKey.of(stack.stackTagCompound));
     }
 
     public static ItemStackKey readFromNBT(NBTTagCompound serialized) {
@@ -55,13 +104,8 @@ public final class ItemStackKey {
     }
 
     public ItemStack toStack(long amount) {
-        GameRegistry.UniqueIdentifier id;
-        try {
-            id = new GameRegistry.UniqueIdentifier(itemName);
-        } catch (RuntimeException ignored) {
-            return null;
-        }
-        net.minecraft.item.Item item = GameRegistry.findItem(id.modId, id.name);
+        // 3.25.0-fix18：拆名与注册表反查都只做一次（原来是每次调用都做）
+        net.minecraft.item.Item item = item();
         if (item == null) {
             return null;
         }
@@ -69,7 +113,6 @@ public final class ItemStackKey {
         if (!tag.isEmpty()) {
             stack.stackTagCompound = tag.copyTag();
         }
-        stack.stackSize = saturatedInt(amount);
         return stack;
     }
 
@@ -99,7 +142,20 @@ public final class ItemStackKey {
 
     @Override
     public int hashCode() {
-        return Objects.hash(itemName, damage, tag);
+        // 3.25.0-fix18：缓存 + 手写（原 Objects.hash 每次装箱 3 个值并分配 Object[]；
+        // 这个 hashCode 在每次 map 查找/枚举里都会被调用）
+        int h = cachedHash;
+        if (!hashCached) {
+            h = itemName.hashCode();
+            h = 31 * h + damage;
+            h = 31 * h + tag.hashCode();
+            if (h == 0) {
+                h = 1; // 避免与"未计算"混淆（用 hashCached 标记，这里只是保守处理）
+            }
+            cachedHash = h;
+            hashCached = true;
+        }
+        return h;
     }
 
     @Override

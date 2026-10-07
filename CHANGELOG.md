@@ -34,6 +34,41 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-05 (77) - **3.25.0-fix18：aeinfinitycell 枚举热路径优化（addAvailable 5.7% → ~1%）**
+
+### 一、取证（先读源码/字节码再动手）——**两处对用户分析的更正**
+1. **`AEItemStack.create` 在 rv3 里只有一个重载**：`create(final ItemStack stack)`（`AEItemStack.java` L141，内部 `new AEItemStack(stack)`）
+   ⇒ 方案 B 里建议的 `AEItemStack.create(Item, int, long, NBTTagCompound)` **不存在**，不能照写。
+2. `ItemStackKey` 存的**不是 long 编码**，而是 `String itemName`（"modid:name"）+ `int damage` + `NbtKey tag`。
+   `toStack(long)` 的真实开销 = `new GameRegistry.UniqueIdentifier(itemName)`（内部 String.split，0.2%）
+   + `GameRegistry.findItem(modId,name)`（注册表反查，0.4%）+ `new ItemStack` + **`tag.copyTag()` NBT 深拷贝**，
+   外加**把 `stackSize` 赋值了两次**（构造器已设过）。
+3. 另有用户未提及的白付：`addAvailable` 在**正在遍历的同一个 map** 上又调了一次
+   `record.getItemAmount(entry.getKey())`（一次哈希查找 + `ItemStackKey.hashCode` 重算），而值就在 `entry.getValue()`。
+
+### 二、修法（A/C 采纳并加强；B 换成**更强且可行**的版本）
+- **A（采纳+加强）**：`ItemStackKey` **惰性**缓存"拆名结果"与"解析出的 Item 引用"；`from()` 增加
+  `Item → "modid:name"` 的进程内缓存。⚠️ 刻意**不在构造时解析**：`readFromNBT` 可能发生在注册表尚未就绪的载入阶段。
+- **B（改为原型缓存，比原方案更强）**：`InfinityItemInventoryHandler` 为每个键缓存**原型 `IAEItemStack`**，
+  枚举时只 `prototype.copy() + setStackSize(amount)`（`AEItemStack.copy()` 实测存在，L359）
+  ⇒ 连 `AEItemStack.create(ItemStack)` 里的 `OreHelper.isOre` / `AESharedNBT` 共享表 / `AEItemDef` 查表也一并省掉。
+  两个安全点：① 用 `null` 值作"解析不出物品"的哨兵，避免每次枚举重试失败反查；② **原型绝不出门**（AE 会改字段，永远发 copy）。
+- **C（采纳）**：`ItemStackKey.hashCode` 改为**手写 + 缓存**（去掉 `Objects.hash` 的装箱与数组分配）。
+- **D（额外）**：`addAvailable` 改用 `entry.getValue()`，并新增 `InfinityCellRecord.clampAmount(BigInteger)`
+  （与 `getItemAmount` 同一口径夹取，避免逻辑漂移）；删掉 `toStack` 里重复的 `stackSize` 赋值。
+
+### 三、本轮**未做**（诚实登记）
+- `NbtKey.of(tag)` 对**带 NBT** 的物品每次都要规范化 + 拼规范字符串（入站路径）——未动：按 NBT 引用做缓存
+  遇到"原地修改 NBT"的物品会拿到过期键，风险大于收益，需单独设计。
+- `InfinityFluidInventoryHandler` / `InfinityEssentiaInventoryHandler` 的 `addAvailable` 是**同样形状**
+  （`toStack` → `AEStack.create`），可按同一模式优化，留待下一轮。
+
+### 四、预期
+`addAvailable` 链 **~5.7% → ~1%**（命中原型时只剩一次 map 查找 + 一次 `copy()` + `setStackSize`）。
+
+### 五、验证（待回填）
+- 构建与产物：待回填。
+
 ## 工作区决策记录 2026-10-05 (76) - **3.25.0-fix17：减噪（智能倍增/并行诊断/上传日志）+ 上传"重复全网同步"取证 + 双端安装说明**
 
 ### 一、用户反馈与我的核对（三条）
