@@ -58,6 +58,7 @@ public abstract class MixinContainerQuickEncodingTerminal {
             if (inputs == null || inputs.length == 0) return;
 
             int wrapped = 0;
+            StringBuilder detail = new StringBuilder();
             for (int i = 0; i < inputs.length; i++) {
                 ItemStack raw = ae2qol$zeroSizedItem(inputs[i]);
                 if (raw == null) continue;
@@ -65,7 +66,24 @@ public abstract class MixinContainerQuickEncodingTerminal {
                 if (circuit == null) continue;
                 IAEStack<?> ae = AEItemStack.create(circuit);
                 if (ae == null) continue;
+                // ★ 3.25.0-fix25 **关键修法**：PH 的 wrap 产出可能是"0 数量"的标记物品，
+                // 若不强制成 1，就会被他们管道里那道"零尺寸过滤"**再丢一次**
+                // —— 这正是"客户端注入成功、最终样板里却没有电路"的最可能根因。
+                ae.setStackSize(1);
                 inputs[i] = ae;
+                if (detail.length() < 400) {
+                    detail.append('[')
+                        .append(i)
+                        .append("] ")
+                        .append(raw.getUnlocalizedName())
+                        .append(" x")
+                        .append(raw.stackSize)
+                        .append(" → ")
+                        .append(circuit.getUnlocalizedName())
+                        .append(" x")
+                        .append(circuit.stackSize)
+                        .append("  ");
+                }
                 wrapped++;
             }
             if (wrapped == 0 && PhToolkitGate.addEmptyProgCircuit()) {
@@ -74,21 +92,67 @@ public abstract class MixinContainerQuickEncodingTerminal {
                     ItemStack zero = PhToolkitGate.wrapAsProgrammingCircuit(null);
                     IAEStack<?> ae = zero == null ? null : AEItemStack.create(zero);
                     if (ae != null) {
+                        ae.setStackSize(1); // 同上：归零电路也必须是 1 数量，否则同样会被零尺寸过滤丢掉
                         inputs[i] = ae;
+                        detail.append("[空槽")
+                            .append(i)
+                            .append("] → 归零编程器电路 x1  ");
                         wrapped++;
                     }
                     break;
                 }
             }
-            if (wrapped > 0 && !ae2qol$loggedOnce) {
-                ae2qol$loggedOnce = true;
+            if (wrapped > 0) {
+                // 3.25.0-fix25：改成**每次都记明细**（原"只记一次"掩盖了后续注入是否真的发生）
                 MyMod.LOG.info(
-                    "[AE2QoL] 已按 PH 编程样板工具箱在写样板时注入编程器电路（本张 {} 块）——"
-                        + "GT-Not-Good 终端无需打开其「保留不消耗物品」开关；此后同类注入不再重复记录",
-                    wrapped);
+                    "[AE2QoL] 写样板时注入 PH 编程器电路：本张 {} 块（明细：{}）",
+                    wrapped,
+                    detail.length() == 0 ? "-" : detail.toString());
             }
         } catch (Throwable t) {
             MyMod.LOG.warn("[AE2QoL] 写样板时注入 PH 编程器电路失败（本次跳过，不影响样板生成）", t);
+        }
+    }
+
+    /**
+     * 3.25.0-fix25 探针：他们**服务端**应用载荷的前后各打一条"收到了什么"的摘要。
+     * <p>用途：判定"我们注入的编程器电路到底有没有过服务器这一关"（用户实测：客户端注入成功、
+     * 最终样板里却没有电路 ⇒ 必须看服务端收到的是什么）。
+     */
+    @Inject(method = "applyRecipeTransfer", at = @At("HEAD"), remap = false)
+    private void ae2qol$probeApplyHead(RecipeTransferPayload payload, CallbackInfo ci) {
+        ae2qol$logPayload("服务端收到", payload);
+    }
+
+    @Inject(method = "applyRecipeTransfer", at = @At("RETURN"), remap = false)
+    private void ae2qol$probeApplyReturn(RecipeTransferPayload payload, CallbackInfo ci) {
+        ae2qol$logPayload("服务端应用后", payload);
+    }
+
+    private static void ae2qol$logPayload(String where, RecipeTransferPayload payload) {
+        try {
+            IAEStack<?>[] inputs = ((MixinRecipeTransferPayload) (Object) payload).ae2qol$inputs();
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < inputs.length; i++) {
+                IAEStack<?> s = inputs[i];
+                if (s == null) continue;
+                String nm = s.getClass()
+                    .getSimpleName();
+                if (s instanceof AEItemStack ais && ais.getItemStack() != null) {
+                    nm = ais.getItemStack()
+                        .getUnlocalizedName();
+                }
+                sb.append('[')
+                    .append(i)
+                    .append("] ")
+                    .append(nm)
+                    .append(" x")
+                    .append(s.getStackSize())
+                    .append("  ");
+            }
+            MyMod.LOG.info("[AE2QoL] 转写探针（{}）：{}", where, sb.length() == 0 ? "(inputs 全空)" : sb.toString());
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 转写探针失败", t);
         }
     }
 
