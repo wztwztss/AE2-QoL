@@ -154,6 +154,16 @@ public abstract class MixinMTEMultiBlockBase {
     private boolean ae2qol$gateWarned = false;
 
     /**
+     * 扣料校验闸已检查的次数 + 上限（3.25.0-fix19，每 tick 路径减负）。
+     * <p>它只是**告警用**诊断（真正的防护是 P0「每 tick 最多起一条线程」），
+     * 而每次检查要付**两遍全仓扫描**（输入总线逐槽 + 双输入仓 + `getStoredFluids()` 分配一个 List）。
+     * 限成每台机器前 {@value #ae2qol$GATE_MAX_CHECKS} 次起步即可 —— 要出问题早就出在第一台机器上了。
+     */
+    private int ae2qol$gateChecks = 0;
+
+    private static final int ae2qol$GATE_MAX_CHECKS = 8;
+
+    /**
      * 输入指纹（扣料校验闸用）：**输入总线 + 双输入仓**（Programmable-Hatches 那类"限制输入仓"就是双输入仓）
      * 里的物品总量。取不到（接口差异/异常）返回 -1，调用方据此放弃本次判断 —— 指纹只是诊断，绝不影响主流程。
      */
@@ -207,27 +217,30 @@ public abstract class MixinMTEMultiBlockBase {
 
     /** 跑一次 GT 的「算配方 + 收尾」，返回已定稿的结果（EU/时长/outputs 才是最终值）。 */
     private CheckRecipeResult ae2qol$checkOne() {
-        long before = ae2qol$inputFingerprint();
+        boolean gate = ae2qol$gateChecks < ae2qol$GATE_MAX_CHECKS;
+        long before = gate ? ae2qol$inputFingerprint() : -1L;
         CheckRecipeResult result = ae2qol$gtDoCheckRecipe();
         if (result != null && result.wasSuccessful()) {
             result = ae2qol$gtPostCheckRecipe(result, processingLogic);
-            // 扣料校验闸（3.25.0-fix4，**先只告警**）：算完一条线程后输入理应减少；
-            // 若没减少，说明"扣料对下一次计算不可见" —— 那正是刷物品的温床（用户实测的 16× 产出即此）。
-            // 这里刻意**不改行为**：ME 输入等"虚拟供给"机器的本机库存本来就不会变，直接拦会误伤；
-            // 真正的防护是"每 tick 最多启动一条线程"（P0）。本条只负责把可疑情况留痕，绝不静默。
-            // 3.25.0-fix7：**两次读数都为 0 时不判定** —— 那说明这台机器没有可观测的输入
-            // （纯流体/ME 供给等），不能据此说"没扣料"（实测蒸馏塔就是被这样误报的）。
-            long after = ae2qol$inputFingerprint();
-            if (before > 0 && after >= 0 && after >= before && !ae2qol$gateWarned) {
-                ae2qol$gateWarned = true;
-                MTEMultiBlockBase self = (MTEMultiBlockBase) (Object) this;
-                MyMod.LOG.warn(
-                    "[AE2QoL] 线程引擎：{} @ {} 启动线程后输入未见减少（{} → {}）——疑似不扣料的虚拟输入仓；"
-                        + "若出现产出倍增请把本行发我。当前由「每 tick 最多一条线程」兜底",
-                    self.getMetaName(),
-                    ae2qol$posText(self.getBaseMetaTileEntity()),
-                    before,
-                    after);
+            if (gate) {
+                ae2qol$gateChecks++;
+                // 扣料校验闸（3.25.0-fix4，**先只告警**）：算完一条线程后输入理应减少；
+                // 若没减少，说明"扣料对下一次计算不可见" —— 那正是刷物品的温床（用户实测的 16× 产出即此）。
+                // 这里刻意**不改行为**：ME 输入等"虚拟供给"机器的本机库存本来就不会变，直接拦会误伤；
+                // 真正的防护是"每 tick 最多启动一条线程"（P0）。本条只负责把可疑情况留痕，绝不静默。
+                // 3.25.0-fix19：**两次读数都为 0 时不判定**（没有可观测输入不是"没扣料"），且总检查次数有上限。
+                long after = ae2qol$inputFingerprint();
+                if (before > 0 && after >= 0 && after >= before && !ae2qol$gateWarned) {
+                    ae2qol$gateWarned = true;
+                    MTEMultiBlockBase self = (MTEMultiBlockBase) (Object) this;
+                    MyMod.LOG.warn(
+                        "[AE2QoL] 线程引擎：{} @ {} 启动线程后输入未见减少（{} → {}）——疑似不扣料的虚拟输入仓；"
+                            + "若出现产出倍增请把本行发我。当前由「每 tick 最多一条线程」兜底",
+                        self.getMetaName(),
+                        ae2qol$posText(self.getBaseMetaTileEntity()),
+                        before,
+                        after);
+                }
             }
         }
         return result;
@@ -471,7 +484,10 @@ public abstract class MixinMTEMultiBlockBase {
         if (mProgresstime + 1 >= mMaxProgresstime) {
             mOutputItems = null;
             mOutputFluids = null;
-        } else {
+        } else if ((mProgresstime & 3) == 0 && engine.activeCount() > 0) {
+            // 3.25.0-fix19（每 tick 路径减负）：这份数据**只用于显示**（GT 主界面 / WAILA 读 mOutputItems），
+            // 而原实现每 tick 都要分配两个 List、合并去重、并逐栈 copy 一次。
+            // 降到每 4 tick 刷新（肉眼无差别），且没有活跃线程时不动（保留上次的显示或空）。
             ae2qol$fillDisplayOutputs(engine);
         }
 

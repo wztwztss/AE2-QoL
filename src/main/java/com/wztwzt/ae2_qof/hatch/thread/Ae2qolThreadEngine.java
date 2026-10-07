@@ -293,6 +293,11 @@ public final class Ae2qolThreadEngine {
 
     /** 上一次记下的"能源仓能力 EU/t"（`getMaxInputEu()`）。 */
     public long lastBudget = -1;
+
+    /**
+     * 每 tick 自增（在 {@link #updatePowerBudget} 里）：给 GUI 快照当"同 tick 复用"的标记（3.25.0-fix19）。
+     */
+    public int tickStamp;
     /** 是否已因电力不足暂停"起步新线程"（直到预算变大才解除）。 */
     public boolean powerBlocked = false;
     /** 触发暂停时的预算值（预算变大即解除，避免每 tick 反复起/降造成机器状态闪"电力不足"）。 */
@@ -309,6 +314,7 @@ public final class Ae2qolThreadEngine {
      * @return 本次因预算不足被降级的线程条数（供日志）
      */
     public int updatePowerBudget(long budget) {
+        tickStamp++; // 3.25.0-fix19：每 tick 推进一步，供 GUI 快照复用
         // 安全阀（fix12）：预算获取失败/为 0 时**不做任何电力干预** ——
         // 宁可让 GT 自己去报"电力不足"，也不能因为我们读不到能源仓就把线程全锁死。
         if (budget <= 0) {
@@ -488,10 +494,36 @@ public final class Ae2qolThreadEngine {
         }
     }
 
-    /** 只列活跃线程（用户口径：空闲折叠成一行计数）。 */
+    /** 同一 tick 内复用的快照（3.25.0-fix19）。 */
+    private List<Row> cachedRows = java.util.Collections.emptyList();
+    private int cachedRowsStamp = -1;
+
+    /**
+     * 只列活跃线程（用户口径：空闲折叠成一行计数）。
+     * <p>3.25.0-fix19（每 tick 路径减负）：
+     * <ol>
+     * <li>**没有活跃线程时返回空列表常量**（零分配）——"机器闲着但界面开着 / WAILA 一直在看"才是常态；</li>
+     * <li>**同一 tick 内多次轮询只构建一次**并返回同一实例：面板轮询与 WAILA 广播共用一份快照，
+     * 而且 MUI2 的列表比较会走 `AbstractList.equals` 首行的"同引用"短路（O(1)）。</li>
+     * </ol>
+     */
     public List<Row> activeRows() {
-        List<Row> rows = new ArrayList<>();
         int count = threadCount();
+        boolean any = false;
+        for (int i = 0; i < count; i++) {
+            Slot s = slots[i];
+            if (s.isRunning() || s.state == ST_OUTPUT_FULL) {
+                any = true;
+                break;
+            }
+        }
+        if (!any) {
+            return java.util.Collections.emptyList();
+        }
+        if (cachedRowsStamp == tickStamp && !cachedRows.isEmpty()) {
+            return cachedRows;
+        }
+        List<Row> rows = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             Slot s = slots[i];
             if (s.isRunning() || s.state == ST_OUTPUT_FULL) {
@@ -504,6 +536,8 @@ public final class Ae2qolThreadEngine {
                     new Row(i + 1, s.state, s.percent(), s.remain, s.parallel, s.icon, fluid, parallelSetting()));
             }
         }
+        cachedRows = rows;
+        cachedRowsStamp = tickStamp;
         return rows;
     }
 

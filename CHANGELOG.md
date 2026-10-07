@@ -34,6 +34,42 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-05 (78) - **3.25.0-fix19：每 tick 路径减负（线程页轮询/显示产物/扣料闸）**
+
+### 一、用户提问
+> "我们还有其他的性能可以优化吗"（并选择先做 P1 的 1+2+3；目前没有新的采样数据）
+
+### 二、取证结论（先读源码再动手）
+- ✅ `WirelessBlockLinkManager.processAll()` **已经节流为每 25 tick 一次**（`tickCounter < 25 return`）⇒ 不用动。
+- ✅ `PatternSlotPersistence.save` 由 `MTEPatternCraftingBufferMKIII/IV.saveNBTData`（L178）调用 ⇒ **不是每 tick**，
+  只在 TE 写档时（chunk 保存/`markDirty` 后的存档）发生；360 槽的写档缓存列为 **P2（未做）**。
+- ⚠️ **已排查但判定"当前无害"**：`slot.items = processingLogic.getOutputItems()` 拿的是 GT 的**内部字段**
+  （`ProcessingLogic` L614-615 直接 `return outputItems;`），但 GT 在每次 `process()` 里是**替换数组引用**
+  （L513 `outputItems = helper.getItemOutputs()`）而非原地写入 ⇒ 各线程握的是各自那份数组，**不构成互相覆盖**，
+  故**不为此加防御性拷贝**（省开销），仅在此登记。
+
+### 三、本轮改动（P1：1+2+3）
+1. **线程页轮询（`Ae2qolThreadEngine.activeRows()`）**：
+   - **没有活跃线程时返回空列表常量**（零分配）——"机器闲着但界面开着 / WAILA 一直在看"才是常态；
+   - **同一 tick 内多次轮询只构建一次并返回同一实例**（新增 `tickStamp`，在每 tick 的 `updatePowerBudget` 里自增）
+     ⇒ 面板轮询与 WAILA 广播共用一份快照，且 MUI2 的列表比较会走 `AbstractList.equals` 首行"同引用"短路（O(1)）。
+2. **显示用产物并集（`ae2qol$fillDisplayOutputs`）**：原实现**每 tick**分配两个 List + 合并去重 + 逐栈 copy；
+   改为**每 4 tick 刷新一次**（`(mProgresstime & 3) == 0`）且**没有活跃线程时不动**
+   —— 它只喂 GT 主界面/WAILA 的显示，4 tick 的陈旧肉眼无差别。
+3. **扣料校验闸（`ae2qol$checkOne`）**：它只是**告警**诊断（真防护是 P0「每 tick 最多一条线程」），
+   而每次检查要付**两遍全仓扫描**（输入总线逐槽 + 双输入仓 + `getStoredFluids()` 分配）。
+   现限制为**每台机器前 8 次起步**才检查（`ae2qol$GATE_MAX_CHECKS = 8`），超限后连 `before` 指纹都不再计算。
+
+### 四、仍未做（登记）
+- **P1-4**：`InfinityCellRecord.add/remove` 的 `amount(map,key)` + `map.put/get` 双哈希 ⇒ 可改 `merge`/`computeIfPresent`；
+  `getItemsView()` 每次分配 `unmodifiableMap` 包装。
+- **P1-5**：流体/源质两个 handler 的 `toStack` → `AEStack.create` 同款优化（需各自确认 copy 语义）。
+- **P2-6**：MK.III/MK.IV 360 槽写档缓存（脏标记 + 缓存复合标签）。
+- **P2-7**：`NbtKey.of` 规范化（带 NBT 物品的入站路径）——不能简单按 NBT 引用缓存。
+
+### 五、验证（待回填）
+- 构建与产物：待回填。
+
 ## 工作区决策记录 2026-10-05 (77) - **3.25.0-fix18：aeinfinitycell 枚举热路径优化（addAvailable 5.7% → ~1%）**
 
 ### 一、取证（先读源码/字节码再动手）——**两处对用户分析的更正**
