@@ -45,9 +45,6 @@
     "gt.MixinMTEHatchCraftingInputMEGui",
     "gt.MixinSuperCraftingInputHatchMEGui",
     "gt.MixinDualInputHatchUI",
-    "gtng.MixinQuickTerminalRecipeTransferHandler",
-    "gtng.MixinContainerQuickEncodingTerminal",
-    "gtng.MixinRecipeTransferPayload",
     "GuiContainerAccessor"
   ],
   "injectors": {
