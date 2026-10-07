@@ -53,6 +53,17 @@ public class GuiUploadButtonHandler {
             return;
         }
 
+        // 3.25.0-fix24（用户口径）：**不要在 GT-Not-Good 的三合一/快速编码终端里显示我们的按钮**
+        // （交换 / 撤回 / 上传 / OV 开关 NEI 显示）。
+        // 为什么以前会出现：他们的 `GuiQuickEncodingTerminal extends appeng...GuiPatternTerm`
+        // ⇒ 命中上面的 instanceof，于是我们的 4 个按钮被加到了他们的界面上（用户截图实证）。
+        // 这里按**类名字符串**判断（不引用他们的类 ⇒ 保持软依赖）。
+        String guiClassName = gui.getClass()
+            .getName();
+        if (guiClassName != null && guiClassName.startsWith("com.xyp.gtnotgood.")) {
+            return;
+        }
+
         if (!(gui instanceof GuiContainer)) {
             return;
         }
