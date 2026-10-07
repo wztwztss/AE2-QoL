@@ -34,6 +34,39 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-07 (82) - **3.25.0-fix24 收尾：GT-Not-Good 编程电路注入（改挂真汇聚点）+ 隐藏我们的按钮 + 版本纠正**
+
+### 一、用户口径（本轮）
+> "我要的不是改（宿主侧改写），而是**不开启对方开关**时，**玩家身上带着 PH 编程样板工具箱**，**编写样板时直接添加编程电路**"；
+> "**带着就行**，不是要隔一会点一下"；"那 4 个按钮（交换/撤回/上传/OV 开关 NEI 显示）**不要在他的页面显示**"。
+
+### 二、三步定位过程（每步都有日志/字节码证据）
+1. **fix22**：挂 `ae2thing.nei.QuickTerminalRecipeTransferHandler.collectStacks`，判据用 PH 的 `holding()`。
+   实测无效 ⇒ 日志显示**连 `Mixing` 行都没有** ⇒ 该类在"点 NEI +"的路径上**从未被加载**。
+2. **fix23**：把判据改成"**带着就算**"（PH `holding()` 为假时扫玩家主背包/盔甲/饰品栏，同 tick 缓存）。
+   实测仍无效（因为上一条：钩子所在类根本不跑）。
+3. **fix24**：`javap` 实例 jar 后改挂**所有客户端来源的汇聚点**
+   `ContainerQuickEncodingTerminal.requestRecipeTransfer(RecipeTransferPayload)`
+   （方法体在操作 `*SyncHandler.setLocalValue` ⇒ 只有客户端才有意义 ⇒ 客户端唯一汇聚点；
+   配合 `@Accessor("inputs")` 原地改写载荷里 `private final IAEStack<?>[] inputs`）。
+
+### 三、本轮代码（提交 a7d3e56 / b3dee34）
+- **新增** `mixin/gtng/MixinContainerQuickEncodingTerminal`（HEAD 注入 + 判据 + 注入逻辑 + 首次 INFO + 异常 WARN）
+  与 `mixin/gtng/MixinRecipeTransferPayload`（inputs 访问器）；两者登记在**两份一致的** mixin 配置的 **client** 段。
+- **新增编译依赖** `compileOnly(project.files("libs/gtnotgood-1.3.1.jar"))`（仅让 Mixin AP 能解析目标类；
+  用户已确认该 jar **留在 Git**）；运行期仍是软依赖（`required:false` + 只按类名匹配）。
+- **隐藏我们的按钮**：`GuiUploadButtonHandler` 在 GUI 类名以 `com.xyp.gtnotgood.` 开头时直接 return
+  （根因：他们的 `GuiQuickEncodingTerminal extends appeng…GuiPatternTerm` ⇒ 命中我们的 `instanceof GuiPatternTerm`）。
+
+### 四、本轮踩到/纠正的坑
+- **坑位 #1 复现**：fix20 的 `setInventorySlotContents` 在 PH jar 里是 **SRG 名 `func_70299_a`** ⇒ 已改成"双名字注入 + require=0"。
+- **PowerShell 手改 `gradle.properties` 写出 UTF-8 BOM**（项目明令禁止）⇒ 已从提交恢复并用 `edit` 工具重改，并每轮校验首字节。
+- **版本漂移**：`gradle.properties` 曾为 fix23 而 `mcmod.info` 停在 fix22 ⇒ 本轮统一到 **fix24**（两处同步）。
+- Mixin 接口强转必须先经 `(Object)`（javac 不接受从目标类型直转）。
+
+### 五、验证（待回填）
+- 构建与产物：待回填。
+
 ## 工作区决策记录 2026-10-05 (81) - **3.25.0-fix22：GT-Not-Good 终端"写样板时"注入 PH 编程器电路（复刻 PH 工具箱语义）**
 
 ### 一、用户口径（本轮定稿）
