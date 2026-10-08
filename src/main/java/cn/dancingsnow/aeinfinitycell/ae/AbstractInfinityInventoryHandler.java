@@ -206,6 +206,15 @@ public abstract class AbstractInfinityInventoryHandler<T extends IAEStack<T>>
         return this.cellStack == stack;
     }
 
+    /**
+     * 3.27.0：上游 1.0.5 的访问器。IO 端口多通道 mixin（轮询实现）在 matches/shouldMove 注入里靠它
+     * 判断"该元件是否所有通道都已搬空"，缺少它会让上游 mixin 无法解析；Apeiron 的
+     * InfinityInventoryBigMixin 也作用在同一目标类上。
+     */
+    public final ItemStack getCellStack() {
+        return cellStack;
+    }
+
     protected final InfinityCellRecord record() {
         World world = ServerWorldAccess.getServerWorld();
         return ItemInfinityStorageCell.getRecord(cellStack, world);

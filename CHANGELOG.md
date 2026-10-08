@@ -34,7 +34,108 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
-## 工作区决策记录 2026-10-07 (82) - **3.25.0-fix24 收尾：GT-Not-Good 编程电路注入（改挂真汇聚点）+ 隐藏我们的按钮 + 版本纠正**
+## 工作区决策记录 2026-10-08 (83) - **3.27.0：并入上游 AE2InfinityCell 1.0.5（修 Apeiron 无限元件契约崩溃）+ IO 端口改轮询实现**
+
+### 一、现象（用户实机，2026-10-08 10:53–10:54，单机集成服）
+
+三份 crash-report：`10.53.29` / `10.54.01` / `10.54.52`。前两份是**同一个**崩溃；`10.54.52` 的顶层是另一回事（见「六」）。
+死亡链（原始报告行号）：
+
+```text
+TileDrive.powerRender → getCellStatus → InfinityCellHandler.getStatusForCell
+  → InfinityCellStorage.loadFromDisk → NoClassDefFoundError: .../storage/InfinityCellRecord
+Caused by: ClassNotFoundException: Exception caught while transforming class ...InfinityCellRecord
+Caused by: MixinApplyError: Mixin [mixins.apeiron.json:aeinfinitycell.storage.InfinityCellRecordBigMixin from mod apeiron] FAILED during APPLY
+Caused by: InvalidMixinException: @Shadow field eu was not located in the target class ...InfinityCellRecord
+```
+
+### 二、根因（jar 字节码实证，不是推测）
+
+- Apeiron `alpha0.0.5`（sha256 `E1F79C3E…`）的 `InfinityCellRecordBigMixin` 用 `@Shadow @Final` 声明四个字段
+  `Map<ItemStackKey,CellCount> items` / `fluids` / `essentia` / `CellCount eu`；`CellCountBigMixin` 以 `CellCount` 为注入目标；
+  `InfinityPreviewCountAccessor` 是 `@Pseudo @Mixin(targets = "...InfinityCellViewHandler$ViewItemStack")` + `@Accessor("amount")`，返回 `CellCount`。
+- 我们并入的 `aeinfinitycell` 一直是**上游 1.0.4 基线**：四个字段是 `Map<*,BigInteger>` / `BigInteger eu`，
+  且全环境**从未存在 `CellCount` 类**（上游 1.0.4 jar、本模组 3.19.0-fix47 / 3.25.0-fix16 / -fix24 / 3.26.0 都没有；
+  git 历史里也从未有过 `CellCount.java`）。
+- `CellCount` 是**上游 1.0.5 才引入**的（参考源码 `reference_src_290b3\AE2InfinityCell-1.0.5`；文件级差异 6 个新增：
+  `storage/CellCount.java`、`mixin/TileIOPortMixin.java`、`AEInfinityCellLateMixins.java`、`integration/appeu/*`×2、上游自己的 `mixin/TileDriveMixin.java`）。
+- 因此：**Apeiron 的无限元件适配是对着上游 1.0.5 写的，我们并的是 1.0.4** ⇒ 目标类契约不匹配 ⇒ Mixin APPLY 失败
+  ⇒ 该类永久无法加载 ⇒ 每次查询元件状态都崩。**不是并入时改坏了字段**（我们的字段布局与上游 1.0.4 逐字一致，
+  1.0.4 同样没有 `CellCount`）。
+
+### 三、本次改动（3.27.0）
+
+1. 新增 `storage/CellCount.java`（上游 1.0.5 原样，MIT；本 jar 已有 aeinfinitycell 署名）。
+2. `storage/InfinityCellRecord.java` 重写为**合并版**：
+   - 四个字段改为 `CellCount`（`final`），满足 Apeiron 的 `@Shadow @Final` 契约；
+   - 保留本项目 API：`clampAmount`、`getStored*Units`、`getEUAmountExact`、`add*(…, BigInteger)`、`remove*`；
+   - 同时提供上游 API：`getEUCount()`、`extractItem/Fluid/Essentia(key, requested, modulate)`、`extractEU(requested, modulate)`；
+   - 序列化改用上游的 `writeEntries`/`readEntries`，条目数量与 EU 仍写 **NBTTagString**（`amount` / `eu`）——
+     与 1.0.4 基线**双向兼容**（双方源码逐行核对过，`FluidStackKey`/`EssentiaStackKey` 两侧逐字节相同）。
+3. `ae/AbstractInfinityInventoryHandler`：补上游的 `getCellStack()`（IO 端口轮询 mixin 的 `matches`/`shouldMove` 注入要用）。
+4. `ae/Infinity{Item,Fluid,Essentia}InventoryHandler`：视图泛型 `BigInteger → CellCount`；物品通道保留 fix18 原型缓存；
+   流体/源质通道改为直接取 `entry.getValue().longValue()`（与 `getXAmount` 同口径，少一次 map 查找）。
+5. `nei/InfinityCellViewPreview`：`Entry.amount` 恢复 `CellCount`，并在快照时 `copy()`（CellCount 可变，预览不能持有活对象）。
+6. `nei/InfinityCellViewHandler`：`ViewItemStack.amount` 恢复 `CellCount` —— **这正是 Apeiron `@Accessor("amount")` 的目标字段**，
+   不改则它的 NEI mixin 仍会 APPLY 失败；tooltip 显示改用 `amount.toBigInteger()`。
+7. `network/InfinityCellViewResponsePacket`：数量编解码 `BigInteger → CellCount.parse`（协议里仍是十进制字符串，**线上格式不变**）。
+8. `mixin/ae/MixinTileIOPort`：改为上游 1.0.5 的**逐 tick 轮询 + 全通道 matches/shouldMove 判定**，替换 fix51 的补搬实现；
+   **保留本项目 ExIOPort 传输倍率注入**。理由见「四」。
+9. 版本：`gradle.properties` / `mcmod.info` → `3.27.0`；`Tags.VERSION` → `1.0.5-ae2qol`。
+10. **未做**：AppEU（EU 通道）集成源码未恢复，原因见「七」。
+11. 版本号口径：按用户 2026-10-08 拍板用功能版号 `3.27.0`（文首 2026-09-27 那条 `-fixN` 规则仍在，对照表里 `3.27.0 = 3.20.0-fix24`；两者并存，不冲突）。
+
+### 四、IO 端口为什么换实现
+
+fix51 的"原版跑完后补搬其余通道"有两个实测出来的语义缺陷：
+
+1. 补搬给**每个剩余通道各发一份完整预算**（256 × 速度升级档位）⇒ 多通道元件把 IO 端口吞吐放大到 n 倍；
+2. 补搬不参与原版的 `shouldMove` "搬空后弹出元件"判定 ⇒ 可能出现"校验通道空了、别的通道还有货就弹出"。
+
+上游轮询方案每 tick 只服务一个通道（总吞吐与原版一致），且 `matches`/`shouldMove` 都以"全部通道"为准，因此取代原实现。
+**已知代价**：批量搬运变慢（原来一 tick 把所有通道搬完，现在按通道轮转，n 个 tick 一轮）。
+
+### 五、验证
+
+- `compileJava --offline` 通过；完整 `build --offline -x spotlessJavaCheck -x spotlessCheck` **BUILD SUCCESSFUL**（GRADLE_EXIT=0）。
+- 产物核对（`javap` 发布 jar `AE2-QoL-3.27.0.jar`，sha256 `015B748131C8A0AD5259E6789E919F6542D8CF0DC1BEDA87B698C963C3D52560`）：
+  - `InfinityCellRecord` 四字段 = `Map<ItemStackKey,CellCount>` / `Map<FluidStackKey,CellCount>` / `Map<EssentiaStackKey,CellCount>` / `CellCount eu`，**全部 `final`**；
+  - `CellCount` 已入包；
+  - `InfinityCellViewHandler$ViewItemStack.amount` 类型 = `CellCount`；
+  - `MixinTileIOPort` 六个方法（`ae2qol$rotateChannels` / `matchesAllChannels` / `shouldMoveAllChannels` / `transferContents` / `cellDrained` / `networkDrained` / `channelInventory`）齐全。
+- **待实测（部署后第一件事）**：启动日志确认 Apeiron 的 4 个 storage mixin + NEI accessor 全部 APPLY 无异常；
+  进存档驱动器不再崩；旧存档无限元件内容可读；IO 端口三通道搬迁与"搬空才弹出"正常。
+
+### 六、尚未处理（本次范围外）
+
+- `crash-2026-10-08_10.54.52-server.txt` 顶层的 **StackOverflowError**：区块递归指纹
+  `AnvilChunkLoader.loadEntities ↔ World.addTileEntity ↔ MonitoredTileList(MobiusCore/Opis) ↔ World.getBlock ↔ syncChunkLoad`，
+  各出现 62–64 次；本模组的 `AdaptiveNetHatch` 只出现 3 帧（栈耗尽那刻正在构造的方块实体），**不是递归单元**。
+  历史报告里该指纹仅此一次，需单独排期。
+- Apeiron 无限元件适配的**编译基线版本**需向其作者确认（我们只能从字节码反推是上游 1.0.5）。
+- `reference_src_290b3` 里上游 1.0.5 的 `AEInfinityCellLateMixins` / `mixins.aeinfinitycell.late.json` **未引入**：
+  本项目已有自己的 mixin 注册体系（`mixins.ae2_qof.json`），引入会形成第二套配置；上游那两个 mixin 的职责
+  已由 `TileDriveMixin`（两侧逐字节相同）+ `ae.MixinTileIOPort` 承担。
+
+### 七、AppEU 为什么没恢复
+
+上游 1.0.5 的 `integration/appeu/*` 依赖 `cn.dancingsnow.appeu:appeu:1.0.2:dev`（上游用 `devOnlyNonPublishable`）。
+本机 Gradle 缓存无该坐标（`~/.gradle/caches/modules-2/files-2.1/cn.dancingsnow.appeu` 不存在），
+GTNH Nexus 的 `repositories/releases` 与该 jar 的直链均 404、`repositories/public` 不可直接浏览 ⇒ **离线无法编译**。
+**当前运行时行为不变**：`CommonProxy` 的反射加载 + `try/catch` 兜底保留，检测到 appeu 但类缺失时只记一条警告。
+（依赖到位后可直接补：源码已在参考源码树里就位。）
+
+### 八、影响面与风险
+
+- **存档**：`amount` / `eu` 仍为 NBTTagString，格式双向兼容；但类型重构后仍建议升级前备份 `saves/<世界>/data/AEInfinityCell/`。
+- **风险 A（要盯启动日志）**：`MixinTileIOPort` 的 `@Shadow currentCell / cachedInventory / manager` 若与 AE2 的字段名不匹配，
+  由于本模组 mixin 配置是 `required: false`，Mixin 只记警告并**静默跳过** → IO 端口退回原版单通道行为（不崩但功能失效）。
+- **风险 B**：Apeiron 其余 aeinfinitycell mixin（`InfinityInventoryBigMixin` 依赖 `record()` 与新增的 `getCellStack()`）需实机确认 APPLY。
+- **风险 C**：客户端与服务端必须使用同一版 jar（mixin 与网络协议同源）。
+
+---
+
+GT-Not-Good 编程电路注入（改挂真汇聚点）+ 隐藏我们的按钮 + 版本纠正**
 
 ### 一、用户口径（本轮）
 > "我要的不是改（宿主侧改写），而是**不开启对方开关**时，**玩家身上带着 PH 编程样板工具箱**，**编写样板时直接添加编程电路**"；

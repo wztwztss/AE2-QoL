@@ -85,7 +85,7 @@
 | 库存统计终端无线端点 | `src/main/java/com/wztwzt/ae2_qof/terminal/StockMonitorTerminalWirelessEndpoint.java` |
 | ME 任务检测器 F16（方块） | `src/main/java/com/wztwzt/ae2_qof/tile/TileQuestDetector.java` |
 | ME 任务检测器 F16（BQ 检索逻辑） | `src/main/java/com/wztwzt/ae2_qof/quest/QuestDetectLogic.java`（NBT 候选去重用 `util/ItemIdentity`，见审查 A15） |
-| 无限存储元件 F17（并入的 aeinfinitycell） | `src/main/java/cn/dancingsnow/aeinfinitycell/` 整包 + `network/InfinityCell*Packet.java`（保存/迁移风险见审查 A01） |
+| 无限存储元件 F17（并入的 aeinfinitycell；**3.27.0 起为上游 1.0.5 计数模型**） | `src/main/java/cn/dancingsnow/aeinfinitycell/` 整包 + `network/InfinityCell*Packet.java`（保存/迁移风险见审查 A01）；`storage/CellCount.java` 是上游 1.0.5 引入的 long/BigInteger 自适应计数器，`storage/InfinityCellRecord.java` 的四个字段必须是 `CellCount` 且 `final`（`Map<*, CellCount>` / `CellCount eu`）——Apeiron 的 mixin 用 `@Shadow @Final` 直接引用它们，改动会重现 2026-10-08 的类加载崩溃；`nei/InfinityCellViewHandler$ViewItemStack.amount` 同理必须是 `CellCount`（Apeiron 的 `@Accessor("amount")`） |
 | 自适应电网统计口径 | `src/main/java/com/wztwzt/ae2_qof/hatch/adaptive/GridEnergyStats.java`（净增/净减语义，见审查 A17） |
 | 配方池检测工具 | `src/main/java/com/wztwzt/ae2_qof/util/RecipeMapDetector.java` |
 | 终端容器解析工具 | `src/main/java/com/wztwzt/ae2_qof/util/ContainerTerminalResolver.java` |

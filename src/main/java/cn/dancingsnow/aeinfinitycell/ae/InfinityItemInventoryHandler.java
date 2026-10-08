@@ -1,6 +1,5 @@
 package cn.dancingsnow.aeinfinitycell.ae;
 
-import java.math.BigInteger;
 import java.util.Map;
 
 import net.minecraft.item.ItemStack;
@@ -12,6 +11,7 @@ import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
 import appeng.util.item.AEItemStack;
 import appeng.util.item.AEItemStackType;
+import cn.dancingsnow.aeinfinitycell.storage.CellCount;
 import cn.dancingsnow.aeinfinitycell.storage.InfinityCellRecord;
 import cn.dancingsnow.aeinfinitycell.storage.ItemStackKey;
 
@@ -68,7 +68,7 @@ public final class InfinityItemInventoryHandler extends AbstractInfinityInventor
 
     @Override
     protected void addAvailable(InfinityCellRecord record, IItemList<IAEItemStack> out) {
-        for (Map.Entry<ItemStackKey, BigInteger> entry : record.getItemsView()
+        for (Map.Entry<ItemStackKey, CellCount> entry : record.getItemsView()
             .entrySet()) {
             ItemStackKey key = entry.getKey();
             IAEItemStack prototype = prototypes.get(key);
@@ -84,8 +84,9 @@ public final class InfinityItemInventoryHandler extends AbstractInfinityInventor
                 }
             }
             // 数量直接取 entry 的值（原实现又对**正在遍历的同一个 map** 调了一次 getItemAmount(key)，
-            // 白付一次哈希查找 + hashCode 重算）
-            long aeAmount = record.clampAmount(entry.getValue());
+            // 白付一次哈希查找 + hashCode 重算）。CellCount.longValue() 与 getItemAmount 同一口径：超限钳到 long
+            long aeAmount = entry.getValue()
+                .longValue();
             IAEItemStack aeStack = prototype.copy();
             aeStack.setStackSize(aeAmount);
             out.addStorage(aeStack);

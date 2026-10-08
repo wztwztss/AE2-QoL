@@ -1,6 +1,5 @@
 package com.wztwzt.ae2_qof.network;
 
-import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,6 +12,7 @@ import cn.dancingsnow.aeinfinitycell.nei.InfinityCellViewPreview;
 import cn.dancingsnow.aeinfinitycell.nei.InfinityCellViewPreview.Channel;
 import cn.dancingsnow.aeinfinitycell.nei.InfinityCellViewPreview.Entry;
 import cn.dancingsnow.aeinfinitycell.nei.InfinityCellViewPreview.Page;
+import cn.dancingsnow.aeinfinitycell.storage.CellCount;
 import cn.dancingsnow.aeinfinitycell.storage.EssentiaStackKey;
 import cn.dancingsnow.aeinfinitycell.storage.FluidStackKey;
 import cn.dancingsnow.aeinfinitycell.storage.InfinityCellRecord;
@@ -67,8 +67,7 @@ public class InfinityCellViewResponsePacket implements IMessage {
                 for (int e = 0; e < entryCount; e++) {
                     boolean hasKey = buf.readBoolean();
                     NBTTagCompound keyTag = hasKey ? ByteBufUtils.readTag(buf) : null;
-                    BigInteger amount = new BigInteger(readString(buf));
-                    Entry<?> entry = decodeEntry(channel, keyTag, amount);
+                    CellCount amount = CellCount.parse(readString(buf));                    Entry<?> entry = decodeEntry(channel, keyTag, amount);
                     if (entry != null) {
                         entries.add(entry);
                     }
@@ -126,7 +125,7 @@ public class InfinityCellViewResponsePacket implements IMessage {
         return null;
     }
 
-    private static Entry<?> decodeEntry(Channel channel, NBTTagCompound keyTag, BigInteger amount) {
+    private static Entry<?> decodeEntry(Channel channel, NBTTagCompound keyTag, CellCount amount) {
         if (channel == Channel.EU) {
             return InfinityCellViewPreview.entry(null, amount);
         }

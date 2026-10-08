@@ -91,7 +91,7 @@
 | Mixin 类路径 | 目标类 | 注入点 | 风险/说明 |
 |---|---|---|---|
 | `mixin/TileDriveMixin.java` | `appeng.tile.storage.TileDrive` (remap=false) | `updateState` RETURN | 为AE2 Infinity Cell提供兼容。在Drive更新状态后，遍历所有槽位，对ItemInfinityStorageCell实例将其handler附加到cellsMap。 |
-| `mixin/ae/MixinTileIOPort.java` | `appeng.tile.storage.TileIOPort` | `transferContents` HEAD (ModifyVariable)；**`tickingRequest` RETURN (Inject)** | ①强化版IO端口(TileExIOPort)的传输倍率：当目标为TileExIOPort实例时，根据配置将每次传输物品数量乘以配置倍率，带溢出保护。②**fix51** 逐通道补搬：AE2 的 `getInv` 每元件只取第一个匹配存储通道就 `break`，多通道元件（本模组无限磁盘）因此只搬一个通道；RETURN 注入按相同顺序枚举该元件支持的通道、跳过索引 0，对剩余通道用**反射**调用 AE2 自身的 `transferContents` 补搬（该方法返回私有内部类 `TileIOPort$TransferResult`，`@Shadow`/`@Invoker` 均不可行）。仅放行 `ItemInfinityStorageCell`，单通道元件立即跳过；`getProxy().isActive()` 前置；能源/存储/预算懒求值；异常只记一条警告。 |
+| `mixin/ae/MixinTileIOPort.java` | `appeng.tile.storage.TileIOPort` (remap=false) | `transferContents` HEAD (ModifyVariable)；**`getInv` HEAD (Inject, cancellable)**；**`matches` HEAD (Inject, cancellable)**；**`shouldMove` HEAD (Inject, cancellable)** | ①强化版IO端口(TileExIOPort)的传输倍率：目标为 TileExIOPort 时按配置放大每次传输量，带溢出保护（**本项目功能，保留**）。②**3.27.0 换上游 1.0.5 的轮询实现**：AE2 的 `getInv` 每元件只取第一个匹配存储通道就 `break`，多通道元件（本模组无限磁盘）因此只搬一个通道；现在按 `@Unique` 轮转下标逐 tick 返回下一个**有内容**的通道（`EMPTY` 模式跳过 `getUsedTypes()==0` 的通道），并把 `matches`（全通道都空才算已空）与 `shouldMove`（全通道网络侧都空）的判定扩展到全部通道，因此元件只在所有通道搬空/抽空后才弹出。仅对 `ItemInfinityStorageCell` 生效，普通元件逐字节不变。依赖 `AbstractInfinityInventoryHandler.getCellStack()`（3.27.0 补）。⚠️ 本 mixin 属 `required: false` 配置：`@Shadow currentCell/cachedInventory/manager` 若不匹配，Mixin 只记警告并**静默跳过**（IO 端口退回原版单通道行为），部署后必须核对启动日志里的 Mixing 行。 |
 | `mixin/ae/MixinPinsHolder.java` | `appeng.items.contents.PinsHolder` (remap=false) | `getCraftingPinsRows` (Redirect) | 合成产物pin行默认开启。原版对"从未设置过的玩家"默认返回DISABLED，此处改为ONE（当配置pinRowEnabled开启时）。 |
 
 ### Accessor - 1个Mixin
@@ -137,13 +137,18 @@
 
 7. **图集"sprite 尺寸 0×0"= 没进图集**：`TextureMap` 的 `registerIcons()` 会先 clear 清单，且启动期会执行多次；任何"只注册一次"的开关都会让真正装载的那一轮清单缺失，渲染结果不是紫黑而是**透明**（UV 全 0），不要误判为资源包问题。
 
-8. **IO 端口只认一个存储通道（AE2 上游行为，fix51 踩到）**：`TileIOPort.getInv(ItemStack)` 在
+8. **IO 端口只认一个存储通道（AE2 上游行为，fix51 踩到；3.27.0 换实现）**：`TileIOPort.getInv(ItemStack)` 在
    `AEStackTypeRegistry.getAllTypes()` 里取到**第一个**能返回非空 inventory 的通道就 `break`，
    而 `tickingRequest` 对每个元件每 tick 只搬运这一个通道。注意 `getAllTypes()` 返回的是
    `registry.values()`，即 **HashMap 顺序**（确定顺序的是 `getSortedTypes()`：ITEM→FLUID→其它），两者不要混用。
    后果：**任何多通道元件**在 IO 端口里都会静默丢掉其余通道；单通道元件不受影响，
    于是"普通流体元件能搬、多通道元件只搬物品"这种不对称很容易被误判成元件自身的问题。
-   本模组用 fix51 的 `tickingRequest` RETURN 注入为无限磁盘补搬其余通道。
+   **3.27.0 起改用上游 1.0.5 的轮询实现**：`getInv` HEAD 注入按 `@Unique` 轮转下标返回下一个有内容的通道，
+   并把 `matches`/`shouldMove` 的"搬空/抽空"判定扩展到**全部通道**（依赖新增的 `AbstractInfinityInventoryHandler.getCellStack()`）。
+   旧 fix51 的"RETURN 补搬"已删除：它给每个剩余通道各发一份完整预算（多通道元件吞吐 ×n），
+   且不参与 `shouldMove`，可能在校验通道已空、别通道还有货时弹出元件。**代价**：批量搬运变慢（按通道轮转）。
+   ⚠️ 该 mixin 在 `required: false` 的配置里：若 `@Shadow` 的 `currentCell`/`cachedInventory`/`manager` 与 AE2 字段名不符，
+   Mixin 只记警告并**静默跳过**（IO 端口退回原版单通道），启动日志必须核对是否真的 Mixing 过。
 
 9. **本整合包「中键取物（含 NBT）」的主人是 SNL，不要再自研也不要抢注入点（3.23.2 删除教训）**：
    `【私货】sciencenotleisure` 的 `MixinMinecraft.onBeforePickBlock` 在 `Minecraft.func_147112_ai`

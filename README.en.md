@@ -10,7 +10,24 @@ An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI patte
 > Client-only installs will show the GUIs but the features will not work; server-only installs leave clients without them.
 > (If a Modrinth page marks this mod as client-only, that metadata is wrong — this note is authoritative.)
 
-**Author: wztwzt · Current source version: 3.25.0 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.27.0 · Reference pack: GTNH 2.9.0-beta-3**
+
+## What's new in 3.27.0 (merged upstream AE2InfinityCell 1.0.5 — fixes the Apeiron infinity-cell crash)
+
+- **Fixed: a drive holding an infinity cell crashed the server tick on world load.** Apeiron's infinity-cell adapter is built
+  against upstream AE2InfinityCell **1.0.5**, while this jar had carried the **1.0.4** baseline since 3.12.0: `CellCount` only
+  exists in 1.0.5, and Apeiron's mixin `@Shadow @Final`s `InfinityCellRecord`'s four fields as `Map<*, CellCount>` / `CellCount eu`.
+  The mismatch made its Mixin APPLY fail, which left `InfinityCellRecord` permanently unloadable, so any cell-status query
+  (drive display refresh) crashed the server tick. The 1.0.5 counting model is now merged in with every local change kept
+  (fix18 enumeration optimisation, write-failure retention and migration archiving, hover stats, dedicated-server NEI preview, …).
+- **Save data stays compatible both ways**: cell data still lives in `data/AEInfinityCell/<uuid>.dat`, counts and EU are still
+  decimal strings, so upgrading and rolling back both read fine.
+- **IO-port multi-channel handling now uses upstream's per-tick channel rotation**, fixing the two semantic defects of the
+  fix51 fan-out (n× throughput inflation on multi-channel cells; drain detection looking at one channel only).
+  **Trade-off**: bulk transfer is slower (one channel per tick instead of all channels in one tick).
+- **The ExIOPort transfer multiplier is kept** and does not conflict with rotation.
+- **AppEU (EU channel) integration is not restored in this build**: its compile dependency
+  `cn.dancingsnow.appeu:appeu:1.0.2:dev` is unavailable offline; runtime behaviour is unchanged from 3.26.0.
 
 ## What's new in 3.25.0 (thread engine + the hatch's "Threads" page)
 
@@ -541,7 +558,7 @@ See the [investigation](docs/mcp-tooltip-duplicate-investigation.md) for evidenc
 ## Installation and upgrades
 
 1. Stop the game/server and back up the **complete world and configuration**, retaining the previous JAR for rollback. Infinity Cell contents live in the world save; backing up item NBT alone is insufficient.
-2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-3.20.0-fix9.jar`. Do not retain multiple versions.
+2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-3.27.0.jar`. Do not retain multiple versions.
 3. **Use the same version on client and server.** fix41 changed upload-related packets; upgrading only one side is unsupported.
 4. This JAR includes `aeinfinitycell` (bundled metadata remains `1.0.4-ae2qol`). Do not also install the standalone AE2 Infinity Cell JAR. Test old cells in a copied world before migrating.
 5. Check startup logs, generated configuration and Mixin loading, then exercise the features you use in a test world. Deployment to the development test instance requires separate approval.

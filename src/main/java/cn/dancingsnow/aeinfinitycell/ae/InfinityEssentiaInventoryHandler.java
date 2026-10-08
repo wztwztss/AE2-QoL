@@ -1,6 +1,5 @@
 package cn.dancingsnow.aeinfinitycell.ae;
 
-import java.math.BigInteger;
 import java.util.Map;
 
 import net.minecraft.item.ItemStack;
@@ -8,6 +7,7 @@ import net.minecraft.item.ItemStack;
 import appeng.api.storage.ICellCacheRegistry;
 import appeng.api.storage.ISaveProvider;
 import appeng.api.storage.data.IItemList;
+import cn.dancingsnow.aeinfinitycell.storage.CellCount;
 import cn.dancingsnow.aeinfinitycell.storage.EssentiaStackKey;
 import cn.dancingsnow.aeinfinitycell.storage.InfinityCellRecord;
 import thaumicenergistics.common.storage.AEEssentiaStack;
@@ -42,9 +42,11 @@ public final class InfinityEssentiaInventoryHandler extends AbstractInfinityInve
 
     @Override
     protected void addAvailable(InfinityCellRecord record, IItemList<AEEssentiaStack> out) {
-        for (Map.Entry<EssentiaStackKey, BigInteger> entry : record.getEssentiaView()
+        for (Map.Entry<EssentiaStackKey, CellCount> entry : record.getEssentiaView()
             .entrySet()) {
-            long aeAmount = record.getEssentiaAmount(entry.getKey());
+            // 数量直接取 entry 的值：与 getEssentiaAmount 同口径（CellCount.longValue 超限钳到 long）
+            long aeAmount = entry.getValue()
+                .longValue();
             AEEssentiaStack stack = entry.getKey()
                 .toStack(aeAmount);
             if (stack != null) {
