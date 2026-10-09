@@ -166,8 +166,19 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
         return 1.0 - clamped / 100.0;
     }
 
+    /**
+     * 3.28.0（2026-10-08 用户决定）：**线程功能停用** —— 总闸恒为 1。
+     *
+     * <p>为什么只改这一处就够：多线程引擎的启用判据是
+     * {@code Ae2qolThreadEngine.isEnabled() == hatch.getEffectiveThreads() > 1}（该文件 L192）
+     * ⇒ 本方法恒 1 之后，引擎的所有多线程分支自然失效，机器行为回到"**单次配方 + 设定并行**"。
+     *
+     * <p>按用户口径「只停用与隐藏、代码保留」：引擎/UI/广播代码一行不删；
+     * 存档里的 {@code userThreads} **照常读写、不清洗不改写**（只是不再生效）。
+     * 并行（{@link #getEffectiveParallel()}）与速度（{@link #getEffectiveSpeedBoost()}）不经过本方法，完全不受影响。
+     */
     public int getEffectiveThreads() {
-        return Math.max(1, Math.min(userThreads, getMaxThreadsForLevel()));
+        return 1;
     }
 
     @Override
@@ -191,6 +202,8 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
             this::getUserThreads,
             v -> this.userThreads = Math.max(1, Math.min(v, getMaxThreadsForLevel()))
         ).allowC2S();
+        // 3.28.0：线程已停用 —— 上面这个 threadSync 不再挂到任何控件（引擎与存档字段都保留，只是界面不再暴露）。
+        if (threadSync == null) return null; // 仅为消除"未使用变量"告警的死分支，永不成立
 
         ModularPanel panel = ModularPanel.defaultPanel("universal_maintenance_hatch", 260, 240);
 
@@ -226,24 +239,19 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
                 .setMaxLength(5).size(80, 14),
             IKey.dynamic(() -> "max " + getMaxSpeedForLevel() + "%")));
 
-        column.child(paramRow("ae2_qof.gui.hatch.threads",
-            new TextFieldWidget().value(threadSync).formatAsInteger(true)
-                .numbersInt(() -> 1L, () -> (long) getMaxThreadsForLevel())
-                .setMaxLength(3).size(80, 14),
-            IKey.dynamic(() -> "max " + getMaxThreadsForLevel())));
+        // 3.28.0：线程已停用 ⇒ 不再提供"线程数"输入框（界面只留并行与速度）。threadSync 一并移除。
 
         pageParams.child(column);
 
-        buildThreadsPage(pageThreads, syncManager);
-
+        // 3.28.0：**不再构建线程页**（buildThreadsPage 保留备查，不再被调用）⇒ 其内部那批
+        // ae2qol_threads_* 同步值也不会注册，客户端不再收到任何线程数据。
         panel.child(
             new com.cleanroommc.modularui.widgets.PagedWidget<>().controller(tabController)
                 .pos(0, 0)
                 .size(260, 140)
-                .addPage(pageParams)
-                .addPage(pageThreads));
+                .addPage(pageParams));
 
-        // G3（3.25.0-fix3）：标签条从"面板右缘外侧"改到**左侧竖直条**（用户要求"按钮放左边"）。
+        // 3.28.0：线程已停用 ⇒ 左侧标签条只保留「参数」这一个页签（线程页签已移除）。
         panel.child(
             new Column().coverChildren()
                 .pos(-32 + 3, -1)
@@ -253,14 +261,7 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
                         .overlay(
                             gregtech.api.modularui2.GTGuiTextures.OVERLAY_BUTTON_PLUS_LARGE.asIcon()
                                 .size(18, 18))
-                        .tooltip(t -> t.addLine(IKey.lang("ae2_qof.threads.tab.params"))))
-                .child(
-                    new com.cleanroommc.modularui.widgets.PageButton(1, tabController)
-                        .tab(com.cleanroommc.modularui.drawable.GuiTextures.TAB_RIGHT, 0)
-                        .overlay(
-                            gregtech.api.modularui2.GTGuiTextures.OVERLAY_BUTTON_BATCH_MODE_ON.asIcon()
-                                .size(18, 18))
-                        .tooltip(t -> t.addLine(IKey.lang("ae2_qof.threads.tab.threads")))));
+                        .tooltip(t -> t.addLine(IKey.lang("ae2_qof.threads.tab.params")))));
 
         panel.bindPlayerInventory();
         return panel;
@@ -268,7 +269,11 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
 
     // ===================== 3.25.0：「线程」页 =====================
 
-    /** 线程页：汇总一行 + 表头 + 只列活跃线程的可滚动列表 + 空闲/降级折叠行。 */
+    /** 线程页：汇总一行 + 表头 + 只列活跃线程的可滚动列表 + 空闲/降级折叠行。
+     *
+     * <p><b>3.28.0 起不再被调用</b>（用户决定停用线程功能，仅保留代码备查）：调用点已从
+     * {@code buildUI} 移除，因此页内的 {@code ae2qol_threads_*} 同步值也不会注册。
+     */
     private void buildThreadsPage(com.cleanroommc.modularui.widget.ParentWidget<?> page,
         PanelSyncManager syncManager) {
         // 汇总用的同步值：getter 在服务端求值，客户端只读（与库存统计终端同一套做法）

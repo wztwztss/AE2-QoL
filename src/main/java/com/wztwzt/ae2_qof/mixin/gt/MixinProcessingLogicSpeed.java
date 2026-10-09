@@ -125,26 +125,30 @@ public abstract class MixinProcessingLogicSpeed {
      * <li>设定值 ≠ 实际值 ⇒ 设定被机器自身的并行/批处理覆盖，需要按机器适配。</li>
      * </ul>
      */
-    @Inject(method = "process", at = @At("RETURN"))
-    private void ae2qol$logParallelOnce(CallbackInfoReturnable<CheckRecipeResult> cir) {
-        if (ae2qol$parallelLogged) return;
-        if (!(machine instanceof MTEMultiBlockBase multi)) return;
-        AE2MaintenanceHatchUniversal uh = findUniversalHatch(multi);
-        if (uh == null) return;
-        int actual = getCurrentParallels();
-        // 3.25.0-fix17（减噪）：**只在真的跑起来时**才记这一行。
-        // 原实现打在 RETURN 上、不分成败 ⇒ 世界加载时上百台空闲机器各打一条"实测本次并行=0"，把日志刷满
-        //（用户实测 09:47 一大批全 0）。actual == 0 视为"这次没跑"，且**不消耗**"只报一次"的机会。
-        if (actual <= 0) return;
-        ae2qol$parallelLogged = true;
-        int setting = uh.getEffectiveParallel();
-        com.wztwzt.ae2_qof.MyMod.LOG.info(
-            "[AE2QoL] 并行设定诊断：{} @ {} 维护仓设定={} 实测本次并行={}（两者不符即为被机器自身并行/批处理覆盖，请把这行发我）",
-            multi.getMetaName(),
-            ae2qol$posText(multi),
-            setting,
-            actual);
-    }
+    /**
+     * 3.28.0（2026-10-08 用户决定）：**删除"并行设定诊断"噪音日志**。
+     *
+     * <p>它当初只是一次性问诊探针（用来让用户把日志发回确认并行设定是否生效），结论已确认
+     * "设定一直生效、设定=1 时刻意不覆盖机器自身并行"并记入文档；此后它只剩噪音：
+     * 每台机器首次真正运行时都要在**服务端**打一行（用户实测一次十几行）。
+     *
+     * <p>**并行逻辑本身一字未动**（{@code getEffectiveParallel} 与 {@code MixinParallel} 系列照旧）。
+     * 需要复活时把下面这段注入恢复即可（保留原注释与实现作为参考）。
+     */
+    // @Inject(method = "process", at = @At("RETURN"))
+    // private void ae2qol$logParallelOnce(CallbackInfoReturnable<CheckRecipeResult> cir) {
+    //     if (ae2qol$parallelLogged) return;
+    //     if (!(machine instanceof MTEMultiBlockBase multi)) return;
+    //     AE2MaintenanceHatchUniversal uh = findUniversalHatch(multi);
+    //     if (uh == null) return;
+    //     int actual = getCurrentParallels();
+    //     // 3.25.0-fix17（减噪）：只在真的跑起来时才记这一行（actual == 0 视为"这次没跑"）。
+    //     if (actual <= 0) return;
+    //     ae2qol$parallelLogged = true;
+    //     com.wztwzt.ae2_qof.MyMod.LOG.info(
+    //         "[AE2QoL] 并行设定诊断：{} @ {} 维护仓设定={} 实测本次并行={}（两者不符即为被机器自身并行/批处理覆盖，请把这行发我）",
+    //         multi.getMetaName(), ae2qol$posText(multi), uh.getEffectiveParallel(), actual);
+    // }
 
     private static String ae2qol$posText(MTEMultiBlockBase multi) {
         if (multi.getBaseMetaTileEntity() == null) return "?";

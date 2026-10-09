@@ -256,8 +256,12 @@ public class CommonProxy {
 
         // G6（3.25.0-fix4）：线程状态的降频广播改由**中央 server tick** 驱动
         // （加速机制会跳过机器 updateEntity，挂在机器 tick 上会稀疏/停发）
-        cpw.mods.fml.common.FMLCommonHandler.instance().bus().register(
-            new com.wztwzt.ae2_qof.hatch.thread.ThreadStatusTicker());
+        //
+        // 3.28.0（2026-10-08 用户决定）：**线程功能停用** ⇒ 不再注册该 ticker，
+        // 服务端不再有"每 10 tick 全量遍历线程"的常驻开销；ThreadStatusTicker / ThreadStatusBroadcaster
+        // 代码保留备查（需要恢复线程时把这一行取消注释即可）。
+        // cpw.mods.fml.common.FMLCommonHandler.instance().bus().register(
+        //     new com.wztwzt.ae2_qof.hatch.thread.ThreadStatusTicker());
 
         try {
             maintenanceHatchUniversal = new AE2MaintenanceHatchUniversal(
