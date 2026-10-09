@@ -34,6 +34,35 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-08 (84) - **3.28.0：停用多线程引擎（只保留并行与速度）+ 隐藏线程 UI + 删并行诊断噪音**
+
+### 一、用户口径（本轮定稿）
+> "你把线程相关的也**全部删掉**吧，**仅仅保留并行和速度**"；
+> 追问后拍板：**(b) 只停用与隐藏、代码保留**（不做物理删除）｜旧存档线程字段**忽略即可**｜版本 **3.28.0**｜顺手**删掉并行诊断噪音**。
+
+### 二、只读取证（总闸只有一处，证据带行号）
+| 环节 | 位置 | 事实 |
+|---|---|---|
+| **总闸** | `hatch/AE2MaintenanceHatchUniversal.java:169-170` `getEffectiveThreads(){ return Math.max(1, Math.min(userThreads, getMaxThreadsForLevel())); }` | 线程数唯一出口 |
+| **引擎开关** | `hatch/thread/Ae2qolThreadEngine.java:192` `isEnabled(){ return hatch != null && hatch.getEffectiveThreads() > 1; }` | **>1 才启用** |
+| **混入入口** | `mixin/gt/MixinMTEMultiBlockBase.java:267`（`doCheckRecipe` HEAD，`:271` 判 `!isEnabled()` → 走 GT 原逻辑）、`:360`（`incrementProgressTime` HEAD，`:365` → `clearAll()`） | 多线程行为全部经此 |
+| **必须保留** | 同文件 `:140-141` `ae2qol$acceptSuperDynamo` | 无线输出终端的动力仓绕过，与线程无关 |
+| **UI/同步值** | 同维护仓 `:271+` 线程页 builder；`ae2qol_threads_*` 在 `:310-317 / :331 / :336` | 隐藏即不再注册 |
+| **常驻开销** | `CommonProxy.java:259-260` 注册 `ThreadStatusTicker`（每 10 tick 全量广播） | 停掉注册即无开销 |
+
+### 三、改动（**零删除**，全部保留代码）
+1. **停用**：`getEffectiveThreads()` **恒返回 1**（注释写明用户决定与恢复方法）⇒ `isEnabled()` 永久 false ⇒ 全部多线程分支失效，机器回到"**单次配方 + 设定并行**"。
+2. **隐藏线程 UI**：不再构建线程页（`buildThreadsPage` 保留并标注"不再被调用"）⇒ 其内 `ae2qol_threads_*` 同步值**不会注册**；
+   左侧标签条**移除线程页签**、参数页**删除"线程数"输入框**；并行页与速度页一字未动。
+3. **去常驻开销**：`CommonProxy` **不再注册** `ThreadStatusTicker`（原行注释保留 + 恢复说明）。
+4. **删噪音**：`mixin/gt/MixinProcessingLogicSpeed.java:128` 的"并行设定诊断"注入**整段注释掉**（原实现保留备查）；
+   **并行逻辑本身一字未动**。
+5. **保留**：并行/速度设定（含 15 级电路板表）、`ae2qol$acceptSuperDynamo`、无限元件/自动上传等全部非线程功能。
+6. **存档兼容**：`userThreads` 照常读写、**不清洗不改写**（用户口径"忽略即可"）。
+
+### 四、验证（待回填）
+- 构建与产物：待回填。
+
 ## 工作区决策记录 2026-10-08 (83) - **3.27.0：并入上游 AE2InfinityCell 1.0.5（修 Apeiron 无限元件契约崩溃）+ IO 端口改轮询实现**
 
 ### 一、现象（用户实机，2026-10-08 10:53–10:54，单机集成服）

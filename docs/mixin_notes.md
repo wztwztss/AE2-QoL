@@ -8,8 +8,15 @@
 > 2. 修改后jar放入测试环境，查看mixin.log确认注入状态。
 > 3. 参考其他模组Mixin实现：`E:\wzt\MC\modcreater\reference_src_290b3`（旧的 `reference_src_290b1_已过期` 已废弃）。
 
-> 当前基线：GTNH **2.9.0-beta-3** / MC 1.7.10 / 版本 `3.20.0`。
+> 当前基线：GTNH **2.9.0-beta-3** / MC 1.7.10 / 版本 `3.28.0`。
 > 清单与 `src/main/resources/mixins.ae2_qof.json` 逐条对齐（通用 14 条 + client 16 条 = 30 条）。
+>
+> **3.28.0 起两处"已停用但仍入包"的注入**（用户决定停用线程，代码保留）：
+> 1. `mixin/gt/MixinProcessingLogicSpeed.ae2qol$logParallelOnce`（并行设定诊断）—— `@Inject` **整段注释掉**，
+>    原实现与注释一并保留备查；并行逻辑（`getEffectiveParallel` 等）未动。
+> 2. `mixin/gt/MixinMTEMultiBlockBase` 的线程两入口（`doCheckRecipe` HEAD / `incrementProgressTime` HEAD）
+>    **仍在包里但永不生效**：维护仓 `getEffectiveThreads()` 恒返回 1 ⇒ `Ae2qolThreadEngine.isEnabled()` 恒 false
+>    ⇒ 两处注入都直接返回、交回 GT 原逻辑。同文件的 `ae2qol$acceptSuperDynamo`（无线输出终端动力仓绕过）**仍生效**。
 
 ---
 

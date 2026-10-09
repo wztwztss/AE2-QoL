@@ -10,9 +10,23 @@ An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI patte
 > Client-only installs will show the GUIs but the features will not work; server-only installs leave clients without them.
 > (If a Modrinth page marks this mod as client-only, that metadata is wrong — this note is authoritative.)
 
-**Author: wztwzt · Current source version: 3.27.0 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.28.0 · Reference pack: GTNH 2.9.0-beta-3**
 
-## What's new in 3.27.0 (merged upstream AE2InfinityCell 1.0.5 — fixes the Apeiron infinity-cell crash)
+## What's new in 3.28.0 (the multi-thread engine is disabled — parallel and speed only)
+
+- **Multi-threading is turned off** (user decision, 2026-10-08): the maintenance hatch no longer offers a thread count,
+  and machines run **one recipe at a time with the parallel value you set**. The engine, its UI and its broadcaster are
+  **all still in the jar** (nothing was deleted) — a single gate now returns 1, so it simply never engages. To restore it,
+  revert `AE2MaintenanceHatchUniversal.getEffectiveThreads()` (details in CHANGELOG (84)).
+- **UI**: no thread tab and no thread-count field in the maintenance hatch; the left strip keeps only the parameters page.
+  **Parallel** and **speed** are unchanged.
+- **Save-safe**: thread values already stored in a world are still read and **never rewritten**, they just have no effect.
+- **Quieter servers**: no more thread-status broadcast every 10 ticks, and the per-machine "parallel setting" diagnostic
+  log line is gone. The parallel logic itself is untouched.
+- **Unaffected**: parallel/speed settings, the wireless output terminal's 2.1-billion-amp dynamo bypass, infinity cells,
+  auto-upload and every other feature.
+
+## Previous: 3.27.0 (merged upstream AE2InfinityCell 1.0.5 — fixes the Apeiron infinity-cell crash)
 
 - **Fixed: a drive holding an infinity cell crashed the server tick on world load.** Apeiron's infinity-cell adapter is built
   against upstream AE2InfinityCell **1.0.5**, while this jar had carried the **1.0.4** baseline since 3.12.0: `CellCount` only
