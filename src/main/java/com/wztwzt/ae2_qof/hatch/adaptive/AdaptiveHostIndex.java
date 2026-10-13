@@ -1,0 +1,314 @@
+package com.wztwzt.ae2_qof.hatch.adaptive;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
+import gregtech.api.metatileentity.MetaTileEntity;
+import gregtech.api.metatileentity.implementations.MTEHatch;
+import gregtech.api.metatileentity.implementations.MTEMultiBlockBase;
+
+import com.wztwzt.ae2_qof.MyMod;
+
+/**
+ * 3.32.0：「仓 → 主机」的**权威反查**，以及 TecTech 兼容激光仓的安培写入。
+ *
+ * <h2>为什么必须改掉旧的"一次性解析"（问题①根因）</h2>
+ * 旧实现只在仓自己的 {@code onFirstTick} 里调 {@code AdaptiveHatchHelper.findAttachedMachine}，
+ * 而它依赖 {@link MultiblockRegistry} 里"控制器已经注册过"。只要仓先 tick（区块加载顺序、
+ * 结构尚未成型、服务器重启后先加载到仓的区块），解析必返 {@code null}，于是把**仓自己的名字与图标**
+ * 写进 NBT 缓存，而且此后**没有任何重算路径** —— 这正是用户实测"481 行全叫『自适应电网仓』"的原因。
+ *
+ * <h2>本类怎么做</h2>
+ * 反过来用 GT 自己维护的仓清单（已用实例 GT jar 的 javap 确认都是 public）：
+ * {@link MTEMultiBlockBase#mEnergyHatches} / {@link MTEMultiBlockBase#mDynamoHatches} /
+ * {@link MTEMultiBlockBase#getExoticEnergyHatches()}。**一次遍历所有已注册主机**就能把全部仓认领完
+ * （O(主机数)，不是 O(仓×主机)），且**完全不依赖任何 tick 时序**；
+ * TecTech 的激光仓（不是我们的类，没有 helper）也顺带认领，用于"纳入统计与配置"。
+ *
+ * <p>副产物：主机是"谁在吃电"的真实主体，GT 把它记在 {@link MTEMultiBlockBase#mEUt}
+ * （消耗路径经字节码里的 {@code ineg} 存为负值），可直接带符号显示。
+ */
+public final class AdaptiveHostIndex {
+
+    /** 一个"主机 + 它名下的仓"分组。{@code host == null} 表示未识别主机（该仓不属于任何已注册多方块）。 */
+    public static final class HostGroup {
+
+        public final MTEMultiBlockBase host;
+        public final int dim;
+        public final int x;
+        public final int y;
+        public final int z;
+        /** 主机控制器物品的 MTE id（客户端据此本地化名称 + 画图标）；-1 = 未识别主机。 */
+        public final int hostMetaId;
+        /** 本网络已绑定、且被这台主机认领的仓。 */
+        public final List<AdaptiveHatchHelper> adaptive = new ArrayList<>();
+        /** 本主机上的 TecTech 兼容激光仓（不是我们的类）。 */
+        public final List<MetaTileEntity> compat = new ArrayList<>();
+
+        HostGroup(MTEMultiBlockBase host, int dim, int x, int y, int z, int hostMetaId) {
+            this.host = host;
+            this.dim = dim;
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.hostMetaId = hostMetaId;
+        }
+
+        public boolean hostKnown() {
+            return host != null && hostMetaId >= 0;
+        }
+
+        /** 主机实时耗电（GT 自己的字段；消耗为负）。未识别主机返回 0。 */
+        public long hostEut() {
+            try {
+                return host == null ? 0L : host.mEUt;
+            } catch (Throwable t) {
+                return 0L;
+            }
+        }
+    }
+
+    private AdaptiveHostIndex() {}
+
+    private static final Set<String> WARNED = java.util.Collections
+        .newSetFromMap(new java.util.concurrent.ConcurrentHashMap<String, Boolean>());
+
+    private static void warnOnce(String key, String message, Throwable t) {
+        if (!WARNED.add(key)) return;
+        if (t == null) {
+            MyMod.LOG.warn("[AE2QoL] " + message);
+        } else {
+            MyMod.LOG.warn("[AE2QoL] " + message, t);
+        }
+    }
+
+    private static String posKey(int dim, int x, int y, int z) {
+        return dim + ":" + x + ":" + y + ":" + z;
+    }
+
+    /**
+     * 反查本网络全部仓的主机归属。
+     *
+     * <p>返回顺序即显示顺序（未排序）：调用方负责排序。
+     * 未识别主机的仓**不会丢**，它们各自成组（{@code host == null}），由调用方标注出来——
+     * 本项目原则：不做"信息静默消失"的兜底。
+     */
+    public static List<HostGroup> scan(UUID owner, int frequency) {
+        AdaptiveNetwork network = AdaptiveNetworkManager.getNetwork(owner, frequency);
+        List<AdaptiveHatchHelper> helpers = network == null ? java.util.Collections.<AdaptiveHatchHelper>emptyList()
+            : network.getAllHelpers();
+
+        Map<String, AdaptiveHatchHelper> byPos = new HashMap<>();
+        for (AdaptiveHatchHelper h : helpers) {
+            byPos.put(posKey(h.getDim(), h.getX(), h.getY(), h.getZ()), h);
+        }
+
+        Map<String, HostGroup> groups = new LinkedHashMap<>();
+        Set<String> claimed = new HashSet<>();
+
+        for (MTEMultiBlockBase host : MultiblockRegistry.snapshot()) {
+            if (host == null) continue;
+            IGregTechTileEntity base = host.getBaseMetaTileEntity();
+            if (base == null || base.getWorld() == null || base.getWorld().isRemote) continue;
+            int hdim = base.getWorld().provider.dimensionId;
+            int hx = base.getXCoord();
+            int hy = base.getYCoord();
+            int hz = base.getZCoord();
+
+            List<MTEHatch> candidates = new ArrayList<>();
+            if (host.mEnergyHatches != null) candidates.addAll(host.mEnergyHatches);
+            if (host.mDynamoHatches != null) candidates.addAll(host.mDynamoHatches);
+            try {
+                List<MTEHatch> exotic = host.getExoticEnergyHatches();
+                if (exotic != null) candidates.addAll(exotic);
+            } catch (Throwable t) {
+                warnOnce("exotic", "读取主机异种能量仓清单失败（激光/多安培仓可能漏统计）", t);
+            }
+
+            HostGroup group = null;
+            for (MTEHatch hatch : candidates) {
+                if (hatch == null) continue;
+                IGregTechTileEntity hb = hatch.getBaseMetaTileEntity();
+                if (hb == null || hb.getWorld() == null) continue;
+                String k = posKey(hb.getWorld().provider.dimensionId, hb.getXCoord(), hb.getYCoord(), hb.getZCoord());
+                if (!claimed.add(k)) continue;
+
+                AdaptiveHatchHelper helper = byPos.get(k);
+                boolean compat = helper == null
+                    && (HatchType.isTecTechLaserSource(hatch) || HatchType.isTecTechLaserTarget(hatch));
+                if (helper == null && !compat) continue;
+
+                if (group == null) {
+                    String gk = posKey(hdim, hx, hy, hz);
+                    group = groups.get(gk);
+                    if (group == null) {
+                        group = new HostGroup(host, hdim, hx, hy, hz, hostMetaIdOf(host));
+                        groups.put(gk, group);
+                    }
+                }
+                if (helper != null) {
+                    group.adaptive.add(helper);
+                } else {
+                    group.compat.add(hatch);
+                }
+            }
+        }
+
+        // 用户口径：TecTech 激光仓只统计"已接入我们电网的主机"⇒ 只含兼容仓、没有我们任何仓的分组丢弃
+        groups.values().removeIf(g -> g.adaptive.isEmpty());
+
+        // 没有任何主机认领的仓：单独成组并标注（信息不消失）
+        for (AdaptiveHatchHelper h : helpers) {
+            if (claimed.contains(posKey(h.getDim(), h.getX(), h.getY(), h.getZ()))) continue;
+            HostGroup orphan = new HostGroup(null, h.getDim(), h.getX(), h.getY(), h.getZ(), -1);
+            orphan.adaptive.add(h);
+            groups.put("orphan:" + posKey(h.getDim(), h.getX(), h.getY(), h.getZ()), orphan);
+        }
+
+        return new ArrayList<>(groups.values());
+    }
+
+    /** 主机控制器物品的 MTE id（= 物品 meta）；取不到返回 -1。 */
+    public static int hostMetaIdOf(MTEMultiBlockBase host) {
+        try {
+            net.minecraft.item.ItemStack stack = host.getStackForm(1L);
+            return stack == null ? -1 : stack.getItemDamage();
+        } catch (Throwable t) {
+            return -1;
+        }
+    }
+
+    /** 某个仓（我们的）所在方块上的 MTE id；取不到返回 -1。 */
+    public static int hatchMetaIdOf(AdaptiveHatchHelper helper) {
+        try {
+            net.minecraft.world.WorldServer ws = net.minecraft.server.MinecraftServer.getServer()
+                .worldServerForDimension(helper.getDim());
+            if (ws == null) return -1;
+            net.minecraft.tileentity.TileEntity te = ws.getTileEntity(helper.getX(), helper.getY(), helper.getZ());
+            if (!(te instanceof IGregTechTileEntity)) return -1;
+            gregtech.api.interfaces.metatileentity.IMetaTileEntity mte =
+                ((IGregTechTileEntity) te).getMetaTileEntity();
+            if (mte == null) return -1;
+            net.minecraft.item.ItemStack stack = mte.getStackForm(1L);
+            return stack == null ? -1 : stack.getItemDamage();
+        } catch (Throwable t) {
+            return -1;
+        }
+    }
+
+    private static final Map<Class<?>, Integer> TYPE_META = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * 按仓类型查它的 MTE id（只查一次并缓存）。
+     *
+     * <p>用途：仓所在区块**没加载**（或主机认不出来）时，方块查不到、拿不到 MTE id，
+     * 这一行就会既没名字也没图标。类型值是常量（我们的四个类），用它反查 METATILEENTITIES
+     * 就能在这种"离线"情形下照样显示正确的仓名与图标 —— 信息不消失。
+     */
+    public static int hatchMetaIdForType(HatchType type) {
+        if (type == null) return -1;
+        Class<?> wanted;
+        switch (type) {
+            case ENERGY:
+                wanted = AdaptiveNetHatch.class;
+                break;
+            case LASER_SOURCE:
+                wanted = AdaptiveNetLaserHatch.class;
+                break;
+            case DYNAMO:
+                wanted = AdaptiveNetDynamoHatch.class;
+                break;
+            case LASER_TARGET:
+                wanted = AdaptiveNetLaserTargetHatch.class;
+                break;
+            default:
+                return -1;
+        }
+        Integer cached = TYPE_META.get(wanted);
+        if (cached != null) return cached;
+        int found = -1;
+        try {
+            Object[] all = gregtech.api.GregTechAPI.METATILEENTITIES;
+            for (int i = 0; i < all.length; i++) {
+                if (all[i] != null && wanted.isInstance(all[i])) {
+                    found = i;
+                    break;
+                }
+            }
+        } catch (Throwable t) {
+            return -1;
+        }
+        if (found >= 0) TYPE_META.put(wanted, found);
+        return found;
+    }
+
+    // ===== TecTech 兼容激光仓：安培写入（用户口径：纳入配置，接受覆盖）=====
+
+    private static final Map<Class<?>, Method> SET_AMPERES = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * 把某一类激光仓的安培写给**本网络主机上的** TecTech 兼容仓。
+     *
+     * <p>为什么必须周期写：{@code MTEHatchEnergyMulti}/{@code MTEHatchDynamoMulti} 的
+     * {@code Amperes} 字段**不进 NBT**（jar 字节码里没有 "Amperes" 键），区块重载后会回到构造默认值。
+     * <p>为什么自己夹取：它们的 {@code setAmperes(int)} 是直接 {@code putfield}、**不做任何校验**，
+     * 所以上限由我们按 {@code maxAmperesIn()/maxAmperesOut()} 夹。
+     * <p>已知代价（用户已确认接受）：TecTech 自己的 GUI 也能改这个值，我们周期写入会覆盖手动设置。
+     *
+     * @return 实际写入的仓数量
+     */
+    public static void applyCompatAmps(UUID owner, int frequency, int sourceAmps, int targetAmps) {
+        int wantedSource = Math.max(1, sourceAmps);
+        int wantedTarget = Math.max(1, targetAmps);
+        for (HostGroup group : scan(owner, frequency)) {
+            for (MetaTileEntity mte : group.compat) {
+                if (mte == null) continue;
+                if (HatchType.isTecTechLaserSource(mte)) {
+                    writeAmperes(mte, HatchType.LASER_SOURCE, wantedSource);
+                } else if (HatchType.isTecTechLaserTarget(mte)) {
+                    writeAmperes(mte, HatchType.LASER_TARGET, wantedTarget);
+                }
+            }
+        }
+    }
+
+    private static boolean writeAmperes(MetaTileEntity mte, HatchType type, int wanted) {
+        try {
+            long cap = type == HatchType.LASER_SOURCE ? mte.maxAmperesIn() : mte.maxAmperesOut();
+            if (cap <= 0) cap = wanted;
+            int value = (int) Math.min(wanted, cap);
+            Method setter = SET_AMPERES.get(mte.getClass());
+            if (setter == null) {
+                setter = mte.getClass()
+                    .getMethod("setAmperes", int.class);
+                SET_AMPERES.put(mte.getClass(), setter);
+            }
+            if (getAmperes(mte) == value) return false;
+            setter.invoke(mte, value);
+            return true;
+        } catch (Throwable t) {
+            warnOnce("compatAmps:" + mte.getClass().getName(),
+                "给 TecTech 兼容激光仓写安培失败（该类可能没有 setAmperes）: " + mte.getClass().getName(), t);
+            return false;
+        }
+    }
+
+    private static int getAmperes(MetaTileEntity mte) {
+        try {
+            Method getter = mte.getClass()
+                .getMethod("getAmperes");
+            Object v = getter.invoke(mte);
+            return v instanceof Integer ? (Integer) v : -1;
+        } catch (Throwable t) {
+            return -1;
+        }
+    }
+}

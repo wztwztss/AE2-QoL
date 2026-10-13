@@ -10,9 +10,41 @@ An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI patte
 > Client-only installs will show the GUIs but the features will not work; server-only installs leave clients without them.
 > (If a Modrinth page marks this mod as client-only, that metadata is wrong — this note is authoritative.)
 
-**Author: wztwzt · Current source version: 3.31.0 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.32.0 · Reference pack: GTNH 2.9.0-beta-3**
 
-## What's new in 3.31.0 (Stock Monitor Terminal: localized names on servers, real target icons, two left-tab pages)
+## What's new in 3.32.0 (Adaptive Net Terminal: hatch list grouped per host, class-based hatch detection, TecTech laser hatch compat)
+
+- **The hatch list is now one row per host instead of one row per hatch** (matching GTNL's Energy Monitor):
+  it shows the **host name/icon**, the **host's live draw (`mEUt`) with sign** (negative = consuming),
+  how many of this network's hatches sit on that host (in/out), and the **rated and measured totals**;
+  the tooltip breaks the row down hatch by hatch (type/tier/amps/rated/measured). Host names and icons are
+  **resolved client-side from the MTE id** - the same trap as 3.31.0: a name computed server-side is always
+  English on a dedicated server.
+- **Host ownership now comes from an authoritative reverse lookup**: GT's own hatch lists
+  (`mEnergyHatches` / `mDynamoHatches` / `getExoticEnergyHatches()`) are scanned once per refresh, which claims
+  every hatch in O(hosts) and **no longer depends on the one-shot resolution in each hatch's `onFirstTick`**
+  (if a hatch ticked before its controller, the old code cached *the hatch's own name* forever - that is why all
+  481 rows read "Adaptive Net Energy Hatch"). Hatches whose host cannot be identified no longer vanish; they are
+  grouped under "Unknown host".
+- **The four hatch slots now identify by class**: the old test was duck-typing on "has input / has output"
+  (`maxEUInput() > 0` etc.), which made ENERGY vs LASER_SOURCE (and DYNAMO vs LASER_TARGET) indistinguishable and
+  accepted **any** GT/TecTech energy or dynamo hatch in the "insert 64 to auto-configure" slots - then wrote
+  *that foreign hatch's* tier/amps onto every hatch of that class in the network. Each slot now only accepts this
+  mod's own class.
+- **TecTech laser hatches are included in both statistics and configuration** (per the user's decision):
+  `MTEHatchDynamoTunnel` (laser source) and `MTEHatchEnergyTunnel` (laser target) are listed - only on hosts that
+  already run this network's hatches - and their amperes are **rewritten periodically** (`setAmperes`, clamped to
+  their rating; their `Amperes` field is not persisted in NBT, so it must be rewritten).
+  **Known limits**: the tier cannot be written (it is decided by the item), and the periodic write overrides a
+  player's manual amperes in TecTech's own GUI (explicitly accepted).
+- **Three pre-existing defects fixed along the way**: (1) hatches in unloaded chunks used to be treated as
+  "removed" and unregistered (missing hatches) - now unloaded dimension/chunk is skipped, and unregistering
+  verifies the block is *still* one of our hatches (ghost entries); (2) the count and the row count now use the
+  same basis; (3) Locate switched from "index into the helpers list" to **coordinate addressing** (the old index
+  could point at a different hatch after a list rebuild) and teleport now searches for a safe standing spot.
+- No new Mixin: the host reverse lookup uses GT's public hatch lists.
+
+## Previous: 3.31.0 (Stock Monitor Terminal: localized names on servers, real target icons, two left-tab pages)
 
 - **Target names no longer turn English on a dedicated server** (user-verified: Chinese in singleplayer, English on the server).
   Root cause: the name was finalized **server-side** into a string — level emitters via `IAEStack.getDisplayName()` →

@@ -60,15 +60,32 @@ public class HatchActionPacket implements IMessage {
     private int action;
     private String hatchOwner;
     private int hatchFrequency;
-    private int hatchIndex;
+    /**
+     * 3.32.0：目标改成**坐标**寻址。
+     *
+     * <p>旧实现用"该仓在 {@code network.getAllHelpers()} 里的下标"，而那个列表每次调用都会新建，
+     * 注册/注销（包括列表重建时的陈旧清理）都会改变顺序 ⇒ 列表刷新后点【定位】**会跳到别的仓**。
+     * 改成坐标后，服务端按坐标重新校验方块真实存在，再执行。
+     */
+    private int targetDim;
+    private int targetX;
+    private int targetY;
+    private int targetZ;
+    /** 高亮颜色类型（0 动力/1 能源/2 激光源/3 激光靶）。 */
+    private int colorType;
 
     public HatchActionPacket() {}
 
-    public HatchActionPacket(int action, String hatchOwner, int hatchFrequency, int hatchIndex) {
+    public HatchActionPacket(int action, String hatchOwner, int hatchFrequency, int targetDim, int targetX,
+                             int targetY, int targetZ, int colorType) {
         this.action = action;
         this.hatchOwner = hatchOwner;
         this.hatchFrequency = hatchFrequency;
-        this.hatchIndex = hatchIndex;
+        this.targetDim = targetDim;
+        this.targetX = targetX;
+        this.targetY = targetY;
+        this.targetZ = targetZ;
+        this.colorType = colorType;
     }
 
     @Override
@@ -78,12 +95,20 @@ public class HatchActionPacket implements IMessage {
             boolean hasOwner = buf.readBoolean();
             this.hatchOwner = hasOwner ? readString(buf) : null;
             this.hatchFrequency = buf.readInt();
-            this.hatchIndex = buf.readInt();
+            this.targetDim = buf.readInt();
+            this.targetX = buf.readInt();
+            this.targetY = buf.readInt();
+            this.targetZ = buf.readInt();
+            this.colorType = buf.readInt();
         } catch (Throwable t) {
             this.action = -1;
             this.hatchOwner = null;
             this.hatchFrequency = 0;
-            this.hatchIndex = -1;
+            this.targetDim = 0;
+            this.targetX = 0;
+            this.targetY = 0;
+            this.targetZ = 0;
+            this.colorType = 0;
         }
     }
 
@@ -95,7 +120,11 @@ public class HatchActionPacket implements IMessage {
             writeString(buf, hatchOwner);
         }
         buf.writeInt(hatchFrequency);
-        buf.writeInt(hatchIndex);
+        buf.writeInt(targetDim);
+        buf.writeInt(targetX);
+        buf.writeInt(targetY);
+        buf.writeInt(targetZ);
+        buf.writeInt(colorType);
     }
 
     private void writeString(ByteBuf buf, String str) {
@@ -154,28 +183,25 @@ public class HatchActionPacket implements IMessage {
                 }
 
                 java.util.List<AdaptiveHatchHelper> helpers = network.getAllHelpers();
-                if (msg.hatchIndex < 0 || msg.hatchIndex >= helpers.size()) return;
+                if (helpers.isEmpty()) return;
 
-                AdaptiveHatchHelper helper = helpers.get(msg.hatchIndex);
-
-                int x = helper.getX();
-                int y = helper.getY();
-                int z = helper.getZ();
-                int dim = helper.getDim();
+                int x = msg.targetX;
+                int y = msg.targetY;
+                int z = msg.targetZ;
+                int dim = msg.targetDim;
 
                 WorldServer world = MinecraftServer.getServer().worldServerForDimension(dim);
                 if (world == null) return;
-
-                TileEntity te = world.getTileEntity(x, y, z);
-                if (te == null) return;
+                // 3.32.0：服务端按坐标重新校验（不再信任客户端给的下标），与库存统计终端同款做法
+                if (!world.blockExists(x, y, z)) return;
+                if (!(world.getTileEntity(x, y, z) instanceof gregtech.api.interfaces.tileentity.IGregTechTileEntity)) return;
 
                 switch (msg.action) {
                     case ACTION_HIGHLIGHT:
-                        int hatchType = helper.getHatchType() != null ? helper.getHatchType().ordinal() : 0;
-                        handleHighlight(player, x, y, z, dim, hatchType);
+                        handleHighlight(player, x, y, z, dim, msg.colorType);
                         break;
                     case ACTION_TELEPORT:
-                        if (com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveTeamHelper.isMemberOf(player.getUniqueID(), uuid)) {
+                        if (AdaptiveTeamHelper.isMemberOf(player.getUniqueID(), uuid)) {
                             handleTeleport(player, x, y, z, dim);
                         } else {
                             player.addChatMessage(new net.minecraft.util.ChatComponentText(
@@ -196,26 +222,38 @@ public class HatchActionPacket implements IMessage {
             scheduleClear(player, MinecraftServer.getServer().getTickCounter() + 200);
         }
 
+        /**
+         * 传送到目标（3.32.0 起目标是**主机**坐标）。
+         *
+         * <p>主机是一整座多方块结构，"坐标上方一格"很可能还在机壳里 ⇒ 沿用库存统计终端那份
+         * "找可站立落点"的逻辑（正上方 + 四邻的上方，要求脚/头两格空气、脚下实心）；
+         * 找不到就提示并取消，而不是把人塞进墙里。
+         */
         private void handleTeleport(EntityPlayerMP player, int x, int y, int z, int dim) {
+            WorldServer world = MinecraftServer.getServer().worldServerForDimension(dim);
+            if (world == null) return;
+            double[] dest = findSafeSpot(world, x, y, z);
+            if (dest == null) {
+                player.addChatMessage(new net.minecraft.util.ChatComponentText(
+                    net.minecraft.util.EnumChatFormatting.RED + "目标附近找不到安全落点，传送已取消"));
+                return;
+            }
             if (player.dimension == dim) {
-                player.setPositionAndUpdate(x + 0.5, y + 1, z + 0.5);
+                player.setPositionAndUpdate(dest[0], dest[1], dest[2]);
                 player.addChatMessage(new net.minecraft.util.ChatComponentText(
                     net.minecraft.util.EnumChatFormatting.GREEN + "传送到 [" + x + ", " + y + ", " + z + "] dim:" + dim));
                 return;
             }
             MinecraftServer server = MinecraftServer.getServer();
-            net.minecraft.world.WorldServer targetWorld = server.worldServerForDimension(dim);
-            if (targetWorld == null) return;
-            final int tx = x;
-            final int ty = y;
-            final int tz = z;
+            final double dx = dest[0];
+            final double dy = dest[1];
+            final double dz = dest[2];
             server.getConfigurationManager().transferPlayerToDimension(player, dim,
-                new net.minecraft.world.Teleporter(targetWorld) {
+                new net.minecraft.world.Teleporter(world) {
                     @Override
                     public void placeInPortal(net.minecraft.entity.Entity entity,
                                               double px, double py, double pz, float yaw) {
-                        entity.setLocationAndAngles(tx + 0.5, ty + 1, tz + 0.5,
-                            entity.rotationYaw, entity.rotationPitch);
+                        entity.setLocationAndAngles(dx, dy, dz, entity.rotationYaw, entity.rotationPitch);
                         entity.motionX = 0;
                         entity.motionY = 0;
                         entity.motionZ = 0;
@@ -233,6 +271,28 @@ public class HatchActionPacket implements IMessage {
                 });
             player.addChatMessage(new net.minecraft.util.ChatComponentText(
                 net.minecraft.util.EnumChatFormatting.GREEN + "传送到 [" + x + ", " + y + ", " + z + "] dim:" + dim));
+        }
+
+        private double[] findSafeSpot(WorldServer world, int x, int y, int z) {
+            int[][] offsets = { { 0, 0 }, { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } };
+            for (int[] o : offsets) {
+                int cx = x + o[0];
+                int cz = z + o[1];
+                for (int cy = y + 1; cy <= y + 2; cy++) {
+                    if (isStandable(world, cx, cy, cz)) {
+                        return new double[] { cx + 0.5D, cy, cz + 0.5D };
+                    }
+                }
+            }
+            return null;
+        }
+
+        private boolean isStandable(WorldServer world, int x, int y, int z) {
+            try {
+                return world.isAirBlock(x, y, z) && world.isAirBlock(x, y + 1, z) && !world.isAirBlock(x, y - 1, z);
+            } catch (Throwable t) {
+                return false;
+            }
         }
     }
 }

@@ -212,6 +212,17 @@ ae2_qof.gui.adaptive_terminal.hatch_list.output_count=Output Hatches
 ae2_qof.gui.adaptive_terminal.hatch_list.highlight=Highlight
 ae2_qof.gui.adaptive_terminal.hatch_list.teleport=Teleport
 
+# ===== 3.32.0: hatch list is now one row per host + TecTech laser hatch compat =====
+ae2_qof.gui.adaptive_terminal.hatch_list.host_unit= hosts
+ae2_qof.gui.adaptive_terminal.hatch_list.unknown_host=Unknown host
+ae2_qof.gui.adaptive_terminal.hatch_list.draw=Draw
+ae2_qof.gui.adaptive_terminal.hatch_list.hatch_unit= hatch(es)
+ae2_qof.gui.adaptive_terminal.hatch_list.in=In
+ae2_qof.gui.adaptive_terminal.hatch_list.out=Out
+ae2_qof.gui.adaptive_terminal.hatch_list.rated=Rated
+ae2_qof.gui.adaptive_terminal.hatch_list.flow=Flow
+ae2_qof.gui.adaptive_terminal.hatch_list.compat=TecTech compat
+
 gt.blockmachines.adaptive_net_hatch.name=Adaptive Net Hatch
 gt.blockmachines.adaptive_net_hatch.tooltip=§6Adaptive Net Hatch\n§7Auto-syncs voltage tier with terminal\n§7Use Network Data Stick to bind\n§8[AE2 QoL]
 gt.blockmachines.adaptive_net_hatch.desc=Auto-syncs voltage tier with terminal

@@ -101,6 +101,7 @@ gtnhintergalactic.tile.multi.elevatormodules.TileEntityModuleResearch
 gtnhintergalactic.tile.multi.elevatormodules.TileEntityModulePump$TileEntityModulePumpT3
 gregtech.common.tileentities.machines.multi.MTELargeMolecularAssembler
 kubatech.tileentity.gregtech.multiblock.MTEMegaIndustrialApiary
+com.miaokatze.gtit.common.machine.v2.MTENekoVendingMachineV2
 com.miaokatze.gtsr.common.machine.MTESteamHubArray
 com.miaokatze.gtsr.common.machine.MTEWaterHubArray
 com.miaokatze.gtsr.common.machine.MTESingularityDrillingHub
@@ -124,6 +125,7 @@ com.miaokatze.gtsr.common.machine.MTEReinforcedBrickBlastFurnace
 com.miaokatze.gtsr.common.machine.MTECriticalSingularityCompressor
 com.miaokatze.gtsr.common.machine.MTEDenseStateManipulator
 com.miaokatze.gtsr.common.machine.MTESteamSingularityEntangler
+com.miaokatze.gtsr.common.machine.MTESpacetimeCalibration
 com.miaokatze.gtsr.common.machine.cluster.MTESteamMineralLogisticsCluster
 com.miaokatze.gtsr.common.machine.cluster.MTEUnitCrusher
 com.miaokatze.gtsr.common.machine.cluster.MTEUnitOreWasher
@@ -220,7 +222,7 @@ com.Nxer.TwistSpaceTechnology.common.machine.TST_SpaceApiary$TST_SpaceApiaryT1
 com.Nxer.TwistSpaceTechnology.common.machine.TST_SpaceApiary$TST_SpaceApiaryT2
 com.Nxer.TwistSpaceTechnology.common.machine.TST_SpaceApiary$TST_SpaceApiaryT3
 com.Nxer.TwistSpaceTechnology.common.machine.TST_SpaceApiary$TST_SpaceApiaryT4
-com.Nxer.TwistSpaceTechnology.common.machine.TST_MegaTreeFarm
+com.Nxer.TwistSpaceTechnology.common.machine.TST_EcoSphereSimulator
 com.Nxer.TwistSpaceTechnology.common.machine.TST_MegaCraftingCenter
 com.Nxer.TwistSpaceTechnology.system.DysonSphereProgram.machines.TST_StrangeMatterAggregator
 com.Nxer.TwistSpaceTechnology.common.machine.TST_LaserMeteorMiner
@@ -250,6 +252,7 @@ com.science.gtnl.common.machine.multiblock.NaquadahReactor$HyperNaquadahReactor
 com.science.gtnl.common.machine.multiblock.NaquadahReactor$AdvancedHyperNaquadahReactor
 com.science.gtnl.common.machine.multiblock.SupercomputingCenter
 com.science.gtnl.common.machine.multiblock.ResearchCenter
+com.science.gtnl.common.machine.multiblock.SiphonTurbine
 reobf.proghatches.ae.cpu.TileCPU
 reobf.proghatches.gt.metatileentity.multi.LargeProgrammingCircuitProvider
 reobf.proghatches.gt.metatileentity.multi.IngredientDistributor
@@ -265,6 +268,12 @@ com.newmaa.othtech.machine.OTEMiniSteamNineInOne
 com.newmaa.othtech.machine.OTEBeeyonds
 com.newmaa.othtech.machine.OTEComputer
 com.gtnewhorizon.cropsnh.tileentity.multi.MTEIndustrialFarm
+com.xyp.gtnotgood.common.machines.multiblock.LargeOreProcessor
+com.xyp.gtnotgood.common.machines.multiblock.LargeVoidMiner
+com.xyp.gtnotgood.common.machines.multiblock.LargeBeeBreeder
+com.xyp.gtnotgood.common.machines.multiblock.LargeCropBreeder
+com.xyp.gtnotgood.common.machines.multiblock.IntegratedProductionFactory
+com.xyp.gtnotgood.common.machines.multiblock.AssemblerMatrix
 gregtech.common.tileentities.machines.multi.steam.MTESteamMacerator
 gtPlusPlus.xmod.gregtech.common.tileentities.machines.multi.production.turbines.MTELargerTurbineGasLegacy
 gtPlusPlus.xmod.gregtech.common.tileentities.machines.multi.production.turbines.MTELargerTurbinePlasmaLegacy
@@ -293,3 +302,7 @@ com.shenfnx.fissionevolved.MTEColossalFissionReactor
 com.MessTech.common.machine.module.SpaceModulePumpInfinity
 com.MessTech.common.machine.module.SpaceModuleMinerInfinity
 com.MessTech.common.machine.module.SpaceModuleAssemblerInfinity
+com.MessTech.common.machine.module.SpaceModuleApiary$MK1
+com.MessTech.common.machine.module.SpaceModuleApiary$MK2
+com.MessTech.common.machine.module.SpaceModuleApiary$MK3
+com.MessTech.common.machine.module.SpaceModuleApiary$MK4

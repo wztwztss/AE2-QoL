@@ -1421,6 +1421,10 @@ id,stackName,className
 4301,gt.oreprefix.盖亚之魂框架,MTEFrame
 4302,gt.oreprefix.活木框架,MTEFrame
 4303,gt.oreprefix.梦之木框架,MTEFrame
+4356,gt.oreprefix.中子合金框架,MTEFrame
+4357,gt.oreprefix.灵韵合金框架,MTEFrame
+4358,gt.oreprefix.焕律璨金框架,MTEFrame
+4359,gt.oreprefix.钅杜框架,MTEFrame
 4396,gt.oreprefix.青铜框架,MTEFrame
 4397,gt.oreprefix.黄铜框架,MTEFrame
 4398,gt.oreprefix.殷钢框架,MTEFrame
@@ -2715,6 +2719,7 @@ id,stackName,className
 14304,超级唱片机,MTEBetterJukebox
 14305,混音公爵3D唱片机,MTEBetterJukebox
 14600,无线能量监视器,MTEWirelessEnergyMonitor
+14610,猫猫售货机,MTENekoVendingMachineV2
 14704,奇点采矿节点,MTESingularityMinerNode
 14705,奇点钻井节点,MTESingularityDrillingNode
 14706,蒸汽缓存节点,MTESteamCacheNode
@@ -2750,6 +2755,7 @@ id,stackName,className
 14900,临界纠缠奇点稳定装置,MTECriticalSingularityCompressor
 14901,致密态蒸汽操控装置,MTEDenseStateManipulator
 14902,蒸汽奇点纠缠装置,MTESteamSingularityEntangler
+14903,时空奇点校准工程,MTESpacetimeCalibration
 14950,输入仓(蒸汽),MTESteamInputHatchGeneric
 14951,输出仓(蒸汽),MTESteamOutputHatchGeneric
 14952,耐压蒸汽仓,MTEHatchPressureSteamInput
@@ -3214,6 +3220,10 @@ id,stackName,className
 18846,血液仓,TST_BloodOrbHatch
 18847,样板访问仓,TST_PatternAccessHatch
 18848,Debug血液仓,TST_Debug_BloodHatch
+18849,生态圈输入接口,TST_EcoSphereInputInterfaceHatch
+18850,生态圈升级接口,TST_EcoSphereUpgradeInterfaceHatch
+18851,超级存储输入总线(ME),TST_AEStorageCellInputBus
+18852,超级存储输入仓(ME),TST_AEStorageCellInputHatch
 18956,无线主光学接口,GT_Hatch_WirelessData_output
 18957,无线副光学接口,GT_Hatch_WirelessData_input
 18958,机箱控制器,GT_Hatch_RackComputationMonitor
@@ -3259,6 +3269,8 @@ id,stackName,className
 19015,人造恒星,TST_ArtificialStar
 19016,奇迹之门,TST_MiracleDoor
 19017,通用矿物处理厂TST,TST_OreProcessingFactory
+19018,精灵工坊,GTCM_ElvenWorkshop
+19019,极限时空转换仪,GTCM_HyperSpacetimeTransformer
 19020,通用电路板转换器,TST_CircuitConverter
 19021,大型工业炼焦厂,TST_LargeIndustrialCokingFactory
 19022,巨型砖高炉,GT_TileEntity_MegaBrickedBlastFurnace
@@ -3290,7 +3302,7 @@ id,stackName,className
 19048,大型装罐机,TST_LargeCanner
 19049,大哥阵列,TST_BigBroArray
 19050,工业电磁离析机,TST_IndustrialMagnetarSeparator
-19051,拟似生态圈,TST_MegaTreeFarm
+19051,拟似生态圈,TST_EcoSphereSimulator
 19052,梦魇工业合成中心,TST_MegaCraftingCenter
 19053,闪电尖塔,GTCM_LightningSpire
 19054,超维度物质等离子锻炉原型机MK-II,MM_DimensionallyTranscendentMatterPlasmaForgePrototypeMK2
@@ -3321,8 +3333,14 @@ id,stackName,className
 19079,集成装配矩阵,TST_IntegratedAssemblyMatrix
 19080,巨型太阳能板工厂,TST_MegaSolarPanelFactory
 19081,巨型硅岩反应堆,TST_MegaNqReactor
-19500,精灵工坊,GTCM_ElvenWorkshop
-19501,极限时空转换仪,GTCM_HyperSpacetimeTransformer
+19298,熯焱高炉,TST_SwelegfyrBlastFurnaceLegacy
+19299,精灵工坊,GTCM_ElvenWorkshopLegacy
+19300,1x焕律璨金导线,MTECable
+19301,2x焕律璨金导线,MTECable
+19302,4x焕律璨金导线,MTECable
+19303,8x焕律璨金导线,MTECable
+19304,12x焕律璨金导线,MTECable
+19305,16x焕律璨金导线,MTECable
 20000,冰淇淋机,MTEIceCreamMachine
 21001,量子计算机,QuantumComputer
 21002,装配矩阵,AssemblerMatrix
@@ -3547,6 +3565,11 @@ id,stackName,className
 21221,超生高速,HighwayToHell
 21222,大型蒸汽线材轧机,LargeSteamWiremill
 21223,科研中心,ResearchCenter
+21224,核反应堆,NuclearReactor
+21225,虹吸涡轮,SiphonTurbine
+21226,小型注魔矩阵,SmallInfusionMatrix
+21227,小型奥术组装机,SmallArcaneAssembler
+21228,工业坩埚,IndustrialCrucible
 21501,魔力输入仓,CustomFluidHatch
 21502,碎冰输入仓,CustomFluidHatch
 21503,烈焰输入仓,CustomFluidHatch
@@ -3598,6 +3621,8 @@ id,stackName,className
 21549,巨型输入总成 (MAX),HumongousDualInputHatch
 21550,可配置无菌维护仓,CustomMaintenanceHatch
 21551,可配置鸿蒙维护仓,CustomMaintenanceHatch
+21552,核燃料物品仓,NuclearItemBus
+21553,核冷却液输入仓,NuclearFluidHatch
 21919,作弊者的究极集成矿处,CheatOreProcessingFactory
 21920,大明科技,NineIndustrialMultiMachine
 22000,编程二合一输入仓 (ULV),DualInputHatch
@@ -3853,6 +3878,9 @@ id,stackName,className
 22604,兑奖机,LootBagRedemption
 22605,过滤存储输入总线(ME),TypeFilteredInputBusME
 22606,液压超级缓存器,HydraulicSuperBuffer
+22607,输入总线（青铁）,MTEBreelSteamInputBus
+22608,输出总线（青铁）,MTEBreelSteamOutputBus
+22609,输入仓（青钢）,MTEStronzeInputHatch
 22620,超级存储输入总成(ME),SuperDualInputHatchME
 22621,进阶超级存储输入总成(ME),SuperDualInputHatchME
 22622,MAX能源仓,MTEHatchEnergy
@@ -4030,6 +4058,9 @@ id,stackName,className
 22795,星辉虹膜控制器,StellarIrisController
 22796,无线真空传送输入端口,WirelessVacuumConveyorInputHatch
 22797,无线真空传送输出端口,WirelessVacuumConveyorOutputHatch
+22798,基础电力炼金炉,SmallEssentiaSmeltery
+22799,进阶电力炼金炉,SmallEssentiaSmeltery
+22800,进阶电力炼金炉 II,SmallEssentiaSmeltery
 23001,大型贸易机,EOHB_VendingMachines
 23002,大型风力发电机,EOHB_WindTurbine
 23003,太阳能阵列,EOHB_SolarEnergyArray
@@ -4293,6 +4324,140 @@ id,stackName,className
 28053,史诗作物合成器 III,MTECropSynthesizer
 28054,史诗作物合成器 IV,MTECropSynthesizer
 28055,工业农场,MTEIndustrialFarm
+28500,大型矿石处理器,LargeOreProcessor
+28501,最大容量ME输出总线,MaxCapacityMEOutputBus
+28502,最大容量ME输出仓,MaxCapacityMEOutputHatch
+28503,超级样板输入总线 (ME),SuperMTEHatchCraftingInputME
+28504,超级样板输入总成 (ME),SuperMTEHatchCraftingInputME
+28505,超级样板输入镜像,SuperMTEHatchCraftingInputSlave
+28506,大型虚空矿机,LargeVoidMiner
+28507,大型蜜蜂杂交机,LargeBeeBreeder
+28508,大型作物杂交机,LargeCropBreeder
+28511,奇点数据中枢,SingularityDataHub
+28512,保险库多方块输入/输出总成,VaultPortHatch
+28513,产线集成工厂,IntegratedProductionFactory
+28514,量子计算机,QuantumComputer
+28515,装配矩阵,AssemblerMatrix
+28516,大型嬗变机,LargeTransmutationMachine
+28517,蜂窝处理机,LargeCombProcessor
+28518,"数据访问仓 (ME, IV)",MEDataAccessHatch
+28519,缩小超级样板输入总成 (ME),SuperMTEHatchCraftingInputME
+28520,跨配方无线能源仓,CrossRecipeWirelessEnergyHatch
+28521,超级进阶存储输入仓 (ME),SuperAdvancedMEInputHatch
+28522,超级进阶存储输入总线 (ME),SuperAdvancedMEInputBus
+28523,电路样板总成 (ME),CircuitMEPatternBuffer
+28604,基础蒸汽轮机,SteamTurbine
+28605,进阶蒸汽轮机,SteamTurbine
+28606,进阶蒸汽轮机 II,SteamTurbine
+28607,进阶蒸汽轮机 III,SteamTurbine
+28608,进阶蒸汽轮机 IV,SteamTurbine
+28609,进阶蒸汽轮机 V,SteamTurbine
+28610,高级源质分解机,EssentiaDisassembler
+28611,高速通用流体泵 (LV),UniversalFluidPump
+28700,256安LV无线激光能源仓,WirelessLaserEnergyHatch
+28701,"1,024安LV无线激光能源仓",WirelessLaserEnergyHatch
+28702,"4,096安LV无线激光能源仓",WirelessLaserEnergyHatch
+28703,"16,384安LV无线激光能源仓",WirelessLaserEnergyHatch
+28704,"65,536安LV无线激光能源仓",WirelessLaserEnergyHatch
+28705,"262,144安LV无线激光能源仓",WirelessLaserEnergyHatch
+28706,"1,048,576安LV无线激光能源仓",WirelessLaserEnergyHatch
+28707,"65,536安LV无线激光动力仓",WirelessLaserDynamoHatch
+28708,256安MV无线激光能源仓,WirelessLaserEnergyHatch
+28709,"1,024安MV无线激光能源仓",WirelessLaserEnergyHatch
+28710,"4,096安MV无线激光能源仓",WirelessLaserEnergyHatch
+28711,"16,384安MV无线激光能源仓",WirelessLaserEnergyHatch
+28712,"65,536安MV无线激光能源仓",WirelessLaserEnergyHatch
+28713,"262,144安MV无线激光能源仓",WirelessLaserEnergyHatch
+28714,"1,048,576安MV无线激光能源仓",WirelessLaserEnergyHatch
+28715,"65,536安MV无线激光动力仓",WirelessLaserDynamoHatch
+28716,256安HV无线激光能源仓,WirelessLaserEnergyHatch
+28717,"1,024安HV无线激光能源仓",WirelessLaserEnergyHatch
+28718,"4,096安HV无线激光能源仓",WirelessLaserEnergyHatch
+28719,"16,384安HV无线激光能源仓",WirelessLaserEnergyHatch
+28720,"65,536安HV无线激光能源仓",WirelessLaserEnergyHatch
+28721,"262,144安HV无线激光能源仓",WirelessLaserEnergyHatch
+28722,"1,048,576安HV无线激光能源仓",WirelessLaserEnergyHatch
+28723,"65,536安HV无线激光动力仓",WirelessLaserDynamoHatch
+28724,256安EV无线激光能源仓,WirelessLaserEnergyHatch
+28725,"1,024安EV无线激光能源仓",WirelessLaserEnergyHatch
+28726,"4,096安EV无线激光能源仓",WirelessLaserEnergyHatch
+28727,"16,384安EV无线激光能源仓",WirelessLaserEnergyHatch
+28728,"65,536安EV无线激光能源仓",WirelessLaserEnergyHatch
+28729,"262,144安EV无线激光能源仓",WirelessLaserEnergyHatch
+28730,"1,048,576安EV无线激光能源仓",WirelessLaserEnergyHatch
+28731,"65,536安EV无线激光动力仓",WirelessLaserDynamoHatch
+28732,256安IV无线激光能源仓,WirelessLaserEnergyHatch
+28733,"1,024安IV无线激光能源仓",WirelessLaserEnergyHatch
+28734,"4,096安IV无线激光能源仓",WirelessLaserEnergyHatch
+28735,"16,384安IV无线激光能源仓",WirelessLaserEnergyHatch
+28736,"65,536安IV无线激光能源仓",WirelessLaserEnergyHatch
+28737,"262,144安IV无线激光能源仓",WirelessLaserEnergyHatch
+28738,"1,048,576安IV无线激光能源仓",WirelessLaserEnergyHatch
+28739,"65,536安IV无线激光动力仓",WirelessLaserDynamoHatch
+28740,256安LuV无线激光能源仓,WirelessLaserEnergyHatch
+28741,"1,024安LuV无线激光能源仓",WirelessLaserEnergyHatch
+28742,"4,096安LuV无线激光能源仓",WirelessLaserEnergyHatch
+28743,"16,384安LuV无线激光能源仓",WirelessLaserEnergyHatch
+28744,"65,536安LuV无线激光能源仓",WirelessLaserEnergyHatch
+28745,"262,144安LuV无线激光能源仓",WirelessLaserEnergyHatch
+28746,"1,048,576安LuV无线激光能源仓",WirelessLaserEnergyHatch
+28747,"65,536安LuV无线激光动力仓",WirelessLaserDynamoHatch
+28748,256安ZPM无线激光能源仓,WirelessLaserEnergyHatch
+28749,"1,024安ZPM无线激光能源仓",WirelessLaserEnergyHatch
+28750,"4,096安ZPM无线激光能源仓",WirelessLaserEnergyHatch
+28751,"16,384安ZPM无线激光能源仓",WirelessLaserEnergyHatch
+28752,"65,536安ZPM无线激光能源仓",WirelessLaserEnergyHatch
+28753,"262,144安ZPM无线激光能源仓",WirelessLaserEnergyHatch
+28754,"1,048,576安ZPM无线激光能源仓",WirelessLaserEnergyHatch
+28755,"65,536安ZPM无线激光动力仓",WirelessLaserDynamoHatch
+28756,256安UV无线激光能源仓,WirelessLaserEnergyHatch
+28757,"1,024安UV无线激光能源仓",WirelessLaserEnergyHatch
+28758,"4,096安UV无线激光能源仓",WirelessLaserEnergyHatch
+28759,"16,384安UV无线激光能源仓",WirelessLaserEnergyHatch
+28760,"65,536安UV无线激光能源仓",WirelessLaserEnergyHatch
+28761,"262,144安UV无线激光能源仓",WirelessLaserEnergyHatch
+28762,"1,048,576安UV无线激光能源仓",WirelessLaserEnergyHatch
+28763,"65,536安UV无线激光动力仓",WirelessLaserDynamoHatch
+28764,256安UHV无线激光能源仓,WirelessLaserEnergyHatch
+28765,"1,024安UHV无线激光能源仓",WirelessLaserEnergyHatch
+28766,"4,096安UHV无线激光能源仓",WirelessLaserEnergyHatch
+28767,"16,384安UHV无线激光能源仓",WirelessLaserEnergyHatch
+28768,"65,536安UHV无线激光能源仓",WirelessLaserEnergyHatch
+28769,"262,144安UHV无线激光能源仓",WirelessLaserEnergyHatch
+28770,"1,048,576安UHV无线激光能源仓",WirelessLaserEnergyHatch
+28771,"65,536安UHV无线激光动力仓",WirelessLaserDynamoHatch
+28772,256安UEV无线激光能源仓,WirelessLaserEnergyHatch
+28773,"1,024安UEV无线激光能源仓",WirelessLaserEnergyHatch
+28774,"4,096安UEV无线激光能源仓",WirelessLaserEnergyHatch
+28775,"16,384安UEV无线激光能源仓",WirelessLaserEnergyHatch
+28776,"65,536安UEV无线激光能源仓",WirelessLaserEnergyHatch
+28777,"262,144安UEV无线激光能源仓",WirelessLaserEnergyHatch
+28778,"1,048,576安UEV无线激光能源仓",WirelessLaserEnergyHatch
+28779,"65,536安UEV无线激光动力仓",WirelessLaserDynamoHatch
+28780,256安UIV无线激光能源仓,WirelessLaserEnergyHatch
+28781,"1,024安UIV无线激光能源仓",WirelessLaserEnergyHatch
+28782,"4,096安UIV无线激光能源仓",WirelessLaserEnergyHatch
+28783,"16,384安UIV无线激光能源仓",WirelessLaserEnergyHatch
+28784,"65,536安UIV无线激光能源仓",WirelessLaserEnergyHatch
+28785,"262,144安UIV无线激光能源仓",WirelessLaserEnergyHatch
+28786,"1,048,576安UIV无线激光能源仓",WirelessLaserEnergyHatch
+28787,"65,536安UIV无线激光动力仓",WirelessLaserDynamoHatch
+28788,256安UMV无线激光能源仓,WirelessLaserEnergyHatch
+28789,"1,024安UMV无线激光能源仓",WirelessLaserEnergyHatch
+28790,"4,096安UMV无线激光能源仓",WirelessLaserEnergyHatch
+28791,"16,384安UMV无线激光能源仓",WirelessLaserEnergyHatch
+28792,"65,536安UMV无线激光能源仓",WirelessLaserEnergyHatch
+28793,"262,144安UMV无线激光能源仓",WirelessLaserEnergyHatch
+28794,"1,048,576安UMV无线激光能源仓",WirelessLaserEnergyHatch
+28803,"65,536安UXV无线激光动力仓",WirelessLaserDynamoHatch
+28804,256安MAX无线激光能源仓,WirelessLaserEnergyHatch
+28805,"1,024安MAX无线激光能源仓",WirelessLaserEnergyHatch
+28806,"4,096安MAX无线激光能源仓",WirelessLaserEnergyHatch
+28807,"16,384安MAX无线激光能源仓",WirelessLaserEnergyHatch
+28808,"65,536安MAX无线激光能源仓",WirelessLaserEnergyHatch
+28809,"262,144安MAX无线激光能源仓",WirelessLaserEnergyHatch
+28810,"1,048,576安MAX无线激光能源仓",WirelessLaserEnergyHatch
+28811,"65,536安MAX无线激光动力仓",WirelessLaserDynamoHatch
 29990,进阶磁悬浮能量塔,MTEMagLevPylon
 29991,进阶磁悬浮能量塔 II,MTEMagLevPylon
 29992,进阶磁悬浮能量塔 III,MTEMagLevPylon
@@ -4485,6 +4650,20 @@ id,stackName,className
 31098,自动工作台（UV）,MTEElectricAutoWorkbench
 31150,巨型合金冶炼炉,MTEMegaAlloyBlastSmelter
 31151,量子操纵者,MTEQuantumForceTransformer
+31300,无限 ME 输出总线,MTEBoundlessMEOutputBus
+31301,无限 ME 输出仓,MTEBoundlessMEOutputHatch
+31302,无限 ME 输出总成,MTEInfiniteMEOutputAssembly
+31303,无限能源仓,MTEInfiniteEnergyHatch
+31304,无限样板输入总成,MTEInfinitePatternInputAssembly
+31305,无限样板输入总成镜像,MTEInfinitePatternInputMirror
+31306,无限编程器电路提供器,MTEInfiniteProgrammingCircuitProvider
+31307,无限存储输入总线,MTEInfiniteStorageInputBus
+31308,无限存储输入仓,MTEInfiniteStorageInputHatch
+31309,无限存储输入总成,MTEInfiniteStorageInputAssembly
+31310,终极无限能源仓,MTEUltimateInfiniteEnergyHatch
+31311,鸿蒙之眼增强模块,MTEEyeOfHarmonyEnhancementModule
+31312,量子操纵者增强方块,MTEQuantumEnhancementModule
+31314,ME 束流输出仓,MTEBeamlineMEOutputHatch
 31778,凿子总线 I,MTEHatchChiselBus
 31779,凿子总线 II,MTEHatchChiselBus
 31780,凿子总线 III,MTEHatchChiselBus
@@ -4541,6 +4720,10 @@ id,stackName,className
 32103,自适应电网激光仓,AdaptiveNetLaserHatch
 32104,自适应电网动力仓,AdaptiveNetDynamoHatch
 32105,自适应电网激光靶仓,AdaptiveNetLaserTargetHatch
+32106,自适应电网终端,AdaptiveNetTerminal
+32107,库存统计终端,StockMonitorTerminal
+32108,编程样板输入总成 MK.III,MTEPatternCraftingBufferMKIII
+32109,编程样板输入总成 MK.IV,MTEPatternCraftingBufferMKIV
 32110,无线电网输出终端,WirelessEnergyOutputTerminal
 32111,无线电网输入终端,WirelessEnergyInputTerminal
 32400,超维度等离子聚变堆,MTDTPF
@@ -4576,6 +4759,44 @@ id,stackName,className
 32430,核反应堆热量控制仓 (UEV),MTReactorHeatHatch
 32431,核反应堆热量控制仓 (UIV),MTReactorHeatHatch
 32433,大型化学扭曲者,MTChemicalTwister
+32434,巨型化学反应釜,MTHugeChemicalReactor
+32440,速度模块 (IV),MTModuleSpeedHatch
+32441,速度模块 (LuV),MTModuleSpeedHatch
+32442,速度模块 (ZPM),MTModuleSpeedHatch
+32443,速度模块 (UV),MTModuleSpeedHatch
+32444,速度模块 (UHV),MTModuleSpeedHatch
+32445,速度模块 (UEV),MTModuleSpeedHatch
+32446,速度模块 (UIV),MTModuleSpeedHatch
+32447,速度模块 (UMV),MTModuleSpeedHatch
+32448,速度模块 (UXV),MTModuleSpeedHatch
+32449,速度模块 (MAX),MTModuleSpeedHatch
+32450,耗电减免模块 (IV),MTModuleEuHatch
+32451,耗电减免模块 (LuV),MTModuleEuHatch
+32452,耗电减免模块 (ZPM),MTModuleEuHatch
+32453,耗电减免模块 (UV),MTModuleEuHatch
+32454,耗电减免模块 (UHV),MTModuleEuHatch
+32455,耗电减免模块 (UEV),MTModuleEuHatch
+32456,耗电减免模块 (UIV),MTModuleEuHatch
+32457,耗电减免模块 (UMV),MTModuleEuHatch
+32458,耗电减免模块 (UXV),MTModuleEuHatch
+32459,耗电减免模块 (MAX),MTModuleEuHatch
+32460,并行控制模块 (IV),MTModuleParallelHatch
+32461,并行控制模块 (LuV),MTModuleParallelHatch
+32462,并行控制模块 (ZPM),MTModuleParallelHatch
+32463,并行控制模块 (UV),MTModuleParallelHatch
+32464,并行控制模块 (UHV),MTModuleParallelHatch
+32465,并行控制模块 (UEV),MTModuleParallelHatch
+32466,并行控制模块 (UIV),MTModuleParallelHatch
+32467,并行控制模块 (UMV),MTModuleParallelHatch
+32468,并行控制模块 (UXV),MTModuleParallelHatch
+32469,并行控制模块 (MAX),MTModuleParallelHatch
+32470,无线束流输入仓,MTWirelessBeamlineInput
+32471,无线束流输出仓,MTWirelessBeamlineOutput
+32472,无线过滤式束流输出仓,MTWirelessBeamlineAdvancedOutput
+32473,太空蜂箱模块 MK-I,MK1
+32474,太空蜂箱模块 MK-II,MK2
+32475,太空蜂箱模块 MK-III,MK3
+32476,太空蜂箱模块 MK-IV,MK4
 32737,1x流明导线,MTECable
 32738,2x流明导线,MTECable
 32739,4x流明导线,MTECable

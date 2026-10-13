@@ -8,8 +8,11 @@
 > 2. 修改后jar放入测试环境，查看mixin.log确认注入状态。
 > 3. 参考其他模组Mixin实现：`E:\wzt\MC\modcreater\reference_src_290b3`（旧的 `reference_src_290b1_已过期` 已废弃）。
 
-> 当前基线：GTNH **2.9.0-beta-3** / MC 1.7.10 / 版本 `3.31.0`。
-> 清单与 `src/main/resources/mixins.ae2_qof.json` 逐条对齐（通用 19 条 + client 16 条 = 35 条）。
+> 当前基线：GTNH **2.9.0-beta-3** / MC 1.7.10 / 版本 `3.32.0`。
+> 清单与 `src/main/resources/mixins.ae2_qof.json` 逐条对齐（通用 **27** 条 + client **16** 条 = **43** 条；两份副本必须逐字节一致）。
+> **3.32.0 未新增任何 Mixin**：自适应电网终端的"仓→主机"权威反查用的是 GT 的**公开**清单
+> （`MTEMultiBlockBase.mEnergyHatches` / `mDynamoHatches` / `getExoticEnergyHatches()`，javap 实例 jar 已确认），
+> 因此不需要再往 GT 里注入；旧的多方块注册表 Mixin（`MixinCommonBaseMetaTileEntityMultiblockRegistry`）保持不变。
 > **3.31.0 轮核实并已修复的既有不一致**：仓库根 `mixins.ae2_qof.json` 曾缺 5 条 `gt.MixinSteam*Tuning`
 > （3.29.0 那轮只改了 `src/main/resources/` 那份）⇒ 两份不逐字节一致；已在 `b4a36e0` 补齐，
 > 现两份**逐字节一致（43 条）**。**改 mixin 配置永远两份一起改**——进 jar 的是 `src/main/resources` 那份。

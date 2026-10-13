@@ -110,7 +110,7 @@ com.Nxer.TwistSpaceTechnology.common.machine.TST_HephaestusAtelier
 com.Nxer.TwistSpaceTechnology.common.machine.TST_StarcoreMiner
 com.Nxer.TwistSpaceTechnology.system.Disassembler.TST_Disassembler
 com.Nxer.TwistSpaceTechnology.common.machine.TST_BallLightning
-com.Nxer.TwistSpaceTechnology.common.machine.TST_MegaTreeFarm
+com.Nxer.TwistSpaceTechnology.common.machine.TST_EcoSphereSimulator
 com.Nxer.TwistSpaceTechnology.common.machine.TST_MegaCraftingCenter
 com.Nxer.TwistSpaceTechnology.common.modularizedMachine.MM_DimensionallyTranscendentMatterPlasmaForgePrototypeMK2
 com.Nxer.TwistSpaceTechnology.common.modularizedMachine.MM_IndistinctTentaclePrototypeMK2
@@ -127,9 +127,16 @@ com.science.gtnl.common.machine.multiblock.GrandAssemblyLine
 com.science.gtnl.common.machine.multiblock.AdvancedInfiniteDriller
 com.science.gtnl.common.machine.multiblock.module.eternalGregTechWorkshop.EternalGregTechWorkshop
 com.science.gtnl.common.machine.multiblock.ResearchCenter
+com.science.gtnl.common.machine.multiblock.SiphonTurbine
 com.jdz.vmd.common.tileentities.MTEVoidMiners$VMLV
 com.jdz.vmd.common.tileentities.MTEVoidMiners$VMHV
 com.jdz.vmd.common.tileentities.MTEVoidMiners$VMIV
+com.xyp.gtnotgood.common.machines.multiblock.LargeOreProcessor
+com.xyp.gtnotgood.common.machines.multiblock.LargeVoidMiner
+com.xyp.gtnotgood.common.machines.multiblock.LargeBeeBreeder
+com.xyp.gtnotgood.common.machines.multiblock.LargeCropBreeder
+com.xyp.gtnotgood.common.machines.multiblock.IntegratedProductionFactory
+com.xyp.gtnotgood.common.machines.multiblock.AssemblerMatrix
 gtPlusPlus.xmod.gregtech.common.tileentities.machines.multi.production.MTELargeSemifluidGenerator
 gtPlusPlus.xmod.gregtech.common.tileentities.machines.multi.processing.MTESpargeTower
 gtPlusPlus.xmod.gregtech.common.tileentities.machines.multi.processing.MTEIndustrialChiselLegacy
@@ -149,3 +156,7 @@ goodgenerator.blocks.tileEntity.AntimatterGenerator
 com.MessTech.common.machine.module.SpaceModulePumpInfinity
 com.MessTech.common.machine.module.SpaceModuleMinerInfinity
 com.MessTech.common.machine.module.SpaceModuleAssemblerInfinity
+com.MessTech.common.machine.module.SpaceModuleApiary$MK1
+com.MessTech.common.machine.module.SpaceModuleApiary$MK2
+com.MessTech.common.machine.module.SpaceModuleApiary$MK3
+com.MessTech.common.machine.module.SpaceModuleApiary$MK4

@@ -60,6 +60,8 @@ public class AdaptiveNetTerminal extends MTEHatch {
     private static final int SLOT_ENERGY = 1;
     private static final int SLOT_LASER_SOURCE = 2;
     private static final int SLOT_LASER_TARGET = 3;
+    /** 列表明细里 TecTech 兼容激光仓的类型标记（本模组四类是 0..3）。 */
+    private static final int COMPAT_HATCH_TYPE = 4;
     private static final int REQUIRED_STACK_SIZE = 64;
     private static final int TERMINAL_TIER = 4;
     private static final int CONTENT_W = 330;
@@ -122,31 +124,9 @@ public class AdaptiveNetTerminal extends MTEHatch {
     }
 
     private void sendHatchListSync(IGregTechTileEntity aBase, AdaptiveNetwork network) {
-        java.util.List<AdaptiveHatchHelper> helpers = network.getAllHelpers();
-
-        java.util.List<AdaptiveHatchHelper> stale = new java.util.ArrayList<>();
-        for (AdaptiveHatchHelper h : helpers) {
-            WorldServer ws = MinecraftServer.getServer().worldServerForDimension(h.getDim());
-            if (ws == null) {
-                stale.add(h);
-                continue;
-            }
-            TileEntity te = ws.getTileEntity(h.getX(), h.getY(), h.getZ());
-            if (te == null) {
-                stale.add(h);
-            }
-        }
-        for (AdaptiveHatchHelper s : stale) {
-            AdaptiveNetworkManager.unregisterHatch(s);
-        }
-        if (!stale.isEmpty()) {
-            helpers = network.getAllHelpers();
-        }
-
-        java.util.LinkedHashSet<String> seenPositions = new java.util.LinkedHashSet<>();
-        java.util.List<HatchListCache.HatchEntry> entries = new java.util.ArrayList<>(helpers.size());
-        int globalIndex = 0;
-        int totalIn = 0, totalOut = 0;
+        // 3.32.0：列表改成「一台主机一行」，主机归属走 AdaptiveHostIndex 的**权威反查**
+        // （反向利用 GT 自己维护的仓清单），不再依赖仓 onFirstTick 的一次性解析。
+        dropStaleHelpers(network);
 
         String ownerName = "";
         if (networkOwner != null) {
@@ -158,51 +138,159 @@ public class AdaptiveNetTerminal extends MTEHatch {
             }
         }
 
-        for (AdaptiveHatchHelper h : helpers) {
-            String posKey = h.getX() + "," + h.getY() + "," + h.getZ() + "," + h.getDim();
-            if (!seenPositions.add(posKey)) continue;
+        java.util.List<HatchListCache.HatchEntry> entries = new java.util.ArrayList<>();
+        int globalIndex = 0;
+        int totalIn = 0, totalOut = 0, hatchTotal = 0;
 
-            int tier = h.getCurrentVoltageTier();
-            int amps = h.getCurrentAmps();
-            HatchType ht = h.getHatchType();
-            long eut = 0;
+        for (AdaptiveHostIndex.HostGroup group : AdaptiveHostIndex.scan(networkOwner, networkFrequency)) {
+            long ratedSum = 0L;
+            long flowSum = 0L;
+            int inCount = 0, outCount = 0;
+            java.util.List<HatchListCache.Sub> subs = new java.util.ArrayList<>();
 
-            if (ht == HatchType.ENERGY) {
-                eut = V[tier] * (long) amps;
-                totalIn++;
-            } else if (ht == HatchType.LASER_SOURCE) {
-                eut = V[tier] * 2L * amps;
-                totalIn++;
-            } else if (ht == HatchType.DYNAMO) {
-                eut = V[tier] * (long) amps;
-                totalOut++;
-            } else if (ht == HatchType.LASER_TARGET) {
-                eut = V[tier] * 2L * amps;
-                totalOut++;
-            } else {
-                totalOut++;
+            // 本模组自己的仓（四类）
+            for (AdaptiveHatchHelper h : group.adaptive) {
+                HatchType ht = h.getHatchType();
+                int tier = h.getCurrentVoltageTier();
+                int amps = h.getCurrentAmps();
+                long rated = ratedEut(ht, tier, amps);
+                ratedSum += rated;
+                flowSum += h.getRealFlowEUt();
+                if (isInputType(ht)) {
+                    inCount++;
+                    totalIn++;
+                } else {
+                    outCount++;
+                    totalOut++;
+                }
+                // 先按类型反查 MTE id（带缓存、不需要世界查询 ⇒ 区块没加载也能显示正确的仓名/图标），
+                // 查不到才退回按坐标查那个方块
+                int hatchMetaId = AdaptiveHostIndex.hatchMetaIdForType(ht);
+                if (hatchMetaId < 0) hatchMetaId = AdaptiveHostIndex.hatchMetaIdOf(h);
+                subs.add(new HatchListCache.Sub(
+                    hatchMetaId, ht == null ? 0 : ht.ordinal(), tier, amps, rated,
+                    h.getRealFlowEUt(), h.getX(), h.getY(), h.getZ(), h.getDim(), false));
             }
 
-            String displayName = h.getMachineName();
-            if (displayName == null || displayName.isEmpty()) displayName = h.getCachedName();
-            int displayMetaId = h.getMachineMetaId();
-            if (displayMetaId < 0) displayMetaId = h.getCachedMetaId();
+            // TecTech 兼容激光仓（用户口径：纳入统计与配置）。
+            // 档位**写不了**（由物品本身决定），这里取它自己的档位、取不到才回落到本网络该类配置；
+            // 安培取本网络该类配置，因为我们每 20 tick 会把它写进去（见 applyCompatAmps）。
+            for (MetaTileEntity compat : group.compat) {
+                boolean source = HatchType.isTecTechLaserSource(compat);
+                HatchType ct = source ? HatchType.LASER_SOURCE : HatchType.LASER_TARGET;
+                int tier = (int) (source ? compat.getInputTier() : compat.getOutputTier());
+                if (tier < 0) tier = hatchTiers[ct.slotIndex];
+                int amps = preferredCompatAmps(ct);
+                long rated = ratedEut(ct, tier, amps);
+                ratedSum += rated;
+                if (source) {
+                    inCount++;
+                    totalIn++;
+                } else {
+                    outCount++;
+                    totalOut++;
+                }
+                int cx = group.x, cy = group.y, cz = group.z, cdim = group.dim;
+                IGregTechTileEntity cb = compat.getBaseMetaTileEntity();
+                if (cb != null && cb.getWorld() != null) {
+                    cx = cb.getXCoord();
+                    cy = cb.getYCoord();
+                    cz = cb.getZCoord();
+                    cdim = cb.getWorld().provider.dimensionId;
+                }
+                subs.add(new HatchListCache.Sub(metaIdOf(compat), COMPAT_HATCH_TYPE, tier, amps, rated, 0L,
+                    cx, cy, cz, cdim, true));
+            }
 
+            hatchTotal += subs.size();
+            // 名称/图标只发 MTE id，由客户端本地化解析（专用服上服务端字符串必是英文）
+            int displayMetaId = group.hostKnown() ? group.hostMetaId : firstSubMetaId(subs);
             entries.add(new HatchListCache.HatchEntry(
-                displayName, h.getCachedMetaId(), displayMetaId, eut, h.getRealFlowEUt(), tier, amps,
-                ht.ordinal(), globalIndex,
-                h.getX(), h.getY(), h.getZ(), h.getDim(),
-                ownerName));
-            globalIndex++;
+                displayMetaId, group.hostKnown(), group.hostEut(), subs.size(), inCount, outCount,
+                ratedSum, flowSum, globalIndex++,
+                group.x, group.y, group.z, group.dim, ownerName, subs));
         }
 
         HatchListSyncPacket packet = new HatchListSyncPacket(
-            networkOwner, networkFrequency, helpers.size(), entries, totalIn, totalOut);
+            networkOwner, networkFrequency, hatchTotal, entries.size(), entries, totalIn, totalOut);
         for (UUID viewerUUID : network.getActiveViewers()) {
             net.minecraft.entity.player.EntityPlayerMP viewer = findPlayerByUUID(aBase.getWorld(), viewerUUID);
             if (viewer != null) {
                 com.wztwzt.ae2_qof.network.ModNetwork.CHANNEL.sendTo(packet, viewer);
             }
+        }
+    }
+
+    /** 输入类：能源仓 + 激光源仓；输出类：动力仓 + 激光靶仓。 */
+    private static boolean isInputType(HatchType ht) {
+        return ht == HatchType.ENERGY || ht == HatchType.LASER_SOURCE;
+    }
+
+    /** 额定功率（沿用旧口径：{@code V[tier] × 安培}，激光类 ×2）。 */
+    private static long ratedEut(HatchType ht, int tier, int amps) {
+        if (ht == null || tier < 0 || tier >= V.length) return 0L;
+        long mult = (ht == HatchType.LASER_SOURCE || ht == HatchType.LASER_TARGET) ? 2L : 1L;
+        return V[tier] * mult * Math.max(1, amps);
+    }
+
+    /** 兼容激光仓要写/要显示的安培：本网络该类配置；为 0 时回落该类默认（激光 256A）。 */
+    private int preferredCompatAmps(HatchType type) {
+        int v = hatchAmps[type.slotIndex];
+        return v > 0 ? v : type.defaultAmps;
+    }
+
+    private static int metaIdOf(MetaTileEntity mte) {
+        try {
+            ItemStack stack = mte.getStackForm(1L);
+            return stack == null ? -1 : stack.getItemDamage();
+        } catch (Throwable t) {
+            return -1;
+        }
+    }
+
+    private static int firstSubMetaId(java.util.List<HatchListCache.Sub> subs) {
+        for (HatchListCache.Sub s : subs) {
+            if (s.metaId >= 0) return s.metaId;
+        }
+        return -1;
+    }
+
+    /**
+     * 清理"确定已经不在了"的仓。
+     *
+     * <p>3.32.0 修正两处旧判据的坑：
+     * <ol>
+     * <li><b>未加载区块不等于被拆除</b>：旧实现只判 {@code getTileEntity(...) == null}，
+     * 于是远方未加载区块里的仓会被直接注销（"漏仓"的来源之一）；</li>
+     * <li><b>不校验身份</b>：旧实现不看那个位置现在还是不是我们的仓 ⇒ 拆掉换别的机器后仍留着幽灵条目
+     * （"多仓"的来源之一）。</li>
+     * </ol>
+     * 现在的判据：维度/区块没加载 → 跳过；已加载但方块已不是本模组的自适应仓 → 才注销，并留一行 INFO。
+     */
+    private void dropStaleHelpers(AdaptiveNetwork network) {
+        java.util.List<AdaptiveHatchHelper> stale = new java.util.ArrayList<>();
+        for (AdaptiveHatchHelper h : network.getAllHelpers()) {
+            try {
+                WorldServer ws = MinecraftServer.getServer().worldServerForDimension(h.getDim());
+                if (ws == null) continue;
+                if (!ws.blockExists(h.getX(), h.getY(), h.getZ())) continue;
+                TileEntity te = ws.getTileEntity(h.getX(), h.getY(), h.getZ());
+                if (!(te instanceof IGregTechTileEntity)) {
+                    stale.add(h);
+                    continue;
+                }
+                IMetaTileEntity mte = ((IGregTechTileEntity) te).getMetaTileEntity();
+                if (!(mte instanceof MetaTileEntity) || !AdaptiveHatchHelper.isAdaptiveHatch((MetaTileEntity) mte)) {
+                    stale.add(h);
+                }
+            } catch (Throwable t) {
+                // 不静默：否则"仓莫名从列表消失"无法定性
+                LOG.warn("[AE2QoL] 清理陈旧仓时出错 pos={},{},{} dim={}", h.getX(), h.getY(), h.getZ(), h.getDim(), t);
+            }
+        }
+        for (AdaptiveHatchHelper s : stale) {
+            LOG.info("[AE2QoL] 注销已不存在的自适应仓 pos={},{},{} dim={}", s.getX(), s.getY(), s.getZ(), s.getDim());
+            AdaptiveNetworkManager.unregisterHatch(s);
         }
     }
 
@@ -288,11 +376,30 @@ public class AdaptiveNetTerminal extends MTEHatch {
         }
     }
 
+    /**
+     * 把"激光源仓 / 激光靶仓"两类的安培写给主机上的 TecTech 兼容仓。
+     *
+     * <p>用户口径（本轮）：TecTech 激光仓**纳入配置**，并**接受覆盖**——我们周期写入会盖掉玩家在
+     * TecTech 自己 GUI 里的手动安培设置（已明确接受）。作用范围只限"已接入我们电网的主机"
+     * （{@link AdaptiveHostIndex#scan} 已按此过滤）。档位写不了：它由物品本身决定。
+     */
+    private void applyCompatAmpsTick() {
+        if (networkOwner == null) return;
+        try {
+            AdaptiveHostIndex.applyCompatAmps(networkOwner, networkFrequency,
+                preferredCompatAmps(HatchType.LASER_SOURCE), preferredCompatAmps(HatchType.LASER_TARGET));
+        } catch (Throwable t) {
+            LOG.warn("[AE2QoL] 兼容激光仓安培写入失败", t);
+        }
+    }
+
     @Override
     public void onPreTick(IGregTechTileEntity aBase, long aTick) {
         super.onPreTick(aBase, aTick);
         if (aBase.isServerSide() && aTick % 20 == 0) {
             updateParamsFromSlots();
+            // 3.32.0：TecTech 兼容激光仓的 Amperes 不进 NBT ⇒ 必须周期重写才保持生效
+            applyCompatAmpsTick();
         }
         if (aBase.isServerSide() && networkOwner != null) {
             AdaptiveNetwork network = AdaptiveNetworkManager.getNetwork(networkOwner, networkFrequency);
@@ -928,7 +1035,9 @@ public class AdaptiveNetTerminal extends MTEHatch {
                 com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache cache = com.wztwzt.ae2_qof.client.ClientState.hatchListCache;
                 if (cache == null) return EnumChatFormatting.YELLOW + "---";
                 return EnumChatFormatting.AQUA + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.total")
-                    + ": " + EnumChatFormatting.WHITE + cache.totalCount;
+                    + ": " + EnumChatFormatting.WHITE + cache.totalCount
+                    + EnumChatFormatting.DARK_GRAY + " (" + cache.hostCount
+                    + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.host_unit") + ")";
             })).size(CONTENT_W - 124, 14).textAlign(com.cleanroommc.modularui.utils.Alignment.CenterRight)));
 
         tab.child(separator(CONTENT_W));
@@ -936,24 +1045,26 @@ public class AdaptiveNetTerminal extends MTEHatch {
         final int rowW = CONTENT_W - 8;
         ListWidget list = new ListWidget();
         list.scrollDirection(com.cleanroommc.modularui.api.GuiAxis.Y);
-        list.size(CONTENT_W, 148);
+        // 行高 24 + 分隔 1 = 25/行 ⇒ 200 高正好 8 行可见（再多的可滚动）
+        list.size(CONTENT_W, 200);
 
         com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache cache = com.wztwzt.ae2_qof.client.ClientState.hatchListCache;
         if (cache != null) {
             for (int i = 0; i < cache.entries.size(); i++) {
                 final com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache.HatchEntry entry = cache.entries.get(i);
 
-                net.minecraft.item.ItemStack iconStack = null;
-                int iconMetaId = entry.machineMetaId >= 0 ? entry.machineMetaId : entry.metaId;
-                if (iconMetaId >= 0 && iconMetaId < GregTechAPI.METATILEENTITIES.length
-                    && GregTechAPI.METATILEENTITIES[iconMetaId] instanceof MetaTileEntity) {
-                    iconStack = ((MetaTileEntity) GregTechAPI.METATILEENTITIES[iconMetaId]).getStackForm(1L);
-                }
+                // 3.32.0：名称与图标都在**客户端**按 MTE id 解析。旧实现把服务端算好的名字当字符串发下来，
+                // 专用服务器上必然是英文（服务端语言表只有 en_US）—— 与库存统计终端 3.31.0 同一个坑。
+                final net.minecraft.item.ItemStack iconStack = stackForMetaId(entry.displayMetaId);
                 final IWidget iconWidget = iconStack != null
                     ? new ItemDrawable(iconStack).asWidget().size(16, 16)
                     : new ItemDrawable().asWidget().size(16, 16);
+                final String hostLabel = hostLabelOf(iconStack);
+                final int textW = rowW - 16 - 46 - 8;
 
-                // 右侧操作按钮：左键高亮 / Shift+左键传送
+                // 右侧操作按钮：左键高亮 / Shift+左键传送。
+                // 3.32.0：改成**按坐标**寻址并定位到**主机**（旧实现按 helpers 的下标寻址，
+                // 列表重建/仓增删后索引会错位，可能跳到别的仓）。
                 ButtonWidget<?> actionBtn = new ButtonWidget<>()
                     .size(42, 18)
                     .background(GuiTextures.BUTTON_CLEAN)
@@ -966,34 +1077,53 @@ public class AdaptiveNetTerminal extends MTEHatch {
                         boolean shift = org.lwjgl.input.Keyboard.isKeyDown(org.lwjgl.input.Keyboard.KEY_LSHIFT)
                             || org.lwjgl.input.Keyboard.isKeyDown(org.lwjgl.input.Keyboard.KEY_RSHIFT);
                         int action = shift ? HatchActionPacket.ACTION_TELEPORT : HatchActionPacket.ACTION_HIGHLIGHT;
+                        // 主机行的着色：有输入仓用蓝色(1)，否则橙色(0)
+                        int colorType = entry.inCount > 0 ? 1 : 0;
                         ModNetwork.CHANNEL.sendToServer(new HatchActionPacket(
-                            action, ownerStr, frequencySync.getIntValue(), entry.index));
+                            action, ownerStr, frequencySync.getIntValue(),
+                            entry.dim, entry.x, entry.y, entry.z, colorType));
                         return true;
                     });
 
-                // 行布局：图标 + 机器名 + spacer + EU/t + tier + 按钮
-                Flow rowFlow = Flow.row().size(rowW, 20).childPadding(2).coverChildrenHeight(20)
+                // 行布局：图标 + 两行文字（主机名/耗电 + 仓数与额定·实测）+ 定位
+                Flow textCol = Flow.column().size(textW, 24).childPadding(0)
+                    .child(new TextWidget<>(IKey.dynamic(() -> {
+                        String prefix = entry.hostKnown
+                            ? EnumChatFormatting.WHITE + hostLabel
+                            : EnumChatFormatting.GRAY
+                                + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.unknown_host")
+                                + EnumChatFormatting.WHITE + hostLabel;
+                        // 注意：条件表达式的两个分支都是 EnumChatFormatting，结果类型是枚举而不是 String，
+                        // 所以这里显式声明为枚举，再靠字符串拼接（枚举 + String 才合法）
+                        EnumChatFormatting eutColor = entry.hostEut < 0 ? EnumChatFormatting.RED
+                            : (entry.hostEut > 0 ? EnumChatFormatting.GREEN : EnumChatFormatting.DARK_GRAY);
+                        return prefix + EnumChatFormatting.DARK_GRAY + "  ·  "
+                            + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.draw")
+                            + " " + eutColor + formatEU(entry.hostEut, displayMode) + " EU/t";
+                    })).size(textW, 12))
+                    .child(new TextWidget<>(IKey.dynamic(() -> EnumChatFormatting.GRAY.toString()
+                        + entry.hatchCount
+                        + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.hatch_unit")
+                        + " · " + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.in") + " "
+                        + entry.inCount + " / "
+                        + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.out") + " "
+                        + entry.outCount
+                        + " · " + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.rated") + " "
+                        + formatEU(entry.eut, displayMode)
+                        + " · " + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.flow") + " "
+                        + formatEU(entry.realFlowEUt, displayMode))).size(textW, 10).scale(0.8F));
+
+                Flow rowFlow = Flow.row().size(rowW, 24).childPadding(2)
+                    .crossAxisAlignment(com.cleanroommc.modularui.utils.Alignment.CrossAxis.CENTER)
                     .child(iconWidget)
-                    .child(new TextWidget<>(IKey.dynamic(() -> {
-                        String name = entry.name != null ? entry.name : "";
-                        if (name.length() > 16) name = name.substring(0, 16) + "...";
-                        return EnumChatFormatting.WHITE + name;
-                    })).size(110, 20))
-                    .child(new TextWidget<>(IKey.str("")).size(10, 20))
-                    .child(new TextWidget<>(IKey.dynamic(() -> {
-                        String eutStr = entry.realFlowEUt > 0
-                            ? formatEU(entry.realFlowEUt, displayMode) + " EU/t"
-                            : "0 EU/t";
-                        return EnumChatFormatting.GREEN + eutStr;
-                    })).size(80, 20).textAlign(com.cleanroommc.modularui.utils.Alignment.CenterRight))
-                    .child(new TextWidget<>(IKey.dynamic(() -> {
-                        return EnumChatFormatting.WHITE + "(" + GTUtility.getColoredTierNameFromTier((byte) entry.tier)
-                            + EnumChatFormatting.WHITE + ")";
-                    })).size(34, 20).textAlign(com.cleanroommc.modularui.utils.Alignment.CenterRight))
+                    .child(textCol)
                     .child(actionBtn);
 
                 rowFlow.tooltipBuilder(t -> {
-                    t.addLine(IKey.str(EnumChatFormatting.WHITE + entry.name));
+                    t.addLine(IKey.str(EnumChatFormatting.WHITE + hostLabel + (entry.hostKnown ? ""
+                        : EnumChatFormatting.GRAY + " ("
+                            + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.unknown_host")
+                            + ")")));
                     if (entry.ownerName != null && !entry.ownerName.isEmpty()) {
                         t.addLine(IKey.str(EnumChatFormatting.AQUA
                             + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.owner")
@@ -1002,8 +1132,24 @@ public class AdaptiveNetTerminal extends MTEHatch {
                     t.addLine(IKey.str(EnumChatFormatting.GRAY
                         + "[" + entry.x + ", " + entry.y + ", " + entry.z + "] dim:" + entry.dim));
                     t.addLine(IKey.str(EnumChatFormatting.YELLOW
-                        + "Capacity: " + formatEU(entry.eut, displayMode) + " EU/t"
-                        + " | Flow: " + formatEU(entry.realFlowEUt, displayMode) + " EU/t"));
+                        + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.draw") + ": "
+                        + formatEU(entry.hostEut, displayMode) + " EU/t"
+                        + " | " + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.rated") + ": "
+                        + formatEU(entry.eut, displayMode) + " EU/t"
+                        + " | " + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.flow") + ": "
+                        + formatEU(entry.realFlowEUt, displayMode) + " EU/t"));
+                    // 明细：逐仓列出类型/档位/安培/额定/实测（名称同样客户端解析）
+                    for (com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache.Sub sub : entry.subs) {
+                        net.minecraft.item.ItemStack subStack = stackForMetaId(sub.metaId);
+                        String subName = subStack != null ? subStack.getDisplayName() : ("#" + sub.metaId);
+                        t.addLine(IKey.str(EnumChatFormatting.GRAY + " - " + EnumChatFormatting.WHITE + subName
+                            + EnumChatFormatting.GRAY + " " + hatchTypeName(sub.hatchType)
+                            + " " + GTUtility.getColoredTierNameFromTier((byte) Math.max(0, Math.min(15, sub.tier)))
+                            + EnumChatFormatting.GRAY + " " + sub.amps + "A"
+                            + " · " + formatEU(sub.eut, displayMode)
+                            + " / " + formatEU(sub.realFlowEUt, displayMode)
+                            + " [" + sub.x + "," + sub.y + "," + sub.z + "]"));
+                    }
                     t.addLine(IKey.str(EnumChatFormatting.YELLOW + "左键定位: 高亮 | Shift+定位: 传送"));
                 });
 
@@ -1029,6 +1175,45 @@ public class AdaptiveNetTerminal extends MTEHatch {
 
     private static IWidget separator(int width) {
         return new TextWidget<>(IKey.str("")).size(width, 1);
+    }
+
+    /**
+     * 客户端按 MTE id 取物品 —— 名称与图标都由它**在客户端**解析。
+     *
+     * <p>为什么不直接发名字：服务端 {@code ItemStack.getDisplayName()} 走 {@code StatCollector}，
+     * 而专用服务器只有 en_US 语言表 ⇒ 发下来必是英文（与库存统计终端 3.31.0 同一个坑）。
+     */
+    private static ItemStack stackForMetaId(int metaId) {
+        if (metaId < 0 || metaId >= GregTechAPI.METATILEENTITIES.length) return null;
+        IMetaTileEntity mte = GregTechAPI.METATILEENTITIES[metaId];
+        if (!(mte instanceof MetaTileEntity)) return null;
+        try {
+            return ((MetaTileEntity) mte).getStackForm(1L);
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    private static String hostLabelOf(ItemStack iconStack) {
+        if (iconStack != null) {
+            try {
+                String n = iconStack.getDisplayName();
+                if (n != null && !n.isEmpty()) return n;
+            } catch (Throwable ignored) {}
+        }
+        return StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.unknown_host");
+    }
+
+    /** 明细行的仓类型名（0..3 = 本模组四类；其它 = TecTech 兼容）。 */
+    private static String hatchTypeName(int hatchType) {
+        String[] keys = {
+            "ae2_qof.gui.adaptive_terminal.dynamo_hatch",
+            "ae2_qof.gui.adaptive_terminal.energy_hatch",
+            "ae2_qof.gui.adaptive_terminal.laser_source",
+            "ae2_qof.gui.adaptive_terminal.laser_target"
+        };
+        if (hatchType >= 0 && hatchType < keys.length) return StatCollector.translateToLocal(keys[hatchType]);
+        return StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.compat");
     }
 
     @Override

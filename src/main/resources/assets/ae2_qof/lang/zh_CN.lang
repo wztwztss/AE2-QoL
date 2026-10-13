@@ -211,6 +211,17 @@ ae2_qof.gui.adaptive_terminal.hatch_list.output_count=输出仓
 ae2_qof.gui.adaptive_terminal.hatch_list.highlight=高亮
 ae2_qof.gui.adaptive_terminal.hatch_list.teleport=传送
 
+# ===== 3.32.0：子仓列表改成「一台主机一行」+ TecTech 激光仓兼容 =====
+ae2_qof.gui.adaptive_terminal.hatch_list.host_unit= 台主机
+ae2_qof.gui.adaptive_terminal.hatch_list.unknown_host=未识别主机
+ae2_qof.gui.adaptive_terminal.hatch_list.draw=耗电
+ae2_qof.gui.adaptive_terminal.hatch_list.hatch_unit= 仓
+ae2_qof.gui.adaptive_terminal.hatch_list.in=入
+ae2_qof.gui.adaptive_terminal.hatch_list.out=出
+ae2_qof.gui.adaptive_terminal.hatch_list.rated=额定
+ae2_qof.gui.adaptive_terminal.hatch_list.flow=实测
+ae2_qof.gui.adaptive_terminal.hatch_list.compat=TecTech兼容
+
 gt.blockmachines.adaptive_net_hatch.name=自适应电网仓
 gt.blockmachines.adaptive_net_hatch.tooltip=§6自适应电网仓\n§7跟随终端自动同步电压等级\n§7使用网络配置闪存绑定\n§8[AE2 QoL]
 gt.blockmachines.adaptive_net_hatch.desc=跟随终端自动同步电压等级的能源仓

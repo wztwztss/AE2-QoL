@@ -5,7 +5,7 @@
 
 **基准**：`3.20.0` 就是"第一次增加通配样板（编程样板输入总成 MK.III）"的那次功能发布；
 **从它之后的每一次发布都算 fix**，序号按真实发布顺序（数据取自本仓提交历史）编排。
-**当前版本 = `3.31.0`**（实践口径：真加功能升 0.1（`3.30.0 → 3.31.0`）；修 bug 用 `-fixN` 叠加在同一基线上）。
+**当前版本 = `3.32.0`**（实践口径：真加功能升 0.1（`3.31.0 → 3.32.0`）；修 bug 用 `-fixN` 叠加在同一基线上）。
 
 | 旧号 | 新号 | 旧号 | 新号 |
 |---|---|---|---|
@@ -33,6 +33,82 @@
 | 3.25.4 | 3.20.0-fix22 | | |
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
+
+## 工作区决策记录 2026-10-13 (90) - **3.32.0：自适应电网终端 —— 子仓列表按主机聚合 + 四仓检测按类 + TecTech 激光仓兼容**
+
+### 一、现象（用户实机报障两条，对照 GTNL 的能源监视器）
+1. **列表显示的是仓、不是耗电的机器主机**：GTNL 的能源监视器列的是一台台机器（带 EU/t），
+   我们的「子仓列表」481 行却全叫「自适应电网仓」，右侧 EU/t 还是按网络配置算出来的额定值。
+2. **四个仓的检测不对**：类型/档位/安培对不上、非本模组的同类仓被当成自己的仓、自动配置扫描范围不对。
+
+### 二、根因（行号 + 字节码级证据）
+**问题①（显示不出主机）**
+- 行的名称来源（改前 `AdaptiveNetTerminal.java:186-189`）：`h.getMachineName()` 为空就退回 `h.getCachedName()`
+  ⇒ 主机信息一空，显示的就是**仓自己**的名字；图标同理（`machineMetaId < 0 → cachedMetaId`）。
+- 而 `machineName/machineMetaId` 的**唯一写点**是四个仓各自的 `onFirstTick`（如 `AdaptiveNetHatch.java:156-176`），
+  内部调 `AdaptiveHatchHelper.findAttachedMachine`（改前 `:124-177`），它只搜内存注册表
+  `MultiblockRegistry`（`:21-46`）；注册表由 Mixin 在**控制器自己的** `handleFirstTick` TAIL 填充
+  （`MixinCommonBaseMetaTileEntityMultiblockRegistry.java:24-32`）。
+- 结果写进 NBT（`ae2qolMMN / ae2qolMMI`，`AdaptiveHatchHelper.java:308-311 / 334-336`）且**没有任何重算路径**
+  ⇒ 只要仓先 tick（区块加载顺序、结构未成型、服务器重启后先加载到仓的区块），就把**仓自己的名字永久缓存**，
+  这正是 481 行全叫「自适应电网仓」的原因。
+- 顺带：那一列 EU/t 是**额定值**（`V[tier] × amps`，激光 ×2），实测值 `realFlowEUt` 只用于排序。
+
+**问题②（四仓检测）**
+- 判据是**鸭子类型**（`HatchType.java:46-54`）：`DYNAMO→maxEUOutput()>0`、`ENERGY→maxEUInput()>0`、
+  **`LASER_SOURCE→maxEUInput()>0`（与 ENERGY 同值）**、**`LASER_TARGET→maxEUOutput()>0`（与 DYNAMO 同值）**。
+- 槽位验收（`isItemValidForSlot`，改前 `:1090-1097`）与"放入 64 个自动配置"（`updateParamsFromSlots`，改前 `:209-244`）
+  都用它，且档位/安培直接从**放入物品的 MTE** 读（`getInputTier/getOutputTier` + `maxAmperesIn/Out`），
+  空槽才回落默认（激光 256A/tier6）⇒ 任何 GT/TecTech 的能源/动力仓都能改写本网络同类仓的规格。
+- **TecTech 激光仓的真身**（实例 GT jar 的 javap）：激光源仓 = `tectech...MTEHatchDynamoTunnel`
+  （extends `MTEHatchDynamoMulti` extends `MTEHatchDynamo`）；激光靶仓 = `tectech...MTEHatchEnergyTunnel`
+  （extends `MTEHatchEnergyMulti` extends **`MTEHatch`** ⇒ 它在 GT 里进的是 `mExoticEnergyHatches`，**不是** `mEnergyHatches`）。
+  两者都提供 `public void setAmperes(int)`（**直接 putfield，不裁剪**）与 `public final int maxAmperes`；
+  且 `Amperes` **不进 NBT**（jar 字节码里没有该键）。
+
+**顺手发现的三个既有缺陷**
+- 陈旧清理只判 `getTileEntity(...) == null`（改前 `:127-144`）⇒ ① 未加载区块的仓被当成"已拆除"直接注销（漏仓）；
+  ② 不校验该位置**仍是我们的仓**（拆掉换机器后留幽灵条目）；
+- 计数用 `helpers.size()`、行却按坐标去重后自增 ⇒ 两个基数不一致；
+- 【定位】按 `helpers.get(msg.hatchIndex)` 取目标（改前 `HatchActionPacket.java:156-159`），
+  而 `getAllHelpers()` 每次新建、注册/注销会改顺序 ⇒ 列表重建后**定位会跳到别的仓**。
+
+### 三、改动（7 条）
+1. **新增 `hatch/adaptive/AdaptiveHostIndex.java`**：一次遍历 `MultiblockRegistry.snapshot()`，用 GT 自己维护的
+   `mEnergyHatches` / `mDynamoHatches` / `getExoticEnergyHatches()`（javap 确认均为 public）把仓认领到主机，
+   **O(主机数)**、不依赖任何 tick 时序；没被认领的仓单独成组（未识别主机，信息不消失）。
+2. `AdaptiveNetTerminal.sendHatchListSync` 改为**按主机出列**：主机名/图标**只发 MTE id**（客户端本地化解析）、
+   主机耗电取 `MTEMultiBlockBase.mEUt`（带符号）、仓数（入/出）、额定与实测合计、逐仓明细（Sub）。
+3. `HatchListCache` / `HatchListSyncPacket` 载荷重构为「主机行 + 明细数组」；排序按 |主机耗电| 降序、再按实测降序。
+4. `HatchType.isValidMTEType` 改**按类**：四个槽位分别只认本模组四个类；激光两类额外兼容 TecTech 两个类
+   （沿继承链比对**真实类名**，不形成编译期依赖）。
+5. **TecTech 兼容仓的安培周期写入**：`AdaptiveHostIndex.applyCompatAmps(...)` 一次扫描同时处理源/靶两类，
+   反射调 `setAmperes`、按 `maxAmperesIn/Out` 自己夹取，只在"已接入我们电网的主机"上写；
+   失败限频 WARN（不静默）。挂在终端 `onPreTick` 的 20 tick 节奏里。
+6. `dropStaleHelpers(...)`：维度/区块未加载 → **跳过**；已加载但该位置不再是我们的仓 → 注销并记一行 INFO。
+7. `HatchActionPacket` 改**坐标寻址**（服务端按坐标重新校验方块存在）+ 传送补"可站立落点"检查；
+   列表 UI 改成 24px 两行行高（8 行可见）、tooltip 逐仓明细。
+
+### 四、影响面与风险
+- **两份网络协议都改了**（`HatchListSyncPacket`、`HatchActionPacket`）⇒ **客户端与服务端必须同版本**（本项目铁则）。
+- 每 20 tick 多 1~2 次主机反查（O(主机数)）；旧的 `onFirstTick` 解析是**每个仓各扫一次注册表**（O(仓×主机)），
+  所以这次是净改善。481 仓规模的实机开销由用户实测确认。
+- TecTech 写入的已知代价（**已与用户确认接受**）：档位写不了（由物品决定）；周期写入会覆盖玩家在 TecTech GUI 里的手动安培。
+- GT 若改掉 `mEnergyHatches` 等公开字段名会在**编译期**失败（不是静默失效）；`getExoticEnergyHatches()` 读取异常会限频 WARN。
+- 旧 NBT 缓存字段（`ae2qolMMN / ae2qolMMI`）保留但不再参与显示（老存档兼容，不做清洗）。
+
+### 五、验证与待测
+- 构建：`JAVA_HOME=E:\java17`、`.\gradlew.bat build --offline -x spotlessJavaCheck -x spotlessCheck` →
+  **BUILD SUCCESSFUL**（`EXIT=0`，无管道取码）；产物 `build/libs/AE2-QoL-3.32.0.jar`
+  （**1,913,711 B**，SHA256 `585371C831838F3FD89A72505C08691124851869A87D3130C39FDD337CD33601`）。
+- 产物核对：`AdaptiveHostIndex` 入包；`javap` 确认新的行模型字段与 `HatchActionPacket` 坐标构造器；
+  包内 mcmod 版本 = 3.32.0；两份 lang 含 9 个新键；文本文件无 BOM。
+- **待用户实测 7 项**：① 子仓列表出现主机名/图标 + 主机耗电；② 同一主机的多台仓合成一行且合计正确；
+  ③ 认不出主机的仓显示「未识别主机」而不消失；④ 四个槽位放 GT 普通能源/动力仓被**拒绝**、放我们四个仓被接受且档位/安培正确；
+  ⑤ TecTech 激光仓出现在统计里且安培被写入（注意会覆盖它在 TecTech GUI 里的手动值）；
+  ⑥【定位】定位到主机、传送落在可站立位置；⑦ 拆掉仓后行消失，重进存档后行名不再退化成仓名。
+
+---
 
 ## 工作区决策记录 2026-10-09 (89) - **3.31.0：库存统计终端 —— 专用服中文名 + 目标真图标 + 左侧竖排双页**
 
