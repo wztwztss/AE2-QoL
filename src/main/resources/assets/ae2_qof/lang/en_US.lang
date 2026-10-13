@@ -223,6 +223,11 @@ ae2_qof.gui.adaptive_terminal.hatch_list.rated=Rated
 ae2_qof.gui.adaptive_terminal.hatch_list.flow=Flow
 ae2_qof.gui.adaptive_terminal.hatch_list.compat=TecTech compat
 
+# ===== 3.32.0-fix3: the main figure is the measured flow, plus a running/idle tag (GT's mEUt is not cleared when idle) =====
+ae2_qof.gui.adaptive_terminal.hatch_list.running=Running
+ae2_qof.gui.adaptive_terminal.hatch_list.idle=Idle
+ae2_qof.gui.adaptive_terminal.hatch_list.recipe=Recipe
+
 gt.blockmachines.adaptive_net_hatch.name=Adaptive Net Hatch
 gt.blockmachines.adaptive_net_hatch.tooltip=§6Adaptive Net Hatch\n§7Auto-syncs voltage tier with terminal\n§7Use Network Data Stick to bind\n§8[AE2 QoL]
 gt.blockmachines.adaptive_net_hatch.desc=Auto-syncs voltage tier with terminal

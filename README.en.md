@@ -14,6 +14,14 @@ An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI patte
 
 ## What's new in 3.32.0 (Adaptive Net Terminal: hatch list grouped per host, class-based hatch detection, TecTech laser hatch compat)
 
+> `3.32.0-fix3` **fixes "an idle machine shows a huge draw" and "the inventory covers the UI"**: the leading figure
+> is now the **measured flow** (what our own hatches actually carry; 0 when idle) with a **Running/Idle** tag,
+> because GT's `mEUt` is recipe-scoped and **is not cleared when a machine stops** - showing it as the draw made
+> an idle multiblock read "-458,752,000 EU/t". `mEUt` now only appears as "Recipe" while the host is running, and
+> rows are sorted by measured flow. Separately, MUI2 draws the player inventory **inside the panel's bottom**
+> (36 slots ~ 80px) and does not grow the panel, so filling the whole panel made it cover the list: the panel is
+> now 268 tall with 80px reserved (content viewport 180, about 6 rows plus scrolling).
+>
 > `3.32.0-fix2` **fixes a regression from fix1/3.32.0**: tightening the slot identity to "this mod's four classes only"
 > made GT/TecTech energy hatches impossible to place at all (and you were using them to declare the specs).
 > Acceptance is back to **real categories**: the ENERGY slot takes the `MTEHatchEnergy` family (including GT's

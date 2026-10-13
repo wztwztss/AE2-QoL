@@ -61,6 +61,7 @@ public class HatchListSyncPacket implements IMessage {
             for (int i = 0; i < count; i++) {
                 int displayMetaId = buf.readInt();
                 boolean hostKnown = buf.readBoolean();
+                boolean running = buf.readBoolean();
                 long hostEut = buf.readLong();
                 int hatchCount = buf.readUnsignedShort();
                 int inCount = buf.readUnsignedShort();
@@ -91,7 +92,7 @@ public class HatchListSyncPacket implements IMessage {
                         buf.readBoolean()));
                 }
                 this.entries.add(new HatchListCache.HatchEntry(
-                    displayMetaId, hostKnown, hostEut, hatchCount, inCount, outCount, eut, realFlowEUt, index,
+                    displayMetaId, hostKnown, running, hostEut, hatchCount, inCount, outCount, eut, realFlowEUt, index,
                     x, y, z, dim, ownerName, subs));
             }
         } catch (Throwable t) {
@@ -121,6 +122,7 @@ public class HatchListSyncPacket implements IMessage {
             for (HatchListCache.HatchEntry e : entries) {
                 buf.writeInt(e.displayMetaId);
                 buf.writeBoolean(e.hostKnown);
+                buf.writeBoolean(e.running);
                 buf.writeLong(e.hostEut);
                 buf.writeShort(e.hatchCount);
                 buf.writeShort(e.inCount);

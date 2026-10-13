@@ -65,6 +65,17 @@ public class AdaptiveNetTerminal extends MTEHatch {
     private static final int REQUIRED_STACK_SIZE = 64;
     private static final int TERMINAL_TIER = 4;
     private static final int CONTENT_W = 330;
+    /** 面板尺寸（3.32.0-fix3：给玩家背包留位置，并保证在 1080p + GUI 缩放 4 的约 270 高可用区里也放得下）。 */
+    private static final int PANEL_W = 370;
+    private static final int PANEL_H = 268;
+    /**
+     * MUI2 的 {@code bindPlayerInventory()} 把玩家背包（36 格 ≈ 76–80px）画在**面板内部的底部**，
+     * 它不会自动扩大面板。我们的内容必须止于 {@code PANEL_H - INV_RESERVED}，
+     * 否则背包会盖住列表尾部（用户实测截图：背包压在子仓列表下面几行上）。
+     */
+    private static final int INV_RESERVED = 80;
+    /** 页签内容视口高度 = 面板高 − 内容起点 4 − 背包预留 80 − 底部留白 4。 */
+    private static final int PAGE_H = PANEL_H - 4 - INV_RESERVED - 4;
 
     private UUID networkOwner;
     private int networkFrequency = 0;
@@ -211,7 +222,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
             // 名称/图标只发 MTE id，由客户端本地化解析（专用服上服务端字符串必是英文）
             int displayMetaId = group.hostKnown() ? group.hostMetaId : firstSubMetaId(subs);
             entries.add(new HatchListCache.HatchEntry(
-                displayMetaId, group.hostKnown(), group.hostEut(), subs.size(), inCount, outCount,
+                displayMetaId, group.hostKnown(), group.running, group.hostEut(), subs.size(), inCount, outCount,
                 ratedSum, flowSum, globalIndex++,
                 group.x, group.y, group.z, group.dim, ownerName, subs));
         }
@@ -704,7 +715,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
 
         PagedWidget.Controller tabController = new PagedWidget.Controller();
 
-        ModularPanel panel = ModularPanel.defaultPanel("adaptive_net_terminal", 370, 280);
+        ModularPanel panel = ModularPanel.defaultPanel("adaptive_net_terminal", PANEL_W, PANEL_H);
 
         int TAB_W = 36;
         int TAB_H = 28;
@@ -727,7 +738,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
         PagedWidget<?> pages = new PagedWidget<>()
             .controller(tabController)
             .pos(CONTENT_X, 4)
-            .size(CONTENT_W, 260)
+            .size(CONTENT_W, PAGE_H)
             .addPage(buildStatusTab(frequencySync, voltageTierSync, hatchTierSyncs, hatchAmpSyncs, hatchCountSyncs, ownerNameSync))
             .addPage(buildSettingsTab(hatchTierSyncs, hatchAmpSyncs))
             .addPage(buildFrequencyTab(frequencySync))
@@ -1074,7 +1085,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
     }
 
     private Flow buildHatchListTab(StringSyncValue ownerSync, IntSyncValue frequencySync) {
-        Flow tab = Flow.column().childPadding(2).size(CONTENT_W, 260);
+        Flow tab = Flow.column().childPadding(2).size(CONTENT_W, PAGE_H);
 
         // 标题行：标题（左）+ 总数（右）
         tab.child(Flow.row().size(CONTENT_W, 16).childPadding(2)
@@ -1093,8 +1104,8 @@ public class AdaptiveNetTerminal extends MTEHatch {
         final int rowW = CONTENT_W - 8;
         ListWidget list = new ListWidget();
         list.scrollDirection(com.cleanroommc.modularui.api.GuiAxis.Y);
-        // 行高 24 + 分隔 1 = 25/行 ⇒ 200 高正好 8 行可见（再多的可滚动）
-        list.size(CONTENT_W, 200);
+        // 行高 24 + 分隔 1 = 25/行；列表高度 = 页高 − 标题 16 − 两个分隔 2 − 页脚 12
+        list.size(CONTENT_W, PAGE_H - 30);
 
         com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache cache = com.wztwzt.ae2_qof.client.ClientState.hatchListCache;
         if (cache != null) {
@@ -1141,13 +1152,19 @@ public class AdaptiveNetTerminal extends MTEHatch {
                             : EnumChatFormatting.GRAY
                                 + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.unknown_host")
                                 + EnumChatFormatting.WHITE + hostLabel;
-                        // 注意：条件表达式的两个分支都是 EnumChatFormatting，结果类型是枚举而不是 String，
-                        // 所以这里显式声明为枚举，再靠字符串拼接（枚举 + String 才合法）
-                        EnumChatFormatting eutColor = entry.hostEut < 0 ? EnumChatFormatting.RED
-                            : (entry.hostEut > 0 ? EnumChatFormatting.GREEN : EnumChatFormatting.DARK_GRAY);
-                        return prefix + EnumChatFormatting.DARK_GRAY + "  ·  "
-                            + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.draw")
-                            + " " + eutColor + formatEU(entry.hostEut, displayMode) + " EU/t";
+                        // 状态标签：GT 的 mEUt 停机不清零 ⇒ 显示耗电前必须先问"在不在跑"
+                        String state = entry.running
+                            ? EnumChatFormatting.GREEN
+                                + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.running")
+                            : EnumChatFormatting.GRAY
+                                + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.idle");
+                        // 主数值 = **实测流量**（我们自己的仓量到的真实吞吐；停机自然为 0）
+                        EnumChatFormatting flowColor = entry.realFlowEUt != 0 ? EnumChatFormatting.RED
+                            : EnumChatFormatting.DARK_GRAY;
+                        return prefix + EnumChatFormatting.DARK_GRAY + "  ·  " + state
+                            + EnumChatFormatting.DARK_GRAY + "  ·  "
+                            + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.flow")
+                            + " " + flowColor + formatEU(entry.realFlowEUt, displayMode) + " EU/t";
                     })).size(textW, 12))
                     .child(new TextWidget<>(IKey.dynamic(() -> EnumChatFormatting.GRAY.toString()
                         + entry.hatchCount
@@ -1158,8 +1175,11 @@ public class AdaptiveNetTerminal extends MTEHatch {
                         + entry.outCount
                         + " · " + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.rated") + " "
                         + formatEU(entry.eut, displayMode)
-                        + " · " + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.flow") + " "
-                        + formatEU(entry.realFlowEUt, displayMode))).size(textW, 10).scale(0.8F));
+                        // 配方 EUt（GT 的 mEUt）**只在运行时**显示：停机时它是上一次配方的残留值
+                        + (entry.running
+                            ? " · " + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.recipe")
+                                + " " + EnumChatFormatting.RED + formatEU(entry.hostEut, displayMode)
+                            : ""))).size(textW, 10).scale(0.8F));
 
                 Flow rowFlow = Flow.row().size(rowW, 24).childPadding(2)
                     .crossAxisAlignment(com.cleanroommc.modularui.utils.Alignment.CrossAxis.CENTER)
@@ -1180,12 +1200,21 @@ public class AdaptiveNetTerminal extends MTEHatch {
                     t.addLine(IKey.str(EnumChatFormatting.GRAY
                         + "[" + entry.x + ", " + entry.y + ", " + entry.z + "] dim:" + entry.dim));
                     t.addLine(IKey.str(EnumChatFormatting.YELLOW
-                        + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.draw") + ": "
-                        + formatEU(entry.hostEut, displayMode) + " EU/t"
+                        + (entry.running
+                            ? EnumChatFormatting.GREEN
+                                + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.running")
+                            : EnumChatFormatting.GRAY
+                                + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.idle"))
+                        + EnumChatFormatting.YELLOW + " | "
+                        + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.flow") + ": "
+                        + formatEU(entry.realFlowEUt, displayMode) + " EU/t"
                         + " | " + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.rated") + ": "
                         + formatEU(entry.eut, displayMode) + " EU/t"
-                        + " | " + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.flow") + ": "
-                        + formatEU(entry.realFlowEUt, displayMode) + " EU/t"));
+                        + (entry.running
+                            ? " | "
+                                + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.recipe")
+                                + ": " + formatEU(entry.hostEut, displayMode) + " EU/t"
+                            : "")));
                     // 明细：逐仓列出类型/档位/安培/额定/实测（名称同样客户端解析）
                     for (com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache.Sub sub : entry.subs) {
                         net.minecraft.item.ItemStack subStack = stackForMetaId(sub.metaId);

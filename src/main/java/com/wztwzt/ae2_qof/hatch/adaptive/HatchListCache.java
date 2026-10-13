@@ -24,15 +24,21 @@ public class HatchListCache {
     public final String inputCountText;
     public final String outputCountText;
 
-    /** 排序：先按 |主机耗电| 降序（谁在吃电谁靠前），再按实测流量降序。 */
-    public static final Comparator<HatchEntry> HOST_EUT_DESC = (a, b) -> {
-        int c = Long.compare(Math.abs(b.hostEut), Math.abs(a.hostEut));
-        return c != 0 ? c : Long.compare(b.realFlowEUt, a.realFlowEUt);
+    /**
+     * 排序（3.32.0-fix3）：**先按实测流量降序**——真正在干活的机器排前面，待机的自然会沉到底部；
+     * 实测相同再按 |主机 mEUt| 降序。
+     *
+     * <p>为什么不再按 mEUt 排：GT 的 {@code mEUt} 停机后**不清零**（残留上一次配方的值），
+     * 用户实测到"最上面那台根本没工作却写着 -458,752,000 EU/t"。
+     */
+    public static final Comparator<HatchEntry> FLOW_DESC = (a, b) -> {
+        int c = Long.compare(Math.abs(b.realFlowEUt), Math.abs(a.realFlowEUt));
+        return c != 0 ? c : Long.compare(Math.abs(b.hostEut), Math.abs(a.hostEut));
     };
 
     public HatchListCache(int totalCount, int hostCount, List<HatchEntry> entries, String inputCountText,
                           String outputCountText) {
-        entries.sort(HOST_EUT_DESC);
+        entries.sort(FLOW_DESC);
         this.totalCount = totalCount;
         this.hostCount = hostCount;
         this.entries = Collections.unmodifiableList(entries);
@@ -50,7 +56,13 @@ public class HatchListCache {
         public final int displayMetaId;
         /** false = 未识别主机（不属于任何已注册多方块，或结构未成型）。 */
         public final boolean hostKnown;
-        /** 主机实时耗电 {@code MTEMultiBlockBase.mEUt}（带符号，消耗为负）；未识别主机为 0。 */
+        /**
+         * 这台主机此刻是否真的在干活（GT {@code MTEMultiBlockBase.mMaxProgresstime > 0}）。
+         * 3.32.0-fix3：**必须靠它决定要不要显示配方耗电**——GT 的 {@code mEUt} 停机后不清零，
+         * 直接显示就会出现"没工作却写着 -458,752,000 EU/t"（用户实测）。
+         */
+        public final boolean running;
+        /** 主机实时耗电 {@code MTEMultiBlockBase.mEUt}（带符号，消耗为负）；未识别主机为 0。**仅在 running 时有意义**。 */
         public final long hostEut;
         /** 本网络在这台主机上的仓数 / 其中输入类 / 输出类。 */
         public final int hatchCount;
@@ -67,11 +79,12 @@ public class HatchListCache {
         /** 明细（tooltip）：每台仓的类型/档位/安培/额定/实测/坐标。 */
         public final List<Sub> subs;
 
-        public HatchEntry(int displayMetaId, boolean hostKnown, long hostEut, int hatchCount, int inCount, int outCount,
-                          long eut, long realFlowEUt, int index, int x, int y, int z, int dim, String ownerName,
-                          List<Sub> subs) {
+        public HatchEntry(int displayMetaId, boolean hostKnown, boolean running, long hostEut, int hatchCount,
+                          int inCount, int outCount, long eut, long realFlowEUt, int index, int x, int y, int z,
+                          int dim, String ownerName, List<Sub> subs) {
             this.displayMetaId = displayMetaId;
             this.hostKnown = hostKnown;
+            this.running = running;
             this.hostEut = hostEut;
             this.hatchCount = Math.max(0, hatchCount);
             this.inCount = Math.max(0, inCount);

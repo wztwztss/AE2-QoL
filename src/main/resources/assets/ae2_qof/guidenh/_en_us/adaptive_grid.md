@@ -63,12 +63,18 @@ A GT hatch-based **adaptive energy network**. Configure a network ID via the Dat
 
 - **One row per host multiblock instead of one row per hatch.** Host names and icons are resolved client-side
   from the MTE id, so they stay localized on a dedicated server
-- Each row shows the **host's live draw** (signed; negative = consuming; GT's own `mEUt`), how many of this
-  network's hatches sit on that host (**in/out**), and the **rated** and **measured** totals
+- Each row leads with a **Running / Idle** tag plus the **measured flow** (what our own hatches actually carry;
+  0 when idle); the second line is `N hatch(es) · In/Out · rated power`
+- ⚠️ **GT's recipe EUt (`mEUt`) is not shown as the draw**: it is recipe-scoped and **is not cleared when the
+  machine stops**; it only appears as "Recipe" on the second line while the host is actually running.
+  An idle host reads "Idle · measured 0 EU/t" (since 3.32.0-fix3)
+- Rows are sorted by **measured flow**, so machines that are actually working come first and idle ones sink
 - Hover a row to expand a per-hatch breakdown (class, tier, amperage, rated/measured, coordinates)
 - Hatches whose host cannot be identified **do not disappear**; they are grouped under "Unknown host"
 - Locate targets the **host**: left-click highlights, Shift teleports next to it (a safe standing spot is
   searched; if none is found the teleport is cancelled with a notice)
+- The **player inventory** sits at the panel bottom (since 3.32.0-fix3 the panel reserves room for it, so it no
+  longer covers the list)
 - **TecTech laser hatches are included in both statistics and configuration**: only those on hosts that already
   run this network's hatches are counted, and their amperage is **rewritten periodically** (their amperage field
   is not persisted). ⚠️ Known limits: the tier cannot be changed (the item decides it), and the rewrite overrides

@@ -222,6 +222,11 @@ ae2_qof.gui.adaptive_terminal.hatch_list.rated=额定
 ae2_qof.gui.adaptive_terminal.hatch_list.flow=实测
 ae2_qof.gui.adaptive_terminal.hatch_list.compat=TecTech兼容
 
+# ===== 3.32.0-fix3：列表主数值改成实测、并显示运行/待机（GT 的 mEUt 停机不清零）=====
+ae2_qof.gui.adaptive_terminal.hatch_list.running=运行
+ae2_qof.gui.adaptive_terminal.hatch_list.idle=待机
+ae2_qof.gui.adaptive_terminal.hatch_list.recipe=配方
+
 gt.blockmachines.adaptive_net_hatch.name=自适应电网仓
 gt.blockmachines.adaptive_net_hatch.tooltip=§6自适应电网仓\n§7跟随终端自动同步电压等级\n§7使用网络配置闪存绑定\n§8[AE2 QoL]
 gt.blockmachines.adaptive_net_hatch.desc=跟随终端自动同步电压等级的能源仓

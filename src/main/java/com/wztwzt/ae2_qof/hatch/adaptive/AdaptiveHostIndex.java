@@ -52,6 +52,11 @@ public final class AdaptiveHostIndex {
         public final List<AdaptiveHatchHelper> adaptive = new ArrayList<>();
         /** 本主机上的 TecTech 兼容激光仓（不是我们的类）。 */
         public final List<MetaTileEntity> compat = new ArrayList<>();
+        /**
+         * 这台主机此刻是否真的在运行（{@link MTEMultiBlockBase#mMaxProgresstime} > 0）。
+         * GT 的 {@code mEUt} 停机后**不清零**，所以显示耗电前必须先问这个。
+         */
+        public final boolean running;
 
         HostGroup(MTEMultiBlockBase host, int dim, int x, int y, int z, int hostMetaId) {
             this.host = host;
@@ -60,6 +65,7 @@ public final class AdaptiveHostIndex {
             this.y = y;
             this.z = z;
             this.hostMetaId = hostMetaId;
+            this.running = isRunning(host);
         }
 
         public boolean hostKnown() {
@@ -176,16 +182,6 @@ public final class AdaptiveHostIndex {
         return new ArrayList<>(groups.values());
     }
 
-    /** 主机控制器物品的 MTE id（= 物品 meta）；取不到返回 -1。 */
-    public static int hostMetaIdOf(MTEMultiBlockBase host) {
-        try {
-            net.minecraft.item.ItemStack stack = host.getStackForm(1L);
-            return stack == null ? -1 : stack.getItemDamage();
-        } catch (Throwable t) {
-            return -1;
-        }
-    }
-
     /** 某个仓（我们的）所在方块上的 MTE id；取不到返回 -1。 */
     public static int hatchMetaIdOf(AdaptiveHatchHelper helper) {
         try {
@@ -201,6 +197,31 @@ public final class AdaptiveHostIndex {
             return stack == null ? -1 : stack.getItemDamage();
         } catch (Throwable t) {
             return -1;
+        }
+    }
+
+    /** 主机控制器物品的 MTE id（= 物品 meta）；取不到返回 -1。 */
+    public static int hostMetaIdOf(MTEMultiBlockBase host) {
+        try {
+            net.minecraft.item.ItemStack stack = host.getStackForm(1L);
+            return stack == null ? -1 : stack.getItemDamage();
+        } catch (Throwable t) {
+            return -1;
+        }
+    }
+
+    /**
+     * 这台主机此刻是否真的在运行。
+     *
+     * <p>判据是 GT 的 {@code MTEMultiBlockBase.mMaxProgresstime}（当前配方的剩余 tick，0 = 空闲）。
+     * **为什么必须先问它**：GT 的 {@code mEUt} 在机器停机后**不清零**，会残留上一次配方的值——
+     * 用户实测到"最上面那台根本没工作却写着 -458,752,000 EU/t"，而同一行的实测流量是 0。
+     */
+    public static boolean isRunning(MTEMultiBlockBase host) {
+        try {
+            return host != null && host.mMaxProgresstime > 0;
+        } catch (Throwable t) {
+            return false;
         }
     }
 
