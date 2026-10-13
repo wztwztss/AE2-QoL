@@ -179,6 +179,21 @@ public class AdaptiveHatchHelper {
     public long getRealFlowEUt() { return realFlowEUt; }
     public void setRealFlowEUt(long realFlowEUt) { this.realFlowEUt = realFlowEUt; }
 
+    /**
+     * 实测流量的采样窗口（tick）。
+     *
+     * <p>四个仓都在 {@code aTick % 4 == 0} 的节拍上采样一次，所以"一个窗口内的增量 ÷ 窗口"才是 **EU/t**。
+     *
+     * <p>3.32.0-fix4：旧实现把**窗口增量**直接当 EU/t 存进 {@link #realFlowEUt}，
+     * 于是列表里的"实测"恰好放大 **4 倍**（用户实测：额定 4,194,304 却显示实测 16,777,216 = ×4）。
+     */
+    public static final int FLOW_WINDOW_TICKS = 4;
+
+    /** 用"一个采样窗口内的增量"更新实测流量，内部换算成 **EU/t**（负数按 0 处理）。 */
+    public void updateRealFlowEUt(long deltaInWindow) {
+        this.realFlowEUt = Math.max(0L, deltaInWindow) / FLOW_WINDOW_TICKS;
+    }
+
     public int getLastVoltageTier() { return lastVoltageTier; }
     public void setLastVoltageTier(int v) { this.lastVoltageTier = v; }
     public int getLastAmps() { return lastAmps; }

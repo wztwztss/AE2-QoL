@@ -1147,26 +1147,27 @@ public class AdaptiveNetTerminal extends MTEHatch {
                 // 行布局：图标 + 两行文字（主机名/耗电 + 仓数与额定·实测）+ 定位
                 Flow textCol = Flow.column().size(textW, 24).childPadding(0)
                     .child(new TextWidget<>(IKey.dynamic(() -> {
+                        // 3.32.0-fix4：MUI2 面板是浅色底 ⇒ 一律用**深色**字，白/亮色在浅底上糊成一片（用户反馈"颜色不清晰"）
                         String prefix = entry.hostKnown
-                            ? EnumChatFormatting.WHITE + hostLabel
+                            ? EnumChatFormatting.BLACK + hostLabel
                             : EnumChatFormatting.GRAY
                                 + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.unknown_host")
-                                + EnumChatFormatting.WHITE + hostLabel;
+                                + EnumChatFormatting.BLACK + hostLabel;
                         // 状态标签：GT 的 mEUt 停机不清零 ⇒ 显示耗电前必须先问"在不在跑"
                         String state = entry.running
-                            ? EnumChatFormatting.GREEN
+                            ? EnumChatFormatting.DARK_GREEN
                                 + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.running")
                             : EnumChatFormatting.GRAY
                                 + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.idle");
                         // 主数值 = **实测流量**（我们自己的仓量到的真实吞吐；停机自然为 0）
-                        EnumChatFormatting flowColor = entry.realFlowEUt != 0 ? EnumChatFormatting.RED
+                        EnumChatFormatting flowColor = entry.realFlowEUt != 0 ? EnumChatFormatting.DARK_RED
                             : EnumChatFormatting.DARK_GRAY;
                         return prefix + EnumChatFormatting.DARK_GRAY + "  ·  " + state
-                            + EnumChatFormatting.DARK_GRAY + "  ·  "
+                            + EnumChatFormatting.DARK_GRAY + "  ·  " + EnumChatFormatting.DARK_AQUA
                             + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.flow")
                             + " " + flowColor + formatEU(entry.realFlowEUt, displayMode) + " EU/t";
                     })).size(textW, 12))
-                    .child(new TextWidget<>(IKey.dynamic(() -> EnumChatFormatting.GRAY.toString()
+                    .child(new TextWidget<>(IKey.dynamic(() -> EnumChatFormatting.DARK_GRAY.toString()
                         + entry.hatchCount
                         + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.hatch_unit")
                         + " · " + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.in") + " "
@@ -1174,12 +1175,13 @@ public class AdaptiveNetTerminal extends MTEHatch {
                         + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.out") + " "
                         + entry.outCount
                         + " · " + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.rated") + " "
-                        + formatEU(entry.eut, displayMode)
+                        + EnumChatFormatting.DARK_BLUE + formatEU(entry.eut, displayMode)
                         // 配方 EUt（GT 的 mEUt）**只在运行时**显示：停机时它是上一次配方的残留值
                         + (entry.running
-                            ? " · " + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.recipe")
-                                + " " + EnumChatFormatting.RED + formatEU(entry.hostEut, displayMode)
-                            : ""))).size(textW, 10).scale(0.8F));
+                            ? " · " + EnumChatFormatting.DARK_GRAY
+                                + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.recipe")
+                                + " " + EnumChatFormatting.DARK_PURPLE + formatEU(entry.hostEut, displayMode)
+                            : ""))).size(textW, 11).scale(0.85F));
 
                 Flow rowFlow = Flow.row().size(rowW, 24).childPadding(2)
                     .crossAxisAlignment(com.cleanroommc.modularui.utils.Alignment.CrossAxis.CENTER)

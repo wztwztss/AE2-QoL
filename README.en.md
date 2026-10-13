@@ -14,6 +14,13 @@ An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI patte
 
 ## What's new in 3.32.0 (Adaptive Net Terminal: hatch list grouped per host, class-based hatch detection, TecTech laser hatch compat)
 
+> `3.32.0-fix4` **fixes "the measured flow is 4x the rating" and the unreadable small text**: all four hatches sample
+> on a 4-tick cadence, and the old code stored the **4-tick window delta** as if it were EU/t, inflating the measured
+> figure by exactly 4x (a 4,194,304 rating displayed 16,777,216). It is now normalised through
+> `FLOW_WINDOW_TICKS = 4` so measured, rated and recipe figures are all EU/t and directly comparable. The second
+> line also switched to **dark colours on the light panel** (rated = dark blue, recipe = dark purple, labels = dark
+> grey) with the small text going from 10px to 11px and 0.8x to 0.85x.
+>
 > `3.32.0-fix3` **fixes "an idle machine shows a huge draw" and "the inventory covers the UI"**: the leading figure
 > is now the **measured flow** (what our own hatches actually carry; 0 when idle) with a **Running/Idle** tag,
 > because GT's `mEUt` is recipe-scoped and **is not cleared when a machine stops** - showing it as the draw made

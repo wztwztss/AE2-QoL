@@ -179,7 +179,8 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
 
         aBase.decreaseStoredEnergyUnits(stored, false);
         WirelessNetworkManager.addEUToGlobalEnergyMap(owner, stored);
-        helper.setRealFlowEUt(stored);
+        // 3.32.0-fix4：本次推送的是"这 4 tick 窗口"累计的缓存量，换算成 EU/t 才是速率
+        helper.updateRealFlowEUt(stored);
     }
 
     @Override

@@ -65,6 +65,9 @@ A GT hatch-based **adaptive energy network**. Configure a network ID via the Dat
   from the MTE id, so they stay localized on a dedicated server
 - Each row leads with a **Running / Idle** tag plus the **measured flow** (what our own hatches actually carry;
   0 when idle); the second line is `N hatch(es) · In/Out · rated power`
+- "Measured" is a real **EU/t** figure (the hatches sample every 4 ticks and the window is divided out), so it is
+  directly comparable with the rated and recipe figures; a machine reading well above its rating usually just runs
+  parallel or several recipes (the rating is only that class's ceiling) - hover the row for the per-hatch breakdown
 - ⚠️ **GT's recipe EUt (`mEUt`) is not shown as the draw**: it is recipe-scoped and **is not cleared when the
   machine stops**; it only appears as "Recipe" on the second line while the host is actually running.
   An idle host reads "Idle · measured 0 EU/t" (since 3.32.0-fix3)

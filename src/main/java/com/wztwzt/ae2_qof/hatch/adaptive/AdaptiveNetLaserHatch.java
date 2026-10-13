@@ -132,7 +132,8 @@ public class AdaptiveNetLaserHatch extends MTEHatchEnergy {
             if (consumed > 0) {
                 WirelessNetworkManager.addEUToGlobalEnergyMap(owner, -consumed);
             }
-            helper.setRealFlowEUt(consumed > 0 ? consumed : 0L);
+            // 3.32.0-fix4：consumed 是"这 4 tick 窗口"的增量，必须换算成 EU/t（否则列表实测放大 4 倍）
+            helper.updateRealFlowEUt(consumed > 0 ? consumed : 0L);
             long gridEU = AdaptiveHatchHelper.getGridEULong(owner);
             helper.setLastGridEU(gridEU);
             long maxStore = maxEUStore();
