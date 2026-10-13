@@ -14,6 +14,15 @@ An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI patte
 
 ## What's new in 3.32.0 (Adaptive Net Terminal: hatch list grouped per host, class-based hatch detection, TecTech laser hatch compat)
 
+> `3.32.0-fix2` **fixes a regression from fix1/3.32.0**: tightening the slot identity to "this mod's four classes only"
+> made GT/TecTech energy hatches impossible to place at all (and you were using them to declare the specs).
+> Acceptance is back to **real categories**: the ENERGY slot takes the `MTEHatchEnergy` family (including GT's
+> wireless energy hatches) plus TecTech's multi-amp energy family; DYNAMO takes the `MTEHatchDynamo` family
+> (including TecTech's multi-amp dynamo and laser source hatches); the two laser slots take this mod's laser
+> hatches plus TecTech's laser source/target. **Machine hulls are still rejected.** Values follow fix1 (this mod's
+> four classes use their factory rating 1A/1A/256A/256A; other hatches use their own rated amperage).
+> The full list of accepted items with IDs is in `docs/ADAPTIVE_HATCH_WHITELIST.md`.
+>
 > `3.32.0-fix1` **fixes the amperage read from the four slots**: the old code copied a *foreign* hatch's own runtime
 > number into the network - GT's plain energy hatch hard-codes 2A (so a "1A" reading showed 2A), TecTech's energy
 > class returns `Amperes + Amperes/4` (**x1.25**, so 64A read as **80A**), and a machine hull passed the check at all

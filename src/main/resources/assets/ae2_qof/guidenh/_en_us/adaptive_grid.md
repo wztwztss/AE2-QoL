@@ -45,11 +45,14 @@ A GT hatch-based **adaptive energy network**. Configure a network ID via the Dat
   (`maxAmperes`), not the runtime method that applies GT's x1.25 rule
 - **Manual wins**: tier/amperage you change on the terminal is only recomputed when a slot's contents actually
   change, so it is no longer overwritten periodically
-- **Identity is class-based since 3.32.0**: each slot accepts only this mod's four hatch classes, and the two
-  laser slots additionally accept TecTech's **laser source** (`MTEHatchDynamoTunnel`) and **laser target**
-  (`MTEHatchEnergyTunnel`). Machine hulls and plain GT energy/dynamo hatches are **rejected** (older builds
-  accepted a hull because `MTEBasicHull.maxEUInput()` is `V[mTier] > 0`, read 2A from a GT energy hatch and
-  80A from a TecTech 64A hatch)
+- **Identity is category-based since 3.32.0-fix2**: the slots accept whole hatch families, not just this mod's four
+  classes. ENERGY = the `MTEHatchEnergy` family (GT tiered energy hatches, GT wireless energy hatches) plus
+  TecTech's multi-amp energy family (4/16/64A energy, wireless energy, laser target); DYNAMO = the
+  `MTEHatchDynamo` family (GT tiered dynamo, TecTech multi-amp dynamo, TecTech laser source);
+  LASER SOURCE = this mod's laser hatch + TecTech laser source; LASER TARGET = this mod's laser target hatch +
+  TecTech laser target. **Machine hulls and GT tanks are rejected** (older builds let a hull through because
+  `MTEBasicHull.maxEUInput()` is `V[mTier] > 0`)
+- The full list of accepted items with IDs is in the repository document `docs/ADAPTIVE_HATCH_WHITELIST.md`
 
 ### Frequency Settings
 

@@ -5,7 +5,7 @@
 
 **基准**：`3.20.0` 就是"第一次增加通配样板（编程样板输入总成 MK.III）"的那次功能发布；
 **从它之后的每一次发布都算 fix**，序号按真实发布顺序（数据取自本仓提交历史）编排。
-**当前版本 = `3.32.0-fix1`**（实践口径：真加功能升 0.1（`3.31.0 → 3.32.0`）；修 bug 用 `-fixN` 叠加在同一基线上）。
+**当前版本 = `3.32.0-fix2`**（实践口径：真加功能升 0.1（`3.31.0 → 3.32.0`）；修 bug 用 `-fixN` 叠加在同一基线上）。
 
 | 旧号 | 新号 | 旧号 | 新号 |
 |---|---|---|---|
@@ -33,6 +33,53 @@
 | 3.25.4 | 3.20.0-fix22 | | |
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
+
+## 工作区决策记录 2026-10-13 (92) - **3.32.0-fix2：修 3.32.0 的回归「任何能源仓都放不进槽位」+ 交付「能识别名单（含 ID）」**
+
+### 一、现象（用户实测，紧接 fix1）
+> 「重大恶心bug，任何能源仓都放不进去了，全都不能识别」
+
+用户本来正是用 **GT/TecTech 的能源仓**来告诉终端"这一类仓的规格"，所以这条回归等于把该功能整体废掉。
+
+### 二、根因（明确的自身回归）
+3.32.0 把身份判据从鸭子类型改成**只认本模组自己的四个类**，而槽位的**放置门禁**是
+`AdaptiveNetTerminal.isItemValidForSlot(aIndex, stack)`（MUI2 的 `ModularSlot` 会调用它）⇒
+GT 标准能源仓（`MTEHatchEnergy`）与 TecTech 的能源族（`MTEHatchEnergyMulti` 等，它们**只 extends `MTEHatch`**）
+在**放置那一刻**就被拒。方向错了：要修的是**从槽位物品读出来的取值**，不是"谁能进槽位"。
+
+### 三、改动
+1. `HatchType.isValidMTEType` 改成**按真实类别（继承关系）**，判据表（继承关系已用实例 GT jar 的 javap 核对）：
+   - **DYNAMO** = `instanceof MTEHatchDynamo` ⇒ 我们 32104 + GT 分级动力仓(30–39) + TecTech `MTEHatchDynamoMulti` /
+     `MTEHatchDynamoTunnel`（后两者都是 `MTEHatchDynamo` 子类）
+   - **ENERGY** = `instanceof MTEHatchEnergy` ⇒ 我们 32102 + GT 分级能源仓(40–49) + GT 无线能源仓
+     (`MTEWirelessEnergy extends MTEHatchEnergy`)；**或**类名链含 `tectech...MTEHatchEnergyMulti` ⇒ 覆盖
+     TecTech 4/16/64安能源仓、无线能源仓、激光靶仓
+   - **LASER_SOURCE** = 我们 32103 + TecTech `MTEHatchDynamoTunnel`（dump 名：256安…**激光源仓**）
+   - **LASER_TARGET** = 我们 32105 + TecTech `MTEHatchEnergyTunnel`（dump 名：256安…**激光靶仓**）
+   - **机械外壳仍拒收**：`MTEBasicHull extends MTEBasicTank`，既不是 `MTEHatchEnergy` 也不是 `MTEHatchDynamo`，
+     类名也不在兼容表里（旧版的洞正是它靠 `maxEUInput()=V[mTier]>0` 混进来）
+2. **取值保持 fix1**（我方四类用出厂额定；其它仓优先读评级字段 `maxAmperes`，没有再退 `maxAmperesIn/Out()`），
+   **手改不被周期覆盖**也保持 fix1（只在槽位内容变化时重算）。
+3. **新增 `docs/ADAPTIVE_HATCH_WHITELIST.md`**：用用户刷新的 `docs/dumps/metatileentity.csv` 生成的**完整可识别名单**
+   （ID / 名称 / 类，按四个槽位分节）。条数：**能源 306、动力 150、激光源 84、激光靶 84**
+   （激光源/靶仓同时也在动力/能源槽的继承链里，文档已注明这处重叠）。
+
+### 四、影响面与风险
+- 只动 `hatch/adaptive/HatchType.java` + 文档/指南页；`ratedAmps` 与 `updateParamsFromSlots` 逻辑未变，
+  协议与存档结构未动 ⇒ 可与 3.32.0 / fix1 叠加（按铁则两端仍同版本）。
+- 已知取舍：能源槽会同时接受 TecTech 激光靶仓、动力槽会同时接受 TecTech 激光源仓（继承链所致，已写进名单文档）。
+- 名单由 dump 生成 ⇒ 只覆盖 dump 里存在的物品；以后整合包新增仓类时按同一规则自动落进对应槽位（判据是继承关系，
+  不是硬编码 ID）。
+
+### 五、验证与待测
+- 构建：`JAVA_HOME=E:\java17`、`.\gradlew.bat build --offline -x spotlessJavaCheck -x spotlessCheck` →
+  **BUILD SUCCESSFUL**（`EXIT=0`）；产物 `build/libs/AE2-QoL-3.32.0-fix2.jar`
+  （**1,915,519 B**，SHA256 `1FCE122DF247B69304D185A2CCAEA0FB0AF50000EE69ECC2622CF0CA2D858859`）。
+- **待用户实测 4 项**：① GT 标准能源仓/动力仓能放进对应槽位（分别读 **2A / 1A**）；
+  ② TecTech 4/16/64安能源仓能放，且读 **4/16/64**（不是 5/20/80）；③ 我们自己的四个仓能放，读 **1A/1A/256A/256A**；
+  ④ **机械外壳仍被拒**（槽位显示 `ULV 0V 0A`，且不改写网络里的档位/安培）。
+
+---
 
 ## 工作区决策记录 2026-10-13 (91) - **3.32.0-fix1：四个槽位的档位/安培读错（放 1A 读成 2A、64A 读成 80A、机械外壳也被识别）**
 
