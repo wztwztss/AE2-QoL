@@ -10,9 +10,9 @@
 
 > 当前基线：GTNH **2.9.0-beta-3** / MC 1.7.10 / 版本 `3.31.0`。
 > 清单与 `src/main/resources/mixins.ae2_qof.json` 逐条对齐（通用 19 条 + client 16 条 = 35 条）。
-> ⚠️ **3.31.0 核实到的既有不一致（未处理，需用户拍板）**：仓库根 `mixins.ae2_qof.json` 缺 5 条 `gt.MixinSteam*Tuning`
-> （3.29.0 那轮只改了 `src/main/resources/` 那份）⇒ 两份**不逐字节一致**。进 jar 的是 `src/main/resources` 那份，
-> 运行时不受影响；但本项目约定两份必须一致，**下一次动 mixin 配置前先落实这一点**。
+> **3.31.0 轮核实并已修复的既有不一致**：仓库根 `mixins.ae2_qof.json` 曾缺 5 条 `gt.MixinSteam*Tuning`
+> （3.29.0 那轮只改了 `src/main/resources/` 那份）⇒ 两份不逐字节一致；已在 `b4a36e0` 补齐，
+> 现两份**逐字节一致（43 条）**。**改 mixin 配置永远两份一起改**——进 jar 的是 `src/main/resources` 那份。
 >
 > **3.28.0 起两处"已停用但仍入包"的注入**（用户决定停用线程，代码保留）：
 > 1. `mixin/gt/MixinProcessingLogicSpeed.ae2qol$logParallelOnce`（并行设定诊断）—— `@Inject` **整段注释掉**，
