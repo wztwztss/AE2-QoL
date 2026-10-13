@@ -83,6 +83,30 @@ public enum HatchType {
         return this == LASER_SOURCE || this == LASER_TARGET;
     }
 
+    /**
+     * 该 MTE 是否属于本槽位的**本模组**类（不含 TecTech 兼容项）。
+     *
+     * <p>3.32.0-fix1：本模组自己的仓是**可配置**的——它们的 {@code maxAmperesIn/Out()} 返回的是
+     * {@code helper.getCurrentAmps()}（当前配置值），{@code maxEUInput()/maxEUOutput()} 也按配置档位算，
+     * 拿"槽位里的那个原型实例"去读只会得到出厂初值（安培 1、档位 ULV），**不是**该类应有的额定。
+     * 所以对它们一律取 {@link #defaultTier} / {@link #defaultAmps}（能源/动力 1A、激光 256A）。
+     */
+    public boolean isOwnClass(MetaTileEntity mte) {
+        if (mte == null) return false;
+        switch (this) {
+            case DYNAMO:
+                return mte instanceof AdaptiveNetDynamoHatch;
+            case ENERGY:
+                return mte instanceof AdaptiveNetHatch;
+            case LASER_SOURCE:
+                return mte instanceof AdaptiveNetLaserHatch;
+            case LASER_TARGET:
+                return mte instanceof AdaptiveNetLaserTargetHatch;
+            default:
+                return false;
+        }
+    }
+
     /** TecTech 激光源仓（沿继承链比对类名，避免对 TecTech 形成编译期依赖）。 */
     public static boolean isTecTechLaserSource(MetaTileEntity mte) {
         return hasClassNamed(mte, TECTECH_LASER_SOURCE);

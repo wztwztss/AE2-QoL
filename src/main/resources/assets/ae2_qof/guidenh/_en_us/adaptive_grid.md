@@ -39,11 +39,17 @@ A GT hatch-based **adaptive energy network**. Configure a network ID via the Dat
 
 - Set the target voltage tier and target amperage; every bound hatch auto-adapts to them
 - Put **64 items of the same hatch class** into each of the four slots (dynamo / energy / laser source /
-  laser target) to copy that class's tier and amperage onto the whole network
+  laser target) to copy that class's specs onto the whole network
+- **Where the specs come from (3.32.0-fix1)**: this mod's own four classes use their **factory rating**
+  (1A for energy/dynamo, 256A for laser); TecTech laser source/target hatches use their **rating field**
+  (`maxAmperes`), not the runtime method that applies GT's x1.25 rule
+- **Manual wins**: tier/amperage you change on the terminal is only recomputed when a slot's contents actually
+  change, so it is no longer overwritten periodically
 - **Identity is class-based since 3.32.0**: each slot accepts only this mod's four hatch classes, and the two
   laser slots additionally accept TecTech's **laser source** (`MTEHatchDynamoTunnel`) and **laser target**
-  (`MTEHatchEnergyTunnel`). A plain GT energy or dynamo hatch is now **rejected** (older builds accepted it and
-  then rewrote the whole network from that foreign hatch's ratings)
+  (`MTEHatchEnergyTunnel`). Machine hulls and plain GT energy/dynamo hatches are **rejected** (older builds
+  accepted a hull because `MTEBasicHull.maxEUInput()` is `V[mTier] > 0`, read 2A from a GT energy hatch and
+  80A from a TecTech 64A hatch)
 
 ### Frequency Settings
 

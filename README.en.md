@@ -14,6 +14,15 @@ An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI patte
 
 ## What's new in 3.32.0 (Adaptive Net Terminal: hatch list grouped per host, class-based hatch detection, TecTech laser hatch compat)
 
+> `3.32.0-fix1` **fixes the amperage read from the four slots**: the old code copied a *foreign* hatch's own runtime
+> number into the network - GT's plain energy hatch hard-codes 2A (so a "1A" reading showed 2A), TecTech's energy
+> class returns `Amperes + Amperes/4` (**x1.25**, so 64A read as **80A**), and a machine hull passed the check at all
+> because `MTEBasicHull.maxEUInput()` returns `V[mTier] > 0`. Now identity is class-based (hulls and plain GT
+> energy/dynamo hatches are rejected), this mod's four classes use their **factory rating** (1A for energy/dynamo,
+> 256A for laser), TecTech compat classes use their **`maxAmperes` rating field** instead of the x1.25 method, and
+> the recompute only runs when a slot's contents actually change - so manual tier/amperage edits on the terminal
+> are no longer overwritten every 20 ticks.
+
 - **The hatch list is now one row per host instead of one row per hatch** (matching GTNL's Energy Monitor):
   it shows the **host name/icon**, the **host's live draw (`mEUt`) with sign** (negative = consuming),
   how many of this network's hatches sit on that host (in/out), and the **rated and measured totals**;

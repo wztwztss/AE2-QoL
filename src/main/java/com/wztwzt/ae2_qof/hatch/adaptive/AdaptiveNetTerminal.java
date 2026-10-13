@@ -76,6 +76,11 @@ public class AdaptiveNetTerminal extends MTEHatch {
     private int currentVoltageTier = 0;
     private int[] hatchTiers = new int[HatchType.COUNT];
     private int[] hatchAmps = new int[HatchType.COUNT];
+    /**
+     * 上一次重算时各槽位的物品指纹（3.32.0-fix1）。
+     * 内容没变就不再重算——否则每 20 tick 都会用槽位物品的读数覆盖玩家手改的档位/安培。
+     */
+    private final String[] lastSlotSignature = new String[HatchType.COUNT];
 
     public AdaptiveNetTerminal(int aID, String aName, String aNameRegional, int aTier) {
         super(aID, aName, aNameRegional, aTier, 4, new String[] { "Adaptive Net Terminal" });
@@ -294,7 +299,33 @@ public class AdaptiveNetTerminal extends MTEHatch {
         }
     }
 
+    /**
+     * 从四个槽位重算"该类仓的档位/安培"。
+     *
+     * <h2>3.32.0-fix1 的两处修正（用户实测：放 1A 识别成 2A、放 64A 识别成 80A、机械外壳也被识别）</h2>
+     * <ol>
+     * <li><b>不再从外来仓读 {@code maxAmperesIn/Out()}</b>：那不是"这个仓是多少安"——
+     * GT 标准能源仓硬编码返回 **2**（所以"1A"变 2A）；TecTech 能源类返回
+     * {@code Amperes + (Amperes >> 2)}（**×1.25**，64安→**80A**，字节码已核对）。
+     * 现在：本模组自己的四类一律取 {@link HatchType#defaultTier}/{@link HatchType#defaultAmps}
+     * （它们的 {@code maxAmperes*} 返回的是**当前配置值**，读原型实例只会得到出厂初值）；
+     * TecTech 兼容类取物品档位 + **评级字段** {@code maxAmperes}（见 {@link AdaptiveHostIndex#ratedAmps}）。</li>
+     * <li><b>只在槽位内容变化时重算</b>：旧实现每 20 tick 无条件重算并 {@code applySettings()}，
+     * 会把玩家在终端上手动改的档位/安培按槽位物品的读数**打回**（手改等于不生效）。</li>
+     * </ol>
+     */
     private void updateParamsFromSlots() {
+        // ① 槽位内容没变就直接返回（保住玩家手改的档位/安培）
+        boolean slotsChanged = false;
+        for (int i = 0; i < HatchType.COUNT; i++) {
+            String sig = slotSignature(mInventory[i]);
+            if (!sig.equals(lastSlotSignature[i])) {
+                lastSlotSignature[i] = sig;
+                slotsChanged = true;
+            }
+        }
+        if (!slotsChanged) return;
+
         boolean anyValid = false;
         int bestTier = 0;
 
@@ -307,19 +338,29 @@ public class AdaptiveNetTerminal extends MTEHatch {
                 if (imte instanceof MetaTileEntity) {
                     MetaTileEntity mte = (MetaTileEntity) imte;
                     if (!ht.isValidMTEType(mte)) {
+                        // 机械外壳、GT 普通能源/动力仓等一切非认类物品：拒收，不把任何规格写进网络
                         hatchTiers[i] = 0;
                         hatchAmps[i] = 0;
                         continue;
                     }
                     boolean isOutput = (ht == HatchType.DYNAMO || ht == HatchType.LASER_TARGET);
-                    int tier = (int) (isOutput ? mte.getOutputTier() : mte.getInputTier());
-                    hatchTiers[i] = (tier >= 0) ? tier : ht.defaultTier;
-                    if (tier > bestTier) bestTier = tier;
+                    if (ht.isOwnClass(mte)) {
+                        // 本模组自己的仓：规格=该类的出厂额定（不读实例——实例返回的是当前配置值）
+                        hatchTiers[i] = ht.defaultTier;
+                        hatchAmps[i] = ht.defaultAmps;
+                        if (ht.defaultTier > bestTier) bestTier = ht.defaultTier;
+                    } else {
+                        // TecTech 兼容仓：档位由物品决定；安培取评级字段（避开 ×1.25 派生值）
+                        int tier = (int) (isOutput ? mte.getOutputTier() : mte.getInputTier());
+                        hatchTiers[i] = (tier >= 0) ? tier : ht.defaultTier;
+                        if (tier > bestTier) bestTier = tier;
+                        hatchAmps[i] = AdaptiveHostIndex.ratedAmps(mte, isOutput, ht.defaultAmps);
+                    }
                     anyValid = true;
-                    hatchAmps[i] = (int) (isOutput ? mte.maxAmperesOut() : mte.maxAmperesIn());
                 } else {
                     hatchTiers[i] = ht.defaultTier;
                     hatchAmps[i] = ht.defaultAmps;
+                    if (ht.defaultTier > bestTier) bestTier = ht.defaultTier;
                 }
             } else {
                 hatchTiers[i] = 0;
@@ -329,6 +370,13 @@ public class AdaptiveNetTerminal extends MTEHatch {
 
         currentVoltageTier = bestTier;
         applySettings();
+    }
+
+    /** 槽位物品指纹（注册名:meta:数量）；空槽为空串。 */
+    private static String slotSignature(ItemStack stack) {
+        if (stack == null || stack.getItem() == null) return "";
+        Object regName = net.minecraft.item.Item.itemRegistry.getNameForObject(stack.getItem());
+        return (regName == null ? "?" : regName.toString()) + ":" + stack.getItemDamage() + ":" + stack.stackSize;
     }
 
     /**

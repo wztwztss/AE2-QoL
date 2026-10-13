@@ -5,7 +5,7 @@
 
 **基准**：`3.20.0` 就是"第一次增加通配样板（编程样板输入总成 MK.III）"的那次功能发布；
 **从它之后的每一次发布都算 fix**，序号按真实发布顺序（数据取自本仓提交历史）编排。
-**当前版本 = `3.32.0`**（实践口径：真加功能升 0.1（`3.31.0 → 3.32.0`）；修 bug 用 `-fixN` 叠加在同一基线上）。
+**当前版本 = `3.32.0-fix1`**（实践口径：真加功能升 0.1（`3.31.0 → 3.32.0`）；修 bug 用 `-fixN` 叠加在同一基线上）。
 
 | 旧号 | 新号 | 旧号 | 新号 |
 |---|---|---|---|
@@ -33,6 +33,57 @@
 | 3.25.4 | 3.20.0-fix22 | | |
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
+
+## 工作区决策记录 2026-10-13 (91) - **3.32.0-fix1：四个槽位的档位/安培读错（放 1A 读成 2A、64A 读成 80A、机械外壳也被识别）**
+
+### 一、现象（用户实测，紧接 3.32.0 之后）
+1. 槽位里放「1A 的仓」→ 识别成 **2A**；
+2. 放「64A 的仓」→ 识别成 **80A**；
+3. **更严重**：放**机械外壳**也能被识别出"对应的电压和安培数"。
+
+### 二、根因（全部用实例 GT jar 的 javap 字节码核对，非猜测）
+3.32.0 只把**身份判据**改成了按类，**取值**仍沿用 `mte.getInputTier()/OutputTier()` + `mte.maxAmperesIn()/Out()`，
+于是：
+- **机械外壳**：旧判据 `maxEUInput()>0` 对 `MTEBasicHull` **恒成立**——
+  `MTEBasicHull.maxEUInput()` / `maxEUOutput()` 的字节码就是 `getstatic GTValues.V; getfield mTier; laload`，
+  即**返回 V[mTier]**（外壳=分级机器方块）⇒ 任何外壳/箱体都被当成能源/动力仓，档位取它的 tier、安培取默认值。
+  （注：`MetaTileEntity` 本体的 `maxEUInput/Output` 是 `lconst_0`，问题出在子类覆写。）
+- **1A→2A**：`MTEHatchEnergy.maxAmperesIn()` 字节码 `ldc2_w 2l; lreturn` ⇒ **GT 标准能源仓硬编码返回 2**。
+- **64A→80A**：`MTEHatchEnergyMulti.maxAmperesIn()` 字节码为
+  `getfield Amperes; getfield Amperes; iconst_2; ishr; iadd` ⇒ **`Amperes + (Amperes >> 2)` = ×1.25** ⇒ 64 + 16 = **80**。
+  （动力侧无此问题：`MTEHatchDynamoMulti.maxAmperesOut()` 就是 `Amperes`。）
+- 另外一处让用户"改了没用"的设计缺陷：`updateParamsFromSlots()` **每 20 tick 无条件重算**并 `applySettings()`，
+  会把手动改的档位/安培按槽位物品的读数**打回**。
+
+### 三、改动（按用户拍板的两条口径）
+1. **取值改读"额定"**（`HatchType.isOwnClass` + `AdaptiveHostIndex.ratedAmps`）：
+   - 本模组四类 → `HatchType.defaultTier/defaultAmps`（能源/动力 **1A/tier1**、激光 **256A/tier6**）。
+     理由：我们的仓 `maxAmperesIn/Out()` 返回的是 `helper.getCurrentAmps()`，也就是**当前配置值**，
+     而槽位读到的是 `GregTechAPI.METATILEENTITIES[<id>]` 那个**原型实例**（配置值仍是出厂初值）——
+     拿它当额定值等于读了另一个变量。
+   - TecTech 兼容类（激光源/靶仓）→ 物品档位 `getInputTier/OutputTier` + **评级字段 `maxAmperes`**（反射读，
+     带缓存）；读不到字段才退回 `maxAmperesIn/Out()`，且**限频 WARN 不静默**。
+2. **手改不再被周期性覆盖**：`updateParamsFromSlots()` 先比对四个槽位的物品指纹（注册名:meta:数量），
+   **内容没变就直接 return**（不再 `applySettings()`）；内容变化才重算。
+3. 拒收口径保持按类：机械外壳、GT 普通能源/动力仓、一切非认类物品**一律拒收且不写进网络**（3.32.0 已做）。
+
+### 四、影响面与风险
+- 只动 `hatch/adaptive/{HatchType,AdaptiveHostIndex,AdaptiveNetTerminal}.java`；协议、存档结构、绑定逻辑均未变
+  ⇒ **可与 3.32.0 混用**（但仍按铁则两端同版本）。
+- 语义变化（需要你在实机确认是否符合预期）：**本模组自己的仓放进槽位不再"照抄实例"**，而是套用该类出厂额定
+  （能源/动力 1A、激光 256A）——档位/安培的最终值由你在终端控件上调整后**长期保留**。
+- 反射读 `maxAmperes` 依赖 TecTech 保留该 public 字段；字段改名只会退回方法值（有限频 WARN），不会崩。
+- 若 TecTech 把 `maxAmperes` 改成非 int（理论上不会），`instanceof Integer` 判断会安全退回。
+
+### 五、验证与待测
+- 构建：`JAVA_HOME=E:\java17`、`.\gradlew.bat build --offline -x spotlessJavaCheck -x spotlessCheck` →
+  **BUILD SUCCESSFUL**（`EXIT=0`）；产物 `build/libs/AE2-QoL-3.32.0-fix1.jar`
+  （**1,915,179 B**，SHA256 `164E9549CEB0FC7282672822A33A6FC142F9FE2EC02C68E0DB16608E3D1494BB`）。
+- **待用户实测 4 项**：① 放机械外壳 → 槽位显示 `ULV 0V 0A`（被拒）且网络里的档位/安培不被改写；
+  ② 放 GT 普通能源仓 → 同样被拒（不再出现 2A）；③ 放 TecTech「64安能源仓」→ 被拒（不再出现 80A）；
+  ④ 放我们自己的四个仓 → 能源/动力显示 1A、激光显示 256A；随后在终端上手改档位/安培，**等 30 秒以上仍保持**（不被重算打回）。
+
+---
 
 ## 工作区决策记录 2026-10-13 (90) - **3.32.0：自适应电网终端 —— 子仓列表按主机聚合 + 四仓检测按类 + TecTech 激光仓兼容**
 

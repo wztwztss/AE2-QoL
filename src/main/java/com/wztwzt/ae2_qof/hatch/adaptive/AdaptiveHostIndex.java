@@ -253,6 +253,45 @@ public final class AdaptiveHostIndex {
     // ===== TecTech 兼容激光仓：安培写入（用户口径：纳入配置，接受覆盖）=====
 
     private static final Map<Class<?>, Method> SET_AMPERES = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Map<Class<?>, java.lang.reflect.Field> MAX_AMPERES_FIELD =
+        new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * 外来兼容仓的**额定安培**（3.32.0-fix1）。
+     *
+     * <p>为什么不能直接用 {@code maxAmperesIn()/maxAmperesOut()}：TecTech 的能源类把它实现成
+     * {@code Amperes + (Amperes >> 2)}，也就是 **×1.25**（字节码已核对）——「64安能源仓」会被读成 **80A**
+     * （用户实测），「256安激光靶仓」会被读成 320A。而它们自己的评级字段 {@code public final int maxAmperes}
+     * 才是"这个仓是多少安"。
+     *
+     * <p>读不到字段时退回方法值，再退回调用方给的兜底值；失败限频 WARN，不静默。
+     */
+    public static int ratedAmps(MetaTileEntity mte, boolean isOutput, int fallback) {
+        if (mte == null) return fallback;
+        try {
+            java.lang.reflect.Field f = MAX_AMPERES_FIELD.get(mte.getClass());
+            if (f == null) {
+                f = mte.getClass()
+                    .getField("maxAmperes");
+                MAX_AMPERES_FIELD.put(mte.getClass(), f);
+            }
+            Object v = f.get(mte);
+            if (v instanceof Integer && (Integer) v > 0) return (Integer) v;
+        } catch (Throwable t) {
+            warnOnce(
+                "maxAmperes:" + mte.getClass()
+                    .getName(),
+                "读不到评级字段 maxAmperes，退回 maxAmperesIn/Out（可能含 GT 的 ×1.25 派生）: "
+                    + mte.getClass()
+                        .getName(),
+                null);
+        }
+        try {
+            long v = isOutput ? mte.maxAmperesOut() : mte.maxAmperesIn();
+            if (v > 0) return (int) Math.min(v, Integer.MAX_VALUE);
+        } catch (Throwable ignored) {}
+        return fallback;
+    }
 
     /**
      * 把某一类激光仓的安培写给**本网络主机上的** TecTech 兼容仓。
