@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.world.WorldSavedData;
@@ -89,6 +90,8 @@ public class CoverRegistry extends WorldSavedData {
      * P1-008：按世界实际状态刷新在线标记。
      * 区块未加载 → 标记离线但保留条目；区块已加载且覆盖板已被拆除/机器已毁 → 直接移除条目。
      * 只统计一个维度，统计终端列出前对所有维度调用一次。
+     *
+     * <p>3.31.0 追加：区块已加载时给"缺目标本体"的老条目补写一次（见 {@link CoverEntry#identityBackfillTried}）。
      */
     public void refreshOnlineStatus() {
         boolean changed = false;
@@ -104,27 +107,46 @@ public class CoverRegistry extends WorldSavedData {
                 }
                 continue;
             }
-            boolean present = isCoverPresent(w, e);
-            if (!present) {
+            StockMonitorCover cover = findCover(w, e);
+            if (cover == null) {
                 it.remove();
                 changed = true;
-            } else if (!e.online) {
+                continue;
+            }
+            if (!e.online) {
                 e.online = true;
                 changed = true;
+            }
+            // 3.31.0：老存档条目里只有服务端算出来的名字（专用服上是英文），没有本体 ⇒ 终端画不出图标。
+            // 覆盖板本体此刻就在手上，补写一次即可。只在本次会话试一次，避免无本体可写的条目每次刷新都 markDirty。
+            if (!e.identityBackfillTried) {
+                e.identityBackfillTried = true;
+                try {
+                    StockMonitorCoverData data = cover.getCoverData();
+                    if (data != null && data.hasAnyMonitorTarget() && !e.hasTargetIdentity()) {
+                        e.updateFrom(data);
+                        changed = true;
+                    }
+                } catch (Throwable t) {
+                    // 静默兜底会掩盖故障：这里至少记一次，否则"图标一直不出现"无法定性
+                    com.wztwzt.ae2_qof.MyMod.LOG.warn("[StockMonitor] 覆盖板目标本体补写失败 " + e.x + "," + e.y + "," + e.z, t);
+                }
             }
         }
         if (changed) markDirty();
     }
 
-    private static boolean isCoverPresent(net.minecraft.world.World w, CoverEntry e) {
+    /** 取该条位置上真实存在的库存检测覆盖板；不存在/异常一律返回 null（调用方按"已拆除"处理）。 */
+    private static StockMonitorCover findCover(net.minecraft.world.World w, CoverEntry e) {
         try {
             net.minecraft.tileentity.TileEntity te = w.getTileEntity(e.x, e.y, e.z);
-            if (!(te instanceof gregtech.api.interfaces.tileentity.ICoverable)) return false;
+            if (!(te instanceof gregtech.api.interfaces.tileentity.ICoverable)) return null;
             net.minecraftforge.common.util.ForgeDirection side =
                 net.minecraftforge.common.util.ForgeDirection.getOrientation(e.side);
-            return ((gregtech.api.interfaces.tileentity.ICoverable) te).getCoverAtSide(side) instanceof StockMonitorCover;
+            Object cover = ((gregtech.api.interfaces.tileentity.ICoverable) te).getCoverAtSide(side);
+            return cover instanceof StockMonitorCover ? (StockMonitorCover) cover : null;
         } catch (Throwable t) {
-            return false;
+            return null;
         }
     }
 
@@ -209,6 +231,7 @@ public class CoverRegistry extends WorldSavedData {
         public final int side;
 
         public String networkId = "";
+        /** 服务端算出来的目标名。3.31.0 起**只作老存档兜底**：新条目一律由客户端按本体自己解析名称。 */
         public String targetName = "";
         public boolean targetIsFluid = false;
         public long threshold = 0;
@@ -216,12 +239,26 @@ public class CoverRegistry extends WorldSavedData {
         public int activeSlotCount = 0;
         public boolean online = true;
 
+        /** 摘要取自哪个检测槽位（0..8）。3.31.0：终端编辑面板按这个槽位写入，避免"看的是 A、改的是 B"。 */
+        public int slotIndex = 0;
+        /** 目标本体：物品目标存物品栈（客户端拿它解析中文名 + 画图标）。流体目标为 null。 */
+        public ItemStack targetItem = null;
+        /** 目标本体：流体目标的流体注册名（客户端 FluidRegistry.getFluid(name) → 真流体贴图）。物品目标为空串。 */
+        public String targetFluidName = "";
+        /** 只在内存里用：本次会话是否已尝试补写本体（不持久化，避免每次刷新都 markDirty）。 */
+        public transient boolean identityBackfillTried = false;
+
         public CoverEntry(int dim, int x, int y, int z, int side) {
             this.dim = dim;
             this.x = x;
             this.y = y;
             this.z = z;
             this.side = side;
+        }
+
+        /** 是否已经存下目标本体（老存档条目在补写之前为 false）。 */
+        public boolean hasTargetIdentity() {
+            return targetItem != null || (targetFluidName != null && !targetFluidName.isEmpty());
         }
 
         public void updateFrom(StockMonitorCoverData data) {
@@ -236,6 +273,28 @@ public class CoverRegistry extends WorldSavedData {
                     this.targetName = slot.monitorTarget.getDisplayName();
                     this.targetIsFluid = slot.monitorTarget instanceof IAEFluidStack;
                     this.threshold = slot.threshold;
+                    this.slotIndex = i;
+                    // 3.31.0：连"本体"一起存下来。只存名字的话，专用服上目标名会一直是英文
+                    // （服务端语言表只有 en_US），而且终端根本没有东西可画图标。
+                    this.targetItem = null;
+                    this.targetFluidName = "";
+                    if (slot.monitorTarget instanceof IAEFluidStack) {
+                        net.minecraftforge.fluids.FluidStack fs = ((IAEFluidStack) slot.monitorTarget).getFluidStack();
+                        if (fs != null && fs.getFluid() != null) {
+                            this.targetFluidName = fs.getFluid().getName();
+                        }
+                    } else if (slot.monitorTarget instanceof IAEItemStack) {
+                        ItemStack is = ((IAEItemStack) slot.monitorTarget).getItemStack();
+                        if (is != null && is.getItem() != null) {
+                            this.targetItem = is.copy();
+                            this.targetItem.stackSize = 1;
+                        }
+                    }
+                    // 兜底：本体取不到（异常流体/第三方堆）时用覆盖板 GUI 里放的那个幻影物品当图标
+                    if (!hasTargetIdentity() && slot.phantomStack != null && slot.phantomStack.getItem() != null) {
+                        this.targetItem = slot.phantomStack.copy();
+                        this.targetItem.stackSize = 1;
+                    }
                     found = true;
                     break;
                 }
@@ -244,6 +303,9 @@ public class CoverRegistry extends WorldSavedData {
                 this.targetName = "";
                 this.targetIsFluid = false;
                 this.threshold = 0;
+                this.slotIndex = 0;
+                this.targetItem = null;
+                this.targetFluidName = "";
             }
         }
 
@@ -261,6 +323,14 @@ public class CoverRegistry extends WorldSavedData {
             tag.setInteger("modeOrdinal", modeOrdinal);
             tag.setInteger("activeSlotCount", activeSlotCount);
             tag.setBoolean("online", online);
+            // 3.31.0 追加字段（老存档没有这几个键，读到默认值即"待补写"）
+            tag.setInteger("slotIndex", slotIndex);
+            tag.setString("targetFluidName", targetFluidName == null ? "" : targetFluidName);
+            if (targetItem != null && targetItem.getItem() != null) {
+                NBTTagCompound itemTag = new NBTTagCompound();
+                targetItem.writeToNBT(itemTag);
+                tag.setTag("targetItem", itemTag);
+            }
             return tag;
         }
 
@@ -276,6 +346,12 @@ public class CoverRegistry extends WorldSavedData {
             e.modeOrdinal = tag.getInteger("modeOrdinal");
             e.activeSlotCount = tag.getInteger("activeSlotCount");
             e.online = tag.getBoolean("online");
+            // 3.31.0 字段：老存档缺键 → slotIndex=0 / 流体名空 / 物品栈 null ⇒ 表现为"尚无本体，等待补写"
+            e.slotIndex = tag.getInteger("slotIndex");
+            e.targetFluidName = tag.getString("targetFluidName");
+            if (tag.hasKey("targetItem")) {
+                e.targetItem = ItemStack.loadItemStackFromNBT(tag.getCompoundTag("targetItem"));
+            }
             return e;
         }
     }

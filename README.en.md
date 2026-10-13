@@ -10,9 +10,30 @@ An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI patte
 > Client-only installs will show the GUIs but the features will not work; server-only installs leave clients without them.
 > (If a Modrinth page marks this mod as client-only, that metadata is wrong — this note is authoritative.)
 
-**Author: wztwzt · Current source version: 3.30.0-fix2 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.31.0 · Reference pack: GTNH 2.9.0-beta-3**
 
-## What's new in 3.30.0 (Steam Elevator: a per-tick parallel knob P)
+## What's new in 3.31.0 (Stock Monitor Terminal: localized names on servers, real target icons, two left-tab pages)
+
+- **Target names no longer turn English on a dedicated server** (user-verified: Chinese in singleplayer, English on the server).
+  Root cause: the name was finalized **server-side** into a string — level emitters via `IAEStack.getDisplayName()` →
+  MC `ItemStack.getDisplayName()` → `StatCollector`, fluids via `Fluid.getLocalizedName()` (both confirmed against the
+  instance jar bytecode) — and the cover registry stored nothing but that string. A dedicated server only has the en_US table.
+  Rows now carry the **actual target** (item stack / fluid registry name) and both the name and the icon are computed
+  **client-side**, exactly like AE2's own GUIs do it.
+- **Target icon at the start of every row**: `ItemDrawable` for items, `FluidDrawable` for fluids (**the real fluid texture**,
+  not the fluid-packet/bucket item).
+- **Two pages behind a left vertical tab strip** (Emitters / Covers), row height 14 → **24px**, panel 340×244 → **380×252**
+  (8 rows visible + scrolling); the selected page is stored in the terminal's NBT, so it **remembers your last choice**.
+- **Fixed a pre-existing mismatch**: the cover row showed the "first non-empty detection slot" while the old edit panel
+  **hard-coded slot 0**; rows now carry `slotIndex` and the panel writes to that same slot.
+- **Old-save compatible**: legacy registry entries only have the old fields, so they keep showing the old (possibly English)
+  name until the cover's chunk loads; the registry refresh then **backfills the target** automatically — no migration code,
+  no crash, no data loss.
+- Untouched invariants: covers are still filtered to this terminal's network (with the "N hidden" hint), highlight/teleport
+  still require the session + BUILD checks, list refresh stays throttled to 20 ticks with value-semantic row snapshots,
+  and threshold/mode writes still happen only in permission-checked server setters.
+
+## Previous: 3.30.0 (Steam Elevator: a per-tick parallel knob P)
 
 > `3.30.0-fix1`: a config file missing newly added keys is **topped up automatically** (values preserved).
 > `3.30.0-fix2`: the oil drill's default parallel is now **8** (was 64). **The value in your config file always wins** —

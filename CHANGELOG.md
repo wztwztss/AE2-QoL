@@ -5,7 +5,7 @@
 
 **基准**：`3.20.0` 就是"第一次增加通配样板（编程样板输入总成 MK.III）"的那次功能发布；
 **从它之后的每一次发布都算 fix**，序号按真实发布顺序（数据取自本仓提交历史）编排。
-**当前版本 = `3.29.0`**（实践口径：真加功能升 0.1（`3.28.0 → 3.29.0`）；修 bug 用 `-fixN` 叠加在同一基线上）。
+**当前版本 = `3.31.0`**（实践口径：真加功能升 0.1（`3.30.0 → 3.31.0`）；修 bug 用 `-fixN` 叠加在同一基线上）。
 
 | 旧号 | 新号 | 旧号 | 新号 |
 |---|---|---|---|
@@ -33,6 +33,82 @@
 | 3.25.4 | 3.20.0-fix22 | | |
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
+
+## 工作区决策记录 2026-10-09 (89) - **3.31.0：库存统计终端 —— 专用服中文名 + 目标真图标 + 左侧竖排双页**
+
+### 一、现象（用户实机报障三条；服务器 = 用户自建的云服务器）
+1. **专用服上目标名是英文**：同一存档单机中文、上服英文；关键判据——**同一服务器上 AE2 自己的界面仍是中文**。
+2. **行里没有图标**：终端行从来只有文字（名称/阈值），用户要求补图标，且**流体必须是真流体贴图**。
+3. **UI 太挤**：行高 14px、面板 340×244、一行硬塞「名称 + 数值 + 高亮 + 传送」。
+
+### 二、根因（字节码级证据，非猜测）
+- **服务端定稿**：`StockMonitorTerminalGui.collectEmitterRows` 在**服务端**求值 `getEmitterLabel()` → `config.getDisplayName()`。
+  实例 AE2 jar 字节码：`AEItemStack.getDisplayName()` → `Platform.getItemDisplayName(getItemStack())`，并把结果
+  `AEItemDef.setDisplayName(...)` **缓存**；`AEFluidStack.getDisplayName()` → `Fluid.getLocalizedName()` → `StatCollector`
+  （Forge universal jar 内是混淆名 `dd.a`）。
+- **覆盖板更彻底**：`CoverRegistry.CoverEntry.updateFrom` 只存 `slot.monitorTarget.getDisplayName()` 这个**字符串**
+  （改前 `CoverRegistry.java:236`），随 `CoverRow.targetName` 原样下发。
+- ⇒ 专用服的语言表只有 en_US，客户端拿到的自然是英文。我们自己的界面文字走 `IKey.lang`、在客户端解析，所以是中文
+  —— 与用户观察完全吻合，也解释了"AE2 自己的界面同服是中文"。
+
+### 三、改动（9 条）
+1. **行快照改传本体**：`EmitterRow`/`CoverRow` 新增 `icon`(ItemStack，`ByteBufUtils.writeItemStack/readItemStack`) 与
+   `fluidName`(UTF8 流体注册名)；显示名改由客户端 `targetLabel()` 解析（物品 `ItemStack.getDisplayName()`／流体
+   `Fluid.getLocalizedName()`／老档无本体时退回旧字符串）。**不能改用发 `IAEStack`**：它的 `getDisplayName()` 会把
+   服务端算出的名字写进 `AEItemDef` 缓存。
+2. **图标**：`ItemDrawable` / `FluidDrawable`（真流体贴图）。**不用** `IAEStack.getItemStackForNEI()`——装了 AE2FC 时
+   它返回的是流体包体/容器物品。注意 `GuiDraw.drawItem` 按 `w/16, h/16` 缩放 ⇒ 图标控件必须正好 16×16，
+   行内居中靠 `Flow.row().crossAxisAlignment(Alignment.CrossAxis.CENTER)`。
+3. **左侧竖排双页**：`PagedWidget.Controller` + `Flow.column()` 内 `PageButton(i, ctrl).tab(GuiTextures.TAB_LEFT, …)`
+   （范式 = 本仓 `AdaptiveNetTerminal.java:550-582`）；页签文字用 `overlay(IKey…alignment(Center).scale(0.8F))`
+   （`PageButton` 没有文字 API，但它继承 `Widget`，`Widget.overlay(IDrawable...)` 存在）。
+4. **尺寸**：面板 380×252、行高 24、列表 328×192（8 行可见 + 滚动）。**为什么不给 10 行**：MUI2 面板不滚动，
+   1080p + GUI 自动缩放(=4) 的可用区只有 480×270，300 高会被裁。**行宽必须等于列表视口宽（`LIST_W - 8`）**：
+   第一版写成 `ROW_W = LIST_W` ⇒ 行比视口宽 8px，最右侧【传送】按钮被裁掉一截（自查时发现并修正：
+   `ROW_W = LIST_W - 8 = 320`，名称/数值相应调成 146 / 90 以对齐宽度预算 16+146+90+30+30+8）。
+5. **"记住上次选择"**：`StockMonitorTerminal` 新增 NBT 键 `UiPage` + `getUiPage/setUiPage`（越界夹回、setter 内
+   `markDirty`）；GUI 用 `IntSyncValue(...).allowC2S()`：`PagedWidget.onPageChange` 回写，
+   `syncValue.setChangeListener(...)` 在 S2C 存量到达后补一次切页（同步值晚于控件构建）。
+6. **覆盖板本体入库**：`CoverEntry` 新增 `targetItem` / `targetFluidName` / `slotIndex`；`refreshOnlineStatus()` 改为
+   `findCover(...)` 拿到覆盖板后，对"区块已加载 + 有目标 + 尚无本体"的老条目补写一次（`identityBackfillTried` 每会话一次，
+   避免每次刷新都 `markDirty`）。**为什么必须在这里补**：覆盖板没有 AE 网格时 `doCoverThings`
+   （`StockMonitorCover.java:84-92`）提前 return、不会走 `upsert`，只靠 upsert 补不齐。
+7. **槽位口径修正**：编辑面板按行携带的 `slotIndex` 写入（旧实现固定 slot 0，而行显示的是"第一个非空槽"，
+   多槽覆盖板会出现"看的是 A、改的是 B"）。
+8. **排序键**换成语言无关的 `getEmitterSortKey`（旧实现按服务端英文名排序，客户端显示中文时行序看着是乱的）。
+9. **性能**：行快照值语义比较新增 `stackKey(ItemStack)`（Item 注册名 + meta + NBT 哈希）——`ItemStack` 没有值语义
+   equals，直接用对象身份会让 20 tick 节流短路失效、变成每 tick 发包。
+
+### 四、影响面与风险
+- 只动 `terminal/` 三件 + 两份 lang + 两份指南页；**未触碰** `cover/stockmonitor/` 的覆盖板逻辑与其 GUI
+  （注册表扩展是唯一交叉点，`StockMonitorCover` 一行未改）。
+- 旧存档：旧条目无新字段 ⇒ `readFromNBT` 得到 null/空 ⇒ 照旧显示旧字符串名；区块加载后自动补写本体。
+  **不崩、不丢数据、无需迁移代码**。
+- **待实机确认（本仓无先例）**：① `PageButton.overlay` 的中文是否按预期居中；② `PagedWidget` 页内嵌
+  `DynamicSyncedWidget` 时两页列表是否都能刷新/滚动；③ 页签"记住上次选择"在**首次打开**是否直接落在上次那页
+  （依据见 skill 坑位 24，本轮按设计约束处理）。
+- 两个列表的同步处理器都在 `build()` 里**无条件注册**（skill 坑位 21 的硬要求）。
+- **红线全部保留**：覆盖板"只列本终端所连网络"（含"另有 N 个已隐藏"）、高亮/传送的会话 + BUILD 鉴权、
+  列表 20 tick 节流与行快照值语义、阈值/模式仍只在服务端 setter 里校验后写入。
+
+### 五、验证与待测
+- 构建：`JAVA_HOME=E:\java17`、`.\gradlew.bat build --offline -x spotlessJavaCheck -x spotlessCheck` →
+  **BUILD SUCCESSFUL**（`GRADLE_EXIT=0`）；产物 `build/libs/AE2-QoL-3.31.0.jar`
+  （**1,898,047 B**，SHA256 `C8FCD38E2F736795B2299CA57613830779B0FA22084A4CF071423B28CBC512C0`）。
+- 产物核对（解包到**临时目录**，未落工作区根）：`StockMonitorTerminalGui$EmitterRow/$CoverRow/$CoverScan` 均入包；
+  `javap` 确认 `getUiPage/setUiPage/NBT_UI_PAGE`、`slotIndex/targetItem/targetFluidName/hasTargetIdentity`、
+  `targetLabel/stackKey/iconWidget/pageTab/selectedSlot`；包内 `mcmod.info` 两处版本 = 3.31.0；
+  两份 lang 都含 `ae2_qof.terminal.page.emitters|covers`；指南页为新版；两份文本文件无 BOM。
+- **待用户实测 7 项**：① 专用服两页都显示中文名；② 物品/流体图标都出现（流体是真流体贴图）；③ 两页都能滚动、
+  行高合适、页签文字可读；④ 页签记住上次选择（重开界面/重登仍是上次那页）；⑤ 旧存档覆盖板加载区块后自动变中文 + 图标；
+  ⑥ 高亮/传送、阈值/模式编辑仍正常；⑦ 未接网覆盖板显示灰字 [OFF]、图标留空。
+- **未部署**：本轮**未触碰**任何实例 `mods/`（部署需用户另行同意，且必须先完全退出游戏）。
+- **发现一处既有不一致（非本轮引入，未处理）**：仓库根 `mixins.ae2_qof.json` 与
+  `src/main/resources/mixins.ae2_qof.json` **不逐字节一致** —— 根副本缺 5 条 `gt.MixinSteam*Tuning`
+  条目（来自 3.29.0 那一轮）。进 jar 的是 `src/main/resources` 那份，所以运行时不受影响，
+  但与本项目"两份必须一致"的约定不符，需用户拍板是否顺手同步。
+
+---
 
 ## 工作区决策记录 2026-10-08 (88) - **3.30.0-fix2：抽油默认并行 64 → 8**
 

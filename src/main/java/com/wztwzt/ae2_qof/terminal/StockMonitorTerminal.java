@@ -34,6 +34,13 @@ public class StockMonitorTerminal extends MTEHatch {
     /** fix12: 保存自己的 ID，getStackForm 不依赖 getBaseMetaTileEntity()（init 阶段可能为 null） */
     private final int terminalId;
 
+    /**
+     * 3.31.0（用户要求"记住上次选择"）：界面上次停留的页签，0 = AE2发信器页，1 = 库存覆盖板页。
+     * 存进本机 NBT，所以重开界面、重登、存档重载之后都停在用户上次看的那一页。
+     */
+    private int uiPage = 0;
+    private static final String NBT_UI_PAGE = "UiPage";
+
     public String getNetworkId() {
         return networkId;
     }
@@ -44,6 +51,26 @@ public class StockMonitorTerminal extends MTEHatch {
 
     public boolean isBound() {
         return networkId != null && !networkId.isEmpty();
+    }
+
+    /** 见 {@link #uiPage}。只有两页，越界一律夹回 0，客户端传什么都改不坏存档。 */
+    public int getUiPage() {
+        return uiPage;
+    }
+
+    public void setUiPage(int page) {
+        int clamped = ae2qol$clampPage(page);
+        if (clamped == uiPage) return;
+        uiPage = clamped;
+        try {
+            // 让 GT 尽快把这份 NBT 落盘（否则要等到区块下一次自然保存）
+            IGregTechTileEntity base = getBaseMetaTileEntity();
+            if (base != null) base.markDirty();
+        } catch (Throwable ignored) {}
+    }
+
+    private static int ae2qol$clampPage(int page) {
+        return page <= 0 ? 0 : 1;
     }
 
     public StockMonitorTerminal(int aID, String aName, String aNameRegional, int aTier) {
@@ -248,6 +275,7 @@ public class StockMonitorTerminal extends MTEHatch {
     public void saveNBTData(NBTTagCompound aNBT) {
         try {
             aNBT.setString("NetworkId", networkId == null ? "" : networkId);
+            aNBT.setInteger(NBT_UI_PAGE, uiPage);
         } catch (Throwable t) {
             System.err.println("[AE2QoL] StockMonitorTerminal.saveNBTData FAILED: " + t);
         }
@@ -258,9 +286,12 @@ public class StockMonitorTerminal extends MTEHatch {
         try {
             networkId = aNBT.getString("NetworkId");
             if (networkId == null) networkId = "";
+            // 旧存档没有这个键时 getInteger 返回 0（默认页），无需迁移
+            uiPage = ae2qol$clampPage(aNBT.getInteger(NBT_UI_PAGE));
         } catch (Throwable t) {
             System.err.println("[AE2QoL] StockMonitorTerminal.loadNBTData FAILED: " + t);
             networkId = "";
+            uiPage = 0;
         }
     }
 

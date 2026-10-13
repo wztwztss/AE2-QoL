@@ -436,6 +436,10 @@ ae2_qof.terminal.highlighted=Highlighted target [%s, %s, %s] (10 s)
 ae2_qof.terminal.teleported=Teleported to [%s, %s, %s] dim:%s
 ae2_qof.terminal.no_covers_filtered=No covers on this terminal's network (%s hidden from other networks)
 
+# ===== 3.31.0: Stock Monitor Terminal - left vertical tabs (Emitters / Covers) =====
+ae2_qof.terminal.page.emitters=Emitters
+ae2_qof.terminal.page.covers=Covers
+
 # ===== 3.22.0: Smart Wildcard Pattern =====
 item.ae2_qof.smart_wildcard_pattern.name=Smart Wildcard Pattern
 ae2_qof.wildcard.tip.unconfigured=No rules yet: use NEI's plus button to write a recipe into this pattern

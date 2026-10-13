@@ -295,6 +295,16 @@ $env:GRADLE_USER_HOME = 'C:\Users\29357\.gradle'
     机器必须走 `node.getMachine()`。旧代码 `for (Object m : grid.getMachines(X.class)) if (m instanceof X)`
     **永远匹配不到**，而且不报错、不抛异常，只表现为"列表恒空"。同时它是**精确类名**查表（与接口终端同一个坑）：
     要覆盖子类得遍历 `grid.getMachinesClasses()` 再按 `X.class.isAssignableFrom(c)` 过滤。
+23. **`ItemDrawable` / `FluidDrawable` 的控件尺寸必须正好 16×16**（2026-10-09 用实例 MUI2 2.3.91 字节码核对）：
+    `ItemDrawable.draw(...)` 走 `GuiDraw.drawItem(item, x, y, w, h, z)`，而它内部是
+    `GlStateManager.scale(w / 16f, h / 16f, 1f)` ⇒ 写成 18×24 这类非正方形会把图标**整体拉伸**（不是裁切、也不报错）。
+    行高大于 16 时不要放大控件去凑高度，改用 `Flow.row().crossAxisAlignment(Alignment.CrossAxis.CENTER)` 居中。
+24. **MUI2 的同步值到达客户端晚于控件构建**（2026-10-09，设计约束，实机验收前按"待确认"看待）：
+    想让"存在机器 NBT 里的界面状态"（如库存统计终端的页签选择）**首次打开就生效**，
+    只在构建期读 `syncValue.getIntValue()` 去 `initialPage(...)` 是不够的——客户端那一刻拿到的还是默认值。
+    正确做法：`syncValue.setChangeListener(() -> 控件.set(value))` 在值到达后补一次，
+    并且回写回调里先做**等值判断**再 `setValue`，避免"监听器 → set → 监听器"回环。
+    另：所有 `syncValue` 都必须在 `build()` 里**无条件注册**，不能写在"当前页/当前分支"里（与本清单第 21 条同源）。
 
 ---
 

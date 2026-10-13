@@ -436,6 +436,10 @@ ae2_qof.terminal.highlighted=已高亮目标 [%s, %s, %s]（10 秒）
 ae2_qof.terminal.teleported=已传送到 [%s, %s, %s] dim:%s
 ae2_qof.terminal.no_covers_filtered=本终端所连网络下没有覆盖板（另有 %s 个属于其他网络，已隐藏）
 
+# ===== 3.31.0：库存统计终端 —— 左侧竖排页签（发信器 / 库存覆盖板 两页）=====
+ae2_qof.terminal.page.emitters=发信器
+ae2_qof.terminal.page.covers=覆盖板
+
 # ===== 3.22.0：智能通配样板 =====
 item.ae2_qof.smart_wildcard_pattern.name=智能通配样板
 ae2_qof.wildcard.tip.unconfigured=未配置规则：用 NEI 的加号把配方写入本样板
