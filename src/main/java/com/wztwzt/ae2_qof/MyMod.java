@@ -5,6 +5,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.wztwzt.ae2_qof.gtnl.SteamElevatorTuning;
 import com.wztwzt.ae2_qof.network.ConfigUpdatePacket;
 import com.wztwzt.ae2_qof.network.ModNetwork;
 
@@ -39,6 +40,8 @@ public class MyMod {
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         proxy.preInit(event);
+        // 3.29.0：GTNL 蒸汽楼梯模块的调速/批处理配置（独立 json，默认单份 1t + 批 128 + 蒸汽不联动）
+        SteamElevatorTuning.init(event.getModConfigurationDirectory());
         // 网络包注册必须完整：半注册（部分 discriminator 缺失）会导致玩家操作时被
         // "Undefined message for discriminator N" 踢出服务器，且极难排查（#74）。
         // 因此这里 fail-fast——注册失败直接抛出，宁可启动失败也不带病运行。
@@ -57,6 +60,8 @@ public class MyMod {
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
         proxy.postInit(event);
+        // 3.29.0：注入自检——mixin 全部 require=0（永不崩），因此必须用日志把"注入失败"变可见
+        SteamElevatorTuning.selfCheck();
     }
 
     @Mod.EventHandler

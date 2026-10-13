@@ -5,7 +5,7 @@
 
 **基准**：`3.20.0` 就是"第一次增加通配样板（编程样板输入总成 MK.III）"的那次功能发布；
 **从它之后的每一次发布都算 fix**，序号按真实发布顺序（数据取自本仓提交历史）编排。
-**当前版本 = `3.20.0-fix42`**（下一包 `-fix43`、`-fix44`…；将来真加功能才 `3.21.0`）。
+**当前版本 = `3.29.0`**（实践口径：真加功能升 0.1（`3.28.0 → 3.29.0`）；修 bug 用 `-fixN` 叠加在同一基线上）。
 
 | 旧号 | 新号 | 旧号 | 新号 |
 |---|---|---|---|
@@ -33,6 +33,121 @@
 | 3.25.4 | 3.20.0-fix22 | | |
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
+
+## 工作区决策记录 2026-10-08 (88) - **3.30.0-fix2：抽油默认并行 64 → 8**
+
+- 用户口径：「给我改成默认 8，而不是 64」。
+- 改动：`SteamElevatorTuning.oilDrillMaxParallel` 默认值 `64 → 8`（连同写进配置的注释文案）⇒ **全新安装 / 配置里没有该键时**，抽油 P=8（约 640,000 L/s 原油、每 6.4 s 落地约 4.10M L）；全局 `moduleMaxParallel` 仍为 1。
+- **实例现状**：用户的 `config/ae2_qof/gtnl_steam_elevator.json` 里**已经写着 `"oilDrillMaxParallel": 8`**（**文件值优先于代码默认**），因此实例生效值与本次新默认一致，**无需改动实例文件**。
+- **历史口径不回改**：本 CHANGELOG 的 (86)(87) 条目按当时事实保留（3.30.0 时默认确为 64），版本演进以本条目为准。
+- 验证：`build --offline -x spotless*` **BUILD SUCCESSFUL**（`EXITCODE=0`）；产物 `build/libs/AE2-QoL-3.30.0-fix2.jar`（**1,889,461 B**，SHA256 `1455DE5AB76B2097E00F0C0F4FB2B5CDCDDD878314608D70CECEAC5F5EB98928`）。
+- **已部署**（2026-10-08）：旧 `【私货】AE2-QoL-3.30.0-fix1.jar` 只移不删入 `_ae2qol_jar_backup`，新 `【私货】AE2-QoL-3.30.0-fix2.jar` 复制到位、SHA256 一致、`mods` 内仅 1 份。**未提交**。
+
+---
+
+## 工作区决策记录 2026-10-08 (87) - **3.30.0-fix1：配置缺少新增键时自动补写（修"抽油的 P 看不到/改不了"）**
+
+### 一、现象与根因
+用户问"抽油模块的 P 不能修改吗"。**不是不能改，而是配置文件里根本没有这个键**：实例那份 `gtnl_steam_elevator.json` 是 **3.29.0** 生成的（当时不存在 `moduleMaxParallel` / `oilDrillMaxParallel`），而本模组的加载器**只读不补写** ⇒ 新键不会出现在文件里，用户打开文件看不到、自然以为改不了。
+另有一个**优先级陷阱**要一并说清：抽油走 `oilDrillMaxParallel`（默认 64），**改全局 `moduleMaxParallel` 对抽油无效**；要让抽油跟随全局，把 `oilDrillMaxParallel` 写成 `0`。
+
+### 二、改动
+`gtnl/SteamElevatorTuning.java`：`reload()` 解析后调用 `hasMissingKeys(o)`，缺任一"已知键"（17 个）就用**当前已加载值**补写回文件（`writeDefaults()`，值保持用户原值不变），并刷新 `lastMtime` 避免重复触发。版本 `3.30.0 → 3.30.0-fix1`。
+
+### 三、验证与部署
+- `build --offline -x spotless*` **BUILD SUCCESSFUL**（`EXITCODE=0`）；产物 `build/libs/AE2-QoL-3.30.0-fix1.jar`（**1,889,464 B**，SHA256 `4FE74818A8FBAE56439DBE2D5A438EC4C9EBE2C88187759C6A6185BE498C423D`）。
+- **已部署**（2026-10-08）：旧 `【私货】AE2-QoL-3.30.0.jar` 只移不删入 `_ae2qol_jar_backup`，新 `【私货】AE2-QoL-3.30.0-fix1.jar` 复制到位、SHA256 一致、`mods` 内仅 1 份，**实例配置未改动**。
+- 下次启动后：配置文件会自动补上 `moduleMaxParallel`（1）与 `oilDrillMaxParallel`（64），日志有 `配置缺少新增键，已补写（值保持原样）`。
+- **未提交**。
+
+### 四、想立刻改 P 的两种方式
+1. **不等重启**：现在就在 `config/ae2_qof/gtnl_steam_elevator.json` 里**手动加一行** `"oilDrillMaxParallel": 8,`（热加载约 1 秒生效，设 `0` 即跟随全局）。
+2. **等 fix1 启动后**：键会自动出现在文件里，直接改数字即可。
+
+---
+
+## 工作区决策记录 2026-10-08 (86) - **3.30.0：蒸汽楼梯「每 tick 并行份数 P」旋钮（唯一能提高"每秒产出"的开关）**
+
+### 一、用户口径
+实测反馈"感觉还是不够快"。取证结论：**当前设计（单份 1 tick + 批 n）的每秒产出天花板 = 1 配方/tick = 20 份/秒**——因为一次操作时长 = n tick、产出 = n 份 ⇒ n/n = 1 份/tick。**把 `batchSize` 调大不会变快**，只会变成"每 51 s 交 1024 份"（每秒产出不变，仅操作频率下降）。⇒ 唯一能提高"每秒产出"的是**并行 P（每 tick 处理 P 份）**。用户拍板：**先实现旋钮、默认 P=1（不改现状）**，且**严格按 P 倍扣材料**。
+
+### 二、改动
+- `gtnl/SteamElevatorTuning.java`：新增配置 `moduleMaxParallel`（默认 1，范围 1~1024）+ `effectiveParallel()`（总开关关闭时恒 1）+ `consumeJellyBatchesDeplete()`（育种按上游 `depleteInput` 方式批量扣）。
+- 5 个 mixin：抗卡顿闸门通过后计算 `total = n + 追加份数`；**产出一律按 `total` 放大**，输入按 `(n×P − 1)` 份实扣；**时长仍按 n** ⇒ 检查频率 20/n 与闸门判定**都不受 P 影响**（并行只改"每 tick 干几份"，不改"多久检查一次"）。
+  - 抽油（无输入）：`total = n×P`，纯倍率；
+  - 蜂箱 / 温室 / 矿处 / 育种：P>1 时逐份实扣蜂王浆/水/矿石，**扣不满就按实得份数产出**（严格配平，不白送）。
+- 版本 `3.29.0 → 3.30.0`（新增能力 + 新配置键；保持已部署验证过的 3.29.0 产物可区分）。
+
+### 三、效果（抽油 III，原油；材料无输入 ⇒ 纯加速）
+| P | 每秒产出 | 每操作产出（128 t 一次） |
+|---|---|---|
+| 1（默认，= 3.29.0 行为） | 约 80,000 L/s | 512k L |
+| 8 | 约 640,000 L/s | 4.10M L |
+| 16 | 约 1.28M L/s | 8.19M L |
+
+其余 4 类模块吞吐 ×P，**材料消耗同步 ×P**。
+
+### 四、验证
+- `build --offline -x spotless*` **BUILD SUCCESSFUL**（`EXITCODE=0`）；产物 `build/libs/AE2-QoL-3.30.0.jar`（**1,889,152 B**，SHA256 `0515DA9A599DD2EC51D5D8E1012A54C2933B0D4518061DE87A19C31B0D0F1E02`）。
+- 产物 `javap` 核对：`moduleMaxParallel` / `effectiveParallel` / `oilDrillMaxParallel` / `effectiveOilDrillParallel` / `consumeJellyBatchesDeplete` 齐全，5 个 mixin 的 `ae2qof$…` 标记与处理器仍在。
+- **抽油单独一个覆盖键 `oilDrillMaxParallel`（代码默认 64）**：需求方口径是"抽油拉高、其余留 1"，但 `moduleMaxParallel` 是全局键 ⇒ 用**代码默认值**实现该意图，**用户的配置文件一行都不用动**（配置里写 0 即跟随全局）。其余 4 类要 ×P 会 ×P 吃材料，故默认仍是 1。
+- **已部署**（2026-10-08）：旧 `【私货】AE2-QoL-3.29.0.jar` 只移不删进 `mods\_ae2qol_jar_backup\prev-…`，新 `【私货】AE2-QoL-3.30.0.jar` 复制到位，本地/实例 SHA256 一致，`mods` 内仅 1 份，**实例配置文件未改动**。**未提交**。
+
+### 五、风险
+- **单次结算量 ×P**（P=16 时抽油一次落地 8.19M L）⇒ 必须用 **ME 流体/物品输出**，否则溢出或卡机风险显著上升。
+- P>1 时材料 ×P；供料不足会按实得份数降级（不会白送），日志会打印"并行 P"。
+
+---
+
+## 工作区决策记录 2026-10-08 (85) - **3.29.0：GTNL 蒸汽楼梯（Steam Elevator）模块调速 + 批处理（单份 1 tick，每 6.4 s 128 份）**
+
+### 一、用户口径（本轮定稿）
+「把这几个模块默认速度超频到 **1 tick**，然后开批处理，**固定 6.4 s 一次**，相当于每 6.4 s 完成 **128 次配方**」；
+蒸汽走 **`steamFollowsSpeed=false`**（蒸汽/t 不随速度变化）；输入不足时**自动降级**（能供几份跑几份，不卡机不空转）；
+注入失败一律**不崩**（全部 `require=0`），且**不做版本白名单**（改用"注入自检 + 两级行为指纹"把失效变可见）。
+
+### 二、范围（只动这 5 类；Beacon / MonsterRepellent / Flight / Weather / EntityCrusher **一律不动**）
+`SteamOreProcessorModule`、`SteamApiaryModule`、`SteamGreenhouseModule`、`SteamBeeBreedingModule`、`SteamOilDrillModule`(I/II/III)。
+
+### 三、关键语义证据（决定实现方式，均来自参考源码 + 实例字节码）
+1. **批处理不放大 EUt**：GT 先按 pre-batch 并行算 EUt（`GTNLParallelHelper:655-656`），之后才加份数、**只拉伸时长**（`:658-675`）⇒ 本实现**不把份数乘进 `lEUt`**（否则会多烧 n 倍蒸汽）。
+2. **单份时长 ≥128 tick 不触发批处理**（`GTNLParallelHelper:659` 判 `duration < MAX_BATCH_MODE_TICK_TIME`）⇒ 不改时长时，Apiary(6000)/育种(12000)/抽油(400~1200)/矿处(200~640) **都不会触发**；"提速"只能靠压单份时长。
+3. **输入补偿按"逐份尝试"而非"先算余量"**：这 5 个模块各自用不同方式取料（Apiary 直接改 `ItemStack.stackSize`、温室直接改 `FluidStack.amount`、育种走 `depleteInput`、矿处改 `ore.stackSize`），且本模组**没有** forestry / cropsnh / fastutil 编译依赖 ⇒ 采用"扣成功一份算一份"，天然实现自动降级，并规避全部外部类型。
+4. **矿处的水/润滑剂不做额外扣减**：`SteamMultiMachineBase.depleteInput(FluidStack,*)`（`:670-715`）**只遍历蒸汽输入仓**，而水/润滑剂进不了被锁定的蒸汽仓 ⇒ **上游本来就没真正扣过**（只当并行上限条件读）；本实现保持上游行为。
+5. **抽油输出容量夹紧默认关闭**（`oilDrillOutputClamp=false`）：ME 流体输出仓在 `mOutputHatches` 的容量语义不可靠，硬夹紧会把 ME 玩家的批处理**静默降成 n=1**（与目标相反）。需要严格护仓时可显式打开。
+
+### 四、改动（新增 6 个文件 + 2 处接线 + 版本）
+- 新增 `gtnl/SteamElevatorTuning.java`：独立配置 `config/ae2_qof/gtnl_steam_elevator.json`（热加载，缺文件即写默认值）、批处理/时长/蒸汽数学、逐份输入补偿、启动自检、两级指纹、一次性日志。
+- 新增 5 个 mixin（`mixin/gt/`）：`MixinSteamBeeBreedingTuning` / `MixinSteamOilDrillTuning` / `MixinSteamApiaryTuning` / `MixinSteamGreenhouseTuning` / `MixinSteamOreProcessorTuning`。全部 `@Mixin(..., remap=false)` + `@Inject(method="checkProcessing", at=@At("RETURN"), require=0)` + `@Unique ae2qof$steamTuningApplied()` 标记方法。
+- `mixins.ae2_qof.json` 通用段登记 5 条（**必须放通用段**：服务端也要生效）。
+- `MyMod.preInit` → `SteamElevatorTuning.init(configDir)`；`MyMod.postInit` → `selfCheck()`。
+- 版本 `3.28.0` → **`3.29.0`**（新增功能，按版本规则升 0.1）：`gradle.properties` + `mcmod.info`（两处，均无 BOM）。
+
+### 五、验证
+- `build --offline -x spotless*` **BUILD SUCCESSFUL**（`EXITCODE=0`；无管道取码）；首轮编译仅 1 个真实错误（漏 `SteamMultiMachineBase` import，4 处）已修。
+- 产物 `build/libs/AE2-QoL-3.29.0.jar`（**1,887,873 B**，SHA256 `66A9D208D1A4A1CB44DC734B426E5B2CCA32B9621961349145B59772D9A1DFCC`）。
+- 解包核对：6 个新类均入包；jar 内 `mixins.ae2_qof.json` 含 5 条蒸汽条目；`javap` 确认标记方法 `ae2qof$steamTuningApplied()` 与处理器 `ae2qof$tuneApiary(CallbackInfoReturnable<CheckRecipeResult>)` 齐全。
+- **出包前的三处抗卡顿/开销修正（用户口径："我最初就是为了减少加速火把带来的卡顿"）**：
+  1. **抗卡顿闸门 `minBatchesToApplyTuning`（默认 8）**：只有能凑够 ≥8 份时才应用"1 tick + 批处理"；凑不够就**完全不改**（保持上游时长/蒸汽/产出）并 WARN 一次。**为什么必须有**：本方案靠"合并操作"降卡顿——一次操作 n 份 ⇒ `checkProcessing` 频率 = 20/n 次/秒；若供料不足而降级到 n=1，会退化成**每 tick 一次配方检查**（Apiary 上游是每 6000 tick 一次），**比改前更卡**。设计原则改为：**宁可不提速，也不提高检查频率**。
+  2. **产出超堆不切叠**：原按 64 切叠是错的——GT 自己的并列产出就是"一个超大堆"（`ParallelHelper.addItemsLong:633-641` 只在 >`Integer.MAX_VALUE` 时拆），输出仓 `MTEHatchOutputBus.storePartial:185-216` 会逐槽自拆；按 64 切会把 5 个堆变成**上万个 ItemStack**，反而放大输出路径开销。已改为与 GT 一致（单堆，仅按 `Integer.MAX_VALUE` 夹紧）。
+  3. **热路径反射缓存 + 批量扣减**：`ALL_PROCESSABLE` 反射句柄缓存（原每批次每物品都 `Class.forName`+`getField`+`getMethod`，128 份级下每次操作上万次反射）；矿石/蜂王浆改「一次取列表 + 批量实扣」（`consumeOreBatches`/`consumeJellyBatches`，每份必须凑齐才扣），不再每份重建输入列表。
+- **给玩家的警告**：不要在这些模块上再叠加**加速火把/时间之瓶**——那会把"每 6.4 s 一次操作"重新变回高频操作 + 高频结算，等于把本改动省下的开销又加回去（且 NH-Utilities 的加速是直接改写 `mProgresstime`，会跳过 tick 上的推进与结算）。
+
+### 六、影响面与风险
+- 只改"时长 / 蒸汽 / 份数"三个量，**不碰产出逻辑、概率、模式、NBT**；旧存档可逆；config 文件不存在时取默认。
+- **默认即开启**（用户要求"方便自用"）⇒ 装上后吞吐 = 原单份时长倍数（Apiary ×6000、育种 ×12000、温室 ×100、抽油 ×1200/600/400、矿处 ×(20~640)×并行），**材料消耗速率同步上升**；要回到上游行为把 `enabled` 设为 false。
+- **蒸汽/t 与改动前完全相同**（不联动），缓冲续航不变。
+- **TPS**：每 6.4 s 一次操作（操作频率 ÷128）是降卡顿来源；单次结算 128 份产出属集中尖峰，建议输出走 ME 总线。
+- `require=0` ⇒ 注入失败**不崩**，但必须靠启动日志确认（`[AE2QoL] SteamElevator 调速: 注入自检...`）。
+- 未做（保留在设计稿）：`moduleMaxParallel` / 电压超频放开 / 缓冲倍率 / 分配周期 / 配方 OC 上限等项目，见 `docs/GTNL_STEAM_ELEVATOR_DESIGN.md` §3.3。
+
+### 七、部署（2026-10-08）
+按部署铁则执行：① 部署前用**精准判据**（命令行含实例路径 / `launchwrapper` / `net.minecraft`）确认无游戏进程（当时的两个 java 进程是构建工具，命令行不含上述特征）；② 旧 `【私货】AE2-QoL-3.28.0.jar` **只移不删** → `mods\_ae2qol_jar_backup\prev-【私货】AE2-QoL-3.28.0.jar`；③ 复制新 jar 为 `【私货】AE2-QoL-3.29.0.jar`（保留实例的 `【私货】` 命名约定）；④ SHA256 比对一致（`66A9D208…DFCC`，1,887,873 B）；⑤ `mods` 内 AE2-QoL jar **仅 1 份**。**未提交、未推送**（需另行授权）。**回退方式**：把 `prev-【私货】AE2-QoL-3.28.0.jar` 移回 `mods` 并移除新 jar；或运行期把 `config/ae2_qof/gtnl_steam_elevator.json` 的 `enabled` 设为 `false`。**注意**：客户端与服务端必须同版本；jar 只在启动时加载，需重启游戏。
+
+### 八、待用户实测
+① 启动日志出现"注入自检通过(5/5)"；② 5 个模块面板里 Waila/机器的 `maxProgress` = 128（或按输入降级的份数×1）；③ 蒸汽/t 与改前相同；④ 供料不足时降级为 1 份并只 WARN 一次；⑤ 矿处的水/润滑剂行为与改前一致（本就不扣）。
+
+---
 
 ## 工作区决策记录 2026-10-08 (84) - **3.28.0：停用多线程引擎（只保留并行与速度）+ 隐藏线程 UI + 删并行诊断噪音**
 

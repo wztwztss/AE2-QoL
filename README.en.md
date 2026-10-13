@@ -10,9 +10,53 @@ An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI patte
 > Client-only installs will show the GUIs but the features will not work; server-only installs leave clients without them.
 > (If a Modrinth page marks this mod as client-only, that metadata is wrong — this note is authoritative.)
 
-**Author: wztwzt · Current source version: 3.28.0 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 3.30.0-fix2 · Reference pack: GTNH 2.9.0-beta-3**
 
-## What's new in 3.28.0 (the multi-thread engine is disabled — parallel and speed only)
+## What's new in 3.30.0 (Steam Elevator: a per-tick parallel knob P)
+
+> `3.30.0-fix1`: a config file missing newly added keys is **topped up automatically** (values preserved).
+> `3.30.0-fix2`: the oil drill's default parallel is now **8** (was 64). **The value in your config file always wins** —
+> edit `oilDrillMaxParallel` to change it (hot-reloaded, ~1 s).
+
+- **Why**: the 3.29.0 design is capped at **1 recipe/tick = 20 batches/s** (an operation of n batches lasts n ticks).
+  Raising `batchSize` does **not** make it faster — it only delivers "1024 batches every 51 s". To raise throughput you must
+  process **several batches per tick**.
+- **New config**: `moduleMaxParallel` (global, default **1** = identical to 3.29.0) plus `oilDrillMaxParallel`
+  (**oil drill only, default 8**; set 0 to follow the global value). The oil drill has no inputs, so its parallel is a pure
+  speed-up; the other four modules would eat ×P materials, hence they stay at 1.
+  - Oil Drill III therefore ships at P=8: ~80,000 → **~640,000 L/s** (~4.10M L per 6.4 s settlement).
+  - Tune it yourself via `moduleMaxParallel` / `oilDrillMaxParallel` (hot-reloaded, ~1 s, no restart).
+- ⚠️ **Steam accounting**: parallel does **not** increase steam use (like batching, `lEUt` is only scaled by
+  `steamCostMultiplier` / `steamFollowsSpeed`) — i.e. "same steam, ×P output". Set `moduleSteamCostMultiplier` to P if you
+  want parallel to cost P× steam.
+- **Lag-neutral**: the duration still follows `n`, so both the recipe-check frequency and the anti-lag gate are unaffected by P.
+- ⚠️ **Per-operation payout is ×P** (P=16 ⇒ 8.19M L in one settlement): use **ME fluid/item output**.
+
+## Previous: 3.29.0 (GTNL Steam Elevator modules: 1-tick recipes, 128-per-batch, zero extra steam)
+
+- **Targets**: the 5 attachment modules of GTNL's Steam Elevator (MTE 21155) — Ore Processor, Apiary, Greenhouse,
+  Bee Breeding, Oil Drill I/II/III. (Beacon / Monster Repellent / Flight / Weather / Entity Crusher are untouched.)
+- **Speed**: the per-recipe duration is forced to **1 tick**, and **128 recipes are merged into one operation**
+  (**128 ticks = 6.4 s**, i.e. 128 recipes per 6.4 s). Throughput vs. vanilla: Ore ×(20–640)×parallel,
+  Apiary ×6000, Bee Breeding ×12000, Greenhouse ×100, Oil Drill ×1200/600/400.
+- **Steam**: `steamFollowsSpeed=false` ⇒ **steam/tick is identical to before** (speed costs no extra steam; buffer
+  endurance unchanged).
+- **What batching really buys**: the machine runs **once per 6.4 s instead of every tick** (operation frequency ÷128 —
+  fewer recipe lookups and start/stop cycles). That is the lag reduction; it does not raise per-tick output.
+- **Anti-lag gate (important)**: the 1-tick + batching mode only engages when **at least 8 batches** can be paid for;
+  otherwise **nothing is changed** (upstream duration/steam/output are kept) and you get one warning. Rationale: n merged
+  batches mean `checkProcessing` runs 20/n times per second — falling back to n=1 would mean **a recipe check every tick**,
+  i.e. *worse* than vanilla. The rule is "rather no speed-up than a higher check rate"; lower `minBatchesToApplyTuning`
+  (e.g. 2) if you prefer speed over quiet.
+- ⚠️ **Do not stack acceleration torches / time bottles on these modules**: that turns "one operation per 6.4 s" back into
+  high-frequency operations and settlements, giving back every saving this change bought.
+- **Auto-degrade**: if inputs only cover a few batches, it runs exactly those (never stalls, never idles) and warns once.
+- **Config**: `config/ae2_qof/gtnl_steam_elevator.json` (hot-reloaded, generated on first start). **`enabled=false`
+  restores upstream behaviour exactly.**
+- **Safety**: every injector is `require=0` (a GTNL signature change can no longer crash the game — worst case that
+  module is simply not tuned), and a **startup self-check** line reports 5/5 applied.
+
+## Previous: 3.28.0 (the multi-thread engine is disabled — parallel and speed only)
 
 - **Multi-threading is turned off** (user decision, 2026-10-08): the maintenance hatch no longer offers a thread count,
   and machines run **one recipe at a time with the parallel value you set**. The engine, its UI and its broadcaster are

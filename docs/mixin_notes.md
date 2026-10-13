@@ -8,8 +8,8 @@
 > 2. 修改后jar放入测试环境，查看mixin.log确认注入状态。
 > 3. 参考其他模组Mixin实现：`E:\wzt\MC\modcreater\reference_src_290b3`（旧的 `reference_src_290b1_已过期` 已废弃）。
 
-> 当前基线：GTNH **2.9.0-beta-3** / MC 1.7.10 / 版本 `3.28.0`。
-> 清单与 `src/main/resources/mixins.ae2_qof.json` 逐条对齐（通用 14 条 + client 16 条 = 30 条）。
+> 当前基线：GTNH **2.9.0-beta-3** / MC 1.7.10 / 版本 `3.29.0`。
+> 清单与 `src/main/resources/mixins.ae2_qof.json` 逐条对齐（通用 19 条 + client 16 条 = 35 条）。
 >
 > **3.28.0 起两处"已停用但仍入包"的注入**（用户决定停用线程，代码保留）：
 > 1. `mixin/gt/MixinProcessingLogicSpeed.ae2qol$logParallelOnce`（并行设定诊断）—— `@Inject` **整段注释掉**，
@@ -21,6 +21,26 @@
 ---
 
 ## Mixin 清单
+
+### GTNL 蒸汽楼梯模块调速（3.29.0）- 5个Mixin
+
+| Mixin 类路径 | 目标类 | 注入点 | 风险/说明 |
+|---|---|---|---|
+| `mixin/gt/MixinSteamBeeBreedingTuning.java` | `com.science.gtnl...steamElevator.SteamBeeBreedingModule` | `checkProcessing` RETURN（`require=0`） | 单份时长→1t、批处理最多 128 份、产出×n；额外份数**逐份实扣蜂王浆**（128/份），不够就降级。蜂王浆原型走**反射**（Forestry 不在编译类路径），反射失败则**不做批处理**（防白送产出）。 |
+| `mixin/gt/MixinSteamOilDrillTuning.java` | `...SteamOilDrillModule` | 同上 | 无输入，份数只受时长上限限制；产出为**流体**×n。`oilDrillOutputClamp` 输出容量夹紧**默认关闭**（ME 仓容量语义不可靠，硬夹紧会把 ME 玩家静默降成 n=1）。 |
+| `mixin/gt/MixinSteamApiaryTuning.java` | `...SteamApiaryModule` | 同上 | 额外份数按 `mMaxSlots × apiaryRoyalJellyPerSlot`（默认 40/槽）逐份实扣；`mStorage.size()` 走**反射**读取。输入/输出模式（`lEUt==0`）直接放行，避免把上一周期 `mOutputItems` 重复放大。 |
+| `mixin/gt/MixinSteamGreenhouseTuning.java` | `...SteamGreenhouseModule` | 同上 | 额外份数按 `greenhouseWaterPerCycle`（默认 16000 mB）逐份扣水；**用与上游相同的手法**（直接改 `getStoredFluids()` 的 `FluidStack.amount`），并只认"名字含 water"的流体。输入/输出模式放行。 |
+| `mixin/gt/MixinSteamOreProcessorTuning.java` | `...SteamOreProcessorModule` | 同上 | 额外份数 = 再扣 `currentParallelism` 个矿/份（反射查 `ALL_PROCESSABLE` 过滤，避免吃掉非矿物品）。**水/润滑剂不做额外扣减**——上游 `depleteInput(FluidStack,*)` 在 GTNL 蒸汽机器里只遍历蒸汽仓（`SteamMultiMachineBase:670-715`），水/润滑剂本来就扣不到。 |
+
+**共同约定（务必保持）**：
+1. 全部 `@Mixin(..., remap=false)` + `@Inject(method="checkProcessing", at=@At("RETURN"), require=0)` —— **永不因注入失败崩游戏**；每个 mixin 用 `@Unique ae2qof$steamTuningApplied()` 供启动自检 `SteamElevatorTuning.selfCheck()` 判定"到底落没落地"。
+2. **不做版本白名单**（用户定案）：改为"注入自检 + 一级结构指纹 + 二级数值指纹（只 WARN）"。
+3. **批处理不放大 `lEUt`**（对齐 GT：先算 EUt 再只拉伸时长，`GTNLParallelHelper:655-656/658-675`）。
+4. 时长一律**运行期读回**（`mMaxProgresstime`）再处理，**不硬编码**上游数值 ⇒ 上游改数值时自动跟随。
+5. 配置：`config/ae2_qof/gtnl_steam_elevator.json`（`enabled=false` 完全回上游行为）。
+6. **抗卡顿闸门（3.29.0 出包前加入，用户口径"最初就是为了减少加速火把带来的卡顿"）**：只有能凑够 `minBatchesToApplyTuning`（默认 8）份时才应用"1 tick + 批处理"，凑不够就**完全不改**并 WARN 一次。理由：一次操作 n 份 ⇒ `checkProcessing` 频率 = 20/n 次/秒，降到 n=1 会退化成**每 tick 一次配方检查**（比改前更卡）。**原则：宁可不提速，也不提高检查频率。**
+7. **产出超堆不切叠**：`multiplyItems` 与 GT 一致（`ParallelHelper.addItemsLong:633-641` 单堆、仅按 `Integer.MAX_VALUE` 夹紧）；输出仓 `MTEHatchOutputBus.storePartial:185-216` 自行逐槽拆分。**不要**按 64 切叠（会把 5 个堆变成上万个 ItemStack）。
+8. **并行 P（3.30.0，3.30.0-fix2 调整默认）**：`moduleMaxParallel`（全局，默认 1）与 `oilDrillMaxParallel`（**抽油专用，默认 8**，0=跟随全局）经 `effectiveParallel()` / `effectiveOilDrillParallel()` 生效；**产出一律按 `total = n + 实扣到的追加份数` 放大，输入按 `(n×P − 1)` 份实扣**（扣不满按实得份数产出，严格配平）；**时长仍按 n** ⇒ 检查频率 20/n 与抗卡顿闸门都不受 P 影响。抽油无输入 ⇒ `total = n×P`。**并行不增加蒸汽消耗**（`lEUt` 只按 `steamCostMultiplier`/`steamFollowsSpeed` 缩放）——要按 P 倍收汽就把 `moduleSteamCostMultiplier` 设为 P。⚠️ 单次结算量 ×P，必须 ME 输出。
 
 ### 智能倍增 (Smart Doubling) - 10个Mixin
 
