@@ -43,18 +43,36 @@ public final class InfinityCellRecord {
     private final Map<EssentiaStackKey, CellCount> essentia = new LinkedHashMap<>();
     private final CellCount eu = new CellCount();
 
+    /**
+     * 3.35.0-fix1（审查 P1-9）：记录级锁。
+     * <p>账本（三个 LinkedHashMap）会被两个线程同时触碰：服务端 tick 线程（AE2 存储
+     * MODULATE 插入/抽取）与客户端 NEI 线程（单机 U 键预览直读 {@code getItemsView}）。
+     * 旧实现零同步 ⇒ 遍历期间服务端插入/删除即 {@code ConcurrentModificationException}，
+     * 或读到半更新状态。{@code InfinityCellStorage} 的 synchronized 罩不到记录内部
+     * （getOrCreate 返回引用后锁即释放）。
+     * <p>改法：全部触碰 map 的公共方法挂本锁；对外视图改为**快照拷贝**（见
+     * {@code getItemsView}），消费方拿到的不再是可以被并发改动的活账本。
+     */
+    private final Object lock = new Object();
+
     // ==================== 读取数量 ====================
 
     public long getItemAmount(ItemStackKey key) {
-        return amount(items, key);
+        synchronized (lock) {
+            return amount(items, key);
+        }
     }
 
     public long getFluidAmount(FluidStackKey key) {
-        return amount(fluids, key);
+        synchronized (lock) {
+            return amount(fluids, key);
+        }
     }
 
     public long getEssentiaAmount(EssentiaStackKey key) {
-        return amount(essentia, key);
+        synchronized (lock) {
+            return amount(essentia, key);
+        }
     }
 
     public long getEUAmount() {
@@ -82,36 +100,52 @@ public final class InfinityCellRecord {
     // ==================== 写入 ====================
 
     public void addItem(ItemStackKey key, long amount) {
-        add(items, key, amount);
+        synchronized (lock) {
+            add(items, key, amount);
+        }
     }
 
     public void addItem(ItemStackKey key, BigInteger amount) {
-        add(items, key, amount);
+        synchronized (lock) {
+            add(items, key, amount);
+        }
     }
 
     public void addFluid(FluidStackKey key, long amount) {
-        add(fluids, key, amount);
+        synchronized (lock) {
+            add(fluids, key, amount);
+        }
     }
 
     public void addFluid(FluidStackKey key, BigInteger amount) {
-        add(fluids, key, amount);
+        synchronized (lock) {
+            add(fluids, key, amount);
+        }
     }
 
     public void addEssentia(EssentiaStackKey key, long amount) {
-        add(essentia, key, amount);
+        synchronized (lock) {
+            add(essentia, key, amount);
+        }
     }
 
     public void addEssentia(EssentiaStackKey key, BigInteger amount) {
-        add(essentia, key, amount);
+        synchronized (lock) {
+            add(essentia, key, amount);
+        }
     }
 
     public void addEU(long amount) {
-        eu.add(amount);
+        synchronized (lock) {
+            eu.add(amount);
+        }
     }
 
     public void addEU(BigInteger amount) {
-        if (amount != null && amount.signum() > 0) {
-            eu.add(CellCount.parse(amount.toString()));
+        synchronized (lock) {
+            if (amount != null && amount.signum() > 0) {
+                eu.add(CellCount.parse(amount.toString()));
+            }
         }
     }
 
@@ -121,26 +155,34 @@ public final class InfinityCellRecord {
      * 取出至多 requested 的数量并返回实际取出量；modulate 为 false 时只模拟不修改存储。
      */
     public long extractItem(ItemStackKey key, long requested, boolean modulate) {
-        return extract(items, key, requested, modulate);
+        synchronized (lock) {
+            return extract(items, key, requested, modulate);
+        }
     }
 
     public long extractFluid(FluidStackKey key, long requested, boolean modulate) {
-        return extract(fluids, key, requested, modulate);
+        synchronized (lock) {
+            return extract(fluids, key, requested, modulate);
+        }
     }
 
     public long extractEssentia(EssentiaStackKey key, long requested, boolean modulate) {
-        return extract(essentia, key, requested, modulate);
+        synchronized (lock) {
+            return extract(essentia, key, requested, modulate);
+        }
     }
 
     public long extractEU(long requested, boolean modulate) {
-        if (requested <= 0L) {
-            return 0L;
+        synchronized (lock) {
+            if (requested <= 0L) {
+                return 0L;
+            }
+            long extracted = Math.min(eu.longValue(), requested);
+            if (modulate && extracted > 0L) {
+                eu.extract(extracted);
+            }
+            return extracted;
         }
-        long extracted = Math.min(eu.longValue(), requested);
-        if (modulate && extracted > 0L) {
-            eu.extract(extracted);
-        }
-        return extracted;
     }
 
     /** 本项目 API（等价于 {@code extractX(key, requested, true)}）。 */
@@ -162,30 +204,47 @@ public final class InfinityCellRecord {
 
     // ==================== 视图 ====================
 
+    /**
+     * 3.35.0-fix1：返回**锁内快照拷贝**而非活视图。旧实现 {@code unmodifiableMap(items)}
+     * 只是挡写——消费方（AE2 addAvailable 枚举 / NEI 预览）仍握着活账本引用，
+     * 客户端线程遍历时服务端插入/删除即 CME。拷贝成本 O(n)，仅在枚举路径发生（可接受）。
+     */
     public Map<ItemStackKey, CellCount> getItemsView() {
-        return Collections.unmodifiableMap(items);
+        synchronized (lock) {
+            return Collections.unmodifiableMap(new java.util.LinkedHashMap<>(items));
+        }
     }
 
     public Map<FluidStackKey, CellCount> getFluidsView() {
-        return Collections.unmodifiableMap(fluids);
+        synchronized (lock) {
+            return Collections.unmodifiableMap(new java.util.LinkedHashMap<>(fluids));
+        }
     }
 
     public Map<EssentiaStackKey, CellCount> getEssentiaView() {
-        return Collections.unmodifiableMap(essentia);
+        synchronized (lock) {
+            return Collections.unmodifiableMap(new java.util.LinkedHashMap<>(essentia));
+        }
     }
 
     // ==================== 计数 ====================
 
     public long getUsedItemTypes() {
-        return items.size();
+        synchronized (lock) {
+            return items.size();
+        }
     }
 
     public long getUsedFluidTypes() {
-        return fluids.size();
+        synchronized (lock) {
+            return fluids.size();
+        }
     }
 
     public long getUsedEssentiaTypes() {
-        return essentia.size();
+        synchronized (lock) {
+            return essentia.size();
+        }
     }
 
     public long getUsedEUTypes() {
@@ -193,43 +252,55 @@ public final class InfinityCellRecord {
     }
 
     public long getStoredItemUnits() {
-        return sum(items);
+        synchronized (lock) {
+            return sum(items);
+        }
     }
 
     public long getStoredFluidUnits() {
-        return sum(fluids);
+        synchronized (lock) {
+            return sum(fluids);
+        }
     }
 
     public long getStoredEssentiaUnits() {
-        return sum(essentia);
+        synchronized (lock) {
+            return sum(essentia);
+        }
     }
 
     public long getStoredEUUnits() {
-        return eu.longValue();
+        synchronized (lock) {
+            return eu.longValue();
+        }
     }
 
     // ==================== 序列化 ====================
 
     public NBTTagCompound writeToNBT() {
-        NBTTagCompound tag = new NBTTagCompound();
-        tag.setTag(KEY_ITEMS, writeEntries(items, ItemStackKey::writeToNBT));
-        tag.setTag(KEY_FLUIDS, writeEntries(fluids, FluidStackKey::writeToNBT));
-        tag.setTag(KEY_ESSENTIA, writeEntries(essentia, EssentiaStackKey::writeToNBT));
-        tag.setString(KEY_EU, eu.toString());
-        return tag;
+        synchronized (lock) {
+            NBTTagCompound tag = new NBTTagCompound();
+            tag.setTag(KEY_ITEMS, writeEntries(items, ItemStackKey::writeToNBT));
+            tag.setTag(KEY_FLUIDS, writeEntries(fluids, FluidStackKey::writeToNBT));
+            tag.setTag(KEY_ESSENTIA, writeEntries(essentia, EssentiaStackKey::writeToNBT));
+            tag.setString(KEY_EU, eu.toString());
+            return tag;
+        }
     }
 
     public void readFromNBT(NBTTagCompound tag) {
-        items.clear();
-        fluids.clear();
-        essentia.clear();
-        eu.clear();
-        if (tag.hasKey(KEY_EU, 8)) {
-            eu.add(CellCount.parse(tag.getString(KEY_EU)));
+        synchronized (lock) {
+            items.clear();
+            fluids.clear();
+            essentia.clear();
+            eu.clear();
+            if (tag.hasKey(KEY_EU, 8)) {
+                eu.add(CellCount.parse(tag.getString(KEY_EU)));
+            }
+            readEntries(tag.getTagList(KEY_ITEMS, 10), items, ItemStackKey::readFromNBT);
+            readEntries(tag.getTagList(KEY_FLUIDS, 10), fluids, FluidStackKey::readFromNBT);
+            readEntries(tag.getTagList(KEY_ESSENTIA, 10), essentia, EssentiaStackKey::readFromNBT);
         }
-        readEntries(tag.getTagList(KEY_ITEMS, 10), items, ItemStackKey::readFromNBT);
-        readEntries(tag.getTagList(KEY_FLUIDS, 10), fluids, FluidStackKey::readFromNBT);
-        readEntries(tag.getTagList(KEY_ESSENTIA, 10), essentia, EssentiaStackKey::readFromNBT);
     }
 
     public ItemStack createItemStack(ItemStackKey key, long amount) {

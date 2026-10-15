@@ -34,6 +34,30 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-15 (109) - **3.35.0-fix1：无限元件记录加锁 + 视图快照 + ItemStackKey 构造期定哈希（P1-9/P1-10 同根因）**
+
+### 一、现象（静态可证的跨线程共享 + 撕裂自证）
+1. `InfinityCellRecord` 三个 `LinkedHashMap` **零同步**，且 `getXxxView()` 返回 `Collections.unmodifiableMap`（**只挡写、不复制**）。
+   账本被两线程触碰：服务端 tick（AE2 MODULATE 插入/抽取）与客户端 NEI（单机 U 键直读）——遍历期间结构性修改 ⇒ CME / 半更新读。
+   外层 `InfinityCellStorage` 的 synchronized 罩不到记录内部（getOrCreate 返回引用后锁即释放）。
+2. `ItemStackKey` 记忆化缓存（`cachedHash/hashCached/uid/item`）非 volatile：代码保证"算出的 hash 永不为 0"（==0 改写 1），
+   所以**读到 0 即撕裂自证** ⇒ 同物品两笔账（一份永远取不出）、`toStack()` 返回 null → handler 把 null 哨兵永久写入
+   ⇒ 物品从 ME 网络列表消失且不重试。
+
+### 二、本轮改动（用户拍板：修）
+1. `InfinityCellRecord`：新增实例锁 `lock`，**全部**触碰 map/EU 计数的公共方法（读数量/写/取/视图/计数/sum/序列化 27 个方法）挂锁；
+2. 三个 `getXxxView()` 改为**锁内快照拷贝**（`new LinkedHashMap<>(map)` 包 unmodifiable）——消费方拿到的是副本，不再握活账本；
+3. `ItemStackKey`：全部缓存字段 `volatile`；**hashCode 在构造期一次算完**（先于任何发布可见）——撕裂读在构造期封死；
+   `readAmount` 消费口径（`Cnt` long）不受影响。
+4. 性能：每次 AE 操作多一次无竞争锁获取（纳秒级）；视图拷贝 O(n) 只发生在枚举路径（本就 O(n)）。
+
+### 三、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.35.0-fix1.jar`。
+- 待游戏实测（用户执行）：① 无限元件存/取/NEI 预览全部照常（核心验收——锁不误伤）；② 长时间高频存取后容量统计不虚增、物品不消失。
+- 说明：单机 NEI 直读的线程前提（`DimensionManager.getWorld(0)` 在客户端线程非 null）为设计路径；本修复使该路径即使成立也安全。
+
+---
+
 ## 工作区决策记录 2026-10-14 (108) - **3.34.0-fix7：apgport 7 包 + wildport 3 包全部归队服务端 tick 线程（P1-8）**
 
 ### 一、现象（源码逐行实证 + FML 字节码）
