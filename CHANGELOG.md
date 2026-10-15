@@ -34,6 +34,34 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-14 (96) - **3.33.0-fix1：堵住"远程炸弹包"——冲突批量提交包解码期无界分配（远程 DoS）**
+
+### 一、现象（静态审查发现 + 字节码/协议取证）
+`apgport/network/PacketResolveConflictsBatch.java` 的 `fromBytes()` 按客户端声明的 int 直接 `new int[len]`，**无任何夹紧**：
+```java
+int len = buf.readInt();          // 客户端可控
+selectedIndices = new int[len];   // 分配先于读取
+```
+`fromBytes` 在 **Netty 解码阶段**执行，早于 `Handler.onMessage` 里的 `ConflictSession.get(uuid)` 会话判定 —— 恶意客户端**无需打开任何界面、无需任何会话**，发一个声明 `len=Integer.MAX_VALUE` 的包即可让服务端在解码期直接 `OutOfMemoryError`（或 `NegativeArraySizeException`）。异常抛在 FML 解码器内（`FMLIndexedMessageToMessageCodec.decode` 无异常表），失败模式为断连/堆抖动，可反复触发。
+
+**评级依据**：这是全仓 33 个 C2S 包里唯一"远程、零前置条件、可重复"的服务端打崩点。同类解码夹紧在同通道其余 7 个包里早已存在（`RequestProvidersListPacket:117` ≤64 等），唯独此包遗漏。
+
+### 二、本轮改动（用户拍板：上限用 360，不用 64）
+1. `PacketResolveConflictsBatch.fromBytes()`：`len < 0 || len > 360` 时按**空数组**处理并直接返回，不再按声明值分配。
+2. **为什么 360 够**：服务端每批冲突组数由 `ForgeConfig.MAX_CONFLICT_BATCH_SIZE = 64` 封顶（默认 6），正常客户端单包最多 64 个下标（`GuiRecipePicker.buildSubmittedSelections`，按 batchSize 构建）—— 360 留 5 倍余量，纯拦恶意/损坏包。
+3. 客户端正常路径零变化：合法提交（≤64 个）不受任何影响。
+
+### 三、影响面与风险
+- 只动一个 `fromBytes()` 的分配守卫；**协议不变**（仍是 int 数组），旧客户端/新客户端互通无影响。
+- 失败模式从"OOM/断连"降级为"攻击包被当空包丢弃"。
+- 无存档/游戏行为变化；不需要游戏内回归（可选用：开一次冲突解决界面正常提交一批，确认功能如常）。
+
+### 四、验证
+- 构建：`JAVA_HOME=E:\java17 GRADLE_USER_HOME=C:\Users\29357\.gradle ./gradlew build --offline -x spotlessJavaCheck -x spotlessCheck`，产物 `build/libs/AE2-QoL-3.33.0-fix1.jar`。
+- 产物核对：`mcmod.info` 双条目 = 3.33.0-fix1；jar 内 `PacketResolveConflictsBatch.class` 含 360 常量与守卫分支。
+
+---
+
 ## 工作区决策记录 2026-10-14 (95) - **3.32.0-fix5：蒸汽屠宰场模块（气动刷怪笼）加入调速（专用键，默认 8）**
 
 ### 一、用户口径

@@ -24,6 +24,18 @@ import io.netty.buffer.ByteBuf;
  */
 public class PacketResolveConflictsBatch implements IMessage {
 
+    /**
+     * 3.33.0-fix1：解码期长度上界（防恶意包打爆堆）。
+     * <p>服务端每批冲突组数由 {@code ForgeConfig.MAX_CONFLICT_BATCH_SIZE = 64} 封顶，
+     * 正常客户端单包最多 64 个下标；360 留 5 倍余量，只拦恶意/损坏的包。
+     * <p>为什么必须在解码期拦：{@code fromBytes} 跑在 Netty 解码阶段，早于
+     * {@code Handler.onMessage} 的会话判定 —— 旧代码按包内声明的 int 无界
+     * {@code new int[len]}，恶意客户端无需任何会话/界面即可让服务端分配
+     * 最大 2GB（len≈5e8）乃至 OOM。与同通道 {@code PacketGeneratePatterns} 等包
+     * 的既有夹紧口径一致。
+     */
+    private static final int MAX_SELECTED_INDICES = 360;
+
     public int expectedStartIndex;
     public boolean cancel;
     public int[] selectedIndices;
@@ -41,6 +53,11 @@ public class PacketResolveConflictsBatch implements IMessage {
         expectedStartIndex = buf.readInt();
         cancel = buf.readBoolean();
         int len = buf.readInt();
+        // 3.33.0-fix1：长度越界（负数或超上限）按空数组处理，不再按声明值分配
+        if (len < 0 || len > MAX_SELECTED_INDICES) {
+            selectedIndices = new int[0];
+            return;
+        }
         selectedIndices = new int[len];
         for (int i = 0; i < len; i++) {
             selectedIndices[i] = buf.readInt();
