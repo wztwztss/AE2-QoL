@@ -37,6 +37,8 @@ public final class InfinityCellDataAccess {
     public static void migrateLegacy(World world) {
         World serverWorld = serverWorld(world);
         if (serverWorld == null) {
+            // 3.35.0-fix3（审查 P2-A6 顺带）："没有旧数据"与"这次没跑"日志上必须可分
+            AEInfinityCell.LOG.info("Legacy infinity cell migration skipped: server world not ready yet");
             return;
         }
 

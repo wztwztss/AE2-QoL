@@ -297,9 +297,27 @@ public final class InfinityCellRecord {
             if (tag.hasKey(KEY_EU, 8)) {
                 eu.add(CellCount.parse(tag.getString(KEY_EU)));
             }
-            readEntries(tag.getTagList(KEY_ITEMS, 10), items, ItemStackKey::readFromNBT);
-            readEntries(tag.getTagList(KEY_FLUIDS, 10), fluids, FluidStackKey::readFromNBT);
-            readEntries(tag.getTagList(KEY_ESSENTIA, 10), essentia, EssentiaStackKey::readFromNBT);
+            // 3.35.0-fix3：被丢弃的条目（amount 非 String 的旧格式行）留痕——
+            // "载入 N / 共 M 条" 形式，M > N 即说明发生了丢弃，日志上直接可见。
+            int loadedItems = readEntries(tag.getTagList(KEY_ITEMS, 10), items, ItemStackKey::readFromNBT);
+            int loadedFluids = readEntries(tag.getTagList(KEY_FLUIDS, 10), fluids, FluidStackKey::readFromNBT);
+            int loadedEssentia = readEntries(tag.getTagList(KEY_ESSENTIA, 10), essentia, EssentiaStackKey::readFromNBT);
+            logSkippedIfNeeded("items", loadedItems, tag.getTagList(KEY_ITEMS, 10).tagCount());
+            logSkippedIfNeeded("fluids", loadedFluids, tag.getTagList(KEY_FLUIDS, 10).tagCount());
+            logSkippedIfNeeded("essentia", loadedEssentia, tag.getTagList(KEY_ESSENTIA, 10).tagCount());
+        }
+    }
+
+    /** 3.35.0-fix3：载入数 < 总数时 WARN（含被忽略条数）——把静默丢弃变成可见事件。 */
+    private static void logSkippedIfNeeded(String channel, int loaded, int total) {
+        if (loaded < total) {
+            cn.dancingsnow.aeinfinitycell.AEInfinityCell.LOG.warn(
+                "[AE2QoL] 无限元件读档：{} 通道 {} 条中只有 {} 条载入，{} 条因数量字段为旧格式（long）被忽略"
+                    + "——这些内容无法恢复，重新存入即可",
+                channel,
+                total,
+                loaded,
+                total - loaded);
         }
     }
 
@@ -328,18 +346,29 @@ public final class InfinityCellRecord {
         return list;
     }
 
-    private static <K> void readEntries(NBTTagList list, Map<K, CellCount> entries, KeyReader<K> reader) {
+    /**
+     * 3.35.0-fix3（审查 P1-12）：读档兼容性丢弃改为**可见**。
+     * 旧格式（数量字段是 long 而非 String）无法表示超限数量，丢弃语义保留（上游 1.0.5 单元测试
+     * {@code legacyLongAmountsAreIgnored} 把它写成预期），但"扔了几个"必须留下痕迹 ——
+     * 否则"数据丢了"与"本来就没有"在日志上无法区分，而迁移链随后还会把源文件归档封存。
+     *
+     * @return 实际载入的条目数；调用方对比 {@code list.tagCount()} 即得被忽略数。
+     */
+    private static <K> int readEntries(NBTTagList list, Map<K, CellCount> entries, KeyReader<K> reader) {
+        int loaded = 0;
         for (int i = 0; i < list.tagCount(); i++) {
             NBTTagCompound entry = list.getCompoundTagAt(i);
-            // 旧格式用 long 保存数量，无法表示超限数量，迁移时直接忽略
+            // 旧格式用 long 保存数量，无法表示超限数量，迁移时直接忽略（数量统计见返回值）
             if (!entry.hasKey(KEY_AMOUNT, 8)) {
                 continue;
             }
             CellCount count = CellCount.parse(entry.getString(KEY_AMOUNT));
             if (count.isPositive()) {
                 entries.put(reader.read(entry), count);
+                loaded++;
             }
         }
+        return loaded;
     }
 
     private static <K> void add(Map<K, CellCount> map, K key, long amount) {
