@@ -5,7 +5,7 @@
 | 状态 | **已实施（3.29.0 → 3.30.0 → 3.32.0-fix5）**。实施记录见 `CHANGELOG.md` 决策记录 (85)(86)(88)(95)：`gtnl/SteamElevatorTuning.java` + 6 个 `mixin/gt/MixinSteam*Tuning.java`；当前产物 `build/libs/AE2-QoL-3.32.0-fix5.jar`（1,919,432 B，SHA256 `540BC30362F6BE827A2BBE46F4A174EC5774186F61B188A0BD4CA5CE9B00C125`，已部署）。**3.32.0-fix5 追加第 6 类（屠宰场）**，见 §5.5 与 §7。本文件继续作为**设计稿/数值表/兼容性分析**的单一来源；文内"未实施"字样仅指该段写作时的状态。 |
 | 载体 | **AE2-QoL（`ae2_qof`）用 mixin 覆写**，不改 GTNL 源码 |
 | 取证基线 | `reference_src_290b3\GT-Not-Leisure-dev-290\GT-Not-Leisure-dev-290`（本文行号标 `[dev-290]`；无 `.git`，commit 不可比） |
-| **编译基线（实测）** | **`libs\sciencenotleisure-0.2.7-pre3-dev-290.jar`**（`mcmod.info`: `version=0.2.7-pre3-dev-290.37+082483e468`，23,283,878 B，2026-09-20）——**同为 dev-290 线，且是比运行 jar 更新的构建** |
+| **编译基线（实测）** | **`libs\sciencenotleisure-0.2.7-dev-290.jar`**（原名 `sciencenotleisure-0.2.7-pre3-dev-290.jar`，3.32.0-fix5 改名去掉 `-pre3` 以通过 CI 的"无 prerelease 依赖"检查；`mcmod.info`: `version=0.2.7-pre3-dev-290.37+082483e468`，23,283,878 B，2026-09-20）——**同为 dev-290 线，且是比运行 jar 更新的构建** |
 | 行号标注 `[pre3]` | 指 `reference_src_290b3\GT-Not-Leisure-0.2.7-pre3` 源码快照（**其真实版本串无法从树内读出**：`gradle.properties` 里是构建期 token `GRADLETOKEN_VERSION`，见 §0.2） |
 | **运行基线（实测）** | **`【私货】sciencenotleisure-0.2.7-rc2-dev-290.14+c9614667ef.jar`**（16,879,392 B，`mcmod.info`: `modid=sciencenotleisure`, `version=0.2.7-rc2-dev-290.14+c9614667ef`, `mcversion=1.7.10`）——**属 dev-290 线，与取证树同线** |
 | 实例其它相关产物 | `【私货】gtnotgood-1.4.0.jar`、`gregtech-5.09.54.133.jar`（GT5U） |
