@@ -10,4 +10,8 @@ on:
 jobs:
   build-and-test:
     uses: GTNewHorizons/GTNH-Actions-Workflows/.github/workflows/build-and-test.yml@master
+    with:
+      # ae2_qof 硬依赖 gregtech/GTNL/gtnotgood（compileOnly 的本地 jar，不在 CI 运行时类路径上），
+      # CI 的 runServer 冒烟测试必然因缺类失败 ⇒ 关闭 server-run，只做编译 + spotless 检查
+      client-only: true
     secrets: inherit

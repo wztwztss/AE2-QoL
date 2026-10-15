@@ -3,6 +3,10 @@
 
 name: Release latest starter and migration packages
 
+# 默认 GITHUB_TOKEN 只有读权限，无法创建/更新 Release（Resource not accessible by integration）
+permissions:
+  contents: write
+
 on:
   push:
     branches: [ master, main ]
