@@ -187,12 +187,36 @@ public class SmartDoublingTogglePacket implements IMessage {
         /**
          * 服务端权威路径：按坐标重新定位机器 → 校验能力接口 → 写入开关 → 回读真值给客户端。
          * 这一路径不依赖任何客户端注入，因此**专用服务端也成立**。
+         *
+         * <p>3.34.0-fix2（审查 P1-3）：入口加两道闸——
+         * <ol>
+         * <li>**距离**：玩家必须离目标 8 格以内（与 {@code SmartWildcardSlotCircuitPacket} 的既有
+         * 范式一致，其注释原话"防止构造包远程改别人机器"）。正常玩家只在打开机器界面时发包，
+         * 距离必然在数格内；伪造的远程包从此直接被拒。</li>
+         * <li>**区块存在性前置**：先 {@code blockExists} 再 {@code getTileEntity}，避免伪造的
+         * 远坐标包逼服务端在身份校验之前加载/生成区块（审查 P1-7 同源，一并修）。</li>
+         * </ol>
          */
         private static void applyAtCoords(EntityPlayerMP player, SmartDoublingTogglePacket msg) {
             MinecraftServer server = MinecraftServer.getServer();
             if (server == null) return;
             WorldServer world = server.worldServerForDimension(msg.dim);
             if (world == null) return;
+            // 3.34.0-fix2：距离闸（8 格 = 64 平方距离；玩家在别的维度时 DistanceSq 对比的是
+            // 自己所在世界的坐标，因此维度不同先按"过远"拒绝——正常玩法不会跨维度拨开关）
+            if (player.dimension != msg.dim
+                || player.getDistanceSq(msg.x + 0.5D, msg.y + 0.5D, msg.z + 0.5D) > 64.0D) {
+                MyMod.LOG.info(
+                    "[AE2QoL] 智能倍增：玩家 {} 距目标 d{} [{}, {}, {}] 过远（>8 格或跨维度），请求已拒绝",
+                    player.getCommandSenderName(),
+                    msg.dim,
+                    msg.x,
+                    msg.y,
+                    msg.z);
+                return;
+            }
+            // 3.34.0-fix2：区块存在性前置（不再在身份校验之前触发区块加载/生成）
+            if (!world.blockExists(msg.x, msg.y, msg.z)) return;
             TileEntity te = world.getTileEntity(msg.x, msg.y, msg.z);
             if (!(te instanceof IGregTechTileEntity)) {
                 MyMod.LOG.warn(
