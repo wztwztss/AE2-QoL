@@ -34,6 +34,35 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-14 (101) - **3.33.0-fix6：ae2fc 流体样板改数量按原生口径写回——修"改完数量流体身份被毁"（P1-1）**
+
+### 一、现象（读写字节码不对称实证）
+对 ae2fc `ItemFluidDrop` 样板用中键设精确数量或 ×2/×8 后，该格流体身份被永久毁掉：
+- **读侧** `getFluidFromItem`（本文件）按 ae2fc 口径读：`getString("Fluid")` + `stack.stackSize` 即毫升级数；
+- **写侧** `setFluidItemAmount` / `multiplyFluidItem` 却 `fs.writeToNBT(tag)` 后 `setTag("Fluid", tag)` ——
+  塞进去的是 **Compound（NBT 类型 10）**，而 ae2fc `ItemFluidDrop.getFluidStack`（实例 jar 字节码）
+  `hasKey("Fluid", 8)` **只认 String（类型 8）** ⇒ 写完后读恒 null ⇒ 该格退化成"无名 drop 物品"，
+  被 `AEItemStack.create` 当普通物品编进样板（机器永远凑不出料），全程无日志。
+
+### 二、本轮改动（两个方法同修，PatternContainer.java）
+`setFluidItemAmount` 与 `multiplyFluidItem` 的 ae2fc 分支改为**原生口径写回**（与实例 ae2fc 1.5.106
+`ItemFluidDrop.newStack` 字节码逐条对齐）：
+```java
+stack.stackTagCompound.setString("Fluid", fs.getFluid().getName());  // String，非 Compound
+stack.stackSize = Math.max(1, Math.min(newAmount, Integer.MAX_VALUE)); // stackSize 即数量
+```
+- 读侧/写侧/ae2fc 官方三方口径完全一致；
+- IFluidContainerItem（真容器）分支不受影响；
+- 历史已写坏的样板（Fluid 已是 Compound）：读侧 getString 得空串 → getFluidFromItem 先返回 null →
+  本方法直接退出，**不会加重损坏**；坏样板需重编一张。
+
+### 三、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.33.0-fix6.jar`。
+- 待游戏实测（用户执行）：① 编一张 ae2fc 流体样板 → 中键改数量 → 编码后机器能正常执行（核心验收）；
+  ② ×2/×8/÷2/÷8 后同样正常；③ WAILA/物品名显示流体名（不变成无名物品）。
+
+---
+
 ## 工作区决策记录 2026-10-14 (100) - **3.33.0-fix5：PH 编程电路转写注入目标改到父类 DualInputHatch——修"从未生效"（P0-5）**
 
 ### 一、现象（日志 + 字节码双证）
