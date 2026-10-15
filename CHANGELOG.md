@@ -34,6 +34,35 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-14 (97) - **3.33.0-fix2：自适应动力仓 maxEUOutput 改回真实电压档——修"电压×安培"溢出炸多方块（P0-2）**
+
+### 一、现象（静态审查 + GT 字节码双证）
+`AdaptiveNetDynamoHatch.maxEUOutput()` 报 `Long.MAX_VALUE / 2`。GT 在
+`MTEMultiBlockBase.addEnergyOutputMultipleDynamos`（字节码 offset 50-62 `lmul`、94-97 `ladd`、190-211 判据）按
+「Σ(每仓 电压×安培)」累加输出预算，`totalOutput < aEU` 即 `explodeMultiblock()`。
+旧值下：amps=2 → 乘积 −9.22e18（负）、amps=4 → 0 —— 都判负 ⇒ **放 ≥2A 动力仓的发电多方块每 tick 被真引爆**；
+TecTech 机（`TTMultiblockBase.powerPass`）则负注入 → 机器白得 EU + 仓内 EU 变负。
+**触发门槛**：`docs/ADAPTIVE_HATCH_WHITELIST.md:14` 明示 DYNAMO 槽接受 MTEHatchDynamoMulti（4/16/64/256A）。
+
+### 二、根因定性：同族修复漏抄
+同模组的 `WirelessEnergyOutputTerminal.maxEUOutput()` 在 3.25.0-fix16 已改为 `V[mTier]`（注释原话"与 GT 自己的动力仓一致"）；
+`AdaptiveNetHatch.maxEUInput()` 也是 `V[helper.getCurrentVoltageTier()]`。唯独自适应**动力仓**还留着天文数字。
+
+### 三、本轮改动（用户拍板：修；安培不设上限）
+1. `AdaptiveNetDynamoHatch.maxEUOutput()`：`Long.MAX_VALUE / 2` → **`V[helper.getCurrentVoltageTier()]`**
+   （tier 由 `setVoltageTier` 钳制 0..15；网络未配置时 tier=0 → `V[0]=8`，偏保守方向，不会误爆）。
+2. **安培不加钳制**（用户明确选择）。算术安全复核（BigInteger 精确计算）：
+   **全部 16 个电压档 × 2^31−1 安培的乘积都 < Long.MAX_VALUE**（最大即 MAX 档 2147483640 × 2147483647 = 4.61e18 < 9.22e18），
+   单仓乘法在"安培不封顶"前提下依然安全；多仓累加时 Σamp×V 超界只会再次落入 GT 的"预算不足"分支（停机判定），不再产生负数误判爆点
+   ——因为每仓乘积均为正数，累加只有正向溢出可能，而正向溢出需要 Σ(V×amp) > 9.2e18，即 MAX 档 × 21 亿安 × 多仓的极端组合，正常游戏不可达。
+3. 体验变化：GT 侧"输出预算"从天文数字变为真实口径（电压×安培），喂不饱大机器时会**缺电停机**（GT 正常行为），不再爆炸。
+
+### 四、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.33.0-fix2.jar`。
+- 待游戏实测（用户执行）：① 给发电多方块放一个 4A+ 动力仓，确认不再爆炸；② 确认输出预算显示为合理数值；③ TecTech 机上不再出现 EU 白得。
+
+---
+
 ## 工作区决策记录 2026-10-14 (96) - **3.33.0-fix1：堵住"远程炸弹包"——冲突批量提交包解码期无界分配（远程 DoS）**
 
 ### 一、现象（静态审查发现 + 字节码/协议取证）

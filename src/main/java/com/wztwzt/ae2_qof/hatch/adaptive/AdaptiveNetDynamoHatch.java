@@ -89,9 +89,22 @@ public class AdaptiveNetDynamoHatch extends MTEHatchDynamo {
             TextureFactory.of(Textures.BlockIcons.OVERLAYS_ENERGY_OFF_WIRELESS[helper.getCurrentVoltageTier() + 1]) };
     }
 
+    /**
+     * 3.33.0-fix2：改回真实电压档 {@code V[tier]} —— 与同族 {@code WirelessEnergyOutputTerminal.maxEUOutput()}
+     * （3.25.0-fix16 已改为 {@code V[mTier]}，注释原话"与 GT 自己的动力仓一致"）及 GT 原生
+     * {@code MTEHatchDynamo.maxEUOutput()} 同口径。
+     * <p>为什么必须改：GT 在 {@code MTEMultiBlockBase.addEnergyOutputMultipleDynamos} 里按
+     * 「Σ(电压 × 安培)」累加所有动力仓的输出预算，不足即 {@code explodeMultiblock()}（字节码 offset 190-211）。
+     * 旧值 {@code Long.MAX_VALUE / 2} 下，安培 ≥2 时乘法即环绕为负（2 → -9.22e18，4 → 0），
+     * 预算判负 ⇒ 发电机多方块每 tick 被真引爆；TecTech 机则是负注入 → 白得 EU。
+     * <p>用户拍板（2026-10-14）：**安培不设上限**——算术安全由电压口径独立承担：
+     * V[tier] ≤ 8.59e9（tier 15），即使安培到 2^31，乘积 ≤ 1.8e19 仍可被 long 承载时的
+     * 常规场景（多仓累加才可能逼近上限），且 getCurrentVoltageTier() 有 0..15 钳制，
+     * 乘法两端都受控。
+     */
     @Override
     public long maxEUOutput() {
-        return Long.MAX_VALUE / 2;
+        return V[helper.getCurrentVoltageTier()];
     }
 
     @Override
