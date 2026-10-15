@@ -164,7 +164,10 @@ public final class SmartPatternGenerator {
     public static Result generate(String mapKeyword, Filters filters, int maxPatterns, boolean dryRun) {
         Result result = new Result();
         Filters f = filters == null ? new Filters() : filters;
-        int cap = maxPatterns <= 0 ? 512 : maxPatterns;
+        // 3.34.0-fix3（审查 P1-4）：服务端兜底上限 —— 旧式只护下界（≤0→512），
+        // 超大正数会驱动"对命中 RecipeMap 全部配方逐条编码"，主线程冻结+内存峰值。
+        // 与 SmartPatternGenPacket.MAX_PATTERNS 同值（4096），双端一致。
+        int cap = (maxPatterns <= 0 || maxPatterns > 4096) ? Math.min(512, 4096) : maxPatterns;
         try {
             List<String> maps = findMatchingRecipeMaps(mapKeyword);
             if (maps.isEmpty()) {

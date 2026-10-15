@@ -27,6 +27,23 @@ import io.netty.buffer.ByteBuf;
  */
 public class SmartPatternGenPacket implements IMessage {
 
+    /**
+     * 3.34.0-fix3（审查 P1-4）：生成数量服务端上限。
+     * <p>客户端 UI 只护下界（≤0 → 512），旧链路对上界照单全收：一个
+     * {@code maxPatterns=Integer.MAX_VALUE} 的包会让服务端对命中 RecipeMap 的**全部**配方
+     * 逐条编码样板 —— 主线程冻结、内存峰值、装不下的 {@code entityDropItem} 成实体洪水。
+     * 4096 远超正常单次需求（正常按几万分批），只截恶意/误输入。
+     */
+    public static final int MAX_PATTERNS = 4096;
+
+    /**
+     * 3.34.0-fix3：同玩家节流窗口（毫秒）。同参数重复请求在该窗口内只处理第一次 ——
+     * 防止"按住按钮狂发包"把服务端反复拖进编码循环。与 apgport 的
+     * {@code PatternGenerationRequestGate} 同思路（那类是包私有，跨包不可见，这里自建一份）。
+     */
+    private static final long DUPLICATE_WINDOW_MS = 5000L;
+    private static final java.util.Map<java.util.UUID, long[]> LAST_REQUEST = new java.util.HashMap<>();
+
     /** 配方设置：RecipeMap id 或其子串。 */
     private String mapKeyword = "";
     private String blacklistInput = "";
@@ -120,9 +137,28 @@ public class SmartPatternGenPacket implements IMessage {
             maxTier = buf.readInt();
             replacements = ByteBufUtils.readUTF8String(buf);
             dryRun = buf.readBoolean();
+            // 3.34.0-fix3：解码期直接夹紧（客户端 UI 的校验不构成防护）
+            if (maxPatterns > MAX_PATTERNS) maxPatterns = MAX_PATTERNS;
         } catch (Throwable t) {
             MyMod.LOG.warn("[AE2QoL] 样板生成请求包解析失败（已忽略）", t);
         }
+    }
+
+    /** 3.34.0-fix3：同玩家 5 秒节流（防按住按钮狂发包）。 */
+    private static synchronized boolean shouldProcess(java.util.UUID player, long nowMillis) {
+        long[] last = LAST_REQUEST.get(player);
+        if (last != null && nowMillis - last[0] < DUPLICATE_WINDOW_MS) {
+            return false;
+        }
+        if (LAST_REQUEST.size() > 1024) {
+            // 无界增长防护：满了先清过期，还满就整体重置（1024 个玩家在线时才可能触到）
+            long cutoff = nowMillis - DUPLICATE_WINDOW_MS;
+            LAST_REQUEST.entrySet()
+                .removeIf(e -> e.getValue()[0] < cutoff);
+            if (LAST_REQUEST.size() > 1024) LAST_REQUEST.clear();
+        }
+        LAST_REQUEST.put(player, new long[] { nowMillis });
+        return true;
     }
 
     public static class Handler implements IMessageHandler<SmartPatternGenPacket, IMessage> {
@@ -133,6 +169,11 @@ public class SmartPatternGenPacket implements IMessage {
                 try {
                     EntityPlayerMP player = ctx.getServerHandler().playerEntity;
                     if (player == null) return;
+                    // 3.34.0-fix3：同玩家 5 秒节流（所有模式统一——dryRun 也在窗口内，
+                    // 防止"预览按钮"被脚本狂点等效绕过）
+                    if (!SmartPatternGenPacket.shouldProcess(player.getUniqueID(), System.currentTimeMillis())) {
+                        return;
+                    }
                     SmartPatternGenerator.Filters filters = new SmartPatternGenerator.Filters();
                     filters.blacklistInput = message.blacklistInput;
                     filters.blacklistOutput = message.blacklistOutput;

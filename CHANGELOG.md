@@ -34,6 +34,32 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-14 (104) - **3.34.0-fix3：样板生成请求夹紧 ≤4096 + 5 秒节流——防手滑卡服/防洪水（P1-4）**
+
+### 一、现象
+`SmartPatternGenPacket.maxPatterns` 全链路无上界（`fromBytes` 原样收下；`SmartPatternGenerator.generate:146` 只护下界 ≤0→512）：
+`maxPatterns=Integer.MAX_VALUE` 的包让服务端对命中 RecipeMap 的**全部**配方逐条编码样板——主线程冻结、内存峰值、装不下的 `entityDropItem` 成实体洪水。
+且该包**无任何节流**（对比 apgport 的 `PacketGeneratePatterns` 有 `PatternGenerationRequestGate`）。
+
+### 二、本轮改动（用户拍板：上限 4096）
+1. `SmartPatternGenPacket`：
+   - 解码期夹紧 `maxPatterns > 4096 → 4096`（客户端 UI 校验不构成防护）；
+   - 新增同玩家 **5 秒节流**（`shouldProcess`，全模式统一含 dryRun，防"预览按钮被脚本狂点"等效绕过）；
+   - 节流表带 1024 条上限 + 过期清理（无界增长防护）。
+2. `SmartPatternGenerator.generate`：服务端兜底 `cap = (≤0 || >4096) ? 512 : maxPatterns`（与包侧同值，双端一致）。
+3. 客户端 UI 不改（它本来就只护下界；服务端夹紧后超大输入自动落到 4096）。
+
+### 三、影响面与风险
+- 正常玩家唯一可感知变化：单次最多生成 4096 张（正常按几万分批，实际无感）；
+- 5 秒内连点生成/预览按钮：只处理第一次（同参数），窗口过后照常；
+- 不改生成逻辑/过滤/dryRun 语义/产物入包方式。
+
+### 四、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.34.0-fix3.jar`；字节码核对 `MAX_PATTERNS=4096` 与 `shouldProcess` 均在包。
+- 待游戏实测（用户执行）：① 正常生成一批（≤4096）照常；② 输入超大数量后单次产出封顶 4096 且不卡服；③ 5 秒内连点只出一次。
+
+---
+
 ## 工作区决策记录 2026-10-14 (103) - **3.34.0-fix2：智能倍增开关加距离/区块双闸——堵住远程篡改他人机器（P1-3 + P1-7 同源）**
 
 ### 一、现象（源码逐行实证 + 同仓正确范式对照）
