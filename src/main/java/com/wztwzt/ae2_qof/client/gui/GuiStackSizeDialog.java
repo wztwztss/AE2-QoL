@@ -8,6 +8,7 @@ import net.minecraft.util.StatCollector;
 
 import org.lwjgl.input.Keyboard;
 
+import com.wztwzt.ae2_qof.merged.PatternContainer;
 import com.wztwzt.ae2_qof.network.MergedTerminalSetStackPacket;
 import com.wztwzt.ae2_qof.network.ModNetwork;
 
@@ -74,7 +75,9 @@ public class GuiStackSizeDialog extends GuiScreen {
                     .trim());
         } catch (Throwable ignored) {}
         if (size < 0) size = 0;
-        if (size > 999) size = 999;
+        // 3.34.0-fix4（审查 P1-5，用户定案）：999 → 21 亿。幽灵格数量是样板内容的大小，
+        // GTNH 大并行/批处理是合法场景；与服务端 PatternContainer.MAX_GHOST_STACK_SIZE 一致。
+        if (size > PatternContainer.MAX_GHOST_STACK_SIZE) size = PatternContainer.MAX_GHOST_STACK_SIZE;
         int slotNumber = this.slot != null ? this.slot.slotNumber : -1;
         if (slotNumber >= 0) {
             ModNetwork.CHANNEL.sendToServer(new MergedTerminalSetStackPacket(slotNumber, size));

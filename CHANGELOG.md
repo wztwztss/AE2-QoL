@@ -34,6 +34,34 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-14 (105) - **3.34.0-fix4：幽灵格 ×2/×8 防溢出 + 数量上限 999 → 21 亿（P1-5，用户定案）**
+
+### 一、现象（2026-10-14 用户指正后定案）
+1. **×2/×8 int 溢出**：`PatternContainer.doubleStacks` 的物品分支 `st.stackSize * factor`（顶格 2147483647×8 = −8）
+   与流体分支 `fs.amount * factor` 同病——负数被写进面板格并编入样板。
+2. **物品分支封顶语义错误**：用 `st.getMaxStackSize()`（物品堆叠上限如 64）当幽灵格天花板——幽灵格数量是
+   **样板内容的大小**（GTNH 大并行/批处理合法到几十万~21 亿），×8 直接被卡死在 64。
+3. **输入框 999 上限**：`GuiStackSizeDialog`/`GuiMergedAmount` 把合法输入卡死在 999；
+   而 `MergedAmountOverlay`（计算器入口）允许 21 亿——同一功能的三个入口口径不一致。
+
+### 二、本轮改动（用户定案：合法上限 = Integer.MAX_VALUE）
+1. `PatternContainer` 新增常量 `MAX_GHOST_STACK_SIZE = Integer.MAX_VALUE`；
+2. `doubleStacks` 物品分支（两处循环）：封顶 `getMaxStackSize()` → `MAX_GHOST_STACK_SIZE`，乘法改 long 中间量；
+3. `multiplyFluidItem`：`fs.amount * factor` 补 long 中间量（封顶口径本就对）；
+4. 两个输入框 999 → `PatternContainer.MAX_GHOST_STACK_SIZE`（与 MergedAmountOverlay 统一）；
+5. 服务端 `setStackSize` 不动（只拒负数、收 0..21 亿本来就是对的——上一轮已定案）。
+
+### 三、影响面与风险
+- 正常玩家正面收益：大样板终于能直接输 21 亿、×2/×8 不再卡死也不再变负数；
+- 已按"先堵溢出再放开输入"的顺序在同一提交内完成（放开当天不会再有人按出负数）；
+- 服务端写入口径未动，恶意大数值行为与修复前一致（幽灵格不构成刷物）。
+
+### 四、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.34.0-fix4.jar`。
+- 待游戏实测（用户执行）：① 数量框输入 2000000000 → 面板格显示 21 亿内数值；② ×2/×8 顶格时不再变负数；③ ÷2/÷8 照常。
+
+---
+
 ## 工作区决策记录 2026-10-14 (104) - **3.34.0-fix3：样板生成请求夹紧 ≤4096 + 5 秒节流——防手滑卡服/防洪水（P1-4）**
 
 ### 一、现象

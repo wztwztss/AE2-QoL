@@ -52,7 +52,10 @@ public class GuiMergedAmount extends GuiScreen {
     private void apply() {
         int size = getAmount();
         if (size < 0) size = 0;
-        if (size > 999) size = 999;
+        // 3.34.0-fix4（审查 P1-5，用户定案）：999 → 21 亿（幽灵格数量 = 样板内容大小）
+        if (size > com.wztwzt.ae2_qof.merged.PatternContainer.MAX_GHOST_STACK_SIZE) {
+            size = com.wztwzt.ae2_qof.merged.PatternContainer.MAX_GHOST_STACK_SIZE;
+        }
         if (slotNumber >= 0) {
             ModNetwork.CHANNEL.sendToServer(new MergedTerminalSetStackPacket(slotNumber, size));
         }

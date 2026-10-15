@@ -633,6 +633,9 @@ public class PatternContainer implements IOptionalSlotHost {
      *
      * @param flags 0=×2，1=×8，2=÷2，3=÷8
      */
+    /** 幽灵格数量的合法上限：3.34.0-fix4 定案（用户拍板）——21 亿（样板内容大小，GTNH 大并行合法场景）。 */
+    public static final int MAX_GHOST_STACK_SIZE = Integer.MAX_VALUE;
+
     public void doubleStacks(int flags) {
         if (craftingMode) return;
         boolean ctrl = (flags & 1) != 0;
@@ -644,8 +647,12 @@ public class PatternContainer implements IOptionalSlotHost {
                 if (isFluidItem(st)) {
                     multiplyFluidItem(st, factor, divide);
                 } else {
+                    // 3.34.0-fix4（审查 P1-5）：×2/×8 用 long 中间量 —— 旧式 2147483647×8
+                    // 在 int 算术下环绕成 -8，负数被写进面板格并编入样板。
+                    // 封顶从 getMaxStackSize()（物品堆叠上限如 64，语义错误且把 ×8 卡死）
+                    // 改为 MAX_GHOST_STACK_SIZE（幽灵格数量 = 样板内容大小）。
                     st.stackSize = divide ? Math.max(1, st.stackSize / factor)
-                        : Math.min(st.stackSize * factor, st.getMaxStackSize());
+                        : (int) Math.min(MAX_GHOST_STACK_SIZE, (long) st.stackSize * factor);
                 }
             }
         }
@@ -656,7 +663,7 @@ public class PatternContainer implements IOptionalSlotHost {
                     multiplyFluidItem(st, factor, divide);
                 } else {
                     st.stackSize = divide ? Math.max(1, st.stackSize / factor)
-                        : Math.min(st.stackSize * factor, st.getMaxStackSize());
+                        : (int) Math.min(MAX_GHOST_STACK_SIZE, (long) st.stackSize * factor);
                 }
             }
         }
@@ -1204,7 +1211,9 @@ public class PatternContainer implements IOptionalSlotHost {
         }
         FluidStack fs = getFluidFromItem(stack);
         if (fs == null) return;
-        int newAmount = divide ? Math.max(1, fs.amount / factor) : Math.min(fs.amount * factor, Integer.MAX_VALUE);
+        // 3.34.0-fix4：fs.amount * factor 同样用 long 中间量（旧式顶格时环绕为负）
+        int newAmount = divide ? Math.max(1, fs.amount / factor)
+            : (int) Math.min(MAX_GHOST_STACK_SIZE, (long) fs.amount * factor);
         if (stack.getItem() instanceof net.minecraftforge.fluids.IFluidContainerItem) {
             fs.amount = newAmount;
             ((net.minecraftforge.fluids.IFluidContainerItem) stack.getItem()).fill(stack, fs, true);
