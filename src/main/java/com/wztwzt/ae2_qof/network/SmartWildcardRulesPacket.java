@@ -250,6 +250,20 @@ public class SmartWildcardRulesPacket implements IMessage {
                         : message.tag.getTagList("TemplateIn", Constants.NBT.TAG_COMPOUND);
                     NBTTagList templateOut = message.tag == null ? null
                         : message.tag.getTagList("TemplateOut", Constants.NBT.TAG_COMPOUND);
+                    // 3.34.0-fix5（审查 P1-6，用户拍板）：模板产物服务端校验 ——
+                    // ① 每条产物物品必须真实存在（注册表能解析出 Item）；
+                    // ② 数量（Cnt，展开时的产物数量，long）≤ 21 亿（与幽灵格上限同口径）。
+                    // 正常流程的 out 来自 NEI 真实配方（如实转发），永远通过；伪造包在写入前被拒。
+                    // 输入侧（templateIn）不做存在性校验——输入允许通配/标签等宽场景，误伤面大，
+                    // 且"机器扣不到料不会开工"由 GT 机器自身校验兜底。
+                    if (templateOut != null && templateOut.tagCount() > 0
+                        && !ae2qol$templateOutLooksSane(templateOut)) {
+                        MyMod.LOG.warn(
+                            "[AE2QoL] 通配样板写回被拒：TemplateOut 含未注册物品或数量越界（>{}），player={}",
+                            MAX_TEMPLATE_AMOUNT,
+                            player.getCommandSenderName());
+                        return;
+                    }
                     state.writeAndBumpRevision(held);
                     try {
                         if (held.getTagCompound() != null) {
@@ -293,6 +307,37 @@ public class SmartWildcardRulesPacket implements IMessage {
                 }
             });
             return null;
+        }
+
+        /**
+         * 3.34.0-fix5（审查 P1-6）：模板产物合理性校验。
+         *
+         * <p>两条判据（都不过即拒）：
+         * <ol>
+         * <li>**物品真实存在**：{@code ItemStack.loadItemStackFromNBT} 解析结果非 null 且
+         * {@code getItem() != null}——未注册 id（如伪造的 "xx:fake_item"）在这里被滤掉；</li>
+         * <li>**数量合法**：{@code Cnt}（展开时的产物数量，long）∈ [1, 21 亿]
+         * ——与幽灵格 {@code PatternContainer.MAX_GHOST_STACK_SIZE} 同口径；负数/超界即拒。</li>
+         * </ol>
+         * 输入侧（TemplateIn）不做存在性校验：输入允许通配/标签等宽场景，误伤面大；
+         * "机器扣不到料不会开工"由 GT 机器自身校验兜底。
+         */
+        private static final long MAX_TEMPLATE_AMOUNT = 2_147_483_647L;
+
+        private static boolean ae2qol$templateOutLooksSane(NBTTagList templateOut) {
+            for (int i = 0; i < templateOut.tagCount(); i++) {
+                NBTTagCompound entry = templateOut.getCompoundTagAt(i);
+                ItemStack parsed = ItemStack.loadItemStackFromNBT(entry);
+                if (parsed == null || parsed.getItem() == null) {
+                    return false;
+                }
+                long amount = entry.hasKey("Cnt") ? entry.getLong("Cnt")
+                    : (entry.hasKey("Count") ? entry.getInteger("Count") : 1L);
+                if (amount < 1L || amount > MAX_TEMPLATE_AMOUNT) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }
