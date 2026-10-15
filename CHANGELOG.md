@@ -34,6 +34,28 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-14 (107) - **3.34.0-fix6：区块存在性前置到 getTileEntity 之前——堵住强制区块加载卡服（P1-7）**
+
+### 一、现象（源码逐行实证）
+三处 C2S 包在身份/距离校验**之前**按客户端坐标 `getTileEntity`：MC 会对未加载坐标强制 `provideChunk`
+（不存在则**现场生成**）——恶意客户端循环发远坐标包即可让服务端持续做昂贵的地形生成（经典卡服手法）。
+- `WirelessActionPacket.java:109`（无线收发器动作）
+- `SmartWildcardSlotCircuitPacket.java:120`（样板槽手势，距离校验在取实体之后）
+- （`SmartDoublingTogglePacket` 已在 fix2 一并修过 `blockExists` 前置，本条不再重复）
+正确先例在仓内：`HatchActionPacket:196` 的 `blockExists` 前置。
+
+### 二、本轮改动
+1. `WirelessActionPacket.handleServer`：入口加 `blockExists` 前置（不过即拒，不触发区块加载）。
+2. `SmartWildcardSlotCircuitPacket`：距离闸**前置**到 `getTileEntity` 之前 + 补 `blockExists` 前置；
+   原位置的距离块删除（避免重复）。
+3. 正常玩家零感知：自己的收发器/样板仓必然已加载且在身边。
+
+### 三、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.34.0-fix6.jar`。
+- 待游戏实测（用户执行）：① 无线频道管理、样板槽手势全部照常（核心验收）；② 伪造远坐标包不再触发区块生成（可选，服务端日志可观测区块加载行为）。
+
+---
+
 ## 工作区决策记录 2026-10-14 (106) - **3.34.0-fix5：通配样板模板产物服务端校验——堵住伪造配方口子（P1-6）**
 
 ### 一、现象（源码实证）

@@ -115,6 +115,19 @@ public class SmartWildcardSlotCircuitPacket implements IMessage {
                 try {
                     EntityPlayerMP player = ctx.getServerHandler().playerEntity;
                     if (player == null) return;
+                    // 3.34.0-fix6（审查 P1-7）：距离闸前置 + 区块存在性前置 ——
+                    // 旧式先 getTileEntity（可触发区块加载/生成）再做距离校验，恶意远坐标包
+                    // 能逼服务端白白加载区块。调序后：区块不存在 → 直接拒；过远 → 直接拒。
+                    if (player.getDistanceSq(message.x + 0.5D, message.y + 0.5D, message.z + 0.5D) > 64.0D) {
+                        MyMod.LOG.warn(
+                            "[AE2QoL] 样板槽手势写回被拒：玩家 {} 距机器过远 @ [{}, {}, {}]",
+                            player.getCommandSenderName(),
+                            message.x,
+                            message.y,
+                            message.z);
+                        return;
+                    }
+                    if (!player.worldObj.blockExists(message.x, message.y, message.z)) return;
                     TileEntity te = player.worldObj.getTileEntity(message.x, message.y, message.z);
                     if (!(te instanceof IGregTechTileEntity gregTechTileEntity)) {
                         MyMod.LOG.warn("[AE2QoL] 样板槽手势写回：坐标处不是 GT 机器 ({} {} {})", message.x, message.y, message.z);
@@ -125,17 +138,7 @@ public class SmartWildcardSlotCircuitPacket implements IMessage {
                         MyMod.LOG.warn("[AE2QoL] 样板槽手势写回：机器元数据为空");
                         return;
                     }
-                    // 安全校验：只允许近距离操作该机器（防止构造包远程改别人机器里的样板）。
-                    // 维度无需另查——TE 是在玩家自己的世界里按坐标取的。8 格是玩家正常开界面能摸到的范围。
-                    if (player.getDistanceSq(message.x + 0.5D, message.y + 0.5D, message.z + 0.5D) > 64.0D) {
-                        MyMod.LOG.warn(
-                            "[AE2QoL] 样板槽手势写回被拒：玩家 {} 距机器过远 @ [{}, {}, {}]",
-                            player.getCommandSenderName(),
-                            message.x,
-                            message.y,
-                            message.z);
-                        return;
-                    }
+                    // （3.34.0-fix6：距离校验已前置到 getTileEntity 之前——原块删除，避免重复）
                     ItemStack pattern = findPattern(mte, message.slot);
                     if (pattern == null || !SmartWildcardState.isSmartWildcard(pattern)) {
                         MyMod.LOG.warn(

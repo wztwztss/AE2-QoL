@@ -106,6 +106,10 @@ public class WirelessActionPacket implements IMessage {
 
         private void handleServer(EntityPlayerMP player, WirelessActionPacket msg) {
             try {
+                // 3.34.0-fix6（审查 P1-7）：区块存在性前置 —— 旧式在身份校验之前直接
+                // getTileEntity，MC 会对未加载坐标强制 provideChunk（不存在则生成），
+                // 恶意客户端循环发远坐标包即可卡服。HatchActionPacket:196 已有正确先例。
+                if (!player.worldObj.blockExists(msg.x, msg.y, msg.z)) return;
                 TileEntity te = player.worldObj.getTileEntity(msg.x, msg.y, msg.z);
                 if (!(te instanceof TileWirelessTransceiver twt)) return;
 
