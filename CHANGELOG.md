@@ -34,6 +34,34 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-15 (114) - **3.35.0-fix6：子仓列表改数据驱动重建——首开即有数据、变化即时刷新（P1-15）**
+
+### 一、现象（源码逐行实证）
+`AdaptiveNetTerminal.buildHatchListTab` 把行控件在建树那一刻**一次性 `list.child(...)` 印死**；
+数据最快 20 tick 后到达，而到达路径（`ClientProxy.handleHatchListSync:265`）只替换静态缓存
+`ClientState.hatchListCache`——全仓 4 处引用里**没有任何重建行控件的路径**。
+⇒ 首次打开列表页大概率为空；仓增删/换频率后要"关掉重开"才看得到（用户实测的"481 行是上一次快照"即此）。
+
+### 二、本轮改动（用户拍板：修；范式与库存统计终端 3.31.0 同款）
+1. `HatchListCache` 补 `HatchEntry` 的 PacketBuffer `writeEntry/readEntry`（快照走网络的必要条件，含 Sub 明细）；
+2. `AdaptiveNetTerminal`：
+   - 注册 `GenericListSyncHandler<HatchEntry>`（getter = 当前缓存快照，S2C；序列化器见上）+
+     `DynamicLinkedSyncHandler` 包它并挂 `widgetProvider` → **快照到达/变化时重建全部行控件**；
+   - 行构建抽成 `buildHatchListRows(entries, rowW, ...)`（原 for 循环体平移，按钮回调/tooltip 逻辑一行不动）；
+   - `DynamicSyncedWidget` 的 initialChild 用当前快照即时构建（与范例同款：滚动由内部 ListWidget 承担）。
+3. 行为：首开即有数据（getter 在面板同步阶段就求值）；仓变化 → 服务端 dirty → S2C → widgetProvider 自动重建。
+
+### 三、影响面与风险
+- "定位"按钮的按坐标寻址逻辑原样保留（重建后仍按坐标发包，不受行序影响）；
+- 行控件里的 IKey.dynamic（实测/额定行）在重建后继续生效；
+- HatchEntry 快照走网络：条目多时包体增大——但与服务端原 `HatchListSyncPacket` 的列表同步量级相同（原本就在发）。
+
+### 四、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.35.0-fix6.jar`。
+- 待游戏实测（用户执行）：① **首次打开**列表页即有数据（核心验收）；② 增删仓/换频率后列表自动刷新（不再需要关掉重开）；③ 定位/传送按钮照常。
+
+---
+
 ## 工作区决策记录 2026-10-15 (113) - **3.35.0-fix5：CraftingCPUCluster 注入成员加 ae2qol$ 前缀——消除与 wtct 的实测撞名（P1-14）**
 
 ### 一、现象（运行日志实证）

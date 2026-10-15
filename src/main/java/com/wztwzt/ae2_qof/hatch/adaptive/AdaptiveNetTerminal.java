@@ -25,10 +25,13 @@ import com.cleanroommc.modularui.factory.PosGuiData;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.screen.UISettings;
 import com.cleanroommc.modularui.value.sync.IntSyncValue;
+import com.cleanroommc.modularui.value.sync.DynamicLinkedSyncHandler;
+import com.cleanroommc.modularui.value.sync.GenericListSyncHandler;
 import com.cleanroommc.modularui.value.sync.LongSyncValue;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
 import com.cleanroommc.modularui.value.sync.StringSyncValue;
 import com.cleanroommc.modularui.widgets.ButtonWidget;
+import com.cleanroommc.modularui.widgets.DynamicSyncedWidget;
 import com.cleanroommc.modularui.widgets.ListWidget;
 import com.cleanroommc.modularui.widgets.PageButton;
 import com.cleanroommc.modularui.widgets.PagedWidget;
@@ -836,7 +839,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
                     avgOut10mSync,
                     instantInputSync,
                     instantOutputSync))
-            .addPage(buildHatchListTab(ownerSync, frequencySync));
+            .addPage(buildHatchListTab(ownerSync, frequencySync, syncManager));
         panel.child(pages);
 
         panel.bindPlayerInventory();
@@ -1294,7 +1297,8 @@ public class AdaptiveNetTerminal extends MTEHatch {
         return tab;
     }
 
-    private Flow buildHatchListTab(StringSyncValue ownerSync, IntSyncValue frequencySync) {
+    private Flow buildHatchListTab(StringSyncValue ownerSync, IntSyncValue frequencySync,
+        PanelSyncManager syncManager) {
         Flow tab = Flow.column()
             .childPadding(2)
             .size(CONTENT_W, PAGE_H);
@@ -1324,17 +1328,79 @@ public class AdaptiveNetTerminal extends MTEHatch {
         tab.child(separator(CONTENT_W));
 
         final int rowW = CONTENT_W - 8;
-        ListWidget list = new ListWidget();
+
+        // 3.35.0-fix6（审查 P1-15）：子仓列表改**数据驱动重建**（与库存统计终端同款范式）。
+        // 旧实现把行控件在建树那一刻一次性 list.child(...) 印死——而数据最快 20 tick 后才到、
+        // "数据到了"只是替换静态缓存（ClientProxy.handleHatchListSync），没有任何代码重建行控件
+        // ⇒ 首次打开列表页大概率为空、仓变化要"关掉重开"才看得到。
+        // 现在挂一个 DynamicLinkedSyncHandler：服务端 getter 从网络读最新缓存（列表 dirty 时
+        // 自动 S2C），widgetProvider 在快照到达后**重建全部行控件**。首开即有数据、变化即时刷新。
+        // 与范例同款：GLSH 本体留局部引用（initialChild 读当前快照），DLH 包它 + widgetProvider
+        GenericListSyncHandler<HatchListCache.HatchEntry> hatchRows = GenericListSyncHandler
+            .<HatchListCache.HatchEntry>builder()
+            .getter(() -> {
+                com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache c =
+                    com.wztwzt.ae2_qof.client.ClientState.hatchListCache;
+                return c == null ? java.util.Collections.<HatchListCache.HatchEntry>emptyList() : c.entries;
+            })
+            .serializer(HatchListCache::writeEntry)
+            .deserializer(HatchListCache::readEntry)
+            .build();
+        DynamicLinkedSyncHandler<GenericListSyncHandler<HatchListCache.HatchEntry>> hatchListHandler =
+            new DynamicLinkedSyncHandler<>(hatchRows).widgetProvider((dynamicSyncManager, value) -> buildHatchListRows(
+                value.getValue(),
+                rowW,
+                ownerSync,
+                frequencySync,
+                displayMode));
+        syncManager.syncValue("wHL", hatchListHandler);
+
+        // DynamicSyncedWidget 本身不滚动——滚动由 initialChild 的 ListWidget 承担（范例同款）
+        DynamicSyncedWidget<?> list = new DynamicSyncedWidget<>()
+            .size(CONTENT_W, PAGE_H - 30)
+            .initialChild(
+                buildHatchListRows(
+                    hatchRows.getValue(),
+                    rowW,
+                    ownerSync,
+                    frequencySync,
+                    displayMode))
+            .syncHandler(hatchListHandler);
+
+
+        tab.child(list);
+        tab.child(separator(CONTENT_W));
+
+        // footer：输入仓/输出仓统计
+        tab.child(new TextWidget<>(IKey.dynamic(() -> {
+            com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache c = com.wztwzt.ae2_qof.client.ClientState.hatchListCache;
+            if (c == null) return EnumChatFormatting.GRAY + "---";
+            return EnumChatFormatting.WHITE + c.inputCountText
+                + EnumChatFormatting.GRAY
+                + " | "
+                + EnumChatFormatting.WHITE
+                + c.outputCountText;
+        })).size(CONTENT_W, 12));
+
+        return tab;
+    }
+
+    /**
+     * 3.35.0-fix6（审查 P1-15）：构建子仓列表的**全部行控件**（由
+     * DynamicLinkedSyncHandler 的 widgetProvider 在快照到达/变化时调用重建）。
+     * 旧实现在 buildHatchListTab 里一次性 list.child(...) 印死——数据晚于建树到达时
+     * 列表永远空，仓变化要"关掉重开"。现在数据驱动：cache 快照 → 行。
+     */
+    private com.cleanroommc.modularui.widgets.ListWidget buildHatchListRows(
+        java.util.List<com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache.HatchEntry> entries, int rowW,
+        StringSyncValue ownerSync, IntSyncValue frequencySync, int displayMode) {
+        com.cleanroommc.modularui.widgets.ListWidget list = new com.cleanroommc.modularui.widgets.ListWidget();
         list.scrollDirection(com.cleanroommc.modularui.api.GuiAxis.Y);
-        // 行高 24 + 分隔 1 = 25/行；列表高度 = 页高 − 标题 16 − 两个分隔 2 − 页脚 12
         list.size(CONTENT_W, PAGE_H - 30);
 
-        com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache cache = com.wztwzt.ae2_qof.client.ClientState.hatchListCache;
-        if (cache != null) {
-            for (int i = 0; i < cache.entries.size(); i++) {
-                final com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache.HatchEntry entry = cache.entries.get(i);
-
-                // 3.32.0：名称与图标都在**客户端**按 MTE id 解析。旧实现把服务端算好的名字当字符串发下来，
+        for (int i = 0; i < entries.size(); i++) {
+            final com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache.HatchEntry entry = entries.get(i);
+                            // 3.32.0：名称与图标都在**客户端**按 MTE id 解析。旧实现把服务端算好的名字当字符串发下来，
                 // 专用服务器上必然是英文（服务端语言表只有 en_US）—— 与库存统计终端 3.31.0 同一个坑。
                 final net.minecraft.item.ItemStack iconStack = stackForMetaId(entry.displayMetaId);
                 final IWidget iconWidget = iconStack != null ? new ItemDrawable(iconStack).asWidget()
@@ -1534,24 +1600,9 @@ public class AdaptiveNetTerminal extends MTEHatch {
 
                 list.child(rowFlow);
                 list.child(separator(rowW));
-            }
         }
 
-        tab.child(list);
-        tab.child(separator(CONTENT_W));
-
-        // footer：输入仓/输出仓统计
-        tab.child(new TextWidget<>(IKey.dynamic(() -> {
-            com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache c = com.wztwzt.ae2_qof.client.ClientState.hatchListCache;
-            if (c == null) return EnumChatFormatting.GRAY + "---";
-            return EnumChatFormatting.WHITE + c.inputCountText
-                + EnumChatFormatting.GRAY
-                + " | "
-                + EnumChatFormatting.WHITE
-                + c.outputCountText;
-        })).size(CONTENT_W, 12));
-
-        return tab;
+        return list;
     }
 
     private static IWidget separator(int width) {

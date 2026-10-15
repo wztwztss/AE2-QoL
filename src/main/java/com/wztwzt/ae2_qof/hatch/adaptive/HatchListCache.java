@@ -132,4 +132,95 @@ public class HatchListCache {
             this.compat = compat;
         }
     }
+
+    // ==================== 3.35.0-fix6：PacketBuffer 序列化（DynamicSyncedWidget 快照走网络）====================
+
+    /** 3.35.0-fix6：把单行（含明细）写进包缓冲。 */
+    public static void writeEntry(io.netty.buffer.ByteBuf buf, HatchEntry e) {
+        buf.writeInt(e.displayMetaId);
+        buf.writeBoolean(e.hostKnown);
+        buf.writeBoolean(e.running);
+        buf.writeLong(e.hostEut);
+        buf.writeInt(e.hatchCount);
+        buf.writeInt(e.inCount);
+        buf.writeInt(e.outCount);
+        buf.writeLong(e.eut);
+        buf.writeLong(e.realFlowEUt);
+        buf.writeInt(e.index);
+        buf.writeInt(e.x);
+        buf.writeInt(e.y);
+        buf.writeInt(e.z);
+        buf.writeInt(e.dim);
+        buf.writeBoolean(e.ownerName != null);
+        if (e.ownerName != null) {
+            cpw.mods.fml.common.network.ByteBufUtils.writeUTF8String(buf, e.ownerName);
+        }
+        buf.writeInt(e.subs.size());
+        for (Sub s : e.subs) {
+            buf.writeInt(s.metaId);
+            buf.writeInt(s.hatchType);
+            buf.writeInt(s.tier);
+            buf.writeInt(s.amps);
+            buf.writeLong(s.eut);
+            buf.writeLong(s.realFlowEUt);
+            buf.writeInt(s.x);
+            buf.writeInt(s.y);
+            buf.writeInt(s.z);
+            buf.writeInt(s.dim);
+            buf.writeBoolean(s.compat);
+        }
+    }
+
+    /** 3.35.0-fix6：从包缓冲读回单行。 */
+    public static HatchEntry readEntry(io.netty.buffer.ByteBuf buf) {
+        int displayMetaId = buf.readInt();
+        boolean hostKnown = buf.readBoolean();
+        boolean running = buf.readBoolean();
+        long hostEut = buf.readLong();
+        int hatchCount = buf.readInt();
+        int inCount = buf.readInt();
+        int outCount = buf.readInt();
+        long eut = buf.readLong();
+        long realFlowEUt = buf.readLong();
+        int index = buf.readInt();
+        int x = buf.readInt();
+        int y = buf.readInt();
+        int z = buf.readInt();
+        int dim = buf.readInt();
+        String ownerName = buf.readBoolean() ? cpw.mods.fml.common.network.ByteBufUtils.readUTF8String(buf) : "";
+        int subCount = buf.readInt();
+        java.util.List<Sub> subs = new java.util.ArrayList<>(Math.max(0, subCount));
+        for (int i = 0; i < subCount; i++) {
+            subs.add(
+                new Sub(
+                    buf.readInt(),
+                    buf.readInt(),
+                    buf.readInt(),
+                    buf.readInt(),
+                    buf.readLong(),
+                    buf.readLong(),
+                    buf.readInt(),
+                    buf.readInt(),
+                    buf.readInt(),
+                    buf.readInt(),
+                    buf.readBoolean()));
+        }
+        return new HatchEntry(
+            displayMetaId,
+            hostKnown,
+            running,
+            hostEut,
+            hatchCount,
+            inCount,
+            outCount,
+            eut,
+            realFlowEUt,
+            index,
+            x,
+            y,
+            z,
+            dim,
+            ownerName,
+            subs);
+    }
 }
