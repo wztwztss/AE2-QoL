@@ -34,6 +34,33 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-14 (99) - **3.33.0-fix4：MixinGuiMEMonitorable @Shadow 类型对齐 AE2 1083——救活 NEI 角标与 pin 行扩展（P0-4）**
+
+### 一、现象（实例运行日志实证）
+`fml-client-latest.log:23539`：
+```
+Mixin apply for mod ae2_qof failed ... @Shadow field repo was not located
+in the target class appeng.client.gui.implementations.GuiMEMonitorable
+```
+全日志唯一一条本模组 Mixin 应用失败。后果：`NetworkInventoryCache`（NEI 网络存量/可合成角标的数据源）与合成 pin 行自动扩展**自 AE2 升级日起整体失效**。
+
+### 二、根因（版本漂移，非代码笔误）
+编译基线 AE2 rv3-beta-1050 里该字段是 `private final appeng.api.storage.data.IDisplayRepo repo`（当时的写法正确）；
+实例实跑 rv3-beta-1083 已重构为 `private final appeng.client.me.ItemRepo repo`（两侧 javap 对比实证）。
+Mixin 要求 @Shadow 声明类型与目标字段**精确匹配**，类型一变整个 Mixin 被拒。
+
+### 三、本轮改动
+`mixin/nei/MixinGuiMEMonitorable.java`：`@Shadow private IDisplayRepo repo` → **`private appeng.client.me.ItemRepo repo`**，
+并移除已无引用的 `IDisplayRepo` import。函数体零改动——`getAEPin(int)` 由父接口 `IPinsHandler` 声明、`ItemRepo` 实现（1083 javap 已核），调用点 `:108` 不受类型变化影响。
+另核对：该 Mixin 其余 3 个注入目标（postUpdate/setPinsRows/setAEPins/reinitalize）在 1083 全部健在。
+
+### 四、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.33.0-fix4.jar`。
+- 待游戏实测（用户执行）：① 启动日志**不再出现** `Mixin apply for mod ae2_qof failed`（核心验收）；② NEI 配方页物品格角落的网络存量/可合成角标重新显示；③ 合成界面 pin 行在产物种类多时自动扩展。
+- 兼容性备忘：若将来实例 AE2 再升级，需复核本 @Shadow 类型（建议把"目标成员比对"纳入升级检查单）。
+
+---
+
 ## 工作区决策记录 2026-10-14 (98) - **3.33.0-fix3：补电加法溢出修复（修"电网>9.2E 后机器疯狂开关机"）＋ 去掉 9.2E 显示上限（P0-3 + P2-6）**
 
 ### 一、现象（用户实测 + 精确算式复核）

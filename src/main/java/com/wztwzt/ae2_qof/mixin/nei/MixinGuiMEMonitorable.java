@@ -14,7 +14,6 @@ import appeng.api.config.PinsRows;
 import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
-import appeng.api.storage.data.IDisplayRepo;
 import appeng.client.gui.implementations.GuiMEMonitorable;
 
 /**
@@ -31,8 +30,13 @@ public abstract class MixinGuiMEMonitorable {
 
     // 注意：不可声明为 final——final shadow 字段的初始化器会被 Mixin 写入目标类构造器，
     // 把原生 repo 赋值覆盖为 null（3.14.0 首版即因此导致打开终端即崩）
+    // 3.33.0-fix4：类型从 IDisplayRepo 改为 ItemRepo —— AE2 rv3-beta-1050→1083 之间上游把
+    // 该字段声明类型重构为 appeng.client.me.ItemRepo（编译基线 1050 里仍是 IDisplayRepo）。
+    // Mixin 要求 @Shadow 声明类型与目标字段类型精确匹配，旧类型导致整个 Mixin 被框架拒绝
+    // （实例日志 23539 行 "@Shadow field repo was not located"）⇒ NEI 角标 + pin 行扩展失效。
+    // getAEPin(int) 由父接口 IPinsHandler 声明、ItemRepo 实现（1083 javap 已核），用法不变。
     @Shadow(remap = false)
-    private IDisplayRepo repo;
+    private appeng.client.me.ItemRepo repo;
 
     @Shadow(remap = false)
     private PinsRows craftingPinsRows;
