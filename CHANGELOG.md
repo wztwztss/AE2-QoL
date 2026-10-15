@@ -34,6 +34,26 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-15 (116) - **3.35.0-fix8：文档同步收官（P1-17）**
+
+### 一、现象（版本口径核对实证）
+- `docs/MOD_MAP.md` 只记录到 `3.32.0-fix2`，**fix3~fix7 的 15 个提交涉及的类变更全部缺失**；
+- `docs/mixin_notes.md` 台账缺 5 条（`MixinPatternSlotAccess`/`MixinGtHostAccess`/`MixinGtnlPatternSlotAccess`/`MixinBaseMetaTileEntityWaila`/`MixinPatternDualInputHatchProgrammingCircuit`）、
+  仍列着**已不存在**的 `mixin/mui/MixinItemSlotWildcardGesture`、汇总数写 **30**（实际 43）；
+- `README.md`/`README.en.md` 版本口径停在 `3.32.0-fix5`。
+
+### 二、本轮改动（纯文档，零代码）
+1. `README.md` + `README.en.md`：版本口径 3.32.0-fix5 → **3.35.0-fix7**（安装说明里的 jar 名同步）；
+2. `docs/mixin_notes.md`：汇总数 30 → **43**（与配置逐条对应、注明 onUnload 新注入）；删除陈旧 MUI 行；**补 5 条缺失台账**（其中 `MixinBaseMetaTileEntityWaila` 明确标注"零注入 + 双端段客户端引用风险"）；
+3. `docs/MOD_MAP.md`：新增一条"全仓审查修复 3.33.0-fix1~3.35.0-fix7"总表条目（按 网络与安全 / 能量与数据 / Mixin / 无限元件 / UI 与内存 / 文档 分域，全部文件名可检索）。
+4. 版本号 3.35.0-fix8（文档同步本身也按铁则占一个 fix 号，保证"每个 commit = 一个可追溯发布点"）。
+
+### 三、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.35.0-fix8.jar`。
+- **第 3 批（P1 收尾 8 条）至此全部完成**；剩余 P2（17 条）按需另行排期。
+
+---
+
 ## 工作区决策记录 2026-10-15 (115) - **3.35.0-fix7：多方块登记簿补齐生命周期——卸载注销 + 停机清空（P1-16）**
 
 ### 一、现象（grep 穷举实证）

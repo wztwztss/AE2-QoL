@@ -93,7 +93,6 @@
 | `mixin/gt/MixinSuperCraftingInputHatchMEWildcard.java` | `com.science.gtnl.common.machine.hatch.SuperCraftingInputHatchME` (remap=false) | 同上四处 | 同上；GTNL 的 `pushPattern` **无判空**（NPE 会穿透到 CPU tick），故 `pushPattern` HEAD 兜底守卫是保命项。3.20.0-fix31 同样补 `rebuild(world)` + 统一判据 + 空展开回退 |
 | `mixin/ph/MixinPatternDualInputHatchWildcard.java` | `reobf.proghatches.gt.metatileentity.PatternDualInputHatch` (remap=false) | `provideCrafting` RETURN | 覆盖 PH 22069 / MK.II 22179 / 我们的 MK.III 32108。**3.20.0-fix31**：判据改 `SmartWildcardGate.isConfiguredWildcard`（旧判据要求"已有我们 NBT"，只在 Wild 界面配过的样板会被**静默跳过**） |
 | `mixin/ae/MixinDualityInterface.java` | `appeng.helpers.DualityInterface` (@Inject remap=false) | `addToCraftingList` HEAD(cancellable) | ME 接口/样板供应器侧展开。**3.20.0-fix31**：判据同上；展开为空或全部解码失败时**不再 `ci.cancel()`**（那等于该槽一条样板都不登记）→ 放行原生逻辑退化为模板那一张 + WARN |
-| `mixin/mui/MixinItemSlotWildcardGesture.java` | `com.cleanroommc.modularui.widgets.slot.ItemSlot` (remap=false，**client 段**) | `onMousePressed` HEAD | Shift+中键点样板槽 → 电路选择屏。**⚠️ 3.20.0-fix31 修正的静默失效**：目标方法返回 `Interactable.Result`（javap 实证 `public Interactable$Result onMousePressed(int)`）⇒ 回调**必须**是 `CallbackInfoReturnable<Interactable.Result>`；写成 `CallbackInfo` 会让整个 Mixin 抛 `InvalidInjectionException: ... CallbackInfoReturnable is required!`，被 UniMixins 的 `MixinErrorHandler` 吞成一条 WARN ⇒ **手势从 3.20.0-fix10 起从未生效**。修复后仍不 `setReturnValue`（中键对槽位无原版语义） |
 
 ### NEI 增强/覆盖层 - 6个Mixin
 
@@ -119,6 +118,16 @@
 |---|---|---|---|
 | `mixin/nei/MixinDefaultOverlayHandler.java` | `codechicken.nei.recipe.DefaultOverlayHandler` (remap=false) | `transferRecipe` HEAD | 拦截配方传输，捕获配方名和GT配方池ID，供自动样板上传使用。 |
 | `mixin/nei/MixinRecipeHandlerRef.java` | `codechicken.nei.recipe.RecipeHandlerRef` (remap=false) | `fillCraftingGrid` HEAD; `craft` HEAD | 在NEI配方引用的填充/合成操作前，捕获当前配方的handler名称和GT配方池ID，存储到ClientRecipeNameUtil。 |
+
+### 审查补录（3.35.0-fix7 台账补齐）- 5个Mixin
+
+| Mixin 类路径 | 目标类 | 注入点 | 风险/说明 |
+|---|---|---|---|
+| `mixin/gt/MixinPatternSlotAccess.java` | `appeng.parts.PatternSlot` (remap=false) | 纯 Accessor | 暴露 `pattern` 字段（protected final ItemStack），供通配样板包装读取。**3.35.0-fix7 补录**（此前台账缺失） |
+| `mixin/gt/MixinGtHostAccess.java` | GT `PatternSlot<...>` 内部类 (remap=false) | 纯 Accessor | 暴露 `internalInventory`，GT 样板输入机的槽位组。**3.35.0-fix7 补录** |
+| `mixin/gt/MixinGtnlPatternSlotAccess.java` | GTNL `SuperCraftingInputHatchME$PatternSlot` (remap=false) | 纯 Accessor | 暴露 `pattern`（public final ItemStack）。**3.35.0-fix7 补录** |
+| `mixin/gt/MixinBaseMetaTileEntityWaila.java` | `gregtech.api.metatileentity.BaseMetaTileEntity` (remap=false) | **零注入** | 已注册但全文无任何 `@Inject/@Overwrite` —— 只往 GT 基类塞了未 `@Unique` 的辅助方法与 `net.minecraft.client.Minecraft` 引用（双端段登记，专用服有 NoClassDefFoundError 风险）。**3.35.0-fix7 补录并标注**：待补 waila compileOnly 依赖后正式实施，或摘除 |
+| `mixin/ph/MixinPatternDualInputHatchProgrammingCircuit.java` | PH `DualInputHatch`（3.35.0-fix5 起，原误钉 `PatternDualInputHatch`——`func_70299_a` 声明在父类） | `func_70299_a`/`setInventorySlotContents` RETURN（双名各一个注入器，`require=0`） | PH 样板仓插入时把 GT 编程电路转写为编程器电路；回调内 `instanceof PatternDualInputHatch` 收窄。**fix5 修复"目标类钉错导致从未生效"**。**3.35.0-fix7 补录** |
 
 ### 其他 QoL - 3个Mixin
 
@@ -219,7 +228,7 @@
 
 ## 按功能域汇总
 
-> 与 `mixins.ae2_qof.json` 对齐，共 **30 条**（部分类跨域复用，故分域计数之和大于 30）。
+> 与 `mixins.ae2_qof.json` 对齐，共 **43 条**（与 `mixins.ae2_qof.json` 逐条对应；3.35.0-fix7 起 `MixinCommonBaseMetaTileEntityMultiblockRegistry` 另含 onUnload 注入）。
 
 | 功能域 | 文件数 | 涉及文件 |
 |--------|--------|----------|
