@@ -20,8 +20,13 @@ public final class InfinityEssentiaInventoryHandler extends AbstractInfinityInve
     }
 
     @Override
-    protected void add(InfinityCellRecord record, AEEssentiaStack input, long amount) {
+    protected boolean add(InfinityCellRecord record, AEEssentiaStack input, long amount) {
+        if (input == null || input.getAspect() == null) {
+            // 3.35.0-fix2（审查 P1-11）：无法解析源质身份 ⇒ 拒收（上层原样退回，不再静默吞）
+            return false;
+        }
         record.addEssentia(EssentiaStackKey.from(input), amount);
+        return true;
     }
 
     @Override

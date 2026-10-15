@@ -28,8 +28,14 @@ public final class InfinityFluidInventoryHandler extends AbstractInfinityInvento
     }
 
     @Override
-    protected void add(InfinityCellRecord record, IAEFluidStack input, long amount) {
-        record.addFluid(FluidStackKey.from(input.getFluidStack()), amount);
+    protected boolean add(InfinityCellRecord record, IAEFluidStack input, long amount) {
+        net.minecraftforge.fluids.FluidStack fs = input.getFluidStack();
+        if (fs == null || fs.getFluid() == null) {
+            // 3.35.0-fix2（审查 P1-11）：无法解析流体身份 ⇒ 拒收（上层原样退回，不再静默吞）
+            return false;
+        }
+        record.addFluid(FluidStackKey.from(fs), amount);
+        return true;
     }
 
     @Override

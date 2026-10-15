@@ -34,6 +34,29 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-15 (110) - **3.35.0-fix2：无限元件拒收不可识别物品——原样退回 + 限频警告（P1-11）**
+
+### 一、现象（源码逐行实证）
+`AbstractInfinityInventoryHandler.injectItems` 在 `MODULATE` 时调用子类 `add(...)` 后**无条件 return null**
+（AE2 契约：返回 null = 全部接收 ⇒ AE2 删除源物品）。而 `InfinityItemInventoryHandler.key()` 解析失败
+（物品不在注册表/`getItemStack()` 为 null）时 `catch (IllegalArgumentException) → return null` 静默、
+`add` 里 `key != null` 才存——即"**什么都不存 + 报全部接收**"= 物品凭空消失且零日志。
+同一方法 `:45-48` 对 `record == null` 就是 `return input`（正确语义），证明此处是遗漏。
+
+### 二、本轮改动（用户拍板：修）
+1. `AbstractInfinityInventoryHandler.add` 抽象签名 `void` → **`boolean`**（true=已存，false=拒收）；
+   `injectItems` 收到 false ⇒ **`return input`**（原样退回给 AE2，源物品保留）。
+2. `InfinityItemInventoryHandler.add`：识别失败 → 限频 WARN（按物品 id 进程内去重，同物品只报一次）→ return false。
+3. `InfinityFluidInventoryHandler.add`：`fs == null || getFluid() == null` → return false（拒收）。
+4. `InfinityEssentiaInventoryHandler.add`：`getAspect() == null` → return false（拒收）。
+5. 正常物品路径（识别成功）零变化。
+
+### 三、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.35.0-fix2.jar`。
+- 待游戏实测（用户执行）：① 正常物品存取照常（核心验收）；② 极端物品（未注册）塞入时被退回 + 日志一条 WARN（可选，需构造场景）。
+
+---
+
 ## 工作区决策记录 2026-10-15 (109) - **3.35.0-fix1：无限元件记录加锁 + 视图快照 + ItemStackKey 构造期定哈希（P1-9/P1-10 同根因）**
 
 ### 一、现象（静态可证的跨线程共享 + 撕裂自证）

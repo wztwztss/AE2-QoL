@@ -48,7 +48,12 @@ public abstract class AbstractInfinityInventoryHandler<T extends IAEStack<T>>
         }
 
         if (type == Actionable.MODULATE) {
-            add(record, input, input.getStackSize());
+            boolean stored = add(record, input, input.getStackSize());
+            if (!stored) {
+                // 3.35.0-fix2（审查 P1-11）：子类拒收（识别不出 key 等）⇒ 把物品**原样退回**
+                // 而不是返回 null 让 AE2 按"全部接收"删源物品 —— 旧行为 = 静默吞物品。
+                return input;
+            }
             markChanged();
         }
         return null;
@@ -228,7 +233,12 @@ public abstract class AbstractInfinityInventoryHandler<T extends IAEStack<T>>
         }
     }
 
-    protected abstract void add(InfinityCellRecord record, T input, long amount);
+    /**
+     * 3.35.0-fix2（审查 P1-11）：签名从 void 改为 boolean ——
+     * 返回 {@code true} = 已存入（或可安全忽略）；{@code false} = **拒收**（调用方必须把
+     * input 原样退回给 AE2，否则 AE2 会按"全部接收"删除源物品 = 静默吞物品）。
+     */
+    protected abstract boolean add(InfinityCellRecord record, T input, long amount);
 
     protected abstract long extract(InfinityCellRecord record, T request, long amount, boolean modulate);
 

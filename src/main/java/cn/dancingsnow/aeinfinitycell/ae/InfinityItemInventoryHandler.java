@@ -27,11 +27,35 @@ public final class InfinityItemInventoryHandler extends AbstractInfinityInventor
     }
 
     @Override
-    protected void add(InfinityCellRecord record, IAEItemStack input, long amount) {
+    protected boolean add(InfinityCellRecord record, IAEItemStack input, long amount) {
         ItemStackKey key = key(input);
         if (key != null) {
             record.addItem(key, amount);
+            return true;
         }
+        // 3.35.0-fix2（审查 P1-11）：识别失败 ⇒ 返回 false 让上层把物品**原样退回**（AE2 契约：
+        // 返回剩余量即"未接收"），并把"识别失败"记成限频 WARN —— 旧实现什么都不存却让 AE2
+        // 按"全部接收"删源物品 = 静默吞物品，且零日志。
+        ae2qol$warnKeyFailure(input);
+        return false;
+    }
+
+    /** 3.35.0-fix2：限频警告（同一物品只报一次，进程内去重，防刷屏）。 */
+    private static final java.util.Set<String> WARNED_KEYS = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    private static void ae2qol$warnKeyFailure(IAEItemStack input) {
+        try {
+            net.minecraft.item.ItemStack mc = input.getItemStack();
+            String id = mc != null && mc.getItem() != null
+                ? net.minecraft.item.Item.itemRegistry.getNameForObject(mc.getItem())
+                    .toString()
+                : "null";
+            if (WARNED_KEYS.add(id)) {
+                cn.dancingsnow.aeinfinitycell.AEInfinityCell.LOG.warn(
+                    "[AE2QoL] 无限元件拒收无法解析注册身份的物品：{}（原样退回；该物品只会警告一次）",
+                    id);
+            }
+        } catch (Throwable ignored) {}
     }
 
     @Override
