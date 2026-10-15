@@ -34,6 +34,30 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-14 (95) - **3.32.0-fix5：蒸汽屠宰场模块（气动刷怪笼）加入调速（专用键，默认 8）**
+
+### 一、用户口径
+用户问"蒸汽刷怪的是不是没修改啊"——确认：**蒸汽屠宰场模块**（`SteamEntityCrusherModule`，配方类型"气动刷怪笼"）在最初点名的排除名单里，本轮按用户拍板加入：**专用键 `entityCrusherMaxParallel`（默认 8，0=跟随全局）**；**信标 / 驱怪 / 飞行 / 天气 4 个保持不动**（非"产量"型）。
+
+### 二、关键取证（决定实现方式）
+1. **输入是 0 数量的刷怪笼**：配方生成器 `ExtremeExtremeEntityCrusherRecipes.java:92` 写的是 `GTUtility.copyAmount(0, spawner)` ⇒ **根本不消耗刷怪笼** ⇒ 并行/批处理**无需输入补偿**，纯倍率（与抽油同类）。
+2. **它走 GT 原生 processingLogic**（`SteamEntityCrusherModule.checkProcessing:57` 调用 `setupProcessingLogic`）⇒ GT 原生批处理对它**生效**（机器自身批处理开 + 单份 <128t 时）⇒ 必须防**双重叠加**：机器自身批处理开启时本处理器**直接放行**。
+3. 上游"双倍产出"判定（2% + 0.5%/同款刷怪笼，上限 34%）在 RETURN 前已掷一次 ⇒ 本处理器把该结果 ×total（n 份共享同一次判定：**均值不变、方差变大**，与其余 5 个模块同一语义）。
+
+### 三、改动
+新增 `mixin/gt/MixinSteamEntityCrusherTuning.java`（`@Mixin(..., remap=false)` + `checkProcessing` RETURN + `require=0` + `@Unique ae2qof$steamTuningApplied()`）；`SteamElevatorTuning` 加 `entityCrusherMaxParallel` + `effectiveEntityCrusherParallel()` + JSON 读写 + `hasMissingKeys` 补键清单；`mixins.ae2_qof.json` 通用段第 6 条。
+
+### 四、验证与部署
+- `build --offline -x spotless*` **BUILD SUCCESSFUL**（`EXITCODE=0`）；产物 `build/libs/AE2-QoL-3.32.0-fix5.jar`（**1,919,432 B**，SHA256 `540BC30362F6BE827A2BBE46F4A174EC5774186F61B188A0BD4CA5CE9B00C125`）；`javap` 核对：新键/新方法/标记方法/处理器均入包。
+- **已部署**（2026-10-14）：旧 `【私货】AE2-QoL-3.32.0-fix4.jar` 只移不删入 `_ae2qol_jar_backup`，SHA256 一致，`mods` 内仅 1 份，实例配置未改动（首次启动会自动补出 `entityCrusherMaxParallel: 8`）。
+- ⚠️ **发现并解开"备份目录消失"之谜**：`_ae2qol_jar_backup` 里的旧 jar 不是被用户删的——**另一会话的部署流程会清空/重建该目录**（本轮部署后里面只剩 prev-3.32.0-fix4）。真正的回退材料一直在 `build/libs`（3.28.0/3.29.0/3.30.0/fix1/fix2 全在）。
+- **未提交**（本轮 delta：`SteamElevatorTuning.java` +19 行、`mixins.ae2_qof.json` +1 行、新 mixin 文件）。
+
+### 五、待用户实测
+① 启动日志"注入自检通过（**6/6** 个模块已生效）"；② 屠宰场模块面板进度 = **6.40s**（128 tick）且日志有 `每操作 1024 份（并行 8）`；③ **不要在它上面开机器自身的批处理按钮**（开了会走 GT 原生批处理、本模组自动放行，日志有 `不再叠加`）；④ 产出含怪物掉落（带概率）与 120 mB 经验汁/份 ⇒ 单次结算量 ×(128×8)，**必须 ME 输出**。
+
+---
+
 ## 工作区决策记录 2026-10-13 (94) - **3.32.0-fix4：实测流量换算成真正的 EU/t（修「实测是额定的 4 倍」）＋ 第二行配色/字号可读性**
 
 ### 一、现象（用户实测截图）

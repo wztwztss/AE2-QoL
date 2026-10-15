@@ -2,7 +2,7 @@
 
 | 项 | 值 |
 |---|---|
-| 状态 | **已实施（3.29.0）**。实施记录见 `CHANGELOG.md` 决策记录 (85)：新增 `gtnl/SteamElevatorTuning.java` + 5 个 `mixin/gt/MixinSteam*Tuning.java`，产物 `build/libs/AE2-QoL-3.29.0.jar`（1,887,873 B，SHA256 `66A9D208…DFCC`，BUILD SUCCESSFUL）。**实施中按"减少卡顿"口径加了一道本文写作时没有的闸门**：`minBatchesToApplyTuning`（默认 8）——凑不够份数就完全不改，见 §5.5。本文件继续作为**设计稿/数值表/兼容性分析**的单一来源；文内"未实施"字样仅指该段写作时的状态。 |
+| 状态 | **已实施（3.29.0 → 3.30.0 → 3.32.0-fix5）**。实施记录见 `CHANGELOG.md` 决策记录 (85)(86)(88)(95)：`gtnl/SteamElevatorTuning.java` + 6 个 `mixin/gt/MixinSteam*Tuning.java`；当前产物 `build/libs/AE2-QoL-3.32.0-fix5.jar`（1,919,432 B，SHA256 `540BC30362F6BE827A2BBE46F4A174EC5774186F61B188A0BD4CA5CE9B00C125`，已部署）。**3.32.0-fix5 追加第 6 类（屠宰场）**，见 §5.5 与 §7。本文件继续作为**设计稿/数值表/兼容性分析**的单一来源；文内"未实施"字样仅指该段写作时的状态。 |
 | 载体 | **AE2-QoL（`ae2_qof`）用 mixin 覆写**，不改 GTNL 源码 |
 | 取证基线 | `reference_src_290b3\GT-Not-Leisure-dev-290\GT-Not-Leisure-dev-290`（本文行号标 `[dev-290]`；无 `.git`，commit 不可比） |
 | **编译基线（实测）** | **`libs\sciencenotleisure-0.2.7-pre3-dev-290.jar`**（`mcmod.info`: `version=0.2.7-pre3-dev-290.37+082483e468`，23,283,878 B，2026-09-20）——**同为 dev-290 线，且是比运行 jar 更新的构建** |
@@ -11,8 +11,8 @@
 | 实例其它相关产物 | `【私货】gtnotgood-1.4.0.jar`、`gregtech-5.09.54.133.jar`（GT5U） |
 | 目标模组 | GT-Not-Leisure，modid **`sciencenotleisure`**（`ScienceNotLeisure.java:32/58` `[dev-290]`） |
 | 目标机器 | Steam Elevator（MTE 21155，"Steam Stairway"） |
-| 本次范围 | **5 个类 / 8 个物品**：SteamOreProcessorModule、SteamApiaryModule、SteamGreenhouseModule、SteamBeeBreedingModule、SteamOilDrillModule I/II/III |
-| 明确不动 | SteamBeaconModule、SteamMonsterRepellentModule、SteamFlightModule、SteamWeatherModule、SteamEntityCrusherModule（5 类） |
+| 本次范围 | **6 个类 / 9+ 个物品**：SteamOreProcessorModule、SteamApiaryModule、SteamGreenhouseModule、SteamBeeBreedingModule、SteamOilDrillModule I/II/III、**SteamEntityCrusherModule（3.32.0-fix5 追加）** |
+| 明确不动 | SteamBeaconModule、SteamMonsterRepellentModule、SteamFlightModule、SteamWeatherModule（4 类） |
 
 > **口径冲突（必须保留可见）**：需求方原始要求"对外发布 + 保持平衡 + 默认值=现值"，随后要求"批处理默认开启（方便自用）"。二者不可兼得：批处理开启 ≈ 变相加速，装上即比现状快。本文按"**默认开启**"实现，并提供 `moduleBatchFollowsMachineButton` 逃生阀（默认 `false`）与 README 明示义务；对外发布推荐改 `true`（见 §5）。
 

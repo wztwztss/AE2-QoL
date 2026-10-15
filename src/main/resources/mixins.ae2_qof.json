@@ -22,6 +22,7 @@
     "gt.MixinSteamApiaryTuning",
     "gt.MixinSteamGreenhouseTuning",
     "gt.MixinSteamOreProcessorTuning",
+    "gt.MixinSteamEntityCrusherTuning",
     "gt.MixinSuperCraftingInputHatchMEWildcard",
     "gt.MixinMTEMultiBlockBase",
     "gt.MixinBaseMetaTileEntityWaila",

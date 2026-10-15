@@ -8,7 +8,7 @@
 > 2. 修改后jar放入测试环境，查看mixin.log确认注入状态。
 > 3. 参考其他模组Mixin实现：`E:\wzt\MC\modcreater\reference_src_290b3`（旧的 `reference_src_290b1_已过期` 已废弃）。
 
-> 当前基线：GTNH **2.9.0-beta-3** / MC 1.7.10 / 版本 `3.32.0`。
+> 当前基线：GTNH **2.9.0-beta-3** / MC 1.7.10 / 版本 `3.32.0-fix5`。
 > 清单与 `src/main/resources/mixins.ae2_qof.json` 逐条对齐（通用 **27** 条 + client **16** 条 = **43** 条；两份副本必须逐字节一致）。
 > **3.32.0 未新增任何 Mixin**：自适应电网终端的"仓→主机"权威反查用的是 GT 的**公开**清单
 > （`MTEMultiBlockBase.mEnergyHatches` / `mDynamoHatches` / `getExoticEnergyHatches()`，javap 实例 jar 已确认），
@@ -28,7 +28,7 @@
 
 ## Mixin 清单
 
-### GTNL 蒸汽楼梯模块调速（3.29.0）- 5个Mixin
+### GTNL 蒸汽楼梯模块调速（3.29.0 起，3.32.0-fix5 加屠宰场）- 6个Mixin
 
 | Mixin 类路径 | 目标类 | 注入点 | 风险/说明 |
 |---|---|---|---|
@@ -37,6 +37,7 @@
 | `mixin/gt/MixinSteamApiaryTuning.java` | `...SteamApiaryModule` | 同上 | 额外份数按 `mMaxSlots × apiaryRoyalJellyPerSlot`（默认 40/槽）逐份实扣；`mStorage.size()` 走**反射**读取。输入/输出模式（`lEUt==0`）直接放行，避免把上一周期 `mOutputItems` 重复放大。 |
 | `mixin/gt/MixinSteamGreenhouseTuning.java` | `...SteamGreenhouseModule` | 同上 | 额外份数按 `greenhouseWaterPerCycle`（默认 16000 mB）逐份扣水；**用与上游相同的手法**（直接改 `getStoredFluids()` 的 `FluidStack.amount`），并只认"名字含 water"的流体。输入/输出模式放行。 |
 | `mixin/gt/MixinSteamOreProcessorTuning.java` | `...SteamOreProcessorModule` | 同上 | 额外份数 = 再扣 `currentParallelism` 个矿/份（反射查 `ALL_PROCESSABLE` 过滤，避免吃掉非矿物品）。**水/润滑剂不做额外扣减**——上游 `depleteInput(FluidStack,*)` 在 GTNL 蒸汽机器里只遍历蒸汽仓（`SteamMultiMachineBase:670-715`），水/润滑剂本来就扣不到。 |
+| `mixin/gt/MixinSteamEntityCrusherTuning.java`（3.32.0-fix5） | `...SteamEntityCrusherModule`（蒸汽屠宰场/气动刷怪笼） | 同上 | **与其它 5 个不同：它走 GT 原生 processingLogic** ⇒ GT 原生批处理对它生效，因此多一道**防双重叠加**守卫（机器自身批处理开关打开 ⇒ 直接放行不叠加）。输入是 **0 数量刷怪笼**（配方 `GTUtility.copyAmount(0, spawner)`，不消耗）⇒ 无需输入补偿、纯倍率。专用键 `entityCrusherMaxParallel`（默认 8，0=跟随全局）。上游"双倍产出"判定（2%+0.5%/同款刷怪笼，上限 34%）在 RETURN 前已掷，本处理器 ×total 共享该判定（均值不变、方差变大）。 |
 
 **共同约定（务必保持）**：
 1. 全部 `@Mixin(..., remap=false)` + `@Inject(method="checkProcessing", at=@At("RETURN"), require=0)` —— **永不因注入失败崩游戏**；每个 mixin 用 `@Unique ae2qof$steamTuningApplied()` 供启动自检 `SteamElevatorTuning.selfCheck()` 判定"到底落没落地"。

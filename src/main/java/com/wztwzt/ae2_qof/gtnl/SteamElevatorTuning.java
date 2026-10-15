@@ -106,6 +106,14 @@ public final class SteamElevatorTuning {
      * 把它做成代码默认值，就**不需要改配置文件**。其余 4 类要 ×P 就会 ×P 吃材料，故仍保持 1。
      */
     public static volatile int oilDrillMaxParallel = 8;
+    /**
+     * **屠宰场模块（气动刷怪笼）专用的并行 P**，默认 8。
+     *
+     * <p>它的输入是 **0 数量的刷怪笼**（配方 `GTUtility.copyAmount(0, spawner)`，不消耗）⇒ 并行是纯倍率、
+     * 无需输入补偿。注意它与 GT 原生 processingLogic 交互，机器自身批处理开启时本模组会**放行不叠加**
+     * （防双重放大，见 MixinSteamEntityCrusherTuning）。
+     */
+    public static volatile int entityCrusherMaxParallel = 8;
 
     // ------------------------------------------------------------------ 运行时状态 --------------------------
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting()
@@ -204,6 +212,7 @@ public final class SteamElevatorTuning {
             minBatchesToApplyTuning = clamp(getInt(o, "minBatchesToApplyTuning", minBatchesToApplyTuning), 1, 4096);
             moduleMaxParallel = clamp(getInt(o, "moduleMaxParallel", moduleMaxParallel), 1, 1024);
             oilDrillMaxParallel = clamp(getInt(o, "oilDrillMaxParallel", oilDrillMaxParallel), 0, 1024);
+            entityCrusherMaxParallel = clamp(getInt(o, "entityCrusherMaxParallel", entityCrusherMaxParallel), 0, 1024);
             if (force) {
                 MyMod.LOG.info(
                     "[AE2QoL] SteamElevator 调速已加载: enabled={} mode={} fixedSingle={} batch={}x{} steamFollowsSpeed={}",
@@ -234,7 +243,7 @@ public final class SteamElevatorTuning {
             "steamFollowsSpeed", "steamCostMultiplier", "batchEnabled", "batchFollowsMachineButton", "batchSize",
             "maxBatchDurationTicks", "apiaryRoyalJellyPerSlot", "beeBreedingRoyalJellyPerBatch",
             "greenhouseWaterPerCycle", "oilDrillOutputClamp", "minBatchesToApplyTuning", "moduleMaxParallel",
-            "oilDrillMaxParallel" };
+            "oilDrillMaxParallel", "entityCrusherMaxParallel" };
         for (String k : keys) {
             if (!o.has(k)) return true;
         }
@@ -268,6 +277,7 @@ public final class SteamElevatorTuning {
             "_comment_oilDrillMaxParallel",
             "抽油模块专用并行（0=跟随 moduleMaxParallel）。抽油无输入，默认 8=纯加速；其余 4 类要 ×P 会 ×P 吃材料，故默认 1");
         o.addProperty("oilDrillMaxParallel", oilDrillMaxParallel);
+        o.addProperty("entityCrusherMaxParallel", entityCrusherMaxParallel);
         try (OutputStreamWriter writer = new OutputStreamWriter(
             Files.newOutputStream(configFile),
             StandardCharsets.UTF_8)) {
@@ -393,6 +403,13 @@ public final class SteamElevatorTuning {
     public static int effectiveOilDrillParallel() {
         if (!enabled) return 1;
         int v = oilDrillMaxParallel > 0 ? oilDrillMaxParallel : moduleMaxParallel;
+        return clamp(v, 1, 1024);
+    }
+
+    /** 屠宰场模块生效的并行 P：{@link #entityCrusherMaxParallel} 为 0 时跟随全局；关闭总开关时恒 1。 */
+    public static int effectiveEntityCrusherParallel() {
+        if (!enabled) return 1;
+        int v = entityCrusherMaxParallel > 0 ? entityCrusherMaxParallel : moduleMaxParallel;
         return clamp(v, 1, 1024);
     }
 
