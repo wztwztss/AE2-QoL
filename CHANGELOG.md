@@ -34,6 +34,42 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-16 (117) - **3.35.0-fix9：库存控制覆盖板流体"随机变换"修复——GT display 物品稳定键优先（用户实测恶劣 bug）**
+
+### 一、现象（用户实测）
+每次模组更新/增删后，库存检测覆盖板里已标记的流体**随机变成别的流体**。
+
+### 二、根因（GT 字节码 + 本仓代码双证，因果链闭合）
+1. GT 的 `ItemFluidDisplay`（NEI 里所有流体的占位物品）**meta = `Fluid.getID()`** ——
+   `GTUtility.getFluidDisplayStack` 字节码 offset 13-22：`istore_3 = FluidStack.getFluid().getID()` 后
+   `ItemList.Display_Fluid.getWithDamage(1, id)`。**流体 ID 是启动时按模组加载顺序动态分配的** ⇒
+   模组列表一变，ID 表整体漂移 ⇒ 同 meta 解出另一个流体。
+2. 本仓两处按这个不稳定 meta 解读流体：
+   - `cover/stockmonitor/StockMonitorCoverData.tryRecognizeFluidItem`：`FluidRegistry.getFluid(stack.getItemDamage())`
+     —— 覆盖板 NBT 存的 Phantom 就是这种物品，重进存档按新 ID 表解读 ⇒ 标记流体错乱；
+   - `client/NetworkInventoryCache.getFluid`：同款（NEI tooltip 显示路径）。
+3. **对照组**：`PatternContainer.getFluidFromGTDisplay` 早用稳定键（NBT `mFluidMaterialName` 字符串）——同仓已有正确范式。
+
+### 三、本轮改动（用户拍板：修）
+两个文件同款修复——**稳定键优先，meta 兜底**：
+1. 优先读物品 NBT 的 `mFluidMaterialName`（GT 写入的 GT 材料名，`GTUtility.getFluidDisplayStack`
+   字节码 offset 127-148 实证为写入方；跨版本/跨模组列表稳定）；
+2. 名称解析：精确匹配 → `fluid.` 前缀剥离 → 全注册表大小写精确匹配（**绝不做模糊 contains**——
+   注册表遍历顺序不定，模糊匹配是"随机错流体"的另一个来源，`PatternContainer.findFluidByName` 注释早有此教训）；
+3. 无 NBT 的老数据才回退 `getItemDamage()`（旧行为不回退）；
+4. `NetworkInventoryCache` 顺带修正 amount 缺省（≤0 → 1000）。
+
+### 四、对"已错数据"的影响（用户问：关服后放修复版还会错吗）
+- **不会**。覆盖板 NBT 里的 Phantom 物品自带 GT 写的 `mFluidMaterialName`，修复版按名字解出**正确的原流体**——
+  即使你动过其它 mod、流体 ID 表已漂移。
+- 个别老数据物品若 NBT 里没有 `mFluidMaterialName`（极端旧数据），meta 兜底可能仍按新 ID 表解——这些只能重放一次流体；但修复后新写入的标记全部带稳定键，不再恶化。
+
+### 五、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.35.0-fix9.jar`。
+- 待游戏实测（用户执行）：① 在覆盖板标记若干流体 → 添加/移除任意其它模组（使流体 ID 表漂移）→ 重进存档，标记的流体**保持不变**（核心验收）；② NEI tooltip 的流体名同步验证。
+
+---
+
 ## 工作区决策记录 2026-10-15 (116) - **3.35.0-fix8：文档同步收官（P1-17）**
 
 ### 一、现象（版本口径核对实证）

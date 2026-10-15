@@ -183,10 +183,50 @@ public final class NetworkInventoryCache {
             return packetFluid != null ? packetFluid.getFluid() : null;
         }
         if (isGtFluidDisplay(stack)) {
+            // 3.35.0-fix9（用户实测恶劣 bug）：**稳定键优先** —— GT display 物品的
+            // meta = Fluid.getID()（动态分配，模组表变化即漂移），按 meta 解读会让
+            // NEI tooltip 在模组更新后张冠李戴。GT 物品 NBT 里的 mFluidMaterialName
+            // 是跨版本稳定的 GT 材料名，优先按它解析；无 NBT 老数据才走 meta 兜底。
+            FluidStack stable = readGtDisplayStable(stack);
+            if (stable != null) return stable.getFluid();
             return FluidRegistry.getFluid(stack.getItemDamage());
         }
         String fluidName = fluidItemMap.get(key(stack));
         return fluidName != null ? FluidRegistry.getFluid(fluidName) : null;
+    }
+
+    /**
+     * 3.35.0-fix9：按 GT 写入物品 NBT 的 {@code mFluidMaterialName}（GT 材料名，
+     * 字节码 GTUtility.getFluidDisplayStack offset 127-148 实证为写入方）解析流体。
+     * 名称解析用精确匹配（含 "fluid." 前缀剥离），**绝不做模糊 contains**——
+     * 注册表遍历顺序不定，模糊匹配正是"随机错流体"的另一个来源。
+     */
+    private static FluidStack readGtDisplayStable(ItemStack stack) {
+        if (!stack.hasTagCompound()) return null;
+        NBTTagCompound tag = stack.getTagCompound();
+        if (!tag.hasKey("mFluidMaterialName")) return null;
+        String matName = tag.getString("mFluidMaterialName");
+        if (matName == null || matName.isEmpty()) return null;
+        Fluid fluid = FluidRegistry.getFluid(matName);
+        if (fluid == null && matName.startsWith("fluid.")) {
+            fluid = FluidRegistry.getFluid(matName.substring(6));
+        }
+        if (fluid == null) {
+            String lower = matName.toLowerCase();
+            for (Fluid registered : FluidRegistry.getRegisteredFluids()
+                .values()) {
+                if (registered.getName() != null && registered.getName()
+                    .toLowerCase()
+                    .equals(lower)) {
+                    fluid = registered;
+                    break;
+                }
+            }
+        }
+        if (fluid == null) return null;
+        int amount = tag.getInteger("mFluidDisplayAmount");
+        if (amount <= 0) amount = 1000;
+        return new FluidStack(fluid, amount);
     }
 
     private static boolean isGtFluidDisplay(ItemStack stack) {

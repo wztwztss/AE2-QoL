@@ -174,6 +174,14 @@ public class StockMonitorCoverData {
                 return readFluidDrop(stack);
             }
             if (cls.equals("gregtech.common.items.ItemFluidDisplay")) {
+                // 3.35.0-fix9（用户实测恶劣 bug）：**稳定键优先** —— GT 的 display 物品
+                // meta = Fluid.getID()（启动时按模组加载顺序动态分配，字节码
+                // GTUtility.getFluidDisplayStack offset 13-22 实证）。模组增删/更新后流体 ID
+                // 表漂移 ⇒ 按 meta 解出**另一个流体** ⇒ 覆盖板标记的流体"随机变换"。
+                // GT 自己在物品 NBT 里写了 mFluidMaterialName（GT 材料名，跨版本稳定），
+                // 优先按它解析；meta 只作无 NBT 老数据的兜底。
+                FluidStack stable = readGtDisplayStable(stack);
+                if (stable != null) return stable;
                 net.minecraftforge.fluids.Fluid fluid = net.minecraftforge.fluids.FluidRegistry
                     .getFluid(stack.getItemDamage());
                 if (fluid != null) {
@@ -184,6 +192,45 @@ public class StockMonitorCoverData {
             if (nbtFluid != null) return nbtFluid;
         } catch (Throwable ignored) {}
         return null;
+    }
+
+    /**
+     * 3.35.0-fix9（审查后用户实测恶劣 bug）：按**稳定键**解析 GT ItemFluidDisplay。
+     * GT 写物品 NBT 的 {@code mFluidMaterialName} 是 GT 材料名（{@code Materials.FLUID_MAP
+     * .get(fluid).mName}，字节码 GTUtility.getFluidDisplayStack offset 127-148 实证），
+     * 跨版本/跨模组列表稳定；而 meta 是动态流体 ID，模组表一变就漂移。
+     * <p>材料名 → 流体的映射可能不止一个（GT 材料可对应多种流体，如 Pu 系列），
+     * 所以遍历注册表时按 display item 的 {@code func_82790_a}（颜色）二次过滤不可靠，
+     * 这里采用与 {@code PatternContainer.findFluidByName} 同口径的**精确名称匹配**，
+     * 多义时按注册表第一个命中并接受（与 GT 自己的 tooltip 反查同口径）。
+     */
+    private static FluidStack readGtDisplayStable(ItemStack stack) {
+        if (!stack.hasTagCompound()) return null;
+        NBTTagCompound tag = stack.getTagCompound();
+        if (!tag.hasKey("mFluidMaterialName")) return null;
+        String matName = tag.getString("mFluidMaterialName");
+        if (matName == null || matName.isEmpty()) return null;
+        net.minecraftforge.fluids.Fluid fluid = net.minecraftforge.fluids.FluidRegistry.getFluid(matName);
+        if (fluid == null && matName.startsWith("fluid.")) {
+            fluid = net.minecraftforge.fluids.FluidRegistry.getFluid(matName.substring(6));
+        }
+        if (fluid == null) {
+            String lower = matName.toLowerCase();
+            for (net.minecraftforge.fluids.Fluid registered : net.minecraftforge.fluids.FluidRegistry
+                .getRegisteredFluids()
+                .values()) {
+                if (registered.getName() != null && registered.getName()
+                    .toLowerCase()
+                    .equals(lower)) {
+                    fluid = registered;
+                    break;
+                }
+            }
+        }
+        if (fluid == null) return null;
+        int amount = tag.getInteger("mFluidDisplayAmount");
+        if (amount <= 0) amount = FluidContainerRegistry.BUCKET_VOLUME;
+        return new FluidStack(fluid, amount);
     }
 
     private static FluidStack readGenericNbtFluid(ItemStack stack) {
