@@ -168,6 +168,22 @@ public class StockMonitorActionPacket implements IMessage {
                     return;
                 }
 
+                // 3.34.0-fix1（审查 P1-2）：目标归属校验 —— 目标必须是本终端所在 AE 网络的成员。
+                // 客户端列表本就只显示同网络条目（CoverRegistry.getByNetwork / 发信器来自 resolveGrid
+                // 同一网格），所以合法玩家永远通过；伪造的"别人家设备"坐标在这里被拒。
+                // 判等用 IGrid.getId()（AE2 1083 公开 API）：同一网络的 Grid 单例共享同一 UUID。
+                if (!isTargetOwnedByTerminalNetwork(terminal, world, msg.x, msg.y, msg.z)) {
+                    chat(player, EnumChatFormatting.RED, "ae2_qof.terminal.target_missing");
+                    MyMod.LOG.info(
+                        "[StockMonitor] 高亮/传送目标不属于终端所在 AE 网络，已拒绝：player={} target={},{},{} dim={}",
+                        player.getCommandSenderName(),
+                        msg.x,
+                        msg.y,
+                        msg.z,
+                        msg.dim);
+                    return;
+                }
+
                 switch (msg.action) {
                     case ACTION_HIGHLIGHT:
                         handleHighlight(player, msg.kind, msg.dim, msg.x, msg.y, msg.z);
@@ -214,6 +230,56 @@ public class StockMonitorActionPacket implements IMessage {
             } catch (Throwable t) {
                 return false;
             }
+        }
+
+        /**
+         * 3.34.0-fix1（审查 P1-2）：目标必须属于终端所在的 AE 网络。
+         *
+         * <p>覆盖板目标：方块本身不是 IGridHost —— 它的"网络归属"用服务端登记表
+         * {@code CoverRegistry.getByNetwork(终端 networkId)}：该集合与 GUI 下发列表同源，
+         * 坐标在其中 ⇒ 目标确实是本网络的覆盖板。伪造坐标要么不在集合里、要么属于别的网络。
+         * 发信器/其它 AE 目标：直接比对 {@code IGrid.getId()}（AE2 1083 公开 API，
+         * 同一网络的 Grid 单例共享同一 UUID）。
+         */
+        private boolean isTargetOwnedByTerminalNetwork(StockMonitorTerminal terminal, WorldServer world, int x, int y,
+            int z) {
+            TileEntity te = world.getTileEntity(x, y, z);
+            // ① 覆盖板：与 GUI 列表同源的网络过滤集合里找这个坐标
+            if (te instanceof gregtech.api.interfaces.tileentity.ICoverable) {
+                gregtech.api.interfaces.tileentity.ICoverable coverable = (gregtech.api.interfaces.tileentity.ICoverable) te;
+                boolean hasOurCover = false;
+                for (net.minecraftforge.common.util.ForgeDirection side : net.minecraftforge.common.util.ForgeDirection.VALID_DIRECTIONS) {
+                    if (coverable
+                        .getCoverAtSide(side) instanceof com.wztwzt.ae2_qof.cover.stockmonitor.StockMonitorCover) {
+                        hasOurCover = true;
+                        break;
+                    }
+                }
+                if (!hasOurCover) return false;
+                for (com.wztwzt.ae2_qof.terminal.CoverRegistry.CoverEntry e : com.wztwzt.ae2_qof.terminal.CoverRegistry
+                    .get(world)
+                    .getByNetwork(terminal.getNetworkId())) {
+                    if (e.dim == world.provider.dimensionId && e.x == x && e.y == y && e.z == z) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            // ② AE 设备：网格 UUID 判等
+            try {
+                if (te instanceof appeng.api.networking.IGridHost) {
+                    appeng.api.networking.IGridNode node = ((appeng.api.networking.IGridHost) te)
+                        .getGridNode(net.minecraftforge.common.util.ForgeDirection.UNKNOWN);
+                    if (node != null && node.getGrid() != null) {
+                        appeng.api.networking.IGrid ownGrid = terminal.resolveGrid();
+                        if (ownGrid == null) return false; // 终端没联网 ⇒ 无从判定，拒绝（保守）
+                        return node.getGrid()
+                            .getId()
+                            .equals(ownGrid.getId());
+                    }
+                }
+            } catch (Throwable ignored) {}
+            return false;
         }
 
         private void handleHighlight(EntityPlayerMP player, int kind, int dim, int x, int y, int z) {

@@ -10,6 +10,7 @@ import net.minecraft.world.WorldServer;
 
 import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveHatchHelper;
+import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveNetTerminal;
 import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveNetwork;
 import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveNetworkManager;
 import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveTeamHelper;
@@ -201,6 +202,23 @@ public class HatchActionPacket implements IMessage {
                 if (!(world.getTileEntity(x, y, z) instanceof gregtech.api.interfaces.tileentity.IGregTechTileEntity))
                     return;
 
+                // 3.34.0-fix1：目标归属校验（审查 P1-2）—— 高亮/传送的目标必须属于本电网。
+                // 旧实现在"会话 + 团队"两道闸之后直接接受**任意** GT 方块实体坐标：
+                // 恶意玩家拿自己的合法终端报一个别人家 AE 设备的坐标，就能跨维度绕墙进他人基地。
+                // 现在目标必须满足其一：① 是本网络名单（network.getAllHelpers）里的仓坐标；
+                // ② 是某个 AE 设备（IGridHost）且其电网 id 与终端所在电网相同（IGrid.getId() 是
+                // AE2 1083 公开 API，同一网络的 Grid 单例共享同一 UUID）。
+                if (!isTargetOwnedByNetwork(network, world, x, y, z)) {
+                    MyMod.LOG.info(
+                        "[AE2QoL] 高亮/传送目标不属于发起终端所在的电网，已拒绝：player={} target={},{},{} dim={}",
+                        player.getCommandSenderName(),
+                        x,
+                        y,
+                        z,
+                        dim);
+                    return;
+                }
+
                 switch (msg.action) {
                     case ACTION_HIGHLIGHT:
                         handleHighlight(player, x, y, z, dim, msg.colorType);
@@ -220,6 +238,70 @@ public class HatchActionPacket implements IMessage {
             } catch (Throwable t) {
                 MyMod.LOG.error("Hatch action failed", t);
             }
+        }
+
+        /**
+         * 3.34.0-fix1（审查 P1-2）：目标必须属于发起终端所在的电网。
+         *
+         * <p>两条放行路径（满足其一即可）：
+         * <ol>
+         * <li>目标是**本网络名单内的仓**：与 {@code network.getAllHelpers()} 的坐标逐一比对
+         * （该名单由服务端维护，客户端伪造的坐标不可能混进来）；</li>
+         * <li>目标是 AE 设备（{@code IGridHost}）且其 {@code IGrid.getId()} 与终端电网相同
+         * —— 典型场景：TecTech 兼容激光仓挂在别人的 AE 主机上但已接入本网络。
+         * {@code IGrid.getId()}（AE2 1083 公开 API，返回 Grid 单例的 UUID）是可靠的网格判等手段。</li>
+         * </ol>
+         *
+         * <p>注意：这里不做区块加载（调用方已先做 {@code blockExists} 过滤，此处 TileEntity
+         * 必然可取）；目标不是 IGridHost 也**不直接拒绝**——先走名单路径（情况①）。
+         */
+        private static boolean isTargetOwnedByNetwork(AdaptiveNetwork network, WorldServer world, int x, int y,
+            int z) {
+            // ① 本网络名单内的仓
+            for (AdaptiveHatchHelper h : network.getAllHelpers()) {
+                if (h.getDim() == world.provider.dimensionId && h.getX() == x && h.getY() == y && h.getZ() == z) {
+                    return true;
+                }
+            }
+            // ② AE 设备且同一电网
+            try {
+                net.minecraft.tileentity.TileEntity te = world.getTileEntity(x, y, z);
+                if (te instanceof appeng.api.networking.IGridHost) {
+                    appeng.api.networking.IGridNode node = ((appeng.api.networking.IGridHost) te)
+                        .getGridNode(net.minecraftforge.common.util.ForgeDirection.UNKNOWN);
+                    if (node != null && node.getGrid() != null) {
+                        java.util.UUID targetGrid = node.getGrid()
+                            .getId();
+                        appeng.api.networking.IGrid ownGrid = resolveNetworkGrid(network);
+                        if (ownGrid != null && targetGrid.equals(ownGrid.getId())) {
+                            return true;
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {
+                // 目标取不到网格 ⇒ 走不到放行路径，返回 false 由调用方拒绝
+            }
+            return false;
+        }
+
+        /**
+         * 3.34.0-fix1：解析"终端所在电网"的 {@code IGrid}（供 {@link #isTargetOwnedByNetwork} 判等）。
+         * 自适应终端实现了 AE2 的 {@code IGridProxyable}（宿主 TE 持有 proxy），从这里拿最稳。
+         */
+        private static appeng.api.networking.IGrid resolveNetworkGrid(AdaptiveNetwork network) {
+            AdaptiveNetTerminal terminal = network.getTerminal();
+            if (terminal == null) return null;
+            try {
+                net.minecraft.tileentity.TileEntity te = (net.minecraft.tileentity.TileEntity) terminal
+                    .getBaseMetaTileEntity();
+                if (te instanceof appeng.me.helpers.IGridProxyable) {
+                    appeng.api.networking.IGridNode node = ((appeng.me.helpers.IGridProxyable) te)
+                        .getProxy()
+                        .getNode();
+                    if (node != null) return node.getGrid();
+                }
+            } catch (Throwable ignored) {}
+            return null;
         }
 
         private void handleHighlight(EntityPlayerMP player, int x, int y, int z, int dim, int hatchType) {
