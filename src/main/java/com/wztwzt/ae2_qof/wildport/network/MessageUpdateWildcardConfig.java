@@ -49,8 +49,16 @@ public class MessageUpdateWildcardConfig implements IMessage {
         @Override
         public IMessage onMessage(MessageUpdateWildcardConfig message, MessageContext context) {
             EntityPlayerMP player = context.getServerHandler().playerEntity;
+            // 3.34.0-fix7（审查 P1-8）：归队服务端 tick 线程 —— 本包写背包物品 NBT 并 markDirty。
+            com.wztwzt.ae2_qof.network.ServerTerminalHelper.scheduleServerTask(
+                () -> handleServerTask(player, message));
+            return null;
+        }
+
+        /** 3.34.0-fix7：原 onMessage 正文（归队后执行）。 */
+        private void handleServerTask(EntityPlayerMP player, MessageUpdateWildcardConfig message) {
             if (message.slot < 0 || message.slot >= player.inventory.mainInventory.length) {
-                return null;
+                return;
             }
 
             ItemStack stack = player.inventory.getStackInSlot(message.slot);
@@ -67,7 +75,7 @@ public class MessageUpdateWildcardConfig implements IMessage {
                     "[AE2QoL] Wild 界面保存被拒绝：槽位 {} 不是通配样板（item={}）",
                     message.slot,
                     stack == null ? "null" : stack.getItem());
-                return null;
+                return;
             }
 
             WildcardPatternGenerator.markAsWildcard(stack);
@@ -78,7 +86,6 @@ public class MessageUpdateWildcardConfig implements IMessage {
                 com.wztwzt.ae2_qof.wildport.bridge.WildcardBridge.pullFromWild(stack);
             }
             player.inventory.markDirty();
-            return null;
         }
     }
 }

@@ -84,6 +84,14 @@ public class PacketSaveFields implements IMessage {
         public IMessage onMessage(PacketSaveFields message, MessageContext ctx) {
             EntityPlayerMP player = ctx.getServerHandler().playerEntity;
             if (player == null) return null;
+            // 3.34.0-fix7（审查 P1-8）：归队服务端 tick 线程 —— 本包写手持物品 NBT 并
+            // openGui（网络线程开界面不会生效，项目已验证机制）。
+            com.wztwzt.ae2_qof.network.ServerTerminalHelper.scheduleServerTask(() -> handleServerTask(player, message));
+            return null;
+        }
+
+        /** 3.34.0-fix7：原 onMessage 正文（归队后执行）。 */
+        private void handleServerTask(EntityPlayerMP player, PacketSaveFields message) {
             ItemStack held = player.getCurrentEquippedItem();
 
             // 3.22.0-fix47 **真 bug 修复**：这里原来只认移植过来的 ItemPatternGenerator，
@@ -120,8 +128,6 @@ public class PacketSaveFields implements IMessage {
                 player
                     .openGui(com.wztwzt.ae2_qof.MyMod.instance, ItemPatternGenerator.GUI_ID, player.worldObj, 0, 0, 0);
             }
-
-            return null;
         }
     }
 }

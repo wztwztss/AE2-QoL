@@ -87,6 +87,14 @@ public class PacketGeneratePatterns implements IMessage {
         @Override
         public IMessage onMessage(PacketGeneratePatterns message, MessageContext ctx) {
             EntityPlayerMP player = ctx.getServerHandler().playerEntity;
+            // 3.34.0-fix7（审查 P1-8）：归队服务端 tick 线程 —— 本包会读 GT 全局配方表、
+            // 写玩家背包并 dropItem，且 Gate/Session 均为非线程安全静态状态。
+            com.wztwzt.ae2_qof.network.ServerTerminalHelper.scheduleServerTask(() -> handleServerTask(player, message));
+            return null;
+        }
+
+        /** 3.34.0-fix7：原 onMessage 正文（归队后执行）。 */
+        private void handleServerTask(EntityPlayerMP player, PacketGeneratePatterns message) {
             UUID uuid = player.getUniqueID();
             try {
                 String requestFingerprint = PatternGenerationRequestGate.fingerprint(
@@ -99,7 +107,7 @@ public class PacketGeneratePatterns implements IMessage {
                     message.replacements,
                     message.targetTier);
                 if (!PatternGenerationRequestGate.shouldProcess(uuid, requestFingerprint, System.currentTimeMillis())) {
-                    return null;
+                    return;
                 }
 
                 // 检查仓储是否有残留样板
@@ -111,7 +119,7 @@ public class PacketGeneratePatterns implements IMessage {
                         "ae2patterngen.msg.generate.storage_not_empty",
                         existing.count,
                         existing.source);
-                    return null;
+                    return;
                 }
 
                 CompositeFilter filter = RecipeFilterFactory.build(
@@ -124,7 +132,7 @@ public class PacketGeneratePatterns implements IMessage {
                 CacheQueryResult queryResult = RecipeCacheService.loadAndFilterRecipes(message.recipeMapId, filter);
                 if (!queryResult.cacheValid) {
                     send(player, EnumChatFormatting.RED, "ae2patterngen.msg.cache.missing_or_invalid");
-                    return null;
+                    return;
                 }
 
                 // 1. 查找匹配的配方表
@@ -135,7 +143,7 @@ public class PacketGeneratePatterns implements IMessage {
                         EnumChatFormatting.RED,
                         "ae2patterngen.msg.generate.no_matching_map",
                         message.recipeMapId);
-                    return null;
+                    return;
                 }
 
                 send(
@@ -156,7 +164,7 @@ public class PacketGeneratePatterns implements IMessage {
 
                 if (filtered.isEmpty()) {
                     send(player, EnumChatFormatting.YELLOW, "ae2patterngen.msg.generate.no_match_after_filter");
-                    return null;
+                    return;
                 }
 
                 // 5. 应用矿辞替换 (从服务端配置读取)
@@ -216,7 +224,7 @@ public class PacketGeneratePatterns implements IMessage {
                             conflicts.size(),
                             ConflictSelectionPolicy.getMaxInteractiveFilteredRecipes(),
                             ConflictSelectionPolicy.getMaxInteractiveConflictGroups());
-                        return null;
+                        return;
                     }
 
                     // 开启冲突处理会话
@@ -230,7 +238,7 @@ public class PacketGeneratePatterns implements IMessage {
                     // 发送第一个冲突给客户端
                     ConflictSession session = ConflictSession.get(uuid);
                     ConflictResolutionService.sendCurrentBatch(player, session);
-                    return null;
+                    return;
                 }
 
                 PatternGenerationService.generateAndStore(player, message.recipeMapId, filtered);
@@ -241,7 +249,7 @@ public class PacketGeneratePatterns implements IMessage {
                     e.getMessage());
                 send(player, EnumChatFormatting.RED, "ae2patterngen.msg.generate.internal_error");
             }
-            return null;
+            return;
         }
 
         private void send(EntityPlayerMP player, EnumChatFormatting color, String key, Object... args) {

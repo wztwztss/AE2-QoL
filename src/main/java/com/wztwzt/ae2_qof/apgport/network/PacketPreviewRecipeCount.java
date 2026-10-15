@@ -71,22 +71,25 @@ public class PacketPreviewRecipeCount implements IMessage {
         @Override
         public IMessage onMessage(PacketPreviewRecipeCount message, MessageContext ctx) {
             EntityPlayerMP player = ctx.getServerHandler().playerEntity;
-            CompositeFilter filter = RecipeFilterFactory.build(
-                message.outputOreDict,
-                message.inputOreDict,
-                message.ncItem,
-                message.blacklistInput,
-                message.blacklistOutput,
-                message.targetTier);
-            CacheQueryResult result = RecipeCacheService.loadAndFilterRecipes(message.recipeMapId, filter);
-            NetworkHandler.INSTANCE.sendTo(
-                new PacketPreviewRecipeCountResult(
-                    result.cacheValid,
-                    message.recipeMapId,
-                    result.matchedMapIds.size(),
-                    result.totalLoadedCount,
-                    result.totalFilteredCount),
-                player);
+            // 3.34.0-fix7（审查 P1-8）：归队服务端 tick 线程（loadAndFilterRecipes 读 GT 全局配方表）
+            com.wztwzt.ae2_qof.network.ServerTerminalHelper.scheduleServerTask(() -> {
+                CompositeFilter filter = RecipeFilterFactory.build(
+                    message.outputOreDict,
+                    message.inputOreDict,
+                    message.ncItem,
+                    message.blacklistInput,
+                    message.blacklistOutput,
+                    message.targetTier);
+                CacheQueryResult result = RecipeCacheService.loadAndFilterRecipes(message.recipeMapId, filter);
+                NetworkHandler.INSTANCE.sendTo(
+                    new PacketPreviewRecipeCountResult(
+                        result.cacheValid,
+                        message.recipeMapId,
+                        result.matchedMapIds.size(),
+                        result.totalLoadedCount,
+                        result.totalFilteredCount),
+                    player);
+            });
             return null;
         }
     }

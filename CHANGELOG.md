@@ -34,6 +34,30 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-14 (108) - **3.34.0-fix7：apgport 7 包 + wildport 3 包全部归队服务端 tick 线程（P1-8）**
+
+### 一、现象（源码逐行实证 + FML 字节码）
+`SimpleChannelHandlerWrapper.channelRead0` **内联调用** `IMessageHandler.onMessage`（对 `MinecraftServer|addScheduledTask` 引用数 0）⇒ 包处理器跑在 **Netty IO 线程**。主通道（apu）23 个 C2S 包全部正确归队，但：
+- `apgport/network/` 全部 7 个 C2S 包未归队（`PacketCreateCache`/`PacketPreviewRecipeCount`/`PacketGeneratePatterns`/`PacketSaveFields`/`PacketStorageAction`/`PacketResolveConflicts`/`PacketResolveConflictsBatch`）——在网络线程读 GT 全局配方表（非线程安全）、写玩家背包、操作非线程安全静态 Session/Gate；
+- `wildport/network/` 3 个未归队（`MessageUpdateWildcardConfig`/`MessageUpdateCompositeWildcardConfig`/`MessageReopenWildGui`）——写背包物品 NBT，且 `MessageReopenWildGui` 与 `PacketSaveFields` 的 `openGui` 在网络线程**不会生效**（项目已验证机制）——这正是"改对话框确认后界面不回来""对照表选行后回不了主页"的根因。
+
+### 二、本轮改动（统一改法 = 主通道同一范式）
+10 个包全部包进 `ServerTerminalHelper.scheduleServerTask(...)`（public static，跨包可用）：
+- 体量小的直接 lambda 包整段；体量大的（PacketGeneratePatterns / PacketSaveFields / 两个 ResolveConflicts）把正文抽成 `handleServerTask(player, message)` 方法再归队；
+- 顺带：`MessageUpdateCompositeWildcardConfig` 的静默 return 补 WARN（违反"不许静默"铁则）。
+- 正常玩家感知：操作响应"立即 → 下一 tick"（16-50ms 级），肉眼不可见。
+
+### 三、影响面与风险
+- 消除一整类并发问题（背包/NBT/静态状态与 tick 线程互斥）；
+- 两个失效的界面返回（Wild"改"对话框回主页、生成器对照表选行回主页）恢复工作；
+- 包格式/协议零变化。
+
+### 四、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.34.0-fix7.jar`。
+- 待游戏实测（用户执行）：① 生成器对照表选行后**能回到主页**（此前不生效）；② Wild"改"对话框确认后界面回来；③ 样板存储提取/清空/删除、缓存构建、冲突解决、配方生成全部照常。
+
+---
+
 ## 工作区决策记录 2026-10-14 (107) - **3.34.0-fix6：区块存在性前置到 getTileEntity 之前——堵住强制区块加载卡服（P1-7）**
 
 ### 一、现象（源码逐行实证）

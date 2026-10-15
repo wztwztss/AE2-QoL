@@ -31,34 +31,38 @@ public class PacketCreateCache implements IMessage {
         @Override
         public IMessage onMessage(PacketCreateCache message, MessageContext ctx) {
             EntityPlayerMP player = ctx.getServerHandler().playerEntity;
-            boolean started = RecipeCacheService.createOrRefreshCache(new RecipeCacheService.ProgressNotifier() {
+            // 3.34.0-fix7（审查 P1-8）：归队服务端 tick 线程 —— createOrRefreshCache 会读
+            // GT 全局配方表（非线程安全）并同步 notifier 回调，不该在 Netty 线程做。
+            com.wztwzt.ae2_qof.network.ServerTerminalHelper.scheduleServerTask(() -> {
+                boolean started = RecipeCacheService.createOrRefreshCache(new RecipeCacheService.ProgressNotifier() {
 
-                @Override
-                public void onProgress(String progressMessage, int current, int total) {
-                    NetworkHandler.INSTANCE.sendTo(
-                        new PacketCacheProgress(PacketCacheProgress.STAGE_PROGRESS, progressMessage, current, total),
-                        player);
-                }
+                    @Override
+                    public void onProgress(String progressMessage, int current, int total) {
+                        NetworkHandler.INSTANCE.sendTo(
+                            new PacketCacheProgress(PacketCacheProgress.STAGE_PROGRESS, progressMessage, current, total),
+                            player);
+                    }
 
-                @Override
-                public void onComplete(CacheStatistics statistics) {
-                    NetworkHandler.INSTANCE.sendTo(new PacketCacheStatistics(statistics), player);
-                }
+                    @Override
+                    public void onComplete(CacheStatistics statistics) {
+                        NetworkHandler.INSTANCE.sendTo(new PacketCacheStatistics(statistics), player);
+                    }
 
-                @Override
-                public void onError(String message) {
+                    @Override
+                    public void onError(String message) {
+                        NetworkHandler.INSTANCE
+                            .sendTo(new PacketCacheProgress(PacketCacheProgress.STAGE_ERROR, message, 0, 0), player);
+                    }
+                });
+
+                if (started) {
                     NetworkHandler.INSTANCE
-                        .sendTo(new PacketCacheProgress(PacketCacheProgress.STAGE_ERROR, message, 0, 0), player);
+                        .sendTo(new PacketCacheProgress(PacketCacheProgress.STAGE_STARTED, "", 0, 0), player);
+                } else {
+                    NetworkHandler.INSTANCE
+                        .sendTo(new PacketCacheProgress(PacketCacheProgress.STAGE_ALREADY_RUNNING, "", 0, 0), player);
                 }
             });
-
-            if (started) {
-                NetworkHandler.INSTANCE
-                    .sendTo(new PacketCacheProgress(PacketCacheProgress.STAGE_STARTED, "", 0, 0), player);
-            } else {
-                NetworkHandler.INSTANCE
-                    .sendTo(new PacketCacheProgress(PacketCacheProgress.STAGE_ALREADY_RUNNING, "", 0, 0), player);
-            }
             return null;
         }
     }

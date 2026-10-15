@@ -49,19 +49,31 @@ public class MessageUpdateCompositeWildcardConfig implements IMessage {
         @Override
         public IMessage onMessage(MessageUpdateCompositeWildcardConfig message, MessageContext context) {
             EntityPlayerMP player = context.getServerHandler().playerEntity;
+            // 3.34.0-fix7（审查 P1-8）：归队服务端 tick 线程（写背包物品 NBT）
+            com.wztwzt.ae2_qof.network.ServerTerminalHelper.scheduleServerTask(
+                () -> handleServerTask(player, message));
+            return null;
+        }
+
+        /** 3.34.0-fix7：原 onMessage 正文（归队后执行）。 */
+        private void handleServerTask(EntityPlayerMP player, MessageUpdateCompositeWildcardConfig message) {
             if (message.slot < 0 || message.slot >= player.inventory.mainInventory.length) {
-                return null;
+                return;
             }
 
             ItemStack stack = player.inventory.getStackInSlot(message.slot);
             if (stack == null || stack.getItem() != ModItems.compositeWildcardPattern) {
-                return null;
+                // 3.34.0-fix7：静默 return 违反"不许静默"铁则——补一条 WARN（与兄弟类对齐）
+                com.wztwzt.ae2_qof.MyMod.LOG.warn(
+                    "[AE2QoL] 复合通配配置写回被拒：槽位 {} 不是复合通配样板（item={}）",
+                    message.slot,
+                    stack == null ? "null" : stack.getItem());
+                return;
             }
 
             CompositeWildcardPatternGenerator.markAsCompositeWildcard(stack);
             CompositeWildcardPatternState.applyConfig(stack, message.config);
             player.inventory.markDirty();
-            return null;
         }
     }
 }

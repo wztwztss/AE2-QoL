@@ -80,32 +80,39 @@ public class PacketResolveConflictsBatch implements IMessage {
         @Override
         public IMessage onMessage(PacketResolveConflictsBatch message, MessageContext ctx) {
             EntityPlayerMP player = ctx.getServerHandler().playerEntity;
+            // 3.34.0-fix7（审查 P1-8）：归队服务端 tick 线程 —— 会写玩家背包并操作静态 Session 状态。
+            com.wztwzt.ae2_qof.network.ServerTerminalHelper.scheduleServerTask(() -> handleServerTask(player, message));
+            return null;
+        }
+
+        /** 3.34.0-fix7：原 onMessage 正文（归队后执行）。 */
+        private void handleServerTask(EntityPlayerMP player, PacketResolveConflictsBatch message) {
             UUID uuid = player.getUniqueID();
             ConflictSession session = ConflictSession.get(uuid);
-            if (session == null) return null;
+            if (session == null) return;
 
             int serverStartIndex = ConflictResolutionService.currentServerStartIndex(session);
 
             if (message.cancel) {
                 // Ignore stale close/cancel packets from an outdated client window.
                 if (message.expectedStartIndex > 0 && message.expectedStartIndex != serverStartIndex) {
-                    return null;
+                    return;
                 }
                 ConflictSession.stop(uuid);
                 send(player, EnumChatFormatting.YELLOW, "ae2patterngen.msg.conflict.cancelled");
-                return null;
+                return;
             }
 
             if (message.expectedStartIndex > 0 && message.expectedStartIndex != serverStartIndex) {
                 send(player, EnumChatFormatting.RED, "ae2patterngen.msg.conflict.session_updated");
                 sendCurrentBatch(player, session);
-                return null;
+                return;
             }
 
             if (message.selectedIndices == null || message.selectedIndices.length == 0) {
                 send(player, EnumChatFormatting.RED, "ae2patterngen.msg.conflict.no_valid_selection");
                 sendCurrentBatch(player, session);
-                return null;
+                return;
             }
 
             for (int selectedIndex : message.selectedIndices) {
@@ -115,7 +122,7 @@ public class PacketResolveConflictsBatch implements IMessage {
                 if (currentRecipes == null || currentRecipes.isEmpty()) {
                     send(player, EnumChatFormatting.RED, "ae2patterngen.msg.conflict.session_empty_group");
                     ConflictSession.stop(uuid);
-                    return null;
+                    return;
                 }
 
                 if (selectedIndex < 0 || selectedIndex >= currentRecipes.size()) {
@@ -125,7 +132,7 @@ public class PacketResolveConflictsBatch implements IMessage {
                         "ae2patterngen.msg.conflict.invalid_batch_selection",
                         selectedIndex);
                     sendCurrentBatch(player, session);
-                    return null;
+                    return;
                 }
 
                 session.select(selectedIndex);
@@ -138,7 +145,7 @@ public class PacketResolveConflictsBatch implements IMessage {
                 sendCurrentBatch(player, session);
             }
 
-            return null;
+            return;
         }
 
         private void sendCurrentBatch(EntityPlayerMP player, ConflictSession session) {

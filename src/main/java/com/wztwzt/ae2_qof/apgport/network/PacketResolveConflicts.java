@@ -60,29 +60,36 @@ public class PacketResolveConflicts implements IMessage {
         @Override
         public IMessage onMessage(PacketResolveConflicts message, MessageContext ctx) {
             EntityPlayerMP player = ctx.getServerHandler().playerEntity;
+            // 3.34.0-fix7（审查 P1-8）：归队服务端 tick 线程 —— 会写玩家背包并操作静态 Session 状态。
+            com.wztwzt.ae2_qof.network.ServerTerminalHelper.scheduleServerTask(() -> handleServerTask(player, message));
+            return null;
+        }
+
+        /** 3.34.0-fix7：原 onMessage 正文（归队后执行）。 */
+        private void handleServerTask(EntityPlayerMP player, PacketResolveConflicts message) {
             UUID uuid = player.getUniqueID();
             ConflictSession session = ConflictSession.get(uuid);
 
-            if (session == null) return null;
+            if (session == null) return;
 
             if (message.cancel) {
                 ConflictSession.stop(uuid);
                 send(player, EnumChatFormatting.YELLOW, "ae2patterngen.msg.conflict.cancelled");
-                return null;
+                return;
             }
 
             int serverConflictIndex = ConflictResolutionService.currentServerStartIndex(session);
             if (message.expectedConflictIndex > 0 && message.expectedConflictIndex != serverConflictIndex) {
                 send(player, EnumChatFormatting.RED, "ae2patterngen.msg.conflict.session_changed");
                 ConflictResolutionService.sendCurrentBatch(player, session);
-                return null;
+                return;
             }
 
             List<RecipeEntry> currentRecipes = session.getCurrentRecipes();
             if (currentRecipes == null || currentRecipes.isEmpty()) {
                 send(player, EnumChatFormatting.RED, "ae2patterngen.msg.conflict.session_empty");
                 ConflictSession.stop(uuid);
-                return null;
+                return;
             }
 
             if (message.recipeIndex < 0 || message.recipeIndex >= currentRecipes.size()) {
@@ -92,7 +99,7 @@ public class PacketResolveConflicts implements IMessage {
                     "ae2patterngen.msg.conflict.invalid_selection",
                     message.recipeIndex);
                 ConflictResolutionService.sendCurrentBatch(player, session);
-                return null;
+                return;
             }
 
             session.select(message.recipeIndex);
@@ -104,7 +111,7 @@ public class PacketResolveConflicts implements IMessage {
                 ConflictResolutionService.sendCurrentBatch(player, session);
             }
 
-            return null;
+            return;
         }
 
         private void send(EntityPlayerMP player, EnumChatFormatting color, String key, Object... args) {
