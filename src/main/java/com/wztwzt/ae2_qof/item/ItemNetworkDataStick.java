@@ -8,17 +8,16 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumChatFormatting;
-
-import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveTeamHelper;
 import net.minecraft.util.StatCollector;
-
-import cpw.mods.fml.common.registry.GameRegistry;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.wztwzt.ae2_qof.AE2QoLCreativeTab;
 import com.wztwzt.ae2_qof.MyMod;
+import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveTeamHelper;
+
+import cpw.mods.fml.common.registry.GameRegistry;
 
 public class ItemNetworkDataStick extends Item {
 
@@ -50,8 +49,7 @@ public class ItemNetworkDataStick extends Item {
 
     public static void writeData(ItemStack stack, UUID owner, int frequency) {
         if (stack == null || !(stack.getItem() instanceof ItemNetworkDataStick)) {
-            LOG.warn("[AE2QoL] writeData: invalid stack, item={}",
-                stack != null ? stack.getItem() : "null");
+            LOG.warn("[AE2QoL] writeData: invalid stack, item={}", stack != null ? stack.getItem() : "null");
             return;
         }
         UUID leader = AdaptiveTeamHelper.resolveLeader(owner);
@@ -77,7 +75,9 @@ public class ItemNetworkDataStick extends Item {
     public static UUID getOwner(ItemStack stack) {
         if (!hasData(stack)) return null;
         try {
-            return UUID.fromString(stack.getTagCompound().getString(NBT_OWNER));
+            return UUID.fromString(
+                stack.getTagCompound()
+                    .getString(NBT_OWNER));
         } catch (IllegalArgumentException e) {
             return null;
         }
@@ -85,7 +85,8 @@ public class ItemNetworkDataStick extends Item {
 
     public static int getFrequency(ItemStack stack) {
         if (!hasData(stack)) return 0;
-        return stack.getTagCompound().getInteger(NBT_FREQUENCY);
+        return stack.getTagCompound()
+            .getInteger(NBT_FREQUENCY);
     }
 
     @SuppressWarnings("unchecked")
@@ -95,26 +96,25 @@ public class ItemNetworkDataStick extends Item {
         if (hasData(stack)) {
             UUID owner = getOwner(stack);
             int freq = getFrequency(stack);
-            tooltip.add(EnumChatFormatting.GREEN
-                + StatCollector.translateToLocal("ae2_qof.item.data_stick.bound"));
-            tooltip.add(EnumChatFormatting.GRAY
-                + StatCollector.translateToLocal("ae2_qof.item.data_stick.owner")
-                + ": " + EnumChatFormatting.WHITE
-                + (owner != null ? owner.toString().substring(0, 8) + "..." : "?"));
-            tooltip.add(EnumChatFormatting.GRAY
-                + StatCollector.translateToLocal("ae2_qof.item.data_stick.frequency")
-                + ": " + EnumChatFormatting.WHITE + freq);
+            tooltip.add(EnumChatFormatting.GREEN + StatCollector.translateToLocal("ae2_qof.item.data_stick.bound"));
+            tooltip.add(
+                EnumChatFormatting.GRAY + StatCollector.translateToLocal("ae2_qof.item.data_stick.owner")
+                    + ": "
+                    + EnumChatFormatting.WHITE
+                    + (owner != null ? owner.toString()
+                        .substring(0, 8) + "..." : "?"));
+            tooltip.add(
+                EnumChatFormatting.GRAY + StatCollector.translateToLocal("ae2_qof.item.data_stick.frequency")
+                    + ": "
+                    + EnumChatFormatting.WHITE
+                    + freq);
         } else {
-            tooltip.add(EnumChatFormatting.YELLOW
-                + StatCollector.translateToLocal("ae2_qof.item.data_stick.empty"));
+            tooltip.add(EnumChatFormatting.YELLOW + StatCollector.translateToLocal("ae2_qof.item.data_stick.empty"));
         }
         tooltip.add(EnumChatFormatting.DARK_GRAY + "───────────────────");
-        tooltip.add(EnumChatFormatting.AQUA
-            + StatCollector.translateToLocal("ae2_qof.item.data_stick.use.write"));
-        tooltip.add(EnumChatFormatting.AQUA
-            + StatCollector.translateToLocal("ae2_qof.item.data_stick.use.bind"));
-        tooltip.add(EnumChatFormatting.AQUA
-            + StatCollector.translateToLocal("ae2_qof.item.data_stick.use.read"));
+        tooltip.add(EnumChatFormatting.AQUA + StatCollector.translateToLocal("ae2_qof.item.data_stick.use.write"));
+        tooltip.add(EnumChatFormatting.AQUA + StatCollector.translateToLocal("ae2_qof.item.data_stick.use.bind"));
+        tooltip.add(EnumChatFormatting.AQUA + StatCollector.translateToLocal("ae2_qof.item.data_stick.use.read"));
         tooltip.add(EnumChatFormatting.DARK_GRAY + "ae2qof");
     }
 

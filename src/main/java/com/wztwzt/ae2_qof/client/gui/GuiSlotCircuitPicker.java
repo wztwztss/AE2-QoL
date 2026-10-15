@@ -58,8 +58,14 @@ public class GuiSlotCircuitPicker extends GuiScreen {
         }
         int bottom = startY + 3 * 22 + 8;
         this.buttonList.add(new GuiButton(ID_CLEAR, startX, bottom, 110, 20, "\u6e05\u9664\uff08\u7ee7\u627f\uff09"));
-        this.buttonList
-            .add(new GuiButton(ID_ADD_NONCONSUMED, startX + 116, bottom, 124, 20, "\u624b\u6301\u7269\u8bb0\u4e3a\u4e0d\u6d88\u8017"));
+        this.buttonList.add(
+            new GuiButton(
+                ID_ADD_NONCONSUMED,
+                startX + 116,
+                bottom,
+                124,
+                20,
+                "\u624b\u6301\u7269\u8bb0\u4e3a\u4e0d\u6d88\u8017"));
         this.buttonList.add(new GuiButton(ID_CLOSE, startX + 60, bottom + 26, 120, 20, "\u5173\u95ed"));
     }
 
@@ -89,9 +95,16 @@ public class GuiSlotCircuitPicker extends GuiScreen {
 
     private void send(int circuit, boolean addHeld) {
         try {
-            ModNetwork.CHANNEL
-                .sendToServer(new SmartWildcardSlotCircuitPacket(this.machineX, this.machineY, this.machineZ, this.slotIndex, circuit, addHeld));
-            this.status = addHeld ? "\u5df2\u8bb0\u4e3a\u4e0d\u6d88\u8017\u7269\u54c1" : ("\u5df2\u53d1\u9001\uff1a\u7535\u8def " + (circuit < 1 ? "\u6e05\u9664" : circuit));
+            ModNetwork.CHANNEL.sendToServer(
+                new SmartWildcardSlotCircuitPacket(
+                    this.machineX,
+                    this.machineY,
+                    this.machineZ,
+                    this.slotIndex,
+                    circuit,
+                    addHeld));
+            this.status = addHeld ? "\u5df2\u8bb0\u4e3a\u4e0d\u6d88\u8017\u7269\u54c1"
+                : ("\u5df2\u53d1\u9001\uff1a\u7535\u8def " + (circuit < 1 ? "\u6e05\u9664" : circuit));
             MyMod.LOG.info(
                 "[AE2QoL] 样板槽手势：已发送写回请求 slot={} circuit={} addHeld={} @ [{}, {}, {}]",
                 this.slotIndex,
@@ -111,15 +124,29 @@ public class GuiSlotCircuitPicker extends GuiScreen {
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         this.drawDefaultBackground();
         int top = this.height / 2 - 60;
-        this.drawCenteredString(this.fontRendererObj, EnumChatFormatting.AQUA + "\u7f16\u7a0b\u7535\u8def\uff081~24\uff09", this.width / 2, top - 30, 0xFFFFFF);
         this.drawCenteredString(
             this.fontRendererObj,
-            EnumChatFormatting.GRAY + "\u76ee\u6807\uff1a" + this.patternName + "  \uff08\u673a\u5668\u69fd\u4f4d " + this.slotIndex + "\uff09",
+            EnumChatFormatting.AQUA + "\u7f16\u7a0b\u7535\u8def\uff081~24\uff09",
+            this.width / 2,
+            top - 30,
+            0xFFFFFF);
+        this.drawCenteredString(
+            this.fontRendererObj,
+            EnumChatFormatting.GRAY + "\u76ee\u6807\uff1a"
+                + this.patternName
+                + "  \uff08\u673a\u5668\u69fd\u4f4d "
+                + this.slotIndex
+                + "\uff09",
             this.width / 2,
             top - 18,
             0xFFFFFF);
         if (!this.status.isEmpty()) {
-            this.drawCenteredString(this.fontRendererObj, EnumChatFormatting.YELLOW + this.status, this.width / 2, top + 116, 0xFFFFFF);
+            this.drawCenteredString(
+                this.fontRendererObj,
+                EnumChatFormatting.YELLOW + this.status,
+                this.width / 2,
+                top + 116,
+                0xFFFFFF);
         }
         super.drawScreen(mouseX, mouseY, partialTicks);
     }

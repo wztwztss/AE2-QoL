@@ -14,12 +14,8 @@ public final class NeighborAeConnector {
     public static IGrid findGrid(World world, int x, int y, int z, ForgeDirection coverSide) {
         if (world == null) return null;
 
-        int[][] candidates = {
-            { x, y, z },
-            { x + 1, y, z }, { x - 1, y, z },
-            { x, y + 1, z }, { x, y - 1, z },
-            { x, y, z + 1 }, { x, y, z - 1 }
-        };
+        int[][] candidates = { { x, y, z }, { x + 1, y, z }, { x - 1, y, z }, { x, y + 1, z }, { x, y - 1, z },
+            { x, y, z + 1 }, { x, y, z - 1 } };
 
         for (int[] pos : candidates) {
             TileEntity te = world.getTileEntity(pos[0], pos[1], pos[2]);
@@ -34,9 +30,11 @@ public final class NeighborAeConnector {
         if (te instanceof IGridProxyable) {
             try {
                 IGridProxyable proxyable = (IGridProxyable) te;
-                if (proxyable.getProxy() != null
-                    && proxyable.getProxy().getNode() != null) {
-                    return proxyable.getProxy().getNode().getGrid();
+                if (proxyable.getProxy() != null && proxyable.getProxy()
+                    .getNode() != null) {
+                    return proxyable.getProxy()
+                        .getNode()
+                        .getGrid();
                 }
             } catch (Throwable ignored) {}
         }

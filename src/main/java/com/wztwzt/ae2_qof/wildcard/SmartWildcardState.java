@@ -63,7 +63,8 @@ public final class SmartWildcardState {
         /**
          * 输出侧匹配串（3.23.0 新增，用户确认"两者都要"）。
          *
-         * <p>留空 = 维持原行为：输出由**模板输出**的矿辞名自动配对（去掉模板材料名再加候选材料名）。
+         * <p>
+         * 留空 = 维持原行为：输出由**模板输出**的矿辞名自动配对（去掉模板材料名再加候选材料名）。
          * 填了 = 这一行独立指定输出（例如输入 {@code ingot*}、输出 {@code plate*}），
          * 于是能表达"输入与输出不同材质前缀"这类 Wildcard 风格的手写规则。
          */
@@ -98,14 +99,7 @@ public final class SmartWildcardState {
         }
 
         public Rule copy() {
-            return new Rule(
-                slot,
-                oreDictMode,
-                matcher,
-                amount,
-                outMatcher,
-                outOreDictMode,
-                outAmount);
+            return new Rule(slot, oreDictMode, matcher, amount, outMatcher, outOreDictMode, outAmount);
         }
 
         NBTTagCompound write() {
@@ -154,14 +148,17 @@ public final class SmartWildcardState {
 
     /** 是否为带本模组数据的通配样板（只看标记，不校验规则是否完整）。 */
     public static boolean isSmartWildcard(ItemStack stack) {
-        return stack != null && stack.hasTagCompound() && stack.getTagCompound().hasKey(KEY_ROOT, Constants.NBT.TAG_COMPOUND);
+        return stack != null && stack.hasTagCompound()
+            && stack.getTagCompound()
+                .hasKey(KEY_ROOT, Constants.NBT.TAG_COMPOUND);
     }
 
     /** 读取指定物品上的数据；不是本模组的样板时返回 {@code null}（调用方负责打日志，不静默）。 */
     public static SmartWildcardState of(ItemStack stack) {
         if (!isSmartWildcard(stack)) return null;
         SmartWildcardState state = new SmartWildcardState();
-        NBTTagCompound root = stack.getTagCompound().getCompoundTag(KEY_ROOT);
+        NBTTagCompound root = stack.getTagCompound()
+            .getCompoundTag(KEY_ROOT);
         state.revision = root.getInteger(KEY_REVISION);
 
         NBTTagList ruleList = root.getTagList(KEY_RULES, Constants.NBT.TAG_COMPOUND);
@@ -272,18 +269,21 @@ public final class SmartWildcardState {
     /**
      * 支持 {@code *} 与 {@code ?} 的通配匹配（不分大小写，全串匹配）。
      *
-     * <p><b>3.37.0 修正（本模组"从未成功过"的最后一个根因）</b>：旧实现把**整个正则串**
+     * <p>
+     * <b>3.37.0 修正（本模组"从未成功过"的最后一个根因）</b>：旧实现把**整个正则串**
      * {@code toLowerCase()} 之后再匹配，而字符是用 {@link Pattern#quote} 逐个转义的，
      * 于是 {@code \Qi\E\Qn\E…} 被压成 {@code \qi\e\qn\e…} —— Java 正则对 {@code \q} 直接抛
      * {@code PatternSyntaxException: Illegal/unsupported escape sequence}，而当时的 {@code catch}
      * **静默返回 false**。后果：本模组**所有**通配匹配恒为 false（展开器枚举不到任何材料 ⇒
      * {@code reason=no-material-matched} ⇒ 产出 0；黑名单/白名单/规则排除也全是死的）。
      * 实测复现（最小 Java 用例）：
+     * 
      * <pre>
      * raw regex  = \Qi\E\Qn\E\Qg\E\Qo\E\Qt\E.*
      * lowercased = \qi\e\qn\e\qg\e\qo\e\qt\e.*
      * matches(ingot*, ingotIron) = false   （异常被吞）
      * </pre>
+     * 
      * 现在改为**逐字符显式转义元字符** + {@link Pattern#CASE_INSENSITIVE}（保留"不分大小写"语义），
      * 且异常不再静默（记 WARN）。
      */
@@ -305,8 +305,7 @@ public final class SmartWildcardState {
                 .matches();
         } catch (Throwable t) {
             // 绝不静默（本项目原则）：历史上正是这里的静默让"所有匹配恒 false"藏了十几轮
-            com.wztwzt.ae2_qof.MyMod.LOG
-                .warn("[AE2QoL] 通配匹配失败（pattern='{}' token='{}'）", pattern, token, t);
+            com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 通配匹配失败（pattern='{}' token='{}'）", pattern, token, t);
             return false;
         }
     }
@@ -315,7 +314,8 @@ public final class SmartWildcardState {
         NBTTagList list = root.getTagList(key, Constants.NBT.TAG_STRING);
         for (int i = 0; i < list.tagCount(); i++) {
             String value = list.getStringTagAt(i);
-            if (value != null && !value.trim().isEmpty()) out.add(value.trim());
+            if (value != null && !value.trim()
+                .isEmpty()) out.add(value.trim());
         }
     }
 
@@ -323,7 +323,8 @@ public final class SmartWildcardState {
         NBTTagList list = new NBTTagList();
         if (values != null) {
             for (String value : values) {
-                if (value != null && !value.trim().isEmpty()) list.appendTag(new NBTTagString(value.trim()));
+                if (value != null && !value.trim()
+                    .isEmpty()) list.appendTag(new NBTTagString(value.trim()));
             }
         }
         return list;

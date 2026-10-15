@@ -60,7 +60,8 @@ public class CommandAe2QoL extends CommandBase {
             RecipeNameUtil.reloadMappings();
             RecipeMapNameConfig.reload();
             sender.addChatMessage(
-                new ChatComponentText(EnumChatFormatting.GREEN + "[AE2QoL] Reloaded settings.json + recipe_names.json"));
+                new ChatComponentText(
+                    EnumChatFormatting.GREEN + "[AE2QoL] Reloaded settings.json + recipe_names.json"));
             return;
         }
         if ("status".equalsIgnoreCase(args[0])) {
@@ -89,9 +90,7 @@ public class CommandAe2QoL extends CommandBase {
             EntityPlayer player = (EntityPlayer) sender;
             ItemStack held = player.getCurrentEquippedItem();
             if (held == null || !(held.getItem() instanceof com.wztwzt.ae2_qof.wildcard.ItemSmartWildcardPattern)) {
-                sender.addChatMessage(
-                    new ChatComponentText(
-                        EnumChatFormatting.RED + "[AE2QoL] 请手持一张（已编码模板配方的）智能通配样板"));
+                sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "[AE2QoL] 请手持一张（已编码模板配方的）智能通配样板"));
                 return;
             }
             String prefix = args.length > 1 ? args[1] : "ingot";
@@ -125,15 +124,13 @@ public class CommandAe2QoL extends CommandBase {
 
             sender.addChatMessage(
                 new ChatComponentText(
-                    (result.isEmpty() ? EnumChatFormatting.RED : EnumChatFormatting.GREEN)
-                        + "[AE2QoL] 规则 #0 ore:"
+                    (result.isEmpty() ? EnumChatFormatting.RED : EnumChatFormatting.GREEN) + "[AE2QoL] 规则 #0 ore:"
                         + prefix
                         + "* x"
                         + amount
                         + " → "
                         + result.describe()));
-            sender.addChatMessage(
-                new ChatComponentText(EnumChatFormatting.GRAY + "若客户端显示未更新，把样板丢出再捡起即可"));
+            sender.addChatMessage(new ChatComponentText(EnumChatFormatting.GRAY + "若客户端显示未更新，把样板丢出再捡起即可"));
             MyMod.LOG.info(
                 "[AE2QoL] /ae2qof wildcard: player={} prefix={} amount={} → {}",
                 player.getCommandSenderName(),
@@ -148,7 +145,8 @@ public class CommandAe2QoL extends CommandBase {
                 return;
             }
             if (args.length < 2) {
-                sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Usage: /ae2qof smbind <networkId>"));
+                sender.addChatMessage(
+                    new ChatComponentText(EnumChatFormatting.RED + "Usage: /ae2qof smbind <networkId>"));
                 return;
             }
             EntityPlayer player = (EntityPlayer) sender;
@@ -166,8 +164,7 @@ public class CommandAe2QoL extends CommandBase {
             }
             if (held.stackTagCompound == null) held.stackTagCompound = new net.minecraft.nbt.NBTTagCompound();
             held.stackTagCompound.setString(StockMonitorCoverData.NBT_NETWORK_ID, args[1]);
-            sender.addChatMessage(
-                new ChatComponentText(EnumChatFormatting.GREEN + "Bound to network: " + args[1]));
+            sender.addChatMessage(new ChatComponentText(EnumChatFormatting.GREEN + "Bound to network: " + args[1]));
             return;
         }
         sender.addChatMessage(new ChatComponentText(getCommandUsage(sender)));

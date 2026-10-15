@@ -5,8 +5,6 @@
  */
 package com.wztwzt.ae2_qof.apgport.gui;
 
-import com.wztwzt.ae2_qof.MyMod;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -19,10 +17,6 @@ import java.util.UUID;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.EnumChatFormatting;
 
-import com.wztwzt.ae2_qof.apgport.network.NetworkHandler;
-import com.wztwzt.ae2_qof.apgport.network.PacketStorageAction;
-import com.wztwzt.ae2_qof.apgport.storage.PatternStorage;
-import com.wztwzt.ae2_qof.apgport.util.I18nUtil;
 import com.gtnewhorizons.modularui.api.drawable.shapes.Rectangle;
 import com.gtnewhorizons.modularui.api.math.Alignment;
 import com.gtnewhorizons.modularui.api.screen.ModularWindow;
@@ -31,6 +25,10 @@ import com.gtnewhorizons.modularui.common.widget.ButtonWidget;
 import com.gtnewhorizons.modularui.common.widget.Scrollable;
 import com.gtnewhorizons.modularui.common.widget.TextWidget;
 import com.gtnewhorizons.modularui.common.widget.textfield.TextFieldWidget;
+import com.wztwzt.ae2_qof.apgport.network.NetworkHandler;
+import com.wztwzt.ae2_qof.apgport.network.PacketStorageAction;
+import com.wztwzt.ae2_qof.apgport.storage.PatternStorage;
+import com.wztwzt.ae2_qof.apgport.util.I18nUtil;
 
 public class GuiPatternStorage {
 

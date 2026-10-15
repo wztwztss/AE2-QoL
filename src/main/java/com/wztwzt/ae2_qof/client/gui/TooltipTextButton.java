@@ -12,9 +12,9 @@ import appeng.client.gui.widgets.ITooltip;
  * 文案取自 lang 键。
  * <p>
  * - 多行：lang 中的 {@code \n} 是字面反斜杠+n（MC 不转义），此处统一替换为真实换行符；
- *   AE2 drawTooltip / 手动绘制路径按 "\n" split 即可分行。
+ * AE2 drawTooltip / 手动绘制路径按 "\n" split 即可分行。
  * - 延迟显示：悬停满 {@link #HOVER_DELAY_MS} 毫秒才显示（{@link #shouldRenderTooltip}），
- *   由宿主 GUI 在渲染前调用闸门判定。
+ * 由宿主 GUI 在渲染前调用闸门判定。
  */
 public class TooltipTextButton extends GuiButton implements ITooltip {
 
@@ -50,8 +50,7 @@ public class TooltipTextButton extends GuiButton implements ITooltip {
      * 离开按钮即重置计时。由宿主每帧调用。
      */
     public boolean shouldRenderTooltip(int mouseX, int mouseY) {
-        final boolean inside = this.visible
-            && this.enabled
+        final boolean inside = this.visible && this.enabled
             && mouseX >= this.xPosition
             && mouseX < this.xPosition + getButtonWidth()
             && mouseY >= this.yPosition

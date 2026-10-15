@@ -18,7 +18,7 @@ import appeng.items.contents.PinsHolder;
  * <ul>
  * <li>首次使用即拥有 1 行 crafting pin（下单产物自动置顶）；</li>
  * <li>玩家在终端设置中手动选择 DISABLED 时，setPinsRows 会显式 put(DISABLED)，
- *     computeIfAbsent 不再走缺省值——尊重用户关闭的选择。</li>
+ * computeIfAbsent 不再走缺省值——尊重用户关闭的选择。</li>
  * </ul>
  */
 @Mixin(value = PinsHolder.class, remap = false)

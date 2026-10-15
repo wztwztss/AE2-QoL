@@ -8,7 +8,6 @@ import net.minecraft.nbt.NBTTagString;
 import net.minecraftforge.common.util.Constants;
 
 import com.wztwzt.ae2_qof.MyMod;
-import com.wztwzt.ae2_qof.network.ServerTerminalHelper;
 import com.wztwzt.ae2_qof.wildcard.ContainerSmartWildcard;
 import com.wztwzt.ae2_qof.wildcard.SmartWildcardState;
 
@@ -30,7 +29,8 @@ import io.netty.buffer.ByteBuf;
  * 因此这里只传**纯数据**（一份 NBT），服务端在归队 tick 线程后写进
  * {@link ContainerSmartWildcard} 指的那个真实槽位，再 {@code detectAndSendChanges()} 同步回客户端。
  *
- * <p>所有失败分支都写日志（本项目原则：不允许静默回退）；反序列化也做保护（坏包不踢人、只记 WARN）。
+ * <p>
+ * 所有失败分支都写日志（本项目原则：不允许静默回退）；反序列化也做保护（坏包不踢人、只记 WARN）。
  */
 public class SmartWildcardRulesPacket implements IMessage {
 
@@ -39,7 +39,8 @@ public class SmartWildcardRulesPacket implements IMessage {
     /**
      * 目标槽位（3.34.0）：{@code >= 0} 时服务端**只写这个槽位**的物品；{@code -1} = 旧行为（在背包里找第一张）。
      *
-     * <p>为什么必须带槽位：3.33.0 实测里，玩家在 Wild 窗口（打开于槽位 7）按加号，包却被写到"背包里第一张"
+     * <p>
+     * 为什么必须带槽位：3.33.0 实测里，玩家在 Wild 窗口（打开于槽位 7）按加号，包却被写到"背包里第一张"
      * 我们的样板（日志指纹：同一张样板的 revision 由 3 回退到 1）⇒ 窗口那张始终是空的，用户看到"加号没效果"。
      */
     private int slot = -1;
@@ -202,15 +203,14 @@ public class SmartWildcardRulesPacket implements IMessage {
                         NBTTagList templateOut = message.tag == null ? null
                             : message.tag.getTagList("TemplateOut", Constants.NBT.TAG_COMPOUND);
                         if (!container.applyRules(state, templateIn, templateOut)) {
-                            MyMod.LOG
-                                .warn("[AE2QoL] 通配样板规则写回被容器拒绝：player={}", player.getCommandSenderName());
+                            MyMod.LOG.warn("[AE2QoL] 通配样板规则写回被容器拒绝：player={}", player.getCommandSenderName());
                         }
                         return;
                     }
                     // 3.23.0：MUI2 编辑器（PlayerInventoryGuiFactory）打开时容器是 MUI2 的 ModularContainer，
                     // 目标样板就是玩家手持的那张 ⇒ 直接写主手物品（同样是服务端权威写入 + 记日志）。
                     // 3.32.0：**不要只看主手** —— Wild 窗口是 ModularUIContainer，打开时主手未必指着那张样板
-                    //（用户实测日志：通配样板写回失败：…主手也不是通配样板（container=ModularUIContainer））。
+                    // （用户实测日志：通配样板写回失败：…主手也不是通配样板（container=ModularUIContainer））。
                     // 改为**在背包里找**我们的通配样板；判据用物品实例（全新样板没有我们的 NBT，不能用 isSmartWildcard）。
                     // 3.34.0：**优先按发送方给的槽位**（Wild 窗口 / 电路页都会带），找不到才退回"背包里第一张"。
                     // 旧行为正是"加号写到另一张样板"的根因（revision 3→1 的指纹）。

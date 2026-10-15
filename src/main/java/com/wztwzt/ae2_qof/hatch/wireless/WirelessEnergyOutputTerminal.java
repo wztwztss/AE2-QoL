@@ -19,6 +19,7 @@ import com.cleanroommc.modularui.value.sync.LongSyncValue;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
 import com.cleanroommc.modularui.widgets.TextWidget;
 import com.cleanroommc.modularui.widgets.layout.Flow;
+import com.wztwzt.ae2_qof.item.ItemNetworkDataStick;
 
 import gregtech.api.enums.Textures;
 import gregtech.api.interfaces.ITexture;
@@ -27,8 +28,6 @@ import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.implementations.MTEHatchDynamo;
 import gregtech.api.render.TextureFactory;
 import gregtech.common.misc.WirelessNetworkManager;
-
-import com.wztwzt.ae2_qof.item.ItemNetworkDataStick;
 
 public class WirelessEnergyOutputTerminal extends MTEHatchDynamo {
 
@@ -44,22 +43,18 @@ public class WirelessEnergyOutputTerminal extends MTEHatchDynamo {
 
     @Override
     public String[] getDescription() {
-        return new String[] {
-            StatCollector.translateToLocal("gt.blockmachines.wireless_energy_output_terminal.desc"),
+        return new String[] { StatCollector.translateToLocal("gt.blockmachines.wireless_energy_output_terminal.desc"),
             StatCollector.translateToLocal("gt.blockmachines.wireless_energy_output_terminal.desc.0"),
             StatCollector.translateToLocal("gt.blockmachines.wireless_energy_output_terminal.desc.1"),
             StatCollector.translateToLocal("gt.blockmachines.wireless_energy_output_terminal.desc.2"),
             EnumChatFormatting.GRAY + "[" + StatCollector.translateToLocal("ae2_qof.modname") + "]",
-            EnumChatFormatting.DARK_GRAY + "ae2qof"
-        };
+            EnumChatFormatting.DARK_GRAY + "ae2qof" };
     }
+
     @Override
     public ITexture[] getTexture(gregtech.api.interfaces.tileentity.IGregTechTileEntity aBaseMetaTileEntity,
-                                 net.minecraftforge.common.util.ForgeDirection side,
-                                 net.minecraftforge.common.util.ForgeDirection facing,
-                                 int aColorIndex,
-                                 boolean aActive,
-                                 boolean aRedstone) {
+        net.minecraftforge.common.util.ForgeDirection side, net.minecraftforge.common.util.ForgeDirection facing,
+        int aColorIndex, boolean aActive, boolean aRedstone) {
         if (com.wztwzt.ae2_qof.util.ModTextures.isReady()) {
             if (side == facing) {
                 return new ITexture[] { com.wztwzt.ae2_qof.util.ModTextures.front("wireless_energy_output") };
@@ -113,11 +108,13 @@ public class WirelessEnergyOutputTerminal extends MTEHatchDynamo {
 
     /**
      * 3.25.0-fix14：**对 GT 必须报"合法电压"**。
-     * <p>GT 的 {@code MTEMultiBlockBase.addDynamoToMachineList} 只认
+     * <p>
+     * GT 的 {@code MTEMultiBlockBase.addDynamoToMachineList} 只认
      * {@code instanceof MTEHatchDynamo} 且 {@code maxAmperesOut() <= 4} 的部件；
      * 原先这里返回 {@code Long.MAX_VALUE}（工具提示显示 `Invalid Voltage Tier`，结构判定直接失败）。
      * 现在按等级报 {@code V[mTier]} —— 与 GT 自己的动力仓 {@code MTEHatchDynamo.maxEUOutput()} 一致。
-     * <p>⚠️ 我们的**无线推送不受此限**：{@code onPreTick} 只把本仓内部缓存推给全局电网，不读这个值。
+     * <p>
+     * ⚠️ 我们的**无线推送不受此限**：{@code onPreTick} 只把本仓内部缓存推给全局电网，不读这个值。
      */
     @Override
     public long maxEUOutput() {
@@ -131,11 +128,14 @@ public class WirelessEnergyOutputTerminal extends MTEHatchDynamo {
 
     /**
      * 3.25.0-fix16（用户要求）：电流改为 **2,147,483,647A（21 亿）**。
-     * <p>GT 的结构判定硬条件本来是 `maxAmperesOut() <= 4`，我们已在
+     * <p>
+     * GT 的结构判定硬条件本来是 `maxAmperesOut() <= 4`，我们已在
      * {@code MixinMTEMultiBlockBase.ae2qol$acceptSuperDynamo} 里为该终端**绕过**该判定（HEAD 注入 + cancel）。
-     * <p>换算：`电压 × 电流 = 2,147,483,640 × 2,147,483,647 ≈ 4.61e18 EU/t`
+     * <p>
+     * 换算：`电压 × 电流 = 2,147,483,640 × 2,147,483,647 ≈ 4.61e18 EU/t`
      * ⇒ **不溢出**（< Long.MAX = 9.22e18），且正好等于终端缓存容量（`Long.MAX/2`）。
-     * <p>⚠️ 别写 9.2e18：`2.1e9 × 9.2e18` 会溢出成负数，GT 的 `aTotal = 安培 × 电压` 会算出垃圾值。
+     * <p>
+     * ⚠️ 别写 9.2e18：`2.1e9 × 9.2e18` 会溢出成负数，GT 的 `aTotal = 安培 × 电压` 会算出垃圾值。
      */
     @Override
     public long maxAmperesOut() {
@@ -174,18 +174,19 @@ public class WirelessEnergyOutputTerminal extends MTEHatchDynamo {
                 ownerUuid = owner;
                 WirelessNetworkManager.strongCheckOrAddUser(ownerUuid);
                 if (!aPlayer.worldObj.isRemote) {
-                    aPlayer.addChatMessage(new net.minecraft.util.ChatComponentText(
-                        EnumChatFormatting.GREEN
-                            + StatCollector.translateToLocal("ae2_qof.wireless.bind.success")));
+                    aPlayer.addChatMessage(
+                        new net.minecraft.util.ChatComponentText(
+                            EnumChatFormatting.GREEN
+                                + StatCollector.translateToLocal("ae2_qof.wireless.bind.success")));
                 }
                 return true;
             }
         } else if (heldItem != null && heldItem.getItem() instanceof ItemNetworkDataStick) {
             ownerUuid = null;
             if (!aPlayer.worldObj.isRemote) {
-                aPlayer.addChatMessage(new net.minecraft.util.ChatComponentText(
-                    EnumChatFormatting.YELLOW
-                        + StatCollector.translateToLocal("ae2_qof.wireless.unbind.success")));
+                aPlayer.addChatMessage(
+                    new net.minecraft.util.ChatComponentText(
+                        EnumChatFormatting.YELLOW + StatCollector.translateToLocal("ae2_qof.wireless.unbind.success")));
             }
             return true;
         }
@@ -201,21 +202,20 @@ public class WirelessEnergyOutputTerminal extends MTEHatchDynamo {
     @Override
     public ModularPanel buildUI(PosGuiData guiData, PanelSyncManager syncManager, UISettings uiSettings) {
         LongSyncValue uuidHigh = new LongSyncValue(
-            () -> ownerUuid != null ? ownerUuid.getMostSignificantBits() : 0L, v -> {});
+            () -> ownerUuid != null ? ownerUuid.getMostSignificantBits() : 0L,
+            v -> {});
         LongSyncValue uuidLow = new LongSyncValue(
-            () -> ownerUuid != null ? ownerUuid.getLeastSignificantBits() : 0L, v -> {});
-        LongSyncValue gridEUSync = new LongSyncValue(
-            () -> {
-                BigInteger eu = (ownerUuid != null) ? WirelessNetworkManager.getUserEU(ownerUuid) : BigInteger.ZERO;
-                return eu.min(BigInteger.valueOf(Long.MAX_VALUE)).longValue();
-            },
+            () -> ownerUuid != null ? ownerUuid.getLeastSignificantBits() : 0L,
             v -> {});
-        LongSyncValue storedEUSync = new LongSyncValue(
-            () -> {
-                IGregTechTileEntity te = getBaseMetaTileEntity();
-                return te != null ? te.getStoredEU() : 0L;
-            },
-            v -> {});
+        LongSyncValue gridEUSync = new LongSyncValue(() -> {
+            BigInteger eu = (ownerUuid != null) ? WirelessNetworkManager.getUserEU(ownerUuid) : BigInteger.ZERO;
+            return eu.min(BigInteger.valueOf(Long.MAX_VALUE))
+                .longValue();
+        }, v -> {});
+        LongSyncValue storedEUSync = new LongSyncValue(() -> {
+            IGregTechTileEntity te = getBaseMetaTileEntity();
+            return te != null ? te.getStoredEU() : 0L;
+        }, v -> {});
         syncManager.syncValue("wUH", uuidHigh);
         syncManager.syncValue("wUL", uuidLow);
         syncManager.syncValue("wEU", gridEUSync);
@@ -223,10 +223,13 @@ public class WirelessEnergyOutputTerminal extends MTEHatchDynamo {
 
         ModularPanel panel = ModularPanel.defaultPanel("wireless_output_terminal", 300, 220);
 
-        Flow column = Flow.column().coverChildren().childPadding(6).top(10).left(10);
+        Flow column = Flow.column()
+            .coverChildren()
+            .childPadding(6)
+            .top(10)
+            .left(10);
 
-        column.child(
-            new TextWidget<>(IKey.lang("ae2_qof.gui.wireless_output_terminal.title")).size(280, 16));
+        column.child(new TextWidget<>(IKey.lang("ae2_qof.gui.wireless_output_terminal.title")).size(280, 16));
 
         column.child(new TextWidget<>(IKey.dynamic(() -> {
             long uuidH = uuidHigh.getLongValue();
@@ -238,27 +241,33 @@ public class WirelessEnergyOutputTerminal extends MTEHatchDynamo {
             UUID clientUuid = new UUID(uuidH, uuidL);
             return EnumChatFormatting.GREEN + "● "
                 + StatCollector.translateToLocal("ae2_qof.gui.wireless_output_terminal.bound")
-                + ": " + EnumChatFormatting.WHITE + clientUuid.toString().substring(0, 8);
+                + ": "
+                + EnumChatFormatting.WHITE
+                + clientUuid.toString()
+                    .substring(0, 8);
         })).size(280, 14));
 
         column.child(new TextWidget<>(IKey.dynamic(() -> {
             long stored = storedEUSync.getLongValue();
-            return EnumChatFormatting.GREEN
-                + StatCollector.translateToLocal("ae2_qof.gui.wireless_output_terminal.stored")
-                + ": " + EnumChatFormatting.RESET + formatEU(stored);
+            return EnumChatFormatting.GREEN + StatCollector.translateToLocal(
+                "ae2_qof.gui.wireless_output_terminal.stored") + ": " + EnumChatFormatting.RESET + formatEU(stored);
         })).size(280, 14));
 
         column.child(new TextWidget<>(IKey.dynamic(() -> {
             long gridEU = gridEUSync.getLongValue();
-            return EnumChatFormatting.GOLD
-                + StatCollector.translateToLocal("ae2_qof.gui.wireless_output_terminal.grid")
-                + ": " + EnumChatFormatting.RESET + formatEU(gridEU);
+            return EnumChatFormatting.GOLD + StatCollector.translateToLocal("ae2_qof.gui.wireless_output_terminal.grid")
+                + ": "
+                + EnumChatFormatting.RESET
+                + formatEU(gridEU);
         })).size(280, 14));
 
-        column.child(new TextWidget<>(IKey.dynamic(() -> {
-            return EnumChatFormatting.RED
-                + StatCollector.translateToLocal("ae2_qof.gui.wireless_output_terminal.unlimited");
-        })).size(280, 14));
+        column.child(
+            new TextWidget<>(
+                IKey.dynamic(
+                    () -> {
+                        return EnumChatFormatting.RED
+                            + StatCollector.translateToLocal("ae2_qof.gui.wireless_output_terminal.unlimited");
+                    })).size(280, 14));
 
         panel.bindPlayerInventory();
         panel.child(column);
@@ -292,8 +301,7 @@ public class WirelessEnergyOutputTerminal extends MTEHatchDynamo {
         if (s != null && !s.isEmpty()) {
             try {
                 ownerUuid = UUID.fromString(s);
-            } catch (IllegalArgumentException ignored) {
-            }
+            } catch (IllegalArgumentException ignored) {}
         }
     }
 
@@ -317,7 +325,6 @@ public class WirelessEnergyOutputTerminal extends MTEHatchDynamo {
             BigInteger gridEU = BigInteger.ZERO;
             if (ownerUuid != null) gridEU = WirelessNetworkManager.getUserEU(ownerUuid);
             currenttip.add(EnumChatFormatting.YELLOW + "Grid: " + formatEU(gridEU.longValue()) + " EU");
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) {}
     }
 }

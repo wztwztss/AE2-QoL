@@ -2,10 +2,10 @@ package com.wztwzt.ae2_qof.wildcard;
 
 import net.minecraft.item.ItemStack;
 
+import com.wztwzt.ae2_qof.MyMod;
+
 import gregtech.api.interfaces.metatileentity.IMetaTileEntity;
 import gregtech.api.util.GTUtility;
-
-import com.wztwzt.ae2_qof.MyMod;
 
 /**
  * 通配样板的「内置编程电路」写入器（3.22.0 M3）。
@@ -26,7 +26,8 @@ import com.wztwzt.ae2_qof.MyMod;
  * </ol>
  * 电路号上限是 {@code ItemIntegratedCircuit.MAX_CIRCUIT_NUMBER = 24}（不是 32）。
  *
- * <p>所有失败分支都记日志（本项目原则）；已经是目标值时不重复写（省掉无谓的方块更新）。
+ * <p>
+ * 所有失败分支都记日志（本项目原则）；已经是目标值时不重复写（省掉无谓的方块更新）。
  */
 public final class SmartWildcardCircuit {
 
@@ -89,11 +90,7 @@ public final class SmartWildcardCircuit {
             }
             mte.getBaseMetaTileEntity()
                 .setInventorySlotContents(support.getCircuitSlot(), GTUtility.getIntegratedCircuit(circuit));
-            MyMod.LOG.info(
-                "[AE2QoL] 通配样板内置电路已写入虚拟电路槽：circuit={}（原值 {}）@ {}",
-                circuit,
-                current,
-                where);
+            MyMod.LOG.info("[AE2QoL] 通配样板内置电路已写入虚拟电路槽：circuit={}（原值 {}）@ {}", circuit, current, where);
             return true;
         } catch (Throwable t) {
             MyMod.LOG.warn("[AE2QoL] 写入编程电路异常：circuit=" + circuit + " @ " + where, t);

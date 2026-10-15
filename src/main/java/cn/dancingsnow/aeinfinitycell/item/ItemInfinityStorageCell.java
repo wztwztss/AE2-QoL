@@ -52,8 +52,8 @@ public final class ItemInfinityStorageCell extends Item implements IHaloRenderIt
         if (id != null && player != null && player.worldObj != null && player.worldObj.isRemote) {
             appendLiveStats(tooltip, id);
         }
-        tooltip.add(net.minecraft.util.EnumChatFormatting.GRAY
-            + "[" + StatCollector.translateToLocal("ae2_qof.modname") + "]");
+        tooltip.add(
+            net.minecraft.util.EnumChatFormatting.GRAY + "[" + StatCollector.translateToLocal("ae2_qof.modname") + "]");
     }
 
     /**
@@ -86,18 +86,18 @@ public final class ItemInfinityStorageCell extends Item implements IHaloRenderIt
         java.math.BigInteger fluidUnits = java.math.BigInteger.valueOf(s[3]);
         java.math.BigInteger essentiaUnits = java.math.BigInteger.valueOf(s[5]);
         java.math.BigInteger euUnits = java.math.BigInteger.valueOf(s[7]);
-        long totalTypes = s[0] + s[2] + s[4]
-            + (s[7] > 0 ? Math.min(1, s[6]) : 0);
-        java.math.BigInteger totalUnits = itemUnits.add(fluidUnits).add(essentiaUnits)
+        long totalTypes = s[0] + s[2] + s[4] + (s[7] > 0 ? Math.min(1, s[6]) : 0);
+        java.math.BigInteger totalUnits = itemUnits.add(fluidUnits)
+            .add(essentiaUnits)
             .add(euUnits);
 
-        String total = sci
-            ? com.wztwzt.ae2_qof.util.BigNumFormatter.formatSci(totalUnits)
+        String total = sci ? com.wztwzt.ae2_qof.util.BigNumFormatter.formatSci(totalUnits)
             : com.wztwzt.ae2_qof.util.BigNumFormatter.format(totalUnits);
 
         // 总计行：∞ Bytes | 共 N 类 / M 件 ≈N KB
         tooltip.add(
-            net.minecraft.util.EnumChatFormatting.WHITE + "\u221E Bytes " + net.minecraft.util.EnumChatFormatting.GRAY
+            net.minecraft.util.EnumChatFormatting.WHITE + "\u221E Bytes "
+                + net.minecraft.util.EnumChatFormatting.GRAY
                 + "| "
                 + StatCollector.translateToLocal("tooltip.aeinfinitycell.stats.total")
                 + ": "
@@ -105,9 +105,9 @@ public final class ItemInfinityStorageCell extends Item implements IHaloRenderIt
                 + " / "
                 + total
                 + " ("
-                + com.wztwzt.ae2_qof.util.BigNumFormatter.format(itemBytes(s[0], s[1])
-                    .add(fluidBytes(s[2], s[3]))
-                    .add(essentiaBytes(s[4], s[5])))
+                + com.wztwzt.ae2_qof.util.BigNumFormatter.format(
+                    itemBytes(s[0], s[1]).add(fluidBytes(s[2], s[3]))
+                        .add(essentiaBytes(s[4], s[5])))
                 + " B)");
 
         if (s[0] > 0 || s[1] > 0) {
@@ -120,8 +120,7 @@ public final class ItemInfinityStorageCell extends Item implements IHaloRenderIt
             tooltip.add(row("stats.essentia", s[4], essentiaUnits, essentiaBytes(s[4], s[5]), sci));
         }
         if (s[7] > 0) {
-            String v = sci
-                ? com.wztwzt.ae2_qof.util.BigNumFormatter.formatSci(euUnits)
+            String v = sci ? com.wztwzt.ae2_qof.util.BigNumFormatter.formatSci(euUnits)
                 : com.wztwzt.ae2_qof.util.BigNumFormatter.format(euUnits);
             tooltip.add(
                 net.minecraft.util.EnumChatFormatting.GRAY
@@ -137,8 +136,7 @@ public final class ItemInfinityStorageCell extends Item implements IHaloRenderIt
     @SideOnly(Side.CLIENT)
     private static String row(String key, long types, java.math.BigInteger units, java.math.BigInteger bytes,
         boolean sci) {
-        String amount = sci
-            ? com.wztwzt.ae2_qof.util.BigNumFormatter.formatSci(units)
+        String amount = sci ? com.wztwzt.ae2_qof.util.BigNumFormatter.formatSci(units)
             : com.wztwzt.ae2_qof.util.BigNumFormatter.format(units);
         return net.minecraft.util.EnumChatFormatting.GRAY
             + StatCollector.translateToLocal("tooltip.aeinfinitycell." + key)

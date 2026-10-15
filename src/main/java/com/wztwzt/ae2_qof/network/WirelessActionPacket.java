@@ -172,8 +172,7 @@ public class WirelessActionPacket implements IMessage {
             // P1-002 鉴权：频道是全局共享命名空间，删除会摘掉发信器并清空该频道所有方块链接，
             // 属破坏性操作。除自持资产外一律拒绝；缺少 owner 的历史数据同样按他人资产处理。
             if (!mayDeleteChannel(player, freqToRemove)) {
-                player.addChatMessage(new ChatComponentText(
-                    EnumChatFormatting.RED + "无权限：该频道上有其他玩家绑定的发信器或方块链接"));
+                player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "无权限：该频道上有其他玩家绑定的发信器或方块链接"));
                 syncChannelsToClient(player);
                 return;
             }
@@ -237,11 +236,9 @@ public class WirelessActionPacket implements IMessage {
                 TileWirelessTransceiver owner = WirelessData.instance()
                     .getSender(freq);
                 if (owner != null && owner != twt
-                    && (owner.getOwnerUUID() == null
-                        || !owner.getOwnerUUID()
-                            .equals(player.getUniqueID()))) {
-                    player.addChatMessage(new ChatComponentText(
-                        EnumChatFormatting.RED + "该频率的频道由其他玩家持有，无法在此处切换为接收端"));
+                    && (owner.getOwnerUUID() == null || !owner.getOwnerUUID()
+                        .equals(player.getUniqueID()))) {
+                    player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "该频率的频道由其他玩家持有，无法在此处切换为接收端"));
                     return;
                 }
             }
@@ -294,11 +291,9 @@ public class WirelessActionPacket implements IMessage {
                 TileWirelessTransceiver occupant = WirelessData.instance()
                     .getSender(newFreq);
                 if (occupant != null && occupant != twt
-                    && (occupant.getOwnerUUID() == null
-                        || !occupant.getOwnerUUID()
-                            .equals(player.getUniqueID()))) {
-                    player.addChatMessage(new ChatComponentText(
-                        EnumChatFormatting.RED + "该频道已被其他玩家的发信器占用，请换一个名字"));
+                    && (occupant.getOwnerUUID() == null || !occupant.getOwnerUUID()
+                        .equals(player.getUniqueID()))) {
+                    player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "该频道已被其他玩家的发信器占用，请换一个名字"));
                     return;
                 }
             }

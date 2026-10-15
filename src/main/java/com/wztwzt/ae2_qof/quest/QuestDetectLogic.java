@@ -142,7 +142,8 @@ public final class QuestDetectLogic {
                 if (o instanceof EntityPlayerMP p) online.add(p.getUniqueID());
             }
             synchronized (CACHES) {
-                CACHES.keySet().removeIf(id -> id != null && !online.contains(id));
+                CACHES.keySet()
+                    .removeIf(id -> id != null && !online.contains(id));
             }
         } catch (Throwable ignored) {}
     }

@@ -14,6 +14,7 @@ import appeng.api.networking.crafting.ICraftingPatternDetails;
  * <h2>为什么不能直接用 API 的 {@code getPatternForItem}</h2>
  * 本工作区同时装着两套通配样板模组，而**原版 WildcardPattern 模组给 AE2 的
  * {@code appeng.items.misc.ItemEncodedPattern.getPatternForItem} 打了注入**：
+ * 
  * <pre>
  * private void wildcardpattern$useLightweightPatternDetails(ItemStack stack, World world,
  *         CallbackInfoReturnable&lt;ICraftingPatternDetails&gt; cir) {
@@ -21,9 +22,11 @@ import appeng.api.networking.crafting.ICraftingPatternDetails;
  *     ... cir.setReturnValue(&lt;轻量预览 details&gt;);                        // 输出恒为模板的代表输出
  * }
  * </pre>
+ * 
  * 我们的 {@code ItemSmartWildcardPattern extends ItemEncodedPattern}，而具体样板又克隆了通配样板本体的整份 NBT
  * ⇒ 该注入会把我们的**具体样板**也认成通配样板，返回"预览 details"（输出全是那一个模板物品）。
  * 实测证据（3.42.0-diag 配对打印）：
+ * 
  * <pre>
  * 配对样本（GT）：concrete@1967ead7 … ‖ details=WildcardPreviewPatternDetails … ‖ details.getOutputs()[0]=铁板
  * </pre>

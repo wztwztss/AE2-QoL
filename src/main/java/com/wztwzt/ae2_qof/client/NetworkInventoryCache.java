@@ -3,8 +3,6 @@ package com.wztwzt.ae2_qof.client;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.wztwzt.ae2_qof.util.ItemIdentity;
-
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -12,6 +10,8 @@ import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidContainerRegistry;
 import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
+
+import com.wztwzt.ae2_qof.util.ItemIdentity;
 
 /**
  * 客户端缓存 AE2 网络库存数据（物品 + 流体）。

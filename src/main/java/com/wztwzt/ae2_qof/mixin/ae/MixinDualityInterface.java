@@ -70,13 +70,15 @@ public abstract class MixinDualityInterface implements ISmartDoublingMedium {
     /**
      * 3.22.0 智能通配样板：ME 接口**建样板索引**时，把一张通配样板展开成 N 张各自合法的普通样板。
      *
-     * <p>为什么在这里截胡：AE2 原生 {@code addToCraftingList} 一张样板只登记**一个** details，
+     * <p>
+     * 为什么在这里截胡：AE2 原生 {@code addToCraftingList} 一张样板只登记**一个** details，
      * 而“一张覆盖一类配方”的唯一省事办法就是把它展开成多张普通样板（参考实现同款路线，
      * 取证见 {@code docs/research/wildcardpattern-forensics.md}）。
      * 展开出的样板由本模组物品的原生解码路径转成 details（它们已剥掉规则子树，就是普通样板），
      * 优先级沿用 AE2 原生算式 {@code slot - 36 * getPriority()}。
      *
-     * <p>失败绝不静默：解析不出候选时记 WARN 并取消（不留半截状态）；
+     * <p>
+     * 失败绝不静默：解析不出候选时记 WARN 并取消（不留半截状态）；
      * 展开器自身异常时**放行原生逻辑**（此时它退化为“按模板那一张样板”），同时记 WARN。
      */
     @Inject(method = "addToCraftingList", at = @At("HEAD"), remap = false)
@@ -86,28 +88,24 @@ public abstract class MixinDualityInterface implements ISmartDoublingMedium {
             net.minecraft.item.ItemStack stack = this.patterns.getStackInSlot(slot);
             // 3.34.0：判据改用统一门（物品实例 → 缺我们 NBT 时先懒同步 → 至少一条规则）。
             // 旧实现要求"已有我们的 NBT"，玩家只在 Wild 界面里配过的样板会被静默放行给原生逻辑
-            //（原生只登记模板那一张，表现为"通配没生效、机器按模板走"）。
-            if (!com.wztwzt.ae2_qof.wildcard.SmartWildcardGate
-                .isConfiguredWildcard(stack, "AE2 ME 接口 slot=" + slot)) return;
+            // （原生只登记模板那一张，表现为"通配没生效、机器按模板走"）。
+            if (!com.wztwzt.ae2_qof.wildcard.SmartWildcardGate.isConfiguredWildcard(stack, "AE2 ME 接口 slot=" + slot))
+                return;
             // 3.35.0：先对**真身**做一次模板自愈，再复制 —— 否则下面的展开只是在副本上生效，物品本身永远缺模板
             com.wztwzt.ae2_qof.wildport.bridge.WildcardBridge.ensureNativeTemplate(stack);
 
             net.minecraft.item.ItemStack single = stack.copy();
             single.stackSize = 1;
-            net.minecraft.world.World world = this.iHost == null || this.iHost.getTileEntity() == null
-                ? null
+            net.minecraft.world.World world = this.iHost == null || this.iHost.getTileEntity() == null ? null
                 : this.iHost.getTileEntity()
                     .getWorldObj();
-            com.wztwzt.ae2_qof.wildcard.SmartWildcardExpander.Result result =
-                com.wztwzt.ae2_qof.wildcard.SmartWildcardExpander.expand(single, world);
+            com.wztwzt.ae2_qof.wildcard.SmartWildcardExpander.Result result = com.wztwzt.ae2_qof.wildcard.SmartWildcardExpander
+                .expand(single, world);
 
             if (result.isEmpty()) {
                 // 3.34.0：**不再 cancel** —— 取消等于这个槽位一条样板都不登记，机器会彻底不接单。
                 // 放行原生逻辑 ⇒ 退化为"按模板那一张样板"（仍然可用），原因照旧记 WARN，不静默。
-                MyMod.LOG.warn(
-                    "[AE2QoL] 智能通配样板未展开出任何样板，已回退原生解码（按模板那一张）：ME 接口 slot={} {}",
-                    slot,
-                    result.describe());
+                MyMod.LOG.warn("[AE2QoL] 智能通配样板未展开出任何样板，已回退原生解码（按模板那一张）：ME 接口 slot={} {}", slot, result.describe());
                 return;
             }
 
@@ -123,20 +121,14 @@ public abstract class MixinDualityInterface implements ISmartDoublingMedium {
                 added++;
             }
             if (added == 0) {
-                MyMod.LOG.warn(
-                    "[AE2QoL] 智能通配样板展开后全部解码失败，已回退原生解码（按模板那一张）：ME 接口 slot={} {}",
-                    slot,
-                    result.describe());
+                MyMod.LOG.warn("[AE2QoL] 智能通配样板展开后全部解码失败，已回退原生解码（按模板那一张）：ME 接口 slot={} {}", slot, result.describe());
                 return;
             }
             // 3.38.0：**不再 ci.cancel()** —— 与 GT/GTNL 同一原则（用户 A/B/A 实测：我们一旦 cancel 掉原方法，
             // 同机原版 WildcardPattern 的展开就塌成一张）。这里只**追加**展开结果，让 AE2 原生继续登记模板那一张；
             // 代价是同材料那张会重复一次（无害），换来的是两套模组彻底互不干扰。
-            MyMod.LOG.info(
-                "[AE2QoL] ME 接口通配样板注册（只追加，未 cancel）：slot={} 追加 details={} {}",
-                slot,
-                added,
-                result.describe());
+            MyMod.LOG
+                .info("[AE2QoL] ME 接口通配样板注册（只追加，未 cancel）：slot={} 追加 details={} {}", slot, added, result.describe());
         } catch (Throwable t) {
             // 放行原生逻辑（退化为模板样板），但绝不静默
             MyMod.LOG.warn("[AE2QoL] 智能通配样板在 ME 接口展开异常，已回退原生解码：slot=" + slot, t);

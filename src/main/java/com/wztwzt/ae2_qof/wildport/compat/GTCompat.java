@@ -44,7 +44,7 @@ public final class GTCompat {
         try {
             Method method = OrePrefixes.class.getMethod("values");
             Object value = method.invoke(null);
-            if (value instanceof OrePrefixes[] prefixes) {
+            if (value instanceof OrePrefixes[]prefixes) {
                 return prefixes.clone();
             }
         } catch (ReflectiveOperationException | SecurityException ignored) {
@@ -57,7 +57,7 @@ public final class GTCompat {
         try {
             Field field = OrePrefixes.class.getField("VALUES");
             Object value = field.get(null);
-            if (value instanceof OrePrefixes[] prefixes) {
+            if (value instanceof OrePrefixes[]prefixes) {
                 return prefixes.clone();
             }
         } catch (ReflectiveOperationException | SecurityException ignored) {

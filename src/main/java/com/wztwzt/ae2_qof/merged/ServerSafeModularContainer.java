@@ -6,7 +6,6 @@ import com.gtnewhorizons.modularui.api.screen.ModularUIContext;
 import com.gtnewhorizons.modularui.api.screen.ModularWindow;
 import com.gtnewhorizons.modularui.api.screen.UIBuildContext;
 import com.gtnewhorizons.modularui.common.internal.wrapper.ModularUIContainer;
-
 import com.wztwzt.ae2_qof.MyMod;
 
 /**
@@ -54,7 +53,8 @@ public final class ServerSafeModularContainer {
     /**
      * 服务端 {@code getServerGuiElement} 用：空窗口 + 无槽位容器。
      *
-     * <p>失败不静默：任何异常都记 WARN（含堆栈）并返回 null —— 那种情况下客户端依旧收不到开窗包，
+     * <p>
+     * 失败不静默：任何异常都记 WARN（含堆栈）并返回 null —— 那种情况下客户端依旧收不到开窗包，
      * 但日志能立刻区分「服务端没能建容器」与「包没发出去」，避免重演本次这种"客户端毫无线索"的排查。
      */
     public static Object slotless(EntityPlayer player) {

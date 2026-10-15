@@ -69,7 +69,8 @@ public final class InfinityCellDataAccess {
             AEInfinityCell.LOG.error("Legacy infinity cell migration incomplete; original file retained");
             return;
         }
-        for (UUID id : legacy.getRecords().keySet()) {
+        for (UUID id : legacy.getRecords()
+            .keySet()) {
             if (!storage.hasCellFile(id) || storage.getOrCreate(id) == null) {
                 AEInfinityCell.LOG.error("Legacy migration verification failed for {}; original retained", id);
                 return;
@@ -85,8 +86,9 @@ public final class InfinityCellDataAccess {
         }
         File legacyFile = new File(saveRoot, "data/" + InfinityCellLegacySavedData.DATA_NAME + ".dat");
         if (!legacyFile.isFile()) return;
-        File backup = new File(legacyFile.getParentFile(), legacyFile.getName() + ".migrated-"
-            + System.currentTimeMillis() + ".bak");
+        File backup = new File(
+            legacyFile.getParentFile(),
+            legacyFile.getName() + ".migrated-" + System.currentTimeMillis() + ".bak");
         try {
             // Never replace an existing backup or delete the only legacy copy.
             java.nio.file.Files.move(legacyFile.toPath(), backup.toPath());

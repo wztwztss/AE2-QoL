@@ -68,8 +68,7 @@ public class RecipeMapTextFieldWidget extends TextFieldWidget {
 
     private void cycle() {
         if (this.lockedFragment == null) {
-            String text = getText() == null ? "" : getText()
-                .trim();
+            String text = getText() == null ? "" : getText().trim();
             this.lockedFragment = text;
             this.candidates = RecipeMapNames.matchIds(text);
             this.index = -1;

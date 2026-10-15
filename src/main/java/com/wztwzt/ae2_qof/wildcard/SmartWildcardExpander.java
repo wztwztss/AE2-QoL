@@ -179,10 +179,7 @@ public final class SmartWildcardExpander {
             // 它既推不出材料名（前缀就是整串），也不该参与材料交集 —— 否则会把整个展开推成空集，
             // 这正是用户实测到的 reason=no-material-matched。这类槽位保持模板原样。
             if (!hasWildcard(rule.matcher)) {
-                MyMod.LOG.info(
-                    "[AE2QoL] 规则为精确匹配（无通配符），该槽保持模板不变：slot={} matcher={}",
-                    rule.slot,
-                    rule.matcher);
+                MyMod.LOG.info("[AE2QoL] 规则为精确匹配（无通配符），该槽保持模板不变：slot={} matcher={}", rule.slot, rule.matcher);
                 continue;
             }
             Set<String> ruleMaterials = new LinkedHashSet<>();
@@ -228,12 +225,12 @@ public final class SmartWildcardExpander {
         // 2) 输出侧候选前缀
         String templateMaterial = templateMaterialName(templateIn, state);
         // 2) 输出侧候选前缀（3.41.0 **修正**）：
-        //    旧实现用 templateOutputPrefix(templateOut, templateMaterial)，靠"模板输出槽的材料名 == 模板输入的材料名"
-        //    来选前缀；而 GT 板材同时注册 plateIron 与 plateAnyIron，解析出的材料名可能是 AnyIron ⇒ 判等失败 ⇒
-        //    返回 **null** ⇒ 下面"逐材料找输出"整段被跳过 ⇒ **几百张具体样板全部保留模板输出（铁板）**。
-        //    这正是 3.39/3.40 两轮实测的 `输出种类=1`（而且 3.40.0 新加的"替换未命中 WARN"也不会触发，
-        //    因为整段都没进）。现在改为**存在性驱动**：候选前缀 = 规则显式写的输出前缀 + 从每个模板输出槽的
-        //    矿辞名里剥掉模板材料名/首个大写字母得到的头；逐材料挑第一个"前缀+材料"在矿辞表里真实存在的。
+        // 旧实现用 templateOutputPrefix(templateOut, templateMaterial)，靠"模板输出槽的材料名 == 模板输入的材料名"
+        // 来选前缀；而 GT 板材同时注册 plateIron 与 plateAnyIron，解析出的材料名可能是 AnyIron ⇒ 判等失败 ⇒
+        // 返回 **null** ⇒ 下面"逐材料找输出"整段被跳过 ⇒ **几百张具体样板全部保留模板输出（铁板）**。
+        // 这正是 3.39/3.40 两轮实测的 `输出种类=1`（而且 3.40.0 新加的"替换未命中 WARN"也不会触发，
+        // 因为整段都没进）。现在改为**存在性驱动**：候选前缀 = 规则显式写的输出前缀 + 从每个模板输出槽的
+        // 矿辞名里剥掉模板材料名/首个大写字母得到的头；逐材料挑第一个"前缀+材料"在矿辞表里真实存在的。
         java.util.LinkedHashSet<String> outPrefixCandidates = new java.util.LinkedHashSet<>();
         for (SmartWildcardState.Rule rule : state.rulesView()) {
             if (rule == null || rule.outMatcher == null || rule.outMatcher.isEmpty()) continue;
@@ -247,7 +244,13 @@ public final class SmartWildcardExpander {
         if (outPrefixCandidates.isEmpty()) {
             logNoOutputPrefixOnce(state, templateOut, templateMaterial);
         }
-        logExpandContextOnce(state, inputPrefix, templateMaterial, outPrefixCandidates, materials, templateIn,
+        logExpandContextOnce(
+            state,
+            inputPrefix,
+            templateMaterial,
+            outPrefixCandidates,
+            materials,
+            templateIn,
             templateOut);
 
         // 3) 逐材料实例化
@@ -282,8 +285,15 @@ public final class SmartWildcardExpander {
             List<String> tokens = candidateTokens(material, inputPrefix, chosenPrefix, inStack, outStack);
             if (!state.acceptsCandidate(tokens)) continue;
 
-            ItemStack concrete = buildConcretePattern(wildcard, templateIn, templateOut, state, material, chosenPrefix,
-                inStack, outStack);
+            ItemStack concrete = buildConcretePattern(
+                wildcard,
+                templateIn,
+                templateOut,
+                state,
+                material,
+                chosenPrefix,
+                inStack,
+                outStack);
             if (concrete != null) {
                 out.add(concrete);
                 logSampleOnce(material, chosenPrefix, inStack, outStack, concrete);
@@ -295,7 +305,8 @@ public final class SmartWildcardExpander {
     /**
      * 收集"随材料变化"的输出前缀候选（3.41.0）。
      *
-     * <p>两条来源，按顺序加入（{@link java.util.LinkedHashSet} 保序、自动去重）：
+     * <p>
+     * 两条来源，按顺序加入（{@link java.util.LinkedHashSet} 保序、自动去重）：
      * <ol>
      * <li>矿辞名以**模板材料名**结尾 ⇒ 头即前缀（{@code plateIron} → {@code plate}）；</li>
      * <li>兜底：按"第一个大写字母"切（{@code plateAnyIron} → {@code plate}），
@@ -339,7 +350,8 @@ public final class SmartWildcardExpander {
     /**
      * 展开上下文诊断（3.41.0，每 JVM 每种上下文只打一次）。
      *
-     * <p>一行给出：**规则的真实 matcher/outMatcher**、由它推出的 inputPrefix、输出前缀候选、材料数与首个材料。
+     * <p>
+     * 一行给出：**规则的真实 matcher/outMatcher**、由它推出的 inputPrefix、输出前缀候选、材料数与首个材料。
      * 这一行专门用来区分两种截然不同的情况：
      * <ul>
      * <li>{@code inputPrefix='ingot'} 且 {@code 首材料='Iron'} ⇒ 规则正常，问题在输出侧；</li>
@@ -370,7 +382,13 @@ public final class SmartWildcardExpander {
                 firstMaterial = m;
                 break;
             }
-            String key = rules + "|" + inputPrefix + "|" + templateMaterial + "|" + firstMaterial + "|"
+            String key = rules + "|"
+                + inputPrefix
+                + "|"
+                + templateMaterial
+                + "|"
+                + firstMaterial
+                + "|"
                 + materials.size();
             if (!CONTEXT_LOGGED.add(key)) return;
             if (CONTEXT_LOGGED.size() > 32) CONTEXT_LOGGED.clear();
@@ -421,8 +439,7 @@ public final class SmartWildcardExpander {
     }
 
     /** 展开样本诊断（每 JVM 只打 3 条）：直接给出"材料 → 选中的前缀 → 产出输出"。 */
-    private static final java.util.concurrent.atomic.AtomicInteger SAMPLE_LOGGED =
-        new java.util.concurrent.atomic.AtomicInteger();
+    private static final java.util.concurrent.atomic.AtomicInteger SAMPLE_LOGGED = new java.util.concurrent.atomic.AtomicInteger();
 
     private static void logSampleOnce(String material, String chosenPrefix, ItemStack inStack, ItemStack outStack,
         ItemStack concrete) {
@@ -444,8 +461,9 @@ public final class SmartWildcardExpander {
     private static String displayNameOf(ItemStack stack) {
         try {
             return stack == null || stack.getItem() == null ? "null"
-                : String.valueOf(stack.getItem()
-                    .getItemStackDisplayName(stack));
+                : String.valueOf(
+                    stack.getItem()
+                        .getItemStackDisplayName(stack));
         } catch (Throwable t) {
             return "?";
         }
@@ -517,7 +535,7 @@ public final class SmartWildcardExpander {
                     // 其余几百张具体样板全部原样保留模板输出（铁板）。
                     // 诊断实证（3.39.0-diag）：三族一律 `输出种类=1 样本=[铁板, 铁板, 铁板]`，
                     // 于是 AE 里永远只有铁板可合成；GT 那台"能下单但不合成"也是同一根因
-                    //（AE 计划里的材料与真正推入机器的材料对不上）。
+                    // （AE 计划里的材料与真正推入机器的材料对不上）。
                     OrePrefixInfo info = oreInfo(stack);
                     if (!replaced && outputPrefix != null
                         && !outputPrefix.isEmpty()
@@ -552,7 +570,8 @@ public final class SmartWildcardExpander {
      * 该输出槽是否"随材料变化"：它的某个矿辞名以本规则的输出前缀开头（例如前缀 {@code plate} 命中
      * {@code plateIron} / {@code plateAnyIron}）。
      *
-     * <p>为什么不用 {@link #oreInfo} 的单次解析：GT 板材往往同时注册 {@code plateIron} 与
+     * <p>
+     * 为什么不用 {@link #oreInfo} 的单次解析：GT 板材往往同时注册 {@code plateIron} 与
      * {@code plateAnyIron} 两个矿辞名，单次解析取到哪个取决于注册顺序 ⇒ 前缀可能被算成 {@code plateAny}
      * 而与规则里的 {@code plate} 对不上（3.40.0 之前的判据更是彻底错：拿候选材料名去比模板输出的材料名）。
      */
@@ -574,8 +593,7 @@ public final class SmartWildcardExpander {
     }
 
     /** 替换槽未命中时的诊断（每张样板只记一次，避免热路径刷屏）。 */
-    private static final Set<String> OUTPUT_MISS_LOGGED = Collections
-        .synchronizedSet(new LinkedHashSet<String>());
+    private static final Set<String> OUTPUT_MISS_LOGGED = Collections.synchronizedSet(new LinkedHashSet<String>());
 
     private static void logOutputSlotMissOnce(String material, String outputPrefix, NBTTagList templateOut) {
         try {
@@ -642,7 +660,8 @@ public final class SmartWildcardExpander {
     /**
      * 供桥/界面用：**直接从单个物品**反推矿辞前缀（与 {@link #oreInfo} 同口径）。
      *
-     * <p>3.36.0 新增：桥要把"输出行"填成 {@code plate*}，必须按**该行自己的模板输出物品**取前缀
+     * <p>
+     * 3.36.0 新增：桥要把"输出行"填成 {@code plate*}，必须按**该行自己的模板输出物品**取前缀
      * （而不是笼统用模板级推导），否则多输出的配方会把前缀填错。
      */
     public static String orePrefixOfStack(ItemStack stack) {
@@ -653,7 +672,8 @@ public final class SmartWildcardExpander {
     /**
      * 供**界面显示**用的输出侧矿辞前缀（3.35.0，用户要求"输出行也要看得见，像 {@code plate*}"）。
      *
-     * <p>刻意复用展开器自己的模板推导（{@link #templateMaterialName} + {@link #templateOutputPrefix}），
+     * <p>
+     * 刻意复用展开器自己的模板推导（{@link #templateMaterialName} + {@link #templateOutputPrefix}），
      * 保证界面显示的就是展开时真正会用的那个前缀，而不是另写一套算法导致"显示与行为不一致"。
      *
      * @return 例如 {@code plate}；模板缺失或推不出时返回 null（调用方负责显示原文/留痕）
@@ -696,13 +716,15 @@ public final class SmartWildcardExpander {
         if (outputPrefix != null && !outputPrefix.isEmpty()) tokens.add(outputPrefix + material);
         if (inStack != null && inStack.getItem() != null) {
             tokens.add(
-                String.valueOf(inStack.getItem()
-                    .getItemStackDisplayName(inStack)));
+                String.valueOf(
+                    inStack.getItem()
+                        .getItemStackDisplayName(inStack)));
         }
         if (outStack != null && outStack.getItem() != null) {
             tokens.add(
-                String.valueOf(outStack.getItem()
-                    .getItemStackDisplayName(outStack)));
+                String.valueOf(
+                    outStack.getItem()
+                        .getItemStackDisplayName(outStack)));
         }
         return tokens;
     }
@@ -759,7 +781,8 @@ public final class SmartWildcardExpander {
     /**
      * 从**真实矿辞名**反推前缀：矿辞 {@code ingotIron} + 材料名 {@code Iron} ⇒ 前缀 {@code ingot}。
      *
-     * <p><b>3.35.0 修正（本轮致命 bug）</b>：GT 的 {@code OrePrefixes.getOreprefixKey()} 返回的是
+     * <p>
+     * <b>3.35.0 修正（本轮致命 bug）</b>：GT 的 {@code OrePrefixes.getOreprefixKey()} 返回的是
      * **本地化键**而不是矿辞前缀 —— javap 实证它的实现是
      * {@code getDefaultLocalNameFormatForItem(m).toLowerCase().replace(" ","_").replace("%material","material")}，
      * 而 {@code OrePrefixes} 的常量池里正是字符串 {@code gt.oreprefix.} ⇒ 返回 {@code gt.oreprefix.ingot}。
@@ -807,10 +830,8 @@ public final class SmartWildcardExpander {
             if (key.startsWith("gt.") || key.indexOf('.') >= 0) {
                 if (!prefixApiPitfallLogged) {
                     prefixApiPitfallLogged = true;
-                    MyMod.LOG.warn(
-                        "[AE2QoL] OrePrefixes.getOreprefixKey() 返回的是本地化键（{}）而不是矿辞前缀，已忽略；"
-                            + "矿辞前缀改由矿辞名反推",
-                        key);
+                    MyMod.LOG
+                        .warn("[AE2QoL] OrePrefixes.getOreprefixKey() 返回的是本地化键（{}）而不是矿辞前缀，已忽略；" + "矿辞前缀改由矿辞名反推", key);
                 }
                 return null;
             }
@@ -823,7 +844,8 @@ public final class SmartWildcardExpander {
     /**
      * 取「矿辞前缀 + 材料名」。
      *
-     * <p><b>3.22.0 修正</b>：原先按“第一个大写字母”切分矿辞名，对 {@code dustSmallIron}、
+     * <p>
+     * <b>3.22.0 修正</b>：原先按“第一个大写字母”切分矿辞名，对 {@code dustSmallIron}、
      * {@code plateDoubleIron}、{@code crushedPurifiedIron} 这类**多段前缀**会切错
      * （会切成 prefix={@code dust} + material={@code SmallIron}），表现只是“候选变少/不对”，很难查。
      * 现在优先用 GT 权威 API {@code OrePrefixes.detectPrefix(ItemStack)}（按 VALUES 最长前缀匹配 + 特例修正），
@@ -833,11 +855,12 @@ public final class SmartWildcardExpander {
     private static OrePrefixInfo oreInfo(ItemStack stack) {
         if (stack == null || stack.getItem() == null) return null;
         try {
-            java.util.List<gregtech.api.enums.OrePrefixes.ParsedOreDictName> parsed =
-                gregtech.api.enums.OrePrefixes.detectPrefix(stack);
+            java.util.List<gregtech.api.enums.OrePrefixes.ParsedOreDictName> parsed = gregtech.api.enums.OrePrefixes
+                .detectPrefix(stack);
             if (parsed != null) {
                 for (gregtech.api.enums.OrePrefixes.ParsedOreDictName name : parsed) {
-                    if (name == null || name.prefix == null || name.material == null || name.material.isEmpty()) continue;
+                    if (name == null || name.prefix == null || name.material == null || name.material.isEmpty())
+                        continue;
                     String key = oreDictPrefixOf(stack, name.material);
                     if (key == null || key.isEmpty()) key = legacyPrefixKeyOrNull(name.prefix);
                     if (key == null || key.isEmpty()) continue;

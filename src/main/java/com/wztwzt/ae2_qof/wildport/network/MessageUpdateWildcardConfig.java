@@ -5,8 +5,13 @@
  * WildcardPatternMod 的引用改为本模组的 MyMod。其余逻辑保持原样，便于后续按需优化。
  */
 package com.wztwzt.ae2_qof.wildport.network;
-import com.wztwzt.ae2_qof.wildport.crafting.WildcardPatternGenerator;
+
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+
 import com.wztwzt.ae2_qof.wildport.ModItems;
+import com.wztwzt.ae2_qof.wildport.crafting.WildcardPatternGenerator;
 import com.wztwzt.ae2_qof.wildport.item.WildcardPatternState;
 
 import cpw.mods.fml.common.network.ByteBufUtils;
@@ -14,9 +19,6 @@ import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
 
 public class MessageUpdateWildcardConfig implements IMessage {
 
@@ -55,12 +57,11 @@ public class MessageUpdateWildcardConfig implements IMessage {
             // 3.24.x 适配：我们的物品不是它的 ModItems.wildcardPattern ⇒ 两种都接受。
             // 否则用我们的样板打开这个界面、点保存会被这里**静默丢弃**（本项目铁则：不许静默）。
             // 注意：**不能**用 SmartWildcardState.isSmartWildcard(stack) —— 它要求"已经有我们的 NBT"
-            //（实现是 stack.hasTagCompound() && hasKey(KEY_ROOT)），而**全新未配置**的样板没有 NBT
+            // （实现是 stack.hasTagCompound() && hasKey(KEY_ROOT)），而**全新未配置**的样板没有 NBT
             // ⇒ 会被判成"不是通配样板"、保存被拒。用户实测日志：
-            //   [AE2QoL] Wild 界面保存被拒绝：槽位 6 不是通配样板（item=ItemSmartWildcardPattern）
+            // [AE2QoL] Wild 界面保存被拒绝：槽位 6 不是通配样板（item=ItemSmartWildcardPattern）
             // 这正是"界面里改了却无法转移"的直接原因。正确判据 = 物品是不是我们的那个实例。
-            boolean ours = stack != null
-                && stack.getItem() == com.wztwzt.ae2_qof.CommonProxy.smartWildcardPattern;
+            boolean ours = stack != null && stack.getItem() == com.wztwzt.ae2_qof.CommonProxy.smartWildcardPattern;
             if (stack == null || (!ours && stack.getItem() != ModItems.wildcardPattern)) {
                 com.wztwzt.ae2_qof.MyMod.LOG.warn(
                     "[AE2QoL] Wild 界面保存被拒绝：槽位 {} 不是通配样板（item={}）",

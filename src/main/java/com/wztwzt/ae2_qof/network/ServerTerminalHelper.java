@@ -6,13 +6,12 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.google.common.collect.ImmutableCollection;
-
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 
+import com.google.common.collect.ImmutableCollection;
 import com.gtnewhorizon.gtnhlib.util.ServerThreadUtil;
 import com.wztwzt.ae2_qof.MyMod;
 

@@ -47,7 +47,8 @@ import reobf.proghatches.gt.metatileentity.PatternDualInputHatch;
  * **我们的 MK.III（32108，直接继承本类且未覆写 provideCrafting）**。按 {@code pattern.length} 迭代
  * 以兼容 MK.III 的 144 槽。
  *
- * <p>PH 为运行时可选依赖（compileOnly + required=false）；未装 PH 时本 mixin 不会被应用。
+ * <p>
+ * PH 为运行时可选依赖（compileOnly + required=false）；未装 PH 时本 mixin 不会被应用。
  */
 @Mixin(value = PatternDualInputHatch.class, remap = false)
 public abstract class MixinPatternDualInputHatchWildcard {
@@ -241,8 +242,7 @@ public abstract class MixinPatternDualInputHatchWildcard {
                 // 3.34.0：判据改用统一门（物品实例 → 缺我们 NBT 时先懒同步 → 至少一条规则）。
                 // 旧实现直接用 isSmartWildcard（要求已有我们的 NBT）且判否完全静默 —— 玩家只在 Wild 界面里
                 // 配过的样板会被跳过，表现为"机器完全不动且日志无痕"（3.33.0 实测根因之一）。
-                if (!com.wztwzt.ae2_qof.wildcard.SmartWildcardGate
-                    .isConfiguredWildcard(slot, "PH 编程样板总成")) continue;
+                if (!com.wztwzt.ae2_qof.wildcard.SmartWildcardGate.isConfiguredWildcard(slot, "PH 编程样板总成")) continue;
                 wildcardSlots++;
                 SmartWildcardExpander.Result result = SmartWildcardExpander.expand(slot, world);
                 if (result.truncated) truncated++;
@@ -257,7 +257,7 @@ public abstract class MixinPatternDualInputHatchWildcard {
                     if (concrete == null || concrete.getItem() == null) continue;
                     if (!(concrete.getItem() instanceof ICraftingPatternItem patternItem)) continue;
                     // 4.1.0 **核心改动**：把这一张具体样板输入里的
-                    //   ① GT 编程电路 ② 样板"不消耗物品"
+                    // ① GT 编程电路 ② 样板"不消耗物品"
                     // 换成 **PH:编程器电路（记录对应目标）**：这样 AE 会按样板去取编程器电路（由 PH 的
                     // 编程器电路提供器按需生成），送进 PH 家族总成（含我们的 MK.III）后由 PH 自己识别并
                     // 消耗掉、把记录的目标写进对应缓冲的虚拟槽 ⇒ 不再需要 AE 备货 GT 电路、也不会残留电路。

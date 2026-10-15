@@ -8,6 +8,7 @@ import net.minecraft.nbt.NBTTagCompound;
 
 /** Immutable exact item identity; quantity is deliberately not part of the key. */
 public final class ItemIdentity {
+
     private final Item item;
     private final int damage;
     private final NBTTagCompound tag;
@@ -16,7 +17,9 @@ public final class ItemIdentity {
     private ItemIdentity(ItemStack stack) {
         item = stack.getItem();
         damage = stack.getItemDamage();
-        tag = stack.getTagCompound() == null ? null : (NBTTagCompound) stack.getTagCompound().copy();
+        tag = stack.getTagCompound() == null ? null
+            : (NBTTagCompound) stack.getTagCompound()
+                .copy();
         hash = 31 * (31 * System.identityHashCode(item) + damage) + Objects.hashCode(tag);
     }
 
@@ -25,8 +28,10 @@ public final class ItemIdentity {
     }
 
     public static boolean same(ItemStack a, ItemStack b) {
-        return a != null && b != null && a.getItem() == b.getItem()
-            && a.getItemDamage() == b.getItemDamage() && ItemStack.areItemStackTagsEqual(a, b);
+        return a != null && b != null
+            && a.getItem() == b.getItem()
+            && a.getItemDamage() == b.getItemDamage()
+            && ItemStack.areItemStackTagsEqual(a, b);
     }
 
     @Override
@@ -38,5 +43,7 @@ public final class ItemIdentity {
     }
 
     @Override
-    public int hashCode() { return hash; }
+    public int hashCode() {
+        return hash;
+    }
 }

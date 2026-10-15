@@ -5,8 +5,6 @@
  */
 package com.wztwzt.ae2_qof.apgport.storage;
 
-import com.wztwzt.ae2_qof.MyMod;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.nio.charset.StandardCharsets;

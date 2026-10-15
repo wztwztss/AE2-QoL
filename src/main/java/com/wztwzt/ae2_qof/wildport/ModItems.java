@@ -8,12 +8,13 @@
  */
 package com.wztwzt.ae2_qof.wildport;
 
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.item.Item;
+
 import com.wztwzt.ae2_qof.wildport.item.ItemCompositeWildcardPattern;
 import com.wztwzt.ae2_qof.wildport.item.ItemWildcardPattern;
 
 import cpw.mods.fml.common.registry.GameRegistry;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.item.Item;
 
 public final class ModItems {
 
@@ -23,12 +24,10 @@ public final class ModItems {
     private ModItems() {}
 
     public static void init() {
-        wildcardPattern = new ItemWildcardPattern()
-            .setUnlocalizedName("wildcard_pattern")
+        wildcardPattern = new ItemWildcardPattern().setUnlocalizedName("wildcard_pattern")
             .setTextureName("wildcardpattern:wildcard_pattern")
             .setCreativeTab(CreativeTabs.tabMisc);
-        compositeWildcardPattern = new ItemCompositeWildcardPattern()
-            .setUnlocalizedName("composite_wildcard_pattern")
+        compositeWildcardPattern = new ItemCompositeWildcardPattern().setUnlocalizedName("composite_wildcard_pattern")
             .setTextureName("wildcardpattern:wildcard_pattern")
             .setCreativeTab(CreativeTabs.tabMisc);
 

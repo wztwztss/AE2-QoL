@@ -7,15 +7,12 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.lang.reflect.Field;
-
 import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.api.ISmartDoublingContainer;
 import com.wztwzt.ae2_qof.api.ISmartDoublingMedium;
 
 import appeng.container.guisync.GuiSync;
 import appeng.container.implementations.ContainerInterface;
-import appeng.helpers.DualityInterface;
 import appeng.helpers.IInterfaceHost;
 
 /**
@@ -54,7 +51,8 @@ public abstract class MixinContainerInterface implements ISmartDoublingContainer
         } else {
             MyMod.LOG.warn(
                 "[AE2QoL] smart doubling toggle could not reach DualityInterface (container={})",
-                this.getClass().getName());
+                this.getClass()
+                    .getName());
         }
     }
 

@@ -1,6 +1,5 @@
 package com.wztwzt.ae2_qof.util;
 
-import java.math.BigInteger;
 import java.util.UUID;
 
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
@@ -13,6 +12,7 @@ import gregtech.common.misc.WirelessNetworkManager;
  * so no prepaid fill logic lives here anymore. See docs/mcp-full-function-audit-fix41.md A04 note.
  */
 public final class WirelessEnergyTransfer {
+
     private WirelessEnergyTransfer() {}
 
     public static long deposit(IGregTechTileEntity tile, UUID owner) {

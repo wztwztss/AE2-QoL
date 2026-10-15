@@ -20,7 +20,8 @@ import appeng.api.networking.crafting.ICraftingPatternDetails;
  * <h2>与 GT 版的差异（都由 javap 查实，不是猜）</h2>
  * <ul>
  * <li>GTNL 的 {@code PatternSlot} 是它**自己复制的一份**（与 GT 的同类不同物），
- * {@code patternDetails} 是 {@code public final}、{@code itemInventory}/{@code fluidInventory} 也是 **public** ⇒ 子类可直接用；</li>
+ * {@code patternDetails} 是 {@code public final}、{@code itemInventory}/{@code fluidInventory} 也是 **public** ⇒
+ * 子类可直接用；</li>
  * <li>它**没有**覆写 {@code shouldBeCached()} ⇒ 继承 GT 默认的 **true**（这是必须子类化的原因：配方缓存以**槽位对象**为 key，
  * 一槽挂 N 个 details 时只会缓存“模板那一份”，机器会用错配方）；</li>
  * <li>它提供了 {@code writeToNBT(NBTTagCompound)} ⇒ 包槽位时用「它的 NBT + 它的 NBT 构造器」恢复缓冲内容，

@@ -21,9 +21,9 @@ import appeng.client.gui.implementations.GuiMEMonitorable;
  * 3.14.0：合成产物 pin 置顶行增强。
  * <ul>
  * <li>删除 3.10.0 覆盖式展示条（drawScreen/mouseClicked 注入移除，遮挡与点击拦截不复存在），
- *     改用 GTNH rv3 原生 pin 系统（服务端 PinsHandler + PacketPinsUpdate + VirtualMEPinSlot 独立行渲染）；</li>
+ * 改用 GTNH rv3 原生 pin 系统（服务端 PinsHandler + PacketPinsUpdate + VirtualMEPinSlot 独立行渲染）；</li>
  * <li>自动扩展行数：pin 产物种类超过当前 crafting 行容量时，本地把可见 crafting 行数提升
- *     （上限 3 行），产物减少时自动回落；不回写玩家设置。</li>
+ * （上限 3 行），产物减少时自动回落；不回写玩家设置。</li>
  * </ul>
  */
 @Mixin(value = GuiMEMonitorable.class, remap = false)
@@ -47,10 +47,7 @@ public abstract class MixinGuiMEMonitorable {
                 if (stack instanceof IAEItemStack itemStack) {
                     net.minecraft.item.ItemStack mcStack = itemStack.getItemStack();
                     if (mcStack != null) {
-                        NetworkInventoryCache.put(
-                            mcStack,
-                            itemStack.isCraftable(),
-                            itemStack.getStackSize());
+                        NetworkInventoryCache.put(mcStack, itemStack.isCraftable(), itemStack.getStackSize());
                     }
                 } else if (stack instanceof IAEFluidStack fluidStack) {
                     if (fluidStack.getFluid() != null) {

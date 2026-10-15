@@ -9,7 +9,6 @@ import net.minecraft.util.IChatComponent;
 import net.minecraft.world.World;
 
 import appeng.api.networking.IGridNode;
-
 import cn.dancingsnow.ae_wireless_nexus.network.TileWirelessControllerRef;
 import cn.dancingsnow.ae_wireless_nexus.network.WirelessBindableEndpoint;
 import cn.dancingsnow.ae_wireless_nexus.network.WirelessLeaseStatus;
@@ -60,8 +59,13 @@ public class StockMonitorTerminalWirelessEndpoint implements WirelessBindableEnd
     public String getStableEndpointKey() {
         TileEntity te = (TileEntity) terminal.getBaseMetaTileEntity();
         if (te == null) return "ae2qol_stock_terminal_unknown";
-        return "ae2qol_stock_terminal_" + te.getWorldObj().provider.dimensionId + "_"
-            + te.xCoord + "_" + te.yCoord + "_" + te.zCoord;
+        return "ae2qol_stock_terminal_" + te.getWorldObj().provider.dimensionId
+            + "_"
+            + te.xCoord
+            + "_"
+            + te.yCoord
+            + "_"
+            + te.zCoord;
     }
 
     @Override

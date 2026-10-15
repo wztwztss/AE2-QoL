@@ -17,7 +17,8 @@ public final class AeStockReader {
             if (storage == null) return 0;
 
             if (target instanceof IAEItemStack) {
-                IAEItemStack result = storage.getItemInventory().getStorageList()
+                IAEItemStack result = storage.getItemInventory()
+                    .getStorageList()
                     .findPrecise((IAEItemStack) target);
                 return result == null ? 0 : result.getStackSize();
             } else if (target instanceof IAEFluidStack) {
@@ -26,9 +27,12 @@ public final class AeStockReader {
                 // 新建的 target 的 Fluid 实例可能与网络里存储的不是同一个对象引用，导致匹配不到。
                 // 改用遍历 + getFluidID() 比较（流体注册 ID 是全局唯一的）。
                 IAEFluidStack targetFluid = (IAEFluidStack) target;
-                int targetId = targetFluid.getFluid().getID();
-                for (IAEFluidStack entry : storage.getFluidInventory().getStorageList()) {
-                    if (entry != null && entry.getFluid().getID() == targetId) {
+                int targetId = targetFluid.getFluid()
+                    .getID();
+                for (IAEFluidStack entry : storage.getFluidInventory()
+                    .getStorageList()) {
+                    if (entry != null && entry.getFluid()
+                        .getID() == targetId) {
                         return entry.getStackSize();
                     }
                 }

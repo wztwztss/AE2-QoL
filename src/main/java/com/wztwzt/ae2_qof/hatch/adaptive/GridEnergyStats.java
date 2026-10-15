@@ -3,6 +3,7 @@ package com.wztwzt.ae2_qof.hatch.adaptive;
 import net.minecraft.nbt.NBTTagCompound;
 
 public class GridEnergyStats {
+
     private long totalInput;
     private long totalOutput;
     private long lastEU;

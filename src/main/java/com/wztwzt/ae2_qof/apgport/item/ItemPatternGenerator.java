@@ -5,8 +5,6 @@
  */
 package com.wztwzt.ae2_qof.apgport.item;
 
-import com.wztwzt.ae2_qof.MyMod;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;

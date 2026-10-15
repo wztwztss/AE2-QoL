@@ -8,9 +8,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.wztwzt.ae2_qof.hatch.thread.Ae2qolThreadEngine;
 import com.wztwzt.ae2_qof.network.ThreadStatusPacket;
@@ -47,15 +44,19 @@ public abstract class MixinBaseMetaTileEntityWaila {
 
     /**
      * 3.25.0-fix5：**再次停用注入 —— 这次是因为它让游戏启动即崩**。
-     * <p>实测崩溃（`crash-2026-10-05_13.51.01-client.txt`，Description: Initializing game）：
+     * <p>
+     * 实测崩溃（`crash-2026-10-05_13.51.01-client.txt`，Description: Initializing game）：
+     * 
      * <pre>
      * InjectionError: Critical injection failure: Callback method ae2qol$appendThreadLines(...)
      * Suppressed: SugarApplicationException: Failed to validate sugar @Local(argsOnly = true, index = 1) List
      * → LoaderException: NoClassDefFoundError: gregtech/api/metatileentity/BaseMetaTileEntity
      * </pre>
+     * 
      * 即：本包的 unimixins 0.3.1 **不接受这种 `@Local` 写法**，而注入失败被当作**致命**错误
      * ⇒ `BaseMetaTileEntity` 的类转换中断 ⇒ 连 GT 的类都加载不了 ⇒ 启动崩溃。
-     * <p>因此这里恢复成"**不注入**"（方法体保留作参考，不再声明 {@code @Inject}）。
+     * <p>
+     * 因此这里恢复成"**不注入**"（方法体保留作参考，不再声明 {@code @Inject}）。
      * WAILA 线程行的正式方案改为**加 compileOnly 的 waila 依赖 + 写全 4 个参数**
      * （不使用 MixinExtras 的 sugar），等下一轮实施；在那之前 WAILA 只是**少几行**，不影响启动。
      */
@@ -65,12 +66,20 @@ public abstract class MixinBaseMetaTileEntityWaila {
         World world = self.getWorldObj();
         if (world == null || !world.isRemote) return;
 
-        ThreadStatusPacket packet = ThreadStatusPacket
-            .lookup(world, self.xCoord, self.yCoord, self.zCoord);
+        ThreadStatusPacket packet = ThreadStatusPacket.lookup(world, self.xCoord, self.yCoord, self.zCoord);
         if (packet == null) return;
 
         currentTip.add(
-            "\u00a7b" + tr("ae2_qof.threads.waila.summary") + " " + packet.active + "/" + packet.total + "  " + packet.parallelSum + "  " + packet.powerSum + " EU/t");
+            "\u00a7b" + tr("ae2_qof.threads.waila.summary")
+                + " "
+                + packet.active
+                + "/"
+                + packet.total
+                + "  "
+                + packet.parallelSum
+                + "  "
+                + packet.powerSum
+                + " EU/t");
         if (packet.active <= 0) return;
 
         boolean sneaking = false;
@@ -82,9 +91,16 @@ public abstract class MixinBaseMetaTileEntityWaila {
         for (int i = 0; i < show; i++) {
             String name = packet.rowName[i] == null || packet.rowName[i].isEmpty() ? "-" : packet.rowName[i];
             currentTip.add(
-                "\u00a7b#" + packet.rowIndex[i] + " \u00a7r" + name + "  " + packet.rowPercent[i] + "%"
-                    + (packet.rowRemain[i] > 0 ? " (" + tr("ae2_qof.threads.remain_short") + packet.rowRemain[i] + "t)" : "")
-                    + "  \u00a79" + packet.rowParallel[i]
+                "\u00a7b#" + packet.rowIndex[i]
+                    + " \u00a7r"
+                    + name
+                    + "  "
+                    + packet.rowPercent[i]
+                    + "%"
+                    + (packet.rowRemain[i] > 0 ? " (" + tr("ae2_qof.threads.remain_short") + packet.rowRemain[i] + "t)"
+                        : "")
+                    + "  \u00a79"
+                    + packet.rowParallel[i]
                     + " \u00a77"
                     + tr(stateKey(packet.rowState[i])));
         }

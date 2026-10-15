@@ -12,7 +12,8 @@ import cpw.mods.fml.common.gameevent.TickEvent;
  * 我们原先把广播写在 {@code incrementProgressTime}（机器 tick 内）里，于是加速期间广播会稀疏甚至停发，
  * WAILA 那行就不稳/不出现。
  *
- * <p>现在改由这里统一驱动：每 {@link #INTERVAL} tick 遍历一次引擎并发包，与机器是否被加速无关。
+ * <p>
+ * 现在改由这里统一驱动：每 {@link #INTERVAL} tick 遍历一次引擎并发包，与机器是否被加速无关。
  * 只对有引擎且已启用的机器发（{@link ThreadStatusBroadcaster#broadcastAll()} 内部再判一次）。
  */
 public final class ThreadStatusTicker {

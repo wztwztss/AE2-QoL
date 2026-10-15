@@ -14,11 +14,13 @@ import gregtech.api.recipe.check.CheckRecipeResult;
 /**
  * Steam Apiary Module 的调速 + 批处理后处理（3.29.0）。
  *
- * <p>上游一个 6000 tick 周期里最多吃 {@code mStorage.size() * 40} 个蜂王浆，并把产出按"吃饱程度"加成 ×1~3。
+ * <p>
+ * 上游一个 6000 tick 周期里最多吃 {@code mStorage.size() * 40} 个蜂王浆，并把产出按"吃饱程度"加成 ×1~3。
  * 因此额外 k 份就要再吃 k 份同样的蜂王浆；本实现**逐份实扣**，扣不满就停在能供上的份数（自动降级）。
  * 这样"产出 ×n"与"蜂王浆 ×n"始终配平，不会出现白送产出的情况。
  *
- * <p>仅在该模块真正处于"运行模式"时生效：输入/输出模式会置 {@code lEUt = 0}，此时直接放行不处理
+ * <p>
+ * 仅在该模块真正处于"运行模式"时生效：输入/输出模式会置 {@code lEUt = 0}，此时直接放行不处理
  * （否则会把上一周期的 {@code mOutputItems} 重复放大）。
  */
 @Mixin(value = SteamApiaryModule.class, remap = false)
@@ -60,7 +62,8 @@ public abstract class MixinSteamApiaryTuning {
             if (wanted > 1) {
                 SteamElevatorTuning.warnOnce(
                     "ap:floor",
-                    "[AE2QoL] SteamElevator 蜂箱模块只够 " + n + " 份（抗卡顿门槛 "
+                    "[AE2QoL] SteamElevator 蜂箱模块只够 " + n
+                        + " 份（抗卡顿门槛 "
                         + SteamElevatorTuning.minBatchesToApplyTuning
                         + "）：为**避免配方检查频率上升**已保持上游行为，补足蜂王浆后自动启用");
             }
@@ -86,7 +89,10 @@ public abstract class MixinSteamApiaryTuning {
         if (total > 1) {
             SteamElevatorTuning.infoOnce(
                 "ap:n",
-                "[AE2QoL] SteamElevator 蜂箱模块批处理生效: 每操作 " + total + " 份（并行 " + p + "）/ "
+                "[AE2QoL] SteamElevator 蜂箱模块批处理生效: 每操作 " + total
+                    + " 份（并行 "
+                    + p
+                    + "）/ "
                     + self.mMaxProgresstime
                     + " tick，蜂王浆 "
                     + (total * perBatch)
@@ -94,9 +100,7 @@ public abstract class MixinSteamApiaryTuning {
         } else if (wanted > 1) {
             SteamElevatorTuning.warnOnce(
                 "ap:short",
-                "[AE2QoL] SteamElevator 蜂箱模块蜂王浆不足，已降级为 1 份/操作（需 " + perBatch + " 个/份；补足后自动恢复 "
-                    + wanted
-                    + " 份）");
+                "[AE2QoL] SteamElevator 蜂箱模块蜂王浆不足，已降级为 1 份/操作（需 " + perBatch + " 个/份；补足后自动恢复 " + wanted + " 份）");
         }
     }
 }

@@ -9,12 +9,12 @@ package com.wztwzt.ae2_qof.wildport.item;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.wztwzt.ae2_qof.wildport.crafting.WildcardPatternEntry;
-
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.common.util.Constants.NBT;
+
+import com.wztwzt.ae2_qof.wildport.crafting.WildcardPatternEntry;
 
 public final class CompositeWildcardPatternState {
 
@@ -106,7 +106,8 @@ public final class CompositeWildcardPatternState {
 
     public static int getExpandedPatternCount(ItemStack stack) {
         NBTTagCompound tag = stack == null ? null : stack.getTagCompound();
-        return tag == null || !tag.hasKey(KEY_EXPANDED_PATTERN_COUNT) ? 0 : Math.max(0, tag.getInteger(KEY_EXPANDED_PATTERN_COUNT));
+        return tag == null || !tag.hasKey(KEY_EXPANDED_PATTERN_COUNT) ? 0
+            : Math.max(0, tag.getInteger(KEY_EXPANDED_PATTERN_COUNT));
     }
 
     public static void setExpandedPatternCount(ItemStack stack, int count) {
@@ -148,9 +149,18 @@ public final class CompositeWildcardPatternState {
         ensureInitialized(stack);
         NBTTagCompound exported = new NBTTagCompound();
         NBTTagCompound source = getOrCreateTag(stack);
-        exported.setTag(KEY_WILDCARD_INPUT, source.getCompoundTag(KEY_WILDCARD_INPUT).copy());
-        exported.setTag(KEY_WILDCARD_OUTPUT, source.getCompoundTag(KEY_WILDCARD_OUTPUT).copy());
-        exported.setTag(KEY_FIXED_INPUTS, source.getTagList(KEY_FIXED_INPUTS, NBT.TAG_COMPOUND).copy());
+        exported.setTag(
+            KEY_WILDCARD_INPUT,
+            source.getCompoundTag(KEY_WILDCARD_INPUT)
+                .copy());
+        exported.setTag(
+            KEY_WILDCARD_OUTPUT,
+            source.getCompoundTag(KEY_WILDCARD_OUTPUT)
+                .copy());
+        exported.setTag(
+            KEY_FIXED_INPUTS,
+            source.getTagList(KEY_FIXED_INPUTS, NBT.TAG_COMPOUND)
+                .copy());
         copyIfPresent(source, exported, "WildcardGlobalExcludeMaterials");
         copyIfPresent(source, exported, "WildcardRuleIncludeMaterials");
         copyIfPresent(source, exported, "WildcardRuleExcludeMaterials");
@@ -187,13 +197,16 @@ public final class CompositeWildcardPatternState {
 
     private static NBTTagCompound importFirstPatternEntry(NBTTagList source) {
         if (source == null || source.tagCount() == 0) {
-            return WildcardPatternEntry.fromStack(null).toNbt();
+            return WildcardPatternEntry.fromStack(null)
+                .toNbt();
         }
-        return WildcardPatternEntry.fromPatternSlot(source.getCompoundTagAt(0)).toNbt();
+        return WildcardPatternEntry.fromPatternSlot(source.getCompoundTagAt(0))
+            .toNbt();
     }
 
     private static NBTTagCompound toEntryTag(WildcardPatternEntry entry) {
-        return entry == null ? WildcardPatternEntry.fromStack(null).toNbt() : entry.toNbt();
+        return entry == null ? WildcardPatternEntry.fromStack(null)
+            .toNbt() : entry.toNbt();
     }
 
     private static void ensureFixedSize(List<ItemStack> inputs) {
@@ -267,7 +280,10 @@ public final class CompositeWildcardPatternState {
 
     private static void copyIfPresent(NBTTagCompound source, NBTTagCompound target, String key) {
         if (source.hasKey(key)) {
-            target.setTag(key, source.getTag(key).copy());
+            target.setTag(
+                key,
+                source.getTag(key)
+                    .copy());
         }
     }
 

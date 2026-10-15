@@ -14,14 +14,17 @@ import gregtech.api.recipe.check.CheckRecipeResult;
 /**
  * Steam Greenhouse Module 的调速 + 批处理后处理（3.29.0）。
  *
- * <p>上游每个耕作周期消耗 {@code getWaterUsage()}（默认 16,000 mB）的水，方式是**直接对
+ * <p>
+ * 上游每个耕作周期消耗 {@code getWaterUsage()}（默认 16,000 mB）的水，方式是**直接对
  * {@code getStoredFluids()} 返回的 FluidStack.amount 做减法**（见 {@code IGreenHouse:555-578}）。
  * 本实现用同一手法逐份补水：额外 k 份就再扣 k × 16,000；扣不满就停在能供上的份数。
  *
- * <p>只认"名字含 water"的流体（水/蒸馏水等）。若使用高 hydration 效价的特殊流体，请把
+ * <p>
+ * 只认"名字含 water"的流体（水/蒸馏水等）。若使用高 hydration 效价的特殊流体，请把
  * {@code greenhouseWaterPerCycle} 调成等效值，或只用普通水供料。
  *
- * <p>输入/输出模式（{@code setLEUt(0)}）不参与批处理。
+ * <p>
+ * 输入/输出模式（{@code setLEUt(0)}）不参与批处理。
  */
 @Mixin(value = SteamGreenhouseModule.class, remap = false)
 public abstract class MixinSteamGreenhouseTuning {
@@ -60,7 +63,8 @@ public abstract class MixinSteamGreenhouseTuning {
             if (wanted > 1) {
                 SteamElevatorTuning.warnOnce(
                     "gh:floor",
-                    "[AE2QoL] SteamElevator 温室模块只够 " + n + " 份（抗卡顿门槛 "
+                    "[AE2QoL] SteamElevator 温室模块只够 " + n
+                        + " 份（抗卡顿门槛 "
                         + SteamElevatorTuning.minBatchesToApplyTuning
                         + "）：为**避免配方检查频率上升**已保持上游行为，补足水后自动启用");
             }
@@ -95,7 +99,10 @@ public abstract class MixinSteamGreenhouseTuning {
         if (total > 1) {
             SteamElevatorTuning.infoOnce(
                 "gh:n",
-                "[AE2QoL] SteamElevator 温室模块批处理生效: 每操作 " + total + " 份（并行 " + p + "）/ "
+                "[AE2QoL] SteamElevator 温室模块批处理生效: 每操作 " + total
+                    + " 份（并行 "
+                    + p
+                    + "）/ "
                     + self.mMaxProgresstime
                     + " tick，水 "
                     + (total * perBatch)
@@ -103,9 +110,7 @@ public abstract class MixinSteamGreenhouseTuning {
         } else if (wanted > 1) {
             SteamElevatorTuning.warnOnce(
                 "gh:short",
-                "[AE2QoL] SteamElevator 温室模块水不足，已降级为 1 份/操作（需 " + perBatch + " mB/份；补足后自动恢复 "
-                    + wanted
-                    + " 份）");
+                "[AE2QoL] SteamElevator 温室模块水不足，已降级为 1 份/操作（需 " + perBatch + " mB/份；补足后自动恢复 " + wanted + " 份）");
         }
     }
 }

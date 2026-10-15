@@ -218,8 +218,7 @@ public final class RecipeNameUtil {
                 }
             } catch (Exception e) {
                 // IOException 与 JsonSyntaxException（坏 JSON）等均在此兜底
-                MyMod.LOG.warn(
-                    StatCollector.translateToLocalFormatted("ae2_qof.error.read_mappings", e.getMessage()));
+                MyMod.LOG.warn(StatCollector.translateToLocalFormatted("ae2_qof.error.read_mappings", e.getMessage()));
             }
         }
 

@@ -11,30 +11,25 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.EnumChatFormatting;
-import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.common.MinecraftForge;
 
-import appeng.api.storage.data.IAEStack;
-import appeng.tile.inventory.IAEStackInventory;
-import appeng.container.implementations.ContainerPatternTerm;
-import appeng.container.implementations.ContainerPatternTermEx;
-
 import com.wztwzt.ae2_qof.client.ClientState;
-import com.wztwzt.ae2_qof.client.PickBlockCompatHandler;
-import com.wztwzt.ae2_qof.common.RecipeMapNameConfig;
 import com.wztwzt.ae2_qof.client.CommandOverlay;
+import com.wztwzt.ae2_qof.client.GuideNHIntegration;
+import com.wztwzt.ae2_qof.client.PickBlockCompatHandler;
 import com.wztwzt.ae2_qof.client.event.GuiUploadButtonHandler;
 import com.wztwzt.ae2_qof.client.event.KeyInputHandler;
 import com.wztwzt.ae2_qof.client.event.KnifeNameCopyHandler;
-import com.wztwzt.ae2_qof.client.GuideNHIntegration;
 import com.wztwzt.ae2_qof.client.event.MergedTerminalPanelHandler;
 import com.wztwzt.ae2_qof.client.gui.GuiProviderSelect;
 import com.wztwzt.ae2_qof.client.render.RenderBlockTransceiver;
 import com.wztwzt.ae2_qof.client.render.WirelessHighlightRenderer;
+import com.wztwzt.ae2_qof.common.RecipeMapNameConfig;
 import com.wztwzt.ae2_qof.merged.GuiMergedTerminal;
 import com.wztwzt.ae2_qof.network.ConfigUpdatePacket;
 import com.wztwzt.ae2_qof.network.CraftingCompletePacket;
 import com.wztwzt.ae2_qof.network.CraftingResponsePacket;
+import com.wztwzt.ae2_qof.network.HatchListSyncPacket;
 import com.wztwzt.ae2_qof.network.MergedTerminalBlankCountPacket;
 import com.wztwzt.ae2_qof.network.MergedTerminalResultPacket;
 import com.wztwzt.ae2_qof.network.ModNetwork;
@@ -46,10 +41,13 @@ import com.wztwzt.ae2_qof.network.UploadFeedbackPacket;
 import com.wztwzt.ae2_qof.network.UploadPatternPacket;
 import com.wztwzt.ae2_qof.network.WirelessChannelSyncPacket;
 import com.wztwzt.ae2_qof.network.WirelessHighlightPacket;
-import com.wztwzt.ae2_qof.network.HatchListSyncPacket;
 import com.wztwzt.ae2_qof.util.RecipeNameUtil;
 import com.wztwzt.ae2_qof.wireless.gui.GuiWireless;
 
+import appeng.api.storage.data.IAEStack;
+import appeng.container.implementations.ContainerPatternTerm;
+import appeng.container.implementations.ContainerPatternTermEx;
+import appeng.tile.inventory.IAEStackInventory;
 import cpw.mods.fml.client.registry.RenderingRegistry;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
@@ -80,9 +78,9 @@ public class ClientProxy extends CommonProxy {
         } catch (Throwable ignored) {}
         try {
             codechicken.nei.api.API.registerNEIGuiHandler(new com.wztwzt.ae2_qof.client.nei.MergedNeiHandler());
-        // 3.23.2：NEI 拖放 → 智能通配样板编辑器的输入/输出匹配框（NEI 的官方扩展点 handleDragNDrop）
-        codechicken.nei.api.API
-            .registerNEIGuiHandler(new com.wztwzt.ae2_qof.client.nei.SmartWildcardNeiDragHandler());
+            // 3.23.2：NEI 拖放 → 智能通配样板编辑器的输入/输出匹配框（NEI 的官方扩展点 handleDragNDrop）
+            codechicken.nei.api.API
+                .registerNEIGuiHandler(new com.wztwzt.ae2_qof.client.nei.SmartWildcardNeiDragHandler());
         } catch (Throwable ignored) {}
         try {
             // 让 NEI 配方界面的「+」覆盖层对合并终端生效（与 AE2 原生终端一致注册方式）
@@ -112,81 +110,86 @@ public class ClientProxy extends CommonProxy {
         Minecraft.getMinecraft()
             .func_152344_a(() -> {
                 try {
-                // Shift+点击：强制打开选择页面
-                if (message.forceGui) {
-                    openGuiWithSearch(message);
-                    return;
-                }
-
-                // 策略1: 只有一个有效供应器时直接上传
-                List<Long> validIds = new ArrayList<Long>();
-                List<String> validKeys = new ArrayList<String>();
-                for (int i = 0; i < message.ids.size(); i++) {
-                    if (message.emptySlots.get(i) > 0) {
-                        validIds.add(message.ids.get(i));
-                        validKeys.add(
-                            i < message.locationKeys.size() ? message.locationKeys.get(i) : null);
+                    // Shift+点击：强制打开选择页面
+                    if (message.forceGui) {
+                        openGuiWithSearch(message);
+                        return;
                     }
-                }
-                if (validIds.size() == 1) {
-                    MyMod.LOG.debug("[Upload] strategy1: single provider, id={}", validIds.get(0));
-                    ClientState.set(null, validIds.get(0));
-                    // fix41：单目标也带上稳定位置，避免该机器被拆装/重载后 ID 失效
-                    ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(validIds.get(0), validKeys.get(0)));
-                    return;
-                }
 
-                // 策略2: 查已记住的 Provider 名字
-                MyMod.LOG.debug("[Upload] strategy2 check: recipeMap={}, rememberedProviders size={}",
-                    message.recipeMap, ClientState.rememberedProviders.size());
-                if (message.recipeMap != null && !message.recipeMap.isEmpty()) {
-                    ClientState.lastRecipeMap = message.recipeMap;
-
-                    String rememberedName = ClientState.getRememberedProviderName(message.recipeMap);
-                    MyMod.LOG.debug("[Upload] strategy2: recipeMap='{}', rememberedName='{}'",
-                        message.recipeMap, rememberedName);
-                    if (rememberedName != null) {
-                        long matchId = 0;
-                        String matchKey = null;
-                        int matchCount = 0;
-                        for (int i = 0; i < message.ids.size(); i++) {
-                            if (message.emptySlots.get(i) > 0 && message.names.get(i)
-                                .equals(rememberedName)) {
-                                    matchId = message.ids.get(i);
-                                    matchKey = i < message.locationKeys.size() ? message.locationKeys.get(i) : null;
-                                matchCount++;
-                            }
+                    // 策略1: 只有一个有效供应器时直接上传
+                    List<Long> validIds = new ArrayList<Long>();
+                    List<String> validKeys = new ArrayList<String>();
+                    for (int i = 0; i < message.ids.size(); i++) {
+                        if (message.emptySlots.get(i) > 0) {
+                            validIds.add(message.ids.get(i));
+                            validKeys.add(i < message.locationKeys.size() ? message.locationKeys.get(i) : null);
                         }
-                        // 兼容旧配置：旧版 remembered 只存基础机器名，没有坐标后缀。
-                        // 仅当基础名唯一命中时才采用，多个同名候选仍交给玩家手动选择。
-                        if (matchCount != 1) {
-                            matchId = 0;
-                            matchCount = 0;
-                            String base = stripLocationSuffix(rememberedName);
+                    }
+                    if (validIds.size() == 1) {
+                        MyMod.LOG.debug("[Upload] strategy1: single provider, id={}", validIds.get(0));
+                        ClientState.set(null, validIds.get(0));
+                        // fix41：单目标也带上稳定位置，避免该机器被拆装/重载后 ID 失效
+                        ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(validIds.get(0), validKeys.get(0)));
+                        return;
+                    }
+
+                    // 策略2: 查已记住的 Provider 名字
+                    MyMod.LOG.debug(
+                        "[Upload] strategy2 check: recipeMap={}, rememberedProviders size={}",
+                        message.recipeMap,
+                        ClientState.rememberedProviders.size());
+                    if (message.recipeMap != null && !message.recipeMap.isEmpty()) {
+                        ClientState.lastRecipeMap = message.recipeMap;
+
+                        String rememberedName = ClientState.getRememberedProviderName(message.recipeMap);
+                        MyMod.LOG.debug(
+                            "[Upload] strategy2: recipeMap='{}', rememberedName='{}'",
+                            message.recipeMap,
+                            rememberedName);
+                        if (rememberedName != null) {
+                            long matchId = 0;
+                            String matchKey = null;
+                            int matchCount = 0;
                             for (int i = 0; i < message.ids.size(); i++) {
-                                if (message.emptySlots.get(i) > 0
-                                    && stripLocationSuffix(message.names.get(i))
-                                        .equals(base)) {
+                                if (message.emptySlots.get(i) > 0 && message.names.get(i)
+                                    .equals(rememberedName)) {
                                     matchId = message.ids.get(i);
                                     matchKey = i < message.locationKeys.size() ? message.locationKeys.get(i) : null;
                                     matchCount++;
                                 }
                             }
+                            // 兼容旧配置：旧版 remembered 只存基础机器名，没有坐标后缀。
+                            // 仅当基础名唯一命中时才采用，多个同名候选仍交给玩家手动选择。
+                            if (matchCount != 1) {
+                                matchId = 0;
+                                matchCount = 0;
+                                String base = stripLocationSuffix(rememberedName);
+                                for (int i = 0; i < message.ids.size(); i++) {
+                                    if (message.emptySlots.get(i) > 0
+                                        && stripLocationSuffix(message.names.get(i)).equals(base)) {
+                                        matchId = message.ids.get(i);
+                                        matchKey = i < message.locationKeys.size() ? message.locationKeys.get(i) : null;
+                                        matchCount++;
+                                    }
+                                }
+                            }
+                            MyMod.LOG.debug("[Upload] strategy2: matchCount={}, matchId={}", matchCount, matchId);
+                            if (matchCount == 1) {
+                                MyMod.LOG.debug(
+                                    "[Upload] strategy2: remembered provider '{}', id={}",
+                                    rememberedName,
+                                    matchId);
+                                ClientState.set(rememberedName, matchId);
+                                ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(matchId, matchKey));
+                                return;
+                            }
                         }
-                        MyMod.LOG.debug("[Upload] strategy2: matchCount={}, matchId={}", matchCount, matchId);
-                        if (matchCount == 1) {
-                            MyMod.LOG.debug("[Upload] strategy2: remembered provider '{}', id={}", rememberedName, matchId);
-                            ClientState.set(rememberedName, matchId);
-                            ModNetwork.CHANNEL.sendToServer(new UploadPatternPacket(matchId, matchKey));
-                            return;
-                        }
+                    } else {
+                        MyMod.LOG.debug("[Upload] strategy2: recipeMap is null or empty, skip remembered check");
                     }
-                } else {
-                    MyMod.LOG.debug("[Upload] strategy2: recipeMap is null or empty, skip remembered check");
-                }
 
-                // 策略3: 打开搜索界面
-                openGuiWithSearch(message);
+                    // 策略3: 打开搜索界面
+                    openGuiWithSearch(message);
                 } catch (Throwable t) {
                     MyMod.LOG.error("[Upload] handleProvidersList failed", t);
                 }
@@ -218,8 +221,15 @@ public class ClientProxy extends CommonProxy {
                 }
             }
         }
-        GuiProviderSelect gui = new GuiProviderSelect(current, message.ids, message.names, message.emptySlots,
-            message.totalSlots, message.locationKeys, message.icons, message.recipeMap);
+        GuiProviderSelect gui = new GuiProviderSelect(
+            current,
+            message.ids,
+            message.names,
+            message.emptySlots,
+            message.totalSlots,
+            message.locationKeys,
+            message.icons,
+            message.recipeMap);
         if (searchKey != null) {
             gui.setPresetSearchKey(searchKey);
         }
@@ -261,9 +271,7 @@ public class ClientProxy extends CommonProxy {
     @Override
     public void handleHatchListSync(final HatchListSyncPacket message) {
         Minecraft.getMinecraft()
-            .func_152344_a(() -> {
-                ClientState.hatchListCache = message.buildCache();
-            });
+            .func_152344_a(() -> { ClientState.hatchListCache = message.buildCache(); });
     }
 
     @Override
@@ -389,15 +397,14 @@ public class ClientProxy extends CommonProxy {
                                     .translateToLocal("chat.appliedenergistics2.CraftComplete"),
                                 description));
                     if (Minecraft.getMinecraft().theWorld != null && Minecraft.getMinecraft().thePlayer != null) {
-                        Minecraft.getMinecraft().theWorld
-                            .playSound(
-                                Minecraft.getMinecraft().thePlayer.posX,
-                                Minecraft.getMinecraft().thePlayer.posY,
-                                Minecraft.getMinecraft().thePlayer.posZ,
-                                "random.levelup",
-                                0.25f,
-                                1,
-                                false);
+                        Minecraft.getMinecraft().theWorld.playSound(
+                            Minecraft.getMinecraft().thePlayer.posX,
+                            Minecraft.getMinecraft().thePlayer.posY,
+                            Minecraft.getMinecraft().thePlayer.posZ,
+                            "random.levelup",
+                            0.25f,
+                            1,
+                            false);
                     }
                 } catch (Throwable t) {
                     com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] crafting notification failed: " + t);
@@ -468,7 +475,8 @@ public class ClientProxy extends CommonProxy {
                 }
                 Minecraft.getMinecraft().thePlayer.addChatMessage(
                     new net.minecraft.util.ChatComponentText(
-                        net.minecraft.util.EnumChatFormatting.YELLOW + net.minecraft.util.StatCollector.translateToLocal(message.messageKey)));
+                        net.minecraft.util.EnumChatFormatting.YELLOW
+                            + net.minecraft.util.StatCollector.translateToLocal(message.messageKey)));
             });
     }
 

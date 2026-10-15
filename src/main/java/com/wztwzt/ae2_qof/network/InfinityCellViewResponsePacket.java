@@ -8,6 +8,8 @@ import java.util.UUID;
 
 import net.minecraft.nbt.NBTTagCompound;
 
+import com.wztwzt.ae2_qof.client.InfinityCellViewCache;
+
 import cn.dancingsnow.aeinfinitycell.nei.InfinityCellViewPreview;
 import cn.dancingsnow.aeinfinitycell.nei.InfinityCellViewPreview.Channel;
 import cn.dancingsnow.aeinfinitycell.nei.InfinityCellViewPreview.Entry;
@@ -17,9 +19,6 @@ import cn.dancingsnow.aeinfinitycell.storage.EssentiaStackKey;
 import cn.dancingsnow.aeinfinitycell.storage.FluidStackKey;
 import cn.dancingsnow.aeinfinitycell.storage.InfinityCellRecord;
 import cn.dancingsnow.aeinfinitycell.storage.ItemStackKey;
-
-import com.wztwzt.ae2_qof.client.InfinityCellViewCache;
-
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -31,7 +30,8 @@ import io.netty.buffer.ByteBuf;
 /**
  * 无限元件 NEI 预览应答（S2C，3.19.0-fix24）：pages 为 null 表示该 id 在服务端无数据。
  *
- * <p>负载为「通道分页 + 每通道前 N 条」的裁剪快照，不是整份存档；配合编码预算上限，
+ * <p>
+ * 负载为「通道分页 + 每通道前 N 条」的裁剪快照，不是整份存档；配合编码预算上限，
  * 避免 1.7.10 S3F 自定义负载长度（short ≤ 32767 字节）溢出导致整包丢弃。
  */
 public class InfinityCellViewResponsePacket implements IMessage {
@@ -67,7 +67,8 @@ public class InfinityCellViewResponsePacket implements IMessage {
                 for (int e = 0; e < entryCount; e++) {
                     boolean hasKey = buf.readBoolean();
                     NBTTagCompound keyTag = hasKey ? ByteBufUtils.readTag(buf) : null;
-                    CellCount amount = CellCount.parse(readString(buf));                    Entry<?> entry = decodeEntry(channel, keyTag, amount);
+                    CellCount amount = CellCount.parse(readString(buf));
+                    Entry<?> entry = decodeEntry(channel, keyTag, amount);
                     if (entry != null) {
                         entries.add(entry);
                     }
@@ -92,8 +93,9 @@ public class InfinityCellViewResponsePacket implements IMessage {
         buf.writeByte(pageCount);
         for (int p = 0; p < pageCount; p++) {
             Page page = pages.get(p);
-            buf.writeByte(page.getChannel()
-                .ordinal());
+            buf.writeByte(
+                page.getChannel()
+                    .ordinal());
             buf.writeLong(page.getTotalTypes());
             List<? extends Entry<?>> entries = page.getEntries();
             int entryCount = Math.min(entries.size(), 65535);
@@ -105,7 +107,11 @@ public class InfinityCellViewResponsePacket implements IMessage {
                 if (keyTag != null) {
                     ByteBufUtils.writeTag(buf, keyTag);
                 }
-                writeString(buf, entry.getAmount() == null ? "0" : entry.getAmount().toString());
+                writeString(
+                    buf,
+                    entry.getAmount() == null ? "0"
+                        : entry.getAmount()
+                            .toString());
             }
         }
     }
@@ -177,9 +183,11 @@ public class InfinityCellViewResponsePacket implements IMessage {
             for (Entry<?> entry : page.getEntries()) {
                 NBTTagCompound keyTag = encodeKey(page.getChannel(), entry);
                 int cost = 8 + (keyTag != null ? keyTag.toString()
-                    .length() * 2 : 0) + (entry.getAmount() == null ? 0 : entry.getAmount()
-                        .toString()
-                        .length() * 2);
+                    .length() * 2 : 0)
+                    + (entry.getAmount() == null ? 0
+                        : entry.getAmount()
+                            .toString()
+                            .length() * 2);
                 if (used + cost > MAX_PAYLOAD_BYTES) {
                     break;
                 }

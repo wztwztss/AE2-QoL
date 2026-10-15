@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.util.IIcon;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -11,27 +12,31 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import net.minecraft.util.IIcon;
-
 import com.wztwzt.ae2_qof.util.ModTextures;
 
 /**
  * v7 材质方案 B：把本模组的 25 张机器贴图混入原版方块图集的注册列表。
  *
- * <p><b>为什么需要</b>：1.7.10 的 {@code TextureMap.registerIcons()} 只会把「所有已注册方块 /
+ * <p>
+ * <b>为什么需要</b>：1.7.10 的 {@code TextureMap.registerIcons()} 只会把「所有已注册方块 /
  * 物品」引用的路径放进 {@code mapRegisteredSprites}。运行时新造的路径不在其中，任何注册尝试
  * 都会拿到 missingno 占位（表现为 25 张不同贴图 UV 全部相同、渲染紫黑）。GT 的图标队列
- * {@code GregTechAPI.sBlockIcons} 走的也是同一个 map，同样解决不了这个问题（8 轮实测已证伪）。</p>
+ * {@code GregTechAPI.sBlockIcons} 走的也是同一个 map，同样解决不了这个问题（8 轮实测已证伪）。
+ * </p>
  *
- * <p><b>做法</b>：注入 {@code registerIcons()}（运行时名 {@code func_110573_f}，MCP 名
+ * <p>
+ * <b>做法</b>：注入 {@code registerIcons()}（运行时名 {@code func_110573_f}，MCP 名
  * {@code registerIcons}，两个都列上并 {@code remap=false}——与 {@code MixinGuiSuperDualInterface}
  * 处理 {@code func_146284_a} 的方式一致）。TAIL 时原版 / Forge / GT 已全部注册完，
  * 我们再把 25 张 v7 路径补进 {@code mapRegisteredSprites}，本帧 stitcher 会把它们当作
- * 「本来就存在的贴图」一起装订进图集，资源包正常参与解析。</p>
+ * 「本来就存在的贴图」一起装订进图集，资源包正常参与解析。
+ * </p>
  *
- * <p><b>Angelica 兼容</b>：Angelica / MCPatcherForge 对 TextureMap 的注入均发生在
+ * <p>
+ * <b>Angelica 兼容</b>：Angelica / MCPatcherForge 对 TextureMap 的注入均发生在
  * {@code func_110571_b}（loadTextureAtlas）的早段与 stitcher 阶段，本注入在
- * {@code func_110573_f}（registerIcons）TAIL，与它们的注入点无重叠，不会互相干扰。</p>
+ * {@code func_110573_f}（registerIcons）TAIL，与它们的注入点无重叠，不会互相干扰。
+ * </p>
  */
 @Mixin(TextureMap.class)
 public abstract class MixinTextureMap {
@@ -102,7 +107,8 @@ public abstract class MixinTextureMap {
     }
 
     @Unique
-    private static Field ae2qol$findField(Class<?> type, String mcpName, String srgName) throws ReflectiveOperationException {
+    private static Field ae2qol$findField(Class<?> type, String mcpName, String srgName)
+        throws ReflectiveOperationException {
         try {
             return type.getDeclaredField(mcpName);
         } catch (NoSuchFieldException ignored) {
@@ -111,7 +117,8 @@ public abstract class MixinTextureMap {
     }
 
     @Unique
-    private static Method ae2qol$findMethod(Class<?> type, String mcpName, String srgName) throws ReflectiveOperationException {
+    private static Method ae2qol$findMethod(Class<?> type, String mcpName, String srgName)
+        throws ReflectiveOperationException {
         try {
             return type.getDeclaredMethod(mcpName, String.class);
         } catch (NoSuchMethodException ignored) {

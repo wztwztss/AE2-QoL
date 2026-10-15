@@ -15,10 +15,12 @@ import com.wztwzt.ae2_qof.network.SmartPatternGenPacket;
 /**
  * 「批量样板生成器」的 MUI2 界面（3.23.0）。
  *
- * <p>功能面对照参考模组 AE2PatternGen 的生成器界面（配方设置 / 过滤器 / 生成），
+ * <p>
+ * 功能面对照参考模组 AE2PatternGen 的生成器界面（配方设置 / 过滤器 / 生成），
  * 但实现为本仓库自己的 MUI2 面板、复用我们的写回与日志口径。
  *
- * <p>过滤器全部"留空即不启用"，匹配串支持 {@code *} 与 {@code ?}，可同时匹配显示名与矿辞名。
+ * <p>
+ * 过滤器全部"留空即不启用"，匹配串支持 {@code *} 与 {@code ?}，可同时匹配显示名与矿辞名。
  * 点「生成」后由服务端扫描 RecipeMap 并产出样板（结果计数进聊天栏与日志），
  * 因此界面本身不需要显示进度。
  */
@@ -63,25 +65,28 @@ public final class GeneratorPanel {
         Flow mapExtra = Flow.row()
             .childPadding(3)
             .size(288, 16);
-        mapExtra.child(new ButtonWidget<>().size(60, 14)
-            .overlay(IKey.str("对照表"))
-            .tooltip(t -> {
-                t.addLine(IKey.str("列出全部 RecipeMap：中文名 | 英文名 | 关键字"));
-                t.addLine(IKey.str("点整行 = 填入关键字并返回"));
-            })
-            .onMouseTapped(ctx -> {
-                if (!data.isClient()) return true;
-                try {
-                    net.minecraft.client.Minecraft.getMinecraft()
-                        .displayGuiScreen(
-                            new com.wztwzt.ae2_qof.client.gui.GuiRecipeMapTable(
-                                ((RecipeMapKeywordField) mapField)::pickFromTable));
-                } catch (Throwable t) {
-                    MyMod.LOG.warn("[AE2QoL] 打开 RecipeMap 对照表失败", t);
-                }
-                return true;
-            }));
-        mapExtra.child(IKey.dynamic(() -> mapHint[0]).asWidget());
+        mapExtra.child(
+            new ButtonWidget<>().size(60, 14)
+                .overlay(IKey.str("对照表"))
+                .tooltip(t -> {
+                    t.addLine(IKey.str("列出全部 RecipeMap：中文名 | 英文名 | 关键字"));
+                    t.addLine(IKey.str("点整行 = 填入关键字并返回"));
+                })
+                .onMouseTapped(ctx -> {
+                    if (!data.isClient()) return true;
+                    try {
+                        net.minecraft.client.Minecraft.getMinecraft()
+                            .displayGuiScreen(
+                                new com.wztwzt.ae2_qof.client.gui.GuiRecipeMapTable(
+                                    ((RecipeMapKeywordField) mapField)::pickFromTable));
+                    } catch (Throwable t) {
+                        MyMod.LOG.warn("[AE2QoL] 打开 RecipeMap 对照表失败", t);
+                    }
+                    return true;
+                }));
+        mapExtra.child(
+            IKey.dynamic(() -> mapHint[0])
+                .asWidget());
         column.child(mapExtra);
         column.child(new TextWidget<>(IKey.str("过滤器（留空 = 不启用；支持 * 与 ?；可匹配显示名或矿辞）")).size(290, 10));
         column.child(row("输入排除", inBlack));
@@ -90,8 +95,7 @@ public final class GeneratorPanel {
         column.child(row("输出矿辞", outOre));
         column.child(row("NC 物品", ncItem));
         column.child(row("替换规则", replField));
-        column.child(
-            new TextWidget<>(IKey.str("替换规则写法：源矿辞=目标矿辞，多条用 ; 分隔，如 dustCopper=dustTin")).size(290, 10));
+        column.child(new TextWidget<>(IKey.str("替换规则写法：源矿辞=目标矿辞，多条用 ; 分隔，如 dustCopper=dustTin")).size(290, 10));
         Flow capRow = Flow.row()
             .childPadding(3)
             .size(288, 20);
@@ -99,26 +103,61 @@ public final class GeneratorPanel {
             .child(capField)
             .child(new TextWidget<>(IKey.str("电压等级")).size(56, 12))
             .child(tierField)
-            .child(new ButtonWidget<>().size(80, 14)
-                .overlay(IKey.str("生成样板"))
-                .tooltip(t -> {
-                    t.addLine(IKey.str("服务端扫描该 RecipeMap 并按过滤器生成样板"));
-                    t.addLine(IKey.str("产物进背包；放不下会掉在脚下"));
-                })
+            .child(
+                new ButtonWidget<>().size(80, 14)
+                    .overlay(IKey.str("生成样板"))
+                    .tooltip(t -> {
+                        t.addLine(IKey.str("服务端扫描该 RecipeMap 并按过滤器生成样板"));
+                        t.addLine(IKey.str("产物进背包；放不下会掉在脚下"));
+                    })
+                    .onMouseTapped(ctx -> {
+                        if (!data.isClient()) return true;
+                        try {
+                            int cap = 512;
+                            try {
+                                cap = Integer.parseInt(
+                                    capField.getText()
+                                        .trim());
+                            } catch (Throwable ignored) {
+                                // 非法上限按默认值处理，并在日志里留痕（不静默）
+                                MyMod.LOG.warn("[AE2QoL] 生成器数量上限非法，按默认 512 处理：{}", capField.getText());
+                            }
+                            ModNetwork.CHANNEL.sendToServer(
+                                new SmartPatternGenPacket(
+                                    mapField.getText(),
+                                    inBlack.getText(),
+                                    outBlack.getText(),
+                                    inOre.getText(),
+                                    outOre.getText(),
+                                    ncItem.getText(),
+                                    cap,
+                                    parseTier(tierField.getText()),
+                                    replField.getText(),
+                                    false));
+                            MyMod.LOG.info(
+                                "[AE2QoL] 已发送样板生成请求：map={} cap={} inBlack={} outBlack={} inOre={} outOre={} nc={}",
+                                mapField.getText(),
+                                cap,
+                                inBlack.getText(),
+                                outBlack.getText(),
+                                inOre.getText(),
+                                outOre.getText(),
+                                ncItem.getText());
+                        } catch (Throwable t) {
+                            MyMod.LOG.warn("[AE2QoL] 发送样板生成请求失败", t);
+                        }
+                        return true;
+                    }));
+        column.child(capRow);
+        // 「预览数量」：同一套参数只统计不产出（对应参考模组的预览数量）
+        column.child(
+            new ButtonWidget<>().size(90, 14)
+                .overlay(IKey.str("预览数量"))
+                .tooltip(t -> t.addLine(IKey.str("按当前参数只统计：会产出多少、跳过多少（不产生任何物品）")))
                 .onMouseTapped(ctx -> {
                     if (!data.isClient()) return true;
                     try {
-                        int cap = 512;
-                        try {
-                            cap = Integer.parseInt(
-                                capField.getText()
-                                    .trim());
-                        } catch (Throwable ignored) {
-                            // 非法上限按默认值处理，并在日志里留痕（不静默）
-                            MyMod.LOG.warn(
-                                "[AE2QoL] 生成器数量上限非法，按默认 512 处理：{}",
-                                capField.getText());
-                        }
+                        int cap = parseCap(capField.getText());
                         ModNetwork.CHANNEL.sendToServer(
                             new SmartPatternGenPacket(
                                 mapField.getText(),
@@ -130,47 +169,12 @@ public final class GeneratorPanel {
                                 cap,
                                 parseTier(tierField.getText()),
                                 replField.getText(),
-                                false));
-                        MyMod.LOG.info(
-                            "[AE2QoL] 已发送样板生成请求：map={} cap={} inBlack={} outBlack={} inOre={} outOre={} nc={}",
-                            mapField.getText(),
-                            cap,
-                            inBlack.getText(),
-                            outBlack.getText(),
-                            inOre.getText(),
-                            outOre.getText(),
-                            ncItem.getText());
+                                true));
                     } catch (Throwable t) {
-                        MyMod.LOG.warn("[AE2QoL] 发送样板生成请求失败", t);
+                        MyMod.LOG.warn("[AE2QoL] 发送预览数量请求失败", t);
                     }
                     return true;
                 }));
-        column.child(capRow);
-        // 「预览数量」：同一套参数只统计不产出（对应参考模组的预览数量）
-        column.child(new ButtonWidget<>().size(90, 14)
-            .overlay(IKey.str("预览数量"))
-            .tooltip(t -> t.addLine(IKey.str("按当前参数只统计：会产出多少、跳过多少（不产生任何物品）")))
-            .onMouseTapped(ctx -> {
-                if (!data.isClient()) return true;
-                try {
-                    int cap = parseCap(capField.getText());
-                    ModNetwork.CHANNEL.sendToServer(
-                        new SmartPatternGenPacket(
-                            mapField.getText(),
-                            inBlack.getText(),
-                            outBlack.getText(),
-                            inOre.getText(),
-                            outOre.getText(),
-                            ncItem.getText(),
-                            cap,
-                            parseTier(tierField.getText()),
-                            replField.getText(),
-                            true));
-                } catch (Throwable t) {
-                    MyMod.LOG.warn("[AE2QoL] 发送预览数量请求失败", t);
-                }
-                return true;
-            }));
         column.child(
             new TextWidget<>(IKey.str("结果会打在聊天栏与日志：seen/produced/skippedFluid/filtered/truncated")).size(290, 10));
 

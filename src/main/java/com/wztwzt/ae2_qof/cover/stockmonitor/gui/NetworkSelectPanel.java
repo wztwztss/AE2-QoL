@@ -22,7 +22,6 @@ import com.cleanroommc.modularui.widgets.ButtonWidget;
 import com.cleanroommc.modularui.widgets.ScrollingTextWidget;
 import com.cleanroommc.modularui.widgets.TextWidget;
 import com.cleanroommc.modularui.widgets.layout.Flow;
-
 import com.wztwzt.ae2_qof.cover.stockmonitor.StockMonitorCover;
 import com.wztwzt.ae2_qof.cover.stockmonitor.ae.WirelessAeConnector;
 
@@ -44,12 +43,13 @@ public final class NetworkSelectPanel {
 
         List<NetworkEntry> entries = fetchNetworks(world, player, cover);
 
-        Flow list = Flow.column().widthRel(1F).childPadding(2);
+        Flow list = Flow.column()
+            .widthRel(1F)
+            .childPadding(2);
 
         if (entries.isEmpty()) {
             list.child(
-                new TextWidget<>(IKey.lang("ae2_qof.gui.stock_monitor.no_networks"))
-                    .widthRel(1F)
+                new TextWidget<>(IKey.lang("ae2_qof.gui.stock_monitor.no_networks")).widthRel(1F)
                     .height(CARD_H)
                     .textAlign(Alignment.CenterLeft)
                     .color(0xFFAEBABC));
@@ -65,13 +65,15 @@ public final class NetworkSelectPanel {
                             // B8：离线网络不可绑定，给玩家提示
                             EntityPlayer p = panelSyncManager.getPlayer();
                             if (p != null) {
-                                p.addChatMessage(new net.minecraft.util.ChatComponentText(
-                                    EnumChatFormatting.RED + StatCollector
-                                        .translateToLocal("ae2_qof.gui.stock_monitor.network_offline")));
+                                p.addChatMessage(
+                                    new net.minecraft.util.ChatComponentText(
+                                        EnumChatFormatting.RED + StatCollector
+                                            .translateToLocal("ae2_qof.gui.stock_monitor.network_offline")));
                             }
                             return;
                         }
-                        cover.getCoverData().setNetworkId(networkId.toString());
+                        cover.getCoverData()
+                            .setNetworkId(networkId.toString());
                         // B8：绑定成功后关闭面板，给出明确完成反馈
                         panelHandler.closePanel();
                     }));
@@ -86,8 +88,7 @@ public final class NetworkSelectPanel {
                     .padding(6)
                     .childPadding(4)
                     .child(
-                        new TextWidget<>(IKey.lang("ae2_qof.gui.stock_monitor.select_network"))
-                            .widthRel(1F)
+                        new TextWidget<>(IKey.lang("ae2_qof.gui.stock_monitor.select_network")).widthRel(1F)
                             .textAlign(Alignment.Center)
                             .marginBottom(2))
                     .child(list)
@@ -97,12 +98,14 @@ public final class NetworkSelectPanel {
                             .height(14)
                             .childPadding(4)
                             .child(
-                                new TextWidget<>(IKey.dynamic(() -> EnumChatFormatting.GRAY
-                                    + StatCollector.translateToLocal("ae2_qof.gui.stock_monitor.network_count")
-                                    + " " + entries.size())).expanded())
+                                new TextWidget<>(
+                                    IKey.dynamic(
+                                        () -> EnumChatFormatting.GRAY
+                                            + StatCollector.translateToLocal("ae2_qof.gui.stock_monitor.network_count")
+                                            + " "
+                                            + entries.size())).expanded())
                             .child(
-                                new ButtonWidget<>()
-                                    .size(40, 14)
+                                new ButtonWidget<>().size(40, 14)
                                     .background(GuiTextures.BUTTON_CLEAN)
                                     .overlay(IKey.lang("ae2_qof.gui.stock_monitor.close"))
                                     .onMousePressed(event -> {
@@ -113,8 +116,7 @@ public final class NetworkSelectPanel {
     }
 
     private static IWidget networkCard(NetworkEntry entry, InteractionSyncHandler select) {
-        return new ButtonWidget<>()
-            .widthRel(1F)
+        return new ButtonWidget<>().widthRel(1F)
             .height(CARD_H)
             .syncHandler(select)
             .child(
@@ -122,19 +124,17 @@ public final class NetworkSelectPanel {
                     .full()
                     .padding(4)
                     .child(
-                        new ScrollingTextWidget(IKey.str(entry.name))
-                            .widthRel(1F)
+                        new ScrollingTextWidget(IKey.str(entry.name)).widthRel(1F)
                             .height(10)
                             .color(entry.selected ? 0xFF42D3CF : 0xFFF0F6F7))
-                    .child(
-                        new TextWidget<>(IKey.dynamic(() -> {
-                            EnumChatFormatting c = entry.online ? EnumChatFormatting.GREEN : EnumChatFormatting.GRAY;
-                            String k = entry.online ? "ae2_qof.gui.stock_monitor.network_online"
-                                : "ae2_qof.gui.stock_monitor.network_offline";
-                            return c + StatCollector.translateToLocal(k);
-                        })).widthRel(1F)
-                            .scale(0.8F)
-                            .color(entry.selected ? 0xFF8FE4E1 : 0xFFAEBABC)));
+                    .child(new TextWidget<>(IKey.dynamic(() -> {
+                        EnumChatFormatting c = entry.online ? EnumChatFormatting.GREEN : EnumChatFormatting.GRAY;
+                        String k = entry.online ? "ae2_qof.gui.stock_monitor.network_online"
+                            : "ae2_qof.gui.stock_monitor.network_offline";
+                        return c + StatCollector.translateToLocal(k);
+                    })).widthRel(1F)
+                        .scale(0.8F)
+                        .color(entry.selected ? 0xFF8FE4E1 : 0xFFAEBABC)));
     }
 
     private static List<NetworkEntry> fetchNetworks(World world, EntityPlayer player, StockMonitorCover cover) {
@@ -142,7 +142,8 @@ public final class NetworkSelectPanel {
         if (!WirelessAeConnector.isNexusAvailable()) return Collections.emptyList();
 
         List<?> records = WirelessAeConnector.getVisibleNetworks(world, player);
-        String currentId = cover.getCoverData().getNetworkId();
+        String currentId = cover.getCoverData()
+            .getNetworkId();
         List<NetworkEntry> entries = new ArrayList<>();
 
         for (Object record : records) {
@@ -150,7 +151,13 @@ public final class NetworkSelectPanel {
             String name = WirelessAeConnector.getRecordName(record);
             boolean online = WirelessAeConnector.isRecordOnline(record);
             if (id != null) {
-                entries.add(new NetworkEntry(id, name, online, id.toString().equals(currentId)));
+                entries.add(
+                    new NetworkEntry(
+                        id,
+                        name,
+                        online,
+                        id.toString()
+                            .equals(currentId)));
             }
         }
         return entries;

@@ -9,14 +9,11 @@ import net.minecraft.item.ItemStack;
 
 import com.glodblock.github.common.item.ItemFluidEncodedPattern;
 import com.wztwzt.ae2_qof.MyMod;
-import com.wztwzt.ae2_qof.util.ProviderLocator;
 
 import appeng.api.AEApi;
 import appeng.api.config.SecurityPermissions;
 import appeng.api.networking.IGrid;
-import appeng.api.networking.IGridHost;
 import appeng.api.networking.IGridNode;
-import appeng.api.networking.IMachineSet;
 import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.networking.security.IActionHost;
 import appeng.api.networking.security.ISecurityGrid;
@@ -137,8 +134,8 @@ public class UploadPatternPacket implements IMessage {
 
                 // fix41：优先按稳定位置（维度+坐标）定位，内存地址 ID 只作兜底；
                 // 区块重载 / 服务器重启后 ID 会失效，坐标不会，避免「点了没反应」。
-                ICraftingProvider target = com.wztwzt.ae2_qof.util.ProviderLocator.find(grid,
-                    message.locationKey, message.providerId);
+                ICraftingProvider target = com.wztwzt.ae2_qof.util.ProviderLocator
+                    .find(grid, message.locationKey, message.providerId);
                 if (target == null) {
                     MyMod.LOG.info(
                         "[Upload] server: provider not found in grid, id={}, key={}",
@@ -228,7 +225,6 @@ public class UploadPatternPacket implements IMessage {
             } catch (Exception ignored) {}
             return null;
         }
-
 
         private boolean insertPatternIntoProvider(ICraftingProvider provider, ItemStack pattern) {
             // 优先使用提供器自带的专属样板槽库存：

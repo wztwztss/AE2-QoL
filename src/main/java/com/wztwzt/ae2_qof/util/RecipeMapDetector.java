@@ -89,8 +89,11 @@ public final class RecipeMapDetector {
                 if (in == null) {
                     continue;
                 }
-                sb.append(in.getItem() == null ? "?" : in.getItem().getClass()
-                    .getName())
+                sb.append(
+                    in.getItem() == null ? "?"
+                        : in.getItem()
+                            .getClass()
+                            .getName())
                     .append(':')
                     .append(in.getItemDamage())
                     .append(';');
@@ -102,8 +105,11 @@ public final class RecipeMapDetector {
                 if (out == null) {
                     continue;
                 }
-                sb.append(out.getItem() == null ? "?" : out.getItem().getClass()
-                    .getName())
+                sb.append(
+                    out.getItem() == null ? "?"
+                        : out.getItem()
+                            .getClass()
+                            .getName())
                     .append(':')
                     .append(out.getItemDamage())
                     .append(';');

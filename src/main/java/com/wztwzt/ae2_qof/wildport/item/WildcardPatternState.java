@@ -9,12 +9,12 @@ package com.wztwzt.ae2_qof.wildport.item;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.wztwzt.ae2_qof.wildport.crafting.WildcardPatternEntry;
-
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.common.util.Constants.NBT;
+
+import com.wztwzt.ae2_qof.wildport.crafting.WildcardPatternEntry;
 
 public final class WildcardPatternState {
 
@@ -63,7 +63,8 @@ public final class WildcardPatternState {
 
     public static int getExpandedPatternCount(ItemStack stack) {
         NBTTagCompound tag = stack == null ? null : stack.getTagCompound();
-        return tag == null || !tag.hasKey(KEY_EXPANDED_PATTERN_COUNT) ? 0 : Math.max(0, tag.getInteger(KEY_EXPANDED_PATTERN_COUNT));
+        return tag == null || !tag.hasKey(KEY_EXPANDED_PATTERN_COUNT) ? 0
+            : Math.max(0, tag.getInteger(KEY_EXPANDED_PATTERN_COUNT));
     }
 
     public static void setExpandedPatternCount(ItemStack stack, int count) {
@@ -103,8 +104,14 @@ public final class WildcardPatternState {
         initializeFromPattern(stack);
         NBTTagCompound exported = new NBTTagCompound();
         NBTTagCompound source = getOrCreateTag(stack);
-        exported.setTag(KEY_INPUT_COMPONENTS, source.getTagList(KEY_INPUT_COMPONENTS, NBT.TAG_COMPOUND).copy());
-        exported.setTag(KEY_OUTPUT_COMPONENTS, source.getTagList(KEY_OUTPUT_COMPONENTS, NBT.TAG_COMPOUND).copy());
+        exported.setTag(
+            KEY_INPUT_COMPONENTS,
+            source.getTagList(KEY_INPUT_COMPONENTS, NBT.TAG_COMPOUND)
+                .copy());
+        exported.setTag(
+            KEY_OUTPUT_COMPONENTS,
+            source.getTagList(KEY_OUTPUT_COMPONENTS, NBT.TAG_COMPOUND)
+                .copy());
         copyIfPresent(source, exported, "WildcardGlobalExcludeMaterials");
         copyIfPresent(source, exported, "WildcardRuleIncludeMaterials");
         copyIfPresent(source, exported, "WildcardRuleExcludeMaterials");
@@ -133,12 +140,14 @@ public final class WildcardPatternState {
     /**
      * 参考实现的"旧槽清理"：把原生 {@code in}/{@code out} 删掉，改用本类自己的组件列表。
      *
-     * <p><b>3.35.0 修正（致命）</b>：**对我们的通配样板跳过这个删除**。本模组的展开器
+     * <p>
+     * <b>3.35.0 修正（致命）</b>：**对我们的通配样板跳过这个删除**。本模组的展开器
      * （{@code SmartWildcardExpander.doExpand}）以原生 {@code in}/{@code out} 当模板来逐候选克隆，
      * 删掉就等于把模板扔掉 —— 3.34.0 实机证据：{@code reason=template-in-out-missing} 出现 **23 次**、
      * 展开产出恒 0，机器于是"直接按这个样板自己的合成"。
      *
-     * <p>**刻意只对 {@code CommonProxy.smartWildcardPattern} 生效**：原版 WildcardPattern 模组的物品
+     * <p>
+     * **刻意只对 {@code CommonProxy.smartWildcardPattern} 生效**：原版 WildcardPattern 模组的物品
      * 保持它原本的行为（用户明确要求两侧互不干扰；实例里两个模组同时装着）。
      */
     private static void cleanupLegacyPatternSlots(ItemStack stack, NBTTagCompound tag) {
@@ -227,7 +236,10 @@ public final class WildcardPatternState {
 
     private static void copyIfPresent(NBTTagCompound source, NBTTagCompound target, String key) {
         if (source.hasKey(key)) {
-            target.setTag(key, source.getTag(key).copy());
+            target.setTag(
+                key,
+                source.getTag(key)
+                    .copy());
         }
     }
 

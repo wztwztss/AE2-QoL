@@ -6,7 +6,6 @@ import net.minecraftforge.fluids.FluidContainerRegistry;
 import net.minecraftforge.fluids.FluidStack;
 
 import appeng.api.AEApi;
-import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.util.Platform;
@@ -31,6 +30,7 @@ public class StockMonitorCoverData {
 
     /** 单个检测槽位 */
     public static class MonitorSlot {
+
         public ItemStack phantomStack = null;
         public IAEStack<?> monitorTarget = null;
         public long threshold = 0;
@@ -147,9 +147,13 @@ public class StockMonitorCoverData {
             fluid = tryRecognizeFluidItem(phantomStack);
         }
         if (fluid != null) {
-            return AEApi.instance().storage().createFluidStack(fluid);
+            return AEApi.instance()
+                .storage()
+                .createFluidStack(fluid);
         }
-        IAEItemStack itemStack = AEApi.instance().storage().createItemStack(phantomStack);
+        IAEItemStack itemStack = AEApi.instance()
+            .storage()
+            .createItemStack(phantomStack);
         itemStack.setStackSize(1);
         return itemStack;
     }
@@ -157,11 +161,12 @@ public class StockMonitorCoverData {
     private static FluidStack tryRecognizeFluidItem(ItemStack stack) {
         try {
             if (stack.getItem() instanceof net.minecraftforge.fluids.IFluidContainerItem) {
-                FluidStack fs = ((net.minecraftforge.fluids.IFluidContainerItem) stack.getItem())
-                    .getFluid(stack);
+                FluidStack fs = ((net.minecraftforge.fluids.IFluidContainerItem) stack.getItem()).getFluid(stack);
                 if (fs != null && fs.getFluid() != null) return fs;
             }
-            String cls = stack.getItem().getClass().getName();
+            String cls = stack.getItem()
+                .getClass()
+                .getName();
             if (cls.equals("com.glodblock.github.common.item.ItemFluidPacket")) {
                 return readPacketFluid(stack);
             }
@@ -177,8 +182,7 @@ public class StockMonitorCoverData {
             }
             FluidStack nbtFluid = readGenericNbtFluid(stack);
             if (nbtFluid != null) return nbtFluid;
-        } catch (Throwable ignored) {
-        }
+        } catch (Throwable ignored) {}
         return null;
     }
 
@@ -195,8 +199,7 @@ public class StockMonitorCoverData {
         if (tag.hasKey("Fluid")) {
             String fluidName = tag.getString("Fluid");
             if (fluidName != null && !fluidName.isEmpty()) {
-                net.minecraftforge.fluids.Fluid fluid = net.minecraftforge.fluids.FluidRegistry
-                    .getFluid(fluidName);
+                net.minecraftforge.fluids.Fluid fluid = net.minecraftforge.fluids.FluidRegistry.getFluid(fluidName);
                 if (fluid != null) {
                     int amount = tag.hasKey("Amount") ? tag.getInteger("Amount") : stack.stackSize;
                     if (amount <= 0) amount = 1;
@@ -210,7 +213,8 @@ public class StockMonitorCoverData {
     private static FluidStack readPacketFluid(ItemStack stack) {
         try {
             if (!stack.hasTagCompound()) return null;
-            NBTTagCompound tag = stack.getTagCompound().getCompoundTag("FluidStack");
+            NBTTagCompound tag = stack.getTagCompound()
+                .getCompoundTag("FluidStack");
             if (tag == null || tag.hasNoTags()) return null;
             return FluidStack.loadFluidStackFromNBT(tag);
         } catch (Throwable ignored) {

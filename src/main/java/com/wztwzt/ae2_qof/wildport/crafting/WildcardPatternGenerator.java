@@ -13,15 +13,17 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import appeng.api.networking.crafting.ICraftingPatternDetails;
-import appeng.api.storage.data.IAEItemStack;
-import com.wztwzt.ae2_qof.wildport.ModItems;
-import com.wztwzt.ae2_qof.wildport.item.WildcardPatternConfig;
-import com.wztwzt.ae2_qof.wildport.item.WildcardPatternState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.world.World;
+
+import com.wztwzt.ae2_qof.wildport.ModItems;
+import com.wztwzt.ae2_qof.wildport.item.WildcardPatternConfig;
+import com.wztwzt.ae2_qof.wildport.item.WildcardPatternState;
+
+import appeng.api.networking.crafting.ICraftingPatternDetails;
+import appeng.api.storage.data.IAEItemStack;
 
 public final class WildcardPatternGenerator {
 
@@ -33,10 +35,10 @@ public final class WildcardPatternGenerator {
     private WildcardPatternGenerator() {}
 
     public static boolean isWildcardPattern(ItemStack stack) {
-        return stack != null
-            && (stack.getItem() == ModItems.wildcardPattern
-                || CompositeWildcardPatternGenerator.isCompositeWildcardPattern(stack)
-                || stack.hasTagCompound() && stack.getTagCompound().getBoolean(KEY_WILDCARD));
+        return stack != null && (stack.getItem() == ModItems.wildcardPattern
+            || CompositeWildcardPatternGenerator.isCompositeWildcardPattern(stack)
+            || stack.hasTagCompound() && stack.getTagCompound()
+                .getBoolean(KEY_WILDCARD));
     }
 
     public static void markAsWildcard(ItemStack stack) {
@@ -55,13 +57,15 @@ public final class WildcardPatternGenerator {
     /**
      * 3.43.0 **根因 L 修复**：抹掉"通配样板"标记。
      *
-     * <p>为什么必须给具体样板抹掉：原版 WildcardPattern 模组的 {@code ItemEncodedPatternMixin} 在
+     * <p>
+     * 为什么必须给具体样板抹掉：原版 WildcardPattern 模组的 {@code ItemEncodedPatternMixin} 在
      * {@code appeng.items.misc.ItemEncodedPattern.getPatternForItem} HEAD 处的判据正是
      * {@code stack.getTagCompound().getBoolean("WildcardPattern")}；一旦命中，它会把返回的 details 换成
      * "轻量预览 details"（输出恒为模板的代表输出）⇒ 我们展开出的几百张具体样板在 AE 眼里全变成同一张。
      * 我们的 {@code buildConcretePattern} 克隆样板时会连整份 NBT 一起复制，所以标记必须显式抹掉。
      *
-     * <p><b>通配样板本体不要调用本方法</b>（Wild 窗口的桥接与预览依赖该标记）。
+     * <p>
+     * <b>通配样板本体不要调用本方法</b>（Wild 窗口的桥接与预览依赖该标记）。
      */
     public static void clearWildcardMarker(ItemStack stack) {
         if (stack == null) {
@@ -180,7 +184,12 @@ public final class WildcardPatternGenerator {
 
         List<ICraftingPatternDetails> result = new ArrayList<>();
         for (GeneratedPattern pattern : patterns) {
-            ItemStack generated = createPatternStack(stack, ruleIndex, pattern.materialName, pattern.inputStack, pattern.outputStack);
+            ItemStack generated = createPatternStack(
+                stack,
+                ruleIndex,
+                pattern.materialName,
+                pattern.inputStack,
+                pattern.outputStack);
             if (generated == null) {
                 continue;
             }
@@ -236,12 +245,14 @@ public final class WildcardPatternGenerator {
 
         List<GeneratedPattern> result = new ArrayList<>();
         for (String candidate : candidates) {
-            if (candidate == null || candidate.trim().isEmpty()) {
+            if (candidate == null || candidate.trim()
+                .isEmpty()) {
                 continue;
             }
             ItemStack inputStack = input == null || input.isEmpty() ? null : input.createStack(candidate, stack);
             ItemStack outputStack = output == null || output.isEmpty() ? null : output.createStack(candidate, stack);
-            if ((input != null && !input.isEmpty() && inputStack == null) || (output != null && !output.isEmpty() && outputStack == null)) {
+            if ((input != null && !input.isEmpty() && inputStack == null)
+                || (output != null && !output.isEmpty() && outputStack == null)) {
                 continue;
             }
             if (!WildcardPatternConfig.acceptsCandidate(stack, ruleIndex, candidate, inputStack, outputStack)) {
@@ -256,13 +267,15 @@ public final class WildcardPatternGenerator {
         Set<String> candidates = null;
         boolean narrowed = false;
 
-        Set<String> inputCandidates = input == null || input.isEmpty() ? java.util.Collections.<String>emptySet() : input.getCandidateMaterials();
+        Set<String> inputCandidates = input == null || input.isEmpty() ? java.util.Collections.<String>emptySet()
+            : input.getCandidateMaterials();
         if (inputCandidates != null && !inputCandidates.isEmpty()) {
             candidates = mergeCandidatePool(candidates, inputCandidates);
             narrowed = true;
         }
 
-        Set<String> outputCandidates = output == null || output.isEmpty() ? java.util.Collections.<String>emptySet() : output.getCandidateMaterials();
+        Set<String> outputCandidates = output == null || output.isEmpty() ? java.util.Collections.<String>emptySet()
+            : output.getCandidateMaterials();
         if (outputCandidates != null && !outputCandidates.isEmpty()) {
             candidates = mergeCandidatePool(candidates, outputCandidates);
             narrowed = true;
@@ -328,7 +341,8 @@ public final class WildcardPatternGenerator {
 
     public static List<String> getCandidateMaterials(ItemStack stack, int ruleIndex) {
         if (CompositeWildcardPatternGenerator.isCompositeWildcardPattern(stack)) {
-            return ruleIndex == 0 ? CompositeWildcardPatternGenerator.getCandidateMaterials(stack) : Collections.emptyList();
+            return ruleIndex == 0 ? CompositeWildcardPatternGenerator.getCandidateMaterials(stack)
+                : Collections.emptyList();
         }
         List<GeneratedPattern> patterns = generateRulePreviewPatterns(stack, ruleIndex);
         if (patterns.isEmpty()) {
@@ -337,7 +351,8 @@ public final class WildcardPatternGenerator {
 
         List<String> result = new ArrayList<>();
         for (GeneratedPattern pattern : patterns) {
-            if (pattern.materialName != null && !pattern.materialName.isEmpty() && !result.contains(pattern.materialName)) {
+            if (pattern.materialName != null && !pattern.materialName.isEmpty()
+                && !result.contains(pattern.materialName)) {
                 result.add(pattern.materialName);
             }
         }
@@ -352,12 +367,8 @@ public final class WildcardPatternGenerator {
         }
     }
 
-    private static ItemStack createPatternStack(
-        ItemStack template,
-        int ruleIndex,
-        String materialName,
-        ItemStack inputStack,
-        ItemStack outputStack) {
+    private static ItemStack createPatternStack(ItemStack template, int ruleIndex, String materialName,
+        ItemStack inputStack, ItemStack outputStack) {
         if (inputStack == null && outputStack == null) {
             return null;
         }
@@ -381,21 +392,21 @@ public final class WildcardPatternGenerator {
         return result;
     }
 
-    private static String buildGeneratedPatternId(
-        int ruleIndex,
-        String materialName,
-        ItemStack inputStack,
+    private static String buildGeneratedPatternId(int ruleIndex, String materialName, ItemStack inputStack,
         ItemStack outputStack) {
         return ruleIndex + "|"
-            + sanitizeIdentityPart(materialName) + "|"
-            + getStackFingerprint(inputStack) + "->"
+            + sanitizeIdentityPart(materialName)
+            + "|"
+            + getStackFingerprint(inputStack)
+            + "->"
             + getStackFingerprint(outputStack);
     }
 
     private static String sanitizeIdentityPart(String value) {
-        return value == null ? "" : value.replace("\\", "\\\\")
-            .replace("|", "\\|")
-            .replace("->", "-\\>");
+        return value == null ? ""
+            : value.replace("\\", "\\\\")
+                .replace("|", "\\|")
+                .replace("->", "-\\>");
     }
 
     private static String getStackFingerprint(ItemStack stack) {
@@ -404,11 +415,18 @@ public final class WildcardPatternGenerator {
         }
         String itemName = String.valueOf(net.minecraft.item.Item.itemRegistry.getNameForObject(stack.getItem()));
         if (itemName == null || itemName.isEmpty() || "null".equals(itemName)) {
-            itemName = stack.getItem() == null ? "null" : stack.getItem().getClass().getName();
+            itemName = stack.getItem() == null ? "null"
+                : stack.getItem()
+                    .getClass()
+                    .getName();
         }
         NBTTagCompound tag = stack.getTagCompound();
-        return itemName + "@" + stack.getItemDamage() + "x" + Math.max(1, stack.stackSize)
-            + "#" + (tag == null ? "" : Integer.toHexString(tag.hashCode()));
+        return itemName + "@"
+            + stack.getItemDamage()
+            + "x"
+            + Math.max(1, stack.stackSize)
+            + "#"
+            + (tag == null ? "" : Integer.toHexString(tag.hashCode()));
     }
 
     private static NBTTagList buildPatternList(ItemStack stack) {
@@ -463,6 +481,7 @@ public final class WildcardPatternGenerator {
     }
 
     public static final class GeneratedPattern {
+
         public final String materialName;
         public final ItemStack inputStack;
         public final ItemStack outputStack;

@@ -25,8 +25,8 @@ import gregtech.api.render.TextureFactory;
  * 免电信息终端。
  *
  * fix12: 所有 public 方法加 try-catch 防御层，避免 init 阶段其他 mod 遍历 MTE
- *        调用本类方法时抛异常逃逸到 FML/Log4j（Log4j 用 RFB 加载堆栈里的
- *        ISidedInventory 会二次崩溃）。同时重写 getStackForm 不依赖 getBaseMetaTileEntity。
+ * 调用本类方法时抛异常逃逸到 FML/Log4j（Log4j 用 RFB 加载堆栈里的
+ * ISidedInventory 会二次崩溃）。同时重写 getStackForm 不依赖 getBaseMetaTileEntity。
  */
 public class StockMonitorTerminal extends MTEHatch {
 
@@ -79,7 +79,7 @@ public class StockMonitorTerminal extends MTEHatch {
     }
 
     public StockMonitorTerminal(String aName, int aTier, int aInvSlotCount, String[] aDescription,
-            ITexture[][][] aTextures) {
+        ITexture[][][] aTextures) {
         super(aName, aTier, aInvSlotCount, aDescription, aTextures);
         this.terminalId = 32107; // newMetaEntity 用的构造器，ID 固定（fix48：原 32101 已让给 fissionevolved）
     }
@@ -202,13 +202,11 @@ public class StockMonitorTerminal extends MTEHatch {
     @Override
     public String[] getDescription() {
         try {
-            return new String[] {
-                StatCollector.translateToLocal("ae2_qof.terminal.stock_monitor.desc"),
+            return new String[] { StatCollector.translateToLocal("ae2_qof.terminal.stock_monitor.desc"),
                 StatCollector.translateToLocal("ae2_qof.terminal.stock_monitor.desc.0"),
                 StatCollector.translateToLocal("ae2_qof.terminal.stock_monitor.desc.1"),
                 EnumChatFormatting.GRAY + "[" + StatCollector.translateToLocal("ae2_qof.modname") + "]",
-                EnumChatFormatting.DARK_GRAY + "ae2qof"
-            };
+                EnumChatFormatting.DARK_GRAY + "ae2qof" };
         } catch (Throwable t) {
             System.err.println("[AE2QoL] StockMonitorTerminal.getDescription FAILED: " + t);
             return new String[] { "Stock Monitor Terminal", "[ae2qof]" };
@@ -218,8 +216,7 @@ public class StockMonitorTerminal extends MTEHatch {
     @Override
     public ITexture[] getTexturesActive(ITexture aBaseTexture) {
         try {
-            return new ITexture[] { aBaseTexture,
-                TextureFactory.of(Textures.BlockIcons.OVERLAY_SCREEN) };
+            return new ITexture[] { aBaseTexture, TextureFactory.of(Textures.BlockIcons.OVERLAY_SCREEN) };
         } catch (Throwable t) {
             System.err.println("[AE2QoL] StockMonitorTerminal.getTexturesActive FAILED: " + t);
             return new ITexture[] { aBaseTexture };
@@ -229,8 +226,7 @@ public class StockMonitorTerminal extends MTEHatch {
     @Override
     public ITexture[] getTexturesInactive(ITexture aBaseTexture) {
         try {
-            return new ITexture[] { aBaseTexture,
-                TextureFactory.of(Textures.BlockIcons.OVERLAY_SCREEN) };
+            return new ITexture[] { aBaseTexture, TextureFactory.of(Textures.BlockIcons.OVERLAY_SCREEN) };
         } catch (Throwable t) {
             System.err.println("[AE2QoL] StockMonitorTerminal.getTexturesInactive FAILED: " + t);
             return new ITexture[] { aBaseTexture };
@@ -297,13 +293,13 @@ public class StockMonitorTerminal extends MTEHatch {
 
     @Override
     public boolean allowPullStack(IGregTechTileEntity aBaseMetaTileEntity, int aIndex, ForgeDirection side,
-            ItemStack aStack) {
+        ItemStack aStack) {
         return false;
     }
 
     @Override
     public boolean allowPutStack(IGregTechTileEntity aBaseMetaTileEntity, int aIndex, ForgeDirection side,
-            ItemStack aStack) {
+        ItemStack aStack) {
         return false;
     }
 
@@ -334,31 +330,47 @@ public class StockMonitorTerminal extends MTEHatch {
     public void closeInventory() {}
 
     @Override
-    public int getSizeInventory() { return 0; }
+    public int getSizeInventory() {
+        return 0;
+    }
 
     @Override
-    public ItemStack getStackInSlot(int p_70301_1_) { return null; }
+    public ItemStack getStackInSlot(int p_70301_1_) {
+        return null;
+    }
 
     @Override
-    public ItemStack decrStackSize(int p_70298_1_, int p_70298_2_) { return null; }
+    public ItemStack decrStackSize(int p_70298_1_, int p_70298_2_) {
+        return null;
+    }
 
     @Override
-    public ItemStack getStackInSlotOnClosing(int p_70304_1_) { return null; }
+    public ItemStack getStackInSlotOnClosing(int p_70304_1_) {
+        return null;
+    }
 
     @Override
     public void setInventorySlotContents(int p_70299_1_, ItemStack p_70299_2_) {}
 
     @Override
-    public String getInventoryName() { return "StockMonitorTerminal"; }
+    public String getInventoryName() {
+        return "StockMonitorTerminal";
+    }
 
     @Override
-    public boolean hasCustomInventoryName() { return false; }
+    public boolean hasCustomInventoryName() {
+        return false;
+    }
 
     @Override
-    public int getInventoryStackLimit() { return 64; }
+    public int getInventoryStackLimit() {
+        return 64;
+    }
 
     @Override
-    public boolean isUseableByPlayer(EntityPlayer p_70300_1_) { return true; }
+    public boolean isUseableByPlayer(EntityPlayer p_70300_1_) {
+        return true;
+    }
 
     @Override
     public void markDirty() {}

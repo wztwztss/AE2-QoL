@@ -10,16 +10,17 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
-import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
-import gregtech.api.metatileentity.MetaTileEntity;
-import gregtech.api.metatileentity.implementations.MTEMultiBlockBase;
-import gregtech.api.metatileentity.implementations.MTEEnhancedMultiBlockBase;
-import org.joml.Vector3f;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.joml.Vector3f;
 
 import com.wztwzt.ae2_qof.item.ItemNetworkDataStick;
+
+import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
+import gregtech.api.metatileentity.MetaTileEntity;
+import gregtech.api.metatileentity.implementations.MTEEnhancedMultiBlockBase;
+import gregtech.api.metatileentity.implementations.MTEMultiBlockBase;
 
 public class AdaptiveHatchHelper {
 
@@ -76,10 +77,21 @@ public class AdaptiveHatchHelper {
         this.lastAmps = this.currentAmps;
     }
 
-    public int getX() { return posX; }
-    public int getY() { return posY; }
-    public int getZ() { return posZ; }
-    public int getDim() { return posDim; }
+    public int getX() {
+        return posX;
+    }
+
+    public int getY() {
+        return posY;
+    }
+
+    public int getZ() {
+        return posZ;
+    }
+
+    public int getDim() {
+        return posDim;
+    }
 
     public void setPosition(int x, int y, int z, int dim) {
         this.posX = x;
@@ -88,16 +100,26 @@ public class AdaptiveHatchHelper {
         this.posDim = dim;
     }
 
-    public short getCachedMetaId() { return cachedMetaId; }
-    public String getCachedName() { return cachedName; }
+    public short getCachedMetaId() {
+        return cachedMetaId;
+    }
+
+    public String getCachedName() {
+        return cachedName;
+    }
 
     public void setCachedInfo(short metaId, String name) {
         this.cachedMetaId = metaId;
         this.cachedName = name != null ? name : "";
     }
 
-    public int getMachineMetaId() { return machineMetaId; }
-    public String getMachineName() { return machineName; }
+    public int getMachineMetaId() {
+        return machineMetaId;
+    }
+
+    public String getMachineName() {
+        return machineName;
+    }
 
     public void setMachineInfo(int metaId, String name) {
         this.machineMetaId = metaId;
@@ -105,8 +127,7 @@ public class AdaptiveHatchHelper {
     }
 
     public static boolean isAdaptiveHatch(MetaTileEntity mte) {
-        return mte instanceof AdaptiveNetHatch
-            || mte instanceof AdaptiveNetDynamoHatch
+        return mte instanceof AdaptiveNetHatch || mte instanceof AdaptiveNetDynamoHatch
             || mte instanceof AdaptiveNetLaserHatch
             || mte instanceof AdaptiveNetLaserTargetHatch;
     }
@@ -134,8 +155,7 @@ public class AdaptiveHatchHelper {
 
         for (MTEMultiBlockBase multi : MultiblockRegistry.snapshot()) {
             IGregTechTileEntity mbBase = multi.getBaseMetaTileEntity();
-            if (mbBase == null || mbBase.getWorld() == null
-                || mbBase.getWorld().provider.dimensionId != dim) {
+            if (mbBase == null || mbBase.getWorld() == null || mbBase.getWorld().provider.dimensionId != dim) {
                 continue;
             }
 
@@ -176,15 +196,22 @@ public class AdaptiveHatchHelper {
         return bestMultiblock;
     }
 
-    public long getRealFlowEUt() { return realFlowEUt; }
-    public void setRealFlowEUt(long realFlowEUt) { this.realFlowEUt = realFlowEUt; }
+    public long getRealFlowEUt() {
+        return realFlowEUt;
+    }
+
+    public void setRealFlowEUt(long realFlowEUt) {
+        this.realFlowEUt = realFlowEUt;
+    }
 
     /**
      * 实测流量的采样窗口（tick）。
      *
-     * <p>四个仓都在 {@code aTick % 4 == 0} 的节拍上采样一次，所以"一个窗口内的增量 ÷ 窗口"才是 **EU/t**。
+     * <p>
+     * 四个仓都在 {@code aTick % 4 == 0} 的节拍上采样一次，所以"一个窗口内的增量 ÷ 窗口"才是 **EU/t**。
      *
-     * <p>3.32.0-fix4：旧实现把**窗口增量**直接当 EU/t 存进 {@link #realFlowEUt}，
+     * <p>
+     * 3.32.0-fix4：旧实现把**窗口增量**直接当 EU/t 存进 {@link #realFlowEUt}，
      * 于是列表里的"实测"恰好放大 **4 倍**（用户实测：额定 4,194,304 却显示实测 16,777,216 = ×4）。
      */
     public static final int FLOW_WINDOW_TICKS = 4;
@@ -194,17 +221,35 @@ public class AdaptiveHatchHelper {
         this.realFlowEUt = Math.max(0L, deltaInWindow) / FLOW_WINDOW_TICKS;
     }
 
-    public int getLastVoltageTier() { return lastVoltageTier; }
-    public void setLastVoltageTier(int v) { this.lastVoltageTier = v; }
-    public int getLastAmps() { return lastAmps; }
-    public void setLastAmps(int a) { this.lastAmps = a; }
-    public long getLastGridEU() { return lastGridEU; }
-    public void setLastGridEU(long eu) { this.lastGridEU = eu; }
+    public int getLastVoltageTier() {
+        return lastVoltageTier;
+    }
+
+    public void setLastVoltageTier(int v) {
+        this.lastVoltageTier = v;
+    }
+
+    public int getLastAmps() {
+        return lastAmps;
+    }
+
+    public void setLastAmps(int a) {
+        this.lastAmps = a;
+    }
+
+    public long getLastGridEU() {
+        return lastGridEU;
+    }
+
+    public void setLastGridEU(long eu) {
+        this.lastGridEU = eu;
+    }
 
     public static long getGridEULong(UUID owner) {
         if (owner == null) return 0;
         BigInteger eu = gregtech.common.misc.WirelessNetworkManager.getUserEU(owner);
-        return eu.min(BigInteger.valueOf(Long.MAX_VALUE)).longValue();
+        return eu.min(BigInteger.valueOf(Long.MAX_VALUE))
+            .longValue();
     }
 
     public static BigInteger getGridEUBigInteger(UUID owner) {
@@ -218,8 +263,12 @@ public class AdaptiveHatchHelper {
 
     public void bind(UUID owner, int frequency) {
         if (isBound()) {
-            LOG.info("[AE2QoL] Hatch rebind: oldOwner={}, oldFreq={} -> newOwner={}, newFreq={}",
-                networkOwner, networkFrequency, owner, frequency);
+            LOG.info(
+                "[AE2QoL] Hatch rebind: oldOwner={}, oldFreq={} -> newOwner={}, newFreq={}",
+                networkOwner,
+                networkFrequency,
+                owner,
+                frequency);
             AdaptiveNetworkManager.unregisterHatch(this);
         } else {
             LOG.info("[AE2QoL] Hatch first bind: owner={}, freq={}, type={}", owner, frequency, hatchType);
@@ -242,7 +291,10 @@ public class AdaptiveHatchHelper {
         if (world == null || uuid == null) return null;
         for (Object obj : world.playerEntities) {
             if (obj instanceof EntityPlayerMP p) {
-                if (uuid.equals(p.getGameProfile().getId())) return p;
+                if (uuid.equals(
+                    p.getGameProfile()
+                        .getId()))
+                    return p;
             }
         }
         return null;
@@ -286,25 +338,27 @@ public class AdaptiveHatchHelper {
                 bind(owner, freq);
                 if (!aPlayer.worldObj.isRemote) {
                     LOG.info("[AE2QoL] Hatch bound successfully: owner={}, freq={}, type={}", owner, freq, hatchType);
-                    aPlayer.addChatMessage(new net.minecraft.util.ChatComponentText(
-                        EnumChatFormatting.GREEN
-                            + StatCollector.translateToLocal("ae2_qof.adaptive.bind.success")));
+                    aPlayer.addChatMessage(
+                        new net.minecraft.util.ChatComponentText(
+                            EnumChatFormatting.GREEN
+                                + StatCollector.translateToLocal("ae2_qof.adaptive.bind.success")));
                 }
             } else {
                 if (!aPlayer.worldObj.isRemote) {
                     LOG.warn("[AE2QoL] Hatch bind failed: owner is null in flash drive");
-                    aPlayer.addChatMessage(new net.minecraft.util.ChatComponentText(
-                        EnumChatFormatting.RED
-                            + StatCollector.translateToLocal("ae2_qof.adaptive.bind.fail")));
+                    aPlayer.addChatMessage(
+                        new net.minecraft.util.ChatComponentText(
+                            EnumChatFormatting.RED + StatCollector.translateToLocal("ae2_qof.adaptive.bind.fail")));
                 }
             }
             return true;
         } else {
             if (!aPlayer.worldObj.isRemote) {
                 LOG.info("[AE2QoL] Empty flash drive used on hatch");
-                aPlayer.addChatMessage(new net.minecraft.util.ChatComponentText(
-                    EnumChatFormatting.YELLOW
-                        + StatCollector.translateToLocal("ae2_qof.adaptive.bind.empty_stick")));
+                aPlayer.addChatMessage(
+                    new net.minecraft.util.ChatComponentText(
+                        EnumChatFormatting.YELLOW
+                            + StatCollector.translateToLocal("ae2_qof.adaptive.bind.empty_stick")));
             }
             return true;
         }
@@ -334,8 +388,7 @@ public class AdaptiveHatchHelper {
         if (s != null && !s.isEmpty()) {
             try {
                 networkOwner = UUID.fromString(s);
-            } catch (IllegalArgumentException ignored) {
-            }
+            } catch (IllegalArgumentException ignored) {}
         }
         networkFrequency = aNBT.getInteger("ae2qolNF");
         currentVoltageTier = aNBT.getInteger("ae2qolVT");

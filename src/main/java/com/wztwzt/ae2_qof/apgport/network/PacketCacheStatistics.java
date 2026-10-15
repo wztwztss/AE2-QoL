@@ -5,8 +5,6 @@
  */
 package com.wztwzt.ae2_qof.apgport.network;
 
-import com.wztwzt.ae2_qof.MyMod;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;

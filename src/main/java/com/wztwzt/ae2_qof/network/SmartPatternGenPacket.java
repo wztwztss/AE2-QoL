@@ -46,14 +46,32 @@ public class SmartPatternGenPacket implements IMessage {
 
     public SmartPatternGenPacket(String mapKeyword, String blacklistInput, String blacklistOutput,
         String requireInputOre, String requireOutputOre, String requireNonConsumed, int maxPatterns) {
-        this(mapKeyword, blacklistInput, blacklistOutput, requireInputOre, requireOutputOre, requireNonConsumed,
-            maxPatterns, -1, "", false);
+        this(
+            mapKeyword,
+            blacklistInput,
+            blacklistOutput,
+            requireInputOre,
+            requireOutputOre,
+            requireNonConsumed,
+            maxPatterns,
+            -1,
+            "",
+            false);
     }
 
     public SmartPatternGenPacket(String mapKeyword, String blacklistInput, String blacklistOutput,
         String requireInputOre, String requireOutputOre, String requireNonConsumed, int maxPatterns, int maxTier) {
-        this(mapKeyword, blacklistInput, blacklistOutput, requireInputOre, requireOutputOre, requireNonConsumed,
-            maxPatterns, maxTier, "", false);
+        this(
+            mapKeyword,
+            blacklistInput,
+            blacklistOutput,
+            requireInputOre,
+            requireOutputOre,
+            requireNonConsumed,
+            maxPatterns,
+            maxTier,
+            "",
+            false);
     }
 
     public SmartPatternGenPacket(String mapKeyword, String blacklistInput, String blacklistOutput,
@@ -161,9 +179,17 @@ public class SmartPatternGenPacket implements IMessage {
                         result.describe());
                     player.addChatMessage(
                         new ChatComponentText(
-                            EnumChatFormatting.GREEN + "[AE2QoL] \u5df2\u751f\u6210 " + stored + " \u5f20\u6837\u677f"
-                                + (dropped > 0 ? EnumChatFormatting.YELLOW + "\uff08\u80cc\u5305\u6ee1\uff0c" + dropped + " \u5f20\u6389\u5728\u811a\u4e0b\uff09" : "")
-                                + EnumChatFormatting.GRAY + " " + result.describe()));
+                            EnumChatFormatting.GREEN + "[AE2QoL] \u5df2\u751f\u6210 "
+                                + stored
+                                + " \u5f20\u6837\u677f"
+                                + (dropped > 0
+                                    ? EnumChatFormatting.YELLOW + "\uff08\u80cc\u5305\u6ee1\uff0c"
+                                        + dropped
+                                        + " \u5f20\u6389\u5728\u811a\u4e0b\uff09"
+                                    : "")
+                                + EnumChatFormatting.GRAY
+                                + " "
+                                + result.describe()));
                 } catch (Throwable t) {
                     MyMod.LOG.warn("[AE2QoL] 样板生成请求处理异常", t);
                 }

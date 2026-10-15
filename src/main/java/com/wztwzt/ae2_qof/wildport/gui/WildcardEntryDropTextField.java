@@ -8,10 +8,10 @@ package com.wztwzt.ae2_qof.wildport.gui;
 
 import java.util.function.Consumer;
 
+import net.minecraft.item.ItemStack;
+
 import com.gtnewhorizons.modularui.api.widget.IDragAndDropHandler;
 import com.gtnewhorizons.modularui.common.widget.textfield.TextFieldWidget;
-
-import net.minecraft.item.ItemStack;
 
 public class WildcardEntryDropTextField extends TextFieldWidget implements IDragAndDropHandler {
 

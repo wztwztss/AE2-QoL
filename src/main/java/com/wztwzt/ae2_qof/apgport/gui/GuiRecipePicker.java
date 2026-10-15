@@ -5,8 +5,6 @@
  */
 package com.wztwzt.ae2_qof.apgport.gui;
 
-import com.wztwzt.ae2_qof.MyMod;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,14 +13,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.fluids.FluidStack;
 
-import com.wztwzt.ae2_qof.apgport.config.ForgeConfig;
-import com.wztwzt.ae2_qof.apgport.network.NetworkHandler;
-import com.wztwzt.ae2_qof.apgport.network.PacketRecipeConflictBatch;
-import com.wztwzt.ae2_qof.apgport.network.PacketRecipeConflicts;
-import com.wztwzt.ae2_qof.apgport.network.PacketResolveConflictsBatch;
-import com.wztwzt.ae2_qof.apgport.recipe.RecipeEntry;
-import com.wztwzt.ae2_qof.apgport.util.I18nUtil;
-import com.wztwzt.ae2_qof.apgport.util.ItemStackUtil;
 import com.gtnewhorizons.modularui.api.drawable.shapes.Rectangle;
 import com.gtnewhorizons.modularui.api.screen.ModularWindow;
 import com.gtnewhorizons.modularui.api.screen.UIBuildContext;
@@ -31,6 +21,14 @@ import com.gtnewhorizons.modularui.common.internal.wrapper.ModularUIContainer;
 import com.gtnewhorizons.modularui.common.widget.ButtonWidget;
 import com.gtnewhorizons.modularui.common.widget.Scrollable;
 import com.gtnewhorizons.modularui.common.widget.TextWidget;
+import com.wztwzt.ae2_qof.apgport.config.ForgeConfig;
+import com.wztwzt.ae2_qof.apgport.network.NetworkHandler;
+import com.wztwzt.ae2_qof.apgport.network.PacketRecipeConflictBatch;
+import com.wztwzt.ae2_qof.apgport.network.PacketRecipeConflicts;
+import com.wztwzt.ae2_qof.apgport.network.PacketResolveConflictsBatch;
+import com.wztwzt.ae2_qof.apgport.recipe.RecipeEntry;
+import com.wztwzt.ae2_qof.apgport.util.I18nUtil;
+import com.wztwzt.ae2_qof.apgport.util.ItemStackUtil;
 
 public class GuiRecipePicker {
 

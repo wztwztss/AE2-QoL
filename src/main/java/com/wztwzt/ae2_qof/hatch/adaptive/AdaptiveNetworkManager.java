@@ -1,10 +1,10 @@
 package com.wztwzt.ae2_qof.hatch.adaptive;
 
-import net.minecraft.world.World;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
+import net.minecraft.world.World;
 
 public class AdaptiveNetworkManager {
 

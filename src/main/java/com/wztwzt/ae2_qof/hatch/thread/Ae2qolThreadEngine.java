@@ -10,8 +10,8 @@ import net.minecraft.nbt.NBTTagCompound;
 
 import com.wztwzt.ae2_qof.hatch.AE2MaintenanceHatchUniversal;
 
-import gregtech.api.metatileentity.implementations.MTEMultiBlockBase;
 import gregtech.api.metatileentity.implementations.MTEHatchMaintenance;
+import gregtech.api.metatileentity.implementations.MTEMultiBlockBase;
 
 /**
  * 3.25.0「线程引擎」：让一台多方块**在同一 tick 内跑 N 条互相独立的线程**，每条线程各自匹配配方、
@@ -51,7 +51,8 @@ public final class Ae2qolThreadEngine {
 
     /**
      * 维护仓 → 主机 的反查表。
-     * <p>为什么需要：线程状态挂在**主机**（{@code MTEMultiBlockBase}）上，而设置线程数的界面在**维护仓**上，
+     * <p>
+     * 为什么需要：线程状态挂在**主机**（{@code MTEMultiBlockBase}）上，而设置线程数的界面在**维护仓**上，
      * 维护仓在 GT 里没有指向主机的稳定后向引用（{@code MTEMultiBlockBase.mMaintenanceHatches} 是单向的）。
      * 于是在建引擎时顺手记一条反查（主机侧的 {@code doCheckRecipe/incrementProgressTime} 注入会周期性建到），
      * GUI/WAILA 就能从维护仓找到主机。
@@ -88,7 +89,8 @@ public final class Ae2qolThreadEngine {
 
     /**
      * G6（3.25.0-fix4）：中央 ticker 用 —— 取所有引擎的**快照**（防并发修改）。
-     * <p>为什么需要：NH-Utilities 等加速机制会**跳过 {@code updateEntity}**，
+     * <p>
+     * 为什么需要：NH-Utilities 等加速机制会**跳过 {@code updateEntity}**，
      * 挂在"机器 tick"上的广播会稀疏甚至停发；改由 server tick 统一驱动才稳。
      */
     public static java.util.List<Ae2qolThreadEngine> allEngines() {
@@ -160,7 +162,8 @@ public final class Ae2qolThreadEngine {
 
     /**
      * 线程起步的**轮转游标**（3.25.0-fix6）。
-     * <p>为什么需要：越早的"空闲槽补位"是"从 0 找第一个空闲槽、失败就 break"，
+     * <p>
+     * 为什么需要：越早的"空闲槽补位"是"从 0 找第一个空闲槽、失败就 break"，
      * 于是一个**持续失败**的槽（例如刚完成那条线程的槽）会把后面所有空闲槽永远挡在门外
      * ⇒ 用户实测"设了 16 线程却只跑 1 条"。改成轮转后，每 tick 从上次的下一个槽继续试，
      * 坏槽最多只消耗一次尝试，不会阻塞其余线程。
@@ -305,10 +308,12 @@ public final class Ae2qolThreadEngine {
 
     /**
      * 电力预算闸（每 tick 一次，**在推进/起步之前**调用）。
-     * <p>旧实现的病根：用 {@code base.getStoredEU()}（机器内部缓存）当"可用电力"，而 GT 多方块
+     * <p>
+     * 旧实现的病根：用 {@code base.getStoredEU()}（机器内部缓存）当"可用电力"，而 GT 多方块
      * 平时根本不缓存 EU（每 tick 直接能源仓拉走）⇒ 恒为 0 ⇒ 每条线程一起步就被降级，
      * 且每 1~2 秒在"降级/恢复"间横跳，机器状态一直闪"电力不足"。
-     * <p>现在：① 预算 = {@code getMaxInputEu()}（能源仓能提供的最大 EU/t，GT 自己的口径）；
+     * <p>
+     * 现在：① 预算 = {@code getMaxInputEu()}（能源仓能提供的最大 EU/t，GT 自己的口径）；
      * ② **只在确有线程在跑且超预算时**才从尾部降级；③ 预算变好才解除封锁并让被暂停的槽重新参与。
      *
      * @return 本次因预算不足被降级的线程条数（供日志）
@@ -452,8 +457,9 @@ public final class Ae2qolThreadEngine {
             h = 31 * h + remain;
             h = 31 * h + parallel;
             h = 31 * h + (icon == null ? 0 : icon.getItemDamageForDisplay() ^ icon.stackSize);
-            h = 31 * h + (fluid == null ? 0 : fluid.getFluid()
-                .hashCode() ^ fluid.amount);
+            h = 31 * h + (fluid == null ? 0
+                : fluid.getFluid()
+                    .hashCode() ^ fluid.amount);
             h = 31 * h + setting;
             return h;
         }
@@ -500,7 +506,8 @@ public final class Ae2qolThreadEngine {
 
     /**
      * 只列活跃线程（用户口径：空闲折叠成一行计数）。
-     * <p>3.25.0-fix19（每 tick 路径减负）：
+     * <p>
+     * 3.25.0-fix19（每 tick 路径减负）：
      * <ol>
      * <li>**没有活跃线程时返回空列表常量**（零分配）——"机器闲着但界面开着 / WAILA 一直在看"才是常态；</li>
      * <li>**同一 tick 内多次轮询只构建一次**并返回同一实例：面板轮询与 WAILA 广播共用一份快照，
@@ -532,8 +539,7 @@ public final class Ae2qolThreadEngine {
                 if (s.icon == null && s.fluids != null && s.fluids.length > 0) {
                     fluid = s.fluids[0];
                 }
-                rows.add(
-                    new Row(i + 1, s.state, s.percent(), s.remain, s.parallel, s.icon, fluid, parallelSetting()));
+                rows.add(new Row(i + 1, s.state, s.percent(), s.remain, s.parallel, s.icon, fluid, parallelSetting()));
             }
         }
         cachedRows = rows;

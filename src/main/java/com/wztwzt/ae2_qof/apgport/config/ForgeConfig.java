@@ -5,8 +5,6 @@
  */
 package com.wztwzt.ae2_qof.apgport.config;
 
-import com.wztwzt.ae2_qof.MyMod;
-
 import java.io.File;
 
 import net.minecraftforge.common.config.Configuration;

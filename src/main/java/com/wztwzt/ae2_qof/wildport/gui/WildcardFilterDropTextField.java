@@ -9,16 +9,18 @@ package com.wztwzt.ae2_qof.wildport.gui;
 import java.util.Locale;
 import java.util.function.Consumer;
 
-import com.gtnewhorizons.modularui.api.widget.IDragAndDropHandler;
-import com.gtnewhorizons.modularui.common.widget.textfield.TextFieldWidget;
-
-import com.wztwzt.ae2_qof.wildport.compat.GTCompat;
-import gregtech.api.objects.ItemData;
-import gregtech.api.util.GTOreDictUnificator;
-import gregtech.api.enums.OrePrefixes;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.oredict.OreDictionary;
+
 import org.lwjgl.input.Keyboard;
+
+import com.gtnewhorizons.modularui.api.widget.IDragAndDropHandler;
+import com.gtnewhorizons.modularui.common.widget.textfield.TextFieldWidget;
+import com.wztwzt.ae2_qof.wildport.compat.GTCompat;
+
+import gregtech.api.enums.OrePrefixes;
+import gregtech.api.objects.ItemData;
+import gregtech.api.util.GTOreDictUnificator;
 
 public class WildcardFilterDropTextField extends TextFieldWidget implements IDragAndDropHandler {
 
@@ -89,8 +91,7 @@ public class WildcardFilterDropTextField extends TextFieldWidget implements IDra
             }
             for (OrePrefixes prefix : GTCompat.orePrefixes()) {
                 String prefixName = getPrefixName(prefix);
-                if (!prefixName.isEmpty()
-                    && oreName.regionMatches(true, 0, prefixName, 0, prefixName.length())
+                if (!prefixName.isEmpty() && oreName.regionMatches(true, 0, prefixName, 0, prefixName.length())
                     && prefixName.length() > bestPrefixLen) {
                     best = oreName;
                     bestPrefixLen = prefixName.length();
@@ -120,16 +121,21 @@ public class WildcardFilterDropTextField extends TextFieldWidget implements IDra
             return "";
         }
         try {
-            return (String) prefix.getClass().getMethod("getName").invoke(prefix);
+            return (String) prefix.getClass()
+                .getMethod("getName")
+                .invoke(prefix);
         } catch (Exception ignored) {}
         try {
-            return (String) prefix.getClass().getMethod("name").invoke(prefix);
+            return (String) prefix.getClass()
+                .getMethod("name")
+                .invoke(prefix);
         } catch (Exception ignored) {}
         return prefix.toString();
     }
 
     private static String appendToken(String current, String token) {
-        if (current == null || current.trim().isEmpty()) {
+        if (current == null || current.trim()
+            .isEmpty()) {
             return token;
         }
         for (String part : current.split("[,;，；\\s]+")) {

@@ -13,12 +13,14 @@ import gregtech.api.enums.ItemList;
 /**
  * 「编程样板输入总成 MK.III」的可选依赖入口（Programmable-Hatches 专用）。
  *
- * <p><b>PH 类型只出现在本方法体内</b>：{@link MTEPatternCraftingBufferMKIII} 继承 PH 的
+ * <p>
+ * <b>PH 类型只出现在本方法体内</b>：{@link MTEPatternCraftingBufferMKIII} 继承 PH 的
  * {@code PatternDualInputHatch}，一旦被加载就要求 PH 在场。方法体里的类引用是**惰性解析**的，
  * 只要 {@link Loader#isModLoaded(String)} 的守卫写在最前面并在 PH 缺失时 return，
  * 未装 PH 的整合包就永远不会加载这个类 —— 与 {@code client/GuideNHIntegration} 同一套做法。
  *
- * <p>三件事按顺序发生：①注册 MTE（GT 构造器自己登记进 {@code GregTechAPI.METATILEENTITIES}）；
+ * <p>
+ * 三件事按顺序发生：①注册 MTE（GT 构造器自己登记进 {@code GregTechAPI.METATILEENTITIES}）；
  * ②加工作台配方（原总成 ×1 + 大师/高级电路）；
  * ③把内部类 {@code Inst.class} 注册进 AE2 的接口终端注册表 ——
  * AE2 的 {@code Grid.getMachines(Class)} 与 {@code InterfaceTerminalRegistry} 都是**按精确类名**查表，
@@ -49,7 +51,8 @@ public final class PhIntegration {
      * ProgrammableHatches 的**真实 modid**。来源是它的 {@code @Mod(modid = MyMod.MODID)}：
      * {@code MyMod.MODID = "programmablehatches"}`，与 jar 内 `mcmod.info` 一致。
      *
-     * <p><b>2026-09-26 实测教训</b>：本类最初写的是 `proghatches` —— 那是 PH 的**包名前缀**
+     * <p>
+     * <b>2026-09-26 实测教训</b>：本类最初写的是 `proghatches` —— 那是 PH 的**包名前缀**
      * （`reobf.proghatches.*`、coremod 类名也是这个），**不是 modid**。后果是守卫恒为 false：
      * 物品不注册、进不了 NEI/创造页，而且**连一条日志都没有**（现象就是「找不到这个物品」）。
      * 教训：可选依赖判定只能取对方 {@code @Mod}/`mcmod.info` 里的 modid，不能从包名或 jar 文件名猜；
@@ -69,8 +72,7 @@ public final class PhIntegration {
         if (!ae2qol$programmableHatchesPresent()) {
             // 未安装 PH：本功能整体不存在（物品既不会注册也不会出现在创造页）。
             // 这一行日志是刻意保留的——没有它，「守卫判错」与「注册失败」都无法与「根本没调到」区分开。
-            MyMod.LOG.info(
-                "[AE2QoL] 未检测到 ProgrammableHatches（modid=" + PH_MODID + "），跳过「编程样板输入总成 MK.III」");
+            MyMod.LOG.info("[AE2QoL] 未检测到 ProgrammableHatches（modid=" + PH_MODID + "），跳过「编程样板输入总成 MK.III」");
             return;
         }
         try {

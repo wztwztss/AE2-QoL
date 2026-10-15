@@ -16,12 +16,14 @@ import io.netty.buffer.ByteBuf;
 /**
  * S2C：服务端权威的智能倍增开关状态（3.21.3 新增）。
  *
- * <p>为什么需要它：GT/GTNL/PH 的开关控件建在**仅客户端**的 mixin 里，界面上的 getter 读的是
+ * <p>
+ * 为什么需要它：GT/GTNL/PH 的开关控件建在**仅客户端**的 mixin 里，界面上的 getter 读的是
  * **客户端内存里**那台机器的字段——在专用服务端上它与服务端真值可能长期不一致
  * （勾选只改了客户端对象、重登后服务端值又读不回来）。
  * 本包把服务端真值送回来写进客户端对象，界面于是始终显示权威值。
  *
- * <p>只注册在 {@link Side#CLIENT}，服务端永不解包（类里的 {@code Minecraft} 引用因此不会在服务端加载）。
+ * <p>
+ * 只注册在 {@link Side#CLIENT}，服务端永不解包（类里的 {@code Minecraft} 引用因此不会在服务端加载）。
  */
 public class SmartDoublingStatePacket implements IMessage {
 

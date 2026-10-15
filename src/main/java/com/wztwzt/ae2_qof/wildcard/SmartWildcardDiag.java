@@ -38,14 +38,14 @@ public final class SmartWildcardDiag {
     private SmartWildcardDiag() {}
 
     /** 3.42.0-diag：配对打印上限（每 JVM 3 条）。 */
-    private static final java.util.concurrent.atomic.AtomicInteger PAIR_LOGGED =
-        new java.util.concurrent.atomic.AtomicInteger();
+    private static final java.util.concurrent.atomic.AtomicInteger PAIR_LOGGED = new java.util.concurrent.atomic.AtomicInteger();
 
     /**
      * **配对打印**（3.42.0-diag）：把"具体样板自己的 out"与"它解码出的 details"三者并列，
      * 用来定死"输出在哪一步从『金板』变成『铁板』"。
      *
-     * <p>为什么要这三项：
+     * <p>
+     * 为什么要这三项：
      * <ul>
      * <li>{@code concrete 自己的 out} —— 生成阶段写进 NBT 的值（3.41.0 的 `展开样本` 已证其正确且各不同）；</li>
      * <li>{@code details.getPattern()} 的 out + **是否与 concrete 同一对象** —— 若同一对象却输出不同，
@@ -92,8 +92,7 @@ public final class SmartWildcardDiag {
                 .getTagList("out", net.minecraftforge.common.util.Constants.NBT.TAG_COMPOUND);
             if (outs.tagCount() == 0) return "out-empty";
             ItemStack first = ItemStack.loadItemStackFromNBT(outs.getCompoundTagAt(0));
-            return first == null || first.getItem() == null ? "unparsable"
-                : String.valueOf(first.getDisplayName());
+            return first == null || first.getItem() == null ? "unparsable" : String.valueOf(first.getDisplayName());
         } catch (Throwable t) {
             return "err:" + t.getClass()
                 .getSimpleName();
@@ -137,14 +136,16 @@ public final class SmartWildcardDiag {
     /**
      * 注册动作**之后**回读 AE2 的合成表，确认 AE 到底收录了多少、抽样输出能否查到。
      *
-     * <p>刻意排到服务端 tick 队列（本模组既有手法）：AE2 的 `CraftingGridCache.updatePatterns()` 会在
+     * <p>
+     * 刻意排到服务端 tick 队列（本模组既有手法）：AE2 的 `CraftingGridCache.updatePatterns()` 会在
      * 所有 provider 的 `provideCrafting` 返回之后才 `setPatternsFromCraftingMethods()`，同一 tick 内立即
      * 查询可能读到旧表。
      */
     public static void scheduleAeReadBack(Object machine, List<ICraftingPatternDetails> details, String family) {
         try {
             final List<ICraftingPatternDetails> snapshot = details == null ? null : new java.util.ArrayList<>(details);
-            com.wztwzt.ae2_qof.network.ServerTerminalHelper.scheduleServerTask(() -> readBack(machine, snapshot, family));
+            com.wztwzt.ae2_qof.network.ServerTerminalHelper
+                .scheduleServerTask(() -> readBack(machine, snapshot, family));
         } catch (Throwable t) {
             MyMod.LOG.warn("[AE2QoL] {} 诊断：AE 回读排队失败", family, t);
         }

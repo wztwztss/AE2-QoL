@@ -18,8 +18,7 @@ import gregtech.api.metatileentity.implementations.MTEMultiBlockBase;
  */
 public class MultiblockRegistry {
 
-    private static final Set<MTEMultiBlockBase> REGISTRY =
-        Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private static final Set<MTEMultiBlockBase> REGISTRY = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private MultiblockRegistry() {}
 

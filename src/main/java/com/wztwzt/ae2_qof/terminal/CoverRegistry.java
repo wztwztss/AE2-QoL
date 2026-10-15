@@ -12,11 +12,9 @@ import net.minecraftforge.common.DimensionManager;
 
 import com.wztwzt.ae2_qof.cover.stockmonitor.StockMonitorCover;
 import com.wztwzt.ae2_qof.cover.stockmonitor.StockMonitorCoverData;
-import com.wztwzt.ae2_qof.cover.stockmonitor.ThresholdMode;
 
 import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
-import appeng.api.storage.data.IAEStack;
 
 /**
  * 全局覆盖板注册表（WorldSavedData）。
@@ -91,11 +89,13 @@ public class CoverRegistry extends WorldSavedData {
      * 区块未加载 → 标记离线但保留条目；区块已加载且覆盖板已被拆除/机器已毁 → 直接移除条目。
      * 只统计一个维度，统计终端列出前对所有维度调用一次。
      *
-     * <p>3.31.0 追加：区块已加载时给"缺目标本体"的老条目补写一次（见 {@link CoverEntry#identityBackfillTried}）。
+     * <p>
+     * 3.31.0 追加：区块已加载时给"缺目标本体"的老条目补写一次（见 {@link CoverEntry#identityBackfillTried}）。
      */
     public void refreshOnlineStatus() {
         boolean changed = false;
-        java.util.Iterator<CoverEntry> it = entries.values().iterator();
+        java.util.Iterator<CoverEntry> it = entries.values()
+            .iterator();
         while (it.hasNext()) {
             CoverEntry e = it.next();
             net.minecraft.world.World w = DimensionManager.getWorld(e.dim);
@@ -141,8 +141,8 @@ public class CoverRegistry extends WorldSavedData {
         try {
             net.minecraft.tileentity.TileEntity te = w.getTileEntity(e.x, e.y, e.z);
             if (!(te instanceof gregtech.api.interfaces.tileentity.ICoverable)) return null;
-            net.minecraftforge.common.util.ForgeDirection side =
-                net.minecraftforge.common.util.ForgeDirection.getOrientation(e.side);
+            net.minecraftforge.common.util.ForgeDirection side = net.minecraftforge.common.util.ForgeDirection
+                .getOrientation(e.side);
             Object cover = ((gregtech.api.interfaces.tileentity.ICoverable) te).getCoverAtSide(side);
             return cover instanceof StockMonitorCover ? (StockMonitorCover) cover : null;
         } catch (Throwable t) {
@@ -224,6 +224,7 @@ public class CoverRegistry extends WorldSavedData {
 
     /** 单个覆盖板的位置和配置摘要 */
     public static class CoverEntry {
+
         public final int dim;
         public final int x;
         public final int y;
@@ -263,7 +264,8 @@ public class CoverRegistry extends WorldSavedData {
 
         public void updateFrom(StockMonitorCoverData data) {
             this.networkId = data.getNetworkId();
-            this.modeOrdinal = data.getMode().ordinal();
+            this.modeOrdinal = data.getMode()
+                .ordinal();
             this.activeSlotCount = data.getActiveSlotCount();
             // 取第一个有效槽位作为摘要
             boolean found = false;
@@ -281,7 +283,8 @@ public class CoverRegistry extends WorldSavedData {
                     if (slot.monitorTarget instanceof IAEFluidStack) {
                         net.minecraftforge.fluids.FluidStack fs = ((IAEFluidStack) slot.monitorTarget).getFluidStack();
                         if (fs != null && fs.getFluid() != null) {
-                            this.targetFluidName = fs.getFluid().getName();
+                            this.targetFluidName = fs.getFluid()
+                                .getName();
                         }
                     } else if (slot.monitorTarget instanceof IAEItemStack) {
                         ItemStack is = ((IAEItemStack) slot.monitorTarget).getItemStack();
@@ -337,8 +340,11 @@ public class CoverRegistry extends WorldSavedData {
         public static CoverEntry readFromNBT(NBTTagCompound tag) {
             if (!tag.hasKey("dim")) return null;
             CoverEntry e = new CoverEntry(
-                tag.getInteger("dim"), tag.getInteger("x"), tag.getInteger("y"),
-                tag.getInteger("z"), tag.getInteger("side"));
+                tag.getInteger("dim"),
+                tag.getInteger("x"),
+                tag.getInteger("y"),
+                tag.getInteger("z"),
+                tag.getInteger("side"));
             e.networkId = tag.getString("networkId");
             e.targetName = tag.getString("targetName");
             e.targetIsFluid = tag.getBoolean("targetIsFluid");

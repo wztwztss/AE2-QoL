@@ -6,7 +6,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.StatCollector;
 import net.minecraftforge.common.util.ForgeDirection;
-import cpw.mods.fml.common.registry.GameRegistry;
 
 import com.cleanroommc.modularui.api.drawable.IKey;
 import com.cleanroommc.modularui.api.widget.IWidget;
@@ -22,9 +21,9 @@ import com.cleanroommc.modularui.widgets.layout.Flow;
 import com.cleanroommc.modularui.widgets.slot.ItemSlot;
 import com.cleanroommc.modularui.widgets.slot.ModularSlot;
 import com.cleanroommc.modularui.widgets.textfield.TextFieldWidget;
-
 import com.wztwzt.ae2_qof.hatch.thread.Ae2qolThreadEngine;
 
+import cpw.mods.fml.common.registry.GameRegistry;
 import gregtech.api.interfaces.ITexture;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 import gregtech.api.metatileentity.MetaTileEntity;
@@ -37,29 +36,34 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
     // 速度上限: MAX(14)=100, 其他按比例递减
     /**
      * 速度字段的上限表（3.25.0-fix11，用户口径定稿）。
-     * <p>**索引 = 电路槽里那块 dreamcraft「任意 XX 电路板」在 {@link #CIRCUIT_KEYS} 里的下标**
+     * <p>
+     * **索引 = 电路槽里那块 dreamcraft「任意 XX 电路板」在 {@link #CIRCUIT_KEYS} 里的下标**
      * （{@link #getCircuitLevel()} 就是返回这个下标；**不是 tier，也不是"编程电路"**）。
      * 因此本表长度**必须与 `CIRCUIT_KEYS` 一致 = 15 项**，下标含义：
+     * 
      * <pre>
      *  0=ULV  1=LV  2=MV  3=HV  4=EV  5=IV  6=LuV  7=ZPM  8=UV  9=UHV
      * 10=UEV 11=UIV 12=UMV 13=UXV 14=MAX
      * </pre>
-     * <p>用户原话："一共15个等级前10级+5递增后五级+10递增，到max正好100" ⇒
+     * <p>
+     * 用户原话："一共15个等级前10级+5递增后五级+10递增，到max正好100" ⇒
      * 前 10 块板（ULV..UHV）每级 +5：5..50；后 5 块板（UEV..MAX）每级 +10：60,70,80,90,**100**。
      * 校验：`10×5 + 5×10 = 100` ✔，即 **MAX 电路板正好 100**。
-     * <p>**不放电路板**时 `getCircuitLevel()` 返回 `-1`，{@link #getMaxSpeedForLevel()} 的 `lvl >= 0` 判据不成立
+     * <p>
+     * **不放电路板**时 `getCircuitLevel()` 返回 `-1`，{@link #getMaxSpeedForLevel()} 的 `lvl >= 0` 判据不成立
      * ⇒ 上限 **0**（原速），无需在本表里额外留 0 项。
-     * <p>语义（不变）：`实际时长 = 原配方时长 × (1 − 速度/100)`；EU/t 不变 ⇒ 加速时总耗电等比减少。
+     * <p>
+     * 语义（不变）：`实际时长 = 原配方时长 × (1 − 速度/100)`；EU/t 不变 ⇒ 加速时总耗电等比减少。
      */
     private static final int[] SPEED_MAX = { 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100 };
-    private static final int[] PARALLEL_MAX = { 1, 4, 16, 64, 256, 1024, 4096, 16384, 65536, 262144, 1048576,
-        4194304, 16777216, 67108864, 268435456, 1073741824 };
+    private static final int[] PARALLEL_MAX = { 1, 4, 16, 64, 256, 1024, 4096, 16384, 65536, 262144, 1048576, 4194304,
+        16777216, 67108864, 268435456, 1073741824 };
     // 线程上限：HV(3) 起可用，UV(8) 封顶 64
     private static final int[] THREAD_MAX = { 1, 1, 1, 2, 4, 8, 16, 32, 64, 64, 64, 64, 64, 64, 64, 64 };
 
     private static final String[] CIRCUIT_KEYS = { "CircuitULV", "CircuitLV", "CircuitMV", "CircuitHV", "CircuitEV",
-        "CircuitIV", "CircuitLuV", "CircuitZPM", "CircuitUV", "CircuitUHV", "CircuitUEV", "CircuitUIV",
-        "CircuitUMV", "CircuitUXV", "CircuitMAX" };
+        "CircuitIV", "CircuitLuV", "CircuitZPM", "CircuitUV", "CircuitUHV", "CircuitUEV", "CircuitUIV", "CircuitUMV",
+        "CircuitUXV", "CircuitMAX" };
     private static Item[] CIRCUIT_ITEMS;
 
     private int userParallel;
@@ -76,23 +80,19 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
 
     @Override
     public String[] getDescription() {
-        return new String[] {
-            StatCollector.translateToLocal("gt.blockmachines.hatch.maintenance.universal.desc"),
+        return new String[] { StatCollector.translateToLocal("gt.blockmachines.hatch.maintenance.universal.desc"),
             StatCollector.translateToLocal("gt.blockmachines.hatch.maintenance.universal.desc.0"),
             StatCollector.translateToLocal("gt.blockmachines.hatch.maintenance.universal.desc.1"),
             EnumChatFormatting.GRAY + "[" + StatCollector.translateToLocal("ae2_qof.modname") + "]",
-            EnumChatFormatting.DARK_GRAY + "ae2qof"
-        };
+            EnumChatFormatting.DARK_GRAY + "ae2qof" };
     }
+
     // v7 方案 B：外观走 ModTextures.front/top/side（TextureMap Mixin 注入的自有路径），
     // 不再占用 GT 的 OVERLAY_AUTOMAINTENANCE；未启用时完全回退 GT 原版渲染（含发光/手动模式）。
     @Override
     public ITexture[] getTexture(gregtech.api.interfaces.tileentity.IGregTechTileEntity aBaseMetaTileEntity,
-                                 net.minecraftforge.common.util.ForgeDirection side,
-                                 net.minecraftforge.common.util.ForgeDirection facing,
-                                 int aColorIndex,
-                                 boolean aActive,
-                                 boolean aRedstone) {
+        net.minecraftforge.common.util.ForgeDirection side, net.minecraftforge.common.util.ForgeDirection facing,
+        int aColorIndex, boolean aActive, boolean aRedstone) {
         if (com.wztwzt.ae2_qof.util.ModTextures.isReady()) {
             if (side == facing) {
                 return new ITexture[] { com.wztwzt.ae2_qof.util.ModTextures.front("universal_maintenance_hatch") };
@@ -136,10 +136,21 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
         return circuitLevelOf(mInventory[CIRCUIT_SLOT]);
     }
 
-    public int getCircuitLevelPublic() { return getCircuitLevel(); }
-    public int getUserParallel() { return userParallel; }
-    public int getUserSpeed() { return userSpeed; }
-    public int getUserThreads() { return userThreads; }
+    public int getCircuitLevelPublic() {
+        return getCircuitLevel();
+    }
+
+    public int getUserParallel() {
+        return userParallel;
+    }
+
+    public int getUserSpeed() {
+        return userSpeed;
+    }
+
+    public int getUserThreads() {
+        return userThreads;
+    }
 
     public int getMaxParallelForLevel() {
         int lvl = getCircuitLevel();
@@ -169,11 +180,13 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
     /**
      * 3.28.0（2026-10-08 用户决定）：**线程功能停用** —— 总闸恒为 1。
      *
-     * <p>为什么只改这一处就够：多线程引擎的启用判据是
+     * <p>
+     * 为什么只改这一处就够：多线程引擎的启用判据是
      * {@code Ae2qolThreadEngine.isEnabled() == hatch.getEffectiveThreads() > 1}（该文件 L192）
      * ⇒ 本方法恒 1 之后，引擎的所有多线程分支自然失效，机器行为回到"**单次配方 + 设定并行**"。
      *
-     * <p>按用户口径「只停用与隐藏、代码保留」：引擎/UI/广播代码一行不删；
+     * <p>
+     * 按用户口径「只停用与隐藏、代码保留」：引擎/UI/广播代码一行不删；
      * 存档里的 {@code userThreads} **照常读写、不清洗不改写**（只是不再生效）。
      * 并行（{@link #getEffectiveParallel()}）与速度（{@link #getEffectiveSpeedBoost()}）不经过本方法，完全不受影响。
      */
@@ -186,22 +199,23 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
         return new AE2MaintenanceHatchUniversal(mName, mTier, mDescriptionArray, mTextures);
     }
 
-    @Override protected boolean useMui2() { return true; }
+    @Override
+    protected boolean useMui2() {
+        return true;
+    }
 
     @Override
     public ModularPanel buildUI(PosGuiData guiData, PanelSyncManager syncManager, UISettings uiSettings) {
         IntSyncValue parallelSync = new IntSyncValue(
             this::getUserParallel,
-            v -> this.userParallel = Math.max(1, Math.min(v, getMaxParallelForLevel()))
-        ).allowC2S();
-        IntSyncValue speedSync = new IntSyncValue(
-            this::getUserSpeed,
-            v -> { int m = getMaxSpeedForLevel(); this.userSpeed = Math.max(-m, Math.min(v, m)); }
-        ).allowC2S();
+            v -> this.userParallel = Math.max(1, Math.min(v, getMaxParallelForLevel()))).allowC2S();
+        IntSyncValue speedSync = new IntSyncValue(this::getUserSpeed, v -> {
+            int m = getMaxSpeedForLevel();
+            this.userSpeed = Math.max(-m, Math.min(v, m));
+        }).allowC2S();
         IntSyncValue threadSync = new IntSyncValue(
             this::getUserThreads,
-            v -> this.userThreads = Math.max(1, Math.min(v, getMaxThreadsForLevel()))
-        ).allowC2S();
+            v -> this.userThreads = Math.max(1, Math.min(v, getMaxThreadsForLevel()))).allowC2S();
         // 3.28.0：线程已停用 —— 上面这个 threadSync 不再挂到任何控件（引擎与存档字段都保留，只是界面不再暴露）。
         if (threadSync == null) return null; // 仅为消除"未使用变量"告警的死分支，永不成立
 
@@ -209,35 +223,46 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
 
         // 3.25.0：界面分两页——「参数」（原有内容）与「线程」（线程进度，见 buildThreadsPage）。
         // 标签条沿用 MK.III 样板窗的做法：贴在面板右缘外侧（PageButton + PagedWidget）。
-        com.cleanroommc.modularui.widgets.PagedWidget.Controller tabController =
-            new com.cleanroommc.modularui.widgets.PagedWidget.Controller();
-        com.cleanroommc.modularui.widget.ParentWidget<?> pageParams =
-            new com.cleanroommc.modularui.widget.ParentWidget<>().coverChildren().name("params");
-        com.cleanroommc.modularui.widget.ParentWidget<?> pageThreads =
-            new com.cleanroommc.modularui.widget.ParentWidget<>().coverChildren().name("threads");
+        com.cleanroommc.modularui.widgets.PagedWidget.Controller tabController = new com.cleanroommc.modularui.widgets.PagedWidget.Controller();
+        com.cleanroommc.modularui.widget.ParentWidget<?> pageParams = new com.cleanroommc.modularui.widget.ParentWidget<>()
+            .coverChildren()
+            .name("params");
+        com.cleanroommc.modularui.widget.ParentWidget<?> pageThreads = new com.cleanroommc.modularui.widget.ParentWidget<>()
+            .coverChildren()
+            .name("threads");
 
-        Flow column = Flow.column().coverChildren().childPadding(3).top(7).left(7);
+        Flow column = Flow.column()
+            .coverChildren()
+            .childPadding(3)
+            .top(7)
+            .left(7);
 
-        column.child(new TextWidget<>(IKey.lang("ae2_qof.gui.hatch.title"))
-            .size(246, 12));
+        column.child(new TextWidget<>(IKey.lang("ae2_qof.gui.hatch.title")).size(246, 12));
 
-        column.child(new TextWidget<>(IKey.lang("ae2_qof.gui.hatch.circuit_slot"))
-            .size(246, 12));
-        column.child(new ItemSlot()
-            .slot(new ModularSlot(inventoryHandler, CIRCUIT_SLOT))
-            .size(18));
+        column.child(new TextWidget<>(IKey.lang("ae2_qof.gui.hatch.circuit_slot")).size(246, 12));
+        column.child(
+            new ItemSlot().slot(new ModularSlot(inventoryHandler, CIRCUIT_SLOT))
+                .size(18));
 
-        column.child(paramRow("ae2_qof.gui.hatch.parallel",
-            new TextFieldWidget().value(parallelSync).formatAsInteger(true)
-                .numbersInt(() -> 1L, () -> (long) getMaxParallelForLevel())
-                .setMaxLength(10).size(80, 14),
-            IKey.dynamic(() -> "max " + getMaxParallelForLevel())));
+        column.child(
+            paramRow(
+                "ae2_qof.gui.hatch.parallel",
+                new TextFieldWidget().value(parallelSync)
+                    .formatAsInteger(true)
+                    .numbersInt(() -> 1L, () -> (long) getMaxParallelForLevel())
+                    .setMaxLength(10)
+                    .size(80, 14),
+                IKey.dynamic(() -> "max " + getMaxParallelForLevel())));
 
-        column.child(paramRow("ae2_qof.gui.hatch.speed",
-            new TextFieldWidget().value(speedSync).formatAsInteger(true)
-                .numbersInt(() -> (long) -getMaxSpeedForLevel(), () -> (long) getMaxSpeedForLevel())
-                .setMaxLength(5).size(80, 14),
-            IKey.dynamic(() -> "max " + getMaxSpeedForLevel() + "%")));
+        column.child(
+            paramRow(
+                "ae2_qof.gui.hatch.speed",
+                new TextFieldWidget().value(speedSync)
+                    .formatAsInteger(true)
+                    .numbersInt(() -> (long) -getMaxSpeedForLevel(), () -> (long) getMaxSpeedForLevel())
+                    .setMaxLength(5)
+                    .size(80, 14),
+                IKey.dynamic(() -> "max " + getMaxSpeedForLevel() + "%")));
 
         // 3.28.0：线程已停用 ⇒ 不再提供"线程数"输入框（界面只留并行与速度）。threadSync 一并移除。
 
@@ -269,13 +294,14 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
 
     // ===================== 3.25.0：「线程」页 =====================
 
-    /** 线程页：汇总一行 + 表头 + 只列活跃线程的可滚动列表 + 空闲/降级折叠行。
+    /**
+     * 线程页：汇总一行 + 表头 + 只列活跃线程的可滚动列表 + 空闲/降级折叠行。
      *
-     * <p><b>3.28.0 起不再被调用</b>（用户决定停用线程功能，仅保留代码备查）：调用点已从
+     * <p>
+     * <b>3.28.0 起不再被调用</b>（用户决定停用线程功能，仅保留代码备查）：调用点已从
      * {@code buildUI} 移除，因此页内的 {@code ae2qol_threads_*} 同步值也不会注册。
      */
-    private void buildThreadsPage(com.cleanroommc.modularui.widget.ParentWidget<?> page,
-        PanelSyncManager syncManager) {
+    private void buildThreadsPage(com.cleanroommc.modularui.widget.ParentWidget<?> page, PanelSyncManager syncManager) {
         // 汇总用的同步值：getter 在服务端求值，客户端只读（与库存统计终端同一套做法）
         IntSyncValue activeSync = new IntSyncValue(() -> {
             Ae2qolThreadEngine engine = engine();
@@ -322,25 +348,26 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
         syncManager.syncValue("ae2qol_threads_outputfull", outputFullSync);
 
         // 活跃线程列表：服务端快照 → 客户端按快照重建控件（变长列表的标准做法）
-        com.cleanroommc.modularui.value.sync.GenericListSyncHandler<Ae2qolThreadEngine.Row> rows =
-            com.cleanroommc.modularui.value.sync.GenericListSyncHandler
-                .<Ae2qolThreadEngine.Row>builder()
-                .getter(() -> {
-                    Ae2qolThreadEngine engine = engine();
-                    return engine == null ? java.util.Collections.emptyList() : engine.activeRows();
-                })
-                .serializer(Ae2qolThreadEngine.Row::write)
-                .deserializer(Ae2qolThreadEngine.Row::read)
-                .immutableCopy()
-                .build();
+        com.cleanroommc.modularui.value.sync.GenericListSyncHandler<Ae2qolThreadEngine.Row> rows = com.cleanroommc.modularui.value.sync.GenericListSyncHandler.<Ae2qolThreadEngine.Row>builder()
+            .getter(() -> {
+                Ae2qolThreadEngine engine = engine();
+                return engine == null ? java.util.Collections.emptyList() : engine.activeRows();
+            })
+            .serializer(Ae2qolThreadEngine.Row::write)
+            .deserializer(Ae2qolThreadEngine.Row::read)
+            .immutableCopy()
+            .build();
         syncManager.syncValue("ae2qol_threads_rows", rows);
 
-        com.cleanroommc.modularui.value.sync.DynamicLinkedSyncHandler<com.cleanroommc.modularui.value.sync.GenericListSyncHandler<Ae2qolThreadEngine.Row>> rowsDyn =
-            new com.cleanroommc.modularui.value.sync.DynamicLinkedSyncHandler<>(rows)
-                .widgetProvider((manager, value) -> buildThreadList(value.getValue()));
+        com.cleanroommc.modularui.value.sync.DynamicLinkedSyncHandler<com.cleanroommc.modularui.value.sync.GenericListSyncHandler<Ae2qolThreadEngine.Row>> rowsDyn = new com.cleanroommc.modularui.value.sync.DynamicLinkedSyncHandler<>(
+            rows).widgetProvider((manager, value) -> buildThreadList(value.getValue()));
         syncManager.syncValue("ae2qol_threads_rows_dyn", rowsDyn);
 
-        Flow col = Flow.column().coverChildren().childPadding(2).top(6).left(6);
+        Flow col = Flow.column()
+            .coverChildren()
+            .childPadding(2)
+            .top(6)
+            .left(6);
         col.child(
             new TextWidget<>(
                 IKey.dynamic(
@@ -349,10 +376,12 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
                         + "/"
                         + totalSync.getValue()
                         + "   "
-                        + StatCollector.translateToLocal("ae2_qof.threads.parallel_sum") + " "
+                        + StatCollector.translateToLocal("ae2_qof.threads.parallel_sum")
+                        + " "
                         + parallelSumSync.getValue()
                         + "   "
-                        + StatCollector.translateToLocal("ae2_qof.threads.power_sum") + " "
+                        + StatCollector.translateToLocal("ae2_qof.threads.power_sum")
+                        + " "
                         + powerSumSync.getValue()
                         + " EU/t")).size(248, 12)
                             .color(0xFF202020));
@@ -364,15 +393,19 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
         col.child(
             new TextWidget<>(
                 IKey.dynamic(
-                    () -> StatCollector.translateToLocal("ae2_qof.threads.idle") + " " + idleSync.getValue()
+                    () -> StatCollector.translateToLocal("ae2_qof.threads.idle") + " "
+                        + idleSync.getValue()
                         + "  "
-                        + StatCollector.translateToLocal("ae2_qof.threads.state.starved") + " "
+                        + StatCollector.translateToLocal("ae2_qof.threads.state.starved")
+                        + " "
                         + starvedSync.getValue()
                         + "  "
-                        + StatCollector.translateToLocal("ae2_qof.threads.state.output_full") + " "
+                        + StatCollector.translateToLocal("ae2_qof.threads.state.output_full")
+                        + " "
                         + outputFullSync.getValue()
                         + "  "
-                        + StatCollector.translateToLocal("ae2_qof.threads.power_down") + " "
+                        + StatCollector.translateToLocal("ae2_qof.threads.power_down")
+                        + " "
                         + powerDownSync.getValue())).size(248, 12)
                             .color(0xFF888888));
         page.child(col);
@@ -384,12 +417,24 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
     }
 
     private static IWidget threadHeaderRow() {
-        Flow row = Flow.row().coverChildren().childPadding(2);
-        row.child(new TextWidget<>(IKey.lang("ae2_qof.threads.header.no")).size(16, 11).color(0xFF666666));
-        row.child(new TextWidget<>(IKey.lang("ae2_qof.threads.header.output")).size(14, 11).color(0xFF666666));
-        row.child(new TextWidget<>(IKey.lang("ae2_qof.threads.header.progress")).size(92, 11).color(0xFF666666));
-        row.child(new TextWidget<>(IKey.lang("ae2_qof.threads.header.parallel")).size(52, 11).color(0xFF666666));
-        row.child(new TextWidget<>(IKey.lang("ae2_qof.threads.header.state")).size(64, 11).color(0xFF666666));
+        Flow row = Flow.row()
+            .coverChildren()
+            .childPadding(2);
+        row.child(
+            new TextWidget<>(IKey.lang("ae2_qof.threads.header.no")).size(16, 11)
+                .color(0xFF666666));
+        row.child(
+            new TextWidget<>(IKey.lang("ae2_qof.threads.header.output")).size(14, 11)
+                .color(0xFF666666));
+        row.child(
+            new TextWidget<>(IKey.lang("ae2_qof.threads.header.progress")).size(92, 11)
+                .color(0xFF666666));
+        row.child(
+            new TextWidget<>(IKey.lang("ae2_qof.threads.header.parallel")).size(52, 11)
+                .color(0xFF666666));
+        row.child(
+            new TextWidget<>(IKey.lang("ae2_qof.threads.header.state")).size(64, 11)
+                .color(0xFF666666));
         return row;
     }
 
@@ -418,7 +463,8 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
 
     private static IWidget threadRow(Ae2qolThreadEngine.Row row) {
         // G4：固定行高（让 ListWidget 能算出内容高度 ⇒ 滚动条范围正确，见 G7）
-        Flow r = Flow.row().height(11)
+        Flow r = Flow.row()
+            .height(11)
             .childPadding(2);
 
         r.child(
@@ -427,8 +473,8 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
 
         // 产物图标：物品优先；纯流体配方用 MUI2 的 FluidDrawable 画**真流体图标**（G4）；
         // 两者都没有（输入不足/空闲）就留空位，保持列对齐
-        com.cleanroommc.modularui.widget.Widget<?> iconWidget =
-            new com.cleanroommc.modularui.widget.Widget<>().size(16, 11);
+        com.cleanroommc.modularui.widget.Widget<?> iconWidget = new com.cleanroommc.modularui.widget.Widget<>()
+            .size(16, 11);
         if (row.icon != null) {
             iconWidget.background(new com.cleanroommc.modularui.drawable.ItemDrawable(row.icon));
         } else if (row.fluid != null) {
@@ -436,8 +482,12 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
         }
         r.child(iconWidget);
 
-        r.child(new TextWidget<>(IKey.str(progressBar(row.percent))).size(28, 11).color(0xFF2E7D32));
-        r.child(new TextWidget<>(IKey.str(row.percent + "%")).size(26, 11).color(0xFF303030));
+        r.child(
+            new TextWidget<>(IKey.str(progressBar(row.percent))).size(28, 11)
+                .color(0xFF2E7D32));
+        r.child(
+            new TextWidget<>(IKey.str(row.percent + "%")).size(26, 11)
+                .color(0xFF303030));
         r.child(
             new TextWidget<>(IKey.str(row.remain > 0 ? row.remain + "t" : "-")).size(32, 11)
                 .color(0xFF606060));
@@ -491,7 +541,9 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
     }
 
     private Flow paramRow(String labelKey, TextFieldWidget field, IKey suffix) {
-        return Flow.row().coverChildren().childPadding(3)
+        return Flow.row()
+            .coverChildren()
+            .childPadding(3)
             .child(new TextWidget<>(IKey.lang(labelKey)).size(55, 14))
             .child(field)
             .child(new TextWidget<>(suffix).size(120, 14));
@@ -515,8 +567,15 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
         if (userThreads <= 0) userThreads = 1;
     }
 
-    @Override public boolean allowPullStack(IGregTechTileEntity a, int i, ForgeDirection s, ItemStack stack) { return false; }
-    @Override public boolean allowPutStack(IGregTechTileEntity a, int i, ForgeDirection s, ItemStack stack) { return false; }
+    @Override
+    public boolean allowPullStack(IGregTechTileEntity a, int i, ForgeDirection s, ItemStack stack) {
+        return false;
+    }
+
+    @Override
+    public boolean allowPutStack(IGregTechTileEntity a, int i, ForgeDirection s, ItemStack stack) {
+        return false;
+    }
 
     /**
      * 电路板槽的物品校验。
@@ -548,9 +607,15 @@ public class AE2MaintenanceHatchUniversal extends MTEHatchMaintenance {
         mcp.mobius.waila.api.IWailaDataAccessor accessor, mcp.mobius.waila.api.IWailaConfigHandler config) {
         super.getWailaBody(itemStack, currenttip, accessor, config);
         try {
-            currenttip.add(EnumChatFormatting.AQUA + "P:" + getEffectiveParallel()
-                + " | S:" + (getUserSpeed() >= 0 ? "+" : "") + getUserSpeed() + "%"
-                + " | T:" + getEffectiveThreads());
+            currenttip.add(
+                EnumChatFormatting.AQUA + "P:"
+                    + getEffectiveParallel()
+                    + " | S:"
+                    + (getUserSpeed() >= 0 ? "+" : "")
+                    + getUserSpeed()
+                    + "%"
+                    + " | T:"
+                    + getEffectiveThreads());
         } catch (Exception ignored) {}
     }
 }

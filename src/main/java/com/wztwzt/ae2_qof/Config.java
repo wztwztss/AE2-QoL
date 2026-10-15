@@ -19,9 +19,9 @@ import com.google.gson.JsonObject;
  * - io_port_rate：强化 IO 端口传输倍率（默认 1024，1..Integer.MAX_VALUE）
  * - smart_doubling_max_rounds：智能倍增最大轮数（默认 0=不限，0..Integer.MAX_VALUE；0 表示一次发配剩余全部轮数）
  * - smart_doubling_push_cap：智能倍增**单次推送轮数上限**（默认 4096，1..Integer.MAX_VALUE）
- *   —— 受 AE2 功率探测（凑够即停的遍历，超额查询会走遍全部储能设备）与物品更新量限制，
- *   默认 4096 是审计项 #51（O(P) 探测）与 #73（大订单客户端被海量更新淹没）修复时定下的安全值；
- *   服务器算力充裕时可调大，代价是每 tick 的提取量与物品更新量线性上升。
+ * —— 受 AE2 功率探测（凑够即停的遍历，超额查询会走遍全部储能设备）与物品更新量限制，
+ * 默认 4096 是审计项 #51（O(P) 探测）与 #73（大订单客户端被海量更新淹没）修复时定下的安全值；
+ * 服务器算力充裕时可调大，代价是每 tick 的提取量与物品更新量线性上升。
  * - nei_overlay_enabled：NEI 叠加层开关（默认 true）
  *
  * 支持热加载：直接编辑文件后约 1 秒内自动生效（服务端/单机均可），
@@ -45,7 +45,8 @@ public class Config {
     /**
      * 智能通配样板单张最大展开候选数（热加载字段，3.22.0）。
      *
-     * <p>为什么必须有上限：通配样板是在**宿主建样板索引时**把规则展开成 N 张各自合法的普通样板
+     * <p>
+     * 为什么必须有上限：通配样板是在**宿主建样板索引时**把规则展开成 N 张各自合法的普通样板
      * （逐候选克隆 + 改写原生 in/out NBT），这条路径由网络钩子同步触发，且每个候选一份完整样板对象。
      * 参考实现（Wildcard Pattern）在这条路径上无上界展开，是明确的卡服点；
      * 本模组改为「有上限 + 超限可见 + 记日志」，绝不做静默截断。
@@ -106,15 +107,14 @@ public class Config {
                     1,
                     Integer.MAX_VALUE);
                 // P1-009：0 在现行语义中表示“不限”，迁移时必须保留 0，不能被钳到 1。
-                int oldRounds = readLegacyCfgInt(configFile, "smartDoublingMaxRounds", smartDoublingMaxRounds, 0, Integer.MAX_VALUE);
+                int oldRounds = readLegacyCfgInt(
+                    configFile,
+                    "smartDoublingMaxRounds",
+                    smartDoublingMaxRounds,
+                    0,
+                    Integer.MAX_VALUE);
                 // P1-009：只有新 settings.json 确实写入成功，才允许删除旧 cfg，否则保留旧文件供下次重试。
-                boolean migrated = writeFile(
-                    oldRate,
-                    oldRounds,
-                    true,
-                    pinRowEnabled,
-                    stockMonitorPresets,
-                    v7Textures);
+                boolean migrated = writeFile(oldRate, oldRounds, true, pinRowEnabled, stockMonitorPresets, v7Textures);
                 if (migrated && !Files.exists(SETTINGS_FILE)) {
                     migrated = false;
                 }
@@ -372,14 +372,14 @@ public class Config {
         return writeFile(ioRate, rounds, overlay, pinRow, presets, v7, smartDoublingPushCap);
     }
 
-    private static boolean writeFile(int ioRate, int rounds, boolean overlay, boolean pinRow, String presets,
-        String v7, int pushCap) {
+    private static boolean writeFile(int ioRate, int rounds, boolean overlay, boolean pinRow, String presets, String v7,
+        int pushCap) {
         // 3.22.0：同样用委托，新增字段（smart_wildcard_expand_cap）从静态字段取值，调用点保持不动。
         return writeFile(ioRate, rounds, overlay, pinRow, presets, v7, pushCap, smartWildcardExpandCap);
     }
 
-    private static boolean writeFile(int ioRate, int rounds, boolean overlay, boolean pinRow, String presets,
-        String v7, int pushCap, int wildcardCap) {
+    private static boolean writeFile(int ioRate, int rounds, boolean overlay, boolean pinRow, String presets, String v7,
+        int pushCap, int wildcardCap) {
         try {
             Path parent = SETTINGS_FILE.getParent();
             if (parent != null && !Files.exists(parent)) {

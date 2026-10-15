@@ -8,7 +8,8 @@ import java.util.List;
  * 3.32.0：列表口径从「一台仓一行」改成「**一台主机一行**」（用户口径：像 GTNL 能源监视器那样，
  * 看的是耗电的机器，而不是它身上插着的仓），同时保留「仓的额定/实测合计」两列。
  *
- * <p>为什么要改：旧列表一行是一台仓，名字取自仓的 {@code machineName}（而那个值又只在
+ * <p>
+ * 为什么要改：旧列表一行是一台仓，名字取自仓的 {@code machineName}（而那个值又只在
  * 仓的 onFirstTick 里解析一次、失败就永久缓存成仓自己的名字 ⇒ 实测 481 行全叫「自适应电网仓」），
  * 右侧 EU/t 还是按网络配置**算出来的额定值**（{@code V[tier] × amps}），既不能回答"谁在吃电"，
  * 也不反映真实流量。现在：行=主机，主机名字/图标由客户端按 MTE id 本地化解析，
@@ -28,7 +29,8 @@ public class HatchListCache {
      * 排序（3.32.0-fix3）：**先按实测流量降序**——真正在干活的机器排前面，待机的自然会沉到底部；
      * 实测相同再按 |主机 mEUt| 降序。
      *
-     * <p>为什么不再按 mEUt 排：GT 的 {@code mEUt} 停机后**不清零**（残留上一次配方的值），
+     * <p>
+     * 为什么不再按 mEUt 排：GT 的 {@code mEUt} 停机后**不清零**（残留上一次配方的值），
      * 用户实测到"最上面那台根本没工作却写着 -458,752,000 EU/t"。
      */
     public static final Comparator<HatchEntry> FLOW_DESC = (a, b) -> {
@@ -37,7 +39,7 @@ public class HatchListCache {
     };
 
     public HatchListCache(int totalCount, int hostCount, List<HatchEntry> entries, String inputCountText,
-                          String outputCountText) {
+        String outputCountText) {
         entries.sort(FLOW_DESC);
         this.totalCount = totalCount;
         this.hostCount = hostCount;
@@ -80,8 +82,8 @@ public class HatchListCache {
         public final List<Sub> subs;
 
         public HatchEntry(int displayMetaId, boolean hostKnown, boolean running, long hostEut, int hatchCount,
-                          int inCount, int outCount, long eut, long realFlowEUt, int index, int x, int y, int z,
-                          int dim, String ownerName, List<Sub> subs) {
+            int inCount, int outCount, long eut, long realFlowEUt, int index, int x, int y, int z, int dim,
+            String ownerName, List<Sub> subs) {
             this.displayMetaId = displayMetaId;
             this.hostKnown = hostKnown;
             this.running = running;
@@ -116,7 +118,7 @@ public class HatchListCache {
         public final boolean compat;
 
         public Sub(int metaId, int hatchType, int tier, int amps, long eut, long realFlowEUt, int x, int y, int z,
-                   int dim, boolean compat) {
+            int dim, boolean compat) {
             this.metaId = metaId;
             this.hatchType = hatchType;
             this.tier = tier;

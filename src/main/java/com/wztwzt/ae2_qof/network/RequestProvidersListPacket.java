@@ -1,7 +1,6 @@
 package com.wztwzt.ae2_qof.network;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -220,11 +219,21 @@ public class RequestProvidersListPacket implements IMessage {
                     }
                 }
                 ProvidersListS2CPacket response = new ProvidersListS2CPacket(
-                    ids, names, emptySlots, totalSlots, locationKeys, icons, recipeMap, message.forceGui);
+                    ids,
+                    names,
+                    emptySlots,
+                    totalSlots,
+                    locationKeys,
+                    icons,
+                    recipeMap,
+                    message.forceGui);
                 if (response.ids.size() < ids.size()) {
-                    player.addChatMessage(new net.minecraft.util.ChatComponentText(
-                        "[AE2 QoL] Provider list limited to " + response.ids.size() + "/" + ids.size()
-                            + " entries by packet budget; automatic selection disabled."));
+                    player.addChatMessage(
+                        new net.minecraft.util.ChatComponentText(
+                            "[AE2 QoL] Provider list limited to " + response.ids.size()
+                                + "/"
+                                + ids.size()
+                                + " entries by packet budget; automatic selection disabled."));
                 }
                 ModNetwork.CHANNEL.sendTo(response, player);
                 MyMod.LOG.debug("[Upload] providers list sent: count={}, recipeMap={}", response.ids.size(), recipeMap);
@@ -233,8 +242,8 @@ public class RequestProvidersListPacket implements IMessage {
             }
         }
 
-        private static void collectProviders(IGrid grid, List<Long> ids, List<String> names,
-            List<Integer> emptySlots, List<Integer> totalSlots, List<String> locationKeys, List<ItemStack> icons,
+        private static void collectProviders(IGrid grid, List<Long> ids, List<String> names, List<Integer> emptySlots,
+            List<Integer> totalSlots, List<String> locationKeys, List<ItemStack> icons,
             List<ICraftingProvider> providers) {
             for (Class<? extends IGridHost> hostClass : grid.getMachinesClasses()) {
                 if (!ICraftingProvider.class.isAssignableFrom(hostClass)) {
@@ -368,8 +377,8 @@ public class RequestProvidersListPacket implements IMessage {
                     }
                 }
                 if (machine instanceof gregtech.api.interfaces.tileentity.IGregTechTileEntity) {
-                    gregtech.api.interfaces.metatileentity.IMetaTileEntity mte =
-                        ((gregtech.api.interfaces.tileentity.IGregTechTileEntity) machine).getMetaTileEntity();
+                    gregtech.api.interfaces.metatileentity.IMetaTileEntity mte = ((gregtech.api.interfaces.tileentity.IGregTechTileEntity) machine)
+                        .getMetaTileEntity();
                     if (mte != null) {
                         ItemStack stack = mte.getStackForm(1L);
                         if (stack != null) {

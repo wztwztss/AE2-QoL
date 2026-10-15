@@ -7,7 +7,6 @@ package com.wztwzt.ae2_qof.apgport.network;
 
 import com.wztwzt.ae2_qof.MyMod;
 
-
 import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import cpw.mods.fml.relauncher.Side;
@@ -19,8 +18,7 @@ public class NetworkHandler {
 
     // 注意：绝不能与我们的 ModNetwork.CHANNEL / WildcardNetwork.CHANNEL 同名 ——
     // NetworkRegistry 遇到重复通道名会直接抛异常（启动崩溃）。因此带 _apg 后缀独立成通道。
-    public static final SimpleNetworkWrapper INSTANCE = NetworkRegistry.INSTANCE
-        .newSimpleChannel(MyMod.MODID + "_apg");
+    public static final SimpleNetworkWrapper INSTANCE = NetworkRegistry.INSTANCE.newSimpleChannel(MyMod.MODID + "_apg");
 
     private static int packetId = 0;
 

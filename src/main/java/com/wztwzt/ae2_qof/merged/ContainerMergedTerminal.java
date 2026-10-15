@@ -282,12 +282,24 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
                     tag.setInteger("y", tracker.y);
                     tag.setInteger("z", tracker.z);
                     tag.setInteger("dim", tracker.dim);
-                    is.setStackDisplayName("Crafting Input Buffer Link Data Stick ("
-                        + tracker.x + ", " + tracker.y + ", " + tracker.z + ")");
+                    is.setStackDisplayName(
+                        "Crafting Input Buffer Link Data Stick (" + tracker.x
+                            + ", "
+                            + tracker.y
+                            + ", "
+                            + tracker.z
+                            + ")");
                     player.inventory.markDirty();
                     player.inventoryContainer.detectAndSendChanges();
-                    player.addChatMessage(new net.minecraft.util.ChatComponentText(
-                        net.minecraft.util.EnumChatFormatting.GREEN + "Linked to [" + tracker.x + ", " + tracker.y + ", " + tracker.z + "]"));
+                    player.addChatMessage(
+                        new net.minecraft.util.ChatComponentText(
+                            net.minecraft.util.EnumChatFormatting.GREEN + "Linked to ["
+                                + tracker.x
+                                + ", "
+                                + tracker.y
+                                + ", "
+                                + tracker.z
+                                + "]"));
                 }
                 return;
             }

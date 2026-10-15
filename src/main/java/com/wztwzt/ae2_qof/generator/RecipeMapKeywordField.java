@@ -68,15 +68,11 @@ public class RecipeMapKeywordField extends TextFieldWidget {
 
     private void cycle() {
         if (this.lockedFragment == null) {
-            String text = getText() == null ? "" : getText()
-                .trim();
+            String text = getText() == null ? "" : getText().trim();
             this.lockedFragment = text;
             this.candidates = RecipeMapNames.matchIds(text);
             this.index = -1;
-            MyMod.LOG.info(
-                "[AE2QoL] RecipeMap 补全：片段='{}' 候选={} 个（匹配 关键字/中文名/英文名 任一）",
-                text,
-                this.candidates.size());
+            MyMod.LOG.info("[AE2QoL] RecipeMap 补全：片段='{}' 候选={} 个（匹配 关键字/中文名/英文名 任一）", text, this.candidates.size());
             if (this.candidates.isEmpty()) {
                 hint("没有匹配的机器：'" + text + "'（换个片段，或点右侧 [对照表] 查）");
                 MyMod.LOG.warn("[AE2QoL] RecipeMap 补全：片段 '{}' 无候选", text);

@@ -15,15 +15,16 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
-import gregtech.api.enums.Materials;
-import gregtech.api.enums.OrePrefixes;
-import gregtech.api.objects.ItemData;
-import gregtech.api.util.GTOreDictUnificator;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.common.util.Constants.NBT;
 import net.minecraftforge.oredict.OreDictionary;
+
+import gregtech.api.enums.Materials;
+import gregtech.api.enums.OrePrefixes;
+import gregtech.api.objects.ItemData;
+import gregtech.api.util.GTOreDictUnificator;
 
 public final class WildcardPatternConfig {
 
@@ -63,11 +64,7 @@ public final class WildcardPatternConfig {
         return getRuleMaterialList(stack, KEY_RULE_EXCLUDE_MATERIALS, ruleIndex);
     }
 
-    public static void apply(
-        ItemStack stack,
-        boolean replaceInputs,
-        boolean replaceOutputs,
-        String include,
+    public static void apply(ItemStack stack, boolean replaceInputs, boolean replaceOutputs, String include,
         String exclude) {
         List<String> includes = new ArrayList<>();
         includes.add(normalizeList(include));
@@ -76,10 +73,7 @@ public final class WildcardPatternConfig {
         apply(stack, normalizeList(exclude), includes, excludes);
     }
 
-    public static void apply(
-        ItemStack stack,
-        String globalExclude,
-        List<String> ruleIncludes,
+    public static void apply(ItemStack stack, String globalExclude, List<String> ruleIncludes,
         List<String> ruleExcludes) {
         NBTTagCompound tag = getOrCreateTag(stack);
         tag.setString(KEY_GLOBAL_EXCLUDE_MATERIALS, normalizeList(globalExclude));
@@ -88,7 +82,9 @@ public final class WildcardPatternConfig {
     }
 
     public static ItemStack getPreferredOreStack(ItemStack stack, String oreName) {
-        if (stack == null || oreName == null || oreName.trim().isEmpty()) {
+        if (stack == null || oreName == null
+            || oreName.trim()
+                .isEmpty()) {
             return null;
         }
         NBTTagCompound tag = stack.getTagCompound();
@@ -101,7 +97,9 @@ public final class WildcardPatternConfig {
     }
 
     public static void setPreferredOreStack(ItemStack stack, String oreName, ItemStack preferred) {
-        if (stack == null || oreName == null || oreName.trim().isEmpty()) {
+        if (stack == null || oreName == null
+            || oreName.trim()
+                .isEmpty()) {
             return;
         }
         NBTTagCompound prefs = getOrCreatePreferences(stack);
@@ -130,11 +128,7 @@ public final class WildcardPatternConfig {
         return result;
     }
 
-    public static boolean acceptsCandidate(
-        ItemStack stack,
-        int ruleIndex,
-        String candidateName,
-        ItemStack inputStack,
+    public static boolean acceptsCandidate(ItemStack stack, int ruleIndex, String candidateName, ItemStack inputStack,
         ItemStack outputStack) {
         Set<String> candidateTerms = collectCandidateTerms(candidateName, inputStack, outputStack);
         if (candidateTerms.isEmpty()) {
@@ -154,11 +148,7 @@ public final class WildcardPatternConfig {
         return acceptsCandidate(stack, ruleIndex, material, null, null);
     }
 
-    public static boolean acceptsCandidate(
-        ItemStack stack,
-        int ruleIndex,
-        Materials material,
-        ItemStack inputStack,
+    public static boolean acceptsCandidate(ItemStack stack, int ruleIndex, Materials material, ItemStack inputStack,
         ItemStack outputStack) {
         Set<String> candidateTerms = collectCandidateTerms(material, inputStack, outputStack);
         if (candidateTerms.isEmpty()) {
@@ -220,7 +210,8 @@ public final class WildcardPatternConfig {
 
     private static Set<String> parseList(String value) {
         Set<String> result = new LinkedHashSet<>();
-        if (value == null || value.trim().isEmpty()) {
+        if (value == null || value.trim()
+            .isEmpty()) {
             return result;
         }
 
@@ -235,7 +226,8 @@ public final class WildcardPatternConfig {
     }
 
     private static String normalizeList(String value) {
-        if (value == null || value.trim().isEmpty()) {
+        if (value == null || value.trim()
+            .isEmpty()) {
             return "";
         }
 
@@ -254,10 +246,13 @@ public final class WildcardPatternConfig {
     }
 
     private static String normalizeMaterialName(String value) {
-        return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
+        return value == null ? ""
+            : value.trim()
+                .toLowerCase(Locale.ROOT);
     }
 
-    private static Set<String> collectCandidateTerms(String candidateName, ItemStack inputStack, ItemStack outputStack) {
+    private static Set<String> collectCandidateTerms(String candidateName, ItemStack inputStack,
+        ItemStack outputStack) {
         Set<String> result = new LinkedHashSet<>();
         String materialName = normalizeMaterialName(candidateName);
         if (!materialName.isEmpty()) {
@@ -316,10 +311,14 @@ public final class WildcardPatternConfig {
             return "";
         }
         try {
-            return (String) prefix.getClass().getMethod("getName").invoke(prefix);
+            return (String) prefix.getClass()
+                .getMethod("getName")
+                .invoke(prefix);
         } catch (Exception ignored) {}
         try {
-            return (String) prefix.getClass().getMethod("name").invoke(prefix);
+            return (String) prefix.getClass()
+                .getMethod("name")
+                .invoke(prefix);
         } catch (Exception ignored) {}
         return prefix.toString();
     }
@@ -332,10 +331,12 @@ public final class WildcardPatternConfig {
     }
 
     private static boolean matchesList(String value, Set<String> candidateTerms) {
-        if (value == null || value.trim().isEmpty()) {
+        if (value == null || value.trim()
+            .isEmpty()) {
             return false;
         }
-        for (TokenMatcher matcher : TOKEN_MATCHER_CACHE.computeIfAbsent(value, WildcardPatternConfig::buildTokenMatchers)) {
+        for (TokenMatcher matcher : TOKEN_MATCHER_CACHE
+            .computeIfAbsent(value, WildcardPatternConfig::buildTokenMatchers)) {
             for (String candidateTerm : candidateTerms) {
                 if (candidateTerm != null && !candidateTerm.isEmpty() && matcher.matches(candidateTerm)) {
                     return true;
@@ -347,7 +348,8 @@ public final class WildcardPatternConfig {
 
     private static List<TokenMatcher> buildTokenMatchers(String value) {
         List<TokenMatcher> result = new ArrayList<>();
-        if (value == null || value.trim().isEmpty()) {
+        if (value == null || value.trim()
+            .isEmpty()) {
             return result;
         }
         for (String part : value.split("[,;锛岋紱\\s]+")) {
@@ -400,6 +402,7 @@ public final class WildcardPatternConfig {
     }
 
     private static final class TokenMatcher {
+
         private final Pattern wildcardPattern;
         private final String exactToken;
 
@@ -410,7 +413,8 @@ public final class WildcardPatternConfig {
 
         private boolean matches(String value) {
             if (this.wildcardPattern != null) {
-                return this.wildcardPattern.matcher(value).matches();
+                return this.wildcardPattern.matcher(value)
+                    .matches();
             }
             return this.exactToken != null && this.exactToken.equals(value);
         }

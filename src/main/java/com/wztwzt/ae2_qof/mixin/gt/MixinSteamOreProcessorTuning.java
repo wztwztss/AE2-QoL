@@ -14,11 +14,13 @@ import gregtech.api.recipe.check.CheckRecipeResult;
 /**
  * Steam Ore Processing Module 的调速 + 批处理后处理（3.29.0）。
  *
- * <p>上游一次操作处理 {@code currentParallelism}（= MAX_PARA × 2^电路，再按水/润滑剂/矿石夹紧）个矿石，
+ * <p>
+ * 上游一次操作处理 {@code currentParallelism}（= MAX_PARA × 2^电路，再按水/润滑剂/矿石夹紧）个矿石，
  * 并把它们从输入里**扣掉**（直接改 {@code ItemStack.stackSize}）。因此额外 k 份就要再扣 k × P 个矿石；
  * 本实现逐份实扣，扣不满就停在能供上的份数（自动降级）。
  *
- * <p><b>水/润滑剂不做额外扣减</b>：上游的 {@code depleteInput(FluidStack, boolean)} 在 GTNL 蒸汽机器里被重写为
+ * <p>
+ * <b>水/润滑剂不做额外扣减</b>：上游的 {@code depleteInput(FluidStack, boolean)} 在 GTNL 蒸汽机器里被重写为
  * **只遍历蒸汽输入仓**（`SteamMultiMachineBase:670-715`），而水/润滑剂不可能放进被锁定的蒸汽仓 ⇒ 上游本来
  * 就**没有真正扣过**这两种流体（只把它们当作"并行上限条件"来读）。本实现保持该上游行为，不做额外扣减，
  * 以免偏离上游语义；如需真正收费，属另一项改动。
@@ -56,7 +58,8 @@ public abstract class MixinSteamOreProcessorTuning {
             if (wanted > 1) {
                 SteamElevatorTuning.warnOnce(
                     "op:floor",
-                    "[AE2QoL] SteamElevator 矿处模块只够 " + n + " 份（抗卡顿门槛 "
+                    "[AE2QoL] SteamElevator 矿处模块只够 " + n
+                        + " 份（抗卡顿门槛 "
                         + SteamElevatorTuning.minBatchesToApplyTuning
                         + "）：为**避免配方检查频率上升**已保持上游行为，补足矿石后自动启用");
             }
@@ -82,7 +85,10 @@ public abstract class MixinSteamOreProcessorTuning {
         if (total > 1) {
             SteamElevatorTuning.infoOnce(
                 "op:n",
-                "[AE2QoL] SteamElevator 矿处模块批处理生效: 每操作 " + total + " 份 = 模块内部并行 " + perBatch + " × 批量并行 "
+                "[AE2QoL] SteamElevator 矿处模块批处理生效: 每操作 " + total
+                    + " 份 = 模块内部并行 "
+                    + perBatch
+                    + " × 批量并行 "
                     + p
                     + "，共 "
                     + (total * perBatch)
@@ -92,9 +98,7 @@ public abstract class MixinSteamOreProcessorTuning {
         } else if (wanted > 1) {
             SteamElevatorTuning.warnOnce(
                 "op:short",
-                "[AE2QoL] SteamElevator 矿处模块矿石不足，已降级为 1 份/操作（每份需 " + perBatch + " 个矿；补足后自动恢复 "
-                    + wanted
-                    + " 份）");
+                "[AE2QoL] SteamElevator 矿处模块矿石不足，已降级为 1 份/操作（每份需 " + perBatch + " 个矿；补足后自动恢复 " + wanted + " 份）");
         }
     }
 }

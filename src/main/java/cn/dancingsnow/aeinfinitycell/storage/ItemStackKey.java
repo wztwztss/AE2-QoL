@@ -34,8 +34,7 @@ public final class ItemStackKey {
     private boolean hashCached;
 
     /** `Item → "modid:name"` 的进程内缓存（入站方向 `from()` 每次都会 `findUniqueIdentifierFor` + `toString`）。 */
-    private static final java.util.Map<net.minecraft.item.Item, String> NAME_CACHE =
-        new java.util.concurrent.ConcurrentHashMap<>();
+    private static final java.util.Map<net.minecraft.item.Item, String> NAME_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
 
     private boolean resolveUid() {
         if (uidResolved) {

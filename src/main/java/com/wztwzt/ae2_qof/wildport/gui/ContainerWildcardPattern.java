@@ -6,10 +6,11 @@
  */
 package com.wztwzt.ae2_qof.wildport.gui;
 
-import com.wztwzt.ae2_qof.wildport.ModItems;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
+
+import com.wztwzt.ae2_qof.wildport.ModItems;
 
 public class ContainerWildcardPattern extends Container {
 

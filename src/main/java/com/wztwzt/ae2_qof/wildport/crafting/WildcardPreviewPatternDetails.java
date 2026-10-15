@@ -6,12 +6,13 @@
  */
 package com.wztwzt.ae2_qof.wildport.crafting;
 
-import appeng.api.networking.crafting.ICraftingPatternDetails;
-import appeng.api.storage.data.IAEItemStack;
-import appeng.util.item.AEItemStack;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
+
+import appeng.api.networking.crafting.ICraftingPatternDetails;
+import appeng.api.storage.data.IAEItemStack;
+import appeng.util.item.AEItemStack;
 
 public class WildcardPreviewPatternDetails implements ICraftingPatternDetails {
 
@@ -43,7 +44,8 @@ public class WildcardPreviewPatternDetails implements ICraftingPatternDetails {
 
     @Override
     public boolean isValidItemForSlot(int slotIndex, ItemStack itemStack, World world) {
-        return slotIndex == 0 && this.inputs.length > 0 && itemStack != null
+        return slotIndex == 0 && this.inputs.length > 0
+            && itemStack != null
             && this.inputs[0] != null
             && this.inputs[0].isSameType(itemStack);
     }

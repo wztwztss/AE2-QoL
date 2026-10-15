@@ -1,10 +1,10 @@
 package com.wztwzt.ae2_qof.hatch.adaptive;
 
+import java.util.HashMap;
+
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.world.WorldSavedData;
-
-import java.util.HashMap;
 
 public class GridEnergyWorldData extends WorldSavedData {
 
@@ -18,7 +18,8 @@ public class GridEnergyWorldData extends WorldSavedData {
     }
 
     public static GridEnergyWorldData get(net.minecraft.world.World world) {
-        GridEnergyWorldData data = (GridEnergyWorldData) world.mapStorage.loadData(GridEnergyWorldData.class, DATA_NAME);
+        GridEnergyWorldData data = (GridEnergyWorldData) world.mapStorage
+            .loadData(GridEnergyWorldData.class, DATA_NAME);
         if (data == null) {
             data = new GridEnergyWorldData(DATA_NAME);
             world.mapStorage.setData(DATA_NAME, data);
@@ -47,7 +48,8 @@ public class GridEnergyWorldData extends WorldSavedData {
             NBTTagCompound compound = new NBTTagCompound();
             compound.setString("key", entry.getKey());
             NBTTagCompound statsTag = new NBTTagCompound();
-            entry.getValue().saveNBT(statsTag);
+            entry.getValue()
+                .saveNBT(statsTag);
             compound.setTag("stats", statsTag);
             list.appendTag(compound);
         }

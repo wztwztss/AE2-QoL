@@ -8,13 +8,15 @@ package com.wztwzt.ae2_qof.wildport.crafting;
 
 import java.util.List;
 
-import appeng.api.AEApi;
-import com.wztwzt.ae2_qof.wildport.ModItems;
-import com.wztwzt.ae2_qof.wildport.item.WildcardPatternState;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.world.World;
+
+import com.wztwzt.ae2_qof.wildport.ModItems;
+import com.wztwzt.ae2_qof.wildport.item.WildcardPatternState;
+
+import appeng.api.AEApi;
 
 public class CompositeWildcardRecipe implements IRecipe {
 
@@ -63,8 +65,14 @@ public class CompositeWildcardRecipe implements IRecipe {
     }
 
     private static boolean isBlankPattern(ItemStack stack) {
-        ItemStack blankPattern = AEApi.instance().definitions().materials().blankPattern().maybeStack(1).orNull();
-        return blankPattern != null && stack.getItem() == blankPattern.getItem() && stack.getItemDamage() == blankPattern.getItemDamage();
+        ItemStack blankPattern = AEApi.instance()
+            .definitions()
+            .materials()
+            .blankPattern()
+            .maybeStack(1)
+            .orNull();
+        return blankPattern != null && stack.getItem() == blankPattern.getItem()
+            && stack.getItemDamage() == blankPattern.getItemDamage();
     }
 
     private static boolean isEmptyWildcardPattern(ItemStack stack) {

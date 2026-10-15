@@ -34,7 +34,8 @@ import reobf.proghatches.gt.metatileentity.PatternDualInputHatch;
  * 手工构造**原版** {@code S35PacketUpdateTileEntity}（GT 与 PH 源码同样使用该类，实例 jar 内亦存在），
  * 内容是这台机器 {@code writeToNBT} 的结果，只发给**正在跟踪该区块**的玩家。
  * 客户端收到后会走 {@code TileEntity.onDataPacket → readFromNBT} —— **与区块重载完全同一条应用路径**
- * （GT 自己的 {@code IGregTechTileEntity} 注释就写着 {@code @see TileEntity#onDataPacket(NetworkManager, S35PacketUpdateTileEntity)}），
+ * （GT 自己的 {@code IGregTechTileEntity} 注释就写着
+ * {@code @see TileEntity#onDataPacket(NetworkManager, S35PacketUpdateTileEntity)}），
  * 因此不需要新网络包、不需要客户端处理器，也不会出现"自行解析 NBT"带来的语义偏差。
  *
  * <h2>为什么不是别的方案</h2>
@@ -44,7 +45,8 @@ import reobf.proghatches.gt.metatileentity.PatternDualInputHatch;
  * <li>自建分片包：可行，但要额外写分片/缺片校验/客户端应用，收益只是省流量，属备选。</li>
  * </ul>
  *
- * <p>风险与边界：载荷是这台机器整份 TE NBT（含 {@code BUFFER_*} 与样板，与区块重载同内容）；
+ * <p>
+ * 风险与边界：载荷是这台机器整份 TE NBT（含 {@code BUFFER_*} 与样板，与区块重载同内容）；
  * 由玩家手动动作触发、频率极低；异常一律吞掉并记 WARN，**绝不影响服务端数据本身**。
  */
 public final class PatternClientSync {
@@ -85,13 +87,8 @@ public final class PatternClientSync {
                     sent++;
                 }
             }
-            MyMod.LOG.info(
-                "[AE2QoL] 样板同步：{} @ {},{},{} 的 TE 数据已下发给 {} 名跟踪该区块的玩家",
-                machine.getMetaName(),
-                x,
-                y,
-                z,
-                sent);
+            MyMod.LOG
+                .info("[AE2QoL] 样板同步：{} @ {},{},{} 的 TE 数据已下发给 {} 名跟踪该区块的玩家", machine.getMetaName(), x, y, z, sent);
         } catch (Throwable t) {
             // 静默兜底会掩盖故障：这里必须留痕，但不改变服务端数据与业务流程
             MyMod.LOG.warn("[AE2QoL] 样板同步：通知客户端失败（服务端数据不受影响）", t);

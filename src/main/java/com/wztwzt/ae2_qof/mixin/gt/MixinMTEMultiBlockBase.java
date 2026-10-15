@@ -15,7 +15,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.hatch.thread.Ae2qolThreadEngine;
-import com.wztwzt.ae2_qof.hatch.thread.ThreadStatusBroadcaster;
 
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 import gregtech.api.logic.ProcessingLogic;
@@ -96,7 +95,8 @@ public abstract class MixinMTEMultiBlockBase {
 
     /**
      * 能源仓能提供的最大 EU/t（3.25.0-fix12 用作"可用电力预算"）。
-     * <p>⚠️ 不能用 {@code getStoredEU()}：GT 多方块平时不缓存 EU（每 tick 直接从能源仓拉走），
+     * <p>
+     * ⚠️ 不能用 {@code getStoredEU()}：GT 多方块平时不缓存 EU（每 tick 直接从能源仓拉走），
      * 那个值恒为 0，正是"只要开多线程就闪电力不足"的元凶。
      */
     @Shadow
@@ -129,12 +129,15 @@ public abstract class MixinMTEMultiBlockBase {
 
     /**
      * 3.25.0-fix16：让「无线电网输出终端」能报 **21 亿 A** 而不被 GT 的结构判定挡掉。
-     * <p>GT 原判定（{@code addDynamoToMachineList}）：
+     * <p>
+     * GT 原判定（{@code addDynamoToMachineList}）：
      * {@code if (mte instanceof MTEHatchDynamo hatch && hatch.maxAmperesOut() <= 4)} —— 那个 `<= 4` 是为普通
      * 动力仓设的上限，会把我们报 2,147,483,647A 的终端拒之门外。这里在 HEAD 直接替 GT 收下该部件并取消原判定。
-     * <p>吞吐换算：{@code 电压 × 电流 = 2,147,483,640 × 2,147,483,647 ≈ 4.61e18 EU/t}
+     * <p>
+     * 吞吐换算：{@code 电压 × 电流 = 2,147,483,640 × 2,147,483,647 ≈ 4.61e18 EU/t}
      * （仍 < Long.MAX = 9.22e18，**不会溢出**；也正好等于终端缓存容量）。
-     * <p>⚠️ {@code addEnergyOutputMultipleDynamos} 会把**所有**动力仓的"电压×安培"累加 ⇒
+     * <p>
+     * ⚠️ {@code addEnergyOutputMultipleDynamos} 会把**所有**动力仓的"电压×安培"累加 ⇒
      * **同一台机器不要放两个这种终端**（两个就到 9.2e18，long 会溢出）。
      */
     @Inject(method = "addDynamoToMachineList", at = @At("HEAD"), cancellable = true)
@@ -155,7 +158,8 @@ public abstract class MixinMTEMultiBlockBase {
 
     /**
      * 扣料校验闸已检查的次数 + 上限（3.25.0-fix19，每 tick 路径减负）。
-     * <p>它只是**告警用**诊断（真正的防护是 P0「每 tick 最多起一条线程」），
+     * <p>
+     * 它只是**告警用**诊断（真正的防护是 P0「每 tick 最多起一条线程」），
      * 而每次检查要付**两遍全仓扫描**（输入总线逐槽 + 双输入仓 + `getStoredFluids()` 分配一个 List）。
      * 限成每台机器前 {@value #ae2qol$GATE_MAX_CHECKS} 次起步即可 —— 要出问题早就出在第一台机器上了。
      */
@@ -251,7 +255,8 @@ public abstract class MixinMTEMultiBlockBase {
 
     /**
      * 上一次观察到的机器进度（{@code mProgresstime}）。
-     * <p>3.25.1：线程推进改为**跟随这个字段的增量**，而不是假定 1/tick —— 因为 NH-Utilities 等加速机制
+     * <p>
+     * 3.25.1：线程推进改为**跟随这个字段的增量**，而不是假定 1/tick —— 因为 NH-Utilities 等加速机制
      * 是「直接改写 {@code multiBlockBase.mProgresstime} 并跳过 updateEntity」的
      * （证据：NH-Utilities `BaseMetaTileEntityAcceleration_Mixin.tickAcceleration`：
      * {@code multiBlockBase.mProgresstime = Math.min(maxProgress, currentProgress + rate); return true;}）。
@@ -467,8 +472,7 @@ public abstract class MixinMTEMultiBlockBase {
                     } else {
                         boolean noRecipe = (result == null || result == CheckRecipeResultRegistry.NO_RECIPE);
                         slot.clearRun();
-                        slot.state = noRecipe ? Ae2qolThreadEngine.ST_STARVED
-                            : Ae2qolThreadEngine.ST_OUTPUT_FULL;
+                        slot.state = noRecipe ? Ae2qolThreadEngine.ST_STARVED : Ae2qolThreadEngine.ST_OUTPUT_FULL;
                         // 游标越过这个失败槽，下个 tick 从下一个槽继续（**不 break**，避免一个坏槽堵住全部）
                         engine.startCursor = (idx + 1) % count;
                     }

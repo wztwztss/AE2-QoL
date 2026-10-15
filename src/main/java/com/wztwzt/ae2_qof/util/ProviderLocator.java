@@ -16,11 +16,13 @@ import appeng.api.util.DimensionalCoord;
 /**
  * 供应器（样板接收机）的稳定定位工具。
  *
- * <p>背景（fix41）：旧实现用 {@link System#identityHashCode} 作为供应器 ID。这个值只是对象在内存中的
+ * <p>
+ * 背景（fix41）：旧实现用 {@link System#identityHashCode} 作为供应器 ID。这个值只是对象在内存中的
  * 地址派生值，区块卸载重载、机器被拆装、服务器重启后都会变化。于是「在界面里选好机器 → 放一会儿 →
  * 再点上传」时，服务端按旧 ID 找不到目标，表现为<b>点了没有任何反应</b>（静默失败）。
  *
- * <p>这里改用「维度 + 坐标（+ 部件朝向）」这类稳定标识：同一台机器只要还在原地，无论对象是否被重建、
+ * <p>
+ * 这里改用「维度 + 坐标（+ 部件朝向）」这类稳定标识：同一台机器只要还在原地，无论对象是否被重建、
  * 服务器是否重启，算出来的 key 都一样。上传时先按 ID 快速命中，命中不了再按坐标兜底查找，
  * 两条路都失败才判定目标真的不在了。
  */
@@ -31,7 +33,7 @@ public final class ProviderLocator {
     /**
      * 计算供应器的稳定位置标识。
      *
-     * @param node   该供应器对应的 AE2 网络节点，可为 null
+     * @param node    该供应器对应的 AE2 网络节点，可为 null
      * @param machine 供应器对象本身
      * @return 形如 {@code D0:-432,63,-2791} 的字符串；坐标取不到时返回 null（调用方回退到 ID 匹配）
      */
@@ -107,9 +109,9 @@ public final class ProviderLocator {
     /**
      * 在网格内查找目标供应器：先按稳定位置标识匹配，再按对象 ID 匹配。
      *
-     * @param grid          终端所在的 AE2 网格
-     * @param locationKey   稳定位置标识，可为 null
-     * @param identityId    客户端记录的旧式 ID，可为 0
+     * @param grid        终端所在的 AE2 网格
+     * @param locationKey 稳定位置标识，可为 null
+     * @param identityId  客户端记录的旧式 ID，可为 0
      * @return 命中的供应器；都找不到返回 null
      */
     public static ICraftingProvider find(IGrid grid, String locationKey, long identityId) {

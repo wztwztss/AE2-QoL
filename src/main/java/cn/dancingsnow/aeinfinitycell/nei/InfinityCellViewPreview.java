@@ -28,13 +28,17 @@ public final class InfinityCellViewPreview {
     }
 
     public static List<Entry<Void>> eu(InfinityCellRecord record, int limit) {
-        if (record == null || limit <= 0 || !record.getEUCount()
-            .isPositive()) {
+        if (record == null || limit <= 0
+            || !record.getEUCount()
+                .isPositive()) {
             return Collections.emptyList();
         }
         // 必须 copy：EU 的 CellCount 是记录里的活对象，预览只是快照
-        return Collections.singletonList(new Entry<>(null, record.getEUCount()
-            .copy()));
+        return Collections.singletonList(
+            new Entry<>(
+                null,
+                record.getEUCount()
+                    .copy()));
     }
 
     public static List<Page> pages(InfinityCellRecord record, int limit) {

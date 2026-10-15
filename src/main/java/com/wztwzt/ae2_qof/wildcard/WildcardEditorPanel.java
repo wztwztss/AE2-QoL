@@ -75,8 +75,7 @@ public final class WildcardEditorPanel {
         // 规则级排除与不消耗物品的工作副本：必须在**页签栏之前**声明（保存按钮的 lambda 要用到它们）
         final List<List<String>> ruleExcludes = new ArrayList<>();
         for (int i = 0; i < ROWS; i++) {
-            ruleExcludes.add(
-                i < base.rules.size() ? new ArrayList<>(base.rules.get(i).excludes) : new ArrayList<>());
+            ruleExcludes.add(i < base.rules.size() ? new ArrayList<>(base.rules.get(i).excludes) : new ArrayList<>());
         }
         // 不消耗物品在数据模型里是 List<ItemStack>（NBT 存真实物品），所以这里也用 ItemStack，
         // 加入方式 = NEI/背包拖到「加」按钮上，或「手持加入」；不再用文本框输名字（那会与模型不符）。
@@ -128,32 +127,34 @@ public final class WildcardEditorPanel {
         String[] tabNames = { "规则", "覆盖预览", "排除", "电路" };
         for (int t = 0; t < tabNames.length; t++) {
             final int page = t;
-            tabBar.child(new ButtonWidget<>().size(80, 16)
-                .overlay(IKey.str(tabNames[t]))
+            tabBar.child(
+                new ButtonWidget<>().size(80, 16)
+                    .overlay(IKey.str(tabNames[t]))
+                    .onMouseTapped(ctx -> {
+                        PAGE = page;
+                        return true;
+                    }));
+        }
+        tabBar.child(
+            new ButtonWidget<>().size(52, 16)
+                .overlay(IKey.str("保存"))
+                .tooltip(tip -> tip.addLine(IKey.str("把这四个页面的内容写进样板（服务端写入）")))
                 .onMouseTapped(ctx -> {
-                    PAGE = page;
+                    if (!data.isClient()) return true;
+                    saveRules(
+                        base,
+                        blacklist,
+                        ruleExcludes,
+                        nonConsumed,
+                        inFields,
+                        inAmounts,
+                        outFields,
+                        outAmounts,
+                        inOre,
+                        outOre,
+                        base.circuit);
                     return true;
                 }));
-        }
-        tabBar.child(new ButtonWidget<>().size(52, 16)
-            .overlay(IKey.str("保存"))
-            .tooltip(tip -> tip.addLine(IKey.str("把这四个页面的内容写进样板（服务端写入）")))
-            .onMouseTapped(ctx -> {
-                if (!data.isClient()) return true;
-                saveRules(
-                    base,
-                    blacklist,
-                    ruleExcludes,
-                    nonConsumed,
-                    inFields,
-                    inAmounts,
-                    outFields,
-                    outAmounts,
-                    inOre,
-                    outOre,
-                    base.circuit);
-                return true;
-            }));
         panel.child(tabBar);
 
         // ===================== 页面 1：规则 =====================
@@ -161,8 +162,7 @@ public final class WildcardEditorPanel {
             .childPadding(GAP)
             .size(352, 226)
             .setEnabledIf(w -> PAGE == 0);
-        pageRules.child(
-            new TextWidget<>(IKey.str("输入匹配支持 ore:ingot* （矿辞）或 name:*锭 （显示名）；输出留空 = 自动配对")).size(348, 10));
+        pageRules.child(new TextWidget<>(IKey.str("输入匹配支持 ore:ingot* （矿辞）或 name:*锭 （显示名）；输出留空 = 自动配对")).size(348, 10));
 
         for (int i = 0; i < ROWS; i++) {
             SmartWildcardState.Rule rule = i < base.rules.size() ? base.rules.get(i) : null;
@@ -199,101 +199,112 @@ public final class WildcardEditorPanel {
                 .size(348, ROW_H);
             row.child(new TextWidget<>(IKey.str(String.valueOf(i + 1))).size(12, 16))
                 .child(inField)
-                .child(new ToggleButton().value(inMode)
-                    .size(16, 16)
-                    .tooltip(tip -> {
-                        tip.addLine(IKey.str("输入模式：开 = 矿辞，关 = 显示名"));
-                        tip.addLine(IKey.str("打开时匹配串按矿辞名比较（如 ingot*）"));
-                    }))
+                .child(
+                    new ToggleButton().value(inMode)
+                        .size(16, 16)
+                        .tooltip(tip -> {
+                            tip.addLine(IKey.str("输入模式：开 = 矿辞，关 = 显示名"));
+                            tip.addLine(IKey.str("打开时匹配串按矿辞名比较（如 ingot*）"));
+                        }))
                 .child(inAmount)
                 .child(new TextWidget<>(IKey.str("→")).size(10, 16))
                 .child(outField)
-                .child(new ToggleButton().value(outMode)
-                    .size(16, 16)
-                    .tooltip(tip -> tip.addLine(IKey.str("输出模式：开 = 矿辞，关 = 显示名"))))
+                .child(
+                    new ToggleButton().value(outMode)
+                        .size(16, 16)
+                        .tooltip(tip -> tip.addLine(IKey.str("输出模式：开 = 矿辞，关 = 显示名"))))
                 .child(outAmount)
-                .child(new ButtonWidget<>().size(20, 16)
-                    .overlay(IKey.str("预"))
-                    .tooltip(tip -> tip.addLine(IKey.str("只按这一行试算（结果进聊天栏，不写回）")))
-                    .onMouseTapped(ctx -> {
-                        if (!data.isClient()) return true;
-                        ae2qol$chat(
-                            rowPreview(
-                                stack,
-                                inFields[index].getText(),
-                                inAmounts[index].getText(),
-                                inOre[index],
-                                outFields[index].getText(),
+                .child(
+                    new ButtonWidget<>().size(20, 16)
+                        .overlay(IKey.str("预"))
+                        .tooltip(tip -> tip.addLine(IKey.str("只按这一行试算（结果进聊天栏，不写回）")))
+                        .onMouseTapped(ctx -> {
+                            if (!data.isClient()) return true;
+                            ae2qol$chat(
+                                rowPreview(
+                                    stack,
+                                    inFields[index].getText(),
+                                    inAmounts[index].getText(),
+                                    inOre[index],
+                                    outFields[index].getText(),
+                                    outAmounts[index].getText(),
+                                    outOre[index]));
+                            return true;
+                        }))
+                .child(
+                    new ButtonWidget<>().size(20, 16)
+                        .overlay(IKey.str("筛"))
+                        .tooltip(tip -> tip.addLine(IKey.str("把这一行的输入匹配串加入总排除（保存后生效）")))
+                        .onMouseTapped(ctx -> {
+                            String token = stripModePrefix(inFields[index].getText());
+                            if (!token.isEmpty() && blacklist.add(token)) {
+                                MyMod.LOG.info("[AE2QoL] 第 {} 行加入总排除：{}（保存后生效）", index + 1, token);
+                            }
+                            return true;
+                        }))
+                .child(
+                    new ButtonWidget<>().size(24, 16)
+                        .overlay(IKey.str("x2"))
+                        .onMouseTapped(ctx -> {
+                            inAmounts[index].setText(String.valueOf(parseLong(inAmounts[index].getText(), 1L) * 2L));
+                            long outNow = parseLong(
                                 outAmounts[index].getText(),
-                                outOre[index]));
-                        return true;
-                    }))
-                .child(new ButtonWidget<>().size(20, 16)
-                    .overlay(IKey.str("筛"))
-                    .tooltip(tip -> tip.addLine(IKey.str("把这一行的输入匹配串加入总排除（保存后生效）")))
-                    .onMouseTapped(ctx -> {
-                        String token = stripModePrefix(inFields[index].getText());
-                        if (!token.isEmpty() && blacklist.add(token)) {
-                            MyMod.LOG.info("[AE2QoL] 第 {} 行加入总排除：{}（保存后生效）", index + 1, token);
-                        }
-                        return true;
-                    }))
-                .child(new ButtonWidget<>().size(24, 16)
-                    .overlay(IKey.str("x2"))
-                    .onMouseTapped(ctx -> {
-                        inAmounts[index].setText(String.valueOf(parseLong(inAmounts[index].getText(), 1L) * 2L));
-                        long outNow = parseLong(outAmounts[index].getText(), parseLong(inAmounts[index].getText(), 1L));
-                        outAmounts[index].setText(String.valueOf(outNow * 2L));
-                        return true;
-                    }))
-                .child(new ButtonWidget<>().size(24, 16)
-                    .overlay(IKey.str("清"))
-                    .onMouseTapped(ctx -> {
-                        inFields[index].setText("");
-                        inAmounts[index].setText("1");
-                        outFields[index].setText("");
-                        outAmounts[index].setText("");
-                        return true;
-                    }));
+                                parseLong(inAmounts[index].getText(), 1L));
+                            outAmounts[index].setText(String.valueOf(outNow * 2L));
+                            return true;
+                        }))
+                .child(
+                    new ButtonWidget<>().size(24, 16)
+                        .overlay(IKey.str("清"))
+                        .onMouseTapped(ctx -> {
+                            inFields[index].setText("");
+                            inAmounts[index].setText("1");
+                            outFields[index].setText("");
+                            outAmounts[index].setText("");
+                            return true;
+                        }));
             pageRules.child(row);
         }
 
         Flow rulesBottom = Flow.row()
             .childPadding(GAP)
             .size(348, 18);
-        rulesBottom.child(new ButtonWidget<>().size(60, 16)
-            .overlay(IKey.str("全部预览"))
-            .tooltip(tip -> tip.addLine(IKey.str("把完整候选与计数打到聊天栏")))
-            .onMouseTapped(ctx -> {
-                if (!data.isClient()) return true;
-                ae2qol$chat(fullPreview(stack, base));
-                return true;
-            }))
-            .child(new ButtonWidget<>().size(60, 16)
-                .overlay(IKey.str("清空本页"))
-                .onMouseTapped(ctx -> {
-                    for (int i = 0; i < ROWS; i++) {
-                        inFields[i].setText("");
-                        inAmounts[i].setText("1");
-                        outFields[i].setText("");
-                        outAmounts[i].setText("");
-                    }
-                    return true;
-                }))
-            .child(new ButtonWidget<>().size(60, 16)
-                .overlay(IKey.str("重新载入"))
-                .tooltip(tip -> {
-                    tip.addLine(IKey.str("放弃未保存的修改，重新从样板读取"));
-                    tip.addLine(IKey.str("MUI2 面板不能就地重建，所以这会关闭界面：再右键打开即可看到最新内容"));
-                })
+        rulesBottom.child(
+            new ButtonWidget<>().size(60, 16)
+                .overlay(IKey.str("全部预览"))
+                .tooltip(tip -> tip.addLine(IKey.str("把完整候选与计数打到聊天栏")))
                 .onMouseTapped(ctx -> {
                     if (!data.isClient()) return true;
-                    MyMod.LOG.info("[AE2QoL] 编辑器「重新载入」：关闭界面，请再次右键样板打开以读取最新内容");
-                    ae2qol$chat("已放弃未保存修改：请再右键样板打开界面");
-                    net.minecraft.client.Minecraft.getMinecraft()
-                        .displayGuiScreen(null);
+                    ae2qol$chat(fullPreview(stack, base));
                     return true;
-                }));
+                }))
+            .child(
+                new ButtonWidget<>().size(60, 16)
+                    .overlay(IKey.str("清空本页"))
+                    .onMouseTapped(ctx -> {
+                        for (int i = 0; i < ROWS; i++) {
+                            inFields[i].setText("");
+                            inAmounts[i].setText("1");
+                            outFields[i].setText("");
+                            outAmounts[i].setText("");
+                        }
+                        return true;
+                    }))
+            .child(
+                new ButtonWidget<>().size(60, 16)
+                    .overlay(IKey.str("重新载入"))
+                    .tooltip(tip -> {
+                        tip.addLine(IKey.str("放弃未保存的修改，重新从样板读取"));
+                        tip.addLine(IKey.str("MUI2 面板不能就地重建，所以这会关闭界面：再右键打开即可看到最新内容"));
+                    })
+                    .onMouseTapped(ctx -> {
+                        if (!data.isClient()) return true;
+                        MyMod.LOG.info("[AE2QoL] 编辑器「重新载入」：关闭界面，请再次右键样板打开以读取最新内容");
+                        ae2qol$chat("已放弃未保存修改：请再右键样板打开界面");
+                        net.minecraft.client.Minecraft.getMinecraft()
+                            .displayGuiScreen(null);
+                        return true;
+                    }));
         pageRules.child(rulesBottom);
 
         // ===================== 页面 2：覆盖预览（搜索 + 翻页 + 逐行排除） =====================
@@ -310,18 +321,20 @@ public final class WildcardEditorPanel {
             .childPadding(GAP)
             .size(348, 18);
         previewTop.child(searchField)
-            .child(new ButtonWidget<>().size(40, 16)
-                .overlay(IKey.str("上一页"))
-                .onMouseTapped(ctx -> {
-                    if (PREVIEW_PAGE > 0) PREVIEW_PAGE--;
-                    return true;
-                }))
-            .child(new ButtonWidget<>().size(40, 16)
-                .overlay(IKey.str("下一页"))
-                .onMouseTapped(ctx -> {
-                    PREVIEW_PAGE++;
-                    return true;
-                }))
+            .child(
+                new ButtonWidget<>().size(40, 16)
+                    .overlay(IKey.str("上一页"))
+                    .onMouseTapped(ctx -> {
+                        if (PREVIEW_PAGE > 0) PREVIEW_PAGE--;
+                        return true;
+                    }))
+            .child(
+                new ButtonWidget<>().size(40, 16)
+                    .overlay(IKey.str("下一页"))
+                    .onMouseTapped(ctx -> {
+                        PREVIEW_PAGE++;
+                        return true;
+                    }))
             .child(new TextWidget<>(IKey.str("搜索：显示名/矿辞包含即可")).size(120, 16));
         pagePreview.child(previewTop);
         pagePreview.child(new TextWidget<>(IKey.str(previewSummary)).size(348, 10));
@@ -329,14 +342,18 @@ public final class WildcardEditorPanel {
         final int totalPages = Math.max(1, (candidateNames.size() + PAGE_SIZE - 1) / PAGE_SIZE);
         pagePreview.child(
             new TextWidget<>(
-                IKey.str("共 " + candidateNames.size() + " 个候选，每页 " + PAGE_SIZE + " 个，共 " + totalPages + " 页"
-                    + (previewTruncatedList ? "（列表只列前 " + PREVIEW_LIST_MAX + " 个，其余见「全部预览」与日志）" : "")))
-                .size(348, 10));
+                IKey.str(
+                    "共 " + candidateNames.size()
+                        + " 个候选，每页 "
+                        + PAGE_SIZE
+                        + " 个，共 "
+                        + totalPages
+                        + " 页"
+                        + (previewTruncatedList ? "（列表只列前 " + PREVIEW_LIST_MAX + " 个，其余见「全部预览」与日志）" : "")))
+                            .size(348, 10));
 
         if (candidateNames.isEmpty()) {
-            pagePreview.child(
-                new TextWidget<>(IKey.str("当前没有覆盖任何候选 —— 上方已给出原因（常见：规则为空，或匹配串没有通配符）"))
-                    .size(348, 10));
+            pagePreview.child(new TextWidget<>(IKey.str("当前没有覆盖任何候选 —— 上方已给出原因（常见：规则为空，或匹配串没有通配符）")).size(348, 10));
         } else {
             for (int idx = 0; idx < candidateNames.size(); idx++) {
                 final String candidateName = candidateNames.get(idx);
@@ -345,20 +362,20 @@ public final class WildcardEditorPanel {
                     .childPadding(GAP)
                     .size(348, 14);
                 line.child(new TextWidget<>(IKey.str(candidateName)).size(280, 12))
-                    .child(new ButtonWidget<>().size(28, 12)
-                        .overlay(IKey.str("排除"))
-                        .tooltip(tip -> tip.addLine(IKey.str("把「" + candidateName + "」加入总排除（保存后生效）")))
-                        .onMouseTapped(ctx -> {
-                            if (blacklist.add(candidateName)) {
-                                MyMod.LOG.info("[AE2QoL] 预览排除：已加入黑名单 {}（保存后生效）", candidateName);
-                            }
-                            return true;
-                        }));
+                    .child(
+                        new ButtonWidget<>().size(28, 12)
+                            .overlay(IKey.str("排除"))
+                            .tooltip(tip -> tip.addLine(IKey.str("把「" + candidateName + "」加入总排除（保存后生效）")))
+                            .onMouseTapped(ctx -> {
+                                if (blacklist.add(candidateName)) {
+                                    MyMod.LOG.info("[AE2QoL] 预览排除：已加入黑名单 {}（保存后生效）", candidateName);
+                                }
+                                return true;
+                            }));
                 // 搜索过滤（读搜索框当前文本）+ 分页（读 PREVIEW_PAGE）
                 line.setEnabledIf(
-                    w -> ae2qol$matchSearch(
-                        searchField.getText(),
-                        candidateName) && candidateIndex / PAGE_SIZE == PREVIEW_PAGE);
+                    w -> ae2qol$matchSearch(searchField.getText(), candidateName)
+                        && candidateIndex / PAGE_SIZE == PREVIEW_PAGE);
                 pagePreview.child(line);
             }
         }
@@ -379,29 +396,29 @@ public final class WildcardEditorPanel {
             .childPadding(GAP)
             .size(348, 18);
         blackRow.child(blacklistField)
-            .child(new ButtonWidget<>().size(60, 16)
-                .overlay(IKey.str("加"))
-                .tooltip(tip -> {
-                    tip.addLine(IKey.str("加入总排除（支持 * 与 ?）"));
-                    tip.addLine(IKey.str("也可以把 NEI/背包里的物品直接拖到本按钮上"));
-                })
-                .onMouseTapped(ctx -> {
-                    String v = blacklistField.getText();
-                    if (v != null && !v.trim()
-                        .isEmpty() && !blacklist.contains(
-                            v.trim())) {
-                        blacklist.add(
-                            v.trim());
-                        blacklistField.setText("");
-                    }
-                    return true;
-                }))
-            .child(new ButtonWidget<>().size(40, 16)
-                .overlay(IKey.str("清空"))
-                .onMouseTapped(ctx -> {
-                    blacklist.clear();
-                    return true;
-                }))
+            .child(
+                new ButtonWidget<>().size(60, 16)
+                    .overlay(IKey.str("加"))
+                    .tooltip(tip -> {
+                        tip.addLine(IKey.str("加入总排除（支持 * 与 ?）"));
+                        tip.addLine(IKey.str("也可以把 NEI/背包里的物品直接拖到本按钮上"));
+                    })
+                    .onMouseTapped(ctx -> {
+                        String v = blacklistField.getText();
+                        if (v != null && !v.trim()
+                            .isEmpty() && !blacklist.contains(v.trim())) {
+                            blacklist.add(v.trim());
+                            blacklistField.setText("");
+                        }
+                        return true;
+                    }))
+            .child(
+                new ButtonWidget<>().size(40, 16)
+                    .overlay(IKey.str("清空"))
+                    .onMouseTapped(ctx -> {
+                        blacklist.clear();
+                        return true;
+                    }))
             .child(new TextWidget<>(IKey.str("现有 " + blacklist.size() + " 项")).size(60, 16));
         pageExclude.child(blackRow);
         int shownBlack = 0;
@@ -412,18 +429,20 @@ public final class WildcardEditorPanel {
                 .childPadding(GAP)
                 .size(348, 14);
             entryLine.child(new TextWidget<>(IKey.str("- " + entry)).size(280, 12))
-                .child(new ButtonWidget<>().size(28, 12)
-                    .overlay(IKey.str("删"))
-                    .onMouseTapped(ctx -> {
-                        blacklist.remove(entry);
-                        MyMod.LOG.info("[AE2QoL] 总排除移除：{}（保存后生效）", entry);
-                        return true;
-                    }));
+                .child(
+                    new ButtonWidget<>().size(28, 12)
+                        .overlay(IKey.str("删"))
+                        .onMouseTapped(ctx -> {
+                            blacklist.remove(entry);
+                            MyMod.LOG.info("[AE2QoL] 总排除移除：{}（保存后生效）", entry);
+                            return true;
+                        }));
             pageExclude.child(entryLine);
             shownBlack++;
         }
         if (blacklist.size() > shownBlack) {
-            pageExclude.child(new TextWidget<>(IKey.str("… 另有 " + (blacklist.size() - shownBlack) + " 项")).size(348, 10));
+            pageExclude
+                .child(new TextWidget<>(IKey.str("… 另有 " + (blacklist.size() - shownBlack) + " 项")).size(348, 10));
         }
 
         // ---- B. 规则级排除（选中哪条规则就编辑哪条）----
@@ -436,13 +455,14 @@ public final class WildcardEditorPanel {
         for (int r = -1; r < ROWS; r++) {
             final int ruleNo = r + 1; // 0 = 总排除（不在此编辑）；1..9 = 规则号
             if (ruleNo == 0) continue;
-            ruleSelector.child(new ButtonWidget<>().size(24, 16)
-                .overlay(IKey.str(String.valueOf(ruleNo)))
-                .onMouseTapped(ctx -> {
-                    EXCLUDE_RULE = ruleNo;
-                    selected[0] = ruleNo;
-                    return true;
-                }));
+            ruleSelector.child(
+                new ButtonWidget<>().size(24, 16)
+                    .overlay(IKey.str(String.valueOf(ruleNo)))
+                    .onMouseTapped(ctx -> {
+                        EXCLUDE_RULE = ruleNo;
+                        selected[0] = ruleNo;
+                        return true;
+                    }));
         }
         pageExclude.child(ruleSelector);
         TextFieldWidget ruleExcludeField = new TextFieldWidget().setMaxLength(64)
@@ -456,33 +476,36 @@ public final class WildcardEditorPanel {
                 .size(348, 18);
             bar.child(new TextWidget<>(IKey.str("规则 " + (i + 1))).size(46, 16))
                 .child(ruleExcludeField)
-                .child(new ButtonWidget<>().size(40, 16)
-                    .overlay(IKey.str("加"))
-                    .onMouseTapped(ctx -> {
-                        int target = Math.max(1, EXCLUDE_RULE) - 1;
-                        String v = ruleExcludeField.getText();
-                        if (v != null && !v.trim()
-                            .isEmpty()) {
-                            List<String> list = ruleExcludes.get(target);
-                            if (!list.contains(
-                                v.trim())) {
-                                list.add(
-                                    v.trim());
-                                MyMod.LOG
-                                    .info("[AE2QoL] 规则 {} 排除加入：{}（保存后生效）", target + 1, v.trim());
+                .child(
+                    new ButtonWidget<>().size(40, 16)
+                        .overlay(IKey.str("加"))
+                        .onMouseTapped(ctx -> {
+                            int target = Math.max(1, EXCLUDE_RULE) - 1;
+                            String v = ruleExcludeField.getText();
+                            if (v != null && !v.trim()
+                                .isEmpty()) {
+                                List<String> list = ruleExcludes.get(target);
+                                if (!list.contains(v.trim())) {
+                                    list.add(v.trim());
+                                    MyMod.LOG.info("[AE2QoL] 规则 {} 排除加入：{}（保存后生效）", target + 1, v.trim());
+                                }
+                                ruleExcludeField.setText("");
                             }
-                            ruleExcludeField.setText("");
-                        }
-                        return true;
-                    }))
-                .child(new ButtonWidget<>().size(40, 16)
-                    .overlay(IKey.str("清空"))
-                    .onMouseTapped(ctx -> {
-                        ruleExcludes.get(ruleIdx)
-                            .clear();
-                        return true;
-                    }))
-                .child(new TextWidget<>(IKey.str("共 " + ruleExcludes.get(i).size() + " 项")).size(50, 16));
+                            return true;
+                        }))
+                .child(
+                    new ButtonWidget<>().size(40, 16)
+                        .overlay(IKey.str("清空"))
+                        .onMouseTapped(ctx -> {
+                            ruleExcludes.get(ruleIdx)
+                                .clear();
+                            return true;
+                        }))
+                .child(
+                    new TextWidget<>(
+                        IKey.str(
+                            "共 " + ruleExcludes.get(i)
+                                .size() + " 项")).size(50, 16));
             // 只显示当前选中规则的这一行（谓词逐帧求值）
             bar.setEnabledIf(w -> EXCLUDE_RULE == ruleIdx + 1);
             pageExclude.child(bar);
@@ -505,35 +528,35 @@ public final class WildcardEditorPanel {
         // 注册为 NEI 拖放落点：拖到它上面 = 把该物品记为不消耗
         DROP_APPEND_TARGETS.put(ncAddButton, nonConsumed);
         ncRow.child(ncAddButton)
-            .child(new ButtonWidget<>().size(66, 16)
-                .overlay(IKey.str("手持加入"))
-                .tooltip(tip -> tip.addLine(IKey.str("把主手物品记为不消耗（铸模/模头/透镜等）")))
-                .onMouseTapped(ctx -> {
-                    if (!data.isClient()) return true;
-                    try {
-                        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getMinecraft();
-                        ItemStack held = mc.thePlayer == null ? null : mc.thePlayer.getCurrentEquippedItem();
-                        if (held == null) {
-                            MyMod.LOG.warn("[AE2QoL] 不消耗物品：主手为空，未加入");
-                            ae2qol$chat("主手没有物品");
-                        } else {
-                            nonConsumed.add(held.copy());
-                            MyMod.LOG.info(
-                                "[AE2QoL] 不消耗物品加入（手持）：{}（保存后生效）",
-                                held.getDisplayName());
-                            ae2qol$chat("已加入不消耗物品：" + held.getDisplayName() + "（点保存写回）");
+            .child(
+                new ButtonWidget<>().size(66, 16)
+                    .overlay(IKey.str("手持加入"))
+                    .tooltip(tip -> tip.addLine(IKey.str("把主手物品记为不消耗（铸模/模头/透镜等）")))
+                    .onMouseTapped(ctx -> {
+                        if (!data.isClient()) return true;
+                        try {
+                            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getMinecraft();
+                            ItemStack held = mc.thePlayer == null ? null : mc.thePlayer.getCurrentEquippedItem();
+                            if (held == null) {
+                                MyMod.LOG.warn("[AE2QoL] 不消耗物品：主手为空，未加入");
+                                ae2qol$chat("主手没有物品");
+                            } else {
+                                nonConsumed.add(held.copy());
+                                MyMod.LOG.info("[AE2QoL] 不消耗物品加入（手持）：{}（保存后生效）", held.getDisplayName());
+                                ae2qol$chat("已加入不消耗物品：" + held.getDisplayName() + "（点保存写回）");
+                            }
+                        } catch (Throwable t) {
+                            MyMod.LOG.warn("[AE2QoL] 不消耗物品加入失败", t);
                         }
-                    } catch (Throwable t) {
-                        MyMod.LOG.warn("[AE2QoL] 不消耗物品加入失败", t);
-                    }
-                    return true;
-                }))
-            .child(new ButtonWidget<>().size(40, 16)
-                .overlay(IKey.str("清空"))
-                .onMouseTapped(ctx -> {
-                    nonConsumed.clear();
-                    return true;
-                }))
+                        return true;
+                    }))
+            .child(
+                new ButtonWidget<>().size(40, 16)
+                    .overlay(IKey.str("清空"))
+                    .onMouseTapped(ctx -> {
+                        nonConsumed.clear();
+                        return true;
+                    }))
             .child(new TextWidget<>(IKey.str("现有 " + nonConsumed.size() + " 项")).size(60, 16));
         pageExclude.child(ncRow);
         int shownNc = 0;
@@ -545,13 +568,14 @@ public final class WildcardEditorPanel {
                 .childPadding(GAP)
                 .size(348, 14);
             entryLine.child(new TextWidget<>(IKey.str("- " + label)).size(280, 12))
-                .child(new ButtonWidget<>().size(28, 12)
-                    .overlay(IKey.str("删"))
-                    .onMouseTapped(ctx -> {
-                        nonConsumed.remove(entry);
-                        MyMod.LOG.info("[AE2QoL] 不消耗物品移除：{}（保存后生效）", label);
-                        return true;
-                    }));
+                .child(
+                    new ButtonWidget<>().size(28, 12)
+                        .overlay(IKey.str("删"))
+                        .onMouseTapped(ctx -> {
+                            nonConsumed.remove(entry);
+                            MyMod.LOG.info("[AE2QoL] 不消耗物品移除：{}（保存后生效）", label);
+                            return true;
+                        }));
             pageExclude.child(entryLine);
             shownNc++;
         }
@@ -569,22 +593,24 @@ public final class WildcardEditorPanel {
                 .size(348, 20);
             for (int col = 0; col < 8; col++) {
                 final int number = rowIdx * 8 + col + 1;
-                line.child(new ButtonWidget<>().size(30, 18)
-                    .overlay(IKey.str(String.valueOf(number)))
-                    .onMouseTapped(ctx -> {
-                        circuit[0] = number;
-                        MyMod.LOG.info("[AE2QoL] 编辑器选择电路 {}（点保存写回）", number);
-                        return true;
-                    }));
+                line.child(
+                    new ButtonWidget<>().size(30, 18)
+                        .overlay(IKey.str(String.valueOf(number)))
+                        .onMouseTapped(ctx -> {
+                            circuit[0] = number;
+                            MyMod.LOG.info("[AE2QoL] 编辑器选择电路 {}（点保存写回）", number);
+                            return true;
+                        }));
             }
             pageCircuit.child(line);
         }
-        pageCircuit.child(new ButtonWidget<>().size(80, 18)
-            .overlay(IKey.str("清除（继承）"))
-            .onMouseTapped(ctx -> {
-                circuit[0] = -1;
-                return true;
-            }));
+        pageCircuit.child(
+            new ButtonWidget<>().size(80, 18)
+                .overlay(IKey.str("清除（继承）"))
+                .onMouseTapped(ctx -> {
+                    circuit[0] = -1;
+                    return true;
+                }));
 
         // ===================== 组装：滚动容器 + 四个页面 =====================
         Flow pages = Flow.column()
@@ -614,8 +640,7 @@ public final class WildcardEditorPanel {
     /** 保存：客户端解析四页内容 → 既有 C2S 包 → 服务端写 NBT。 */
     private static void saveRules(SmartWildcardState base, List<String> blacklist, List<List<String>> ruleExcludes,
         List<ItemStack> nonConsumed, TextFieldWidget[] inFields, TextFieldWidget[] inAmounts,
-        TextFieldWidget[] outFields, TextFieldWidget[] outAmounts, boolean[] inOre, boolean[] outOre,
-        int baseCircuit) {
+        TextFieldWidget[] outFields, TextFieldWidget[] outAmounts, boolean[] inOre, boolean[] outOre, int baseCircuit) {
         try {
             SmartWildcardState edited = new SmartWildcardState();
             edited.circuit = lastCircuit != null ? lastCircuit[0] : baseCircuit;
@@ -676,8 +701,8 @@ public final class WildcardEditorPanel {
     }
 
     /** 单行试算。 */
-    private static String rowPreview(ItemStack baseStack, String inText, String inAmount, boolean inOre,
-        String outText, String outAmount, boolean outOre) {
+    private static String rowPreview(ItemStack baseStack, String inText, String inAmount, boolean inOre, String outText,
+        String outAmount, boolean outOre) {
         try {
             if (baseStack == null) return "没有可用的样板物品";
             String raw = inText == null ? "" : inText.trim();
@@ -722,7 +747,8 @@ public final class WildcardEditorPanel {
             .append(" 张，命中候选 ")
             .append(result.matchedCandidates)
             .append(" 个");
-        if (result.skippedMissingCounterpart > 0) sb.append("，因对侧矿辞缺失跳过 ").append(result.skippedMissingCounterpart);
+        if (result.skippedMissingCounterpart > 0) sb.append("，因对侧矿辞缺失跳过 ")
+            .append(result.skippedMissingCounterpart);
         if (result.truncated) sb.append("，已达展开上限被截断（可调大 smart_wildcard_expand_cap）");
         if (result.reason != null && !result.reason.isEmpty()) {
             sb.append("；原因：")
@@ -733,8 +759,7 @@ public final class WildcardEditorPanel {
 
     /** 结果原因码 → 中文说明。 */
     private static String reasonZh(String reason) {
-        if (reason.startsWith("no-material-matched"))
-            return "输入匹配串没有通配符（或推不出材料名），只能按精确匹配处理";
+        if (reason.startsWith("no-material-matched")) return "输入匹配串没有通配符（或推不出材料名），只能按精确匹配处理";
         if (reason.startsWith("no-rules")) return "这张样板还没有任何规则";
         if (reason.startsWith("not-a-smart-wildcard")) return "这不是智能通配样板";
         if (reason.startsWith("no-template-nbt")) return "样板里没有模板配方（请先用 NEI 加号写入）";
@@ -757,8 +782,9 @@ public final class WildcardEditorPanel {
 
     /** 搜索匹配：搜索词为空则全通过；否则显示名/矿辞包含即命中（不区分大小写）。 */
     private static boolean ae2qol$matchSearch(String query, String candidateName) {
-        String q = query == null ? "" : query.trim()
-            .toLowerCase();
+        String q = query == null ? ""
+            : query.trim()
+                .toLowerCase();
         if (q.isEmpty()) return true;
         return candidateName != null && candidateName.toLowerCase()
             .contains(q);
@@ -777,7 +803,8 @@ public final class WildcardEditorPanel {
     /**
      * NEI 把物品拖到某个匹配框上时调用（由 {@code SmartWildcardNeiDragHandler} 转发）。
      *
-     * <p>写入规则：物品有矿辞 ⇒ 取 GT 权威的矿辞前缀写成 {@code <前缀>*} 并把该行切到**矿辞模式**；
+     * <p>
+     * 写入规则：物品有矿辞 ⇒ 取 GT 权威的矿辞前缀写成 {@code <前缀>*} 并把该行切到**矿辞模式**；
      * 没有矿辞 ⇒ 写成显示名并把该行切到**名称模式**。返回是否消费了这次拖放（未消费则 NEI 继续走默认行为）。
      */
     public static boolean applyDropToHovered(Object hoveredWidget, ItemStack stack) {
@@ -787,7 +814,8 @@ public final class WildcardEditorPanel {
     /**
      * NEI 拖入（带鼠标坐标）。
      *
-     * <p><b>为什么需要坐标</b>：用户实测日志里出现 `NEI 拖入未消费（没有落在匹配框上）：hovered=null mouse=(104,101)`
+     * <p>
+     * <b>为什么需要坐标</b>：用户实测日志里出现 `NEI 拖入未消费（没有落在匹配框上）：hovered=null mouse=(104,101)`
      * —— MUI2 的悬停状态是在 {@code drawScreen} 期间算的，NEI 的拖放事件在帧外到达时取不到 ✗。
      * 所以这里再加一条**坐标命中测试**：逐个候选控件读 {@code IWidget.getArea()}（绝对区域，逐帧更新）判断落点。
      * 两条都失败时，把鼠标坐标与所有候选区域一起记进日志，便于一次定位（本项目的"不许静默"原则）。
@@ -795,16 +823,15 @@ public final class WildcardEditorPanel {
     public static boolean applyDropToHovered(Object hoveredWidget, int mouseX, int mouseY, ItemStack stack) {
         try {
             if (stack == null || stack.getItem() == null) return false;
-            if (hoveredWidget == null || (!DROP_TARGETS.containsKey(hoveredWidget)
-                && !DROP_APPEND_TARGETS.containsKey(hoveredWidget))) {
+            if (hoveredWidget == null
+                || (!DROP_TARGETS.containsKey(hoveredWidget) && !DROP_APPEND_TARGETS.containsKey(hoveredWidget))) {
                 Object hit = hitTest(mouseX, mouseY);
                 if (hit != null) {
                     hoveredWidget = hit;
                 } else if (mouseX == Integer.MIN_VALUE) {
                     return false;
                 } else {
-                    MyMod.LOG
-                        .info("[AE2QoL] NEI 拖入命中测试失败：mouse=({}, {}) 候选区域={}", mouseX, mouseY, describeAreas());
+                    MyMod.LOG.info("[AE2QoL] NEI 拖入命中测试失败：mouse=({}, {}) 候选区域={}", mouseX, mouseY, describeAreas());
                     return false;
                 }
             }
@@ -824,8 +851,8 @@ public final class WildcardEditorPanel {
 
             String orePrefix = null;
             try {
-                java.util.List<gregtech.api.enums.OrePrefixes.ParsedOreDictName> parsed =
-                    gregtech.api.enums.OrePrefixes.detectPrefix(stack);
+                java.util.List<gregtech.api.enums.OrePrefixes.ParsedOreDictName> parsed = gregtech.api.enums.OrePrefixes
+                    .detectPrefix(stack);
                 if (parsed != null) {
                     for (gregtech.api.enums.OrePrefixes.ParsedOreDictName name : parsed) {
                         if (name == null || name.prefix == null) continue;

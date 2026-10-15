@@ -27,7 +27,8 @@ import io.netty.buffer.ByteBuf;
 /**
  * 库存统计终端 → 服务端的「高亮 / 传送」动作请求（3.21.0）。
  *
- * <p>刻意照抄 {@link HatchActionPacket} 的**分工与防护**，只是把"目标身份"换成坐标：
+ * <p>
+ * 刻意照抄 {@link HatchActionPacket} 的**分工与防护**，只是把"目标身份"换成坐标：
  * <ul>
  * <li>客户端只发**坐标**，不做任何判定；</li>
  * <li>服务端在 tick 线程里**重新解析目标**（覆盖板要真的贴在该方块上、发信器要求该方块是 AE 主机），
@@ -36,12 +37,14 @@ import io.netty.buffer.ByteBuf;
  * {@code activeViewers}），② 权限——终端所连 AE 网络必须给该玩家 BUILD。</li>
  * </ul>
  *
- * <p>高亮复用 {@link WirelessHighlightPacket}（{@code {dim,x,y,z,colorType}}，
+ * <p>
+ * 高亮复用 {@link WirelessHighlightPacket}（{@code {dim,x,y,z,colorType}}，
  * 渲染器 {@code WirelessHighlightRenderer} 自带"非同维度跳过"）与 {@link HatchActionPacket#scheduleClear}
  * 的 200 tick（10 秒）自动清除队列——该队列由 {@code StockMonitorTerminal.onPostTick} 每 tick 推进，
  * 所以**不装自适应电网终端时高亮也会按时消失**。
  *
- * <p>传送沿用自适应终端那份修好的 {@link Teleporter} 匿名实现（覆写 {@code placeInPortal} 直接落坐标、
+ * <p>
+ * 传送沿用自适应终端那份修好的 {@link Teleporter} 匿名实现（覆写 {@code placeInPortal} 直接落坐标、
  * {@code placeInExistingPortal}/{@code makePortal} 短路），避免 {@code new Teleporter(world)} 去找/建下界门；
  * 落点先找**可站立**的相邻格，找不到就拒绝并提示（用户确认要"安全落点"）。
  */
@@ -197,11 +200,10 @@ public class StockMonitorActionPacket implements IMessage {
                     // 覆盖板：该方块任意一面确实贴着库存检测覆盖板
                     TileEntity te = world.getTileEntity(x, y, z);
                     if (!(te instanceof gregtech.api.interfaces.tileentity.ICoverable)) return false;
-                    gregtech.api.interfaces.tileentity.ICoverable coverable =
-                        (gregtech.api.interfaces.tileentity.ICoverable) te;
-                    for (net.minecraftforge.common.util.ForgeDirection side : net.minecraftforge.common.util.ForgeDirection
-                        .VALID_DIRECTIONS) {
-                        if (coverable.getCoverAtSide(side) instanceof com.wztwzt.ae2_qof.cover.stockmonitor.StockMonitorCover) {
+                    gregtech.api.interfaces.tileentity.ICoverable coverable = (gregtech.api.interfaces.tileentity.ICoverable) te;
+                    for (net.minecraftforge.common.util.ForgeDirection side : net.minecraftforge.common.util.ForgeDirection.VALID_DIRECTIONS) {
+                        if (coverable
+                            .getCoverAtSide(side) instanceof com.wztwzt.ae2_qof.cover.stockmonitor.StockMonitorCover) {
                             return true;
                         }
                     }
@@ -225,7 +227,10 @@ public class StockMonitorActionPacket implements IMessage {
             int colorType = kind == KIND_COVER ? 1 : 2;
             List<int[]> positions = new ArrayList<>(Collections.singletonList(new int[] { dim, x, y, z, colorType }));
             ModNetwork.CHANNEL.sendTo(new WirelessHighlightPacket(positions, true), player);
-            HatchActionPacket.scheduleClear(player, MinecraftServer.getServer().getTickCounter() + HIGHLIGHT_TICKS);
+            HatchActionPacket.scheduleClear(
+                player,
+                MinecraftServer.getServer()
+                    .getTickCounter() + HIGHLIGHT_TICKS);
             chatFormatted(player, EnumChatFormatting.GREEN, "ae2_qof.terminal.highlighted", x, y, z);
         }
 
@@ -251,7 +256,11 @@ public class StockMonitorActionPacket implements IMessage {
 
                         @Override
                         public void placeInPortal(Entity entity, double px, double py, double pz, float yaw) {
-                            entity.setLocationAndAngles(dest[0], dest[1], dest[2], entity.rotationYaw,
+                            entity.setLocationAndAngles(
+                                dest[0],
+                                dest[1],
+                                dest[2],
+                                entity.rotationYaw,
                                 entity.rotationPitch);
                             entity.motionX = 0;
                             entity.motionY = 0;
@@ -305,8 +314,8 @@ public class StockMonitorActionPacket implements IMessage {
         }
 
         private void chatFormatted(EntityPlayerMP player, EnumChatFormatting color, String langKey, Object... args) {
-            player.addChatMessage(
-                new ChatComponentText(color + StatCollector.translateToLocalFormatted(langKey, args)));
+            player
+                .addChatMessage(new ChatComponentText(color + StatCollector.translateToLocalFormatted(langKey, args)));
         }
     }
 }

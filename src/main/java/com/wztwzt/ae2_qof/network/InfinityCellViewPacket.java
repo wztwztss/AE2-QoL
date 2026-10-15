@@ -8,17 +8,16 @@ import cn.dancingsnow.aeinfinitycell.ServerWorldAccess;
 import cn.dancingsnow.aeinfinitycell.storage.InfinityCellDataAccess;
 import cn.dancingsnow.aeinfinitycell.storage.InfinityCellRecord;
 import cn.dancingsnow.aeinfinitycell.storage.InfinityCellStorage;
-
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-
 import io.netty.buffer.ByteBuf;
 
 /**
  * 无限元件 NEI 预览请求（C2S，3.19.0-fix24）。
  *
- * <p>无限元件内容存服务端世界存档（{@link InfinityCellDataAccess} 在专用服客户端恒为 null），
+ * <p>
+ * 无限元件内容存服务端世界存档（{@link InfinityCellDataAccess} 在专用服客户端恒为 null），
  * 因此 NEI 的 U 键查看在联机时拿不到任何数据。此包按 storageId 向服务端索取
  * 「每个通道前 N 条」的预览快照，由 {@link InfinityCellViewResponsePacket} 回传。
  */
@@ -68,13 +67,13 @@ public class InfinityCellViewPacket implements IMessage {
                         ModNetwork.CHANNEL.sendTo(new InfinityCellViewResponsePacket(id, null), player);
                         return;
                     }
-                    InfinityCellRecord record = InfinityCellDataAccess.getOrCreate(id, ServerWorldAccess.getServerWorld());
+                    InfinityCellRecord record = InfinityCellDataAccess
+                        .getOrCreate(id, ServerWorldAccess.getServerWorld());
                     ModNetwork.CHANNEL.sendTo(
                         new InfinityCellViewResponsePacket(
                             id,
-                            InfinityCellViewResponsePacket.encode(
-                                record,
-                                cn.dancingsnow.aeinfinitycell.Config.neiPreviewEntriesPerChannel)),
+                            InfinityCellViewResponsePacket
+                                .encode(record, cn.dancingsnow.aeinfinitycell.Config.neiPreviewEntriesPerChannel)),
                         player);
                 } catch (Throwable ignored) {}
             });

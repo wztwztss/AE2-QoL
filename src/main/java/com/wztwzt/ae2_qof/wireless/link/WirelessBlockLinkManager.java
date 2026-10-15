@@ -163,7 +163,8 @@ public class WirelessBlockLinkManager {
         if (tickCounter < 25) return;
         tickCounter = 0;
 
-        Iterator<Map.Entry<String, List<WirelessBlockLinkData>>> channels = blockLinks.entrySet().iterator();
+        Iterator<Map.Entry<String, List<WirelessBlockLinkData>>> channels = blockLinks.entrySet()
+            .iterator();
         while (channels.hasNext()) {
             Map.Entry<String, List<WirelessBlockLinkData>> entry = channels.next();
             String freq = entry.getKey();

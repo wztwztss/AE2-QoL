@@ -10,7 +10,6 @@ import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
 
 import com.cleanroommc.modularui.factory.PlayerInventoryGuiData;
-import com.cleanroommc.modularui.factory.PlayerInventoryGuiFactory;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
 import com.wztwzt.ae2_qof.AE2QoLCreativeTab;
@@ -21,7 +20,8 @@ import cpw.mods.fml.common.registry.GameRegistry;
 /**
  * 「批量样板生成器」物品（3.23.0，吞并 AE2PatternGen 的主要功能入口）。
  *
- * <p>右键打开 MUI2 界面（{@link GeneratorPanel}）：选 RecipeMap、填过滤器、点生成，
+ * <p>
+ * 右键打开 MUI2 界面（{@link GeneratorPanel}）：选 RecipeMap、填过滤器、点生成，
  * 服务端扫描该 RecipeMap 并按过滤器产出普通样板，产物进背包（放不下掉脚下），
  * 聊天栏与日志给出全量计数。
  */

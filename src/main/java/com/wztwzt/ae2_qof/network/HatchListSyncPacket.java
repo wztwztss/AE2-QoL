@@ -16,7 +16,8 @@ import io.netty.buffer.ByteBuf;
 /**
  * 3.32.0：载荷从「一台仓一行」改成「**一台主机一行 + 仓明细**」。
  *
- * <p>注意名称不在这里传：旧实现把服务端算好的名字（{@code ItemStack.getDisplayName()}）当字符串发下来，
+ * <p>
+ * 注意名称不在这里传：旧实现把服务端算好的名字（{@code ItemStack.getDisplayName()}）当字符串发下来，
  * 专用服务器上必然是英文（服务端语言表只有 en_US）。现在只传 **MTE id**，
  * 名称与图标一律由客户端本地解析 —— 与库存统计终端 3.31.0 的修法同源。
  */
@@ -34,8 +35,7 @@ public class HatchListSyncPacket implements IMessage {
     public HatchListSyncPacket() {}
 
     public HatchListSyncPacket(UUID owner, int frequency, int totalCount, int hostCount,
-                               List<HatchListCache.HatchEntry> entries,
-                               int inputCount, int outputCount) {
+        List<HatchListCache.HatchEntry> entries, int inputCount, int outputCount) {
         this.owner = owner;
         this.frequency = frequency;
         this.totalCount = totalCount;
@@ -78,22 +78,38 @@ public class HatchListSyncPacket implements IMessage {
                 int subCount = buf.readUnsignedShort();
                 List<HatchListCache.Sub> subs = new ArrayList<>(subCount);
                 for (int s = 0; s < subCount; s++) {
-                    subs.add(new HatchListCache.Sub(
-                        buf.readInt(),
-                        buf.readUnsignedByte(),
-                        buf.readUnsignedByte(),
-                        buf.readUnsignedShort(),
-                        buf.readLong(),
-                        buf.readLong(),
-                        buf.readInt(),
-                        buf.readInt(),
-                        buf.readInt(),
-                        buf.readShort(),
-                        buf.readBoolean()));
+                    subs.add(
+                        new HatchListCache.Sub(
+                            buf.readInt(),
+                            buf.readUnsignedByte(),
+                            buf.readUnsignedByte(),
+                            buf.readUnsignedShort(),
+                            buf.readLong(),
+                            buf.readLong(),
+                            buf.readInt(),
+                            buf.readInt(),
+                            buf.readInt(),
+                            buf.readShort(),
+                            buf.readBoolean()));
                 }
-                this.entries.add(new HatchListCache.HatchEntry(
-                    displayMetaId, hostKnown, running, hostEut, hatchCount, inCount, outCount, eut, realFlowEUt, index,
-                    x, y, z, dim, ownerName, subs));
+                this.entries.add(
+                    new HatchListCache.HatchEntry(
+                        displayMetaId,
+                        hostKnown,
+                        running,
+                        hostEut,
+                        hatchCount,
+                        inCount,
+                        outCount,
+                        eut,
+                        realFlowEUt,
+                        index,
+                        x,
+                        y,
+                        z,
+                        dim,
+                        ownerName,
+                        subs));
             }
         } catch (Throwable t) {
             this.owner = null;
@@ -157,8 +173,12 @@ public class HatchListSyncPacket implements IMessage {
 
     public HatchListCache buildCache() {
         List<HatchListCache.HatchEntry> list = entries != null ? entries : new ArrayList<>();
-        return new HatchListCache(totalCount, hostCount, new ArrayList<>(list),
-            "输入仓: " + inputCount, "输出仓: " + outputCount);
+        return new HatchListCache(
+            totalCount,
+            hostCount,
+            new ArrayList<>(list),
+            "输入仓: " + inputCount,
+            "输出仓: " + outputCount);
     }
 
     private static void writeUUID(ByteBuf buf, UUID uuid) {

@@ -177,14 +177,14 @@ public class GuiRecipeMapTable extends GuiScreen {
             int y = tableTop + ROW_H * (i + 1);
             int idx = i;
             boolean hover = idx == rowAt(mouseX, mouseY);
-            drawRect(
-                left,
-                y,
-                left + 380,
-                y + ROW_H,
-                hover ? 0xCFE4FF : ((i % 2 == 0) ? 0xF2F2F2 : 0xE8E8E8));
+            drawRect(left, y, left + 380, y + ROW_H, hover ? 0xCFE4FF : ((i % 2 == 0) ? 0xF2F2F2 : 0xE8E8E8));
             this.drawString(this.fontRendererObj, clip(RecipeMapNames.chineseName(id), 118), left + 4, y + 3, 0x202020);
-            this.drawString(this.fontRendererObj, clip(RecipeMapNames.englishName(id), 122), left + 124, y + 3, 0x303030);
+            this.drawString(
+                this.fontRendererObj,
+                clip(RecipeMapNames.englishName(id), 122),
+                left + 124,
+                y + 3,
+                0x303030);
             // 3.22.0-fix52：关键字列原来是 0x505050（浅底上偏糊），改深色
             this.drawString(this.fontRendererObj, clip(id, 128), left + 250, y + 3, 0x202020);
         }

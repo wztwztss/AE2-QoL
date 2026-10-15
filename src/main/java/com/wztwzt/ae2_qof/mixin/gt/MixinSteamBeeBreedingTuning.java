@@ -14,10 +14,12 @@ import gregtech.api.recipe.check.CheckRecipeResult;
 /**
  * Steam Bee Breeding Module 的调速 + 批处理后处理（3.29.0）。
  *
- * <p>做法与理由见 {@link SteamElevatorTuning} 的类注释。本类只做三件事：
+ * <p>
+ * 做法与理由见 {@link SteamElevatorTuning} 的类注释。本类只做三件事：
  * 把单份时长按配置压到 1 tick、把成功率化的"额外份数"按**逐份实扣蜂王浆**确定、并把产出按份数放大。
  *
- * <p>注意：上游一次操作吃 2×64=128 个蜂王浆，因此额外 k 份就要再吃 k×128 个；不够就停在能供上的份数
+ * <p>
+ * 注意：上游一次操作吃 2×64=128 个蜂王浆，因此额外 k 份就要再吃 k×128 个；不够就停在能供上的份数
  * （= 需求方选定的"自动降级"）。若 forestry 反射不可用，则**不做批处理**（防止白送产出）。
  */
 @Mixin(value = SteamBeeBreedingModule.class, remap = false)
@@ -57,7 +59,8 @@ public abstract class MixinSteamBeeBreedingTuning {
             if (wanted > 1) {
                 SteamElevatorTuning.warnOnce(
                     "bb:floor",
-                    "[AE2QoL] SteamElevator 育种模块只够 " + n + " 份（抗卡顿门槛 "
+                    "[AE2QoL] SteamElevator 育种模块只够 " + n
+                        + " 份（抗卡顿门槛 "
                         + SteamElevatorTuning.minBatchesToApplyTuning
                         + "）：为**避免配方检查频率上升**已保持上游行为，补足供料后自动启用");
             }
@@ -84,14 +87,16 @@ public abstract class MixinSteamBeeBreedingTuning {
         if (total > 1) {
             SteamElevatorTuning.infoOnce(
                 "bb:n",
-                "[AE2QoL] SteamElevator 育种模块批处理生效: 每操作 " + total + " 份（并行 " + p + "）/ "
+                "[AE2QoL] SteamElevator 育种模块批处理生效: 每操作 " + total
+                    + " 份（并行 "
+                    + p
+                    + "）/ "
                     + self.mMaxProgresstime
                     + " tick");
         } else if (wanted > 1) {
             SteamElevatorTuning.warnOnce(
                 "bb:short",
-                "[AE2QoL] SteamElevator 育种模块输入不足，已降级为 1 份/操作（蜂王浆需 " + perBatch
-                    + " 个/份；补足后自动恢复 " + wanted + " 份）");
+                "[AE2QoL] SteamElevator 育种模块输入不足，已降级为 1 份/操作（蜂王浆需 " + perBatch + " 个/份；补足后自动恢复 " + wanted + " 份）");
         }
     }
 }

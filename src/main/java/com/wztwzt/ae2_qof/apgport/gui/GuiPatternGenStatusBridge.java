@@ -5,8 +5,6 @@
  */
 package com.wztwzt.ae2_qof.apgport.gui;
 
-import com.wztwzt.ae2_qof.MyMod;
-
 import com.wztwzt.ae2_qof.apgport.util.I18nUtil;
 
 /**

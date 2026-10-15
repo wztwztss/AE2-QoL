@@ -128,9 +128,7 @@ public class ItemPatternClipboard extends Item {
 
         PatternDualInputHatch machine = resolveOurMachine(world, x, y, z);
         if (machine == null) {
-            tell(
-                player,
-                EnumChatFormatting.RED + t(LANG + "not_ours"));
+            tell(player, EnumChatFormatting.RED + t(LANG + "not_ours"));
             return true;
         }
 
@@ -178,9 +176,7 @@ public class ItemPatternClipboard extends Item {
         int count = 0;
         for (int i = 0; i < patterns.length; i++) {
             if (patterns[i] != null) {
-                tag.setTag(
-                    "i" + i,
-                    patterns[i].writeToNBT(new NBTTagCompound()));
+                tag.setTag("i" + i, patterns[i].writeToNBT(new NBTTagCompound()));
                 count++;
             }
         }
@@ -278,8 +274,8 @@ public class ItemPatternClipboard extends Item {
             // 剪贴板比目标大（例如 360 → 144）：只搬得走前 target 张，必须显式告知，不能静默截断
             tell(
                 player,
-                EnumChatFormatting.YELLOW + StatCollector
-                    .translateToLocalFormatted(LANG + "truncated", clip.getInteger(CLIP_COUNT), target));
+                EnumChatFormatting.YELLOW
+                    + StatCollector.translateToLocalFormatted(LANG + "truncated", clip.getInteger(CLIP_COUNT), target));
         }
         MyMod.LOG.info(
             "[AE2QoL] 样板剪贴板：粘贴 {} 张样板到目标（目标槽位={}，剪贴板来源={}，玩家={}）",
@@ -299,7 +295,8 @@ public class ItemPatternClipboard extends Item {
         }
         tell(
             player,
-            EnumChatFormatting.AQUA + t(LANG + "status") + " "
+            EnumChatFormatting.AQUA + t(LANG + "status")
+                + " "
                 + format(clip.getInteger(CLIP_COUNT), clip.getInteger(CLIP_SLOTS))
                 + EnumChatFormatting.GRAY
                 + " | "
@@ -355,9 +352,7 @@ public class ItemPatternClipboard extends Item {
         tooltip.add(EnumChatFormatting.GRAY + t(LANG + "tooltip.0"));
         tooltip.add(EnumChatFormatting.GRAY + t(LANG + "tooltip.1"));
         tooltip.add(EnumChatFormatting.GRAY + t(LANG + "tooltip.2"));
-        tooltip.add(
-            EnumChatFormatting.DARK_GRAY + t(LANG + "mode")
-                + EnumChatFormatting.WHITE
-                + modeName(getMode(stack)));
+        tooltip
+            .add(EnumChatFormatting.DARK_GRAY + t(LANG + "mode") + EnumChatFormatting.WHITE + modeName(getMode(stack)));
     }
 }

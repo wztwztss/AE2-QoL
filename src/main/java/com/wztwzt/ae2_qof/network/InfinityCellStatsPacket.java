@@ -7,11 +7,9 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import cn.dancingsnow.aeinfinitycell.ServerWorldAccess;
 import cn.dancingsnow.aeinfinitycell.storage.InfinityCellDataAccess;
 import cn.dancingsnow.aeinfinitycell.storage.InfinityCellRecord;
-
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-
 import io.netty.buffer.ByteBuf;
 
 /**
@@ -101,7 +99,8 @@ public class InfinityCellStatsPacket implements IMessage {
                         ModNetwork.CHANNEL.sendTo(new InfinityCellStatsResponsePacket(id, null), player);
                         return;
                     }
-                    InfinityCellRecord record = InfinityCellDataAccess.getOrCreate(id, ServerWorldAccess.getServerWorld());
+                    InfinityCellRecord record = InfinityCellDataAccess
+                        .getOrCreate(id, ServerWorldAccess.getServerWorld());
                     if (record == null) {
                         ModNetwork.CHANNEL.sendTo(new InfinityCellStatsResponsePacket(id, null), player);
                         return;

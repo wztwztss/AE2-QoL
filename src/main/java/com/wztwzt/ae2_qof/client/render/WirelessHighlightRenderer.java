@@ -17,12 +17,7 @@ public class WirelessHighlightRenderer {
 
     public static final WirelessHighlightRenderer INSTANCE = new WirelessHighlightRenderer();
 
-    private static final int[][] HATCH_COLORS = {
-        { 255, 160, 0 },
-        { 0, 160, 255 },
-        { 180, 0, 255 },
-        { 255, 255, 0 }
-    };
+    private static final int[][] HATCH_COLORS = { { 255, 160, 0 }, { 0, 160, 255 }, { 180, 0, 255 }, { 255, 255, 0 } };
 
     private int tickCount = 0;
 

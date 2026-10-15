@@ -52,7 +52,8 @@ public abstract class MixinGuiOverlayButton {
         // 3.22.0/3.23.0：通配样板编辑器（MUI2 的带容器屏 GuiContainerWrapper）同样需要强制可用
         // （GT 处理配方的 overlay identifier 不是 crafting，NEI 会把按钮算成 disabled ⇒ 点击不会被派发）
         if (firstGui != null && (firstGui instanceof GuiMergedTerminal
-            || (firstGui instanceof com.cleanroommc.modularui.screen.GuiContainerWrapper || firstGui instanceof com.gtnewhorizons.modularui.common.internal.wrapper.ModularGui))) {
+            || (firstGui instanceof com.cleanroommc.modularui.screen.GuiContainerWrapper
+                || firstGui instanceof com.gtnewhorizons.modularui.common.internal.wrapper.ModularGui))) {
             ((net.minecraft.client.gui.GuiButton) (Object) this).enabled = true;
         }
     }
@@ -67,39 +68,37 @@ public abstract class MixinGuiOverlayButton {
             // 不落 AE2 原版填充。推导结果交给界面，用户确认后由 C2S 包在服务端写入样板 NBT。
             // 3.23.0：通配样板编辑器（MUI2 带容器屏）里的加号 = 「按当前 NEI 配方推导规则与模板 + 立即写回样板」。
             // 3.34.0：**Wild 窗口（GTNH-MUI）改为就地写入** —— 推导结果直接落进已打开窗口的内存 9 行并立即
-            //   持久化（WildcardPatternWindow.applyDerivedFromNei）。旧实现只发包 + 聊天栏"关掉重开"，
-            //   结果是界面当场毫无变化，且窗口旧内存态在保存时把刚写入的规则覆盖成 0 条（实测"加号无效果"）。
-            //   同时**收紧识别**：只有"当前 GTNH-MUI 主窗口就是 Wild 通配样板窗口"才消费加号；其它 GTNH-MUI
-            //   窗口（例如批量样板生成器）不再被误当成通配编辑器去写样板数据。
+            // 持久化（WildcardPatternWindow.applyDerivedFromNei）。旧实现只发包 + 聊天栏"关掉重开"，
+            // 结果是界面当场毫无变化，且窗口旧内存态在保存时把刚写入的规则覆盖成 0 条（实测"加号无效果"）。
+            // 同时**收紧识别**：只有"当前 GTNH-MUI 主窗口就是 Wild 通配样板窗口"才消费加号；其它 GTNH-MUI
+            // 窗口（例如批量样板生成器）不再被误当成通配编辑器去写样板数据。
             if (firstGui instanceof com.gtnewhorizons.modularui.common.internal.wrapper.ModularGui modularGui) {
                 ae2qol$inOverlayFill = true;
                 try {
                     RecipeHandlerRef ref = ((GuiRecipeButton) (Object) this).handlerRef;
                     if (ref != null && ref.handler != null && ref.recipeIndex >= 0) {
-                        com.wztwzt.ae2_qof.client.SmartWildcardRecipeDeriver.Result derived =
-                            com.wztwzt.ae2_qof.client.SmartWildcardRecipeDeriver.derive(
+                        com.wztwzt.ae2_qof.client.SmartWildcardRecipeDeriver.Result derived = com.wztwzt.ae2_qof.client.SmartWildcardRecipeDeriver
+                            .derive(
                                 ref.handler,
                                 ref.recipeIndex,
                                 net.minecraft.client.Minecraft.getMinecraft().theWorld);
                         if (derived != null && derived.ok) {
                             com.wztwzt.ae2_qof.client.SmartWildcardClientState.setDerived(derived);
-                            com.gtnewhorizons.modularui.api.screen.ModularWindow window = modularGui.getContext() == null
-                                ? null
-                                : modularGui.getContext()
-                                    .getMainWindow();
+                            com.gtnewhorizons.modularui.api.screen.ModularWindow window = modularGui.getContext()
+                                == null ? null
+                                    : modularGui.getContext()
+                                        .getMainWindow();
                             if (com.wztwzt.ae2_qof.wildport.gui.WildcardPatternWindow
                                 .applyDerivedFromNei(window, derived)) {
-                                com.wztwzt.ae2_qof.MyMod.LOG
-                                    .info("[AE2QoL] NEI 加号推导并就地写入 Wild 界面：{}", derived.summary);
+                                com.wztwzt.ae2_qof.MyMod.LOG.info("[AE2QoL] NEI 加号推导并就地写入 Wild 界面：{}", derived.summary);
                                 ci.cancel();
                                 return;
                             }
-                            com.wztwzt.ae2_qof.MyMod.LOG.info(
-                                "[AE2QoL] NEI 加号：当前 GTNH-MUI 窗口不是 Wild 通配样板窗口，未接管（交回 NEI）");
+                            com.wztwzt.ae2_qof.MyMod.LOG
+                                .info("[AE2QoL] NEI 加号：当前 GTNH-MUI 窗口不是 Wild 通配样板窗口，未接管（交回 NEI）");
                         } else {
-                            com.wztwzt.ae2_qof.MyMod.LOG.warn(
-                                "[AE2QoL] NEI 加号推导失败（未产生规则）：{}",
-                                derived == null ? "null" : derived.reason);
+                            com.wztwzt.ae2_qof.MyMod.LOG
+                                .warn("[AE2QoL] NEI 加号推导失败（未产生规则）：{}", derived == null ? "null" : derived.reason);
                             ae2qol$chat(
                                 "\u00a7c[AE2QoL] \u63a8\u5bfc\u5931\u8d25\uff1a"
                                     + (derived == null ? "null" : derived.reason));
@@ -124,8 +123,8 @@ public abstract class MixinGuiOverlayButton {
                 try {
                     RecipeHandlerRef ref = ((GuiRecipeButton) (Object) this).handlerRef;
                     if (ref != null && ref.handler != null && ref.recipeIndex >= 0) {
-                        com.wztwzt.ae2_qof.client.SmartWildcardRecipeDeriver.Result derived =
-                            com.wztwzt.ae2_qof.client.SmartWildcardRecipeDeriver.derive(
+                        com.wztwzt.ae2_qof.client.SmartWildcardRecipeDeriver.Result derived = com.wztwzt.ae2_qof.client.SmartWildcardRecipeDeriver
+                            .derive(
                                 ref.handler,
                                 ref.recipeIndex,
                                 net.minecraft.client.Minecraft.getMinecraft().theWorld);
@@ -136,13 +135,12 @@ public abstract class MixinGuiOverlayButton {
                                     derived.state,
                                     derived.templateIn,
                                     derived.templateOut));
-                            com.wztwzt.ae2_qof.MyMod.LOG
-                                .info("[AE2QoL] NEI 加号推导并写回通配样板：{}", derived.summary);
-                            ae2qol$chat("\u00a7a[AE2QoL] \u5df2\u6309 NEI \u914d\u65b9\u5199\u5165\uff1a" + derived.summary);
+                            com.wztwzt.ae2_qof.MyMod.LOG.info("[AE2QoL] NEI 加号推导并写回通配样板：{}", derived.summary);
+                            ae2qol$chat(
+                                "\u00a7a[AE2QoL] \u5df2\u6309 NEI \u914d\u65b9\u5199\u5165\uff1a" + derived.summary);
                         } else {
-                            com.wztwzt.ae2_qof.MyMod.LOG.warn(
-                                "[AE2QoL] NEI 加号推导失败（未产生规则）：{}",
-                                derived == null ? "null" : derived.reason);
+                            com.wztwzt.ae2_qof.MyMod.LOG
+                                .warn("[AE2QoL] NEI 加号推导失败（未产生规则）：{}", derived == null ? "null" : derived.reason);
                             ae2qol$chat(
                                 "\u00a7c[AE2QoL] \u63a8\u5bfc\u5931\u8d25\uff1a"
                                     + (derived == null ? "null" : derived.reason));
@@ -163,8 +161,8 @@ public abstract class MixinGuiOverlayButton {
                 try {
                     RecipeHandlerRef ref = ((GuiRecipeButton) (Object) this).handlerRef;
                     if (ref != null && ref.handler != null && ref.recipeIndex >= 0) {
-                        com.wztwzt.ae2_qof.client.SmartWildcardRecipeDeriver.Result derived =
-                            com.wztwzt.ae2_qof.client.SmartWildcardRecipeDeriver.derive(
+                        com.wztwzt.ae2_qof.client.SmartWildcardRecipeDeriver.Result derived = com.wztwzt.ae2_qof.client.SmartWildcardRecipeDeriver
+                            .derive(
                                 ref.handler,
                                 ref.recipeIndex,
                                 net.minecraft.client.Minecraft.getMinecraft().theWorld);
@@ -172,8 +170,7 @@ public abstract class MixinGuiOverlayButton {
                         if (derived.ok) {
                             com.wztwzt.ae2_qof.MyMod.LOG.info("[AE2QoL] NEI 加号推导通配规则：{}", derived.summary);
                         } else {
-                            com.wztwzt.ae2_qof.MyMod.LOG
-                                .warn("[AE2QoL] NEI 加号推导失败（未产生规则）：{}", derived.reason);
+                            com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] NEI 加号推导失败（未产生规则）：{}", derived.reason);
                         }
                         ((com.wztwzt.ae2_qof.client.gui.GuiSmartWildcard) firstGui).ae2qol$reloadDerived();
                     } else {
@@ -215,7 +212,8 @@ public abstract class MixinGuiOverlayButton {
     @Inject(method = "canFillCraftingGrid()Z", at = @At("HEAD"), cancellable = true)
     private void ae2qol$alwaysFillableForMergedTerminal(CallbackInfoReturnable<Boolean> cir) {
         if (firstGui != null && (firstGui instanceof GuiMergedTerminal
-            || (firstGui instanceof com.cleanroommc.modularui.screen.GuiContainerWrapper || firstGui instanceof com.gtnewhorizons.modularui.common.internal.wrapper.ModularGui))) {
+            || (firstGui instanceof com.cleanroommc.modularui.screen.GuiContainerWrapper
+                || firstGui instanceof com.gtnewhorizons.modularui.common.internal.wrapper.ModularGui))) {
             cir.setReturnValue(true);
         }
     }

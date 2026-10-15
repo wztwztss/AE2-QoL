@@ -8,14 +8,13 @@ import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IChatComponent;
 import net.minecraft.world.World;
 
-import appeng.api.networking.IGridNode;
+import com.wztwzt.ae2_qof.cover.stockmonitor.StockMonitorCover;
+import com.wztwzt.ae2_qof.cover.stockmonitor.StockMonitorCoverData;
 
+import appeng.api.networking.IGridNode;
 import cn.dancingsnow.ae_wireless_nexus.network.TileWirelessControllerRef;
 import cn.dancingsnow.ae_wireless_nexus.network.WirelessBindableEndpoint;
 import cn.dancingsnow.ae_wireless_nexus.network.WirelessLeaseStatus;
-
-import com.wztwzt.ae2_qof.cover.stockmonitor.StockMonitorCover;
-import com.wztwzt.ae2_qof.cover.stockmonitor.StockMonitorCoverData;
 
 /**
  * 将库存检测覆盖板包装为 Nexus WirelessBindableEndpoint，
@@ -35,7 +34,8 @@ public class StockMonitorWirelessEndpoint implements WirelessBindableEndpoint {
 
     @Override
     public UUID getTargetNetworkId() {
-        String id = cover.getCoverData().getNetworkId();
+        String id = cover.getCoverData()
+            .getNetworkId();
         if (id == null || id.isEmpty()) return null;
         try {
             return UUID.fromString(id);
@@ -63,8 +63,13 @@ public class StockMonitorWirelessEndpoint implements WirelessBindableEndpoint {
     public String getStableEndpointKey() {
         TileEntity te = cover.getTile() instanceof TileEntity ? (TileEntity) cover.getTile() : null;
         if (te == null) return "ae2qol_stock_monitor_unknown";
-        return "ae2qol_stock_monitor_" + te.getWorldObj().provider.dimensionId + "_"
-            + te.xCoord + "_" + te.yCoord + "_" + te.zCoord;
+        return "ae2qol_stock_monitor_" + te.getWorldObj().provider.dimensionId
+            + "_"
+            + te.xCoord
+            + "_"
+            + te.yCoord
+            + "_"
+            + te.zCoord;
     }
 
     @Override
@@ -110,7 +115,8 @@ public class StockMonitorWirelessEndpoint implements WirelessBindableEndpoint {
 
     @Override
     public void unbindFromNetwork() {
-        cover.getCoverData().setNetworkId("");
+        cover.getCoverData()
+            .setNetworkId("");
     }
 
     @Override

@@ -55,10 +55,7 @@ public abstract class MixinBaseMetaTileEntityIdMigration {
      * 其中 {@code mID} 取自 {@code aNBT.getInteger("mID")}。
      * 在方法最前面把旧编号改写掉，后续原逻辑就会按新编号创建机器。
      */
-    @Inject(
-        method = "setInitialValuesAsNBT(Lnet/minecraft/nbt/NBTTagCompound;S)V",
-        at = @At("HEAD"),
-        remap = false)
+    @Inject(method = "setInitialValuesAsNBT(Lnet/minecraft/nbt/NBTTagCompound;S)V", at = @At("HEAD"), remap = false)
     private void ae2qol$migrateLegacyMachineId(NBTTagCompound nbt, short aID, CallbackInfo ci) {
         try {
             if (nbt == null) return;
@@ -67,10 +64,7 @@ public abstract class MixinBaseMetaTileEntityIdMigration {
             if (mapped == storedId) return;
             if (!ae2qol$isOwnMachine(nbt)) return;
             nbt.setInteger("mID", mapped);
-            MyMod.LOG.info(
-                "[AE2QoL] migrated legacy terminal in save data: MTE id {} -> {}",
-                storedId,
-                mapped);
+            MyMod.LOG.info("[AE2QoL] migrated legacy terminal in save data: MTE id {} -> {}", storedId, mapped);
         } catch (Throwable ignored) {
             // 迁移失败绝不能影响存档加载，静默放行由原逻辑处理
         }

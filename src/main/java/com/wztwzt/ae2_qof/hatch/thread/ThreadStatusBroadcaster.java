@@ -16,7 +16,8 @@ import gregtech.api.metatileentity.implementations.MTEMultiBlockBase;
 /**
  * 3.25.0（提交 2/2）：把线程状态**降频**推给"正在跟踪该机器区块"的玩家，供 WAILA 显示。
  *
- * <p>只做两件事：按 {@link #INTERVAL} 节流（默认每 10 tick 一次），然后把汇总 + **最慢的 N 条**线程
+ * <p>
+ * 只做两件事：按 {@link #INTERVAL} 节流（默认每 10 tick 一次），然后把汇总 + **最慢的 N 条**线程
  * 打进 {@link ThreadStatusPacket} 发给跟踪者。不在包里的线程（超过 8 条）在 WAILA 里折叠为计数，
  * 与线框稿一致。发送对象与区块包一致（{@code isPlayerWatchingChunk}），因此不会给看不见的人发流量。
  */
@@ -62,7 +63,9 @@ public final class ThreadStatusBroadcaster {
 
         // 只带最慢的若干条（剩余最多的排前面）：常态显示 2 条、潜行展开最多 8 条（线框稿口径）
         List<Ae2qolThreadEngine.Row> rows = new ArrayList<>(engine.activeRows());
-        rows.sort(Comparator.comparingInt((Ae2qolThreadEngine.Row r) -> r.remain).reversed());
+        rows.sort(
+            Comparator.comparingInt((Ae2qolThreadEngine.Row r) -> r.remain)
+                .reversed());
         int n = Math.min(ThreadStatusPacket.MAX_ROWS, rows.size());
         packet.rowIndex = new int[n];
         packet.rowState = new int[n];

@@ -72,7 +72,8 @@ public class ItemSmartWildcardPattern extends ItemEncodedPattern
     /**
      * 按 MUI2 的要求覆写 {@code createScreen} 并传入本模组 modid。
      *
-     * <p>不覆写时 MUI2 会打警告「should be overridden to pass your own mod id … or else it will crash」——
+     * <p>
+     * 不覆写时 MUI2 会打警告「should be overridden to pass your own mod id … or else it will crash」——
      * 它用 owner 来区分同名面板，未来版本不传会直接崩，所以这里现在就给对。
      */
     @Override
@@ -114,7 +115,8 @@ public class ItemSmartWildcardPattern extends ItemEncodedPattern
         try {
             SmartWildcardState state = SmartWildcardState.of(stack);
             if (state == null) {
-                lines.add(EnumChatFormatting.GRAY + StatCollector.translateToLocal("ae2_qof.wildcard.tip.unconfigured"));
+                lines
+                    .add(EnumChatFormatting.GRAY + StatCollector.translateToLocal("ae2_qof.wildcard.tip.unconfigured"));
                 return;
             }
             if (!state.isConfigured()) {
@@ -167,8 +169,8 @@ public class ItemSmartWildcardPattern extends ItemEncodedPattern
     public ItemStack onItemRightClick(ItemStack stack, World world, EntityPlayer player) {
         ItemStack result = super.onItemRightClick(stack, world, player);
         // 3.26.x：**两个入口**（用户要求把"电路 1~24"与"不消耗物品"重新给出入口）——
-        //   · 直接右键：搬运进来的 Wild 界面（9 行规则表 / 排除 / 预览 + NEI 拖入 + 加号）
-        //   · Shift+右键：我们原有的四页签 MUI2 编辑器（含**内置电路**与**不消耗物品**两页）
+        // · 直接右键：搬运进来的 Wild 界面（9 行规则表 / 排除 / 预览 + NEI 拖入 + 加号）
+        // · Shift+右键：我们原有的四页签 MUI2 编辑器（含**内置电路**与**不消耗物品**两页）
         // Wild 窗口没有这两页，所以旧界面保留为备选而不是删掉（它也不再是无入口的死代码）。
         final boolean shift = player != null && player.isSneaking();
         try {
@@ -208,7 +210,7 @@ public class ItemSmartWildcardPattern extends ItemEncodedPattern
             MyMod.LOG.warn("[AE2QoL] 打开通配样板界面异常详情", t);
         }
         // 3.23.1：移除 M1 时期的"右键聊天摘要"——用户反馈它每次打开界面都在聊天栏刷屏
-        //（rules=… / expand: produced=…）。配置信息现在由 MUI2 编辑器与物品 tooltip 承载，诊断信息进日志。
+        // （rules=… / expand: produced=…）。配置信息现在由 MUI2 编辑器与物品 tooltip 承载，诊断信息进日志。
         return result;
     }
 }

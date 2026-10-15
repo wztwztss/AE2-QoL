@@ -5,16 +5,15 @@ import java.util.List;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IIcon;
 import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
 
+import com.wztwzt.ae2_qof.AE2QoLCreativeTab;
+
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
-
-import com.wztwzt.ae2_qof.AE2QoLCreativeTab;
 
 public class ItemStockMonitorCover extends Item {
 
@@ -35,11 +34,11 @@ public class ItemStockMonitorCover extends Item {
         try {
             ItemStack controller = gregtech.api.enums.ItemList.Cover_Controller.get(1);
             if (controller != null && controller.getItem() != null) {
-                IIcon icon = controller.getItem().getIconFromDamage(controller.getItemDamage());
+                IIcon icon = controller.getItem()
+                    .getIconFromDamage(controller.getItemDamage());
                 if (icon != null) return icon;
             }
-        } catch (Throwable ignored) {
-        }
+        } catch (Throwable ignored) {}
         return super.getIconFromDamage(damage);
     }
 
@@ -71,8 +70,8 @@ public class ItemStockMonitorCover extends Item {
             if (!world.isRemote) {
                 player.addChatMessage(
                     new net.minecraft.util.ChatComponentText(
-                        EnumChatFormatting.YELLOW + StatCollector
-                            .translateToLocal("ae2_qof.cover.stock_monitor.config_cleared")));
+                        EnumChatFormatting.YELLOW
+                            + StatCollector.translateToLocal("ae2_qof.cover.stock_monitor.config_cleared")));
             }
         }
         return stack;

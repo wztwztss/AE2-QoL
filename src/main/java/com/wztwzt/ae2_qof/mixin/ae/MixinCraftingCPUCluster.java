@@ -33,8 +33,6 @@ import com.wztwzt.ae2_qof.network.CraftingCompletePacket;
 import com.wztwzt.ae2_qof.network.ModNetwork;
 import com.wztwzt.ae2_qof.network.SmartDoublingTogglePacket;
 
-import gregtech.api.interfaces.metatileentity.IMetaTileEntity;
-
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;
 import appeng.api.config.Upgrades;
@@ -68,6 +66,7 @@ import appeng.util.ScheduledReason;
 import appeng.util.inv.MEInventoryCrafting;
 import appeng.util.item.AEItemStack;
 import cpw.mods.fml.common.FMLCommonHandler;
+import gregtech.api.interfaces.metatileentity.IMetaTileEntity;
 import reobf.proghatches.gt.metatileentity.util.IMultiplePatternPushable;
 
 /**
@@ -225,9 +224,8 @@ public abstract class MixinCraftingCPUCluster {
             return;
         }
         long elapsedMillis = java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(this.elapsedTime);
-        ModNetwork.CHANNEL.sendTo(
-            new CraftingCompletePacket(this.output, this.output.stackSize, elapsedMillis),
-            playerMP);
+        ModNetwork.CHANNEL
+            .sendTo(new CraftingCompletePacket(this.output, this.output.stackSize, elapsedMillis), playerMP);
         setAsNull();
     }
 
@@ -533,8 +531,10 @@ public abstract class MixinCraftingCPUCluster {
             } catch (Throwable t) {
                 this.suspended = true;
                 this.markDirty();
-                MyMod.LOG.error("[AE2QoL] Smart doubling failed after execution started; CPU suspended. "
-                    + "Inspect inputs/medium before resuming; unsafe vanilla replay was prevented.", t);
+                MyMod.LOG.error(
+                    "[AE2QoL] Smart doubling failed after execution started; CPU suspended. "
+                        + "Inspect inputs/medium before resuming; unsafe vanilla replay was prevented.",
+                    t);
                 return;
             }
             ci.cancel();
@@ -602,11 +602,8 @@ public abstract class MixinCraftingCPUCluster {
             if (!(medium instanceof IMetaTileEntity mte)) return false;
             final TileEntity base = (TileEntity) mte.getBaseMetaTileEntity();
             if (base == null || base.getWorldObj() == null) return false;
-            return SmartDoublingTogglePacket.isExpectEnabled(
-                base.getWorldObj().provider.dimensionId,
-                base.xCoord,
-                base.yCoord,
-                base.zCoord);
+            return SmartDoublingTogglePacket
+                .isExpectEnabled(base.getWorldObj().provider.dimensionId, base.xCoord, base.yCoord, base.zCoord);
         } catch (Throwable t) {
             return false;
         }

@@ -23,17 +23,18 @@ import com.cleanroommc.modularui.widgets.ButtonWidget;
 import com.cleanroommc.modularui.widgets.ScrollingTextWidget;
 import com.cleanroommc.modularui.widgets.TextWidget;
 import com.cleanroommc.modularui.widgets.layout.Flow;
-
 import com.wztwzt.ae2_qof.cover.stockmonitor.ae.WirelessAeConnector;
 
 /**
  * 库存统计终端的**回退**网络选择面板：Nexus 不可用（未安装或反射初始化失败）时使用。
  *
- * <p>与覆盖板的 {@code cover/stockmonitor/gui/NetworkSelectPanel} 是**兄弟实现**：
+ * <p>
+ * 与覆盖板的 {@code cover/stockmonitor/gui/NetworkSelectPanel} 是**兄弟实现**：
  * 两者结构相同、数据来源相同（`WirelessAeConnector.getVisibleNetworks`），只是绑定目标不同
  * （这里写回 {@link StockMonitorTerminal#setNetworkId(String)}）。
  *
- * <p>为什么复制而不是复用：覆盖板的那个面板签名绑死了 {@code StockMonitorCover}
+ * <p>
+ * 为什么复制而不是复用：覆盖板的那个面板签名绑死了 {@code StockMonitorCover}
  * （要拿 {@code cover.getTile()} 与 {@code cover.getCoverData().setNetworkId}）。
  * 与其改动一个**用户已确认可用**的 GUI 去做泛化，不如把这点重复留在终端侧，
  * 保持"本次改动不触碰覆盖板"的边界。若将来覆盖板面板改版，这里需要一起复核。
@@ -47,7 +48,7 @@ public final class StockMonitorTerminalNetworkPanel {
     private StockMonitorTerminalNetworkPanel() {}
 
     public static ModularPanel build(PanelSyncManager panelSyncManager, StockMonitorTerminal terminal,
-            IPanelHandler panelHandler) {
+        IPanelHandler panelHandler) {
         EntityPlayer player = panelSyncManager.getPlayer();
         World world = null;
         try {
@@ -57,12 +58,13 @@ public final class StockMonitorTerminalNetworkPanel {
 
         List<NetworkEntry> entries = fetchNetworks(world, player, terminal);
 
-        Flow list = Flow.column().widthRel(1F).childPadding(2);
+        Flow list = Flow.column()
+            .widthRel(1F)
+            .childPadding(2);
 
         if (entries.isEmpty()) {
             list.child(
-                new TextWidget<>(IKey.lang("ae2_qof.gui.stock_monitor.no_networks"))
-                    .widthRel(1F)
+                new TextWidget<>(IKey.lang("ae2_qof.gui.stock_monitor.no_networks")).widthRel(1F)
                     .height(CARD_H)
                     .textAlign(Alignment.CenterLeft)
                     .color(0xFFAEBABC));
@@ -77,9 +79,10 @@ public final class StockMonitorTerminalNetworkPanel {
                         if (!online) {
                             EntityPlayer p = panelSyncManager.getPlayer();
                             if (p != null) {
-                                p.addChatMessage(new net.minecraft.util.ChatComponentText(
-                                    EnumChatFormatting.RED + StatCollector
-                                        .translateToLocal("ae2_qof.gui.stock_monitor.network_offline")));
+                                p.addChatMessage(
+                                    new net.minecraft.util.ChatComponentText(
+                                        EnumChatFormatting.RED + StatCollector
+                                            .translateToLocal("ae2_qof.gui.stock_monitor.network_offline")));
                             }
                             return;
                         }
@@ -98,8 +101,7 @@ public final class StockMonitorTerminalNetworkPanel {
                     .padding(6)
                     .childPadding(4)
                     .child(
-                        new TextWidget<>(IKey.lang("ae2_qof.gui.stock_monitor.select_network"))
-                            .widthRel(1F)
+                        new TextWidget<>(IKey.lang("ae2_qof.gui.stock_monitor.select_network")).widthRel(1F)
                             .textAlign(Alignment.Center)
                             .marginBottom(2))
                     .child(list)
@@ -109,12 +111,14 @@ public final class StockMonitorTerminalNetworkPanel {
                             .height(14)
                             .childPadding(4)
                             .child(
-                                new TextWidget<>(IKey.dynamic(() -> EnumChatFormatting.GRAY
-                                    + StatCollector.translateToLocal("ae2_qof.gui.stock_monitor.network_count")
-                                    + " " + entries.size())).expanded())
+                                new TextWidget<>(
+                                    IKey.dynamic(
+                                        () -> EnumChatFormatting.GRAY
+                                            + StatCollector.translateToLocal("ae2_qof.gui.stock_monitor.network_count")
+                                            + " "
+                                            + entries.size())).expanded())
                             .child(
-                                new ButtonWidget<>()
-                                    .size(40, 14)
+                                new ButtonWidget<>().size(40, 14)
                                     .background(GuiTextures.BUTTON_CLEAN)
                                     .overlay(IKey.lang("ae2_qof.gui.stock_monitor.close"))
                                     .onMousePressed(event -> {
@@ -124,8 +128,7 @@ public final class StockMonitorTerminalNetworkPanel {
     }
 
     private static IWidget networkCard(NetworkEntry entry, InteractionSyncHandler select) {
-        return new ButtonWidget<>()
-            .widthRel(1F)
+        return new ButtonWidget<>().widthRel(1F)
             .height(CARD_H)
             .syncHandler(select)
             .child(
@@ -133,19 +136,17 @@ public final class StockMonitorTerminalNetworkPanel {
                     .full()
                     .padding(4)
                     .child(
-                        new ScrollingTextWidget(IKey.str(entry.name))
-                            .widthRel(1F)
+                        new ScrollingTextWidget(IKey.str(entry.name)).widthRel(1F)
                             .height(10)
                             .color(entry.selected ? 0xFF42D3CF : 0xFFF0F6F7))
-                    .child(
-                        new TextWidget<>(IKey.dynamic(() -> {
-                            EnumChatFormatting c = entry.online ? EnumChatFormatting.GREEN : EnumChatFormatting.GRAY;
-                            String k = entry.online ? "ae2_qof.gui.stock_monitor.network_online"
-                                : "ae2_qof.gui.stock_monitor.network_offline";
-                            return c + StatCollector.translateToLocal(k);
-                        })).widthRel(1F)
-                            .scale(0.8F)
-                            .color(entry.selected ? 0xFF8FE4E1 : 0xFFAEBABC)));
+                    .child(new TextWidget<>(IKey.dynamic(() -> {
+                        EnumChatFormatting c = entry.online ? EnumChatFormatting.GREEN : EnumChatFormatting.GRAY;
+                        String k = entry.online ? "ae2_qof.gui.stock_monitor.network_online"
+                            : "ae2_qof.gui.stock_monitor.network_offline";
+                        return c + StatCollector.translateToLocal(k);
+                    })).widthRel(1F)
+                        .scale(0.8F)
+                        .color(entry.selected ? 0xFF8FE4E1 : 0xFFAEBABC)));
     }
 
     private static List<NetworkEntry> fetchNetworks(World world, EntityPlayer player, StockMonitorTerminal terminal) {
@@ -161,7 +162,13 @@ public final class StockMonitorTerminalNetworkPanel {
             String name = WirelessAeConnector.getRecordName(record);
             boolean online = WirelessAeConnector.isRecordOnline(record);
             if (id != null) {
-                entries.add(new NetworkEntry(id, name, online, id.toString().equals(currentId)));
+                entries.add(
+                    new NetworkEntry(
+                        id,
+                        name,
+                        online,
+                        id.toString()
+                            .equals(currentId)));
             }
         }
         return entries;

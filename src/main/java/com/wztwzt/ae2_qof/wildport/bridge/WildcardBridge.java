@@ -52,10 +52,12 @@ public final class WildcardBridge {
      * {@code reason=template-in-out-missing} 出现 **23 次**、展开产出恒 0，机器于是回退到
      * "按模板那一张样板合成" —— 正是用户看到的"AE 直接按这个样板自己的合成"。
      *
-     * <p>好在 {@code importPatternList} → {@code WildcardPatternEntry.fromPatternSlot} → {@code fromStack}
+     * <p>
+     * 好在 {@code importPatternList} → {@code WildcardPatternEntry.fromPatternSlot} → {@code fromStack}
      * **保留了原始 stack**，所以存量样板也能就地救回（用户不必重配）。
      *
-     * <p>3.35.0 同时把"首次初始化时不再删我们物品的 in/out"写进了 {@code WildcardPatternState}
+     * <p>
+     * 3.35.0 同时把"首次初始化时不再删我们物品的 in/out"写进了 {@code WildcardPatternState}
      * （仅对我们的样板生效，原版 WildcardPattern 物品行为不变），本方法负责修复**已经被删过**的存量样板。
      *
      * @return true = 本次确实重建并写回了模板
@@ -71,17 +73,16 @@ public final class WildcardBridge {
             return false; // 模板还在，什么都不做
         }
         try {
-            java.util.List<com.wztwzt.ae2_qof.wildport.crafting.WildcardPatternEntry> inEntries =
-                WildcardPatternState.getInputEntries(stack);
-            java.util.List<com.wztwzt.ae2_qof.wildport.crafting.WildcardPatternEntry> outEntries =
-                WildcardPatternState.getOutputEntries(stack);
+            java.util.List<com.wztwzt.ae2_qof.wildport.crafting.WildcardPatternEntry> inEntries = WildcardPatternState
+                .getInputEntries(stack);
+            java.util.List<com.wztwzt.ae2_qof.wildport.crafting.WildcardPatternEntry> outEntries = WildcardPatternState
+                .getOutputEntries(stack);
             java.util.List<ItemStack> inputs = templateStacks(inEntries);
             java.util.List<ItemStack> outputs = templateStacks(outEntries);
             if (inputs.isEmpty() || outputs.isEmpty()) {
                 logHealOnce(
                     stack,
-                    "模板缺失且 Wild 行数据里也没有可用 stack（in=" + inputs.size() + " out=" + outputs.size()
-                        + "）⇒ 无法自愈",
+                    "模板缺失且 Wild 行数据里也没有可用 stack（in=" + inputs.size() + " out=" + outputs.size() + "）⇒ 无法自愈",
                     true);
                 return false;
             }
@@ -93,10 +94,7 @@ public final class WildcardBridge {
             // （3.35.0 实测：`规则槽位越界：slot=1 inSize=1 matcher=ingot*`）。
             remapRuleSlots(stack, inEntries);
             com.wztwzt.ae2_qof.wildcard.SmartWildcardExpander.clearCache();
-            logHealOnce(
-                stack,
-                "已从 Wild 的行数据重建原生模板（in=" + inputs.size() + " out=" + outputs.size() + "）",
-                false);
+            logHealOnce(stack, "已从 Wild 的行数据重建原生模板（in=" + inputs.size() + " out=" + outputs.size() + "）", false);
             return true;
         } catch (Throwable t) {
             MyMod.LOG.warn("[AE2QoL] 模板自愈异常（该样板继续按现有 NBT 处理）", t);
@@ -107,13 +105,14 @@ public final class WildcardBridge {
     /**
      * 模板重建后重排规则槽位（3.36.0）：新下标 = "该行之前有 stack 的行数"。
      *
-     * <p>只改真正需要改的规则，并**记一条 INFO**（本项目原则：改数据必须可见）。
+     * <p>
+     * 只改真正需要改的规则，并**记一条 INFO**（本项目原则：改数据必须可见）。
      */
     private static void remapRuleSlots(ItemStack stack,
         java.util.List<com.wztwzt.ae2_qof.wildport.crafting.WildcardPatternEntry> inEntries) {
         try {
-            com.wztwzt.ae2_qof.wildcard.SmartWildcardState state =
-                com.wztwzt.ae2_qof.wildcard.SmartWildcardState.of(stack);
+            com.wztwzt.ae2_qof.wildcard.SmartWildcardState state = com.wztwzt.ae2_qof.wildcard.SmartWildcardState
+                .of(stack);
             if (state == null || state.rules.isEmpty()) return;
             // 原行号 → 新下标（只数有 stack 的行）
             java.util.Map<Integer, Integer> remap = new java.util.HashMap<>();
@@ -184,7 +183,8 @@ public final class WildcardBridge {
     /**
      * 我们的状态 → Wild 的键（**服务端**在打开界面前调用）。
      *
-     * <p>写入内容：每行的输入/输出 entry（模式/匹配串/数量 + 用于显示的模板堆）、总排除串、
+     * <p>
+     * 写入内容：每行的输入/输出 entry（模式/匹配串/数量 + 用于显示的模板堆）、总排除串、
      * 每条规则的包含/排除列表。任一行失败都会记 WARN 并跳过该行（不静默、也不整体失败）。
      */
     public static void pushToWild(ItemStack stack, SmartWildcardState state) {
@@ -211,14 +211,11 @@ public final class WildcardBridge {
             // "界面行号 / 规则序号 / 模板下标"三套编号互相错位 ⇒ 保存一次就漂移一次，
             // 自愈重建模板时还会丢行，最终表现为 `规则槽位越界` + `材料交集为空` + 输出行空白
             // （3.35.0 实机证据）。现在：每行都产出恰好一个 entry（占位行留空），行号即模板下标。
-            int rows = Math.max(
-                SmartWildcardEditorRows(),
-                Math.max(inTemplate.tagCount(), outTemplate.tagCount()));
+            int rows = Math.max(SmartWildcardEditorRows(), Math.max(inTemplate.tagCount(), outTemplate.tagCount()));
             for (int row = 0; row < rows; row++) {
                 SmartWildcardState.Rule rule = ruleForSlot(state, row);
                 if (rule != null) {
-                    WildcardPatternEntry in = entry(rule, rule.matcher, rule.oreDictMode, rule.amount, inTemplate,
-                        row);
+                    WildcardPatternEntry in = entry(rule, rule.matcher, rule.oreDictMode, rule.amount, inTemplate, row);
                     if (in == null) in = WildcardPatternEntry.fromStack(null);
                     inputs.add(in);
                     // 3.35.0/3.36.0：规则没显式指定输出时，用**该行自己的模板输出**推前缀（如 plate*），
@@ -227,8 +224,12 @@ public final class WildcardBridge {
                     if (outMatcher == null || outMatcher.isEmpty()) {
                         outMatcher = derivedOutputMatcherForRow(stack, state, row);
                     }
-                    WildcardPatternEntry out = entry(rule, outMatcher, rule.outOreDictMode,
-                        rule.outAmount > 0 ? rule.outAmount : rule.amount, outTemplate,
+                    WildcardPatternEntry out = entry(
+                        rule,
+                        outMatcher,
+                        rule.outOreDictMode,
+                        rule.outAmount > 0 ? rule.outAmount : rule.amount,
+                        outTemplate,
                         row < outTemplate.tagCount() ? row : -1);
                     if (out == null) out = WildcardPatternEntry.fromStack(null);
                     outputs.add(out);
@@ -261,7 +262,8 @@ public final class WildcardBridge {
     /**
      * Wild 的键 → 我们的状态（**服务端**在它保存后调用；由 {@code MessageUpdateWildcardConfig} 的处理器转发）。
      *
-     * <p>只覆盖我们模型里有的四类信息（规则、总排除、规则级排除、电路保持原值），
+     * <p>
+     * 只覆盖我们模型里有的四类信息（规则、总排除、规则级排除、电路保持原值），
      * 写完 {@code writeAndBumpRevision} 并清展开器缓存，让机器侧立刻看到新配置。
      */
     public static boolean pullFromWild(ItemStack stack) {

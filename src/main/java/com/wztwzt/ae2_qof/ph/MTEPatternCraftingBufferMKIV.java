@@ -46,10 +46,12 @@ import reobf.proghatches.gt.metatileentity.PatternDualInputHatch;
 /**
  * 编程样板输入总成 MK.III —— Programmable-Hatches「编程样板输入总成」的**扩容克隆版**。
  *
- * <p>它只在安装了 Programmable-Hatches 时存在：本类的父类、以及所有 PH 类型都只被
+ * <p>
+ * 它只在安装了 Programmable-Hatches 时存在：本类的父类、以及所有 PH 类型都只被
  * {@link PhIntegration#register()} 的方法体引用，PH 缺失时该入口直接 return，本类不会被加载。
  *
- * <p>与原型的差别只有「样板槽数量」和随之而来的样板窗形状：
+ * <p>
+ * 与原型的差别只有「样板槽数量」和随之而来的样板窗形状：
  * <ul>
  * <li>样板槽 **360**（原型 36 = PH 写死的数组长度，本机是它的 10 倍），对应 AE2 接口终端 40 行 × 9 列；</li>
  * <li>样板窗改成 9 列 × 9 可见行的**可滚动网格**（滚动覆盖 40 行），并加了按屏幕裁剪的停靠逻辑；</li>
@@ -57,7 +59,8 @@ import reobf.proghatches.gt.metatileentity.PatternDualInputHatch;
  * <li>其余（AE 频道/收单/缓冲隔离/电路处理/倍率/退款/Waila/NBT）**全部继承 PH 原实现**。</li>
  * </ul>
  *
- * <p>容量替换的关键证据与坑位见 {@link MixinPatternDualInputHatchAccess} 与
+ * <p>
+ * 容量替换的关键证据与坑位见 {@link MixinPatternDualInputHatchAccess} 与
  * {@link #ae2qol$ensureSlots()} / {@link #loadNBTData(NBTTagCompound)} 的注释。
  */
 public class MTEPatternCraftingBufferMKIV extends PatternDualInputHatch {
@@ -232,9 +235,8 @@ public class MTEPatternCraftingBufferMKIV extends PatternDualInputHatch {
 
     /** 模板构造器用的描述（英文兜底，正常显示走 {@link #getDescription()} 的懒翻译）。 */
     public static String[] defaultDescription() {
-        return new String[] { "AE-direct pattern buffer for multiblocks",
-            "360 pattern slots (10x the original 36)", "32 item + 32 fluid inputs per buffer, 24 buffers",
-            "[AE2 QoL + ProgrammableHatches]" };
+        return new String[] { "AE-direct pattern buffer for multiblocks", "360 pattern slots (10x the original 36)",
+            "32 item + 32 fluid inputs per buffer, 24 buffers", "[AE2 QoL + ProgrammableHatches]" };
     }
 
     // ===================== 真实实例 =====================
@@ -318,7 +320,8 @@ public class MTEPatternCraftingBufferMKIV extends PatternDualInputHatch {
         // 不是 lang 键后缀），找不到就退回加号图标。
         Item gloveItem = GameRegistry.findItem("miscutils", "GTPP.bauble.fireprotection.0.name");
         IDrawable dragIcon = gloveItem != null ? new ItemDrawable(new ItemStack(gloveItem, 1, 0)).asIcon()
-            .size(18, 18) : GTGuiTextures.OVERLAY_BUTTON_PLUS_LARGE.asIcon()
+            .size(18, 18)
+            : GTGuiTextures.OVERLAY_BUTTON_PLUS_LARGE.asIcon()
                 .size(18, 18);
 
         PagedWidget.Controller tabController = new PagedWidget.Controller();
@@ -333,58 +336,54 @@ public class MTEPatternCraftingBufferMKIV extends PatternDualInputHatch {
         // ---- 第 3 页：批量倍率 ----
         // 这些按钮会改 multiplier[]（写回 NBT），因此必须在服务端执行：点击经 InteractionSyncHandler
         // 同步到服务端后运行（照抄 PH 的做法）。
-        page3.child(
-            PatternWindowWidgets.makeBatchButton(syncManager, "batch_x2", () -> {
-                int[] m = acc.getAe2qolMultiplier();
-                for (int i = 0; i < m.length; i++) {
-                    m[i] = Math.max(m[i] * 2, 1);
-                }
-                refresh();
-            })
-                .pos(3, 3)
-                .tooltip(t -> t.addLine(IKey.str("x2"))));
+        page3.child(PatternWindowWidgets.makeBatchButton(syncManager, "batch_x2", () -> {
+            int[] m = acc.getAe2qolMultiplier();
+            for (int i = 0; i < m.length; i++) {
+                m[i] = Math.max(m[i] * 2, 1);
+            }
+            refresh();
+        })
+            .pos(3, 3)
+            .tooltip(t -> t.addLine(IKey.str("x2"))));
         page3.child(
             IKey.str("x2")
                 .asWidget()
                 .pos(3 + 3, 3));
-        page3.child(
-            PatternWindowWidgets.makeBatchButton(syncManager, "batch_set1", () -> {
-                int[] m = acc.getAe2qolMultiplier();
-                for (int i = 0; i < m.length; i++) {
-                    m[i] = 1;
-                }
-                refresh();
-            })
-                .pos(3 + 16, 3)
-                .tooltip(t -> t.addLine(IKey.str("=1"))));
+        page3.child(PatternWindowWidgets.makeBatchButton(syncManager, "batch_set1", () -> {
+            int[] m = acc.getAe2qolMultiplier();
+            for (int i = 0; i < m.length; i++) {
+                m[i] = 1;
+            }
+            refresh();
+        })
+            .pos(3 + 16, 3)
+            .tooltip(t -> t.addLine(IKey.str("=1"))));
         page3.child(
             IKey.str("=1")
                 .asWidget()
                 .pos(3 + 3 + 16, 3));
-        page3.child(
-            PatternWindowWidgets.makeBatchButton(syncManager, "batch_xn", () -> {
-                int[] m = acc.getAe2qolMultiplier();
-                for (int i = 0; i < m.length; i++) {
-                    m[i] = Math.max(m[i] * n, 1);
-                }
-                refresh();
-            })
-                .pos(3, 3 + 32)
-                .tooltip(t -> t.addLine(IKey.str("xN"))));
+        page3.child(PatternWindowWidgets.makeBatchButton(syncManager, "batch_xn", () -> {
+            int[] m = acc.getAe2qolMultiplier();
+            for (int i = 0; i < m.length; i++) {
+                m[i] = Math.max(m[i] * n, 1);
+            }
+            refresh();
+        })
+            .pos(3, 3 + 32)
+            .tooltip(t -> t.addLine(IKey.str("xN"))));
         page3.child(
             IKey.dynamic(() -> "x" + n)
                 .asWidget()
                 .pos(3 + 3, 3 + 32));
-        page3.child(
-            PatternWindowWidgets.makeBatchButton(syncManager, "batch_setn", () -> {
-                int[] m = acc.getAe2qolMultiplier();
-                for (int i = 0; i < m.length; i++) {
-                    m[i] = n;
-                }
-                refresh();
-            })
-                .pos(3 + 16, 3 + 32)
-                .tooltip(t -> t.addLine(IKey.str("=N"))));
+        page3.child(PatternWindowWidgets.makeBatchButton(syncManager, "batch_setn", () -> {
+            int[] m = acc.getAe2qolMultiplier();
+            for (int i = 0; i < m.length; i++) {
+                m[i] = n;
+            }
+            refresh();
+        })
+            .pos(3 + 16, 3 + 32)
+            .tooltip(t -> t.addLine(IKey.str("=N"))));
         page3.child(
             IKey.dynamic(() -> "=" + n)
                 .asWidget()
@@ -405,15 +404,14 @@ public class MTEPatternCraftingBufferMKIV extends PatternDualInputHatch {
                 .background(GTGuiTextures.BACKGROUND_TEXT_FIELD));
 
         // 退款按钮：沿用 PH 的摆放位置（批量页下方空白处）
-        page3.child(
-            PatternWindowWidgets.createRefundButton(syncManager, () -> {
-                try {
-                    acc.invokeAe2qolRefundAll();
-                } catch (Exception ignored) {
-                    // refundAll 内部已自行吞掉网络异常，这里只兜住 Invoker 的受检异常
-                }
-            })
-                .pos(3, 3 + 32 + 18 + 18 + 4));
+        page3.child(PatternWindowWidgets.createRefundButton(syncManager, () -> {
+            try {
+                acc.invokeAe2qolRefundAll();
+            } catch (Exception ignored) {
+                // refundAll 内部已自行吞掉网络异常，这里只兜住 Invoker 的受检异常
+            }
+        })
+            .pos(3, 3 + 32 + 18 + 18 + 4));
         page3.child(
             IKey.str("Refund")
                 .asWidget()
@@ -468,13 +466,12 @@ public class MTEPatternCraftingBufferMKIV extends PatternDualInputHatch {
                     .background(GTGuiTextures.SLOT_ITEM_STANDARD));
 
             // 倍率标签叠在槽位上：必须不参与命中测试，否则会吞掉槽位的点击/拖拽/释放。
-            content1.child(
-                new PatternWindowWidgets.NonInteractiveText(IKey.dynamic(() -> {
-                    int mv = acc.getAe2qolMultiplier()[ii];
-                    String label = mv == 1 ? "" : CountFormatter.format(mv);
-                    return acc.getAe2qolPattern()[ii] == null ? "\u00a77" + label : label;
-                })).pos(sx, sy)
-                    .size(18, 18));
+            content1.child(new PatternWindowWidgets.NonInteractiveText(IKey.dynamic(() -> {
+                int mv = acc.getAe2qolMultiplier()[ii];
+                String label = mv == 1 ? "" : CountFormatter.format(mv);
+                return acc.getAe2qolPattern()[ii] == null ? "\u00a77" + label : label;
+            })).pos(sx, sy)
+                .size(18, 18));
         }
 
         ScrollWidget<?> scroll1 = new ScrollWidget<>(new VerticalScrollData());
@@ -506,8 +503,7 @@ public class MTEPatternCraftingBufferMKIV extends PatternDualInputHatch {
             new Column().coverChildren()
                 .pos(WIDTH - 3, -1)
                 .child(
-                    new PatternWindowWidgets.DragTab()
-                        .background(GuiTextures.TAB_RIGHT.get(-1, false), dragIcon)
+                    new PatternWindowWidgets.DragTab().background(GuiTextures.TAB_RIGHT.get(-1, false), dragIcon)
                         .size(TAB_W, 28)
                         .tooltip(t -> t.addLine(IKey.str("Hold to drag"))))
                 .child(

@@ -13,6 +13,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import com.wztwzt.ae2_qof.hatch.AE2MaintenanceHatchUniversal;
+
 import gregtech.api.interfaces.tileentity.IVoidable;
 import gregtech.api.logic.ProcessingLogic;
 import gregtech.api.metatileentity.implementations.MTEHatchMaintenance;
@@ -23,8 +25,6 @@ import gregtech.api.recipe.check.CheckRecipeResultRegistry;
 import gregtech.api.util.GTRecipe;
 import gregtech.api.util.OverclockCalculator;
 import gregtech.api.util.ParallelHelper;
-
-import com.wztwzt.ae2_qof.hatch.AE2MaintenanceHatchUniversal;
 
 @Mixin(value = ProcessingLogic.class, remap = false)
 public abstract class MixinProcessingLogicSpeed {
@@ -117,7 +117,8 @@ public abstract class MixinProcessingLogicSpeed {
 
     /**
      * P1 诊断（3.25.0-fix4）：**只报一次**，把"维护仓设定值"与"本次实际采用值"并排打出来。
-     * <p>为什么需要：用户实测"并行 1000 改 10，产出/耗时完全不变"，看起来像设定被忽略；
+     * <p>
+     * 为什么需要：用户实测"并行 1000 改 10，产出/耗时完全不变"，看起来像设定被忽略；
      * 但启动日志证明我们的 {@code process() HEAD} 注入**确实被应用**（`@Inject::ae2qol$hatchControl`），
      * 所以需要这一行来区分两种情况：
      * <ul>
@@ -128,26 +129,28 @@ public abstract class MixinProcessingLogicSpeed {
     /**
      * 3.28.0（2026-10-08 用户决定）：**删除"并行设定诊断"噪音日志**。
      *
-     * <p>它当初只是一次性问诊探针（用来让用户把日志发回确认并行设定是否生效），结论已确认
+     * <p>
+     * 它当初只是一次性问诊探针（用来让用户把日志发回确认并行设定是否生效），结论已确认
      * "设定一直生效、设定=1 时刻意不覆盖机器自身并行"并记入文档；此后它只剩噪音：
      * 每台机器首次真正运行时都要在**服务端**打一行（用户实测一次十几行）。
      *
-     * <p>**并行逻辑本身一字未动**（{@code getEffectiveParallel} 与 {@code MixinParallel} 系列照旧）。
+     * <p>
+     * **并行逻辑本身一字未动**（{@code getEffectiveParallel} 与 {@code MixinParallel} 系列照旧）。
      * 需要复活时把下面这段注入恢复即可（保留原注释与实现作为参考）。
      */
     // @Inject(method = "process", at = @At("RETURN"))
     // private void ae2qol$logParallelOnce(CallbackInfoReturnable<CheckRecipeResult> cir) {
-    //     if (ae2qol$parallelLogged) return;
-    //     if (!(machine instanceof MTEMultiBlockBase multi)) return;
-    //     AE2MaintenanceHatchUniversal uh = findUniversalHatch(multi);
-    //     if (uh == null) return;
-    //     int actual = getCurrentParallels();
-    //     // 3.25.0-fix17（减噪）：只在真的跑起来时才记这一行（actual == 0 视为"这次没跑"）。
-    //     if (actual <= 0) return;
-    //     ae2qol$parallelLogged = true;
-    //     com.wztwzt.ae2_qof.MyMod.LOG.info(
-    //         "[AE2QoL] 并行设定诊断：{} @ {} 维护仓设定={} 实测本次并行={}（两者不符即为被机器自身并行/批处理覆盖，请把这行发我）",
-    //         multi.getMetaName(), ae2qol$posText(multi), uh.getEffectiveParallel(), actual);
+    // if (ae2qol$parallelLogged) return;
+    // if (!(machine instanceof MTEMultiBlockBase multi)) return;
+    // AE2MaintenanceHatchUniversal uh = findUniversalHatch(multi);
+    // if (uh == null) return;
+    // int actual = getCurrentParallels();
+    // // 3.25.0-fix17（减噪）：只在真的跑起来时才记这一行（actual == 0 视为"这次没跑"）。
+    // if (actual <= 0) return;
+    // ae2qol$parallelLogged = true;
+    // com.wztwzt.ae2_qof.MyMod.LOG.info(
+    // "[AE2QoL] 并行设定诊断：{} @ {} 维护仓设定={} 实测本次并行={}（两者不符即为被机器自身并行/批处理覆盖，请把这行发我）",
+    // multi.getMetaName(), ae2qol$posText(multi), uh.getEffectiveParallel(), actual);
     // }
 
     private static String ae2qol$posText(MTEMultiBlockBase multi) {
@@ -175,7 +178,8 @@ public abstract class MixinProcessingLogicSpeed {
      * 输入共享 + 额度递减（ParallelHelper.build 原地扣输入）。
      * 机器端只消费 ProcessingLogic 输出字段，无需合成 GTRecipe。
      *
-     * <p><b>3.25.0 起已停用（dead code，待下一轮清理）</b>：调用点已改为线程引擎
+     * <p>
+     * <b>3.25.0 起已停用（dead code，待下一轮清理）</b>：调用点已改为线程引擎
      * （{@code MixinMTEMultiBlockBase} + {@code hatch/thread/Ae2qolThreadEngine}）。
      * 保留本方法只为对照排查，**不会被调用**。
      */
@@ -202,7 +206,8 @@ public abstract class MixinProcessingLogicSpeed {
             int totalParallels = 0;
             int matchedRecipes = 0;
 
-            GTRecipe[] recipes = findRecipeMatches(map).limit(maxRecipes).toArray(GTRecipe[]::new);
+            GTRecipe[] recipes = findRecipeMatches(map).limit(maxRecipes)
+                .toArray(GTRecipe[]::new);
             for (GTRecipe recipe : recipes) {
                 if (remain <= 0) break;
 
@@ -218,7 +223,8 @@ public abstract class MixinProcessingLogicSpeed {
                 helper.setCalculator(calc);
                 helper.build();
 
-                if (!helper.getResult().wasSuccessful() || helper.getCurrentParallel() <= 0) continue;
+                if (!helper.getResult()
+                    .wasSuccessful() || helper.getCurrentParallel() <= 0) continue;
 
                 long perRecipeEUt = calc.getConsumption();
                 // P1-020：duration 先做溢出判断再转 int；乘法前用除法判界避免 long 溢出。
@@ -305,8 +311,7 @@ public abstract class MixinProcessingLogicSpeed {
 
     private static void addFluidMerged(List<FluidStack> list, FluidStack stack) {
         for (FluidStack existing : list) {
-            if (existing.getFluid() == stack.getFluid()
-                && FluidStack.areFluidStackTagsEqual(existing, stack)) {
+            if (existing.getFluid() == stack.getFluid() && FluidStack.areFluidStackTagsEqual(existing, stack)) {
                 long sum = (long) existing.amount + stack.amount;
                 existing.amount = (int) Math.min(Integer.MAX_VALUE, sum);
                 return;

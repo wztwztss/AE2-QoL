@@ -1,9 +1,9 @@
 package com.wztwzt.ae2_qof.mixin.gt;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
@@ -101,7 +101,8 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard {
     /**
      * 3.38.0：**刻意把 {@code cancellable} 去掉、也不再调用 {@code ci.cancel()}**。
      *
-     * <p>用户实测跑出了一个干净的 A/B/A 对照（同一总成里两套模组的样板各放一张）：
+     * <p>
+     * 用户实测跑出了一个干净的 A/B/A 对照（同一总成里两套模组的样板各放一张）：
      * <ul>
      * <li>3.35.0（我们**总是** cancel 并全量注册）⇒ **两边都只剩一张**；</li>
      * <li>3.36.0（我们的展开还没修好 ⇒ {@code wildcardSlots} 空 ⇒ 我们**没有**接管）⇒ **原版恢复全部**，只有我们不行；</li>
@@ -132,7 +133,9 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard {
                 }
                 if (this.ae2qol$isWildcardItem(slot, i)) {
                     // 包一层（搬运库存），并替换进数组 —— 只在这里替换，且替换后仍是同一槽位语义
-                    SmartWildcardPatternSlot wrapped = new SmartWildcardPatternSlot(slot, (MTEHatchCraftingInputME) (Object) this);
+                    SmartWildcardPatternSlot wrapped = new SmartWildcardPatternSlot(
+                        slot,
+                        (MTEHatchCraftingInputME) (Object) this);
                     // 3.34.0 修正：**必须在这里调用 rebuild**（旧实现只 new 了槽位，rebuild 全仓零调用者）
                     wrapped.rebuild(this.ae2qol$world());
                     this.internalInventory[i] = wrapped;
@@ -140,10 +143,7 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard {
                     if (wrapped.expandedDetails()
                         .isEmpty()) {
                         // 不再由我们"回退注册模板那一张" —— GT 本体本来就会登记它；这里只说明原因（不静默）
-                        MyMod.LOG.warn(
-                            "[AE2QoL] GT 通配槽位展开为空（模板那一张仍由 GT 本体注册）：slot={} {}",
-                            i,
-                            wrapped.expandSummary());
+                        MyMod.LOG.warn("[AE2QoL] GT 通配槽位展开为空（模板那一张仍由 GT 本体注册）：slot={} {}", i, wrapped.expandSummary());
                     } else {
                         wildcardSlots.add(wrapped);
                         MyMod.LOG.info("[AE2QoL] GT 样板仓发现通配样板并展开：slot={} {}", i, wrapped.expandSummary());
@@ -207,9 +207,7 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard {
                 if (wildcardSlot != null && wildcardSlot.expandedDetails()
                     .contains(patternDetails)) {
                     this.patternDetailsPatternSlotMap.put(patternDetails, wildcardSlot);
-                    MyMod.LOG.warn(
-                        "[AE2QoL] GT 样板仓映射被外部清掉，已就地补回并放行：details={} slot 已重新绑定",
-                        patternDetails);
+                    MyMod.LOG.warn("[AE2QoL] GT 样板仓映射被外部清掉，已就地补回并放行：details={} slot 已重新绑定", patternDetails);
                     return;
                 }
             }
@@ -263,7 +261,9 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard {
                 this.ae2qol$wildcards.remove(index);
                 return;
             }
-            SmartWildcardPatternSlot wrapped = new SmartWildcardPatternSlot(slot, (MTEHatchCraftingInputME) (Object) this);
+            SmartWildcardPatternSlot wrapped = new SmartWildcardPatternSlot(
+                slot,
+                (MTEHatchCraftingInputME) (Object) this);
             // 3.34.0：与 provideCrafting 同一处修正 —— 重包后必须重新展开，否则换样板/读档后永远注册 0 条
             wrapped.rebuild(this.ae2qol$world());
             this.internalInventory[index] = wrapped;
@@ -294,13 +294,11 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard {
             ItemStack pattern = ((MixinPatternSlotAccess) (Object) slot).getAe2qolSlotPattern();
             SmartWildcardState state = SmartWildcardState.of(pattern);
             if (state == null || state.circuit < 1) return;
-            gregtech.api.interfaces.metatileentity.IMetaTileEntity mte =
-                (gregtech.api.interfaces.metatileentity.IMetaTileEntity) (Object) this;
+            gregtech.api.interfaces.metatileentity.IMetaTileEntity mte = (gregtech.api.interfaces.metatileentity.IMetaTileEntity) (Object) this;
             int target = com.wztwzt.ae2_qof.wildcard.SmartWildcardCircuit
                 .resolve(state.circuit, -1, com.wztwzt.ae2_qof.wildcard.SmartWildcardCircuit.readMachineCircuit(mte));
             if (target >= 1) {
-                com.wztwzt.ae2_qof.wildcard.SmartWildcardCircuit
-                    .apply(mte, target, "GT 样板输入仓 slot=" + index);
+                com.wztwzt.ae2_qof.wildcard.SmartWildcardCircuit.apply(mte, target, "GT 样板输入仓 slot=" + index);
             }
         } catch (Throwable t) {
             MyMod.LOG.warn("[AE2QoL] 写入 GT 仓内置电路失败：slot=" + index, t);
@@ -310,7 +308,8 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard {
     /**
      * 该槽位的样板物品是否应按"已配置的通配样板"处理（经内部类 accessor 读取，只读不改）。
      *
-     * <p>3.34.0：判据交给 {@link SmartWildcardGate}（物品实例 → 缺我们 NBT 时先懒同步 → 至少一条规则），
+     * <p>
+     * 3.34.0：判据交给 {@link SmartWildcardGate}（物品实例 → 缺我们 NBT 时先懒同步 → 至少一条规则），
      * 并在任一不满足时**留痕**。旧实现直接用 {@code isSmartWildcard}（要求已有我们的 NBT）且判否时
      * 完全静默，导致"界面上配好了但机器不认"在日志里毫无痕迹。
      */
@@ -330,8 +329,8 @@ public abstract class MixinMTEHatchCraftingInputMEWildcard {
     @Unique
     private net.minecraft.world.World ae2qol$world() {
         try {
-            gregtech.api.interfaces.tileentity.IGregTechTileEntity base =
-                ((MTEHatchCraftingInputME) (Object) this).getBaseMetaTileEntity();
+            gregtech.api.interfaces.tileentity.IGregTechTileEntity base = ((MTEHatchCraftingInputME) (Object) this)
+                .getBaseMetaTileEntity();
             return base == null ? null : base.getWorld();
         } catch (Throwable t) {
             MyMod.LOG.warn("[AE2QoL] 读取 GT 样板仓所在世界失败（本次以 null 世界解码模板）", t);

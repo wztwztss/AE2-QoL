@@ -1,7 +1,5 @@
 package com.wztwzt.ae2_qof.block;
 
-import java.util.UUID;
-
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -52,8 +50,8 @@ public class BlockQuestDetector extends BlockIOPort {
     }
 
     @Override
-    public void onBlockPlacedBy(final World world, final int x, final int y, final int z,
-        final EntityLivingBase placer, final ItemStack stack) {
+    public void onBlockPlacedBy(final World world, final int x, final int y, final int z, final EntityLivingBase placer,
+        final ItemStack stack) {
         super.onBlockPlacedBy(world, x, y, z, placer, stack);
         if (world.isRemote) return;
         TileEntity te = world.getTileEntity(x, y, z);
@@ -65,14 +63,14 @@ public class BlockQuestDetector extends BlockIOPort {
     }
 
     @Override
-    public boolean onBlockActivated(final World world, final int x, final int y, final int z,
-        final EntityPlayer player, final int side, final float hitX, final float hitY, final float hitZ) {
+    public boolean onBlockActivated(final World world, final int x, final int y, final int z, final EntityPlayer player,
+        final int side, final float hitX, final float hitY, final float hitZ) {
         if (world.isRemote) return true;
         final TileEntity te = world.getTileEntity(x, y, z);
         if (te instanceof TileQuestDetector) {
             final TileQuestDetector qd = (TileQuestDetector) te;
-            player.addChatMessage(new net.minecraft.util.ChatComponentText(
-                "§7[QuestDetector] §fOwner: " + qd.getOwner()));
+            player.addChatMessage(
+                new net.minecraft.util.ChatComponentText("§7[QuestDetector] §fOwner: " + qd.getOwner()));
             return true;
         }
         return super.onBlockActivated(world, x, y, z, player, side, hitX, hitY, hitZ);

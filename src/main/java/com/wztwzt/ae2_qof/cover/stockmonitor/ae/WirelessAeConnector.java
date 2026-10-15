@@ -116,7 +116,9 @@ public final class WirelessAeConnector {
                 LOG.debug("[StockMonitor] getGridForNetwork: proxy.getNode() null");
                 return null;
             }
-            IGrid grid = (IGrid) node.getClass().getMethod("getGrid").invoke(node);
+            IGrid grid = (IGrid) node.getClass()
+                .getMethod("getGrid")
+                .invoke(node);
             if (grid == null) {
                 LOG.debug("[StockMonitor] getGridForNetwork: node.getGrid() null");
             }
@@ -144,8 +146,8 @@ public final class WirelessAeConnector {
 
                 mSavedDataGet = clsSavedData.getMethod("get", World.class);
                 mSavedDataGetRecord = clsSavedData.getMethod("get", UUID.class);
-                mServiceGetVisible = clsService.getMethod("getVisibleNetworks", World.class,
-                    net.minecraft.entity.player.EntityPlayer.class);
+                mServiceGetVisible = clsService
+                    .getMethod("getVisibleNetworks", World.class, net.minecraft.entity.player.EntityPlayer.class);
                 mServiceFindController = clsService.getMethod("findController", clsRecord);
                 mRecordGetName = clsRecord.getMethod("getName");
                 mRecordGetId = clsRecord.getMethod("getId");

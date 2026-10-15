@@ -6,22 +6,22 @@
  */
 package com.wztwzt.ae2_qof.wildport.item;
 
-import com.wztwzt.ae2_qof.wildport.WildportIds;
-
-import com.wztwzt.ae2_qof.MyMod;
-
 import java.util.List;
 
-import appeng.api.networking.crafting.ICraftingPatternDetails;
-import appeng.items.misc.ItemEncodedPattern;
-import com.wztwzt.ae2_qof.wildport.crafting.CompositeWildcardPatternGenerator;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
+
+import com.wztwzt.ae2_qof.MyMod;
+import com.wztwzt.ae2_qof.wildport.WildportIds;
+import com.wztwzt.ae2_qof.wildport.crafting.CompositeWildcardPatternGenerator;
+
+import appeng.api.networking.crafting.ICraftingPatternDetails;
+import appeng.items.misc.ItemEncodedPattern;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 
 public class ItemCompositeWildcardPattern extends ItemEncodedPattern {
 
@@ -71,10 +71,7 @@ public class ItemCompositeWildcardPattern extends ItemEncodedPattern {
 
     @Override
     @SideOnly(Side.CLIENT)
-    public void addCheckedInformation(
-        ItemStack stack,
-        EntityPlayer player,
-        List<String> lines,
+    public void addCheckedInformation(ItemStack stack, EntityPlayer player, List<String> lines,
         boolean advancedTooltips) {
         if (!CompositeWildcardPatternGenerator.isCompositeWildcardPattern(stack)) {
             CompositeWildcardPatternGenerator.markAsCompositeWildcard(stack);

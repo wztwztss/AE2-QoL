@@ -36,7 +36,8 @@ import gregtech.api.recipe.RecipeMap;
  * 所以这条回落是常态而不是异常，**首次回落会记一条 INFO 说明**（本项目不许静默降级）。</li>
  * </ul>
  *
- * <p>所有对外方法都不抛异常；枚举 RecipeMap 失败时返回空表并记 WARN。
+ * <p>
+ * 所有对外方法都不抛异常；枚举 RecipeMap 失败时返回空表并记 WARN。
  */
 public final class RecipeMapNames {
 
@@ -111,13 +112,15 @@ public final class RecipeMapNames {
     /**
      * 按片段匹配候选（**关键字 / 中文名 / 英文名 三者任一**，不区分大小写子串）。
      *
-     * <p>排序：完全相等 &gt; 前缀命中 &gt; 子串命中；同级按对照表顺序（即中文名序）。
+     * <p>
+     * 排序：完全相等 &gt; 前缀命中 &gt; 子串命中；同级按对照表顺序（即中文名序）。
      * 片段为空 ⇒ 返回整表的 id 顺序（Tab 循环用）。
      */
     public static List<String> matchIds(String fragment) {
         List<Entry> table = entries();
-        String needle = fragment == null ? "" : fragment.trim()
-            .toLowerCase();
+        String needle = fragment == null ? ""
+            : fragment.trim()
+                .toLowerCase();
         List<String> exact = new ArrayList<>();
         List<String> prefix = new ArrayList<>();
         List<String> contains = new ArrayList<>();
@@ -182,8 +185,10 @@ public final class RecipeMapNames {
                     String key = line.substring(0, eq)
                         .trim();
                     if (!key.startsWith("gt.recipe.")) continue;
-                    map.put(key, line.substring(eq + 1)
-                        .trim());
+                    map.put(
+                        key,
+                        line.substring(eq + 1)
+                            .trim());
                 }
             }
             MyMod.LOG.info("[AE2QoL] 已载入 {} 条 RecipeMap 英文名（gregtech:lang/en_US.lang）", map.size());

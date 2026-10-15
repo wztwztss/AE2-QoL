@@ -15,8 +15,8 @@ import org.lwjgl.input.Mouse;
 import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.client.SmartWildcardClientState;
 import com.wztwzt.ae2_qof.client.SmartWildcardRecipeDeriver;
-import com.wztwzt.ae2_qof.network.SmartWildcardRulesPacket;
 import com.wztwzt.ae2_qof.network.ModNetwork;
+import com.wztwzt.ae2_qof.network.SmartWildcardRulesPacket;
 import com.wztwzt.ae2_qof.wildcard.ContainerSmartWildcard;
 import com.wztwzt.ae2_qof.wildcard.SmartWildcardExpander;
 import com.wztwzt.ae2_qof.wildcard.SmartWildcardState;
@@ -36,10 +36,12 @@ import com.wztwzt.ae2_qof.wildcard.SmartWildcardState;
  * <li><b>黑名单</b>：文本框添加 + 逐行删除，支持通配串。</li>
  * </ol>
  *
- * <p>预览用的是**与服务器完全同一个展开器**（{@link SmartWildcardExpander}），因此不会出现参考实现
+ * <p>
+ * 预览用的是**与服务器完全同一个展开器**（{@link SmartWildcardExpander}），因此不会出现参考实现
  * 「预览能出、实际出不来」的两套语义问题。
  *
- * <p>页面内所有改动只动客户端工作副本，**点「保存」才发包**由服务端写 NBT（客户端不写 NBT）。
+ * <p>
+ * 页面内所有改动只动客户端工作副本，**点「保存」才发包**由服务端写 NBT（客户端不写 NBT）。
  */
 public class GuiSmartWildcard extends GuiContainer {
 
@@ -124,9 +126,16 @@ public class GuiSmartWildcard extends GuiContainer {
             }
             SmartWildcardState circuitState = workingOrLoad();
             int listY = startY + 66;
-            this.buttonList.add(new GuiButton(ID_CIRCUIT_CLEAR, startX, listY, 96, 18, "\u6e05\u9664\uff08\u7ee7\u627f\uff09"));
+            this.buttonList
+                .add(new GuiButton(ID_CIRCUIT_CLEAR, startX, listY, 96, 18, "\u6e05\u9664\uff08\u7ee7\u627f\uff09"));
             this.buttonList.add(
-                new GuiButton(ID_CIRCUIT_ADD_NONCONSUM, startX + 100, listY, 150, 18, "\u628a\u624b\u6301\u7269\u54c1\u8bb0\u4e3a\u4e0d\u6d88\u8017"));
+                new GuiButton(
+                    ID_CIRCUIT_ADD_NONCONSUM,
+                    startX + 100,
+                    listY,
+                    150,
+                    18,
+                    "\u628a\u624b\u6301\u7269\u54c1\u8bb0\u4e3a\u4e0d\u6d88\u8017"));
             for (int i = 0; i < 4 && i < circuitState.nonConsumed.size(); i++) {
                 int id = ID_NONCONSUM_REMOVE_BASE + i;
                 this.buttonList.add(new GuiButton(id, startX + 250, listY + 20 + i * 18, 50, 16, "\u5220\u9664"));
@@ -151,21 +160,13 @@ public class GuiSmartWildcard extends GuiContainer {
                     : String.valueOf(
                         stack.getItem()
                             .getItemStackDisplayName(stack));
-                this.buttonList.add(
-                    new GuiButton(
-                        ID_EXCLUDE_BASE + i,
-                        x + 236,
-                        rowY + i * 16,
-                        76,
-                        14,
-                        "\u6392\u9664"));
+                this.buttonList.add(new GuiButton(ID_EXCLUDE_BASE + i, x + 236, rowY + i * 16, 76, 14, "\u6392\u9664"));
                 this.ae2qol$rowNames.put(ID_EXCLUDE_BASE + i, name);
             }
         } else if (this.page == 2) {
             int rowY = y + 52;
             for (int i = 0; i < 9 && i + this.scroll < state.blacklist.size(); i++) {
-                this.buttonList
-                    .add(new GuiButton(ID_REMOVE_BASE + i, x + 236, rowY + i * 16, 76, 14, "\u5220\u9664"));
+                this.buttonList.add(new GuiButton(ID_REMOVE_BASE + i, x + 236, rowY + i * 16, 76, 14, "\u5220\u9664"));
                 this.ae2qol$rowNames.put(ID_REMOVE_BASE + i, state.blacklist.get(i + this.scroll));
             }
         }
@@ -177,7 +178,8 @@ public class GuiSmartWildcard extends GuiContainer {
     /**
      * 拼一张“工作副本样板”供预览展开：把界面里**尚未保存**的规则与刚推导的模板写进去。
      *
-     * <p>为什么必须这么做：预览若直接展开物品上已保存的 NBT，用户刚按完加号、还没点保存时
+     * <p>
+     * 为什么必须这么做：预览若直接展开物品上已保存的 NBT，用户刚按完加号、还没点保存时
      * 预览里什么都不会变（而保存后结果又不一样）—— 这正是参考实现“预览能出、实际出不来”的观感来源。
      * 这里用与服务器**同一个展开器**展开同一份数据，预览与保存后必然一致。
      */
@@ -278,8 +280,7 @@ public class GuiSmartWildcard extends GuiContainer {
                     this.ae2qol$save();
                     return;
                 case ID_BLACKLIST_ADD:
-                    if (this.blacklistField != null
-                        && workingOrLoad().addBlacklist(this.blacklistField.getText())) {
+                    if (this.blacklistField != null && workingOrLoad().addBlacklist(this.blacklistField.getText())) {
                         this.blacklistField.setText("");
                         this.statusLine = "\u5df2\u6dfb\u52a0";
                         initGui();
@@ -302,10 +303,9 @@ public class GuiSmartWildcard extends GuiContainer {
                 java.util.List<ItemStack> list = workingOrLoad().nonConsumed;
                 if (idx >= 0 && idx < list.size()) {
                     ItemStack removed = list.remove(idx);
-                    this.statusLine = "\u5df2\u79fb\u9664\u4e0d\u6d88\u8017\u7269\u54c1\uff1a"
-                        + (removed == null ? "?"
-                            : removed.getItem()
-                                .getItemStackDisplayName(removed));
+                    this.statusLine = "\u5df2\u79fb\u9664\u4e0d\u6d88\u8017\u7269\u54c1\uff1a" + (removed == null ? "?"
+                        : removed.getItem()
+                            .getItemStackDisplayName(removed));
                 }
                 initGui();
                 return;
@@ -358,7 +358,8 @@ public class GuiSmartWildcard extends GuiContainer {
         int wheel = Mouse.getEventDWheel();
         if (wheel == 0) return;
         if (this.page == 1 && !this.previewItems.isEmpty()) {
-            this.scroll = Math.max(0, Math.min(Math.max(0, this.previewItems.size() - 10), this.scroll + (wheel > 0 ? -1 : 1)));
+            this.scroll = Math
+                .max(0, Math.min(Math.max(0, this.previewItems.size() - 10), this.scroll + (wheel > 0 ? -1 : 1)));
             initGui();
         } else if (this.page == 2) {
             int size = workingOrLoad().blacklist.size();
@@ -414,15 +415,19 @@ public class GuiSmartWildcard extends GuiContainer {
             } else {
                 for (SmartWildcardState.Rule rule : state.rules) {
                     if (rule == null) continue;
-                    this.fontRendererObj
-                        .drawStringWithShadow("#" + rule.slot + " " + (rule.oreDictMode ? "ore:" : "name:") + rule.matcher, 10, y, 0xFFFFFF);
+                    this.fontRendererObj.drawStringWithShadow(
+                        "#" + rule.slot + " " + (rule.oreDictMode ? "ore:" : "name:") + rule.matcher,
+                        10,
+                        y,
+                        0xFFFFFF);
                     y += 11;
                 }
             }
             y += 6;
             String derived = SmartWildcardClientState.derivedSummary();
             if (derived != null && !derived.isEmpty()) {
-                this.fontRendererObj.drawStringWithShadow(EnumChatFormatting.GREEN + "NEI: " + derived, 10, y, 0xFFFFFF);
+                this.fontRendererObj
+                    .drawStringWithShadow(EnumChatFormatting.GREEN + "NEI: " + derived, 10, y, 0xFFFFFF);
             }
         } else if (this.page == 1) {
             this.fontRendererObj.drawStringWithShadow(
@@ -443,13 +448,17 @@ public class GuiSmartWildcard extends GuiContainer {
         } else if (this.page == 3) {
             this.fontRendererObj.drawStringWithShadow(
                 EnumChatFormatting.AQUA + "\u7535\u8def\u53f7\uff081~24\uff09\u5f53\u524d\uff1a"
-                    + (state.circuit < 1 ? "\u672a\u8bbe\u7f6e\uff08\u7ee7\u627f\uff09" : String.valueOf(state.circuit)),
+                    + (state.circuit < 1 ? "\u672a\u8bbe\u7f6e\uff08\u7ee7\u627f\uff09"
+                        : String.valueOf(state.circuit)),
                 10,
                 y,
                 0xFFFFFF);
             int listY = 34 + 66 + 62;
-            this.fontRendererObj
-                .drawStringWithShadow(EnumChatFormatting.AQUA + "\u4e0d\u6d88\u8017\u7269\u54c1\uff1a", 10, listY, 0xFFFFFF);
+            this.fontRendererObj.drawStringWithShadow(
+                EnumChatFormatting.AQUA + "\u4e0d\u6d88\u8017\u7269\u54c1\uff1a",
+                10,
+                listY,
+                0xFFFFFF);
             for (int i = 0; i < 4 && i < state.nonConsumed.size(); i++) {
                 ItemStack item = state.nonConsumed.get(i);
                 String name = item == null ? "?"
@@ -466,7 +475,8 @@ public class GuiSmartWildcard extends GuiContainer {
                 0xFFFFFF);
             y += 20;
             for (int i = 0; i < 9 && i + this.scroll < state.blacklist.size(); i++) {
-                this.fontRendererObj.drawStringWithShadow(state.blacklist.get(i + this.scroll), 10, y + i * 16 + 3, 0xFFFFFF);
+                this.fontRendererObj
+                    .drawStringWithShadow(state.blacklist.get(i + this.scroll), 10, y + i * 16 + 3, 0xFFFFFF);
             }
             if (this.blacklistField != null) this.blacklistField.drawTextBox();
         }

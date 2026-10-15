@@ -5,7 +5,8 @@ import com.wztwzt.ae2_qof.wildcard.SmartWildcardState;
 /**
  * 客户端侧的通配样板配置状态桥（3.22.0 M2-A）。
  *
- * <p>为什么需要它：NEI 的加号发生在 {@code GuiOverlayButton} 里（我们是 mixin 截胡），
+ * <p>
+ * 为什么需要它：NEI 的加号发生在 {@code GuiOverlayButton} 里（我们是 mixin 截胡），
  * 而"当前正在配置的通配界面"是另一个对象 ⇒ 用这里做唯一的交接点：
  * <ol>
  * <li>界面打开时把自己登记为 {@link #activeGui}（关闭时清空）；</li>
@@ -13,7 +14,8 @@ import com.wztwzt.ae2_qof.wildcard.SmartWildcardState;
  * <li>界面读 {@link #derived} 显示"覆盖预览/规则"，用户确认后由界面发 C2S 包写回服务端。</li>
  * </ol>
  *
- * <p>只存引用与纯数据，不引用任何渲染类之外的客户端 API（服务器侧不会加载本类）。
+ * <p>
+ * 只存引用与纯数据，不引用任何渲染类之外的客户端 API（服务器侧不会加载本类）。
  */
 public final class SmartWildcardClientState {
 

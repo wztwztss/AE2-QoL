@@ -15,9 +15,11 @@ import gregtech.api.recipe.check.CheckRecipeResult;
 /**
  * Steam Oil Drill Module（I/II/III）的调速 + 批处理后处理（3.29.0）。
  *
- * <p>本模块**没有输入**（只产地下流体），所以份数只受"时长上限"限制，必要时再受输出仓余量限制。
+ * <p>
+ * 本模块**没有输入**（只产地下流体），所以份数只受"时长上限"限制，必要时再受输出仓余量限制。
  *
- * <p><b>输出容量夹紧默认关闭</b>（{@code oilDrillOutputClamp}）：ME 流体输出仓在 {@code mOutputHatches} 里的
+ * <p>
+ * <b>输出容量夹紧默认关闭</b>（{@code oilDrillOutputClamp}）：ME 流体输出仓在 {@code mOutputHatches} 里的
  * 容量语义不可靠，硬夹紧会把 ME 玩家的批处理静默降成 n=1（与需求目标相反）。需要在"小仓 + 不用 ME"的场景
  * 防止流体被 void 时，可显式打开该项。
  */
@@ -56,7 +58,9 @@ public abstract class MixinSteamOilDrillTuning {
             if (clamped < total) {
                 SteamElevatorTuning.warnOnce(
                     "od:space",
-                    "[AE2QoL] SteamElevator 抽油模块输出仓余量不足，批次由 " + total + " 降为 " + clamped
+                    "[AE2QoL] SteamElevator 抽油模块输出仓余量不足，批次由 " + total
+                        + " 降为 "
+                        + clamped
                         + "（建议改用 ME 流体输出仓，或关闭 oilDrillOutputClamp）");
                 total = clamped;
             }
@@ -74,7 +78,10 @@ public abstract class MixinSteamOilDrillTuning {
         if (total > 1) {
             SteamElevatorTuning.infoOnce(
                 "od:n",
-                "[AE2QoL] SteamElevator 抽油模块批处理生效: 每操作 " + total + " 份（并行 " + p + "）/ "
+                "[AE2QoL] SteamElevator 抽油模块批处理生效: 每操作 " + total
+                    + " 份（并行 "
+                    + p
+                    + "）/ "
                     + self.mMaxProgresstime
                     + " tick");
         }

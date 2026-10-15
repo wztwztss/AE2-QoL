@@ -69,8 +69,7 @@ public abstract class MixinPacketPickBlock {
             ItemStack picked = ae2qol$readPickedBlock(this);
             if (picked == null || picked.getItem() == null) {
                 // 本该发生：读不到说明 AE2 的私有字段改名/结构变了，记一次以免功能无声失效
-                ServerTerminalHelper
-                    .warnOnce("pick-block:no-picked-block", "反射读取 PacketPickBlock.pickedBlock 失败或为空");
+                ServerTerminalHelper.warnOnce("pick-block:no-picked-block", "反射读取 PacketPickBlock.pickedBlock 失败或为空");
                 return;
             }
 

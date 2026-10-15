@@ -26,14 +26,15 @@ import com.wztwzt.ae2_qof.util.RecipeNameUtil;
 /**
  * 样板上传目标选择界面（fix40 重做）。
  *
- * <p>按我们自己的需求分区排版，四个区域纵向排列、互不重叠：
+ * <p>
+ * 按我们自己的需求分区排版，四个区域纵向排列、互不重叠：
  * <ol>
- *   <li>标题栏：左侧界面名，右侧「共 N 台 · 显示 M」计数；</li>
- *   <li>搜索栏：机器名过滤 + 翻页按钮；</li>
- *   <li>机器列表：每行是「物品图标 + 机器名 + 空槽数」卡片，左键选中、双击直接上传、右键把该机器名
- *       填进下方映射框；</li>
- *   <li>配方映射区：把「配方 ID」关联到「机器名」，供自动上传时按名称匹配目标。这一块是本模组独有的
- *       需求，上一版照着 GTNH-ECO 抄的时候把输入框和按钮挤在同一行，导致互相遮挡，本期重新设计。</li>
+ * <li>标题栏：左侧界面名，右侧「共 N 台 · 显示 M」计数；</li>
+ * <li>搜索栏：机器名过滤 + 翻页按钮；</li>
+ * <li>机器列表：每行是「物品图标 + 机器名 + 空槽数」卡片，左键选中、双击直接上传、右键把该机器名
+ * 填进下方映射框；</li>
+ * <li>配方映射区：把「配方 ID」关联到「机器名」，供自动上传时按名称匹配目标。这一块是本模组独有的
+ * 需求，上一版照着 GTNH-ECO 抄的时候把输入框和按钮挤在同一行，导致互相遮挡，本期重新设计。</li>
  * </ol>
  *
  * 面板宽度、可见行数会随游戏窗口缩放自适应，避免小分辨率下底部被裁掉。
@@ -222,7 +223,8 @@ public class GuiProviderSelect extends GuiScreen {
 
     /** 判断给定字符串是否与某台候选机器的展示名匹配（允许省略 @D 维度坐标后缀）。 */
     private boolean isKnownProviderName(String candidate) {
-        if (candidate == null || candidate.trim().isEmpty()) {
+        if (candidate == null || candidate.trim()
+            .isEmpty()) {
             return false;
         }
         String c = candidate.trim();
@@ -274,8 +276,9 @@ public class GuiProviderSelect extends GuiScreen {
 
     private void applyFilter() {
         filtered.clear();
-        String q = query == null ? "" : query.trim()
-            .toLowerCase();
+        String q = query == null ? ""
+            : query.trim()
+                .toLowerCase();
         for (GroupEntry entry : groups) {
             if (q.isEmpty() || entry.name.toLowerCase()
                 .contains(q)) {
@@ -412,18 +415,27 @@ public class GuiProviderSelect extends GuiScreen {
         this.buttonList.add(new GuiButton(BUTTON_NEXT, left + panelW - PAD - 22, navY, 22, SEARCH_H, ">"));
 
         this.buttonList.add(
-            new GuiButton(BUTTON_UPLOAD, left + panelW / 2 - 42, actionY, 84, ACTION_H,
+            new GuiButton(
+                BUTTON_UPLOAD,
+                left + panelW / 2 - 42,
+                actionY,
+                84,
+                ACTION_H,
                 translate("ae2_qof.select_provider.upload")));
-        this.buttonList.add(
-            new GuiButton(BUTTON_CLOSE, left + panelW - PAD - 50, actionY, 50, ACTION_H, translate("gui.cancel")));
+        this.buttonList
+            .add(new GuiButton(BUTTON_CLOSE, left + panelW - PAD - 50, actionY, 50, ACTION_H, translate("gui.cancel")));
 
         int bx = left + PAD;
         this.buttonList.add(new GuiButton(BUTTON_ADD, bx, mapBtnY, 50, 20, translate("gui.ae2_qof.add")));
         this.buttonList.add(new GuiButton(BUTTON_DELETE, bx + 54, mapBtnY, 50, 20, translate("gui.ae2_qof.delete")));
-        this.buttonList
-            .add(new GuiButton(BUTTON_RELOAD, bx + 108, mapBtnY, 50, 20, translate("gui.ae2_qof.reload")));
+        this.buttonList.add(new GuiButton(BUTTON_RELOAD, bx + 108, mapBtnY, 50, 20, translate("gui.ae2_qof.reload")));
         this.buttonList.add(
-            new GuiButton(BUTTON_PICK_NAME, bx + 162, mapBtnY, mapButtonW, 20,
+            new GuiButton(
+                BUTTON_PICK_NAME,
+                bx + 162,
+                mapBtnY,
+                mapButtonW,
+                20,
                 translate("ae2_qof.select_provider.use_selected")));
     }
 
@@ -552,8 +564,7 @@ public class GuiProviderSelect extends GuiScreen {
         try {
             RecipeNameUtil.reloadMappings();
         } catch (Throwable t) {
-            sendClientMessage(
-                StatCollector.translateToLocalFormatted("ae2_qof.error.read_mappings", t.getMessage()));
+            sendClientMessage(StatCollector.translateToLocalFormatted("ae2_qof.error.read_mappings", t.getMessage()));
             return;
         }
         if (lastAddedMappingName != null && !lastAddedMappingName.isEmpty()) {
@@ -566,13 +577,15 @@ public class GuiProviderSelect extends GuiScreen {
     }
 
     private void addMappingFromUI() {
-        String key = keyField == null ? "" : keyField.getText()
-            .trim();
+        String key = keyField == null ? ""
+            : keyField.getText()
+                .trim();
         if (key.isEmpty() && lastRawRecipeId != null && !lastRawRecipeId.isEmpty()) {
             key = lastRawRecipeId;
         }
-        String value = mappingField == null ? "" : mappingField.getText()
-            .trim();
+        String value = mappingField == null ? ""
+            : mappingField.getText()
+                .trim();
         if (key.isEmpty()) {
             sendClientMessage(translate("ae2_qof.info.enter_keyword"));
             return;
@@ -597,10 +610,12 @@ public class GuiProviderSelect extends GuiScreen {
     }
 
     private void deleteMappingFromUI() {
-        String key = keyField == null ? "" : keyField.getText()
-            .trim();
-        String value = mappingField == null ? "" : mappingField.getText()
-            .trim();
+        String key = keyField == null ? ""
+            : keyField.getText()
+                .trim();
+        String value = mappingField == null ? ""
+            : mappingField.getText()
+                .trim();
         boolean removedAny = false;
         if (!key.isEmpty() && RecipeNameUtil.removeMappingByKey(key)) {
             sendClientMessage(String.format(translate("ae2_qof.info.mapping_deleted"), 1));
@@ -680,13 +695,14 @@ public class GuiProviderSelect extends GuiScreen {
         int idx = rowIndexAt(mouseX, mouseY);
         if (mouseButton == 1) {
             // 右键：清空搜索框，方便快速回到完整列表
-            if (searchBox != null && isPointInRegion(
-                searchBox.xPosition,
-                searchBox.yPosition,
-                searchBox.width,
-                searchBox.height,
-                mouseX,
-                mouseY)
+            if (searchBox != null
+                && isPointInRegion(
+                    searchBox.xPosition,
+                    searchBox.yPosition,
+                    searchBox.width,
+                    searchBox.height,
+                    mouseX,
+                    mouseY)
                 && !searchBox.getText()
                     .isEmpty()) {
                 searchBox.setText("");
@@ -801,18 +817,26 @@ public class GuiProviderSelect extends GuiScreen {
         for (int i = scroll; i < end; i++) {
             GroupEntry entry = filtered.get(i);
             int rowY = y + (i - scroll) * (ROW_H + ROW_GAP);
-            boolean hovered = mouseX >= left && mouseX <= left + panelW && mouseY >= rowY
-                && mouseY <= rowY + ROW_H;
+            boolean hovered = mouseX >= left && mouseX <= left + panelW && mouseY >= rowY && mouseY <= rowY + ROW_H;
             boolean isSelected = i == selected;
             int bg = isSelected ? 0xFF2E5C8A : (hovered ? 0xFF2A2A32 : 0xFF1B1B22);
             drawRect(left + 1, rowY, left + panelW - 1, rowY + ROW_H, bg);
             drawRect(left + 1, rowY, left + 3, rowY + ROW_H, isSelected ? 0xFF6FB3F0 : 0xFF3A3A44);
 
             if (entry.icon != null) {
-                this.itemRender.renderItemAndEffectIntoGUI(this.fontRendererObj, this.mc.getTextureManager(),
-                    entry.icon, left + 6, rowY + 3);
-                this.itemRender.renderItemOverlayIntoGUI(this.fontRendererObj, this.mc.getTextureManager(),
-                    entry.icon, left + 6, rowY + 3, "");
+                this.itemRender.renderItemAndEffectIntoGUI(
+                    this.fontRendererObj,
+                    this.mc.getTextureManager(),
+                    entry.icon,
+                    left + 6,
+                    rowY + 3);
+                this.itemRender.renderItemOverlayIntoGUI(
+                    this.fontRendererObj,
+                    this.mc.getTextureManager(),
+                    entry.icon,
+                    left + 6,
+                    rowY + 3,
+                    "");
             } else {
                 drawRect(left + 6, rowY + 3, left + 22, rowY + 19, 0xFF3A3A44);
             }
@@ -834,11 +858,7 @@ public class GuiProviderSelect extends GuiScreen {
         }
 
         if (filtered.isEmpty()) {
-            drawCentredString(
-                translate("ae2_qof.select_provider.empty"),
-                left + panelW / 2,
-                listTopY + 24,
-                0xFFFF8888);
+            drawCentredString(translate("ae2_qof.select_provider.empty"), left + panelW / 2, listTopY + 24, 0xFFFF8888);
         }
 
         if (filtered.size() > rows) {
@@ -863,11 +883,8 @@ public class GuiProviderSelect extends GuiScreen {
         String valLabel = translate("ae2_qof.select_provider.mapping_value");
         this.fontRendererObj.drawStringWithShadow(keyLabel, left + PAD, mapLabelY, 0xFF909090);
         if (keyField != null) {
-            this.fontRendererObj.drawStringWithShadow(
-                valLabel,
-                keyField.xPosition + keyField.width + 24,
-                mapLabelY,
-                0xFF909090);
+            this.fontRendererObj
+                .drawStringWithShadow(valLabel, keyField.xPosition + keyField.width + 24, mapLabelY, 0xFF909090);
         }
         if (keyField != null) {
             keyField.drawTextBox();
@@ -909,8 +926,7 @@ public class GuiProviderSelect extends GuiScreen {
             List<String> tip = new ArrayList<String>();
             tip.add(entry.name);
             tip.add(
-                EnumChatFormatting.GRAY
-                    + translate("ae2_qof.select_provider.slots", entry.bestEmpty, entry.bestTotal));
+                EnumChatFormatting.GRAY + translate("ae2_qof.select_provider.slots", entry.bestEmpty, entry.bestTotal));
             if (entry.count > 1) {
                 tip.add(EnumChatFormatting.GRAY + translate("ae2_qof.select_provider.duplicates", entry.count));
             }
@@ -930,11 +946,8 @@ public class GuiProviderSelect extends GuiScreen {
 
     private void drawCentredString(String text, int centerX, int y, int color) {
         if (text == null) return;
-        this.fontRendererObj.drawStringWithShadow(
-            text,
-            centerX - this.fontRendererObj.getStringWidth(text) / 2,
-            y,
-            color);
+        this.fontRendererObj
+            .drawStringWithShadow(text, centerX - this.fontRendererObj.getStringWidth(text) / 2, y, color);
     }
 
     @Override

@@ -21,11 +21,13 @@ import gregtech.api.modularui2.GTGuiTextures;
  * {@code reobf.proghatches.gt.metatileentity.PatternDualInputHatch} 里同名的**包私有**内部类
  * （{@code PanelDragForwarder} / {@code DragTab} / {@code NonInteractiveText}）与其两个 private 按钮工厂。
  *
- * <p>为什么要复制而不是复用：它们在 PH 里是包私有/private，跨包既不能继承也不能调用；
+ * <p>
+ * 为什么要复制而不是复用：它们在 PH 里是包私有/private，跨包既不能继承也不能调用；
  * 而本模组刻意**不**把类塞进 PH 的包里（避免跨 jar 拆包）。它们只用 MUI2 的公开 API，
  * 复制过来是安全的；PH 升级时这里需要跟着复核一次（见 docs/mixin_notes.md）。
  *
- * <p>已按**编译基线**（libs 里的 MUI2 2.3.88）逐项核对过所用 API 都存在：
+ * <p>
+ * 已按**编译基线**（libs 里的 MUI2 2.3.88）逐项核对过所用 API 都存在：
  * {@code ScrollWidget}/{@code VerticalScrollData}、{@code IPositioned.leftRelAnchor/topRelAnchor}
  * （接口默认方法）、{@code Area extends java.awt.Rectangle}（所以 {@code width}/{@code height} 是公开字段）。
  */
@@ -47,7 +49,8 @@ public final class PatternWindowWidgets {
 
     /**
      * 「退货」按钮：把内部缓冲里的物品/流体全部退回 AE。
-     * <p>PH 原版在这里先置 {@code dirty = true} 再调 {@code refundAll()}；而 {@code refundAll()} 自己
+     * <p>
+     * PH 原版在这里先置 {@code dirty = true} 再调 {@code refundAll()}；而 {@code refundAll()} 自己
      * 开头就做了 {@code markDirty(); dirty = true;}，所以本实现只调退款动作，不需要再碰包私有的
      * {@code dirty} 字段。
      */

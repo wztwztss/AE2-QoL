@@ -15,18 +15,21 @@ import reobf.proghatches.gt.metatileentity.PatternDualInputHatch;
  * {@code new ...[36]}（用 {@code javap -c} 可在它的两个构造器里各看到 4 次 {@code bipush 36}）。
  * 类内所有功能循环都按 {@code pattern.length} 走，所以「换掉这 4 个数组」就等于「换容量」。
  *
- * <p>本 accessor 只提供这个能力给本模组的子类
+ * <p>
+ * 本 accessor 只提供这个能力给本模组的子类
  * {@link com.wztwzt.ae2_qof.ph.MTEPatternCraftingBufferMKIII}，**不改动 PH 自身任何行为**：
  * PH 自己的三种变体（总成 22069 / MK.II 22179 / 仅物品 22130）依旧是 36 槽。
  *
- * <p>另外两个 {@code @Invoker} 是继承拿不到的 private 成员：
+ * <p>
+ * 另外两个 {@code @Invoker} 是继承拿不到的 private 成员：
  * <ul>
  * <li>{@code onPatternChange()} —— 「样板变了」的唯一入口，样板窗的槽位 changeListener 必须调它，
  * 否则手动放进槽位的样板不会重新注册给 AE（表现为样板放了但不接单）；</li>
  * <li>{@code refundAll()} —— 样板窗「退货」按钮的实现（把内部缓冲里的物品/流体全退回 AE）。</li>
  * </ul>
  *
- * <p>PH 是运行时可选依赖（compileOnly + 配置级 required=false）。未安装 PH 时本 mixin 的目标类
+ * <p>
+ * PH 是运行时可选依赖（compileOnly + 配置级 required=false）。未安装 PH 时本 mixin 的目标类
  * 永远不会被加载，因此它既不会被应用也不会报错；本模组引用 PH 类型的代码全部隔离在
  * {@code PhIntegration.register()} 的方法体里，同样不会被加载。
  */

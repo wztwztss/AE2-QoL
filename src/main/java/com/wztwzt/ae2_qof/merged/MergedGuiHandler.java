@@ -15,8 +15,6 @@ import com.wztwzt.ae2_qof.wireless.WirelessGuiHandler;
 
 import appeng.api.parts.IPart;
 import cpw.mods.fml.common.network.IGuiHandler;
-import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
-import gregtech.api.metatileentity.implementations.MTEHatch;
 
 /**
  * 总 GUI 处理器：合并二合一终端三种形态的 Gui ID 与原有无线收发器 Gui ID。
@@ -105,9 +103,8 @@ public class MergedGuiHandler implements IGuiHandler {
             return client ? wildUiHandler.getClientGuiElement(ID, player, world, x, y, z)
                 : wildUiHandler.getServerGuiElement(ID, player, world, x, y, z);
         }
-        if (apgUiHandler != null
-            && (ID == com.wztwzt.ae2_qof.apgport.item.ItemPatternGenerator.GUI_ID
-                || ID == com.wztwzt.ae2_qof.apgport.item.ItemPatternGenerator.GUI_ID_STORAGE)) {
+        if (apgUiHandler != null && (ID == com.wztwzt.ae2_qof.apgport.item.ItemPatternGenerator.GUI_ID
+            || ID == com.wztwzt.ae2_qof.apgport.item.ItemPatternGenerator.GUI_ID_STORAGE)) {
             return client ? apgUiHandler.getClientGuiElement(ID, player, world, x, y, z)
                 : apgUiHandler.getServerGuiElement(ID, player, world, x, y, z);
         }

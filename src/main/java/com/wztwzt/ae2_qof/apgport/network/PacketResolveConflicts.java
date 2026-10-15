@@ -5,8 +5,6 @@
  */
 package com.wztwzt.ae2_qof.apgport.network;
 
-import com.wztwzt.ae2_qof.MyMod;
-
 import java.util.List;
 import java.util.UUID;
 

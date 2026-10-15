@@ -44,8 +44,15 @@ public class ProvidersListS2CPacket implements IMessage {
 
     public ProvidersListS2CPacket(List<Long> ids, List<String> names, List<Integer> emptySlots, String recipeMap,
         boolean forceGui) {
-        this(ids, names, emptySlots, new ArrayList<Integer>(), new ArrayList<String>(), new ArrayList<ItemStack>(),
-            recipeMap, forceGui);
+        this(
+            ids,
+            names,
+            emptySlots,
+            new ArrayList<Integer>(),
+            new ArrayList<String>(),
+            new ArrayList<ItemStack>(),
+            recipeMap,
+            forceGui);
     }
 
     public ProvidersListS2CPacket(List<Long> ids, List<String> names, List<Integer> emptySlots,

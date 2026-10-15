@@ -81,18 +81,18 @@ public class ClientState {
         if (recipeMap != null && providerName != null) {
             rememberedProviders.put(recipeMap, providerName);
             // MyMod.LOG.info("[APU] rememberProvider: recipeMap='{}', providerName='{}', total={}",
-            //     recipeMap, providerName, rememberedProviders.size());
+            // recipeMap, providerName, rememberedProviders.size());
             saveRemembered();
         } else {
             // MyMod.LOG.warn("[APU] rememberProvider: null args, recipeMap='{}', providerName='{}'",
-            //     recipeMap, providerName);
+            // recipeMap, providerName);
         }
     }
 
     public static String getRememberedProviderName(String recipeMap) {
         String result = recipeMap != null ? rememberedProviders.get(recipeMap) : null;
         // MyMod.LOG.info("[APU] getRememberedProviderName: recipeMap='{}', result='{}', allKeys={}",
-        //     recipeMap, result, rememberedProviders.keySet());
+        // recipeMap, result, rememberedProviders.keySet());
         return result;
     }
 

@@ -6,6 +6,10 @@
  */
 package com.wztwzt.ae2_qof.wildport.network;
 
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+
 import com.wztwzt.ae2_qof.wildport.ModItems;
 import com.wztwzt.ae2_qof.wildport.crafting.CompositeWildcardPatternGenerator;
 import com.wztwzt.ae2_qof.wildport.item.CompositeWildcardPatternState;
@@ -15,9 +19,6 @@ import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
 
 public class MessageUpdateCompositeWildcardConfig implements IMessage {
 

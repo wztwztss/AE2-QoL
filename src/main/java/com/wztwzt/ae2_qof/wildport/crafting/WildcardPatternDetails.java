@@ -6,13 +6,14 @@
  */
 package com.wztwzt.ae2_qof.wildport.crafting;
 
-import appeng.api.networking.crafting.ICraftingPatternDetails;
-import appeng.api.storage.data.IAEItemStack;
-import appeng.helpers.PatternHelper;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
+
+import appeng.api.networking.crafting.ICraftingPatternDetails;
+import appeng.api.storage.data.IAEItemStack;
+import appeng.helpers.PatternHelper;
 
 public class WildcardPatternDetails implements ICraftingPatternDetails {
 
@@ -87,7 +88,8 @@ public class WildcardPatternDetails implements ICraftingPatternDetails {
         ItemStack pattern = this.getPattern();
         int result = pattern.getItem() != null ? System.identityHashCode(pattern.getItem()) : 0;
         result = 31 * result + pattern.getItemDamage();
-        result = 31 * result + WildcardPatternGenerator.getPatternIdentity(pattern).hashCode();
+        result = 31 * result + WildcardPatternGenerator.getPatternIdentity(pattern)
+            .hashCode();
         return result;
     }
 

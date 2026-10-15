@@ -30,7 +30,8 @@ import reobf.proghatches.gt.metatileentity.PatternDualInputHatch;
  * {@code updateValidGridProxySides()}（与 PH 的 {@code Inst} 一致）。</li>
  * </ul>
  *
- * <p>槽位数由调用方传入（MK.III=144、MK.IV=360）：读档时**按目标槽位重建数组**，
+ * <p>
+ * 槽位数由调用方传入（MK.III=144、MK.IV=360）：读档时**按目标槽位重建数组**，
  * 因此"144 槽的旧档"也能被 360 槽的新机器安全读入（前 144 张原位、其余留空、倍率补 1）；
  * 反向（360 档 → 144 机器）则只取前 144 张（超出部分读档时被自然截断，调用方需自行提示）。
  */

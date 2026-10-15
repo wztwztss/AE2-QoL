@@ -13,14 +13,16 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import appeng.api.networking.crafting.ICraftingPatternDetails;
-import com.wztwzt.ae2_qof.wildport.ModItems;
-import com.wztwzt.ae2_qof.wildport.item.CompositeWildcardPatternState;
-import com.wztwzt.ae2_qof.wildport.item.WildcardPatternConfig;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.world.World;
+
+import com.wztwzt.ae2_qof.wildport.ModItems;
+import com.wztwzt.ae2_qof.wildport.item.CompositeWildcardPatternState;
+import com.wztwzt.ae2_qof.wildport.item.WildcardPatternConfig;
+
+import appeng.api.networking.crafting.ICraftingPatternDetails;
 
 public final class CompositeWildcardPatternGenerator {
 
@@ -32,8 +34,8 @@ public final class CompositeWildcardPatternGenerator {
 
     public static boolean isCompositeWildcardPattern(ItemStack stack) {
         return stack != null
-            && (stack.getItem() == ModItems.compositeWildcardPattern
-                || stack.hasTagCompound() && stack.getTagCompound().getBoolean(KEY_COMPOSITE_WILDCARD));
+            && (stack.getItem() == ModItems.compositeWildcardPattern || stack.hasTagCompound() && stack.getTagCompound()
+                .getBoolean(KEY_COMPOSITE_WILDCARD));
     }
 
     /** 3.43.0 **根因 L 修复**：抹掉"复合通配样板"标记（具体样板不许带；本体样板不要调用）。 */
@@ -129,7 +131,11 @@ public final class CompositeWildcardPatternGenerator {
         }
         List<ICraftingPatternDetails> result = new ArrayList<>();
         for (GeneratedPattern pattern : generatePreviewPatterns(stack)) {
-            ItemStack generated = createPatternStack(stack, pattern.materialName, pattern.inputStacks, pattern.outputStack);
+            ItemStack generated = createPatternStack(
+                stack,
+                pattern.materialName,
+                pattern.inputStacks,
+                pattern.outputStack);
             if (generated == null) {
                 continue;
             }
@@ -138,7 +144,9 @@ public final class CompositeWildcardPatternGenerator {
                 result.add(detail);
             }
         }
-        result.sort(Comparator.comparing(details -> WildcardPatternGenerator.getPatternIdentity(details == null ? null : details.getPattern())));
+        result.sort(
+            Comparator.comparing(
+                details -> WildcardPatternGenerator.getPatternIdentity(details == null ? null : details.getPattern())));
         return result;
     }
 
@@ -164,7 +172,8 @@ public final class CompositeWildcardPatternGenerator {
 
         List<GeneratedPattern> result = new ArrayList<>();
         for (String candidate : candidates) {
-            if (candidate == null || candidate.trim().isEmpty()) {
+            if (candidate == null || candidate.trim()
+                .isEmpty()) {
                 continue;
             }
             ItemStack wildcardInput = input.createStack(candidate, stack);
@@ -194,7 +203,8 @@ public final class CompositeWildcardPatternGenerator {
 
         List<String> result = new ArrayList<>();
         for (GeneratedPattern pattern : patterns) {
-            if (pattern.materialName != null && !pattern.materialName.isEmpty() && !result.contains(pattern.materialName)) {
+            if (pattern.materialName != null && !pattern.materialName.isEmpty()
+                && !result.contains(pattern.materialName)) {
                 result.add(pattern.materialName);
             }
         }
@@ -259,10 +269,7 @@ public final class CompositeWildcardPatternGenerator {
         return result;
     }
 
-    private static ItemStack createPatternStack(
-        ItemStack template,
-        String materialName,
-        List<ItemStack> inputStacks,
+    private static ItemStack createPatternStack(ItemStack template, String materialName, List<ItemStack> inputStacks,
         ItemStack outputStack) {
         if (inputStacks == null || inputStacks.isEmpty() || outputStack == null) {
             return null;
@@ -287,9 +294,11 @@ public final class CompositeWildcardPatternGenerator {
         return result;
     }
 
-    private static String buildGeneratedPatternId(String materialName, List<ItemStack> inputStacks, ItemStack outputStack) {
+    private static String buildGeneratedPatternId(String materialName, List<ItemStack> inputStacks,
+        ItemStack outputStack) {
         StringBuilder builder = new StringBuilder("composite|");
-        builder.append(sanitizeIdentityPart(materialName)).append('|');
+        builder.append(sanitizeIdentityPart(materialName))
+            .append('|');
         if (inputStacks != null) {
             for (ItemStack input : inputStacks) {
                 if (builder.charAt(builder.length() - 1) != '|') {
@@ -298,14 +307,16 @@ public final class CompositeWildcardPatternGenerator {
                 builder.append(getStackFingerprint(input));
             }
         }
-        builder.append("->").append(getStackFingerprint(outputStack));
+        builder.append("->")
+            .append(getStackFingerprint(outputStack));
         return builder.toString();
     }
 
     private static String sanitizeIdentityPart(String value) {
-        return value == null ? "" : value.replace("\\", "\\\\")
-            .replace("|", "\\|")
-            .replace("->", "-\\>");
+        return value == null ? ""
+            : value.replace("\\", "\\\\")
+                .replace("|", "\\|")
+                .replace("->", "-\\>");
     }
 
     private static String getStackFingerprint(ItemStack stack) {
@@ -314,11 +325,18 @@ public final class CompositeWildcardPatternGenerator {
         }
         String itemName = String.valueOf(net.minecraft.item.Item.itemRegistry.getNameForObject(stack.getItem()));
         if (itemName == null || itemName.isEmpty() || "null".equals(itemName)) {
-            itemName = stack.getItem() == null ? "null" : stack.getItem().getClass().getName();
+            itemName = stack.getItem() == null ? "null"
+                : stack.getItem()
+                    .getClass()
+                    .getName();
         }
         NBTTagCompound tag = stack.getTagCompound();
-        return itemName + "@" + stack.getItemDamage() + "x" + Math.max(1, stack.stackSize)
-            + "#" + (tag == null ? "" : Integer.toHexString(tag.hashCode()));
+        return itemName + "@"
+            + stack.getItemDamage()
+            + "x"
+            + Math.max(1, stack.stackSize)
+            + "#"
+            + (tag == null ? "" : Integer.toHexString(tag.hashCode()));
     }
 
     private static NBTTagList buildPatternList(List<ItemStack> stacks) {
@@ -368,6 +386,7 @@ public final class CompositeWildcardPatternGenerator {
     }
 
     public static final class GeneratedPattern {
+
         public final String materialName;
         public final List<ItemStack> inputStacks;
         public final ItemStack inputStack;
@@ -376,7 +395,9 @@ public final class CompositeWildcardPatternGenerator {
         private GeneratedPattern(String materialName, List<ItemStack> inputStacks, ItemStack outputStack) {
             this.materialName = materialName == null ? "" : materialName;
             this.inputStacks = copyStacks(inputStacks);
-            this.inputStack = this.inputStacks.isEmpty() ? null : this.inputStacks.get(0).copy();
+            this.inputStack = this.inputStacks.isEmpty() ? null
+                : this.inputStacks.get(0)
+                    .copy();
             this.outputStack = outputStack == null ? null : outputStack.copy();
         }
 

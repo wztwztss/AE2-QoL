@@ -22,7 +22,8 @@ import com.wztwzt.ae2_qof.MyMod;
  * 不改宿主窗口布局，只在每个文本框旁加一个"改"按钮，点开本对话框（原版输入框 ⇒ 中文可打），
  * 回车/确定写回原控件并触发原来的 setter（列表即时刷新）。Esc/取消 = 不改。
  *
- * <p>配色与文字遵守用户偏好：浅底深字、不使用 § 颜色码。
+ * <p>
+ * 配色与文字遵守用户偏好：浅底深字、不使用 § 颜色码。
  */
 public class GuiTextInputDialog extends GuiScreen {
 

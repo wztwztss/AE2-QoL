@@ -3,9 +3,9 @@ package com.wztwzt.ae2_qof.cover.stockmonitor.gui;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.StatCollector;
 
+import com.cleanroommc.modularui.api.IPanelHandler;
 import com.cleanroommc.modularui.api.drawable.IKey;
 import com.cleanroommc.modularui.drawable.GuiTextures;
-import com.cleanroommc.modularui.api.IPanelHandler;
 import com.cleanroommc.modularui.value.sync.BooleanSyncValue;
 import com.cleanroommc.modularui.value.sync.IntSyncValue;
 import com.cleanroommc.modularui.value.sync.InteractionSyncHandler;
@@ -16,14 +16,13 @@ import com.cleanroommc.modularui.widgets.TextWidget;
 import com.cleanroommc.modularui.widgets.layout.Flow;
 import com.cleanroommc.modularui.widgets.slot.ModularSlot;
 import com.cleanroommc.modularui.widgets.textfield.TextFieldWidget;
-
 import com.wztwzt.ae2_qof.Config;
 import com.wztwzt.ae2_qof.cover.stockmonitor.StockMonitorCover;
 import com.wztwzt.ae2_qof.cover.stockmonitor.StockMonitorCoverData;
 import com.wztwzt.ae2_qof.cover.stockmonitor.ThresholdMode;
 import com.wztwzt.ae2_qof.cover.stockmonitor.ae.AeConnector;
-import com.wztwzt.ae2_qof.cover.stockmonitor.ae.WirelessAeConnector;
 import com.wztwzt.ae2_qof.cover.stockmonitor.ae.StockMonitorWirelessEndpoint;
+import com.wztwzt.ae2_qof.cover.stockmonitor.ae.WirelessAeConnector;
 
 import gregtech.api.modularui2.CoverGuiData;
 import gregtech.common.gui.modularui.cover.base.CoverBaseGui;
@@ -56,16 +55,15 @@ public class StockMonitorCoverGui extends CoverBaseGui<StockMonitorCover> {
             final int idx = i;
             thresholdSyncs[i] = new LongSyncValue(
                 () -> coverData.getSlot(idx).threshold,
-                v -> coverData.getSlot(idx).threshold = v
-            ).allowC2S();
+                v -> coverData.getSlot(idx).threshold = v).allowC2S();
             syncManager.syncValue("threshold_" + i, thresholdSyncs[i]);
         }
 
         // 模式 SyncValue（全局，C2S）
         final IntSyncValue modeSync = new IntSyncValue(
-            () -> coverData.getMode().ordinal(),
-            ordinal -> coverData.setMode(ThresholdMode.fromOrdinal(ordinal)))
-            .allowC2S();
+            () -> coverData.getMode()
+                .ordinal(),
+            ordinal -> coverData.setMode(ThresholdMode.fromOrdinal(ordinal))).allowC2S();
         syncManager.syncValue("mode", modeSync);
 
         // 运行态（S2C）
@@ -75,15 +73,12 @@ public class StockMonitorCoverGui extends CoverBaseGui<StockMonitorCover> {
         syncManager.syncValue("should_work", shouldWorkSync);
 
         // ===== 网络选择子面板 =====
-        IPanelHandler networkPanel = syncManager.syncedPanel(
-            "network_select",
-            true,
-            (panelSyncManager, panelHandler) -> {
+        IPanelHandler networkPanel = syncManager
+            .syncedPanel("network_select", true, (panelSyncManager, panelHandler) -> {
                 if (WirelessAeConnector.isNexusAvailable()) {
                     StockMonitorWirelessEndpoint endpoint = new StockMonitorWirelessEndpoint(cover);
                     return cn.dancingsnow.ae_wireless_nexus.gui.WirelessSelectionPanel
-                        .build("ae2qol_net_select", endpoint, panelSyncManager.getPlayer(),
-                            panelSyncManager, true);
+                        .build("ae2qol_net_select", endpoint, panelSyncManager.getPlayer(), panelSyncManager, true);
                 }
                 return NetworkSelectPanel.build(panelSyncManager, cover, panelHandler);
             });
@@ -95,28 +90,29 @@ public class StockMonitorCoverGui extends CoverBaseGui<StockMonitorCover> {
             } else {
                 net.minecraft.entity.player.EntityPlayer player = syncManager.getPlayer();
                 if (player != null) {
-                    player.addChatMessage(new net.minecraft.util.ChatComponentText(
-                        EnumChatFormatting.YELLOW + StatCollector
-                            .translateToLocal("ae2_qof.gui.stock_monitor.nexus_not_installed")));
+                    player.addChatMessage(
+                        new net.minecraft.util.ChatComponentText(
+                            EnumChatFormatting.YELLOW
+                                + StatCollector.translateToLocal("ae2_qof.gui.stock_monitor.nexus_not_installed")));
                 }
             }
         });
         syncManager.syncValue("connect", connectAction);
 
         // ===== 更多槽位子面板 =====
-        IPanelHandler moreSlotsPanel = syncManager.syncedPanel(
-            "more_slots",
-            true,
-            (panelSyncManager, panelHandler) -> {
-                Flow panelColumn = Flow.column().coverChildren().childPadding(3);
+        IPanelHandler moreSlotsPanel = syncManager.syncedPanel("more_slots", true, (panelSyncManager, panelHandler) -> {
+            Flow panelColumn = Flow.column()
+                .coverChildren()
+                .childPadding(3);
 
-                // 标题 + 返回按钮
-                panelColumn.child(
-                    Flow.row().coverChildren().childPadding(4)
-                        .child(new TextWidget<>(IKey.lang("ae2_qof.gui.stock_monitor.more_slots"))
-                            .size(120, 14))
-                        .child(new ButtonWidget<>()
-                            .size(50, 14)
+            // 标题 + 返回按钮
+            panelColumn.child(
+                Flow.row()
+                    .coverChildren()
+                    .childPadding(4)
+                    .child(new TextWidget<>(IKey.lang("ae2_qof.gui.stock_monitor.more_slots")).size(120, 14))
+                    .child(
+                        new ButtonWidget<>().size(50, 14)
                             .background(GuiTextures.BUTTON_CLEAN)
                             .overlay(IKey.lang("ae2_qof.gui.stock_monitor.back"))
                             .onMousePressed(e -> {
@@ -124,27 +120,33 @@ public class StockMonitorCoverGui extends CoverBaseGui<StockMonitorCover> {
                                 return true;
                             })));
 
-                // 槽位 1-8
-                for (int i = 1; i < StockMonitorCoverData.MAX_SLOTS; i++) {
-                    panelColumn.child(slotRow(i, thresholdSyncs[i], coverData));
-                }
+            // 槽位 1-8
+            for (int i = 1; i < StockMonitorCoverData.MAX_SLOTS; i++) {
+                panelColumn.child(slotRow(i, thresholdSyncs[i], coverData));
+            }
 
-                return com.cleanroommc.modularui.screen.ModularPanel.defaultPanel(
-                    "more_slots_panel", PANEL_W, 240)
-                    .child(Flow.column().full().padding(6).childPadding(3).child(panelColumn));
-            });
+            return com.cleanroommc.modularui.screen.ModularPanel.defaultPanel("more_slots_panel", PANEL_W, 240)
+                .child(
+                    Flow.column()
+                        .full()
+                        .padding(6)
+                        .childPadding(3)
+                        .child(panelColumn));
+        });
 
         // ===== 主面板内容 =====
 
         // 连接状态 + 连接按钮
         column.child(
-            Flow.row().coverChildren().childPadding(4)
+            Flow.row()
+                .coverChildren()
+                .childPadding(4)
                 .child(connectionStatusWidget(channelSync))
-                .child(new ButtonWidget<>()
-                    .size(80, 16)
-                    .background(GuiTextures.BUTTON_CLEAN)
-                    .overlay(IKey.lang("ae2_qof.gui.stock_monitor.connect"))
-                    .syncHandler(connectAction)));
+                .child(
+                    new ButtonWidget<>().size(80, 16)
+                        .background(GuiTextures.BUTTON_CLEAN)
+                        .overlay(IKey.lang("ae2_qof.gui.stock_monitor.connect"))
+                        .syncHandler(connectAction)));
 
         // 槽位 0（主检测槽）
         column.child(slotRow(0, thresholdSyncs[0], coverData));
@@ -154,14 +156,15 @@ public class StockMonitorCoverGui extends CoverBaseGui<StockMonitorCover> {
 
         // 模式切换（全局）
         column.child(
-            Flow.row().coverChildren().childPadding(4)
+            Flow.row()
+                .coverChildren()
+                .childPadding(4)
                 .child(new TextWidget<>(IKey.lang("ae2_qof.gui.stock_monitor.mode")).size(60, 14))
                 .child(modeToggleButton(modeSync)));
 
         // 更多按钮
         column.child(
-            new ButtonWidget<>()
-                .size(PANEL_W, 16)
+            new ButtonWidget<>().size(PANEL_W, 16)
                 .background(GuiTextures.BUTTON_CLEAN)
                 .overlay(IKey.lang("ae2_qof.gui.stock_monitor.more"))
                 .onMousePressed(e -> {
@@ -183,9 +186,10 @@ public class StockMonitorCoverGui extends CoverBaseGui<StockMonitorCover> {
             if (channelSync.getValue() == AeConnector.CHANNEL_NEIGHBOR) {
                 net.minecraft.entity.player.EntityPlayer player = syncManager.getPlayer();
                 if (player != null) {
-                    player.addChatMessage(new net.minecraft.util.ChatComponentText(
-                        EnumChatFormatting.YELLOW + StatCollector
-                            .translateToLocal("ae2_qof.gui.stock_monitor.cannot_disconnect_neighbor")));
+                    player.addChatMessage(
+                        new net.minecraft.util.ChatComponentText(
+                            EnumChatFormatting.YELLOW + StatCollector
+                                .translateToLocal("ae2_qof.gui.stock_monitor.cannot_disconnect_neighbor")));
                 }
                 return;
             }
@@ -197,13 +201,15 @@ public class StockMonitorCoverGui extends CoverBaseGui<StockMonitorCover> {
 
     /** 单个槽位行：phantom slot + 阈值输入 + 物品名 */
     private Flow slotRow(int slotIndex, LongSyncValue thresholdSync, StockMonitorCoverData coverData) {
-        return Flow.row().coverChildren().childPadding(4)
+        return Flow.row()
+            .coverChildren()
+            .childPadding(4)
             .child(new TextWidget<>(IKey.str("#" + (slotIndex + 1))).size(16, 18))
             .child(new StockMonitorPhantomSlot().slot(new ModularSlot(cover.getPhantomSlot(), slotIndex)))
-            .child(new TextFieldWidget()
-                .size(80, 16)
-                .numbersLong(0, Long.MAX_VALUE)
-                .value(thresholdSync))
+            .child(
+                new TextFieldWidget().size(80, 16)
+                    .numbersLong(0, Long.MAX_VALUE)
+                    .value(thresholdSync))
             .child(slotTargetNameWidget(coverData, slotIndex));
     }
 
@@ -213,8 +219,7 @@ public class StockMonitorCoverGui extends CoverBaseGui<StockMonitorCover> {
             if (slot.monitorTarget != null) {
                 return EnumChatFormatting.WHITE + slot.monitorTarget.getDisplayName();
             }
-            return EnumChatFormatting.GRAY + StatCollector
-                .translateToLocal("ae2_qof.gui.stock_monitor.no_target");
+            return EnumChatFormatting.GRAY + StatCollector.translateToLocal("ae2_qof.gui.stock_monitor.no_target");
         })).size(70, 14);
     }
 
@@ -242,7 +247,9 @@ public class StockMonitorCoverGui extends CoverBaseGui<StockMonitorCover> {
     }
 
     private Flow presetButtonsRow(LongSyncValue thresholdSync) {
-        Flow row = Flow.row().coverChildren().childPadding(2);
+        Flow row = Flow.row()
+            .coverChildren()
+            .childPadding(2);
         String[] presets = Config.stockMonitorPresets.split(";");
         for (String preset : presets) {
             String[] parts = preset.split("=", 2);
@@ -256,21 +263,20 @@ public class StockMonitorCoverGui extends CoverBaseGui<StockMonitorCover> {
             }
             if (value < 0) continue;
             final long presetValue = value;
-            row.child(new ButtonWidget<>()
-                .size(40, 14)
-                .background(GuiTextures.BUTTON_CLEAN)
-                .overlay(IKey.str(label))
-                .onMousePressed(event -> {
-                    thresholdSync.setLongValue(presetValue);
-                    return true;
-                }));
+            row.child(
+                new ButtonWidget<>().size(40, 14)
+                    .background(GuiTextures.BUTTON_CLEAN)
+                    .overlay(IKey.str(label))
+                    .onMousePressed(event -> {
+                        thresholdSync.setLongValue(presetValue);
+                        return true;
+                    }));
         }
         return row;
     }
 
     private ButtonWidget<?> modeToggleButton(IntSyncValue modeSync) {
-        return new ButtonWidget<>()
-            .size(120, 14)
+        return new ButtonWidget<>().size(120, 14)
             .background(GuiTextures.BUTTON_CLEAN)
             .overlay(IKey.dynamic(() -> {
                 int mode = modeSync.getValue();
@@ -281,9 +287,9 @@ public class StockMonitorCoverGui extends CoverBaseGui<StockMonitorCover> {
             }))
             .onMousePressed(event -> {
                 int current = modeSync.getValue();
-                modeSync.setValue(current == ThresholdMode.BELOW_THRESHOLD_RUN.ordinal()
-                    ? ThresholdMode.ABOVE_THRESHOLD_RUN.ordinal()
-                    : ThresholdMode.BELOW_THRESHOLD_RUN.ordinal());
+                modeSync.setValue(
+                    current == ThresholdMode.BELOW_THRESHOLD_RUN.ordinal() ? ThresholdMode.ABOVE_THRESHOLD_RUN.ordinal()
+                        : ThresholdMode.BELOW_THRESHOLD_RUN.ordinal());
                 return true;
             });
     }
@@ -301,10 +307,14 @@ public class StockMonitorCoverGui extends CoverBaseGui<StockMonitorCover> {
                 if (slot.monitorTarget == null) continue;
                 any = true;
                 sb.append(EnumChatFormatting.WHITE)
-                    .append("#").append(i + 1).append(" ")
+                    .append("#")
+                    .append(i + 1)
+                    .append(" ")
                     .append(slot.monitorTarget.getDisplayName())
-                    .append(": ").append(slot.lastStock)
-                    .append(" / ").append(slot.threshold)
+                    .append(": ")
+                    .append(slot.lastStock)
+                    .append(" / ")
+                    .append(slot.threshold)
                     .append("\n");
             }
             if (!any) {
@@ -326,8 +336,7 @@ public class StockMonitorCoverGui extends CoverBaseGui<StockMonitorCover> {
     }
 
     private ButtonWidget<?> disconnectButton(InteractionSyncHandler disconnectAction) {
-        return new ButtonWidget<>()
-            .size(80, 16)
+        return new ButtonWidget<>().size(80, 16)
             .background(GuiTextures.BUTTON_CLEAN)
             .overlay(IKey.lang("ae2_qof.gui.stock_monitor.disconnect"))
             .syncHandler(disconnectAction);

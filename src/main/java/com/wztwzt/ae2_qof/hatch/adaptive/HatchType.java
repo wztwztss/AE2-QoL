@@ -25,9 +25,8 @@ public enum HatchType {
      */
     private static final String TECTECH_ENERGY_MULTI = "tectech.thing.metaTileEntity.hatch.MTEHatchEnergyMulti";
 
-    public static final String[] VOLTAGE_NAMES = {
-        "ULV", "LV", "MV", "HV", "EV", "IV", "LuV", "ZPM", "UV", "UHV", "UEV", "UIV", "UMV", "UXV", "MAX"
-    };
+    public static final String[] VOLTAGE_NAMES = { "ULV", "LV", "MV", "HV", "EV", "IV", "LuV", "ZPM", "UV", "UHV",
+        "UEV", "UIV", "UMV", "UXV", "MAX" };
 
     public final int slotIndex;
     public final int defaultAmps;
@@ -78,7 +77,8 @@ public enum HatchType {
      * <li><b>LASER_SOURCE</b>：本模组激光仓 + TecTech {@code MTEHatchDynamoTunnel}。</li>
      * <li><b>LASER_TARGET</b>：本模组激光靶仓 + TecTech {@code MTEHatchEnergyTunnel}。</li>
      * </ul>
-     * <p>机械外壳仍被拒（{@code MTEBasicHull extends MTEBasicTank}，既不是 MTEHatchEnergy 也不是
+     * <p>
+     * 机械外壳仍被拒（{@code MTEBasicHull extends MTEBasicTank}，既不是 MTEHatchEnergy 也不是
      * MTEHatchDynamo，类名也不在兼容表里）——旧版的洞正是它靠 {@code maxEUInput()=V[mTier]>0} 混进来。
      */
     public boolean isValidMTEType(MetaTileEntity mte) {
@@ -105,7 +105,8 @@ public enum HatchType {
     /**
      * 该 MTE 是否属于本槽位的**本模组**类（不含 TecTech 兼容项）。
      *
-     * <p>3.32.0-fix1：本模组自己的仓是**可配置**的——它们的 {@code maxAmperesIn/Out()} 返回的是
+     * <p>
+     * 3.32.0-fix1：本模组自己的仓是**可配置**的——它们的 {@code maxAmperesIn/Out()} 返回的是
      * {@code helper.getCurrentAmps()}（当前配置值），{@code maxEUInput()/maxEUOutput()} 也按配置档位算，
      * 拿"槽位里的那个原型实例"去读只会得到出厂初值（安培 1、档位 ULV），**不是**该类应有的额定。
      * 所以对它们一律取 {@link #defaultTier} / {@link #defaultAmps}（能源/动力 1A、激光 256A）。

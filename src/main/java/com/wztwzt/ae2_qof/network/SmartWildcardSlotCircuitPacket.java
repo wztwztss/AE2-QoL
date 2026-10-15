@@ -92,15 +92,13 @@ public class SmartWildcardSlotCircuitPacket implements IMessage {
             if (mte instanceof com.science.gtnl.common.machine.hatch.SuperCraftingInputHatchME gtnl) {
                 if (gtnl.internalInventory == null || slot < 0 || slot >= gtnl.internalInventory.length) return null;
                 Object patternSlot = gtnl.internalInventory[slot];
-                return patternSlot == null ? null
-                    : ((MixinGtnlPatternSlotAccess) patternSlot).getAe2qolSlotPattern();
+                return patternSlot == null ? null : ((MixinGtnlPatternSlotAccess) patternSlot).getAe2qolSlotPattern();
             }
             if (mte instanceof gregtech.common.tileentities.machines.MTEHatchCraftingInputME gt) {
                 var array = ((MixinGtHostAccess) gt).getAe2qolInternalInventory();
                 if (array == null || slot < 0 || slot >= array.length) return null;
                 Object patternSlot = array[slot];
-                return patternSlot == null ? null
-                    : ((MixinPatternSlotAccess) patternSlot).getAe2qolSlotPattern();
+                return patternSlot == null ? null : ((MixinPatternSlotAccess) patternSlot).getAe2qolSlotPattern();
             }
             MyMod.LOG.warn("[AE2QoL] 样板槽手势写回：暂不支持该机器类型 {}（可用右键样板的「电路」页）", mte.getClass());
         } catch (Throwable t) {

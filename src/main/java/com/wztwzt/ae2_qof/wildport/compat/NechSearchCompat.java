@@ -67,6 +67,8 @@ public final class NechSearchCompat {
     }
 
     private static String normalize(String value) {
-        return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
+        return value == null ? ""
+            : value.trim()
+                .toLowerCase(Locale.ROOT);
     }
 }

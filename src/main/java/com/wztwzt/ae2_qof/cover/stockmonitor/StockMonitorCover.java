@@ -1,15 +1,15 @@
 package com.wztwzt.ae2_qof.cover.stockmonitor;
 
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.InventoryBasic;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.fluids.Fluid;
 
 import com.cleanroommc.modularui.utils.item.InvWrapper;
+import com.wztwzt.ae2_qof.cover.stockmonitor.ae.AeConnector;
+import com.wztwzt.ae2_qof.cover.stockmonitor.ae.AeStockReader;
 
 import gregtech.api.covers.CoverContext;
 import gregtech.api.interfaces.ITexture;
@@ -17,11 +17,6 @@ import gregtech.api.interfaces.tileentity.ICoverable;
 import gregtech.api.interfaces.tileentity.IMachineProgress;
 import gregtech.common.covers.Cover;
 import gregtech.common.gui.modularui.cover.base.CoverBaseGui;
-
-import appeng.api.networking.IGrid;
-import appeng.api.storage.data.IAEStack;
-import com.wztwzt.ae2_qof.cover.stockmonitor.ae.AeConnector;
-import com.wztwzt.ae2_qof.cover.stockmonitor.ae.AeStockReader;
 
 public class StockMonitorCover extends Cover {
 
@@ -78,8 +73,7 @@ public class StockMonitorCover extends Cover {
         if (tile instanceof net.minecraft.tileentity.TileEntity) {
             world = ((net.minecraft.tileentity.TileEntity) tile).getWorldObj();
         }
-        AeConnector.GridResult result = AeConnector.getGrid(
-            data.getNetworkId(), world, x, y, z, coverSide);
+        AeConnector.GridResult result = AeConnector.getGrid(data.getNetworkId(), world, x, y, z, coverSide);
 
         if (result.grid == null) {
             data.setLastChannel(AeConnector.CHANNEL_NONE);
@@ -105,7 +99,8 @@ public class StockMonitorCover extends Cover {
             hasValidSlot = true;
             long count = AeStockReader.readStock(result.grid, slot.monitorTarget);
             slot.lastStock = count;
-            if (data.getMode().shouldWork(count, slot.threshold)) {
+            if (data.getMode()
+                .shouldWork(count, slot.threshold)) {
                 anyActive = true;
             }
         }
@@ -126,8 +121,13 @@ public class StockMonitorCover extends Cover {
             if (ct instanceof net.minecraft.tileentity.TileEntity) {
                 net.minecraft.tileentity.TileEntity te = (net.minecraft.tileentity.TileEntity) ct;
                 com.wztwzt.ae2_qof.terminal.CoverRegistry.get(te.getWorldObj())
-                    .upsert(te.getWorldObj().provider.dimensionId, te.xCoord, te.yCoord, te.zCoord,
-                        coverSide.ordinal(), data);
+                    .upsert(
+                        te.getWorldObj().provider.dimensionId,
+                        te.xCoord,
+                        te.yCoord,
+                        te.zCoord,
+                        coverSide.ordinal(),
+                        data);
             }
         } catch (Throwable ignored) {}
     }
@@ -142,7 +142,11 @@ public class StockMonitorCover extends Cover {
             if (tile instanceof net.minecraft.tileentity.TileEntity) {
                 net.minecraft.tileentity.TileEntity te = (net.minecraft.tileentity.TileEntity) tile;
                 com.wztwzt.ae2_qof.terminal.CoverRegistry.get(te.getWorldObj())
-                    .remove(te.getWorldObj().provider.dimensionId, te.xCoord, te.yCoord, te.zCoord,
+                    .remove(
+                        te.getWorldObj().provider.dimensionId,
+                        te.xCoord,
+                        te.yCoord,
+                        te.zCoord,
                         coverSide.ordinal());
             }
         } catch (Throwable ignored) {}
@@ -164,22 +168,34 @@ public class StockMonitorCover extends Cover {
     }
 
     @Override
-    public boolean letsEnergyIn() { return true; }
+    public boolean letsEnergyIn() {
+        return true;
+    }
 
     @Override
-    public boolean letsEnergyOut() { return true; }
+    public boolean letsEnergyOut() {
+        return true;
+    }
 
     @Override
-    public boolean letsFluidIn(Fluid fluid) { return true; }
+    public boolean letsFluidIn(Fluid fluid) {
+        return true;
+    }
 
     @Override
-    public boolean letsFluidOut(Fluid fluid) { return true; }
+    public boolean letsFluidOut(Fluid fluid) {
+        return true;
+    }
 
     @Override
-    public boolean letsItemsIn(int slot) { return true; }
+    public boolean letsItemsIn(int slot) {
+        return true;
+    }
 
     @Override
-    public boolean letsItemsOut(int slot) { return true; }
+    public boolean letsItemsOut(int slot) {
+        return true;
+    }
 
     // ===== GUI =====
 
@@ -218,10 +234,13 @@ public class StockMonitorCover extends Cover {
         super.writeDataToByteBuf(byteBuf);
         byteBuf.writeBoolean(data.isBound());
         byte[] bytes = data.getNetworkId() == null ? new byte[0]
-            : data.getNetworkId().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            : data.getNetworkId()
+                .getBytes(java.nio.charset.StandardCharsets.UTF_8);
         byteBuf.writeShort(bytes.length);
         byteBuf.writeBytes(bytes);
-        byteBuf.writeByte(data.getMode().ordinal());
+        byteBuf.writeByte(
+            data.getMode()
+                .ordinal());
 
         // 9 个槽位的 threshold
         for (int i = 0; i < StockMonitorCoverData.MAX_SLOTS; i++) {

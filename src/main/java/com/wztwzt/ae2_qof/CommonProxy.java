@@ -5,13 +5,11 @@ import com.wztwzt.ae2_qof.block.BlockQuestDetector;
 import com.wztwzt.ae2_qof.cover.stockmonitor.ItemStockMonitorCover;
 import com.wztwzt.ae2_qof.cover.stockmonitor.StockMonitorCover;
 import com.wztwzt.ae2_qof.hatch.AE2MaintenanceHatchUniversal;
-import com.wztwzt.ae2_qof.terminal.StockMonitorTerminal;
 import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveNetDynamoHatch;
 import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveNetHatch;
 import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveNetLaserHatch;
 import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveNetLaserTargetHatch;
 import com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveNetTerminal;
-
 import com.wztwzt.ae2_qof.hatch.wireless.WirelessEnergyInputTerminal;
 import com.wztwzt.ae2_qof.hatch.wireless.WirelessEnergyOutputTerminal;
 import com.wztwzt.ae2_qof.item.ItemInfinityWaterLavaCell;
@@ -21,16 +19,17 @@ import com.wztwzt.ae2_qof.merged.MergedGuiHandler;
 import com.wztwzt.ae2_qof.merged.TileMergedTerminal;
 import com.wztwzt.ae2_qof.network.ConfigUpdatePacket;
 import com.wztwzt.ae2_qof.network.CraftingCompletePacket;
-import com.wztwzt.ae2_qof.network.UploadFeedbackPacket;
 import com.wztwzt.ae2_qof.network.CraftingResponsePacket;
+import com.wztwzt.ae2_qof.network.HatchListSyncPacket;
 import com.wztwzt.ae2_qof.network.MergedTerminalBlankCountPacket;
 import com.wztwzt.ae2_qof.network.MergedTerminalResultPacket;
 import com.wztwzt.ae2_qof.network.ProvidersListS2CPacket;
 import com.wztwzt.ae2_qof.network.ReplaceCandidatesPacket;
 import com.wztwzt.ae2_qof.network.SwapPatternPacket;
+import com.wztwzt.ae2_qof.network.UploadFeedbackPacket;
 import com.wztwzt.ae2_qof.network.WirelessChannelSyncPacket;
 import com.wztwzt.ae2_qof.network.WirelessHighlightPacket;
-import com.wztwzt.ae2_qof.network.HatchListSyncPacket;
+import com.wztwzt.ae2_qof.terminal.StockMonitorTerminal;
 import com.wztwzt.ae2_qof.tile.TileExIOPort;
 import com.wztwzt.ae2_qof.tile.TileQuestDetector;
 import com.wztwzt.ae2_qof.wireless.WirelessBlockEventListener;
@@ -79,7 +78,7 @@ public class CommonProxy {
         // 加入 "net.minecraft" 前缀后，net.minecraftforge.* 也被委托给子类加载器，
         // 绕过 RFB 的 ExtensibleEnumTransformer，导致 lwjgl3ify 的枚举扩展失效，
         // Railcraft 注册 PopulateChunkEvent$Populate$EventType 时抛
-        //「was not made extensible, add it to lwjgl3ify configs」而整局崩溃。
+        // 「was not made extensible, add it to lwjgl3ify configs」而整局崩溃。
         //
         // 而 F22 崩溃的真实根因后来已查明是 MTE ID 32001 与 GT 本体重号（见下方 fix30），
         // 与 RFB 无关。因此这段注入既无必要、又有害，现彻底删除，恢复 fix14 的加载行为。
@@ -174,7 +173,8 @@ public class CommonProxy {
                 gregtech.api.render.TextureFactory.of(
                     gregtech.api.enums.Textures.BlockIcons.MACHINE_CASINGS[2][0],
                     gregtech.api.render.TextureFactory.of(gregtech.api.enums.Textures.BlockIcons.OVERLAY_CONTROLLER)),
-                context -> new StockMonitorCover(context,
+                context -> new StockMonitorCover(
+                    context,
                     gregtech.api.render.TextureFactory.of(gregtech.api.enums.Textures.BlockIcons.OVERLAY_CONTROLLER)),
                 gregtech.api.covers.CoverPlacer.builder()
                     .onlyPlaceIf(StockMonitorCover::isCoverPlaceable)
@@ -229,7 +229,9 @@ public class CommonProxy {
         // v7 贴图（客户端，方案 B）：MixinTextureMap 在 TextureMap.registerIcons 阶段把 25 张贴图
         // 混入方块图集的注册列表，资源包正常参与解析；ModTextures.init() 只负责预创建容器。
         // 是否启用 v7 外观仍由 ModTextures.isReady()（v7_textures=auto/on/off）决定。
-        if (cpw.mods.fml.common.FMLCommonHandler.instance().getEffectiveSide().isClient()) {
+        if (cpw.mods.fml.common.FMLCommonHandler.instance()
+            .getEffectiveSide()
+            .isClient()) {
             com.wztwzt.ae2_qof.util.ModTextures.init();
         }
         NetworkRegistry.INSTANCE.registerGuiHandler(MyMod.instance, new MergedGuiHandler());
@@ -243,16 +245,17 @@ public class CommonProxy {
             MergedGuiHandler.setUiHandlers(
                 new com.wztwzt.ae2_qof.wildport.gui.WildcardGuiHandler(),
                 new com.wztwzt.ae2_qof.apgport.gui.GuiHandler());
-            MyMod.LOG.info(
-                "[AE2QoL] 两套搬运界面已挂到唯一的 MergedGuiHandler：Wild 通道 _wild、apgport 通道 _apg（GUI id 140 / 101 / 102）");
+            MyMod.LOG
+                .info("[AE2QoL] 两套搬运界面已挂到唯一的 MergedGuiHandler：Wild 通道 _wild、apgport 通道 _apg（GUI id 140 / 101 / 102）");
         } catch (Throwable t) {
             MyMod.LOG.error("[AE2QoL] 搬运界面注册失败（Wild 窗口与生成器窗口将无法打开）", t);
         }
         cpw.mods.fml.common.FMLCommonHandler.instance()
             .bus()
             .register(new WirelessBlockEventListener());
-        cpw.mods.fml.common.FMLCommonHandler.instance().bus().register(
-            com.wztwzt.ae2_qof.wireless.link.WirelessBlockLinkManager.instance());
+        cpw.mods.fml.common.FMLCommonHandler.instance()
+            .bus()
+            .register(com.wztwzt.ae2_qof.wireless.link.WirelessBlockLinkManager.instance());
 
         // G6（3.25.0-fix4）：线程状态的降频广播改由**中央 server tick** 驱动
         // （加速机制会跳过机器 updateEntity，挂在机器 tick 上会稀疏/停发）
@@ -261,7 +264,7 @@ public class CommonProxy {
         // 服务端不再有"每 10 tick 全量遍历线程"的常驻开销；ThreadStatusTicker / ThreadStatusBroadcaster
         // 代码保留备查（需要恢复线程时把这一行取消注释即可）。
         // cpw.mods.fml.common.FMLCommonHandler.instance().bus().register(
-        //     new com.wztwzt.ae2_qof.hatch.thread.ThreadStatusTicker());
+        // new com.wztwzt.ae2_qof.hatch.thread.ThreadStatusTicker());
 
         try {
             maintenanceHatchUniversal = new AE2MaintenanceHatchUniversal(
@@ -320,11 +323,7 @@ public class CommonProxy {
         }
 
         try {
-            adaptiveNetTerminal = new AdaptiveNetTerminal(
-                32106,
-                "adaptive_net_terminal",
-                "Adaptive Net Terminal",
-                5);
+            adaptiveNetTerminal = new AdaptiveNetTerminal(32106, "adaptive_net_terminal", "Adaptive Net Terminal", 5);
             GameRegistry.addShapedRecipe(
                 adaptiveNetTerminal.getStackForm(1L),
                 "ece",
@@ -344,11 +343,7 @@ public class CommonProxy {
         }
 
         try {
-            adaptiveNetHatch = new AdaptiveNetHatch(
-                32102,
-                "adaptive_net_hatch",
-                "Adaptive Net Hatch",
-                5);
+            adaptiveNetHatch = new AdaptiveNetHatch(32102, "adaptive_net_hatch", "Adaptive Net Hatch", 5);
             GameRegistry.addShapedRecipe(
                 adaptiveNetHatch.getStackForm(1L),
                 "ehe",
@@ -439,8 +434,6 @@ public class CommonProxy {
             t.printStackTrace(System.err);
         }
 
-
-
         try {
             wirelessEnergyInputTerminal = new WirelessEnergyInputTerminal(
                 32111,
@@ -502,7 +495,9 @@ public class CommonProxy {
     public void postInit(FMLPostInitializationEvent event) {
         // v7 贴图：postInit 时资源已全部加载完成，此后才允许做「25 张 PNG 是否齐全」的自动判定。
         // 放在这里而非 init，是因为 init 阶段资源可能仍处于 reload 中间态，会导致误判为可用。
-        if (cpw.mods.fml.common.FMLCommonHandler.instance().getEffectiveSide().isClient()) {
+        if (cpw.mods.fml.common.FMLCommonHandler.instance()
+            .getEffectiveSide()
+            .isClient()) {
             try {
                 com.wztwzt.ae2_qof.util.ModTextures.allowResourceCheck();
             } catch (Throwable t) {

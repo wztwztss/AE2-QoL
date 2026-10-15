@@ -37,7 +37,8 @@ import io.netty.buffer.ByteBuf;
  * 单人之所以正常，是因为 SP 是同一个客户端 JVM，client 段 mixin 照样变换了该类，
  * 集成服务端调用面板构建方法时跑的就是注入后版本。
  *
- * <p>改成"客户端只报坐标、服务端重新解析并写入 + 回读权威值"后，**与 MUI2 面板双端构建行为完全解耦**，
+ * <p>
+ * 改成"客户端只报坐标、服务端重新解析并写入 + 回读权威值"后，**与 MUI2 面板双端构建行为完全解耦**，
  * 两个分支都成立。服务端写入前会校验目标确实是 {@link ISmartDoublingMedium}，写后打日志
  * （不再有静默失败）。
  */
@@ -78,14 +79,16 @@ public class SmartDoublingTogglePacket implements IMessage {
     public static void sendFromClient(boolean enabled, IMetaTileEntity mte) {
         int[] pos = posOf(mte);
         if (pos == null) return;
-        ModNetwork.CHANNEL.sendToServer(new SmartDoublingTogglePacket(MODE_SET, enabled, pos[0], pos[1], pos[2], pos[3]));
+        ModNetwork.CHANNEL
+            .sendToServer(new SmartDoublingTogglePacket(MODE_SET, enabled, pos[0], pos[1], pos[2], pos[3]));
     }
 
     /** 客户端便捷方法：打开界面时向服务端要一次真值，避免显示客户端内存里的旧值。 */
     public static void queryFromClient(IMetaTileEntity mte) {
         int[] pos = posOf(mte);
         if (pos == null) return;
-        ModNetwork.CHANNEL.sendToServer(new SmartDoublingTogglePacket(MODE_QUERY, false, pos[0], pos[1], pos[2], pos[3]));
+        ModNetwork.CHANNEL
+            .sendToServer(new SmartDoublingTogglePacket(MODE_QUERY, false, pos[0], pos[1], pos[2], pos[3]));
     }
 
     private static int[] posOf(IMetaTileEntity mte) {
@@ -102,7 +105,8 @@ public class SmartDoublingTogglePacket implements IMessage {
     /**
      * 「玩家刚把某位置的开关设为 true」的期望登记（位置 → 过期时间戳）。
      *
-     * <p>3.21.3 诊断用：正常情况下服务端写入立即生效，CPU 看到的就是 true；
+     * <p>
+     * 3.21.3 诊断用：正常情况下服务端写入立即生效，CPU 看到的就是 true；
      * 若 CPU 仍看到 false（开关根本没写进服务端——本次要修的那类静默故障），
      * CPU 侧会据此打一条 WARN，把"勾了却不生效"变成可定性现象。
      * 只有在玩家主动开启过之后 5 分钟内才可能触发，正常运行零噪声。
@@ -193,14 +197,24 @@ public class SmartDoublingTogglePacket implements IMessage {
             if (!(te instanceof IGregTechTileEntity)) {
                 MyMod.LOG.warn(
                     "[AE2QoL] 智能倍增：坐标 d{} [{}, {}, {}] 上没有 GT 机器，请求已忽略（player={}）",
-                    msg.dim, msg.x, msg.y, msg.z, player.getCommandSenderName());
+                    msg.dim,
+                    msg.x,
+                    msg.y,
+                    msg.z,
+                    player.getCommandSenderName());
                 return;
             }
             IMetaTileEntity mte = ((IGregTechTileEntity) te).getMetaTileEntity();
             if (!(mte instanceof ISmartDoublingMedium sdm)) {
                 MyMod.LOG.warn(
                     "[AE2QoL] 智能倍增：{} @ d{} [{}, {}, {}] 未实现 ISmartDoublingMedium，请求已忽略",
-                    mte == null ? "null" : mte.getClass().getSimpleName(), msg.dim, msg.x, msg.y, msg.z);
+                    mte == null ? "null"
+                        : mte.getClass()
+                            .getSimpleName(),
+                    msg.dim,
+                    msg.x,
+                    msg.y,
+                    msg.z);
                 return;
             }
 
@@ -226,7 +240,8 @@ public class SmartDoublingTogglePacket implements IMessage {
                         "[AE2QoL] 智能倍增开关 {} → {} @ {} d{} [{}, {}, {}]（样板介质={}）player={}",
                         before,
                         msg.enabled,
-                        mte.getClass().getSimpleName(),
+                        mte.getClass()
+                            .getSimpleName(),
                         msg.dim,
                         msg.x,
                         msg.y,
@@ -237,7 +252,8 @@ public class SmartDoublingTogglePacket implements IMessage {
                 if (msg.enabled && !isProvider) {
                     MyMod.LOG.warn(
                         "[AE2QoL] {} 未实现 ICraftingProvider，isSmartDoublingEnabled() 会恒为 false，开关不会生效",
-                        mte.getClass().getSimpleName());
+                        mte.getClass()
+                            .getSimpleName());
                 }
             }
 

@@ -6,7 +6,6 @@ import java.util.UUID;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.WorldServer;
 
 import com.wztwzt.ae2_qof.MyMod;
@@ -34,7 +33,8 @@ public class HatchActionPacket implements IMessage {
 
     public static void tickPendingClears() {
         if (pendingClears.isEmpty()) return;
-        int currentTick = MinecraftServer.getServer().getTickCounter();
+        int currentTick = MinecraftServer.getServer()
+            .getTickCounter();
         java.util.Iterator<long[]> it = pendingClears.iterator();
         while (it.hasNext()) {
             long[] entry = it.next();
@@ -42,15 +42,16 @@ public class HatchActionPacket implements IMessage {
                 it.remove();
                 EntityPlayerMP player = findPlayer((int) entry[0]);
                 if (player != null) {
-                    ModNetwork.CHANNEL.sendTo(
-                        new WirelessHighlightPacket(new java.util.ArrayList<int[]>(), false), player);
+                    ModNetwork.CHANNEL
+                        .sendTo(new WirelessHighlightPacket(new java.util.ArrayList<int[]>(), false), player);
                 }
             }
         }
     }
 
     private static EntityPlayerMP findPlayer(int entityId) {
-        for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
+        for (Object obj : MinecraftServer.getServer()
+            .getConfigurationManager().playerEntityList) {
             EntityPlayerMP p = (EntityPlayerMP) obj;
             if (p.getEntityId() == entityId) return p;
         }
@@ -63,7 +64,8 @@ public class HatchActionPacket implements IMessage {
     /**
      * 3.32.0：目标改成**坐标**寻址。
      *
-     * <p>旧实现用"该仓在 {@code network.getAllHelpers()} 里的下标"，而那个列表每次调用都会新建，
+     * <p>
+     * 旧实现用"该仓在 {@code network.getAllHelpers()} 里的下标"，而那个列表每次调用都会新建，
      * 注册/注销（包括列表重建时的陈旧清理）都会改变顺序 ⇒ 列表刷新后点【定位】**会跳到别的仓**。
      * 改成坐标后，服务端按坐标重新校验方块真实存在，再执行。
      */
@@ -76,8 +78,8 @@ public class HatchActionPacket implements IMessage {
 
     public HatchActionPacket() {}
 
-    public HatchActionPacket(int action, String hatchOwner, int hatchFrequency, int targetDim, int targetX,
-                             int targetY, int targetZ, int colorType) {
+    public HatchActionPacket(int action, String hatchOwner, int hatchFrequency, int targetDim, int targetX, int targetY,
+        int targetZ, int colorType) {
         this.action = action;
         this.hatchOwner = hatchOwner;
         this.hatchFrequency = hatchFrequency;
@@ -177,8 +179,9 @@ public class HatchActionPacket implements IMessage {
                 // 高亮与传送同源：团队归属始终是 networkOwner（终端所有者），
                 // 与“谁在查看”无关，因此两条路径用同一套成员校验。
                 if (!AdaptiveTeamHelper.isMemberOf(player.getUniqueID(), uuid)) {
-                    player.addChatMessage(new net.minecraft.util.ChatComponentText(
-                        net.minecraft.util.EnumChatFormatting.RED + "无权限：不属于该电网团队"));
+                    player.addChatMessage(
+                        new net.minecraft.util.ChatComponentText(
+                            net.minecraft.util.EnumChatFormatting.RED + "无权限：不属于该电网团队"));
                     return;
                 }
 
@@ -190,11 +193,13 @@ public class HatchActionPacket implements IMessage {
                 int z = msg.targetZ;
                 int dim = msg.targetDim;
 
-                WorldServer world = MinecraftServer.getServer().worldServerForDimension(dim);
+                WorldServer world = MinecraftServer.getServer()
+                    .worldServerForDimension(dim);
                 if (world == null) return;
                 // 3.32.0：服务端按坐标重新校验（不再信任客户端给的下标），与库存统计终端同款做法
                 if (!world.blockExists(x, y, z)) return;
-                if (!(world.getTileEntity(x, y, z) instanceof gregtech.api.interfaces.tileentity.IGregTechTileEntity)) return;
+                if (!(world.getTileEntity(x, y, z) instanceof gregtech.api.interfaces.tileentity.IGregTechTileEntity))
+                    return;
 
                 switch (msg.action) {
                     case ACTION_HIGHLIGHT:
@@ -204,8 +209,9 @@ public class HatchActionPacket implements IMessage {
                         if (AdaptiveTeamHelper.isMemberOf(player.getUniqueID(), uuid)) {
                             handleTeleport(player, x, y, z, dim);
                         } else {
-                            player.addChatMessage(new net.minecraft.util.ChatComponentText(
-                                net.minecraft.util.EnumChatFormatting.RED + "无传送权限：不属于该电网团队"));
+                            player.addChatMessage(
+                                new net.minecraft.util.ChatComponentText(
+                                    net.minecraft.util.EnumChatFormatting.RED + "无传送权限：不属于该电网团队"));
                         }
                         break;
                     default:
@@ -217,60 +223,79 @@ public class HatchActionPacket implements IMessage {
         }
 
         private void handleHighlight(EntityPlayerMP player, int x, int y, int z, int dim, int hatchType) {
-            java.util.List<int[]> positions = new ArrayList<>(Collections.singletonList(new int[] { dim, x, y, z, hatchType }));
+            java.util.List<int[]> positions = new ArrayList<>(
+                Collections.singletonList(new int[] { dim, x, y, z, hatchType }));
             ModNetwork.CHANNEL.sendTo(new WirelessHighlightPacket(positions, true), player);
-            scheduleClear(player, MinecraftServer.getServer().getTickCounter() + 200);
+            scheduleClear(
+                player,
+                MinecraftServer.getServer()
+                    .getTickCounter() + 200);
         }
 
         /**
          * 传送到目标（3.32.0 起目标是**主机**坐标）。
          *
-         * <p>主机是一整座多方块结构，"坐标上方一格"很可能还在机壳里 ⇒ 沿用库存统计终端那份
+         * <p>
+         * 主机是一整座多方块结构，"坐标上方一格"很可能还在机壳里 ⇒ 沿用库存统计终端那份
          * "找可站立落点"的逻辑（正上方 + 四邻的上方，要求脚/头两格空气、脚下实心）；
          * 找不到就提示并取消，而不是把人塞进墙里。
          */
         private void handleTeleport(EntityPlayerMP player, int x, int y, int z, int dim) {
-            WorldServer world = MinecraftServer.getServer().worldServerForDimension(dim);
+            WorldServer world = MinecraftServer.getServer()
+                .worldServerForDimension(dim);
             if (world == null) return;
             double[] dest = findSafeSpot(world, x, y, z);
             if (dest == null) {
-                player.addChatMessage(new net.minecraft.util.ChatComponentText(
-                    net.minecraft.util.EnumChatFormatting.RED + "目标附近找不到安全落点，传送已取消"));
+                player.addChatMessage(
+                    new net.minecraft.util.ChatComponentText(
+                        net.minecraft.util.EnumChatFormatting.RED + "目标附近找不到安全落点，传送已取消"));
                 return;
             }
             if (player.dimension == dim) {
                 player.setPositionAndUpdate(dest[0], dest[1], dest[2]);
-                player.addChatMessage(new net.minecraft.util.ChatComponentText(
-                    net.minecraft.util.EnumChatFormatting.GREEN + "传送到 [" + x + ", " + y + ", " + z + "] dim:" + dim));
+                player.addChatMessage(
+                    new net.minecraft.util.ChatComponentText(
+                        net.minecraft.util.EnumChatFormatting.GREEN + "传送到 ["
+                            + x
+                            + ", "
+                            + y
+                            + ", "
+                            + z
+                            + "] dim:"
+                            + dim));
                 return;
             }
             MinecraftServer server = MinecraftServer.getServer();
             final double dx = dest[0];
             final double dy = dest[1];
             final double dz = dest[2];
-            server.getConfigurationManager().transferPlayerToDimension(player, dim,
-                new net.minecraft.world.Teleporter(world) {
+            server.getConfigurationManager()
+                .transferPlayerToDimension(player, dim, new net.minecraft.world.Teleporter(world) {
+
                     @Override
-                    public void placeInPortal(net.minecraft.entity.Entity entity,
-                                              double px, double py, double pz, float yaw) {
+                    public void placeInPortal(net.minecraft.entity.Entity entity, double px, double py, double pz,
+                        float yaw) {
                         entity.setLocationAndAngles(dx, dy, dz, entity.rotationYaw, entity.rotationPitch);
                         entity.motionX = 0;
                         entity.motionY = 0;
                         entity.motionZ = 0;
                     }
+
                     @Override
-                    public boolean placeInExistingPortal(net.minecraft.entity.Entity entity,
-                                                         double px, double py, double pz, float yaw) {
+                    public boolean placeInExistingPortal(net.minecraft.entity.Entity entity, double px, double py,
+                        double pz, float yaw) {
                         placeInPortal(entity, px, py, pz, yaw);
                         return true;
                     }
+
                     @Override
                     public boolean makePortal(net.minecraft.entity.Entity entity) {
                         return true;
                     }
                 });
-            player.addChatMessage(new net.minecraft.util.ChatComponentText(
-                net.minecraft.util.EnumChatFormatting.GREEN + "传送到 [" + x + ", " + y + ", " + z + "] dim:" + dim));
+            player.addChatMessage(
+                new net.minecraft.util.ChatComponentText(
+                    net.minecraft.util.EnumChatFormatting.GREEN + "传送到 [" + x + ", " + y + ", " + z + "] dim:" + dim));
         }
 
         private double[] findSafeSpot(WorldServer world, int x, int y, int z) {

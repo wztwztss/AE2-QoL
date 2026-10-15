@@ -7,7 +7,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.world.World;
-import net.minecraftforge.oredict.OreDictionary;
 
 import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.wildcard.SmartWildcardState;
@@ -15,7 +14,6 @@ import com.wztwzt.ae2_qof.wildcard.SmartWildcardState;
 import codechicken.nei.PositionedStack;
 import codechicken.nei.recipe.IRecipeHandler;
 import gregtech.api.enums.OrePrefixes;
-import gregtech.nei.GTNEIDefaultHandler;
 
 /**
  * 「从 NEI 当前配方推导通配规则」的推导器（3.22.0 M2-B，纯客户端逻辑，无副作用）。
@@ -42,12 +40,14 @@ public final class SmartWildcardRecipeDeriver {
     /**
      * 判断 NEI 里一个堆是不是"流体幻影"。
      *
-     * <p><b>为什么不能再用 {@code GTNEIDefaultHandler.IFluidAlternativeStack}</b>：用 javap 核对 GT
+     * <p>
+     * <b>为什么不能再用 {@code GTNEIDefaultHandler.IFluidAlternativeStack}</b>：用 javap 核对 GT
      * 5.09.54.133 的 jar 后确认，该接口由 {@code GTNEIDefaultHandler$FixedPositionedStack}（GT NEI handler
      * 用来装**所有**原料的那个类）实现 ⇒ 这个 instanceof 对每个物品原料都为真。用户实测因此出现
      * 「2 个物品原料 → skippedFluid=2 → 输入为空 → 加号推导 no-inputs」。
      *
-     * <p>正确判据：流体在 GT 的 NEI 里以 {@code gregtech.common.items.ItemFluidDisplay} 这个占位物品呈现
+     * <p>
+     * 正确判据：流体在 GT 的 NEI 里以 {@code gregtech.common.items.ItemFluidDisplay} 这个占位物品呈现
      * （GT jar 里同时存在 {@code FluidDisplayStackMode} 可佐证），所以只认它。
      */
     private static boolean isFluidPhantom(PositionedStack positioned) {
@@ -119,8 +119,8 @@ public final class SmartWildcardRecipeDeriver {
                     // ③ 编程电路：记进 state.circuit，并且**仍然保留在模板输入里**。
                     // 两条路互补（纠正此前"电路不入样板"的判断——那会让 AE2 ME 接口这类不写幽灵电路槽的宿主
                     // 完全没有电路）：
-                    //   ・模板里带电路 = GTNH 样板惯例，保证任何总成/机器都能匹配到该配方；
-                    //   ・机器索引期再由 SmartWildcardCircuit 把同一个号码写进虚拟电路槽，让机器直接读取。
+                    // ・模板里带电路 = GTNH 样板惯例，保证任何总成/机器都能匹配到该配方；
+                    // ・机器索引期再由 SmartWildcardCircuit 把同一个号码写进虚拟电路槽，让机器直接读取。
                     String unlocalized = stack.getItem()
                         .getUnlocalizedName();
                     if (unlocalized != null && unlocalized.startsWith("gt.integrated_circuit")) {
@@ -151,15 +151,16 @@ public final class SmartWildcardRecipeDeriver {
                         MyMod.LOG.warn("[AE2QoL] 推导时读取矿辞前缀失败（按名称匹配处理）", t);
                     }
                     if (matcher != null) {
-                        result.state.rules.add(new SmartWildcardState.Rule(slot, true, matcher, templateStack.stackSize));
+                        result.state.rules
+                            .add(new SmartWildcardState.Rule(slot, true, matcher, templateStack.stackSize));
                         oreRules++;
                     } else {
                         // 退化：显示名精确匹配（摘要里会计数，用户可在界面里手改成通配串）
                         String display = String.valueOf(
                             stack.getItem()
                                 .getItemStackDisplayName(stack));
-                        result.state.rules.add(
-                            new SmartWildcardState.Rule(slot, false, display, templateStack.stackSize));
+                        result.state.rules
+                            .add(new SmartWildcardState.Rule(slot, false, display, templateStack.stackSize));
                         nameRules++;
                     }
                 }

@@ -49,16 +49,15 @@ public class QuestDetectorWailaProvider implements IWailaDataProvider {
         TileQuestDetector tile = (TileQuestDetector) te;
         String ownerName = tile.getOwnerNameForDisplay();
         if (ownerName != null && !ownerName.isEmpty()) {
-            currenttip.add(
-                StatCollector.translateToLocal("waila.ae2qol.quest_detector.owner") + ": " + ownerName);
+            currenttip.add(StatCollector.translateToLocal("waila.ae2qol.quest_detector.owner") + ": " + ownerName);
         }
         boolean powered = tile.isPowered();
         currenttip.add(
             (powered ? EnumChatFormatting.GREEN : EnumChatFormatting.RED)
                 + StatCollector.translateToLocal("waila.ae2qol.quest_detector.powered")
                 + ": "
-                + StatCollector.translateToLocal(
-                    powered ? "waila.ae2qol.quest_detector.on" : "waila.ae2qol.quest_detector.off"));
+                + StatCollector
+                    .translateToLocal(powered ? "waila.ae2qol.quest_detector.on" : "waila.ae2qol.quest_detector.off"));
         return currenttip;
     }
 

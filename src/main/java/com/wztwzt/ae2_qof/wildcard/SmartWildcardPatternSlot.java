@@ -54,7 +54,8 @@ public class SmartWildcardPatternSlot extends MTEHatchCraftingInputME.PatternSlo
     /**
      * 由 GT 已有槽位包一个我们自己的槽位：**只搬运已推入的物品/流体**，不改 GT 的任何字段。
      *
-     * <p>为什么必须搬：{@code pushPattern} 把 AE2 推来的东西写进槽位自己的
+     * <p>
+     * 为什么必须搬：{@code pushPattern} 把 AE2 推来的东西写进槽位自己的
      * {@code itemInventory}/{@code fluidInventory}（GT:422-439），而机器读的是 {@code internalInventory[]}
      * 里那个槽位对象 ⇒ 换槽位时不搬运，读档后缓冲里已有的物品会“消失”。
      * 依据：{@code getItemInputs()}/{@code getFluidInputs()} 都是 {@code toArray} **拷贝**（GT:236-245），
@@ -62,9 +63,7 @@ public class SmartWildcardPatternSlot extends MTEHatchCraftingInputME.PatternSlo
      */
     public SmartWildcardPatternSlot(MTEHatchCraftingInputME.PatternSlot<MTEHatchCraftingInputME> original,
         MTEHatchCraftingInputME parent) {
-        super(
-            ((com.wztwzt.ae2_qof.mixin.gt.MixinPatternSlotAccess) (Object) original).getAe2qolSlotPattern(),
-            parent);
+        super(((com.wztwzt.ae2_qof.mixin.gt.MixinPatternSlotAccess) (Object) original).getAe2qolSlotPattern(), parent);
         try {
             for (ItemStack item : original.getItemInputs()) {
                 if (item != null) this.itemInventory.add(item);
@@ -140,7 +139,8 @@ public class SmartWildcardPatternSlot extends MTEHatchCraftingInputME.PatternSlo
     /**
      * 永不进 GT 的配方缓存。
      *
-     * <p>依据：{@code IDualInputInventoryWithPattern.shouldBeCached()} 是 default 方法，
+     * <p>
+     * 依据：{@code IDualInputInventoryWithPattern.shouldBeCached()} 是 default 方法，
      * {@code ProcessingLogic:149-151} 见到 false 就放行、不写 {@code dualInvWithPatternToRecipeCache}
      * ⇒ 既避免「只缓存模板那一份」的错配方，又**不需要任何反射**。
      */

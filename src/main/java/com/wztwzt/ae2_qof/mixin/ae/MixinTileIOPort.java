@@ -14,12 +14,15 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import com.wztwzt.ae2_qof.Config;
+import com.wztwzt.ae2_qof.tile.TileExIOPort;
+
 import appeng.api.AEApi;
 import appeng.api.config.FullnessMode;
 import appeng.api.config.OperationMode;
 import appeng.api.config.Settings;
-import appeng.api.storage.IMEMonitor;
 import appeng.api.storage.IMEInventory;
+import appeng.api.storage.IMEMonitor;
 import appeng.api.storage.data.AEStackTypeRegistry;
 import appeng.api.storage.data.IAEStackType;
 import appeng.me.GridAccessException;
@@ -29,9 +32,6 @@ import appeng.util.ConfigManager;
 import cn.dancingsnow.aeinfinitycell.ae.AbstractInfinityInventoryHandler;
 import cn.dancingsnow.aeinfinitycell.item.ItemInfinityStorageCell;
 
-import com.wztwzt.ae2_qof.Config;
-import com.wztwzt.ae2_qof.tile.TileExIOPort;
-
 /**
  * 无限存储元件的 IO 端口适配。
  * <p>
@@ -39,8 +39,8 @@ import com.wztwzt.ae2_qof.tile.TileExIOPort;
  * （{@code getInv} 每次轮到一个通道 + {@code matches}/{@code shouldMove} 把"搬空/抽空"判定扩展到全部通道），
  * 替换本项目 fix51 的「原版跑完后补搬其余通道」方案。换的理由是两条实测出来的语义缺陷：
  * <ol>
- *   <li>补搬给每个剩余通道各发一份**完整**预算（256 × 速度升级档位），多通道元件会把 IO 端口吞吐放大到 n 倍；</li>
- *   <li>补搬不参与原版的 {@code shouldMove}「搬空后弹出元件」判定，可能出现"校验通道空了、别的通道还有货就弹出"。</li>
+ * <li>补搬给每个剩余通道各发一份**完整**预算（256 × 速度升级档位），多通道元件会把 IO 端口吞吐放大到 n 倍；</li>
+ * <li>补搬不参与原版的 {@code shouldMove}「搬空后弹出元件」判定，可能出现"校验通道空了、别的通道还有货就弹出"。</li>
  * </ol>
  * 轮询方案每 tick 只服务一个通道（总吞吐与原版一致）且三处判定都以"全部通道"为准，因此取代原实现。
  * <p>

@@ -21,6 +21,7 @@ import com.cleanroommc.modularui.value.sync.PanelSyncManager;
 import com.cleanroommc.modularui.widgets.TextWidget;
 import com.cleanroommc.modularui.widgets.layout.Flow;
 import com.cleanroommc.modularui.widgets.textfield.TextFieldWidget;
+import com.wztwzt.ae2_qof.item.ItemNetworkDataStick;
 
 import gregtech.api.enums.Textures;
 import gregtech.api.interfaces.ITexture;
@@ -30,25 +31,24 @@ import gregtech.api.metatileentity.implementations.MTEHatchEnergy;
 import gregtech.api.render.TextureFactory;
 import gregtech.common.misc.WirelessNetworkManager;
 
-import com.wztwzt.ae2_qof.item.ItemNetworkDataStick;
-
 public class WirelessEnergyInputTerminal extends MTEHatchEnergy {
 
     private UUID ownerUuid;
     private long lastStoredEU = 0;
     // 电压档位: 0=ULV(8), 1=LV(32), 2=MV(128), 3=HV(512), 4=EV(2,048),
-    //           5=IV(8,192), 6=LuV(32,768), 7=ZPM(131,072), 8=UV(524,288),
-    //           9=UHV(2,097,152), 10=UEV(8,388,608), 11=UIV(33,554,432),
-    //           12=UMV(134,217,728), 13=UXV(536,870,912), 14=MAX(2,147,483,647)
+    // 5=IV(8,192), 6=LuV(32,768), 7=ZPM(131,072), 8=UV(524,288),
+    // 9=UHV(2,097,152), 10=UEV(8,388,608), 11=UIV(33,554,432),
+    // 12=UMV(134,217,728), 13=UXV(536,870,912), 14=MAX(2,147,483,647)
     /**
      * 3.25.0-fix15（用户要求「把这个也整成 MAX 的外观」）：默认档位改为 **MAX（14）**。
-     * <p>原先默认 0 = ULV，于是 WAILA 显示"电压输入: 8 (ULV)"——那和输出终端（MAX 等级）看起来不对等。
+     * <p>
+     * 原先默认 0 = ULV，于是 WAILA 显示"电压输入: 8 (ULV)"——那和输出终端（MAX 等级）看起来不对等。
      * 该字段**不写 NBT**（每次加载回到默认值），所以改默认值即可让所有终端默认呈现 MAX；
      * 玩家仍可在终端界面里自行调低档位（可配置性保留）。
      */
     private int voltageTier = 14;
     // 电流档位: 0=1A, 1=64A, 2=4,096A, 3=262,144A(262KA),
-    //           4=16,777,216A(16MA), 5=1,073,741,824A(1GA)
+    // 4=16,777,216A(16MA), 5=1,073,741,824A(1GA)
     /** 同上：默认取最高电流档（1GA），与"超级能源仓"的定位一致。 */
     private int ampTier = 5;
 
@@ -57,9 +57,8 @@ public class WirelessEnergyInputTerminal extends MTEHatchEnergy {
     private static final int VOLTAGE_COUNT = 15;
     private static final int AMP_COUNT = AMP_TIERS.length;
 
-    private static final String[] VOLTAGE_NAMES = {
-        "ULV", "LV", "MV", "HV", "EV", "IV", "LuV", "ZPM", "UV", "UHV", "UEV", "UIV", "UMV", "UXV", "MAX"
-    };
+    private static final String[] VOLTAGE_NAMES = { "ULV", "LV", "MV", "HV", "EV", "IV", "LuV", "ZPM", "UV", "UHV",
+        "UEV", "UIV", "UMV", "UXV", "MAX" };
 
     public WirelessEnergyInputTerminal(int aID, String aName, String aNameRegional, int aTier) {
         super(aID, aName, aNameRegional, aTier);
@@ -71,22 +70,18 @@ public class WirelessEnergyInputTerminal extends MTEHatchEnergy {
 
     @Override
     public String[] getDescription() {
-        return new String[] {
-            StatCollector.translateToLocal("gt.blockmachines.wireless_energy_input_terminal.desc"),
+        return new String[] { StatCollector.translateToLocal("gt.blockmachines.wireless_energy_input_terminal.desc"),
             StatCollector.translateToLocal("gt.blockmachines.wireless_energy_input_terminal.desc.0"),
             StatCollector.translateToLocal("gt.blockmachines.wireless_energy_input_terminal.desc.1"),
             StatCollector.translateToLocal("gt.blockmachines.wireless_energy_input_terminal.desc.2"),
             EnumChatFormatting.GRAY + "[" + StatCollector.translateToLocal("ae2_qof.modname") + "]",
-            EnumChatFormatting.DARK_GRAY + "ae2qof"
-        };
+            EnumChatFormatting.DARK_GRAY + "ae2qof" };
     }
+
     @Override
     public ITexture[] getTexture(gregtech.api.interfaces.tileentity.IGregTechTileEntity aBaseMetaTileEntity,
-                                 net.minecraftforge.common.util.ForgeDirection side,
-                                 net.minecraftforge.common.util.ForgeDirection facing,
-                                 int aColorIndex,
-                                 boolean aActive,
-                                 boolean aRedstone) {
+        net.minecraftforge.common.util.ForgeDirection side, net.minecraftforge.common.util.ForgeDirection facing,
+        int aColorIndex, boolean aActive, boolean aRedstone) {
         if (com.wztwzt.ae2_qof.util.ModTextures.isReady()) {
             if (side == facing) {
                 return new ITexture[] { com.wztwzt.ae2_qof.util.ModTextures.front("wireless_energy_input") };
@@ -158,7 +153,8 @@ public class WirelessEnergyInputTerminal extends MTEHatchEnergy {
                 WirelessNetworkManager.addEUToGlobalEnergyMap(ownerUuid, -consumed);
             }
             BigInteger gridEU = WirelessNetworkManager.getUserEU(ownerUuid);
-            long newStored = gridEU.min(BigInteger.valueOf(maxEUStore())).longValue();
+            long newStored = gridEU.min(BigInteger.valueOf(maxEUStore()))
+                .longValue();
             long diff = newStored - currentStored;
             if (diff > 0) {
                 aBase.increaseStoredEnergyUnits(diff, false);
@@ -178,18 +174,19 @@ public class WirelessEnergyInputTerminal extends MTEHatchEnergy {
                 ownerUuid = owner;
                 WirelessNetworkManager.strongCheckOrAddUser(ownerUuid);
                 if (!aPlayer.worldObj.isRemote) {
-                    aPlayer.addChatMessage(new net.minecraft.util.ChatComponentText(
-                        EnumChatFormatting.GREEN
-                            + StatCollector.translateToLocal("ae2_qof.wireless.bind.success")));
+                    aPlayer.addChatMessage(
+                        new net.minecraft.util.ChatComponentText(
+                            EnumChatFormatting.GREEN
+                                + StatCollector.translateToLocal("ae2_qof.wireless.bind.success")));
                 }
                 return true;
             }
         } else if (heldItem != null && heldItem.getItem() instanceof ItemNetworkDataStick) {
             ownerUuid = null;
             if (!aPlayer.worldObj.isRemote) {
-                aPlayer.addChatMessage(new net.minecraft.util.ChatComponentText(
-                    EnumChatFormatting.YELLOW
-                        + StatCollector.translateToLocal("ae2_qof.wireless.unbind.success")));
+                aPlayer.addChatMessage(
+                    new net.minecraft.util.ChatComponentText(
+                        EnumChatFormatting.YELLOW + StatCollector.translateToLocal("ae2_qof.wireless.unbind.success")));
             }
             return true;
         }
@@ -217,26 +214,24 @@ public class WirelessEnergyInputTerminal extends MTEHatchEnergy {
             () -> voltageTier,
             v -> voltageTier = Math.max(0, Math.min(v, VOLTAGE_COUNT - 1))).allowC2S();
 
-        IntSyncValue ampSync = new IntSyncValue(
-            () -> ampTier,
-            v -> ampTier = Math.max(0, Math.min(v, AMP_COUNT - 1))).allowC2S();
+        IntSyncValue ampSync = new IntSyncValue(() -> ampTier, v -> ampTier = Math.max(0, Math.min(v, AMP_COUNT - 1)))
+            .allowC2S();
 
         LongSyncValue uuidHigh = new LongSyncValue(
-            () -> ownerUuid != null ? ownerUuid.getMostSignificantBits() : 0L, v -> {});
+            () -> ownerUuid != null ? ownerUuid.getMostSignificantBits() : 0L,
+            v -> {});
         LongSyncValue uuidLow = new LongSyncValue(
-            () -> ownerUuid != null ? ownerUuid.getLeastSignificantBits() : 0L, v -> {});
-        LongSyncValue gridEUSync = new LongSyncValue(
-            () -> {
-                BigInteger eu = (ownerUuid != null) ? WirelessNetworkManager.getUserEU(ownerUuid) : BigInteger.ZERO;
-                return eu.min(BigInteger.valueOf(Long.MAX_VALUE)).longValue();
-            },
+            () -> ownerUuid != null ? ownerUuid.getLeastSignificantBits() : 0L,
             v -> {});
-        LongSyncValue storedEUSync = new LongSyncValue(
-            () -> {
-                IGregTechTileEntity te = getBaseMetaTileEntity();
-                return te != null ? te.getStoredEU() : 0L;
-            },
-            v -> {});
+        LongSyncValue gridEUSync = new LongSyncValue(() -> {
+            BigInteger eu = (ownerUuid != null) ? WirelessNetworkManager.getUserEU(ownerUuid) : BigInteger.ZERO;
+            return eu.min(BigInteger.valueOf(Long.MAX_VALUE))
+                .longValue();
+        }, v -> {});
+        LongSyncValue storedEUSync = new LongSyncValue(() -> {
+            IGregTechTileEntity te = getBaseMetaTileEntity();
+            return te != null ? te.getStoredEU() : 0L;
+        }, v -> {});
 
         syncManager.syncValue("wVT", voltageSync);
         syncManager.syncValue("wAT", ampSync);
@@ -247,11 +242,14 @@ public class WirelessEnergyInputTerminal extends MTEHatchEnergy {
 
         ModularPanel panel = ModularPanel.defaultPanel("wireless_input_terminal", 300, 340);
 
-        Flow column = Flow.column().coverChildren().childPadding(4).top(8).left(8);
+        Flow column = Flow.column()
+            .coverChildren()
+            .childPadding(4)
+            .top(8)
+            .left(8);
 
         // 标题
-        column.child(new TextWidget<>(IKey.lang("ae2_qof.gui.wireless_input_terminal.title"))
-            .size(284, 16));
+        column.child(new TextWidget<>(IKey.lang("ae2_qof.gui.wireless_input_terminal.title")).size(284, 16));
 
         // 绑定状态
         column.child(new TextWidget<>(IKey.dynamic(() -> {
@@ -264,7 +262,10 @@ public class WirelessEnergyInputTerminal extends MTEHatchEnergy {
             UUID clientUuid = new UUID(uuidH, uuidL);
             return EnumChatFormatting.GREEN + "● "
                 + StatCollector.translateToLocal("ae2_qof.gui.wireless_input_terminal.bound")
-                + ": " + EnumChatFormatting.WHITE + clientUuid.toString().substring(0, 8);
+                + ": "
+                + EnumChatFormatting.WHITE
+                + clientUuid.toString()
+                    .substring(0, 8);
         })).size(284, 14));
 
         // 本地缓存
@@ -272,7 +273,10 @@ public class WirelessEnergyInputTerminal extends MTEHatchEnergy {
             long stored = storedEUSync.getLongValue();
             return EnumChatFormatting.GREEN + "■ "
                 + StatCollector.translateToLocal("ae2_qof.gui.wireless_input_terminal.stored")
-                + ": " + EnumChatFormatting.RESET + formatEU(stored) + " EU";
+                + ": "
+                + EnumChatFormatting.RESET
+                + formatEU(stored)
+                + " EU";
         })).size(284, 14));
 
         // 电网余额
@@ -280,78 +284,105 @@ public class WirelessEnergyInputTerminal extends MTEHatchEnergy {
             long gridEU = gridEUSync.getLongValue();
             return EnumChatFormatting.GOLD + "■ "
                 + StatCollector.translateToLocal("ae2_qof.gui.wireless_input_terminal.grid")
-                + ": " + EnumChatFormatting.RESET + formatEU(gridEU) + " EU";
+                + ": "
+                + EnumChatFormatting.RESET
+                + formatEU(gridEU)
+                + " EU";
         })).size(284, 14));
 
         // 电压选择行
-        column.child(Flow.row().coverChildren().childPadding(4)
-            .child(new TextWidget<>(IKey.lang("ae2_qof.gui.wireless_input_terminal.voltage_select"))
-                .size(80, 16))
-            .child(new TextFieldWidget().value(voltageSync).formatAsInteger(true)
-                .numbersInt(() -> 0L, () -> (long) (VOLTAGE_COUNT - 1))
-                .setMaxLength(2).size(32, 16))
-            .child(new TextWidget<>(IKey.dynamic(() -> {
-                int v = voltageSync.getIntValue();
-                String name = (v >= 0 && v < VOLTAGE_NAMES.length) ? VOLTAGE_NAMES[v] : "?";
-                return EnumChatFormatting.RED + name
-                    + EnumChatFormatting.WHITE + " (" + formatEU(V[v]) + " EU/t)";
-            })).size(168, 16)));
+        column.child(
+            Flow.row()
+                .coverChildren()
+                .childPadding(4)
+                .child(new TextWidget<>(IKey.lang("ae2_qof.gui.wireless_input_terminal.voltage_select")).size(80, 16))
+                .child(
+                    new TextFieldWidget().value(voltageSync)
+                        .formatAsInteger(true)
+                        .numbersInt(() -> 0L, () -> (long) (VOLTAGE_COUNT - 1))
+                        .setMaxLength(2)
+                        .size(32, 16))
+                .child(new TextWidget<>(IKey.dynamic(() -> {
+                    int v = voltageSync.getIntValue();
+                    String name = (v >= 0 && v < VOLTAGE_NAMES.length) ? VOLTAGE_NAMES[v] : "?";
+                    return EnumChatFormatting.RED + name + EnumChatFormatting.WHITE + " (" + formatEU(V[v]) + " EU/t)";
+                })).size(168, 16)));
 
         // 电流选择行
-        column.child(Flow.row().coverChildren().childPadding(4)
-            .child(new TextWidget<>(IKey.lang("ae2_qof.gui.wireless_input_terminal.current_select"))
-                .size(80, 16))
-            .child(new TextFieldWidget().value(ampSync).formatAsInteger(true)
-                .numbersInt(() -> 0L, () -> (long) (AMP_COUNT - 1))
-                .setMaxLength(2).size(32, 16))
-            .child(new TextWidget<>(IKey.dynamic(() -> {
-                int a = ampSync.getIntValue();
-                return EnumChatFormatting.RED + AMP_LABELS[a]
-                    + EnumChatFormatting.WHITE + " (" + formatEU(AMP_TIERS[a]) + ")";
-            })).size(168, 16)));
+        column.child(
+            Flow.row()
+                .coverChildren()
+                .childPadding(4)
+                .child(new TextWidget<>(IKey.lang("ae2_qof.gui.wireless_input_terminal.current_select")).size(80, 16))
+                .child(
+                    new TextFieldWidget().value(ampSync)
+                        .formatAsInteger(true)
+                        .numbersInt(() -> 0L, () -> (long) (AMP_COUNT - 1))
+                        .setMaxLength(2)
+                        .size(32, 16))
+                .child(new TextWidget<>(IKey.dynamic(() -> {
+                    int a = ampSync.getIntValue();
+                    return EnumChatFormatting.RED + AMP_LABELS[a]
+                        + EnumChatFormatting.WHITE
+                        + " ("
+                        + formatEU(AMP_TIERS[a])
+                        + ")";
+                })).size(168, 16)));
 
         // 输出功率
         column.child(new TextWidget<>(IKey.dynamic(() -> {
             long voltage = getVoltage();
             long amps = getAmperage();
             long power = voltage * amps;
-                return EnumChatFormatting.RED + "■ "
-                    + StatCollector.translateToLocal("ae2_qof.gui.wireless_input_terminal.power")
-                    + ": " + EnumChatFormatting.RESET + formatEU(power) + " EU/t"
-                    + EnumChatFormatting.WHITE + " (" + formatEU(voltage) + "V x " + amps + "A)";
+            return EnumChatFormatting.RED + "■ "
+                + StatCollector.translateToLocal("ae2_qof.gui.wireless_input_terminal.power")
+                + ": "
+                + EnumChatFormatting.RESET
+                + formatEU(power)
+                + " EU/t"
+                + EnumChatFormatting.WHITE
+                + " ("
+                + formatEU(voltage)
+                + "V x "
+                + amps
+                + "A)";
         })).size(284, 14));
 
         // 档位对照表
-        column.child(new TextWidget<>(IKey.str(
-            EnumChatFormatting.WHITE + "─── " + StatCollector.translateToLocal("ae2_qof.gui.wireless_input_terminal.voltage_ref") + " ───"
-        )).size(284, 10));
+        column.child(
+            new TextWidget<>(
+                IKey.str(
+                    EnumChatFormatting.WHITE + "─── "
+                        + StatCollector.translateToLocal("ae2_qof.gui.wireless_input_terminal.voltage_ref")
+                        + " ───")).size(284, 10));
 
-        String[][] voltageRows = {
-            { "0:ULV(8)", "1:LV(32)", "2:MV(128)", "3:HV(512)", "4:EV(2K)" },
+        String[][] voltageRows = { { "0:ULV(8)", "1:LV(32)", "2:MV(128)", "3:HV(512)", "4:EV(2K)" },
             { "5:IV(8K)", "6:LuV(32K)", "7:ZPM(131K)", "8:UV(524K)", "9:UHV(2M)" },
-            { "10:UEV(8M)", "11:UIV(33M)", "12:UMV(134M)", "13:UXV(536M)", "14:MAX(2G)" }
-        };
+            { "10:UEV(8M)", "11:UIV(33M)", "12:UMV(134M)", "13:UXV(536M)", "14:MAX(2G)" } };
         for (String[] row : voltageRows) {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < row.length; i++) {
                 if (i > 0) sb.append("  ");
-                sb.append(EnumChatFormatting.WHITE).append(row[i]);
+                sb.append(EnumChatFormatting.WHITE)
+                    .append(row[i]);
             }
             column.child(new TextWidget<>(IKey.str(sb.toString())).size(284, 9));
         }
 
-        column.child(new TextWidget<>(IKey.str(
-            EnumChatFormatting.WHITE + "─── " + StatCollector.translateToLocal("ae2_qof.gui.wireless_input_terminal.current_ref") + " ───"
-        )).size(284, 10));
+        column.child(
+            new TextWidget<>(
+                IKey.str(
+                    EnumChatFormatting.WHITE + "─── "
+                        + StatCollector.translateToLocal("ae2_qof.gui.wireless_input_terminal.current_ref")
+                        + " ───")).size(284, 10));
 
-        String[][] ampRows = {
-            { "0:1A", "1:64A", "2:4,096A", "3:262KA", "4:16MA", "5:1GA" }
-        };
+        String[][] ampRows = { { "0:1A", "1:64A", "2:4,096A", "3:262KA", "4:16MA", "5:1GA" } };
         for (String[] row : ampRows) {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < row.length; i++) {
                 if (i > 0) sb.append("  ");
-                sb.append(EnumChatFormatting.WHITE).append(row[i]);
+                sb.append(EnumChatFormatting.WHITE)
+                    .append(row[i]);
             }
             column.child(new TextWidget<>(IKey.str(sb.toString())).size(284, 9));
         }
@@ -381,8 +412,7 @@ public class WirelessEnergyInputTerminal extends MTEHatchEnergy {
         if (s != null && !s.isEmpty()) {
             try {
                 ownerUuid = UUID.fromString(s);
-            } catch (IllegalArgumentException ignored) {
-            }
+            } catch (IllegalArgumentException ignored) {}
         }
         voltageTier = aNBT.getInteger("ae2qolVT");
         ampTier = aNBT.getInteger("ae2qolAT");
@@ -418,7 +448,6 @@ public class WirelessEnergyInputTerminal extends MTEHatchEnergy {
             long voltage = getVoltage();
             long amps = getAmperage();
             currenttip.add(EnumChatFormatting.LIGHT_PURPLE + "Power: " + formatEU(voltage * amps) + " EU/t");
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) {}
     }
 }

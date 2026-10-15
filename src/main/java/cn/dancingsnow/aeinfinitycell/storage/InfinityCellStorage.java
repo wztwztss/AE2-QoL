@@ -77,8 +77,10 @@ public final class InfinityCellStorage {
 
     public synchronized void clear() {
         if (!dirty.isEmpty()) {
-            AEInfinityCell.LOG.error("Retaining {} unsaved infinity cells for {}. Fix disk access before shutdown!",
-                dirty.size(), directory);
+            AEInfinityCell.LOG.error(
+                "Retaining {} unsaved infinity cells for {}. Fix disk access before shutdown!",
+                dirty.size(),
+                directory);
             return;
         }
         cache.clear();

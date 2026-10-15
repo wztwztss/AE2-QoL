@@ -1,6 +1,7 @@
 package com.wztwzt.ae2_qof.hatch.adaptive;
 
 import static gregtech.api.enums.GTValues.V;
+
 import java.util.UUID;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -29,7 +30,6 @@ import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.implementations.MTEHatchEnergy;
 import gregtech.api.render.TextureFactory;
 import gregtech.api.util.GTUtility;
-
 import gregtech.common.misc.WirelessNetworkManager;
 
 public class AdaptiveNetHatch extends MTEHatchEnergy {
@@ -55,21 +55,17 @@ public class AdaptiveNetHatch extends MTEHatchEnergy {
 
     @Override
     public String[] getDescription() {
-        return new String[] {
-            StatCollector.translateToLocal("gt.blockmachines.adaptive_net_hatch.desc"),
+        return new String[] { StatCollector.translateToLocal("gt.blockmachines.adaptive_net_hatch.desc"),
             StatCollector.translateToLocal("gt.blockmachines.adaptive_net_hatch.desc.0"),
             StatCollector.translateToLocal("gt.blockmachines.adaptive_net_hatch.desc.1"),
             EnumChatFormatting.GRAY + "[" + StatCollector.translateToLocal("ae2_qof.modname") + "]",
-            EnumChatFormatting.DARK_GRAY + "ae2qof"
-        };
+            EnumChatFormatting.DARK_GRAY + "ae2qof" };
     }
+
     @Override
     public ITexture[] getTexture(gregtech.api.interfaces.tileentity.IGregTechTileEntity aBaseMetaTileEntity,
-                                 net.minecraftforge.common.util.ForgeDirection side,
-                                 net.minecraftforge.common.util.ForgeDirection facing,
-                                 int aColorIndex,
-                                 boolean aActive,
-                                 boolean aRedstone) {
+        net.minecraftforge.common.util.ForgeDirection side, net.minecraftforge.common.util.ForgeDirection facing,
+        int aColorIndex, boolean aActive, boolean aRedstone) {
         if (com.wztwzt.ae2_qof.util.ModTextures.isReady()) {
             if (side == facing) {
                 return new ITexture[] { com.wztwzt.ae2_qof.util.ModTextures.front("adaptive_net_hatch") };
@@ -153,25 +149,36 @@ public class AdaptiveNetHatch extends MTEHatchEnergy {
         super.onFirstTick(aBase);
         if (aBase.isServerSide()) {
             this.world = aBase.getWorld();
-            helper.setPosition(aBase.getXCoord(), aBase.getYCoord(), aBase.getZCoord(), aBase.getWorld().provider.dimensionId);
+            helper.setPosition(
+                aBase.getXCoord(),
+                aBase.getYCoord(),
+                aBase.getZCoord(),
+                aBase.getWorld().provider.dimensionId);
             gregtech.api.metatileentity.MetaTileEntity machineMTE = AdaptiveHatchHelper.findAttachedMachine(aBase);
             if (machineMTE != null) {
                 net.minecraft.item.ItemStack machineStack = machineMTE.getStackForm(1L);
                 if (machineStack != null) {
                     helper.setMachineInfo(machineStack.getItemDamage(), machineStack.getDisplayName());
                 } else {
-                    helper.setMachineInfo(-1,
-                        net.minecraft.util.StatCollector.translateToLocal(helper.getHatchType().getTranslationKey()));
+                    helper.setMachineInfo(
+                        -1,
+                        net.minecraft.util.StatCollector.translateToLocal(
+                            helper.getHatchType()
+                                .getTranslationKey()));
                 }
             } else {
-                gregtech.api.metatileentity.MetaTileEntity mte = (gregtech.api.metatileentity.MetaTileEntity) aBase.getMetaTileEntity();
+                gregtech.api.metatileentity.MetaTileEntity mte = (gregtech.api.metatileentity.MetaTileEntity) aBase
+                    .getMetaTileEntity();
                 if (mte != null) {
                     net.minecraft.item.ItemStack stack = mte.getStackForm(1L);
                     if (stack != null) {
                         helper.setMachineInfo(stack.getItemDamage(), stack.getDisplayName());
                     } else {
-                        helper.setMachineInfo(-1,
-                            net.minecraft.util.StatCollector.translateToLocal(helper.getHatchType().getTranslationKey()));
+                        helper.setMachineInfo(
+                            -1,
+                            net.minecraft.util.StatCollector.translateToLocal(
+                                helper.getHatchType()
+                                    .getTranslationKey()));
                     }
                 }
             }
@@ -214,46 +221,48 @@ public class AdaptiveNetHatch extends MTEHatchEnergy {
         IntSyncValue boundSync = new IntSyncValue(() -> helper.isBound() ? 1 : 0, v -> {});
         IntSyncValue voltageSync = new IntSyncValue(() -> helper.getCurrentVoltageTier(), v -> {});
         IntSyncValue ampSync = new IntSyncValue(() -> helper.getCurrentAmps(), v -> {});
-        LongSyncValue gridEUSync = new LongSyncValue(() -> helper.isBound() && helper.getNetworkOwner() != null
-            ? AdaptiveHatchHelper.getGridEULong(helper.getNetworkOwner()) : 0L, v -> {});
+        LongSyncValue gridEUSync = new LongSyncValue(
+            () -> helper.isBound() && helper.getNetworkOwner() != null
+                ? AdaptiveHatchHelper.getGridEULong(helper.getNetworkOwner())
+                : 0L,
+            v -> {});
         syncManager.syncValue("aBD", boundSync);
         syncManager.syncValue("aVT", voltageSync);
         syncManager.syncValue("aAM", ampSync);
         syncManager.syncValue("aGE", gridEUSync);
 
-        Flow column = Flow.column().coverChildren().childPadding(2).top(6).left(10);
+        Flow column = Flow.column()
+            .coverChildren()
+            .childPadding(2)
+            .top(6)
+            .left(10);
 
-        column.child(
-            new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_hatch.title")).size(260, 16));
+        column.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_hatch.title")).size(260, 16));
 
         column.child(new TextWidget<>(IKey.dynamic(() -> {
             if (boundSync.getIntValue() == 0) {
                 return EnumChatFormatting.RED + "● "
                     + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.unbound");
             }
-            return EnumChatFormatting.GREEN + "● "
-                + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.bound");
+            return EnumChatFormatting.GREEN + "● " + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.bound");
         })).size(260, 14));
 
         column.child(new TextWidget<>(IKey.dynamic(() -> {
             int v = voltageSync.getIntValue();
             String tierName = GTUtility.getColoredTierNameFromTier((byte) v);
-            return EnumChatFormatting.AQUA
-                + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.voltage")
-                + " " + tierName + " (" + V[v] + " EU/t)";
+            return EnumChatFormatting.AQUA + StatCollector
+                .translateToLocal("ae2_qof.gui.adaptive_hatch.voltage") + " " + tierName + " (" + V[v] + " EU/t)";
         })).size(260, 14));
 
         column.child(new TextWidget<>(IKey.dynamic(() -> {
-            return EnumChatFormatting.YELLOW
-                + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.amperage")
-                + " " + EnumChatFormatting.WHITE + ampSync.getIntValue() + " A";
+            return EnumChatFormatting.YELLOW + StatCollector.translateToLocal(
+                "ae2_qof.gui.adaptive_hatch.amperage") + " " + EnumChatFormatting.WHITE + ampSync.getIntValue() + " A";
         })).size(260, 14));
 
         column.child(new TextWidget<>(IKey.dynamic(() -> {
             long gridEU = gridEUSync.getLongValue();
-            return EnumChatFormatting.AQUA
-                + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.grid_energy")
-                + " " + EnumChatFormatting.WHITE + formatEU(gridEU) + " EU";
+            return EnumChatFormatting.AQUA + StatCollector.translateToLocal(
+                "ae2_qof.gui.adaptive_hatch.grid_energy") + " " + EnumChatFormatting.WHITE + formatEU(gridEU) + " EU";
         })).size(260, 14));
 
         panel.bindPlayerInventory();
@@ -314,10 +323,9 @@ public class AdaptiveNetHatch extends MTEHatchEnergy {
             long gridEU = helper.getLastGridEU();
             currenttip.add(EnumChatFormatting.AQUA + "Grid: " + formatEU(gridEU));
             if (helper.isBound()) {
-                currenttip.add(EnumChatFormatting.GREEN
-                    + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.bound"));
+                currenttip
+                    .add(EnumChatFormatting.GREEN + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.bound"));
             }
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) {}
     }
 }

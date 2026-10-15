@@ -1,13 +1,11 @@
 /*
  * 本文件改编自 AE2PatternGen (https://github.com/Ch4oooooooLL/AE2PatternGen) 的 MIT 许可代码：
- *   - recipe/GTRecipeSource.java（RecipeMap 枚举与配方筛选思路）
- *   - encoder/PatternEncoder.java（把 GTRecipe 编码成 AE2 加工样板的 NBT 结构）
- *   - filter/*（过滤器功能面：电压/输入黑名单/输出黑名单/NC 物品/输入矿辞/输出矿辞）
- *
+ * - recipe/GTRecipeSource.java（RecipeMap 枚举与配方筛选思路）
+ * - encoder/PatternEncoder.java（把 GTRecipe 编码成 AE2 加工样板的 NBT 结构）
+ * - filter/*（过滤器功能面：电压/输入黑名单/输出黑名单/NC 物品/输入矿辞/输出矿辞）
  * AE2PatternGen 的 MIT 许可与版权声明：
- *   MIT License — Copyright (c) AE2PatternGen contributors
- *   （该项目的 README 注明「本项目依据 MIT License 许可协议开源发布」）
- *
+ * MIT License — Copyright (c) AE2PatternGen contributors
+ * （该项目的 README 注明「本项目依据 MIT License 许可协议开源发布」）
  * 本仓库的改动：按 AE2-QoL 的工程约定重写为单一服务类（去掉其缓存/冲突解决/虚拟存储/自建网络子系统），
  * 复用我们已有的「展开上限 / 非静默日志 / 双端同版本」原则；过滤器只保留对生成有用的部分，
  * 并统一走本模组的日志与诊断口径。
@@ -127,8 +125,9 @@ public final class SmartPatternGenerator {
     /** 关键字模糊匹配 RecipeMap id（不区分大小写的子串匹配；先精确后模糊）。 */
     public static List<String> findMatchingRecipeMaps(String keyword) {
         List<String> matched = new ArrayList<>();
-        String key = keyword == null ? "" : keyword.trim()
-            .toLowerCase();
+        String key = keyword == null ? ""
+            : keyword.trim()
+                .toLowerCase();
         if (key.isEmpty()) return matched;
         try {
             if (RecipeMap.ALL_RECIPE_MAPS.containsKey(key)) {
@@ -148,8 +147,8 @@ public final class SmartPatternGenerator {
     /**
      * 生成样板。
      *
-     * @param mapKeyword RecipeMap id 或其子串（如 {@code gt.recipe.rolling} / {@code rolling}）
-     * @param filters    过滤器（可为 null）
+     * @param mapKeyword  RecipeMap id 或其子串（如 {@code gt.recipe.rolling} / {@code rolling}）
+     * @param filters     过滤器（可为 null）
      * @param maxPatterns 上限（<=0 视为 512）
      */
     public static Result generate(String mapKeyword, Filters filters, int maxPatterns) {
@@ -176,7 +175,12 @@ public final class SmartPatternGenerator {
             // 命中多个时不猜：用第一个精确匹配，其余记日志提示（与"不静默"原则一致）
             result.recipeMapId = maps.get(0);
             if (maps.size() > 1) {
-                MyMod.LOG.info("[AE2QoL] 生成器：关键字 {} 命中 {} 个 RecipeMap，使用第一个 {}（其余：{}）", mapKeyword, maps.size(), result.recipeMapId, maps.subList(1, Math.min(maps.size(), 5)));
+                MyMod.LOG.info(
+                    "[AE2QoL] 生成器：关键字 {} 命中 {} 个 RecipeMap，使用第一个 {}（其余：{}）",
+                    mapKeyword,
+                    maps.size(),
+                    result.recipeMapId,
+                    maps.subList(1, Math.min(maps.size(), 5)));
             }
             RecipeMap<?> target = RecipeMap.ALL_RECIPE_MAPS.get(result.recipeMapId);
             if (target == null) {
@@ -224,9 +228,7 @@ public final class SmartPatternGenerator {
                 ItemStack pattern = encode(template, recipe, repl);
                 if (pattern != null) result.patterns.add(pattern);
             }
-            MyMod.LOG.info(
-                "[AE2QoL] 样板生成器完成：{}",
-                result.describe());
+            MyMod.LOG.info("[AE2QoL] 样板生成器完成：{}", result.describe());
             if (result.truncated > 0) {
                 MyMod.LOG.warn("[AE2QoL] 样板生成达到上限 {}，已截断 {} 条（可提高上限后重生成）", cap, result.truncated);
             }
@@ -273,7 +275,8 @@ public final class SmartPatternGenerator {
             if (ids != null) {
                 for (int id : ids) {
                     String ore = net.minecraftforge.oredict.OreDictionary.getOreName(id);
-                    if (ore != null && com.wztwzt.ae2_qof.wildcard.SmartWildcardState.matches(matcher, ore)) return true;
+                    if (ore != null && com.wztwzt.ae2_qof.wildcard.SmartWildcardState.matches(matcher, ore))
+                        return true;
                 }
             }
         }

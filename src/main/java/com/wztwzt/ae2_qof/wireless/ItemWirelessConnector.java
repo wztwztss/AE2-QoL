@@ -3,7 +3,6 @@ package com.wztwzt.ae2_qof.wireless;
 import java.util.List;
 import java.util.UUID;
 
-import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;

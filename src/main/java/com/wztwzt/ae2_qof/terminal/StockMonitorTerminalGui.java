@@ -34,8 +34,8 @@ import com.cleanroommc.modularui.utils.Alignment;
 import com.cleanroommc.modularui.value.sync.BooleanSyncValue;
 import com.cleanroommc.modularui.value.sync.DynamicLinkedSyncHandler;
 import com.cleanroommc.modularui.value.sync.GenericListSyncHandler;
-import com.cleanroommc.modularui.value.sync.InteractionSyncHandler;
 import com.cleanroommc.modularui.value.sync.IntSyncValue;
+import com.cleanroommc.modularui.value.sync.InteractionSyncHandler;
 import com.cleanroommc.modularui.value.sync.LongSyncValue;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
 import com.cleanroommc.modularui.value.sync.StringSyncValue;
@@ -48,6 +48,13 @@ import com.cleanroommc.modularui.widgets.PagedWidget;
 import com.cleanroommc.modularui.widgets.TextWidget;
 import com.cleanroommc.modularui.widgets.layout.Flow;
 import com.cleanroommc.modularui.widgets.textfield.TextFieldWidget;
+import com.wztwzt.ae2_qof.MyMod;
+import com.wztwzt.ae2_qof.cover.stockmonitor.StockMonitorCover;
+import com.wztwzt.ae2_qof.cover.stockmonitor.ThresholdMode;
+import com.wztwzt.ae2_qof.cover.stockmonitor.ae.WirelessAeConnector;
+import com.wztwzt.ae2_qof.network.ModNetwork;
+import com.wztwzt.ae2_qof.network.StockMonitorActionPacket;
+import com.wztwzt.ae2_qof.terminal.CoverRegistry.CoverEntry;
 
 import appeng.api.config.LevelType;
 import appeng.api.config.SecurityPermissions;
@@ -61,16 +68,7 @@ import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.parts.automation.PartLevelEmitter;
-
 import cpw.mods.fml.common.network.ByteBufUtils;
-
-import com.wztwzt.ae2_qof.MyMod;
-import com.wztwzt.ae2_qof.cover.stockmonitor.StockMonitorCover;
-import com.wztwzt.ae2_qof.cover.stockmonitor.ThresholdMode;
-import com.wztwzt.ae2_qof.cover.stockmonitor.ae.WirelessAeConnector;
-import com.wztwzt.ae2_qof.network.ModNetwork;
-import com.wztwzt.ae2_qof.network.StockMonitorActionPacket;
-import com.wztwzt.ae2_qof.terminal.CoverRegistry.CoverEntry;
 
 /**
  * 库存统计终端 GUI（第五版）：左侧竖排页签分两页（发信器 / 库存覆盖板）+ 行首目标图标 + 编辑子面板。
@@ -193,8 +191,8 @@ public class StockMonitorTerminalGui {
         return i == null ? -1 : i;
     }
 
-    public static ModularPanel build(StockMonitorTerminal terminal, PosGuiData guiData,
-            PanelSyncManager syncManager, UISettings uiSettings) {
+    public static ModularPanel build(StockMonitorTerminal terminal, PosGuiData guiData, PanelSyncManager syncManager,
+        UISettings uiSettings) {
         ModularPanel panel = ModularPanel.defaultPanel("stock_monitor_terminal", PANEL_W, PANEL_H);
         EntityPlayer player = guiData.getPlayer();
 
@@ -237,28 +235,34 @@ public class StockMonitorTerminalGui {
 
         // ===== 子面板（编辑 + 网络选择）=====
         IPanelHandler coverEditPanel = syncManager.syncedPanel(
-            "cover_edit", true,
-            (panelSyncManager, panelHandler) -> buildCoverEditPanel(terminal, panelSyncManager, panelHandler,
-                coverRows, coverSelSync));
+            "cover_edit",
+            true,
+            (panelSyncManager, panelHandler) -> buildCoverEditPanel(
+                terminal,
+                panelSyncManager,
+                panelHandler,
+                coverRows,
+                coverSelSync));
 
         IPanelHandler emitterEditPanel = syncManager.syncedPanel(
-            "emitter_edit", true,
-            (panelSyncManager, panelHandler) -> buildEmitterEditPanel(panelSyncManager, panelHandler, emitterRows,
-                emitterSelSync));
+            "emitter_edit",
+            true,
+            (panelSyncManager,
+                panelHandler) -> buildEmitterEditPanel(panelSyncManager, panelHandler, emitterRows, emitterSelSync));
 
-        IPanelHandler netSelectPanel = syncManager.syncedPanel(
-            "net_select", true,
-            (panelSyncManager, panelHandler) -> {
-                if (WirelessAeConnector.isNexusAvailable()) {
-                    StockMonitorTerminalWirelessEndpoint endpoint =
-                        new StockMonitorTerminalWirelessEndpoint(terminal);
-                    return cn.dancingsnow.ae_wireless_nexus.gui.WirelessSelectionPanel
-                        .build("ae2qol_terminal_net_select", endpoint, panelSyncManager.getPlayer(),
-                            panelSyncManager, true);
-                }
-                // Nexus 不可用：回退到自定义选择面板（与覆盖板 GUI 同样的回退策略）
-                return StockMonitorTerminalNetworkPanel.build(panelSyncManager, terminal, panelHandler);
-            });
+        IPanelHandler netSelectPanel = syncManager.syncedPanel("net_select", true, (panelSyncManager, panelHandler) -> {
+            if (WirelessAeConnector.isNexusAvailable()) {
+                StockMonitorTerminalWirelessEndpoint endpoint = new StockMonitorTerminalWirelessEndpoint(terminal);
+                return cn.dancingsnow.ae_wireless_nexus.gui.WirelessSelectionPanel.build(
+                    "ae2qol_terminal_net_select",
+                    endpoint,
+                    panelSyncManager.getPlayer(),
+                    panelSyncManager,
+                    true);
+            }
+            // Nexus 不可用：回退到自定义选择面板（与覆盖板 GUI 同样的回退策略）
+            return StockMonitorTerminalNetworkPanel.build(panelSyncManager, terminal, panelHandler);
+        });
 
         // ===== 连接状态（S2C）+ 连接按钮（点击在服务端执行，打开 synced 子面板）=====
         BooleanSyncValue boundSync = new BooleanSyncValue(terminal::isBound);
@@ -272,20 +276,32 @@ public class StockMonitorTerminalGui {
         syncManager.syncValue("sm_terminal_connect", connectAction);
 
         // ===== 两个变长列表：按快照重建控件（行内含本体，客户端自己解析名称/图标）=====
-        DynamicLinkedSyncHandler<GenericListSyncHandler<EmitterRow>> emitterListHandler =
-            new DynamicLinkedSyncHandler<>(emitterRows).widgetProvider(
-                (dynamicSyncManager, value) -> buildEmitterList(value.getValue(), dynamicSyncManager, player,
-                    emitterEditPanel, terminal));
+        DynamicLinkedSyncHandler<GenericListSyncHandler<EmitterRow>> emitterListHandler = new DynamicLinkedSyncHandler<>(
+            emitterRows).widgetProvider(
+                (dynamicSyncManager, value) -> buildEmitterList(
+                    value.getValue(),
+                    dynamicSyncManager,
+                    player,
+                    emitterEditPanel,
+                    terminal));
         syncManager.syncValue("sm_terminal_emitters_dyn", emitterListHandler);
 
-        DynamicLinkedSyncHandler<GenericListSyncHandler<CoverRow>> coverListHandler =
-            new DynamicLinkedSyncHandler<>(coverRows).widgetProvider(
-                (dynamicSyncManager, value) -> buildCoverList(value.getValue(), dynamicSyncManager, player,
-                    coverEditPanel, terminal, hiddenCoversSync));
+        DynamicLinkedSyncHandler<GenericListSyncHandler<CoverRow>> coverListHandler = new DynamicLinkedSyncHandler<>(
+            coverRows).widgetProvider(
+                (dynamicSyncManager, value) -> buildCoverList(
+                    value.getValue(),
+                    dynamicSyncManager,
+                    player,
+                    coverEditPanel,
+                    terminal,
+                    hiddenCoversSync));
         syncManager.syncValue("sm_terminal_covers_dyn", coverListHandler);
 
         // ===== 表头：标题 + 连接状态 + 连接/切换网络 =====
-        Flow header = Flow.row().pos(CONTENT_X, 6).size(CONTENT_W, 16).childPadding(2);
+        Flow header = Flow.row()
+            .pos(CONTENT_X, 6)
+            .size(CONTENT_W, 16)
+            .childPadding(2);
         header.child(
             new TextWidget<>(IKey.lang("ae2_qof.terminal.stock_monitor.title")).size(116, 16)
                 .color(0xFF404040));
@@ -314,24 +330,30 @@ public class StockMonitorTerminalGui {
 
         PagedWidget.Controller tabController = new PagedWidget.Controller();
 
-        Flow tabStrip = Flow.column().pos(0, 6).width(TAB_W).childPadding(0);
+        Flow tabStrip = Flow.column()
+            .pos(0, 6)
+            .width(TAB_W)
+            .childPadding(0);
         tabStrip.child(pageTab(0, tabController, "ae2_qof.terminal.page.emitters"));
         tabStrip.child(pageTab(1, tabController, "ae2_qof.terminal.page.covers"));
         panel.child(tabStrip);
 
-        PagedWidget<?> pages = new PagedWidget<>()
-            .controller(tabController)
+        PagedWidget<?> pages = new PagedWidget<>().controller(tabController)
             .pos(CONTENT_X, PAGE_Y)
             .size(CONTENT_W, PAGE_H)
             .initialPage(pageSync.getIntValue())
             .addPage(buildEmitterPage(emitterListHandler, emitterRows, syncManager, player, emitterEditPanel, terminal))
             .addPage(
-                buildCoverPage(coverListHandler, coverRows, syncManager, player, coverEditPanel, terminal,
+                buildCoverPage(
+                    coverListHandler,
+                    coverRows,
+                    syncManager,
+                    player,
+                    coverEditPanel,
+                    terminal,
                     hiddenCoversSync));
         // 客户端点页签 → 回写服务端 NBT
-        pages.onPageChange(i -> {
-            if (pageSync.getIntValue() != i) pageSync.setValue(i);
-        });
+        pages.onPageChange(i -> { if (pageSync.getIntValue() != i) pageSync.setValue(i); });
         // 服务端存量的同步值晚于控件构建到达客户端，这里补一次切页，否则首次打开"记住上次选择"不生效
         pageSync.setChangeListener(() -> {
             int stored = pageSync.getIntValue();
@@ -348,15 +370,20 @@ public class StockMonitorTerminalGui {
     private static IWidget pageTab(int index, PagedWidget.Controller controller, String langKey) {
         // PageButton 没有文字 API，但它是 Widget ⇒ 用 overlay 把中文叠在页签贴图上（居中）
         return new PageButton(index, controller).tab(GuiTextures.TAB_LEFT, index == 0 ? -1 : 0)
-            .overlay(IKey.lang(langKey).alignment(Alignment.Center).scale(0.8F))
+            .overlay(
+                IKey.lang(langKey)
+                    .alignment(Alignment.Center)
+                    .scale(0.8F))
             .tooltip(t -> t.addLine(IKey.lang(langKey)))
             .size(TAB_W, TAB_H);
     }
 
     private static IWidget buildEmitterPage(DynamicLinkedSyncHandler<GenericListSyncHandler<EmitterRow>> listHandler,
-            GenericListSyncHandler<EmitterRow> rows, PanelSyncManager syncManager, EntityPlayer player,
-            IPanelHandler editPanel, StockMonitorTerminal terminal) {
-        Flow column = Flow.column().size(CONTENT_W, PAGE_H).childPadding(2);
+        GenericListSyncHandler<EmitterRow> rows, PanelSyncManager syncManager, EntityPlayer player,
+        IPanelHandler editPanel, StockMonitorTerminal terminal) {
+        Flow column = Flow.column()
+            .size(CONTENT_W, PAGE_H)
+            .childPadding(2);
         column.child(
             new DynamicSyncedWidget<>().size(LIST_W, LIST_H)
                 .initialChild(buildEmitterList(rows.getValue(), syncManager, player, editPanel, terminal))
@@ -368,9 +395,11 @@ public class StockMonitorTerminalGui {
     }
 
     private static IWidget buildCoverPage(DynamicLinkedSyncHandler<GenericListSyncHandler<CoverRow>> listHandler,
-            GenericListSyncHandler<CoverRow> rows, PanelSyncManager syncManager, EntityPlayer player,
-            IPanelHandler editPanel, StockMonitorTerminal terminal, IntSyncValue hiddenCoversSync) {
-        Flow column = Flow.column().size(CONTENT_W, PAGE_H).childPadding(2);
+        GenericListSyncHandler<CoverRow> rows, PanelSyncManager syncManager, EntityPlayer player,
+        IPanelHandler editPanel, StockMonitorTerminal terminal, IntSyncValue hiddenCoversSync) {
+        Flow column = Flow.column()
+            .size(CONTENT_W, PAGE_H)
+            .childPadding(2);
         column.child(
             new DynamicSyncedWidget<>().size(LIST_W, LIST_H)
                 .initialChild(
@@ -393,10 +422,10 @@ public class StockMonitorTerminalGui {
 
             // 注意两件事（都是"列表永远为空"的真实根因）：
             // 1) AE2 的 Grid.getMachines(Class) 是**精确类名**查表（与接口终端同一个坑），
-            //    直接传 PartLevelEmitter 会漏掉任何子类 ⇒ 这里按已注册的机器类过滤 instanceof；
+            // 直接传 PartLevelEmitter 会漏掉任何子类 ⇒ 这里按已注册的机器类过滤 instanceof；
             // 2) Grid.getMachines(...) 返回的是 **IGridNode** 集合
-            //    （IMachineSet extends IReadOnlyCollection<IGridNode>，已用实例 AE2 jar 核对），
-            //    机器必须从 node.getMachine() 取——旧实现直接对 node 做 instanceof，永远匹配不到。
+            // （IMachineSet extends IReadOnlyCollection<IGridNode>，已用实例 AE2 jar 核对），
+            // 机器必须从 node.getMachine() 取——旧实现直接对 node 做 instanceof，永远匹配不到。
             List<PartLevelEmitter> emitters = new ArrayList<>();
             for (Class<? extends IGridHost> machineClass : grid.getMachinesClasses()) {
                 if (!PartLevelEmitter.class.isAssignableFrom(machineClass)) continue;
@@ -440,45 +469,52 @@ public class StockMonitorTerminalGui {
     }
 
     private static IWidget buildEmitterList(List<EmitterRow> rows, PanelSyncManager syncManager, EntityPlayer player,
-            IPanelHandler editPanel, StockMonitorTerminal terminal) {
+        IPanelHandler editPanel, StockMonitorTerminal terminal) {
         RowList list = new RowList();
         if (rows == null || rows.isEmpty()) {
             list.child(
-                new TextWidget<>(IKey.lang("ae2_qof.terminal.no_emitters")).color(0xFFAAAAAA).size(LIST_W - 8, 12));
+                new TextWidget<>(IKey.lang("ae2_qof.terminal.no_emitters")).color(0xFFAAAAAA)
+                    .size(LIST_W - 8, 12));
             return list;
         }
         for (EmitterRow row : rows) {
             // 名称在**客户端**解析（服务端算出来的名字在专用服上是英文，见类头注释）
             String name = targetLabel(row.icon, row.fluidName, "", "ae2_qof.terminal.emitter_unnamed");
             String value = typeLabel(row.typeName) + " · " + formatNumber(row.threshold);
-            list.child(
-                buildActionRow(
-                    syncManager,
-                    "sm_terminal_emitter_row",
-                    row.index,
-                    p -> {
-                        // 该回调在服务端执行；row 是服务端行的实例，携带真实 AE 部件引用。
-                        // 客户端行的 ref 为 null（快照不含对象），因此这里天然是服务端分支。
-                        if (row.emitter == null) return;
-                        setSelectedEmitter(p, row.emitter, row.index);
-                        editPanel.openPanel();
-                    },
-                    row.icon,
-                    fluidIcon(row.fluidName),
-                    name,
-                    value,
-                    row.hasPos() ? new int[] { row.dim, row.x, row.y, row.z } : null,
-                    terminal,
-                    StockMonitorActionPacket.KIND_EMITTER,
-                    java.util.Arrays.asList(
-                        EnumChatFormatting.WHITE + name,
-                        EnumChatFormatting.GRAY + StatCollector.translateToLocal("ae2_qof.terminal.type") + ": "
-                            + typeLabel(row.typeName),
-                        EnumChatFormatting.GRAY + StatCollector.translateToLocal("ae2_qof.terminal.threshold") + ": "
-                            + formatNumber(row.threshold),
-                        row.hasPos()
-                            ? EnumChatFormatting.DARK_AQUA + "D" + row.dim + " [" + row.x + ", " + row.y + ", " + row.z + "]"
-                            : EnumChatFormatting.DARK_GRAY + StatCollector.translateToLocal("ae2_qof.terminal.no_coords"))));
+            list.child(buildActionRow(syncManager, "sm_terminal_emitter_row", row.index, p -> {
+                // 该回调在服务端执行；row 是服务端行的实例，携带真实 AE 部件引用。
+                // 客户端行的 ref 为 null（快照不含对象），因此这里天然是服务端分支。
+                if (row.emitter == null) return;
+                setSelectedEmitter(p, row.emitter, row.index);
+                editPanel.openPanel();
+            },
+                row.icon,
+                fluidIcon(row.fluidName),
+                name,
+                value,
+                row.hasPos() ? new int[] { row.dim, row.x, row.y, row.z } : null,
+                terminal,
+                StockMonitorActionPacket.KIND_EMITTER,
+                java.util.Arrays.asList(
+                    EnumChatFormatting.WHITE + name,
+                    EnumChatFormatting.GRAY + StatCollector.translateToLocal("ae2_qof.terminal.type")
+                        + ": "
+                        + typeLabel(row.typeName),
+                    EnumChatFormatting.GRAY + StatCollector.translateToLocal("ae2_qof.terminal.threshold")
+                        + ": "
+                        + formatNumber(row.threshold),
+                    row.hasPos()
+                        ? EnumChatFormatting.DARK_AQUA + "D"
+                            + row.dim
+                            + " ["
+                            + row.x
+                            + ", "
+                            + row.y
+                            + ", "
+                            + row.z
+                            + "]"
+                        : EnumChatFormatting.DARK_GRAY
+                            + StatCollector.translateToLocal("ae2_qof.terminal.no_coords"))));
         }
         return list;
     }
@@ -510,7 +546,8 @@ public class StockMonitorTerminalGui {
             long now = 0L;
             try {
                 TileEntity te = (TileEntity) terminal.getBaseMetaTileEntity();
-                if (te != null && te.getWorldObj() != null) now = te.getWorldObj().getTotalWorldTime();
+                if (te != null && te.getWorldObj() != null) now = te.getWorldObj()
+                    .getTotalWorldTime();
             } catch (Throwable ignored) {}
             if (now - lastTick < LIST_REFRESH_INTERVAL) return;
             lastTick = now;
@@ -542,9 +579,22 @@ public class StockMonitorTerminalGui {
 
                 for (int i = 0; i < sorted.size(); i++) {
                     CoverEntry entry = sorted.get(i);
-                    fresh.add(new CoverRow(i, entry.dim, entry.x, entry.y, entry.z, entry.side,
-                        entry.targetName, entry.targetItem, entry.targetFluidName, entry.slotIndex, entry.online,
-                        entry.modeOrdinal, entry.threshold, entry));
+                    fresh.add(
+                        new CoverRow(
+                            i,
+                            entry.dim,
+                            entry.x,
+                            entry.y,
+                            entry.z,
+                            entry.side,
+                            entry.targetName,
+                            entry.targetItem,
+                            entry.targetFluidName,
+                            entry.slotIndex,
+                            entry.online,
+                            entry.modeOrdinal,
+                            entry.threshold,
+                            entry));
                 }
                 hiddenCount = Math.max(0, total - sorted.size());
             } catch (Throwable t) {
@@ -556,7 +606,7 @@ public class StockMonitorTerminalGui {
     }
 
     private static IWidget buildCoverList(List<CoverRow> rows, PanelSyncManager syncManager, EntityPlayer player,
-            IPanelHandler editPanel, StockMonitorTerminal terminal, IntSyncValue hiddenSync) {
+        IPanelHandler editPanel, StockMonitorTerminal terminal, IntSyncValue hiddenSync) {
         RowList list = new RowList();
         if (rows == null || rows.isEmpty()) {
             // 空列表要能说明原因：是"本网络下确实没有覆盖板"，还是"有但都属于别的网络（被过滤了）"
@@ -576,34 +626,39 @@ public class StockMonitorTerminalGui {
             String name = targetLabel(row.icon, row.fluidName, row.targetName, "ae2_qof.terminal.unset");
             String value = modeLabel(row.modeOrdinal) + " · " + formatNumber(row.threshold);
 
-            list.child(
-                buildActionRow(
-                    syncManager,
-                    "sm_terminal_cover_row",
-                    row.index,
-                    p -> {
-                        if (row.entry == null) return;
-                        setSelectedCover(p, row.entry, row.index);
-                        editPanel.openPanel();
-                    },
-                    row.online ? row.icon : null,
-                    row.online ? fluidIcon(row.fluidName) : null,
-                    row.online ? name : EnumChatFormatting.GRAY + name + " [OFF]",
-                    value,
-                    new int[] { row.dim, row.x, row.y, row.z },
-                    terminal,
-                    StockMonitorActionPacket.KIND_COVER,
-                    java.util.Arrays.asList(
-                        EnumChatFormatting.WHITE + name,
-                        EnumChatFormatting.GRAY + StatCollector.translateToLocal("ae2_qof.terminal.mode") + ": "
-                            + modeLabel(row.modeOrdinal),
-                        EnumChatFormatting.GRAY + StatCollector.translateToLocal("ae2_qof.terminal.threshold") + ": "
-                            + formatNumber(row.threshold),
-                        EnumChatFormatting.DARK_AQUA + "D" + row.dim + " [" + row.x + ", " + row.y + ", " + row.z + "]"
-                            + " 面" + row.side,
-                        row.online ? EnumChatFormatting.GREEN
-                            + StatCollector.translateToLocal("ae2_qof.terminal.online")
-                            : EnumChatFormatting.RED + StatCollector.translateToLocal("ae2_qof.terminal.offline"))));
+            list.child(buildActionRow(syncManager, "sm_terminal_cover_row", row.index, p -> {
+                if (row.entry == null) return;
+                setSelectedCover(p, row.entry, row.index);
+                editPanel.openPanel();
+            },
+                row.online ? row.icon : null,
+                row.online ? fluidIcon(row.fluidName) : null,
+                row.online ? name : EnumChatFormatting.GRAY + name + " [OFF]",
+                value,
+                new int[] { row.dim, row.x, row.y, row.z },
+                terminal,
+                StockMonitorActionPacket.KIND_COVER,
+                java.util.Arrays.asList(
+                    EnumChatFormatting.WHITE + name,
+                    EnumChatFormatting.GRAY + StatCollector.translateToLocal("ae2_qof.terminal.mode")
+                        + ": "
+                        + modeLabel(row.modeOrdinal),
+                    EnumChatFormatting.GRAY + StatCollector.translateToLocal("ae2_qof.terminal.threshold")
+                        + ": "
+                        + formatNumber(row.threshold),
+                    EnumChatFormatting.DARK_AQUA + "D"
+                        + row.dim
+                        + " ["
+                        + row.x
+                        + ", "
+                        + row.y
+                        + ", "
+                        + row.z
+                        + "]"
+                        + " 面"
+                        + row.side,
+                    row.online ? EnumChatFormatting.GREEN + StatCollector.translateToLocal("ae2_qof.terminal.online")
+                        : EnumChatFormatting.RED + StatCollector.translateToLocal("ae2_qof.terminal.offline"))));
         }
         return list;
     }
@@ -626,8 +681,8 @@ public class StockMonitorTerminalGui {
      * 未经验证，不冒险）。
      */
     private static IWidget buildActionRow(PanelSyncManager syncManager, String keyPrefix, int index,
-            java.util.function.Consumer<EntityPlayer> onOpen, ItemStack iconItem, FluidStack iconFluid, String name,
-            String value, int[] pos, StockMonitorTerminal terminal, int kind, List<String> tooltipLines) {
+        java.util.function.Consumer<EntityPlayer> onOpen, ItemStack iconItem, FluidStack iconFluid, String name,
+        String value, int[] pos, StockMonitorTerminal terminal, int kind, List<String> tooltipLines) {
         InteractionSyncHandler nameHandler = syncManager.getOrCreateSyncHandler(
             keyPrefix + "_name_" + index,
             InteractionSyncHandler.class,
@@ -637,7 +692,8 @@ public class StockMonitorTerminalGui {
             InteractionSyncHandler.class,
             () -> new InteractionSyncHandler().setOnMousePressed(mouse -> onOpen.accept(syncManager.getPlayer())));
 
-        Flow row = Flow.row().size(ROW_W, ROW_H)
+        Flow row = Flow.row()
+            .size(ROW_W, ROW_H)
             .childPadding(2)
             // 行高 24 > 图标 16：不居中的话图标会贴着行顶
             .crossAxisAlignment(Alignment.CrossAxis.CENTER)
@@ -654,10 +710,20 @@ public class StockMonitorTerminalGui {
                     .syncHandler(valueHandler));
 
         if (pos != null) {
-            row.child(actionButton(terminal, pos, kind, StockMonitorActionPacket.ACTION_HIGHLIGHT,
-                "ae2_qof.terminal.highlight"));
-            row.child(actionButton(terminal, pos, kind, StockMonitorActionPacket.ACTION_TELEPORT,
-                "ae2_qof.terminal.teleport"));
+            row.child(
+                actionButton(
+                    terminal,
+                    pos,
+                    kind,
+                    StockMonitorActionPacket.ACTION_HIGHLIGHT,
+                    "ae2_qof.terminal.highlight"));
+            row.child(
+                actionButton(
+                    terminal,
+                    pos,
+                    kind,
+                    StockMonitorActionPacket.ACTION_TELEPORT,
+                    "ae2_qof.terminal.teleport"));
         } else {
             row.child(new TextWidget<>(IKey.str("")).size(BTN_W, ROW_H));
             row.child(new TextWidget<>(IKey.str("")).size(BTN_W, ROW_H));
@@ -673,16 +739,19 @@ public class StockMonitorTerminalGui {
     /**
      * 行首图标：物品优先，其次**真流体贴图**（{@code FluidDrawable}），两者都没有就留空位保持列对齐。
      *
-     * <p>为什么不拿 {@code IAEStack.getItemStackForNEI()} 代替流体图标：装了 AE2FC 时它返回的是
+     * <p>
+     * 为什么不拿 {@code IAEStack.getItemStackForNEI()} 代替流体图标：装了 AE2FC 时它返回的是
      * 流体包体/容器物品（{@code AEFluidStack#getItemStackForNEI} 里的 {@code Platform.isAE2FCLoaded} 分支），
      * 用户明确要"真流体贴图，不要容器图标"。
      */
     private static IWidget iconWidget(ItemStack item, FluidStack fluid) {
         if (item != null && item.getItem() != null) {
-            return new ItemDrawable(item).asWidget().size(ICON_SIZE, ICON_SIZE);
+            return new ItemDrawable(item).asWidget()
+                .size(ICON_SIZE, ICON_SIZE);
         }
         if (fluid != null && fluid.getFluid() != null) {
-            return new FluidDrawable(fluid).asWidget().size(ICON_SIZE, ICON_SIZE);
+            return new FluidDrawable(fluid).asWidget()
+                .size(ICON_SIZE, ICON_SIZE);
         }
         // 显式声明成 Widget<?>：Widget 是自引用泛型，直接把 new Widget<>() 当 IWidget 返回会推断失败
         Widget<?> empty = new Widget<>().size(ICON_SIZE, ICON_SIZE);
@@ -690,7 +759,7 @@ public class StockMonitorTerminalGui {
     }
 
     private static IWidget actionButton(StockMonitorTerminal terminal, int[] pos, int kind, int action,
-            String langKey) {
+        String langKey) {
         return new ButtonWidget<>().size(BTN_W, ROW_H)
             .background(GuiTextures.BUTTON_CLEAN)
             .child(
@@ -727,12 +796,12 @@ public class StockMonitorTerminalGui {
      * 所有写入都在服务端 setter 里做权限校验后落盘（P1-015 语义不变）。
      * 未选中/区块未加载时不再提前 return（那会让客户端永远看不到控件），而是显示提示。
      *
-     * <p>3.31.0：名称改成 `IKey.dynamic` + 客户端行快照解析（原来走服务端 StringSyncValue，
+     * <p>
+     * 3.31.0：名称改成 `IKey.dynamic` + 客户端行快照解析（原来走服务端 StringSyncValue，
      * 专用服上必然英文）；写入槽位改用行里带的 {@code slotIndex}（原写死 slot 0）。
      */
-    private static ModularPanel buildCoverEditPanel(StockMonitorTerminal terminal,
-            PanelSyncManager syncManager, IPanelHandler panelHandler, GenericListSyncHandler<CoverRow> coverRows,
-            IntSyncValue selSync) {
+    private static ModularPanel buildCoverEditPanel(StockMonitorTerminal terminal, PanelSyncManager syncManager,
+        IPanelHandler panelHandler, GenericListSyncHandler<CoverRow> coverRows, IntSyncValue selSync) {
         ModularPanel edit = ModularPanel.defaultPanel("cover_edit_panel", EDIT_PANEL_W, EDIT_PANEL_H);
 
         BooleanSyncValue readySync = new BooleanSyncValue(() -> selectedCover(syncManager) != null);
@@ -743,71 +812,76 @@ public class StockMonitorTerminalGui {
             return "D" + entry.dim + " [" + entry.x + ", " + entry.y + ", " + entry.z + "] 面" + entry.side;
         });
 
-        LongSyncValue thresholdSync = new LongSyncValue(
-            () -> {
-                StockMonitorCover cover = selectedCover(syncManager);
-                if (cover == null) return 0L;
-                return cover.getCoverData().getSlot(selectedSlot(syncManager)).threshold;
-            },
-            value -> {
-                StockMonitorCover cover = selectedCover(syncManager);
-                if (cover == null) return;
-                if (!terminal.hasBuildPermission(syncManager.getPlayer())) return;
-                cover.getCoverData().getSlot(selectedSlot(syncManager)).threshold = value;
-                cover.markCoverDirty();
-            }).allowC2S();
+        LongSyncValue thresholdSync = new LongSyncValue(() -> {
+            StockMonitorCover cover = selectedCover(syncManager);
+            if (cover == null) return 0L;
+            return cover.getCoverData()
+                .getSlot(selectedSlot(syncManager)).threshold;
+        }, value -> {
+            StockMonitorCover cover = selectedCover(syncManager);
+            if (cover == null) return;
+            if (!terminal.hasBuildPermission(syncManager.getPlayer())) return;
+            cover.getCoverData()
+                .getSlot(selectedSlot(syncManager)).threshold = value;
+            cover.markCoverDirty();
+        }).allowC2S();
 
-        IntSyncValue modeSync = new IntSyncValue(
-            () -> {
-                StockMonitorCover cover = selectedCover(syncManager);
-                return cover == null ? 0 : cover.getCoverData().getMode().ordinal();
-            },
-            value -> {
-                StockMonitorCover cover = selectedCover(syncManager);
-                if (cover == null) return;
-                if (!terminal.hasBuildPermission(syncManager.getPlayer())) return;
-                cover.getCoverData().setMode(ThresholdMode.fromOrdinal(value));
-                cover.markCoverDirty();
-            }).allowC2S();
+        IntSyncValue modeSync = new IntSyncValue(() -> {
+            StockMonitorCover cover = selectedCover(syncManager);
+            return cover == null ? 0
+                : cover.getCoverData()
+                    .getMode()
+                    .ordinal();
+        }, value -> {
+            StockMonitorCover cover = selectedCover(syncManager);
+            if (cover == null) return;
+            if (!terminal.hasBuildPermission(syncManager.getPlayer())) return;
+            cover.getCoverData()
+                .setMode(ThresholdMode.fromOrdinal(value));
+            cover.markCoverDirty();
+        }).allowC2S();
 
         syncManager.syncValue("sm_cover_edit_ready", readySync);
         syncManager.syncValue("sm_cover_edit_pos", positionSync);
         syncManager.syncValue("sm_cover_edit_threshold", thresholdSync);
         syncManager.syncValue("sm_cover_edit_mode", modeSync);
 
-        edit.child(
-            new TextWidget<>(
-                IKey.dynamic(() -> {
-                    CoverRow row = rowAt(coverRows, selSync.getIntValue());
-                    if (row == null) {
-                        return EnumChatFormatting.RED + StatCollector.translateToLocal("ae2_qof.terminal.none_selected");
-                    }
-                    return targetLabel(row.icon, row.fluidName, row.targetName, "ae2_qof.terminal.unset");
-                })).pos(10, 8).size(EDIT_PANEL_W - 20, 14));
+        edit.child(new TextWidget<>(IKey.dynamic(() -> {
+            CoverRow row = rowAt(coverRows, selSync.getIntValue());
+            if (row == null) {
+                return EnumChatFormatting.RED + StatCollector.translateToLocal("ae2_qof.terminal.none_selected");
+            }
+            return targetLabel(row.icon, row.fluidName, row.targetName, "ae2_qof.terminal.unset");
+        })).pos(10, 8)
+            .size(EDIT_PANEL_W - 20, 14));
 
-        edit.child(new TextWidget<>(IKey.lang("ae2_qof.terminal.threshold")).pos(10, 32).size(60, 12));
+        edit.child(
+            new TextWidget<>(IKey.lang("ae2_qof.terminal.threshold")).pos(10, 32)
+                .size(60, 12));
         edit.child(
             new TextFieldWidget().numbersLong(0, Long.MAX_VALUE)
                 .pos(75, 30)
                 .size(EDIT_PANEL_W - 85, 16)
                 .value(thresholdSync));
 
-        edit.child(new TextWidget<>(IKey.lang("ae2_qof.terminal.mode")).pos(10, 58).size(60, 12));
+        edit.child(
+            new TextWidget<>(IKey.lang("ae2_qof.terminal.mode")).pos(10, 58)
+                .size(60, 12));
         String[] modeKeys = { "ae2_qof.terminal.mode.below", "ae2_qof.terminal.mode.above" };
         for (int i = 0; i < modeKeys.length; i++) {
             final int mi = i;
             InteractionSyncHandler modeBtn = new InteractionSyncHandler()
                 .setOnMousePressed(mouse -> modeSync.setValue(mi));
             edit.child(
-                new ButtonWidget<>().pos(75 + i * 70, 56).size(65, 16)
+                new ButtonWidget<>().pos(75 + i * 70, 56)
+                    .size(65, 16)
                     .background(GuiTextures.BUTTON_CLEAN)
                     .overlay(IKey.lang(modeKeys[i]))
                     .syncHandler(modeBtn));
         }
 
         edit.child(
-            new TextWidget<>(IKey.dynamic(() -> EnumChatFormatting.GRAY + positionSync.getValue()))
-                .pos(10, 82)
+            new TextWidget<>(IKey.dynamic(() -> EnumChatFormatting.GRAY + positionSync.getValue())).pos(10, 82)
                 .size(EDIT_PANEL_W - 20, 10));
 
         // 覆盖板所在区块未加载时，上面的数值会是 0 且改不动——明确提示，避免误判为 bug
@@ -816,14 +890,14 @@ public class StockMonitorTerminalGui {
                 IKey.dynamic(
                     () -> readySync.getValue() ? ""
                         : EnumChatFormatting.RED
-                            + StatCollector.translateToLocal("ae2_qof.terminal.cover_unavailable")))
-                .pos(10, 96)
-                .size(EDIT_PANEL_W - 20, 10));
+                            + StatCollector.translateToLocal("ae2_qof.terminal.cover_unavailable"))).pos(10, 96)
+                                .size(EDIT_PANEL_W - 20, 10));
 
         InteractionSyncHandler closeBtn = new InteractionSyncHandler()
             .setOnMousePressed(mouse -> panelHandler.closePanel());
         edit.child(
-            new ButtonWidget<>().pos(10, 116).size(60, 18)
+            new ButtonWidget<>().pos(10, 116)
+                .size(60, 18)
                 .background(GuiTextures.BUTTON_CLEAN)
                 .overlay(IKey.lang("ae2_qof.gui.stock_monitor.close"))
                 .syncHandler(closeBtn));
@@ -849,7 +923,7 @@ public class StockMonitorTerminalGui {
     // ===== 发信器编辑子面板 =====
 
     private static ModularPanel buildEmitterEditPanel(PanelSyncManager syncManager, IPanelHandler panelHandler,
-            GenericListSyncHandler<EmitterRow> emitterRows, IntSyncValue selSync) {
+        GenericListSyncHandler<EmitterRow> emitterRows, IntSyncValue selSync) {
         ModularPanel edit = ModularPanel.defaultPanel("emitter_edit_panel", EDIT_PANEL_W, EDIT_PANEL_H);
 
         StringSyncValue typeSync = new StringSyncValue(() -> {
@@ -857,39 +931,39 @@ public class StockMonitorTerminalGui {
             return emitter == null ? "" : levelTypeName(emitter);
         });
 
-        LongSyncValue thresholdSync = new LongSyncValue(
-            () -> {
-                PartLevelEmitter emitter = getSelectedEmitter(syncManager.getPlayer());
-                return emitter == null ? 0L : emitter.getReportingValue();
-            },
-            value -> {
-                PartLevelEmitter emitter = getSelectedEmitter(syncManager.getPlayer());
-                if (emitter == null) return;
-                if (!hasPermission(syncManager.getPlayer(), emitter)) return;
-                emitter.setReportingValue(value);
-            }).allowC2S();
+        LongSyncValue thresholdSync = new LongSyncValue(() -> {
+            PartLevelEmitter emitter = getSelectedEmitter(syncManager.getPlayer());
+            return emitter == null ? 0L : emitter.getReportingValue();
+        }, value -> {
+            PartLevelEmitter emitter = getSelectedEmitter(syncManager.getPlayer());
+            if (emitter == null) return;
+            if (!hasPermission(syncManager.getPlayer(), emitter)) return;
+            emitter.setReportingValue(value);
+        }).allowC2S();
 
         syncManager.syncValue("sm_emitter_edit_type", typeSync);
         syncManager.syncValue("sm_emitter_edit_threshold", thresholdSync);
 
-        edit.child(
-            new TextWidget<>(
-                IKey.dynamic(() -> {
-                    EmitterRow row = rowAt(emitterRows, selSync.getIntValue());
-                    if (row == null) {
-                        return EnumChatFormatting.RED + StatCollector.translateToLocal("ae2_qof.terminal.none_selected");
-                    }
-                    return targetLabel(row.icon, row.fluidName, "", "ae2_qof.terminal.emitter_unnamed");
-                })).pos(10, 8).size(EDIT_PANEL_W - 20, 14));
+        edit.child(new TextWidget<>(IKey.dynamic(() -> {
+            EmitterRow row = rowAt(emitterRows, selSync.getIntValue());
+            if (row == null) {
+                return EnumChatFormatting.RED + StatCollector.translateToLocal("ae2_qof.terminal.none_selected");
+            }
+            return targetLabel(row.icon, row.fluidName, "", "ae2_qof.terminal.emitter_unnamed");
+        })).pos(10, 8)
+            .size(EDIT_PANEL_W - 20, 14));
 
         edit.child(
             new TextWidget<>(
                 IKey.dynamic(
-                    () -> EnumChatFormatting.GRAY + StatCollector.translateToLocal("ae2_qof.terminal.type") + ": "
+                    () -> EnumChatFormatting.GRAY + StatCollector.translateToLocal("ae2_qof.terminal.type")
+                        + ": "
                         + typeLabel(typeSync.getValue()))).pos(10, 28)
                             .size(EDIT_PANEL_W - 20, 12));
 
-        edit.child(new TextWidget<>(IKey.lang("ae2_qof.terminal.threshold")).pos(10, 52).size(60, 12));
+        edit.child(
+            new TextWidget<>(IKey.lang("ae2_qof.terminal.threshold")).pos(10, 52)
+                .size(60, 12));
         edit.child(
             new TextFieldWidget().numbersLong(0, Long.MAX_VALUE)
                 .pos(75, 50)
@@ -901,15 +975,15 @@ public class StockMonitorTerminalGui {
             new TextWidget<>(
                 IKey.dynamic(
                     () -> "ENERGY".equals(typeSync.getValue())
-                        ? EnumChatFormatting.YELLOW
-                            + StatCollector.translateToLocal("ae2_qof.terminal.energy_readonly")
+                        ? EnumChatFormatting.YELLOW + StatCollector.translateToLocal("ae2_qof.terminal.energy_readonly")
                         : "")).pos(10, 72)
                             .size(EDIT_PANEL_W - 20, 10));
 
         InteractionSyncHandler closeBtn = new InteractionSyncHandler()
             .setOnMousePressed(mouse -> panelHandler.closePanel());
         edit.child(
-            new ButtonWidget<>().pos(10, 100).size(60, 18)
+            new ButtonWidget<>().pos(10, 100)
+                .size(60, 18)
                 .background(GuiTextures.BUTTON_CLEAN)
                 .overlay(IKey.lang("ae2_qof.gui.stock_monitor.close"))
                 .syncHandler(closeBtn));
@@ -977,7 +1051,8 @@ public class StockMonitorTerminalGui {
     /**
      * 行快照的**值语义**栈标识。
      *
-     * <p>为什么必须有它：{@code ItemStack} 没有值语义的 equals/hashCode（用的是对象身份），
+     * <p>
+     * 为什么必须有它：{@code ItemStack} 没有值语义的 equals/hashCode（用的是对象身份），
      * 直接参与行比较会让 {@code detectAndSendChanges} 每 tick 都判定"行变了"⇒ 持续发包，
      * 违反本项目的性能红线（列表 20 tick 节流 + 无变化不发包）。
      */
@@ -985,7 +1060,9 @@ public class StockMonitorTerminalGui {
         if (stack == null || stack.getItem() == null) return "";
         Object regName = net.minecraft.item.Item.itemRegistry.getNameForObject(stack.getItem());
         net.minecraft.nbt.NBTTagCompound tag = stack.getTagCompound();
-        return (regName == null ? "?" : regName.toString()) + ":" + stack.getItemDamage() + ":"
+        return (regName == null ? "?" : regName.toString()) + ":"
+            + stack.getItemDamage()
+            + ":"
             + (tag == null ? "" : Integer.toHexString(tag.hashCode()));
     }
 
@@ -1000,7 +1077,9 @@ public class StockMonitorTerminalGui {
             }
             if (config instanceof IAEFluidStack) {
                 FluidStack fs = ((IAEFluidStack) config).getFluidStack();
-                return "1:" + (fs == null || fs.getFluid() == null ? "" : fs.getFluid().getName());
+                return "1:" + (fs == null || fs.getFluid() == null ? ""
+                    : fs.getFluid()
+                        .getName());
             }
         } catch (Throwable ignored) {}
         return "2:";
@@ -1029,10 +1108,11 @@ public class StockMonitorTerminalGui {
         private List<T> rows = Collections.emptyList();
 
         List<T> get(gregtech.api.interfaces.tileentity.IGregTechTileEntity base,
-                java.util.function.Supplier<List<T>> compute) {
+            java.util.function.Supplier<List<T>> compute) {
             long now = 0L;
             try {
-                if (base != null && base.getWorld() != null) now = base.getWorld().getTotalWorldTime();
+                if (base != null && base.getWorld() != null) now = base.getWorld()
+                    .getTotalWorldTime();
             } catch (Throwable ignored) {}
             if (now - lastTick < LIST_REFRESH_INTERVAL) return rows;
             lastTick = now;
@@ -1064,7 +1144,7 @@ public class StockMonitorTerminalGui {
         final transient PartLevelEmitter emitter;
 
         private EmitterRow(int index, ItemStack icon, String fluidName, String typeName, long threshold,
-                boolean positioned, int dim, int x, int y, int z, PartLevelEmitter emitter) {
+            boolean positioned, int dim, int x, int y, int z, PartLevelEmitter emitter) {
             this.index = index;
             this.icon = icon;
             this.fluidName = fluidName == null ? "" : fluidName;
@@ -1106,7 +1186,8 @@ public class StockMonitorTerminalGui {
                     }
                 } else if (config instanceof IAEFluidStack) {
                     FluidStack fs = ((IAEFluidStack) config).getFluidStack();
-                    if (fs != null && fs.getFluid() != null) fluidName = fs.getFluid().getName();
+                    if (fs != null && fs.getFluid() != null) fluidName = fs.getFluid()
+                        .getName();
                 }
             } catch (Throwable ignored) {}
             return new EmitterRow(index, icon, fluidName, typeName, threshold, positioned, dim, x, y, z, emitter);
@@ -1135,9 +1216,18 @@ public class StockMonitorTerminalGui {
         }
 
         static EmitterRow read(PacketBuffer buf) throws IOException {
-            return new EmitterRow(buf.readInt(), ByteBufUtils.readItemStack(buf), ByteBufUtils.readUTF8String(buf),
-                ByteBufUtils.readUTF8String(buf), buf.readLong(), buf.readBoolean(), buf.readInt(), buf.readInt(),
-                buf.readInt(), buf.readInt(), null);
+            return new EmitterRow(
+                buf.readInt(),
+                ByteBufUtils.readItemStack(buf),
+                ByteBufUtils.readUTF8String(buf),
+                ByteBufUtils.readUTF8String(buf),
+                buf.readLong(),
+                buf.readBoolean(),
+                buf.readInt(),
+                buf.readInt(),
+                buf.readInt(),
+                buf.readInt(),
+                null);
         }
 
         // 值语义 equals/hashCode：列表内容不变时不应触发同步与重建。
@@ -1195,8 +1285,8 @@ public class StockMonitorTerminalGui {
         /** 仅服务端非 null。 */
         final transient CoverEntry entry;
 
-        CoverRow(int index, int dim, int x, int y, int z, int side, String targetName, ItemStack icon,
-                String fluidName, int slotIndex, boolean online, int modeOrdinal, long threshold, CoverEntry entry) {
+        CoverRow(int index, int dim, int x, int y, int z, int side, String targetName, ItemStack icon, String fluidName,
+            int slotIndex, boolean online, int modeOrdinal, long threshold, CoverEntry entry) {
             this.index = index;
             this.dim = dim;
             this.x = x;
@@ -1243,8 +1333,21 @@ public class StockMonitorTerminalGui {
             boolean online = buf.readBoolean();
             int modeOrdinal = buf.readInt();
             long threshold = buf.readLong();
-            return new CoverRow(index, dim, x, y, z, side, targetName, icon, fluidName, slotIndex, online, modeOrdinal,
-                threshold, null);
+            return new CoverRow(
+                index,
+                dim,
+                x,
+                y,
+                z,
+                side,
+                targetName,
+                icon,
+                fluidName,
+                slotIndex,
+                online,
+                modeOrdinal,
+                threshold,
+                null);
         }
 
         @Override
@@ -1252,7 +1355,11 @@ public class StockMonitorTerminalGui {
             if (this == o) return true;
             if (!(o instanceof CoverRow)) return false;
             CoverRow r = (CoverRow) o;
-            return index == r.index && dim == r.dim && x == r.x && y == r.y && z == r.z && side == r.side
+            return index == r.index && dim == r.dim
+                && x == r.x
+                && y == r.y
+                && z == r.z
+                && side == r.side
                 && slotIndex == r.slotIndex
                 && online == r.online
                 && modeOrdinal == r.modeOrdinal
@@ -1289,7 +1396,8 @@ public class StockMonitorTerminalGui {
     /**
      * 类型中文名（行内与编辑面板共用）。
      *
-     * <p>**必须用前缀匹配**：GTNH 这条 AE2 线上 `LevelType` 的常量是 {@code ITEM_LEVEL} /
+     * <p>
+     * **必须用前缀匹配**：GTNH 这条 AE2 线上 `LevelType` 的常量是 {@code ITEM_LEVEL} /
      * {@code ENERGY_LEVEL}（根本没有 {@code ITEM}/{@code FLUID}/{@code ENERGY}），
      * 3.21.0 用等值比较 ⇒ 永远落到"未知"（已用实例 jar `javap` 核对）。
      */
@@ -1309,7 +1417,8 @@ public class StockMonitorTerminalGui {
 
     private static String levelTypeName(PartLevelEmitter emitter) {
         try {
-            Object type = emitter.getConfigManager().getSetting(Settings.LEVEL_TYPE);
+            Object type = emitter.getConfigManager()
+                .getSetting(Settings.LEVEL_TYPE);
             if (type instanceof LevelType) return ((LevelType) type).name();
         } catch (Throwable ignored) {}
         return "";
@@ -1322,8 +1431,7 @@ public class StockMonitorTerminalGui {
             if (!world.blockExists(entry.x, entry.y, entry.z)) return null;
             TileEntity te = world.getTileEntity(entry.x, entry.y, entry.z);
             if (te instanceof gregtech.api.interfaces.tileentity.ICoverable) {
-                gregtech.api.interfaces.tileentity.ICoverable coverable =
-                    (gregtech.api.interfaces.tileentity.ICoverable) te;
+                gregtech.api.interfaces.tileentity.ICoverable coverable = (gregtech.api.interfaces.tileentity.ICoverable) te;
                 ForgeDirection side = ForgeDirection.values()[entry.side];
                 Object cover = coverable.getCoverAtSide(side);
                 if (cover instanceof StockMonitorCover) {

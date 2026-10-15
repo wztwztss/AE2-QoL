@@ -6,22 +6,22 @@
  */
 package com.wztwzt.ae2_qof.wildport.item;
 
-import com.wztwzt.ae2_qof.wildport.WildportIds;
-
-import com.wztwzt.ae2_qof.MyMod;
-
 import java.util.List;
 
-import appeng.api.networking.crafting.ICraftingPatternDetails;
-import appeng.items.misc.ItemEncodedPattern;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import com.wztwzt.ae2_qof.wildport.crafting.WildcardPatternGenerator;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
+
+import com.wztwzt.ae2_qof.MyMod;
+import com.wztwzt.ae2_qof.wildport.WildportIds;
+import com.wztwzt.ae2_qof.wildport.crafting.WildcardPatternGenerator;
+
+import appeng.api.networking.crafting.ICraftingPatternDetails;
+import appeng.items.misc.ItemEncodedPattern;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 
 public class ItemWildcardPattern extends ItemEncodedPattern {
 
@@ -45,29 +45,14 @@ public class ItemWildcardPattern extends ItemEncodedPattern {
     public ItemStack onItemRightClick(ItemStack stack, World world, EntityPlayer player) {
         WildcardPatternGenerator.markAsWildcard(stack);
         if (!world.isRemote) {
-            player.openGui(
-                MyMod.instance,
-                WildportIds.GUI_WILDCARD_PATTERN,
-                world,
-                player.inventory.currentItem,
-                0,
-                0);
+            player.openGui(MyMod.instance, WildportIds.GUI_WILDCARD_PATTERN, world, player.inventory.currentItem, 0, 0);
         }
         return stack;
     }
 
     @Override
-    public boolean onItemUseFirst(
-        ItemStack stack,
-        EntityPlayer player,
-        World world,
-        int x,
-        int y,
-        int z,
-        int side,
-        float hitX,
-        float hitY,
-        float hitZ) {
+    public boolean onItemUseFirst(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side,
+        float hitX, float hitY, float hitZ) {
         WildcardPatternGenerator.markAsWildcard(stack);
         return false;
     }
@@ -87,10 +72,7 @@ public class ItemWildcardPattern extends ItemEncodedPattern {
 
     @Override
     @SideOnly(Side.CLIENT)
-    public void addCheckedInformation(
-        ItemStack stack,
-        EntityPlayer player,
-        List<String> lines,
+    public void addCheckedInformation(ItemStack stack, EntityPlayer player, List<String> lines,
         boolean advancedTooltips) {
         if (!WildcardPatternGenerator.isWildcardPattern(stack)) {
             WildcardPatternGenerator.markAsWildcard(stack);

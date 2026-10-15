@@ -5,10 +5,7 @@
  */
 package com.wztwzt.ae2_qof.apgport.network;
 
-import com.wztwzt.ae2_qof.MyMod;
-
 import java.util.List;
-import java.util.UUID;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
@@ -17,7 +14,6 @@ import net.minecraft.util.EnumChatFormatting;
 
 import com.wztwzt.ae2_qof.apgport.encoder.PatternEncoder;
 import com.wztwzt.ae2_qof.apgport.recipe.RecipeEntry;
-import com.wztwzt.ae2_qof.apgport.storage.PatternStorage;
 import com.wztwzt.ae2_qof.apgport.util.AE2Util;
 import com.wztwzt.ae2_qof.apgport.util.I18nUtil;
 import com.wztwzt.ae2_qof.apgport.util.InventoryUtil;
@@ -38,11 +34,11 @@ public final class PatternGenerationService {
         // ===== 3.29.0（AE2-QoL 的适配改动，文件头已注明来源）=====
         // 搬运来的是它的原行为：**扣掉 AE2 空白样板** + 写入它自己的**虚拟仓储**（PatternStorage），
         // 产物并不直接给玩家。本模组要的是"产物仍进背包"，所以这里改成：
-        //   ① 编码仍用搬运来的 PatternEncoder（与我们 SmartPatternGenerator 的编码语义一致：
-        //      in/out + crafting=false + 同时写 Count/Cnt）；
-        //   ② **不再消耗空白样板**（我们的生成器一直是不消耗的，行为保持一致）；
-        //   ③ 产物**直接进背包**，放不下掉在脚下；
-        //   ④ 聊天栏 + 日志给出**全量计数**（本项目铁则：不许静默）。
+        // ① 编码仍用搬运来的 PatternEncoder（与我们 SmartPatternGenerator 的编码语义一致：
+        // in/out + crafting=false + 同时写 Count/Cnt）；
+        // ② **不再消耗空白样板**（我们的生成器一直是不消耗的，行为保持一致）；
+        // ③ 产物**直接进背包**，放不下掉在脚下；
+        // ④ 聊天栏 + 日志给出**全量计数**（本项目铁则：不许静默）。
         List<ItemStack> patterns = PatternEncoder.encodeBatch(recipes);
         if (patterns.isEmpty()) {
             send(player, EnumChatFormatting.YELLOW, "ae2patterngen.msg.pattern.no_valid_after_encode");
@@ -72,7 +68,9 @@ public final class PatternGenerationService {
             new net.minecraft.util.ChatComponentText(
                 "\u00a7a[AE2QoL] \u5df2\u751f\u6210 " + stored
                     + " \u5f20\u6837\u677f"
-                    + (dropped > 0 ? "\uff08\u80cc\u5305\u6ee1\uff0c" + dropped + " \u5f20\u6389\u5728\u811a\u4e0b\uff09" : "")
+                    + (dropped > 0
+                        ? "\uff08\u80cc\u5305\u6ee1\uff0c" + dropped + " \u5f20\u6389\u5728\u811a\u4e0b\uff09"
+                        : "")
                     + "\uff08\u672a\u6d88\u8017\u7a7a\u767d\u6837\u677f\uff09"));
         return true;
     }

@@ -11,6 +11,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.StatCollector;
+import net.minecraftforge.oredict.OreDictionary;
+
 import com.gtnewhorizons.modularui.api.ModularUITextures;
 import com.gtnewhorizons.modularui.api.drawable.IDrawable;
 import com.gtnewhorizons.modularui.api.drawable.Text;
@@ -23,7 +30,6 @@ import com.gtnewhorizons.modularui.common.widget.ButtonWidget;
 import com.gtnewhorizons.modularui.common.widget.DrawableWidget;
 import com.gtnewhorizons.modularui.common.widget.TextWidget;
 import com.gtnewhorizons.modularui.common.widget.textfield.TextFieldWidget;
-
 import com.wztwzt.ae2_qof.wildport.compat.GTCompat;
 import com.wztwzt.ae2_qof.wildport.compat.NechSearchCompat;
 import com.wztwzt.ae2_qof.wildport.crafting.WildcardPatternEntry;
@@ -32,15 +38,10 @@ import com.wztwzt.ae2_qof.wildport.item.WildcardPatternConfig;
 import com.wztwzt.ae2_qof.wildport.item.WildcardPatternState;
 import com.wztwzt.ae2_qof.wildport.network.MessageUpdateWildcardConfig;
 import com.wztwzt.ae2_qof.wildport.network.WildcardNetwork;
+
 import cpw.mods.fml.common.registry.GameRegistry;
 import gregtech.api.objects.ItemData;
 import gregtech.api.util.GTOreDictUnificator;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.StatCollector;
-import net.minecraftforge.oredict.OreDictionary;
 
 public final class WildcardPatternWindow {
 
@@ -77,12 +78,14 @@ public final class WildcardPatternWindow {
     /**
      * 当前打开的 Wild 窗口（3.34.0）。
      *
-     * <p>为什么需要：NEI 加号必须**就地**把推导结果写进这个窗口的内存态。旧实现只发了个包 + 聊天栏
+     * <p>
+     * 为什么需要：NEI 加号必须**就地**把推导结果写进这个窗口的内存态。旧实现只发了个包 + 聊天栏
      * "关掉重开"，于是 (a) 界面当场看不到任何变化，(b) 窗口内存态还是旧的，用户随后保存/关闭时
      * 用旧内存态把刚写进去的规则**覆盖成 0 条**（3.33.0 日志指纹：14:57:30 写回 rules=1 → 14:57:32
      * 窗口保存触发拉回得到"规则 0 条"）。
      *
-     * <p>只在客户端登记（服务端线程同样会构建窗口；SP 下两者同 JVM，不隔离就会互相覆盖）。
+     * <p>
+     * 只在客户端登记（服务端线程同样会构建窗口；SP 下两者同 JVM，不隔离就会互相覆盖）。
      */
     private static WindowState ACTIVE_STATE;
     private static ModularWindow ACTIVE_WINDOW;
@@ -115,8 +118,7 @@ public final class WildcardPatternWindow {
      *
      * @return true = 本窗口接收并处理了（调用方不要再走"发个包让用户关掉重开"的旧路径）
      */
-    public static boolean applyDerivedFromNei(
-        ModularWindow window,
+    public static boolean applyDerivedFromNei(ModularWindow window,
         com.wztwzt.ae2_qof.client.SmartWildcardRecipeDeriver.Result derived) {
         if (window == null || derived == null || !derived.ok) return false;
         WindowState state = ACTIVE_STATE;
@@ -124,8 +126,7 @@ public final class WildcardPatternWindow {
         try {
             ItemStack held = state.getHeldStack();
             if (!com.wztwzt.ae2_qof.wildcard.SmartWildcardGate.isOurs(held)) {
-                com.wztwzt.ae2_qof.MyMod.LOG
-                    .warn("[AE2QoL] NEI 加号：槽位 {} 里不是我们的通配样板，未写入", state.slot);
+                com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] NEI 加号：槽位 {} 里不是我们的通配样板，未写入", state.slot);
                 return false;
             }
             // ① 借用桥的 NBT 往返把"我们的状态"翻成"Wild 的 entry 列表"，再整页替换界面内存行
@@ -135,11 +136,15 @@ public final class WildcardPatternWindow {
             NBTTagCompound tmpTag = tmp.getTagCompound();
             if (tmpTag != null) {
                 if (derived.templateIn != null && !derived.templateIn.isEmpty()) {
-                    tmpTag.setTag("in", com.wztwzt.ae2_qof.network.SmartWildcardRulesPacket.buildList(derived.templateIn));
+                    tmpTag.setTag(
+                        "in",
+                        com.wztwzt.ae2_qof.network.SmartWildcardRulesPacket.buildList(derived.templateIn));
                     tmpTag.setBoolean("crafting", false);
                 }
                 if (derived.templateOut != null && !derived.templateOut.isEmpty()) {
-                    tmpTag.setTag("out", com.wztwzt.ae2_qof.network.SmartWildcardRulesPacket.buildList(derived.templateOut));
+                    tmpTag.setTag(
+                        "out",
+                        com.wztwzt.ae2_qof.network.SmartWildcardRulesPacket.buildList(derived.templateOut));
                 }
             }
             com.wztwzt.ae2_qof.wildport.bridge.WildcardBridge.pushToWild(tmp, ours);
@@ -159,11 +164,10 @@ public final class WildcardPatternWindow {
                     state.slot));
             // ③ Wild 自己的键也写一遍（服务端侧由 MessageUpdateWildcardConfig 应用并同步我们的子树）
             state.save();
-            com.wztwzt.ae2_qof.MyMod.LOG.info(
-                "[AE2QoL] NEI 加号：已就地把推导结果写进 Wild 窗口（槽位 {}，{}）",
-                state.slot,
-                derived.summary);
-            state.chat("\u00a7a[AE2QoL] \u5df2\u6309 NEI \u914d\u65b9\u586b\u5165\u754c\u9762\u5e76\u5199\u56de\u6837\u677f");
+            com.wztwzt.ae2_qof.MyMod.LOG
+                .info("[AE2QoL] NEI 加号：已就地把推导结果写进 Wild 窗口（槽位 {}，{}）", state.slot, derived.summary);
+            state.chat(
+                "\u00a7a[AE2QoL] \u5df2\u6309 NEI \u914d\u65b9\u586b\u5165\u754c\u9762\u5e76\u5199\u56de\u6837\u677f");
             return true;
         } catch (Throwable t) {
             com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] NEI 加号就地写入失败（回退到旧路径）", t);
@@ -174,7 +178,8 @@ public final class WildcardPatternWindow {
     /**
      * 3.34.0：**电路页**（用户拍板：电路从底部带改为独立页；1~24 按 4 列 × 6 行重排）。
      *
-     * <p>数据仍写进**我们自己的**子树（{@code SmartWildcardState.circuit}），走既有
+     * <p>
+     * 数据仍写进**我们自己的**子树（{@code SmartWildcardState.circuit}），走既有
      * {@code SmartWildcardRulesPacket}（带槽位）整包发回服务端，**不新增包、不新增通道**。
      * 点完当场高亮（按钮背景 supplier 读实时状态）——不再是"关掉重开才能看到"。
      */
@@ -184,11 +189,13 @@ public final class WildcardPatternWindow {
 
         TextWidget title = new TextWidget("");
         title.setPos(18, 38);
-        title.setStringSupplier(() -> EnumChatFormatting.BLACK + tr("gui.wildcardpattern.circuit_title") + "："
-            + tr("gui.wildcardpattern.circuit_current")
-            + " = "
-            + (state.currentCircuit() >= 1 ? String.valueOf(state.currentCircuit())
-                : tr("gui.wildcardpattern.circuit_inherit")));
+        title.setStringSupplier(
+            () -> EnumChatFormatting.BLACK + tr("gui.wildcardpattern.circuit_title")
+                + "："
+                + tr("gui.wildcardpattern.circuit_current")
+                + " = "
+                + (state.currentCircuit() >= 1 ? String.valueOf(state.currentCircuit())
+                    : tr("gui.wildcardpattern.circuit_inherit")));
         addCircuitWidget(builder, state, title);
 
         TextWidget tip1 = new TextWidget("");
@@ -231,7 +238,8 @@ public final class WildcardPatternWindow {
     /**
      * 3.34.0：**不消耗物品页**（用户拍板：NEI 拖入 + 手持加入 + 逐行删除 + 即时写回，全部都要）。
      *
-     * <p>拖动接入用的是搬进来的 Wild 自带控件 {@code WildcardFilterDropTextField}（它本就是为
+     * <p>
+     * 拖动接入用的是搬进来的 Wild 自带控件 {@code WildcardFilterDropTextField}（它本就是为
      * GTNH-MUI 窗口写的 NEI 拖放接收器）；本模组另一个 {@code SmartWildcardNeiDragHandler} 只服务
      * Cleanroom MUI2 的那个编辑器，对本窗口**不生效**，所以不能复用。
      */
@@ -242,7 +250,8 @@ public final class WildcardPatternWindow {
         TextWidget title = new TextWidget("");
         title.setPos(18, 38);
         title.setStringSupplier(
-            () -> EnumChatFormatting.BLACK + tr("gui.wildcardpattern.nonconsumed_title") + "（"
+            () -> EnumChatFormatting.BLACK + tr("gui.wildcardpattern.nonconsumed_title")
+                + "（"
                 + state.getNonConsumedCount()
                 + "）");
         addNonConsumedWidget(builder, state, title);
@@ -282,8 +291,7 @@ public final class WildcardPatternWindow {
             icon.setPos(18, rowY);
             icon.setSize(16, 16);
             icon.setDrawable(
-                new com.gtnewhorizons.modularui.api.drawable.ItemDrawable(
-                    () -> state.getNonConsumedRow(lineIndex)));
+                new com.gtnewhorizons.modularui.api.drawable.ItemDrawable(() -> state.getNonConsumedRow(lineIndex)));
             addNonConsumedWidget(builder, state, icon);
 
             TextWidget name = new TextWidget("");
@@ -292,9 +300,8 @@ public final class WildcardPatternWindow {
             name.setStringSupplier(() -> {
                 ItemStack stack = state.getNonConsumedRow(lineIndex);
                 return stack == null ? ""
-                    : EnumChatFormatting.BLACK + trim(
-                        stack.getDisplayName() + (stack.stackSize > 1 ? " x" + stack.stackSize : ""),
-                        40);
+                    : EnumChatFormatting.BLACK
+                        + trim(stack.getDisplayName() + (stack.stackSize > 1 ? " x" + stack.stackSize : ""), 40);
             });
             addNonConsumedWidget(builder, state, name);
 
@@ -311,23 +318,25 @@ public final class WildcardPatternWindow {
         ButtonWidget prev = button("<");
         prev.setPos(18, 252);
         prev.setSize(34, 17);
-        prev.setOnClick((clickData, widget) -> {
-            if (state.nonConsumedPageIndex > 0) state.nonConsumedPageIndex--;
-        });
+        prev.setOnClick((clickData, widget) -> { if (state.nonConsumedPageIndex > 0) state.nonConsumedPageIndex--; });
         addNonConsumedWidget(builder, state, prev);
 
         TextWidget page = new TextWidget("");
         page.setPos(58, 256);
-        page.setStringSupplier(() -> EnumChatFormatting.BLACK + StatCollector
-            .translateToLocalFormatted("gui.wildcardpattern.page", state.nonConsumedPageIndex + 1, state.getNonConsumedPageCount()));
+        page.setStringSupplier(
+            () -> EnumChatFormatting.BLACK + StatCollector.translateToLocalFormatted(
+                "gui.wildcardpattern.page",
+                state.nonConsumedPageIndex + 1,
+                state.getNonConsumedPageCount()));
         addNonConsumedWidget(builder, state, page);
 
         ButtonWidget next = button(">");
         next.setPos(110, 252);
         next.setSize(34, 17);
-        next.setOnClick((clickData, widget) -> {
-            if (state.nonConsumedPageIndex + 1 < state.getNonConsumedPageCount()) state.nonConsumedPageIndex++;
-        });
+        next.setOnClick(
+            (clickData, widget) -> {
+                if (state.nonConsumedPageIndex + 1 < state.getNonConsumedPageCount()) state.nonConsumedPageIndex++;
+            });
         addNonConsumedWidget(builder, state, next);
 
         ButtonWidget back = button("gui.wildcardpattern.back");
@@ -340,7 +349,10 @@ public final class WildcardPatternWindow {
     /** 顶部右侧页签条（用户拍板：不放主页底部，改放窗口顶部右侧三个小按钮）。 */
     private static void addPageTabs(ModularWindow.Builder builder, WindowState state) {
         ButtonWidget home = button(
-            () -> buttonBackground(!state.circuitPage && !state.nonConsumedPage, tr("gui.wildcardpattern.tab_home"), BUTTON_TEXT_COLOR));
+            () -> buttonBackground(
+                !state.circuitPage && !state.nonConsumedPage,
+                tr("gui.wildcardpattern.tab_home"),
+                BUTTON_TEXT_COLOR));
         home.setPos(298, 5);
         home.setSize(46, 16);
         home.setOnClick((clickData, widget) -> state.closeExtraPages());
@@ -354,7 +366,10 @@ public final class WildcardPatternWindow {
         builder.widget(circuit);
 
         ButtonWidget nonConsumed = button(
-            () -> buttonBackground(state.nonConsumedPage, tr("gui.wildcardpattern.tab_nonconsumed"), BUTTON_TEXT_COLOR));
+            () -> buttonBackground(
+                state.nonConsumedPage,
+                tr("gui.wildcardpattern.tab_nonconsumed"),
+                BUTTON_TEXT_COLOR));
         nonConsumed.setPos(398, 5);
         nonConsumed.setSize(52, 16);
         nonConsumed.setOnClick((clickData, widget) -> state.openNonConsumedPage());
@@ -373,28 +388,30 @@ public final class WildcardPatternWindow {
         TextWidget title = new TextWidget("");
         title.setPos(10, 9);
         title.setScale(0.95f);
-        title.setStringSupplier(() -> EnumChatFormatting.BLACK + "" + EnumChatFormatting.BOLD
-            + tr(state.circuitPage ? "gui.wildcardpattern.circuit_title"
-                : state.nonConsumedPage ? "gui.wildcardpattern.nonconsumed_title"
-                    : state.dedupePage
-                        ? "gui.wildcardpattern.dedupe_page"
-                        : state.excludePage
-                            ? "gui.wildcardpattern.exclude_page"
-                            : state.previewPage ? "gui.wildcardpattern.preview_page" : "gui.wildcardpattern.title"));
+        title.setStringSupplier(
+            () -> EnumChatFormatting.BLACK + ""
+                + EnumChatFormatting.BOLD
+                + tr(
+                    state.circuitPage ? "gui.wildcardpattern.circuit_title"
+                        : state.nonConsumedPage ? "gui.wildcardpattern.nonconsumed_title"
+                            : state.dedupePage ? "gui.wildcardpattern.dedupe_page"
+                                : state.excludePage ? "gui.wildcardpattern.exclude_page"
+                                    : state.previewPage ? "gui.wildcardpattern.preview_page"
+                                        : "gui.wildcardpattern.title"));
         builder.widget(title);
 
         TextWidget hint = new TextWidget("");
         // 3.34.0：宽度收到 160 —— 右上角要留给三个页签按钮（298 / 348 / 398）
         hint.setPos(132, 11);
         hint.setSize(160, 10);
-        hint.setStringSupplier(() -> EnumChatFormatting.DARK_GRAY
-            + tr(state.circuitPage ? "gui.wildcardpattern.circuit_hint"
-                : state.nonConsumedPage ? "gui.wildcardpattern.nonconsumed_hint"
-                    : state.dedupePage
-                        ? "gui.wildcardpattern.dedupe_hint"
-                        : state.excludePage
-                            ? "gui.wildcardpattern.exclude_hint"
-                            : state.previewPage ? "gui.wildcardpattern.preview_hint" : "gui.wildcardpattern.drag_hint"));
+        hint.setStringSupplier(
+            () -> EnumChatFormatting.DARK_GRAY + tr(
+                state.circuitPage ? "gui.wildcardpattern.circuit_hint"
+                    : state.nonConsumedPage ? "gui.wildcardpattern.nonconsumed_hint"
+                        : state.dedupePage ? "gui.wildcardpattern.dedupe_hint"
+                            : state.excludePage ? "gui.wildcardpattern.exclude_hint"
+                                : state.previewPage ? "gui.wildcardpattern.preview_hint"
+                                    : "gui.wildcardpattern.drag_hint"));
         builder.widget(hint);
     }
 
@@ -445,7 +462,8 @@ public final class WildcardPatternWindow {
         save.setSize(68, 18);
         save.setOnClick((clickData, widget) -> {
             state.save();
-            widget.getWindow().closeWindow();
+            widget.getWindow()
+                .closeWindow();
         });
         addMainWidget(builder, state, save);
     }
@@ -461,13 +479,8 @@ public final class WildcardPatternWindow {
         addMainText(builder, state, EnumChatFormatting.DARK_GRAY + tr("gui.wildcardpattern.actions"), x + 302, y);
     }
 
-    private static void addRuleRow(
-        ModularWindow.Builder builder,
-        WindowState state,
-        List<EntryCellRefs> refs,
-        int row,
-        int x,
-        int y) {
+    private static void addRuleRow(ModularWindow.Builder builder, WindowState state, List<EntryCellRefs> refs, int row,
+        int x, int y) {
         addMainText(builder, state, EnumChatFormatting.DARK_GRAY + String.valueOf(row + 1), x + 4, y + 4);
 
         EntryCellRefs input = addEntryCell(builder, state, state.inputs, row, x + 22, y);
@@ -530,13 +543,8 @@ public final class WildcardPatternWindow {
         addMainWidget(builder, state, clear);
     }
 
-    private static EntryCellRefs addEntryCell(
-        ModularWindow.Builder builder,
-        WindowState state,
-        List<WildcardPatternEntry> entries,
-        int index,
-        int x,
-        int y) {
+    private static EntryCellRefs addEntryCell(ModularWindow.Builder builder, WindowState state,
+        List<WildcardPatternEntry> entries, int index, int x, int y) {
         final boolean[] suppressNextSetter = { false };
         final WildcardEntryDropTextField[] textRef = new WildcardEntryDropTextField[1];
         WildcardEntryDropTextField text = new WildcardEntryDropTextField(stack -> {
@@ -572,7 +580,13 @@ public final class WildcardPatternWindow {
             }
             state.refreshActivePage();
         });
-        text.setText(entries.get(index).isEmpty() ? "" : trim(entries.get(index).getLabel(), 11));
+        text.setText(
+            entries.get(index)
+                .isEmpty() ? ""
+                    : trim(
+                        entries.get(index)
+                            .getLabel(),
+                        11));
         text.setTextColor(FIELD_TEXT_COLOR);
         text.setBackground(WildcardPatternWindow::fieldBackground);
         text.setTextAlignment(Alignment.CenterLeft);
@@ -583,8 +597,11 @@ public final class WildcardPatternWindow {
 
         ButtonWidget mode = button(
             () -> buttonBackground(
-                entries.get(index).isOreDict(),
-                tr(entries.get(index).isOreDict() ? "gui.wildcardpattern.mode_oredict" : "gui.wildcardpattern.mode_name"),
+                entries.get(index)
+                    .isOreDict(),
+                tr(
+                    entries.get(index)
+                        .isOreDict() ? "gui.wildcardpattern.mode_oredict" : "gui.wildcardpattern.mode_name"),
                 BUTTON_TEXT_COLOR));
         mode.setPos(x + ENTRY_MODE_X, y);
         mode.setSize(ENTRY_MODE_WIDTH, 16);
@@ -598,10 +615,14 @@ public final class WildcardPatternWindow {
         TextFieldWidget amount = new TextFieldWidget();
         amount.setSynced(false, false);
         amount.setSetter(value -> {
-            entries.get(index).setAmount(parseAmount(value));
+            entries.get(index)
+                .setAmount(parseAmount(value));
             state.refreshActivePage();
         });
-        amount.setText(formatAmount(entries.get(index).getAmountLong()));
+        amount.setText(
+            formatAmount(
+                entries.get(index)
+                    .getAmountLong()));
         amount.setTextColor(FIELD_TEXT_COLOR);
         amount.setBackground(WildcardPatternWindow::fieldBackground);
         amount.setTextAlignment(Alignment.Center);
@@ -610,15 +631,16 @@ public final class WildcardPatternWindow {
         amount.setSize(ENTRY_AMOUNT_WIDTH, 16);
         addMainWidget(builder, state, amount);
 
-        return new EntryCellRefs(text, amount, () -> formatAmount(entries.get(index).getAmountLong()));
+        return new EntryCellRefs(
+            text,
+            amount,
+            () -> formatAmount(
+                entries.get(index)
+                    .getAmountLong()));
     }
 
-    private static void switchEntryMode(
-        List<WildcardPatternEntry> entries,
-        int index,
-        WildcardEntryDropTextField text,
-        WindowState state,
-        boolean[] suppressNextSetter) {
+    private static void switchEntryMode(List<WildcardPatternEntry> entries, int index, WildcardEntryDropTextField text,
+        WindowState state, boolean[] suppressNextSetter) {
         WildcardPatternEntry entry = entries.get(index);
         if (entry.isOreDict()) {
             entry.convertToItem();
@@ -633,7 +655,12 @@ public final class WildcardPatternWindow {
 
     private static void addGlobalExclude(ModularWindow.Builder builder, WindowState state, int x, int y) {
         addPanel(builder, state, x, y, 148, 40, false);
-        addMainText(builder, state, EnumChatFormatting.BLACK + tr("gui.wildcardpattern.global_exclude"), x + 12, y + 10);
+        addMainText(
+            builder,
+            state,
+            EnumChatFormatting.BLACK + tr("gui.wildcardpattern.global_exclude"),
+            x + 12,
+            y + 10);
         TextWidget summary = new TextWidget("");
         summary.setPos(x + 12, y + 24);
         summary.setScale(0.72f);
@@ -651,13 +678,15 @@ public final class WildcardPatternWindow {
         addPanel(builder, state, x, y, 138, 40, false);
         TextWidget label = new TextWidget("");
         label.setPos(x + 8, y + 10);
-        label.setStringSupplier(() -> EnumChatFormatting.BLACK
-            + StatCollector.translateToLocalFormatted("gui.wildcardpattern.rule_exclude", state.selectedRule + 1));
+        label.setStringSupplier(
+            () -> EnumChatFormatting.BLACK
+                + StatCollector.translateToLocalFormatted("gui.wildcardpattern.rule_exclude", state.selectedRule + 1));
         addMainWidget(builder, state, label);
         TextWidget summary = new TextWidget("");
         summary.setPos(x + 8, y + 24);
         summary.setScale(0.72f);
-        summary.setStringSupplier(() -> EnumChatFormatting.DARK_GRAY + trim(state.getExcludeSummary(state.selectedRule), 23));
+        summary.setStringSupplier(
+            () -> EnumChatFormatting.DARK_GRAY + trim(state.getExcludeSummary(state.selectedRule), 23));
         addMainWidget(builder, state, summary);
 
         ButtonWidget edit = button("gui.wildcardpattern.exclude_short");
@@ -717,8 +746,7 @@ public final class WildcardPatternWindow {
             excludeSummary.setPos(226, 62);
             excludeSummary.setScale(0.72f);
             excludeSummary.setStringSupplier(
-                () -> EnumChatFormatting.DARK_GRAY
-                    + tr("gui.wildcardpattern.exclude_short")
+                () -> EnumChatFormatting.DARK_GRAY + tr("gui.wildcardpattern.exclude_short")
                     + ": "
                     + trim(state.getExcludeSummary(state.previewRule), 18));
             addPreviewWidget(builder, state, excludeSummary);
@@ -759,8 +787,8 @@ public final class WildcardPatternWindow {
 
         TextWidget page = new TextWidget("");
         page.setPos(228, 268);
-        page.setStringSupplier(() -> EnumChatFormatting.BLACK
-            + StatCollector.translateToLocalFormatted(
+        page.setStringSupplier(
+            () -> EnumChatFormatting.BLACK + StatCollector.translateToLocalFormatted(
                 "gui.wildcardpattern.page",
                 Integer.valueOf(state.previewPageIndex + 1),
                 Integer.valueOf(Math.max(1, state.getPreviewPageCount()))));
@@ -796,8 +824,8 @@ public final class WildcardPatternWindow {
         tip2.setStringSupplier(() -> EnumChatFormatting.DARK_GRAY + tr("gui.wildcardpattern.exclude_tip2"));
         addExcludeWidget(builder, state, tip2);
 
-        TextFieldWidget field = new WildcardFilterDropTextField(value -> state.excludeDraft = value == null ? "" : value)
-            .setOnEnter(state::addCurrentExcludeDraft);
+        TextFieldWidget field = new WildcardFilterDropTextField(
+            value -> state.excludeDraft = value == null ? "" : value).setOnEnter(state::addCurrentExcludeDraft);
         field.setSynced(false, false);
         field.setGetter(() -> state.excludeDraft);
         field.setSetter(value -> state.excludeDraft = value == null ? "" : value);
@@ -852,8 +880,8 @@ public final class WildcardPatternWindow {
 
         TextWidget page = new TextWidget("");
         page.setPos(62, 268);
-        page.setStringSupplier(() -> EnumChatFormatting.BLACK
-            + StatCollector.translateToLocalFormatted(
+        page.setStringSupplier(
+            () -> EnumChatFormatting.BLACK + StatCollector.translateToLocalFormatted(
                 "gui.wildcardpattern.page",
                 Integer.valueOf(state.excludePageIndex + 1),
                 Integer.valueOf(Math.max(1, state.getExcludePageCount()))));
@@ -922,9 +950,7 @@ public final class WildcardPatternWindow {
             rule.setPos(18, rowY + 2);
             rule.setStringSupplier(() -> {
                 DedupeRow row = state.getDedupeRow(lineIndex);
-                return row != null
-                    ? row.getTopColor() + "R" + (row.rule + 1)
-                    : "";
+                return row != null ? row.getTopColor() + "R" + (row.rule + 1) : "";
             });
             addDedupeWidget(builder, state, rule);
 
@@ -933,9 +959,7 @@ public final class WildcardPatternWindow {
             inputOre.setScale(0.74f);
             inputOre.setStringSupplier(() -> {
                 DedupeRow row = state.getDedupeRow(lineIndex);
-                return row != null
-                    ? row.getTopColor() + trimMiddle(row.getInputLine(), 26)
-                    : "";
+                return row != null ? row.getTopColor() + trimMiddle(row.getInputLine(), 26) : "";
             });
             addDedupeWidget(builder, state, inputOre);
 
@@ -948,9 +972,7 @@ public final class WildcardPatternWindow {
             outputOre.setScale(0.74f);
             outputOre.setStringSupplier(() -> {
                 DedupeRow row = state.getDedupeRow(lineIndex);
-                return row != null
-                    ? row.getTopColor() + trimMiddle(row.getOutputLine(), 26)
-                    : "";
+                return row != null ? row.getTopColor() + trimMiddle(row.getOutputLine(), 26) : "";
             });
             addDedupeWidget(builder, state, outputOre);
 
@@ -959,9 +981,7 @@ public final class WildcardPatternWindow {
             inputChoice.setScale(0.7f);
             inputChoice.setStringSupplier(() -> {
                 DedupeRow row = state.getDedupeRow(lineIndex);
-                return row != null
-                    ? row.getDetailColor() + trimMiddle(row.getInputChoiceLine(state), 28)
-                    : "";
+                return row != null ? row.getDetailColor() + trimMiddle(row.getInputChoiceLine(state), 28) : "";
             });
             addDedupeWidget(builder, state, inputChoice);
 
@@ -974,9 +994,7 @@ public final class WildcardPatternWindow {
             outputChoice.setScale(0.7f);
             outputChoice.setStringSupplier(() -> {
                 DedupeRow row = state.getDedupeRow(lineIndex);
-                return row != null
-                    ? row.getDetailColor() + trimMiddle(row.getOutputChoiceLine(state), 28)
-                    : "";
+                return row != null ? row.getDetailColor() + trimMiddle(row.getOutputChoiceLine(state), 28) : "";
             });
             addDedupeWidget(builder, state, outputChoice);
 
@@ -989,9 +1007,9 @@ public final class WildcardPatternWindow {
                     state.cycleDedupeChoice(state.dedupeRows.get(absolute).inputOreName);
                 }
             });
-            cycleInput.setEnabled(widget -> state.dedupePage
-                && state.getDedupeRow(lineIndex) != null
-                && state.getDedupeRow(lineIndex).inputDuplicate);
+            cycleInput.setEnabled(
+                widget -> state.dedupePage && state.getDedupeRow(lineIndex) != null
+                    && state.getDedupeRow(lineIndex).inputDuplicate);
             addDedupeWidget(builder, state, cycleInput);
 
             ButtonWidget cycleOutput = button("gui.wildcardpattern.dedupe_output");
@@ -1003,9 +1021,9 @@ public final class WildcardPatternWindow {
                     state.cycleDedupeChoice(state.dedupeRows.get(absolute).outputOreName);
                 }
             });
-            cycleOutput.setEnabled(widget -> state.dedupePage
-                && state.getDedupeRow(lineIndex) != null
-                && state.getDedupeRow(lineIndex).outputDuplicate);
+            cycleOutput.setEnabled(
+                widget -> state.dedupePage && state.getDedupeRow(lineIndex) != null
+                    && state.getDedupeRow(lineIndex).outputDuplicate);
             addDedupeWidget(builder, state, cycleOutput);
         }
 
@@ -1027,8 +1045,8 @@ public final class WildcardPatternWindow {
 
         TextWidget page = new TextWidget("");
         page.setPos(228, 268);
-        page.setStringSupplier(() -> EnumChatFormatting.BLACK
-            + StatCollector.translateToLocalFormatted(
+        page.setStringSupplier(
+            () -> EnumChatFormatting.BLACK + StatCollector.translateToLocalFormatted(
                 "gui.wildcardpattern.page",
                 Integer.valueOf(state.dedupePageIndex + 1),
                 Integer.valueOf(Math.max(1, state.getDedupePageCount()))));
@@ -1045,14 +1063,8 @@ public final class WildcardPatternWindow {
         addDedupeWidget(builder, state, next);
     }
 
-    private static void addDedupeTextField(
-        ModularWindow.Builder builder,
-        WindowState state,
-        String label,
-        java.util.function.Supplier<String> getter,
-        java.util.function.Consumer<String> setter,
-        int x,
-        int y,
+    private static void addDedupeTextField(ModularWindow.Builder builder, WindowState state, String label,
+        java.util.function.Supplier<String> getter, java.util.function.Consumer<String> setter, int x, int y,
         int width) {
         TextWidget labelText = new TextWidget(label);
         labelText.setPos(x, y + 4);
@@ -1079,22 +1091,19 @@ public final class WildcardPatternWindow {
             try {
                 net.minecraft.client.Minecraft.getMinecraft()
                     .displayGuiScreen(
-                        new com.wztwzt.ae2_qof.client.gui.GuiTextInputDialog(
-                            label,
-                            getter.get(),
-                            value -> {
-                                String v = value == null ? "" : value;
-                                setter.accept(v);
-                                field.setText(v);
-                                field.markForUpdate();
-                                // 3.22.0-fix53：原版对话框会把 Wild 窗口顶掉 ⇒ 确认后请服务端重开界面
-                                try {
-                                    com.wztwzt.ae2_qof.wildport.network.WildcardNetwork.CHANNEL.sendToServer(
-                                        new com.wztwzt.ae2_qof.wildport.network.MessageReopenWildGui());
-                                } catch (Throwable t2) {
-                                    com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 请求重开 Wild 界面失败（去重页）", t2);
-                                }
-                            }));
+                        new com.wztwzt.ae2_qof.client.gui.GuiTextInputDialog(label, getter.get(), value -> {
+                            String v = value == null ? "" : value;
+                            setter.accept(v);
+                            field.setText(v);
+                            field.markForUpdate();
+                            // 3.22.0-fix53：原版对话框会把 Wild 窗口顶掉 ⇒ 确认后请服务端重开界面
+                            try {
+                                com.wztwzt.ae2_qof.wildport.network.WildcardNetwork.CHANNEL
+                                    .sendToServer(new com.wztwzt.ae2_qof.wildport.network.MessageReopenWildGui());
+                            } catch (Throwable t2) {
+                                com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 请求重开 Wild 界面失败（去重页）", t2);
+                            }
+                        }));
             } catch (Throwable t) {
                 com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 打开文本输入对话框失败（去重页）", t);
             }
@@ -1102,15 +1111,8 @@ public final class WildcardPatternWindow {
         addDedupeWidget(builder, state, dedupeEdit);
     }
 
-    private static void addPreviewTextField(
-        ModularWindow.Builder builder,
-        WindowState state,
-        String label,
-        java.util.function.Supplier<String> getter,
-        java.util.function.Consumer<String> setter,
-        int x,
-        int y,
-        int width,
+    private static void addPreviewTextField(ModularWindow.Builder builder, WindowState state, String label,
+        java.util.function.Supplier<String> getter, java.util.function.Consumer<String> setter, int x, int y, int width,
         boolean previewPage) {
         TextWidget labelText = new TextWidget(label);
         labelText.setPos(x, y + 4);
@@ -1137,22 +1139,19 @@ public final class WildcardPatternWindow {
             try {
                 net.minecraft.client.Minecraft.getMinecraft()
                     .displayGuiScreen(
-                        new com.wztwzt.ae2_qof.client.gui.GuiTextInputDialog(
-                            label,
-                            getter.get(),
-                            value -> {
-                                String v = value == null ? "" : value;
-                                setter.accept(v);
-                                field.setText(v);
-                                field.markForUpdate();
-                                // 3.22.0-fix53：原版对话框会把 Wild 窗口顶掉 ⇒ 确认后请服务端重开界面
-                                try {
-                                    com.wztwzt.ae2_qof.wildport.network.WildcardNetwork.CHANNEL.sendToServer(
-                                        new com.wztwzt.ae2_qof.wildport.network.MessageReopenWildGui());
-                                } catch (Throwable t2) {
-                                    com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 请求重开 Wild 界面失败", t2);
-                                }
-                            }));
+                        new com.wztwzt.ae2_qof.client.gui.GuiTextInputDialog(label, getter.get(), value -> {
+                            String v = value == null ? "" : value;
+                            setter.accept(v);
+                            field.setText(v);
+                            field.markForUpdate();
+                            // 3.22.0-fix53：原版对话框会把 Wild 窗口顶掉 ⇒ 确认后请服务端重开界面
+                            try {
+                                com.wztwzt.ae2_qof.wildport.network.WildcardNetwork.CHANNEL
+                                    .sendToServer(new com.wztwzt.ae2_qof.wildport.network.MessageReopenWildGui());
+                            } catch (Throwable t2) {
+                                com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 请求重开 Wild 界面失败", t2);
+                            }
+                        }));
             } catch (Throwable t) {
                 com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 打开文本输入对话框失败", t);
             }
@@ -1174,12 +1173,12 @@ public final class WildcardPatternWindow {
 
     private static IDrawable[] buttonBackground(boolean active, String text, int textColor) {
         if (active) {
-            return new IDrawable[] { ModularUITextures.VANILLA_BUTTON_NORMAL,
-                new Rectangle().setColor(0x223E6FB0),
-                new Text(text).color(textColor).alignment(Alignment.Center) };
+            return new IDrawable[] { ModularUITextures.VANILLA_BUTTON_NORMAL, new Rectangle().setColor(0x223E6FB0),
+                new Text(text).color(textColor)
+                    .alignment(Alignment.Center) };
         }
-        return new IDrawable[] { ModularUITextures.VANILLA_BUTTON_NORMAL,
-            new Text(text).color(textColor).alignment(Alignment.Center) };
+        return new IDrawable[] { ModularUITextures.VANILLA_BUTTON_NORMAL, new Text(text).color(textColor)
+            .alignment(Alignment.Center) };
     }
 
     private static IDrawable[] fieldBackground() {
@@ -1190,13 +1189,7 @@ public final class WildcardPatternWindow {
         return text != null && text.contains(".") ? tr(text) : text;
     }
 
-    private static void addPanel(
-        ModularWindow.Builder builder,
-        WindowState state,
-        int x,
-        int y,
-        int width,
-        int height,
+    private static void addPanel(ModularWindow.Builder builder, WindowState state, int x, int y, int width, int height,
         boolean previewPage) {
         DrawableWidget shadow = new DrawableWidget();
         shadow.setPos(x + 2, y + 2);
@@ -1217,14 +1210,8 @@ public final class WildcardPatternWindow {
         addPageWidget(builder, state, fill, previewPage);
     }
 
-    private static void addSeparator(
-        ModularWindow.Builder builder,
-        WindowState state,
-        int x,
-        int y,
-        int width,
-        int height,
-        boolean previewPage) {
+    private static void addSeparator(ModularWindow.Builder builder, WindowState state, int x, int y, int width,
+        int height, boolean previewPage) {
         DrawableWidget dark = new DrawableWidget();
         dark.setPos(x, y);
         dark.setSize(width, Math.max(1, height / 2));
@@ -1265,7 +1252,8 @@ public final class WildcardPatternWindow {
         if (width <= 0 || height <= 0) {
             return;
         }
-        new Rectangle().setColor(color).draw(x, y, width, height, partialTicks);
+        new Rectangle().setColor(color)
+            .draw(x, y, width, height, partialTicks);
     }
 
     private static void addMainText(ModularWindow.Builder builder, WindowState state, String text, int x, int y) {
@@ -1310,12 +1298,7 @@ public final class WildcardPatternWindow {
         builder.widget(widget);
     }
 
-    private static void addCircuitPanel(
-        ModularWindow.Builder builder,
-        WindowState state,
-        int x,
-        int y,
-        int width,
+    private static void addCircuitPanel(ModularWindow.Builder builder, WindowState state, int x, int y, int width,
         int height) {
         DrawableWidget shadow = new DrawableWidget();
         shadow.setPos(x + 2, y + 2);
@@ -1336,12 +1319,7 @@ public final class WildcardPatternWindow {
         addCircuitWidget(builder, state, fill);
     }
 
-    private static void addCircuitSeparator(
-        ModularWindow.Builder builder,
-        WindowState state,
-        int x,
-        int y,
-        int width,
+    private static void addCircuitSeparator(ModularWindow.Builder builder, WindowState state, int x, int y, int width,
         int height) {
         DrawableWidget dark = new DrawableWidget();
         dark.setPos(x, y);
@@ -1356,12 +1334,7 @@ public final class WildcardPatternWindow {
         addCircuitWidget(builder, state, light);
     }
 
-    private static void addNonConsumedPanel(
-        ModularWindow.Builder builder,
-        WindowState state,
-        int x,
-        int y,
-        int width,
+    private static void addNonConsumedPanel(ModularWindow.Builder builder, WindowState state, int x, int y, int width,
         int height) {
         DrawableWidget shadow = new DrawableWidget();
         shadow.setPos(x + 2, y + 2);
@@ -1382,13 +1355,8 @@ public final class WildcardPatternWindow {
         addNonConsumedWidget(builder, state, fill);
     }
 
-    private static void addNonConsumedSeparator(
-        ModularWindow.Builder builder,
-        WindowState state,
-        int x,
-        int y,
-        int width,
-        int height) {
+    private static void addNonConsumedSeparator(ModularWindow.Builder builder, WindowState state, int x, int y,
+        int width, int height) {
         DrawableWidget dark = new DrawableWidget();
         dark.setPos(x, y);
         dark.setSize(width, Math.max(1, height / 2));
@@ -1402,12 +1370,7 @@ public final class WildcardPatternWindow {
         addNonConsumedWidget(builder, state, light);
     }
 
-    private static void addDedupePanel(
-        ModularWindow.Builder builder,
-        WindowState state,
-        int x,
-        int y,
-        int width,
+    private static void addDedupePanel(ModularWindow.Builder builder, WindowState state, int x, int y, int width,
         int height) {
         DrawableWidget shadow = new DrawableWidget();
         shadow.setPos(x + 2, y + 2);
@@ -1428,12 +1391,7 @@ public final class WildcardPatternWindow {
         addDedupeWidget(builder, state, fill);
     }
 
-    private static void addDedupeCard(
-        ModularWindow.Builder builder,
-        WindowState state,
-        int x,
-        int y,
-        int width,
+    private static void addDedupeCard(ModularWindow.Builder builder, WindowState state, int x, int y, int width,
         int height) {
         DrawableWidget shadow = new DrawableWidget();
         shadow.setPos(x + 1, y + 1);
@@ -1448,12 +1406,7 @@ public final class WildcardPatternWindow {
         addDedupeWidget(builder, state, border);
     }
 
-    private static void addExcludePanel(
-        ModularWindow.Builder builder,
-        WindowState state,
-        int x,
-        int y,
-        int width,
+    private static void addExcludePanel(ModularWindow.Builder builder, WindowState state, int x, int y, int width,
         int height) {
         DrawableWidget shadow = new DrawableWidget();
         shadow.setPos(x + 2, y + 2);
@@ -1474,12 +1427,7 @@ public final class WildcardPatternWindow {
         addExcludeWidget(builder, state, fill);
     }
 
-    private static void addDedupeSeparator(
-        ModularWindow.Builder builder,
-        WindowState state,
-        int x,
-        int y,
-        int width,
+    private static void addDedupeSeparator(ModularWindow.Builder builder, WindowState state, int x, int y, int width,
         int height) {
         DrawableWidget dark = new DrawableWidget();
         dark.setPos(x, y);
@@ -1494,12 +1442,7 @@ public final class WildcardPatternWindow {
         addDedupeWidget(builder, state, light);
     }
 
-    private static void addExcludeSeparator(
-        ModularWindow.Builder builder,
-        WindowState state,
-        int x,
-        int y,
-        int width,
+    private static void addExcludeSeparator(ModularWindow.Builder builder, WindowState state, int x, int y, int width,
         int height) {
         DrawableWidget dark = new DrawableWidget();
         dark.setPos(x, y);
@@ -1514,7 +1457,8 @@ public final class WildcardPatternWindow {
         addExcludeWidget(builder, state, light);
     }
 
-    private static void addPageWidget(ModularWindow.Builder builder, WindowState state, Widget widget, boolean previewPage) {
+    private static void addPageWidget(ModularWindow.Builder builder, WindowState state, Widget widget,
+        boolean previewPage) {
         // 3.34.0：新增两页后，主/预览页也必须让位（否则它们会在电路页/不消耗页上一起画出来）
         widget.setEnabled(
             w -> !state.dedupePage && !state.excludePage
@@ -1581,11 +1525,17 @@ public final class WildcardPatternWindow {
         }
         String itemName = String.valueOf(net.minecraft.item.Item.itemRegistry.getNameForObject(stack.getItem()));
         if (itemName == null || itemName.isEmpty() || "null".equals(itemName)) {
-            itemName = stack.getItem().getClass().getName();
+            itemName = stack.getItem()
+                .getClass()
+                .getName();
         }
         NBTTagCompound tag = stack.getTagCompound();
-        return itemName + "@" + stack.getItemDamage() + "x" + Math.max(1, stack.stackSize)
-            + "#" + (tag == null ? "" : Integer.toHexString(tag.hashCode()));
+        return itemName + "@"
+            + stack.getItemDamage()
+            + "x"
+            + Math.max(1, stack.stackSize)
+            + "#"
+            + (tag == null ? "" : Integer.toHexString(tag.hashCode()));
     }
 
     private static String getOutputExcludeToken(ItemStack outputStack, String materialName) {
@@ -1699,20 +1649,25 @@ public final class WildcardPatternWindow {
     }
 
     private static long parseAmount(String value) {
-        String token = value == null ? "" : value.trim().toLowerCase(java.util.Locale.ROOT);
+        String token = value == null ? ""
+            : value.trim()
+                .toLowerCase(java.util.Locale.ROOT);
         if (token.isEmpty()) {
             return 1;
         }
         long multiplier = 1L;
         if (token.endsWith("k")) {
             multiplier = 1_000L;
-            token = token.substring(0, token.length() - 1).trim();
+            token = token.substring(0, token.length() - 1)
+                .trim();
         } else if (token.endsWith("m")) {
             multiplier = 1_000_000L;
-            token = token.substring(0, token.length() - 1).trim();
+            token = token.substring(0, token.length() - 1)
+                .trim();
         } else if (token.endsWith("g")) {
             multiplier = 1_000_000_000L;
-            token = token.substring(0, token.length() - 1).trim();
+            token = token.substring(0, token.length() - 1)
+                .trim();
         }
         try {
             double parsed = Double.parseDouble(token);
@@ -1731,10 +1686,14 @@ public final class WildcardPatternWindow {
             return "";
         }
         try {
-            return (String) prefix.getClass().getMethod("getName").invoke(prefix);
+            return (String) prefix.getClass()
+                .getMethod("getName")
+                .invoke(prefix);
         } catch (Exception ignored) {}
         try {
-            return (String) prefix.getClass().getMethod("name").invoke(prefix);
+            return (String) prefix.getClass()
+                .getMethod("name")
+                .invoke(prefix);
         } catch (Exception ignored) {}
         return prefix.toString();
     }
@@ -1744,13 +1703,12 @@ public final class WildcardPatternWindow {
     }
 
     private static final class EntryCellRefs {
+
         private final TextFieldWidget textField;
         private final TextFieldWidget amountField;
         private final java.util.function.Supplier<String> amountSupplier;
 
-        private EntryCellRefs(
-            TextFieldWidget textField,
-            TextFieldWidget amountField,
+        private EntryCellRefs(TextFieldWidget textField, TextFieldWidget amountField,
             java.util.function.Supplier<String> amountSupplier) {
             this.textField = textField;
             this.amountField = amountField;
@@ -1803,6 +1761,7 @@ public final class WildcardPatternWindow {
     }
 
     private static final class DedupeRow {
+
         private final int rule;
         private final String materialName;
         private final String inputOreName;
@@ -1811,24 +1770,13 @@ public final class WildcardPatternWindow {
         private final boolean outputDuplicate;
         private final int duplicateOutputCount;
 
-        private DedupeRow(
-            int rule,
-            String materialName,
-            String inputOreName,
-            String outputOreName,
-            boolean inputDuplicate,
-            boolean outputDuplicate) {
+        private DedupeRow(int rule, String materialName, String inputOreName, String outputOreName,
+            boolean inputDuplicate, boolean outputDuplicate) {
             this(rule, materialName, inputOreName, outputOreName, inputDuplicate, outputDuplicate, 0);
         }
 
-        private DedupeRow(
-            int rule,
-            String materialName,
-            String inputOreName,
-            String outputOreName,
-            boolean inputDuplicate,
-            boolean outputDuplicate,
-            int duplicateOutputCount) {
+        private DedupeRow(int rule, String materialName, String inputOreName, String outputOreName,
+            boolean inputDuplicate, boolean outputDuplicate, int duplicateOutputCount) {
             this.rule = rule;
             this.materialName = materialName == null ? "" : materialName;
             this.inputOreName = inputOreName;
@@ -1839,10 +1787,7 @@ public final class WildcardPatternWindow {
         }
 
         private String getLine() {
-            return "R" + (this.rule + 1) + " "
-                + label(this.inputOreName)
-                + " -> "
-                + label(this.outputOreName);
+            return "R" + (this.rule + 1) + " " + label(this.inputOreName) + " -> " + label(this.outputOreName);
         }
 
         private String getInputLine() {
@@ -1854,8 +1799,7 @@ public final class WildcardPatternWindow {
         }
 
         private String getChoiceLine(WindowState state) {
-            return label(state.getSelectedDedupeLabel(this.inputOreName))
-                + " -> "
+            return label(state.getSelectedDedupeLabel(this.inputOreName)) + " -> "
                 + label(state.getSelectedDedupeLabel(this.outputOreName));
         }
 
@@ -1880,8 +1824,7 @@ public final class WildcardPatternWindow {
         }
 
         private boolean matches(WindowState state, String search) {
-            return NechSearchCompat.matches(getLine(), search)
-                || NechSearchCompat.matches(getChoiceLine(state), search)
+            return NechSearchCompat.matches(getLine(), search) || NechSearchCompat.matches(getChoiceLine(state), search)
                 || NechSearchCompat.matches(getDuplicateLine(), search)
                 || NechSearchCompat.matches(this.materialName, search);
         }
@@ -1890,7 +1833,8 @@ public final class WildcardPatternWindow {
             if (!hasDuplicateOutput()) {
                 return "";
             }
-            return "R" + (this.rule + 1) + " "
+            return "R" + (this.rule + 1)
+                + " "
                 + tr("gui.wildcardpattern.duplicate_output")
                 + " x"
                 + Math.max(2, this.duplicateOutputCount)
@@ -1904,6 +1848,7 @@ public final class WildcardPatternWindow {
     }
 
     private static final class PreviewRow {
+
         private final int rule;
         private final String materialName;
         private final String excludeToken;
@@ -1913,15 +1858,8 @@ public final class WildcardPatternWindow {
         private final String outputLabel;
         private final int duplicateOutputCount;
 
-        private PreviewRow(
-            int rule,
-            String materialName,
-            String excludeToken,
-            String outputExcludeToken,
-            String line,
-            String outputKey,
-            String outputLabel,
-            int duplicateOutputCount) {
+        private PreviewRow(int rule, String materialName, String excludeToken, String outputExcludeToken, String line,
+            String outputKey, String outputLabel, int duplicateOutputCount) {
             this.rule = rule;
             this.materialName = materialName == null ? "" : materialName;
             this.excludeToken = excludeToken == null ? "" : excludeToken;
@@ -1938,6 +1876,7 @@ public final class WildcardPatternWindow {
     }
 
     private static final class AsyncPreviewResult {
+
         private final int generation;
         private final List<PreviewRow> rows;
 
@@ -1948,6 +1887,7 @@ public final class WildcardPatternWindow {
     }
 
     private static final class WindowState {
+
         private final EntityPlayer player;
         private final int slot;
         private final List<WildcardPatternEntry> inputs;
@@ -2086,7 +2026,8 @@ public final class WildcardPatternWindow {
         /**
          * 取出"我们自己的状态"：没有子树时**懒同步一次**（玩家可能只在 Wild 界面里配过）。
          *
-         * <p>为什么这里也要兜底：电路页/不消耗页的写回是"读—改—整包写"，读不到就发空包 ⇒ 会把服务端
+         * <p>
+         * 为什么这里也要兜底：电路页/不消耗页的写回是"读—改—整包写"，读不到就发空包 ⇒ 会把服务端
          * 已有的规则覆盖成 0 条（3.33.0 实测到的规则被抹掉就是这个机理）。
          */
         private com.wztwzt.ae2_qof.wildcard.SmartWildcardState materializeOurs(ItemStack stack) {
@@ -2107,20 +2048,18 @@ public final class WildcardPatternWindow {
 
         /** 唯一写路径：就地改我们的状态 + **立刻**整包发回服务端（带槽位）。返回是否成功。 */
         private boolean pushOurState(
-            java.util.function.Consumer<com.wztwzt.ae2_qof.wildcard.SmartWildcardState> mutator,
-            String why) {
+            java.util.function.Consumer<com.wztwzt.ae2_qof.wildcard.SmartWildcardState> mutator, String why) {
             try {
                 ItemStack held = getHeldStack();
                 if (!com.wztwzt.ae2_qof.wildcard.SmartWildcardGate.isOurs(held)) {
-                    com.wztwzt.ae2_qof.MyMod.LOG
-                        .warn("[AE2QoL] {}：槽位 {} 里不是通配样板，未写入（item={}）", why, this.slot, held);
+                    com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] {}：槽位 {} 里不是通配样板，未写入（item={}）", why, this.slot, held);
                     return false;
                 }
                 com.wztwzt.ae2_qof.wildcard.SmartWildcardState s = materializeOurs(held);
                 if (s == null) s = new com.wztwzt.ae2_qof.wildcard.SmartWildcardState();
                 mutator.accept(s);
-                com.wztwzt.ae2_qof.network.ModNetwork.CHANNEL.sendToServer(
-                    new com.wztwzt.ae2_qof.network.SmartWildcardRulesPacket(s, this.slot));
+                com.wztwzt.ae2_qof.network.ModNetwork.CHANNEL
+                    .sendToServer(new com.wztwzt.ae2_qof.network.SmartWildcardRulesPacket(s, this.slot));
                 com.wztwzt.ae2_qof.MyMod.LOG.info(
                     "[AE2QoL] {}：已提交（槽位 {}，规则 {} 条、不消耗 {} 项、电路 {}）",
                     why,
@@ -2212,7 +2151,8 @@ public final class WildcardPatternWindow {
         /**
          * 3.34.0：整页替换 9 行（用户拍板："加号按推导结果整页替换"），并就地刷新控件。
          *
-         * <p>为什么必须刷新控件：窗口的行文本是**构建期** {@code setText} 写死的，只改内存态不会重绘。
+         * <p>
+         * 为什么必须刷新控件：窗口的行文本是**构建期** {@code setText} 写死的，只改内存态不会重绘。
          */
         private void setRows(List<WildcardPatternEntry> newInputs, List<WildcardPatternEntry> newOutputs) {
             for (int i = 0; i < RULE_ROWS; i++) {
@@ -2295,7 +2235,8 @@ public final class WildcardPatternWindow {
 
         private String getExcludeTitle() {
             if (this.excludeRule >= 0) {
-                return StatCollector.translateToLocalFormatted("gui.wildcardpattern.rule_exclude", this.excludeRule + 1);
+                return StatCollector
+                    .translateToLocalFormatted("gui.wildcardpattern.rule_exclude", this.excludeRule + 1);
             }
             return tr("gui.wildcardpattern.global_exclude");
         }
@@ -2311,7 +2252,8 @@ public final class WildcardPatternWindow {
             } else {
                 this.globalExclude = next;
             }
-            if (next.trim().isEmpty()) {
+            if (next.trim()
+                .isEmpty()) {
                 this.excludePageIndex = 0;
             }
             refreshActivePage();
@@ -2319,7 +2261,8 @@ public final class WildcardPatternWindow {
 
         private String getExcludeSummary(int rule) {
             String value = rule >= 0 ? this.ruleExcludes.get(rule) : this.globalExclude;
-            if (value == null || value.trim().isEmpty()) {
+            if (value == null || value.trim()
+                .isEmpty()) {
                 return tr("gui.wildcardpattern.exclude_empty");
             }
             return value;
@@ -2328,7 +2271,8 @@ public final class WildcardPatternWindow {
         private List<String> getCurrentExcludeTokens() {
             List<String> tokens = new ArrayList<>();
             String value = getCurrentExcludeValue();
-            if (value == null || value.trim().isEmpty()) {
+            if (value == null || value.trim()
+                .isEmpty()) {
                 return tokens;
             }
             for (String token : value.split("[,;\\s]+")) {
@@ -2382,7 +2326,8 @@ public final class WildcardPatternWindow {
 
         private String getPreviewTitle() {
             if (this.previewRule >= 0) {
-                return StatCollector.translateToLocalFormatted("gui.wildcardpattern.preview_rule", this.previewRule + 1);
+                return StatCollector
+                    .translateToLocalFormatted("gui.wildcardpattern.preview_rule", this.previewRule + 1);
             }
             return tr("gui.wildcardpattern.preview_all");
         }
@@ -2396,7 +2341,11 @@ public final class WildcardPatternWindow {
         }
 
         private int getExcludePageCount() {
-            return Math.max(1, (this.getCurrentExcludeTokens().size() + EXCLUDE_LINES - 1) / EXCLUDE_LINES);
+            return Math.max(
+                1,
+                (this.getCurrentExcludeTokens()
+                    .size() + EXCLUDE_LINES
+                    - 1) / EXCLUDE_LINES);
         }
 
         private void multiplyRule(int rule) {
@@ -2468,14 +2417,19 @@ public final class WildcardPatternWindow {
             Thread thread = new Thread(() -> {
                 List<PreviewRow> rawRows = new ArrayList<>();
                 for (java.util.Map.Entry<Integer, ItemStack> entry : stacks.entrySet()) {
-                    if (Thread.currentThread().isInterrupted()) return;
+                    if (Thread.currentThread()
+                        .isInterrupted()) return;
                     int rule = entry.getKey();
-                    List<WildcardPatternGenerator.GeneratedPattern> patterns =
-                        WildcardPatternGenerator.generateRulePreviewPatterns(entry.getValue(), rule);
+                    List<WildcardPatternGenerator.GeneratedPattern> patterns = WildcardPatternGenerator
+                        .generateRulePreviewPatterns(entry.getValue(), rule);
                     for (WildcardPatternGenerator.GeneratedPattern pattern : patterns) {
-                        if (Thread.currentThread().isInterrupted()) return;
+                        if (Thread.currentThread()
+                            .isInterrupted()) return;
                         String materialName = pattern.materialName;
-                        String excludeToken = getPreviewExcludeToken(pattern.inputStack, pattern.outputStack, materialName);
+                        String excludeToken = getPreviewExcludeToken(
+                            pattern.inputStack,
+                            pattern.outputStack,
+                            materialName);
                         rawRows.add(
                             new PreviewRow(
                                 rule,
@@ -2502,8 +2456,7 @@ public final class WildcardPatternWindow {
                         row.outputKey,
                         row.outputLabel,
                         duplicateCount);
-                    if (!filterSnapshot.isEmpty()
-                        && !NechSearchCompat.matches(displayRow.line, filterSnapshot)
+                    if (!filterSnapshot.isEmpty() && !NechSearchCompat.matches(displayRow.line, filterSnapshot)
                         && !NechSearchCompat.matches(displayRow.materialName, filterSnapshot)
                         && !NechSearchCompat.matches(displayRow.excludeToken, filterSnapshot)
                         && !NechSearchCompat.matches(displayRow.outputExcludeToken, filterSnapshot)
@@ -2513,7 +2466,8 @@ public final class WildcardPatternWindow {
                     result.add(displayRow);
                 }
                 sortDuplicateOutputsFirst(result);
-                if (!Thread.currentThread().isInterrupted() && generation == this.asyncPreviewGeneration) {
+                if (!Thread.currentThread()
+                    .isInterrupted() && generation == this.asyncPreviewGeneration) {
                     this.asyncPreviewResult = new AsyncPreviewResult(generation, result);
                 }
             }, "WildcardPreviewBuild");
@@ -2578,8 +2532,8 @@ public final class WildcardPatternWindow {
         private Map<String, Integer> collectDuplicateOutputCounts(ItemStack preview) {
             List<PreviewRow> generatedRows = new ArrayList<>();
             for (int rule = 0; rule < RULE_ROWS; rule++) {
-                for (WildcardPatternGenerator.GeneratedPattern pattern :
-                    WildcardPatternGenerator.generateRulePreviewPatterns(preview, rule)) {
+                for (WildcardPatternGenerator.GeneratedPattern pattern : WildcardPatternGenerator
+                    .generateRulePreviewPatterns(preview, rule)) {
                     String outputKey = getOutputIdentity(pattern.outputStack);
                     if (outputKey.isEmpty()) {
                         continue;
@@ -2603,10 +2557,7 @@ public final class WildcardPatternWindow {
             return duplicateOutputs;
         }
 
-        private void collectDuplicateRows(
-            ItemStack preview,
-            List<DedupeRow> rows,
-            int rule,
+        private void collectDuplicateRows(ItemStack preview, List<DedupeRow> rows, int rule,
             Map<String, Integer> duplicateOutputs) {
             for (String materialName : WildcardPatternGenerator.getCandidateMaterials(preview, rule)) {
                 String inputOreName = getOreName(this.inputs.get(rule), materialName);
@@ -2657,8 +2608,7 @@ public final class WildcardPatternWindow {
                 if (oreName == null || oreName.isEmpty()) continue;
                 for (gregtech.api.enums.OrePrefixes prefix : GTCompat.orePrefixes()) {
                     String prefixName = getPrefixName(prefix);
-                    if (!prefixName.isEmpty()
-                        && oreName.regionMatches(true, 0, prefixName, 0, prefixName.length())
+                    if (!prefixName.isEmpty() && oreName.regionMatches(true, 0, prefixName, 0, prefixName.length())
                         && prefixName.length() > bestPrefixLen) {
                         bestPrefix = prefixName;
                         bestPrefixLen = prefixName.length();
@@ -2669,7 +2619,9 @@ public final class WildcardPatternWindow {
         }
 
         private boolean hasDuplicateOptions(String oreName) {
-            return oreName != null && OreDictionary.getOres(oreName) != null && OreDictionary.getOres(oreName).size() > 1;
+            return oreName != null && OreDictionary.getOres(oreName) != null
+                && OreDictionary.getOres(oreName)
+                    .size() > 1;
         }
 
         private String getSelectedDedupeLabel(String oreName) {
@@ -2746,13 +2698,11 @@ public final class WildcardPatternWindow {
             if (row == null) {
                 return;
             }
-            String token = row.hasDuplicateOutput() && !row.outputExcludeToken.isEmpty()
-                ? row.outputExcludeToken
+            String token = row.hasDuplicateOutput() && !row.outputExcludeToken.isEmpty() ? row.outputExcludeToken
                 : row.excludeToken.isEmpty() ? row.materialName : row.excludeToken;
             appendRuleExclude(row.rule, token);
             rebuildPreview();
         }
-
 
         private String getPreviewExcludeToken(ItemStack inputStack, ItemStack outputStack, String materialName) {
             String inputOre = getAssociatedOreName(inputStack);
@@ -2802,7 +2752,8 @@ public final class WildcardPatternWindow {
             }
             List<String> tokens = new ArrayList<>();
             String current = this.ruleExcludes.get(rule);
-            if (current != null && !current.trim().isEmpty()) {
+            if (current != null && !current.trim()
+                .isEmpty()) {
                 for (String part : current.split("[,;\\s]+")) {
                     String trimmed = part == null ? "" : part.trim();
                     if (!trimmed.isEmpty()) {
@@ -2819,17 +2770,18 @@ public final class WildcardPatternWindow {
             this.ruleExcludes.set(rule, String.join(" ", tokens));
         }
 
-
         private void save() {
             ItemStack preview = buildStack(null);
             ItemStack held = getHeldStack();
             if (preview == null || held == null) {
                 return;
             }
-            WildcardPatternState.setExpandedPatternCount(preview, WildcardPatternGenerator.countPreviewPatterns(preview));
+            WildcardPatternState
+                .setExpandedPatternCount(preview, WildcardPatternGenerator.countPreviewPatterns(preview));
             WildcardPatternGenerator.markAsWildcard(held);
             WildcardPatternState.applyConfig(held, WildcardPatternState.exportConfig(preview));
-            WildcardNetwork.CHANNEL.sendToServer(new MessageUpdateWildcardConfig(this.slot, WildcardPatternState.exportConfig(preview)));
+            WildcardNetwork.CHANNEL
+                .sendToServer(new MessageUpdateWildcardConfig(this.slot, WildcardPatternState.exportConfig(preview)));
         }
 
         private ItemStack buildStack(Integer onlyRule) {

@@ -5,22 +5,12 @@
  */
 package com.wztwzt.ae2_qof.apgport.gui;
 
-import com.wztwzt.ae2_qof.MyMod;
-
 import java.util.Arrays;
 import java.util.List;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumChatFormatting;
 
-import com.wztwzt.ae2_qof.apgport.config.ForgeConfig;
-import com.wztwzt.ae2_qof.apgport.item.ItemPatternGenerator;
-import com.wztwzt.ae2_qof.apgport.network.NetworkHandler;
-import com.wztwzt.ae2_qof.apgport.network.PacketCreateCache;
-import com.wztwzt.ae2_qof.apgport.network.PacketGeneratePatterns;
-import com.wztwzt.ae2_qof.apgport.network.PacketPreviewRecipeCount;
-import com.wztwzt.ae2_qof.apgport.network.PacketSaveFields;
-import com.wztwzt.ae2_qof.apgport.util.I18nUtil;
 import com.gtnewhorizons.modularui.api.drawable.IDrawable;
 import com.gtnewhorizons.modularui.api.drawable.Text;
 import com.gtnewhorizons.modularui.api.drawable.shapes.Rectangle;
@@ -30,6 +20,14 @@ import com.gtnewhorizons.modularui.common.widget.ButtonWidget;
 import com.gtnewhorizons.modularui.common.widget.Scrollable;
 import com.gtnewhorizons.modularui.common.widget.TextWidget;
 import com.gtnewhorizons.modularui.common.widget.textfield.TextFieldWidget;
+import com.wztwzt.ae2_qof.apgport.config.ForgeConfig;
+import com.wztwzt.ae2_qof.apgport.item.ItemPatternGenerator;
+import com.wztwzt.ae2_qof.apgport.network.NetworkHandler;
+import com.wztwzt.ae2_qof.apgport.network.PacketCreateCache;
+import com.wztwzt.ae2_qof.apgport.network.PacketGeneratePatterns;
+import com.wztwzt.ae2_qof.apgport.network.PacketPreviewRecipeCount;
+import com.wztwzt.ae2_qof.apgport.network.PacketSaveFields;
+import com.wztwzt.ae2_qof.apgport.util.I18nUtil;
 
 public class GuiPatternGen {
 
@@ -391,7 +389,7 @@ public class GuiPatternGen {
             ButtonWidget btnTable = new ButtonWidget();
             btnTable.setSynced(false, false);
             // 3.22.0-fix52：按钮从底部按钮行**移到提示行右端**并加宽到 92px
-            //（原来 70px 装不下"对照表"三个字会被挤成两行，且放在生成样板右侧会越出窗口）
+            // （原来 70px 装不下"对照表"三个字会被挤成两行，且放在生成样板右侧会越出窗口）
             btnTable.setPos(2 + fullFieldW - 92, recipeFieldYHolder[0] + 25);
             btnTable.setSize(92, 14);
             btnTable.setBackground(com.gtnewhorizons.modularui.api.ModularUITextures.VANILLA_BUTTON_NORMAL);
@@ -400,27 +398,24 @@ public class GuiPatternGen {
             btnTable.setOnClick((cd, w) -> {
                 try {
                     net.minecraft.client.Minecraft.getMinecraft()
-                        .displayGuiScreen(
-                            new com.wztwzt.ae2_qof.client.gui.GuiRecipeMapTable(recipeMapId -> {
-                                try {
-                                    NetworkHandler.INSTANCE.sendToServer(
-                                        new PacketSaveFields(
-                                            recipeMapId,
-                                            tfOutputOre.getText(),
-                                            tfInputOre.getText(),
-                                            tfNCItem.getText(),
-                                            tfBlacklistIn.getText(),
-                                            tfBlacklistOut.getText(),
-                                            "",
-                                            currentTierIndex[0] - 1,
-                                            true));
-                                    com.wztwzt.ae2_qof.MyMod.LOG.info(
-                                        "[AE2QoL] 对照表已选：{}（已请求保存并重开生成器界面）",
-                                        recipeMapId);
-                                } catch (Throwable t) {
-                                    com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 对照表选行后保存失败", t);
-                                }
-                            }));
+                        .displayGuiScreen(new com.wztwzt.ae2_qof.client.gui.GuiRecipeMapTable(recipeMapId -> {
+                            try {
+                                NetworkHandler.INSTANCE.sendToServer(
+                                    new PacketSaveFields(
+                                        recipeMapId,
+                                        tfOutputOre.getText(),
+                                        tfInputOre.getText(),
+                                        tfNCItem.getText(),
+                                        tfBlacklistIn.getText(),
+                                        tfBlacklistOut.getText(),
+                                        "",
+                                        currentTierIndex[0] - 1,
+                                        true));
+                                com.wztwzt.ae2_qof.MyMod.LOG.info("[AE2QoL] 对照表已选：{}（已请求保存并重开生成器界面）", recipeMapId);
+                            } catch (Throwable t) {
+                                com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 对照表选行后保存失败", t);
+                            }
+                        }));
                 } catch (Throwable t) {
                     com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 打开 RecipeMap 对照表失败", t);
                 }
@@ -537,10 +532,12 @@ public class GuiPatternGen {
     /**
      * 3.22.0-fix48 / fix51：给 MUI1 自绘界面里的文本框挂一个「改」按钮。
      *
-     * <p>为什么要走对话框：GTNH-ModularUI（MUI1）自绘界面里**系统输入法无法启用**（用户实测"切不了输入法"），
+     * <p>
+     * 为什么要走对话框：GTNH-ModularUI（MUI1）自绘界面里**系统输入法无法启用**（用户实测"切不了输入法"），
      * 而原版 {@code GuiTextField} 正常 ⇒ 用 {@code client/gui/GuiTextInputDialog} 作为中文入口。
      *
-     * <p><b>fix51 关键修正</b>：原版 GuiScreen 一打开就会把 MUI 窗口顶掉，确认后回到"无界面"，
+     * <p>
+     * <b>fix51 关键修正</b>：原版 GuiScreen 一打开就会把 MUI 窗口顶掉，确认后回到"无界面"，
      * 写回的目标字段其实已经随窗口销毁 ⇒ 表现为"关了界面、输入的东西也没了"。
      * 现在确认后**立刻把编辑结果发给服务端存进手持物品，并请服务端重开生成器界面**
      * （{@code reopenGui=true}，与 [对照表] 选行后同一套；已实测该手法能正确回到主页并带上新值）。
@@ -560,21 +557,16 @@ public class GuiPatternGen {
             try {
                 net.minecraft.client.Minecraft.getMinecraft()
                     .displayGuiScreen(
-                        new com.wztwzt.ae2_qof.client.gui.GuiTextInputDialog(
-                            title,
-                            field.getText(),
-                            value -> {
-                                String v = value == null ? "" : value;
-                                field.setText(v);
-                                field.markForUpdate();
-                                if (packetFor != null) {
-                                    NetworkHandler.INSTANCE.sendToServer(packetFor.apply(v));
-                                    com.wztwzt.ae2_qof.MyMod.LOG.info(
-                                        "[AE2QoL] 「改」对话框已写回并请求保存+重开界面：字段={} 新值长度={}",
-                                        title,
-                                        v.length());
-                                }
-                            }));
+                        new com.wztwzt.ae2_qof.client.gui.GuiTextInputDialog(title, field.getText(), value -> {
+                            String v = value == null ? "" : value;
+                            field.setText(v);
+                            field.markForUpdate();
+                            if (packetFor != null) {
+                                NetworkHandler.INSTANCE.sendToServer(packetFor.apply(v));
+                                com.wztwzt.ae2_qof.MyMod.LOG
+                                    .info("[AE2QoL] 「改」对话框已写回并请求保存+重开界面：字段={} 新值长度={}", title, v.length());
+                            }
+                        }));
             } catch (Throwable t) {
                 com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 打开文本输入对话框失败", t);
             }

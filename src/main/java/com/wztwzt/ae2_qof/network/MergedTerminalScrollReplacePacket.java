@@ -164,10 +164,13 @@ public class MergedTerminalScrollReplacePacket implements IMessage {
             }
             // Include the current ghost type even if its physical stock just reached zero.
             if (seen.add(com.wztwzt.ae2_qof.util.ItemIdentity.of(current))) result.add(current.copy());
-            result.sort(java.util.Comparator
-                .comparingInt((ItemStack stack) -> net.minecraft.item.Item.getIdFromItem(stack.getItem()))
-                .thenComparingInt(ItemStack::getItemDamage)
-                .thenComparing(stack -> cn.dancingsnow.aeinfinitycell.storage.NbtKey.of(stack.getTagCompound()).toString()));
+            result.sort(
+                java.util.Comparator
+                    .comparingInt((ItemStack stack) -> net.minecraft.item.Item.getIdFromItem(stack.getItem()))
+                    .thenComparingInt(ItemStack::getItemDamage)
+                    .thenComparing(
+                        stack -> cn.dancingsnow.aeinfinitycell.storage.NbtKey.of(stack.getTagCompound())
+                            .toString()));
         } catch (Throwable ignored) {}
         return result;
     }

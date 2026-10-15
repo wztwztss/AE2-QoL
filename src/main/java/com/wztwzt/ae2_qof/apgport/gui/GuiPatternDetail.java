@@ -5,21 +5,19 @@
  */
 package com.wztwzt.ae2_qof.apgport.gui;
 
-import com.wztwzt.ae2_qof.MyMod;
-
 import java.util.List;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.EnumChatFormatting;
 
-import com.wztwzt.ae2_qof.apgport.network.NetworkHandler;
-import com.wztwzt.ae2_qof.apgport.network.PacketStorageAction;
-import com.wztwzt.ae2_qof.apgport.util.I18nUtil;
 import com.gtnewhorizons.modularui.api.screen.ModularWindow;
 import com.gtnewhorizons.modularui.api.screen.UIBuildContext;
 import com.gtnewhorizons.modularui.common.widget.ButtonWidget;
 import com.gtnewhorizons.modularui.common.widget.Scrollable;
 import com.gtnewhorizons.modularui.common.widget.TextWidget;
+import com.wztwzt.ae2_qof.apgport.network.NetworkHandler;
+import com.wztwzt.ae2_qof.apgport.network.PacketStorageAction;
+import com.wztwzt.ae2_qof.apgport.util.I18nUtil;
 
 public class GuiPatternDetail {
 
@@ -111,7 +109,9 @@ public class GuiPatternDetail {
         TextWidget btnBackText = new TextWidget(I18nUtil.tr("ae2patterngen.gui.common.back"));
         btnBackText.setPos(GUI_W / 2 + 4 + 32, btnY + 6);
         btnBack.setOnClick(
-            (cd, w) -> { com.wztwzt.ae2_qof.apgport.ApgStubs.openPatternStorageScreen(Minecraft.getMinecraft().thePlayer); });
+            (cd, w) -> {
+                com.wztwzt.ae2_qof.apgport.ApgStubs.openPatternStorageScreen(Minecraft.getMinecraft().thePlayer);
+            });
         builder.widget(btnBack);
         builder.widget(btnBackText);
 

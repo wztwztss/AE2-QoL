@@ -100,9 +100,8 @@ public class TileQuestDetector extends AENetworkTile implements IPowerChannelSta
     private void refreshPowerState() {
         boolean newState = false;
         try {
-            newState = getProxy().isActive()
-                && getProxy().getEnergy()
-                    .extractAEPower(1, Actionable.SIMULATE, PowerMultiplier.CONFIG) > 0.0001;
+            newState = getProxy().isActive() && getProxy().getEnergy()
+                .extractAEPower(1, Actionable.SIMULATE, PowerMultiplier.CONFIG) > 0.0001;
         } catch (final GridAccessException ignored) {}
         if (newState != powered) {
             powered = newState;
@@ -134,8 +133,8 @@ public class TileQuestDetector extends AENetworkTile implements IPowerChannelSta
         if (server == null || server.getConfigurationManager() == null) return null;
         List<?> players = server.getConfigurationManager().playerEntityList;
         for (Object o : players) {
-            if (o instanceof EntityPlayerMP
-                && uuid.equals(((EntityPlayerMP) o).getGameProfile()
+            if (o instanceof EntityPlayerMP && uuid.equals(
+                ((EntityPlayerMP) o).getGameProfile()
                     .getId())) {
                 return (EntityPlayerMP) o;
             }

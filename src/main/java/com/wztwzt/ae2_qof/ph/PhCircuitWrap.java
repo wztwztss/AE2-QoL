@@ -34,7 +34,8 @@ import com.wztwzt.ae2_qof.wildcard.SmartWildcardState;
  * "只要新插入的，不动旧样板"。</li>
  * </ul>
  *
- * <p>PH 是运行时可选依赖（compileOnly + mixin 配置 {@code required:false}）：未装 PH 时本类不会被加载，
+ * <p>
+ * PH 是运行时可选依赖（compileOnly + mixin 配置 {@code required:false}）：未装 PH 时本类不会被加载，
  * 调用方（PH 专属混入）也不会被应用。
  */
 public final class PhCircuitWrap {
@@ -140,7 +141,8 @@ public final class PhCircuitWrap {
 
     /**
      * 3.25.0-fix22：把目标**包成一个编程器电路物品**（不是 NBT 条目）。
-     * <p>{@code target == null} ⇒ PH 的"归零电路"（工具箱兜底模式补的那块）。
+     * <p>
+     * {@code target == null} ⇒ PH 的"归零电路"（工具箱兜底模式补的那块）。
      */
     public static ItemStack wrapAsProgrammingCircuit(ItemStack target) {
         return reobf.proghatches.item.ItemProgrammingCircuit.wrap(target);
@@ -150,8 +152,7 @@ public final class PhCircuitWrap {
         if (loggedOnce) return;
         loggedOnce = true;
         MyMod.LOG.info(
-            "[AE2QoL] 已把放进 PH 仓的样板里的 GT 编程电路改写为 PH:编程器电路（本张改写 {} 条）——"
-                + "AE 将按需取编程器电路，PH 总成收到后写进虚拟槽（此后同类改写不再重复记录）",
+            "[AE2QoL] 已把放进 PH 仓的样板里的 GT 编程电路改写为 PH:编程器电路（本张改写 {} 条）——" + "AE 将按需取编程器电路，PH 总成收到后写进虚拟槽（此后同类改写不再重复记录）",
             wrapped);
     }
 }

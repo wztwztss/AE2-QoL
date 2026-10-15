@@ -55,12 +55,11 @@ public abstract class MixinDualInputHatchUI {
             () -> ((ISmartDoublingMedium) (Object) this).isSmartDoublingEnabled(),
             val -> {
                 ((ISmartDoublingMedium) (Object) this).setSmartDoubling(val);
-                com.wztwzt.ae2_qof.network.SmartDoublingTogglePacket.sendFromClient(
-                    val,
-                    (gregtech.api.interfaces.metatileentity.IMetaTileEntity) (Object) this);
+                com.wztwzt.ae2_qof.network.SmartDoublingTogglePacket
+                    .sendFromClient(val, (gregtech.api.interfaces.metatileentity.IMetaTileEntity) (Object) this);
             });
-        com.wztwzt.ae2_qof.network.SmartDoublingTogglePacket.queryFromClient(
-            (gregtech.api.interfaces.metatileentity.IMetaTileEntity) (Object) this);
+        com.wztwzt.ae2_qof.network.SmartDoublingTogglePacket
+            .queryFromClient((gregtech.api.interfaces.metatileentity.IMetaTileEntity) (Object) this);
 
         builder.child(ae2qol$createSmartDoublingToggle(smartDoublingSync));
     }

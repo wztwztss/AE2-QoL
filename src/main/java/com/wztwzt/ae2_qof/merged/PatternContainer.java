@@ -14,7 +14,11 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.fluids.FluidContainerRegistry;
 import net.minecraftforge.fluids.FluidStack;
 
+import com.glodblock.github.common.item.ItemFluidDrop;
+import com.glodblock.github.common.item.ItemFluidEncodedPattern;
 import com.glodblock.github.common.item.ItemFluidPacket;
+import com.glodblock.github.loader.ItemAndBlockHolder;
+import com.glodblock.github.util.FluidPatternDetails;
 import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.common.RecipeMapNameConfig;
 import com.wztwzt.ae2_qof.merged.slot.SlotPatternFake;
@@ -32,11 +36,6 @@ import appeng.container.slot.SlotFakeCraftingMatrix;
 import appeng.container.slot.SlotRestrictedInput;
 import appeng.tile.inventory.AppEngInternalInventory;
 import appeng.util.Platform;
-
-import com.glodblock.github.common.item.ItemFluidDrop;
-import com.glodblock.github.common.item.ItemFluidEncodedPattern;
-import com.glodblock.github.loader.ItemAndBlockHolder;
-import com.glodblock.github.util.FluidPatternDetails;
 
 /**
  * 样板编码小组件，移植自 AE2Things PatternContainer（原生 4×4 网格布局）。
@@ -445,10 +444,12 @@ public class PatternContainer implements IOptionalSlotHost {
         // 这里直接用 getCondensedAEInputs()（原生 IAEFluidStack）写 "in"/"out" 键，
         // readFromStack() 读回时能正确还原为流体。
         NBTTagCompound fluidTag = new NBTTagCompound();
-        fluidTag.setTag("in", com.glodblock.github.util.FluidPatternDetails
-            .writeStackArray(pattern.getCondensedAEInputs()));
-        fluidTag.setTag("out", com.glodblock.github.util.FluidPatternDetails
-            .writeStackArray(pattern.getCondensedAEOutputs()));
+        fluidTag.setTag(
+            "in",
+            com.glodblock.github.util.FluidPatternDetails.writeStackArray(pattern.getCondensedAEInputs()));
+        fluidTag.setTag(
+            "out",
+            com.glodblock.github.util.FluidPatternDetails.writeStackArray(pattern.getCondensedAEOutputs()));
         fluidTag.setInteger("combine", pattern.getCombine());
         fluidTag.setBoolean("beSubstitute", pattern.canBeSubstitute());
         output.setTagCompound(fluidTag);
@@ -457,13 +458,15 @@ public class PatternContainer implements IOptionalSlotHost {
         // GT 配方池反查
         applyRecipeMapMeta(null);
         try {
-            String playerKey = playerInv.player.getUniqueID().toString();
+            String playerKey = playerInv.player.getUniqueID()
+                .toString();
             String recipeMap = pendingRecipeMap;
             if (recipeMap == null || recipeMap.isEmpty()) {
                 recipeMap = RecipeMapDetector.detectRecipeMap(in, out, playerKey);
             }
             if (recipeMap != null && !recipeMap.isEmpty()) {
-                output.getTagCompound().setString("apu:recipeMap", recipeMap);
+                output.getTagCompound()
+                    .setString("apu:recipeMap", recipeMap);
                 applyRecipeMapMeta(recipeMap);
                 MyMod.LOG.info("[Encode-Fluid] done, recipeMap={}", recipeMap);
             } else {

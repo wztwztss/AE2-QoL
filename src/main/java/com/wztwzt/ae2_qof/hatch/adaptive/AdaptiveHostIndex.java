@@ -10,12 +10,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import com.wztwzt.ae2_qof.MyMod;
+
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.implementations.MTEHatch;
 import gregtech.api.metatileentity.implementations.MTEMultiBlockBase;
-
-import com.wztwzt.ae2_qof.MyMod;
 
 /**
  * 3.32.0：「仓 → 主机」的**权威反查**，以及 TecTech 兼容激光仓的安培写入。
@@ -33,7 +33,8 @@ import com.wztwzt.ae2_qof.MyMod;
  * （O(主机数)，不是 O(仓×主机)），且**完全不依赖任何 tick 时序**；
  * TecTech 的激光仓（不是我们的类，没有 helper）也顺带认领，用于"纳入统计与配置"。
  *
- * <p>副产物：主机是"谁在吃电"的真实主体，GT 把它记在 {@link MTEMultiBlockBase#mEUt}
+ * <p>
+ * 副产物：主机是"谁在吃电"的真实主体，GT 把它记在 {@link MTEMultiBlockBase#mEUt}
  * （消耗路径经字节码里的 {@code ineg} 存为负值），可直接带符号显示。
  */
 public final class AdaptiveHostIndex {
@@ -103,7 +104,8 @@ public final class AdaptiveHostIndex {
     /**
      * 反查本网络全部仓的主机归属。
      *
-     * <p>返回顺序即显示顺序（未排序）：调用方负责排序。
+     * <p>
+     * 返回顺序即显示顺序（未排序）：调用方负责排序。
      * 未识别主机的仓**不会丢**，它们各自成组（{@code host == null}），由调用方标注出来——
      * 本项目原则：不做"信息静默消失"的兜底。
      */
@@ -169,7 +171,8 @@ public final class AdaptiveHostIndex {
         }
 
         // 用户口径：TecTech 激光仓只统计"已接入我们电网的主机"⇒ 只含兼容仓、没有我们任何仓的分组丢弃
-        groups.values().removeIf(g -> g.adaptive.isEmpty());
+        groups.values()
+            .removeIf(g -> g.adaptive.isEmpty());
 
         // 没有任何主机认领的仓：单独成组并标注（信息不消失）
         for (AdaptiveHatchHelper h : helpers) {
@@ -190,8 +193,7 @@ public final class AdaptiveHostIndex {
             if (ws == null) return -1;
             net.minecraft.tileentity.TileEntity te = ws.getTileEntity(helper.getX(), helper.getY(), helper.getZ());
             if (!(te instanceof IGregTechTileEntity)) return -1;
-            gregtech.api.interfaces.metatileentity.IMetaTileEntity mte =
-                ((IGregTechTileEntity) te).getMetaTileEntity();
+            gregtech.api.interfaces.metatileentity.IMetaTileEntity mte = ((IGregTechTileEntity) te).getMetaTileEntity();
             if (mte == null) return -1;
             net.minecraft.item.ItemStack stack = mte.getStackForm(1L);
             return stack == null ? -1 : stack.getItemDamage();
@@ -213,7 +215,8 @@ public final class AdaptiveHostIndex {
     /**
      * 这台主机此刻是否真的在运行。
      *
-     * <p>判据是 GT 的 {@code MTEMultiBlockBase.mMaxProgresstime}（当前配方的剩余 tick，0 = 空闲）。
+     * <p>
+     * 判据是 GT 的 {@code MTEMultiBlockBase.mMaxProgresstime}（当前配方的剩余 tick，0 = 空闲）。
      * **为什么必须先问它**：GT 的 {@code mEUt} 在机器停机后**不清零**，会残留上一次配方的值——
      * 用户实测到"最上面那台根本没工作却写着 -458,752,000 EU/t"，而同一行的实测流量是 0。
      */
@@ -230,7 +233,8 @@ public final class AdaptiveHostIndex {
     /**
      * 按仓类型查它的 MTE id（只查一次并缓存）。
      *
-     * <p>用途：仓所在区块**没加载**（或主机认不出来）时，方块查不到、拿不到 MTE id，
+     * <p>
+     * 用途：仓所在区块**没加载**（或主机认不出来）时，方块查不到、拿不到 MTE id，
      * 这一行就会既没名字也没图标。类型值是常量（我们的四个类），用它反查 METATILEENTITIES
      * 就能在这种"离线"情形下照样显示正确的仓名与图标 —— 信息不消失。
      */
@@ -274,18 +278,19 @@ public final class AdaptiveHostIndex {
     // ===== TecTech 兼容激光仓：安培写入（用户口径：纳入配置，接受覆盖）=====
 
     private static final Map<Class<?>, Method> SET_AMPERES = new java.util.concurrent.ConcurrentHashMap<>();
-    private static final Map<Class<?>, java.lang.reflect.Field> MAX_AMPERES_FIELD =
-        new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Map<Class<?>, java.lang.reflect.Field> MAX_AMPERES_FIELD = new java.util.concurrent.ConcurrentHashMap<>();
 
     /**
      * 外来兼容仓的**额定安培**（3.32.0-fix1）。
      *
-     * <p>为什么不能直接用 {@code maxAmperesIn()/maxAmperesOut()}：TecTech 的能源类把它实现成
+     * <p>
+     * 为什么不能直接用 {@code maxAmperesIn()/maxAmperesOut()}：TecTech 的能源类把它实现成
      * {@code Amperes + (Amperes >> 2)}，也就是 **×1.25**（字节码已核对）——「64安能源仓」会被读成 **80A**
      * （用户实测），「256安激光靶仓」会被读成 320A。而它们自己的评级字段 {@code public final int maxAmperes}
      * 才是"这个仓是多少安"。
      *
-     * <p>读不到字段时退回方法值，再退回调用方给的兜底值；失败限频 WARN，不静默。
+     * <p>
+     * 读不到字段时退回方法值，再退回调用方给的兜底值；失败限频 WARN，不静默。
      */
     public static int ratedAmps(MetaTileEntity mte, boolean isOutput, int fallback) {
         if (mte == null) return fallback;
@@ -302,9 +307,8 @@ public final class AdaptiveHostIndex {
             warnOnce(
                 "maxAmperes:" + mte.getClass()
                     .getName(),
-                "读不到评级字段 maxAmperes，退回 maxAmperesIn/Out（可能含 GT 的 ×1.25 派生）: "
-                    + mte.getClass()
-                        .getName(),
+                "读不到评级字段 maxAmperes，退回 maxAmperesIn/Out（可能含 GT 的 ×1.25 派生）: " + mte.getClass()
+                    .getName(),
                 null);
         }
         try {
@@ -317,11 +321,14 @@ public final class AdaptiveHostIndex {
     /**
      * 把某一类激光仓的安培写给**本网络主机上的** TecTech 兼容仓。
      *
-     * <p>为什么必须周期写：{@code MTEHatchEnergyMulti}/{@code MTEHatchDynamoMulti} 的
+     * <p>
+     * 为什么必须周期写：{@code MTEHatchEnergyMulti}/{@code MTEHatchDynamoMulti} 的
      * {@code Amperes} 字段**不进 NBT**（jar 字节码里没有 "Amperes" 键），区块重载后会回到构造默认值。
-     * <p>为什么自己夹取：它们的 {@code setAmperes(int)} 是直接 {@code putfield}、**不做任何校验**，
+     * <p>
+     * 为什么自己夹取：它们的 {@code setAmperes(int)} 是直接 {@code putfield}、**不做任何校验**，
      * 所以上限由我们按 {@code maxAmperesIn()/maxAmperesOut()} 夹。
-     * <p>已知代价（用户已确认接受）：TecTech 自己的 GUI 也能改这个值，我们周期写入会覆盖手动设置。
+     * <p>
+     * 已知代价（用户已确认接受）：TecTech 自己的 GUI 也能改这个值，我们周期写入会覆盖手动设置。
      *
      * @return 实际写入的仓数量
      */
@@ -355,8 +362,12 @@ public final class AdaptiveHostIndex {
             setter.invoke(mte, value);
             return true;
         } catch (Throwable t) {
-            warnOnce("compatAmps:" + mte.getClass().getName(),
-                "给 TecTech 兼容激光仓写安培失败（该类可能没有 setAmperes）: " + mte.getClass().getName(), t);
+            warnOnce(
+                "compatAmps:" + mte.getClass()
+                    .getName(),
+                "给 TecTech 兼容激光仓写安培失败（该类可能没有 setAmperes）: " + mte.getClass()
+                    .getName(),
+                t);
             return false;
         }
     }

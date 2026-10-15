@@ -40,7 +40,8 @@ public class CommonProxy {
                 cellHandler.addChannelSupport(loadChannelSupport(APPEU_INTEGRATION_CLASS));
                 AEInfinityCell.LOG.info("Enabled AppEU EU storage support");
             } catch (Throwable t) {
-                AEInfinityCell.LOG.warn("AppEU detected but its integration class is absent in this build; EU channel disabled: " + t);
+                AEInfinityCell.LOG.warn(
+                    "AppEU detected but its integration class is absent in this build; EU channel disabled: " + t);
             }
         }
         AEApi.instance()
@@ -64,8 +65,9 @@ public class CommonProxy {
         com.wztwzt.ae2_qof.hatch.adaptive.AdaptiveNetworkManager.saveAllStats();
         InfinityCellStorage storage = InfinityCellStorage.getInstance();
         if (!storage.saveAll()) {
-            AEInfinityCell.LOG.error("SERVER STOP: infinity cell save failed. Unsaved records retained in memory; "
-                + "do not terminate the JVM before recovering disk access and retrying the save.");
+            AEInfinityCell.LOG.error(
+                "SERVER STOP: infinity cell save failed. Unsaved records retained in memory; "
+                    + "do not terminate the JVM before recovering disk access and retrying the save.");
         }
         storage.clear();
         ServerWorldAccess.clear();

@@ -10,13 +10,13 @@ import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 
-import com.wztwzt.ae2_qof.apgport.gui.GuiPatternDetail;
-import com.wztwzt.ae2_qof.apgport.gui.GuiPatternStorage;
 import com.gtnewhorizons.modularui.api.screen.ModularUIContext;
 import com.gtnewhorizons.modularui.api.screen.ModularWindow;
 import com.gtnewhorizons.modularui.api.screen.UIBuildContext;
 import com.gtnewhorizons.modularui.common.internal.wrapper.ModularGui;
 import com.gtnewhorizons.modularui.common.internal.wrapper.ModularUIContainer;
+import com.wztwzt.ae2_qof.apgport.gui.GuiPatternDetail;
+import com.wztwzt.ae2_qof.apgport.gui.GuiPatternStorage;
 
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 

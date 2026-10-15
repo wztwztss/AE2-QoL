@@ -3,7 +3,6 @@ package com.wztwzt.ae2_qof.common;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.util.RecipeNameUtil;
 
 /**

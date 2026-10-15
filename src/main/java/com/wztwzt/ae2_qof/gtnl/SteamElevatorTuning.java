@@ -26,7 +26,8 @@ import com.wztwzt.ae2_qof.MyMod;
 /**
  * GTNL 蒸汽楼梯（Steam Elevator）模块的**调速 + 批处理**可配置实现（3.29.0）。
  *
- * <p>需求口径（用户拍板）：
+ * <p>
+ * 需求口径（用户拍板）：
  * <ul>
  * <li>单份配方时长压到 **1 tick**（{@code singleDurationMode=FIXED_TICKS}）；</li>
  * <li>开批处理：一次操作合并 **n 份**（默认 128），时长 = n × 单份时长 ⇒ 每 6.4 s 完成 128 次配方；</li>
@@ -34,15 +35,18 @@ import com.wztwzt.ae2_qof.MyMod;
  * <li>输入不足时**自动降级**（能供几份就跑几份），不卡机、不空转。</li>
  * </ul>
  *
- * <p><b>为什么批处理不放大蒸汽</b>：GT 自己的批处理是先按 pre-batch 并行算 EUt，之后才加份数并**只拉伸时长**
+ * <p>
+ * <b>为什么批处理不放大蒸汽</b>：GT 自己的批处理是先按 pre-batch 并行算 EUt，之后才加份数并**只拉伸时长**
  * （{@code GTNLParallelHelper:655-656 / :658-675}）。本实现照抄该语义 ⇒ 每份配方的蒸汽随单份时长一起下降。
  *
- * <p><b>为什么输入补偿用"逐份尝试"而不是"先算余量"</b>：这些模块的重写版 {@code checkProcessing()} 各自用不同方式
+ * <p>
+ * <b>为什么输入补偿用"逐份尝试"而不是"先算余量"</b>：这些模块的重写版 {@code checkProcessing()} 各自用不同方式
  * 取料（有的直接改 {@code ItemStack.stackSize}、有的直接改 {@code FluidStack.amount}、有的走 {@code depleteInput}），
  * 且我们**没有** forestry / cropsnh / fastutil 的编译依赖，无法可靠地"预先计算可负担份数"。
  * 「逐份尝试消耗、成功一份算一份」既规避了全部外部类型，又天然实现了用户要的自动降级。
  *
- * <p><b>已知偏差（相对设计文档）</b>：OilDrill 的输出容量夹紧默认**关闭**（{@code oilDrillOutputClamp=false}）。
+ * <p>
+ * <b>已知偏差（相对设计文档）</b>：OilDrill 的输出容量夹紧默认**关闭**（{@code oilDrillOutputClamp=false}）。
  * 原因：ME 流体输出仓在 {@code mOutputHatches} 里的容量语义不可靠，硬夹紧会把 ME 玩家的批处理**静默降成 n=1**。
  * 需要严格保护仓容时可在配置里打开。
  */
@@ -80,7 +84,8 @@ public final class SteamElevatorTuning {
     /**
      * **抗卡顿闸门**：只有"能凑够这么多份"时才应用调速/批处理；凑不够就**完全不改**（保持上游时长、蒸汽、产出）。
      *
-     * <p>为什么必须有它（需求方口径：*"我最初就是为了减少加速火把带来的卡顿"*）：
+     * <p>
+     * 为什么必须有它（需求方口径：*"我最初就是为了减少加速火把带来的卡顿"*）：
      * 本方案靠"**合并操作**"降卡顿——一次操作 n 份 ⇒ `checkProcessing` 频率 = 20/n 次/秒。
      * 若输入供不上而降级到 n=1，就会退化成**每 tick 一次配方检查**（Apiary 上游是每 6000 tick 一次），
      * 比改前**更卡**。因此"宁可不提速，也不提高检查频率"。
@@ -90,18 +95,21 @@ public final class SteamElevatorTuning {
     /**
      * **每 tick 处理的份数（并行 P）**，默认 1（= 与 3.29.0 首版完全一致）。
      *
-     * <p>为什么它是唯一能提高"每秒产出"的旋钮：单份时长已被压到 1 tick，一次操作 n 份 / n tick
+     * <p>
+     * 为什么它是唯一能提高"每秒产出"的旋钮：单份时长已被压到 1 tick，一次操作 n 份 / n tick
      * ⇒ 每秒配方数 = 1 配方/tick = 20 份/秒，**这是天花板**；把 {@code batchSize} 调大只会让操作变长
      * （每 51 s 交 1024 份），每秒产出不变。只有 P 能让每个 tick 处理 P 份 ⇒ 每秒 20×P 份。
      *
-     * <p>代价：产出 ×n×P 的同时，输入也**严格按 n×P 份扣**（抽油无输入，故是纯加速）。
+     * <p>
+     * 代价：产出 ×n×P 的同时，输入也**严格按 n×P 份扣**（抽油无输入，故是纯加速）。
      * 抗卡顿闸门仍按**操作时长 n**（= 检查频率 20/n）判定，**不**按 n×P —— 并行不改变检查频率。
      */
     public static volatile int moduleMaxParallel = 1;
     /**
      * **抽油模块专用的并行覆盖值**（0 = 跟随 {@link #moduleMaxParallel}）。
      *
-     * <p>为什么给它单独的键且默认 8：抽油**没有任何输入**，并行是纯加速（不消耗材料）。
+     * <p>
+     * 为什么给它单独的键且默认 8：抽油**没有任何输入**，并行是纯加速（不消耗材料）。
      * 需求方口径 =「抽油拉高、其余留 1」，并指定抽油默认值 **8**（≈640,000 L/s 原油）；
      * 把它做成代码默认值，就**不需要改配置文件**。其余 4 类要 ×P 就会 ×P 吃材料，故仍保持 1。
      */
@@ -109,7 +117,8 @@ public final class SteamElevatorTuning {
     /**
      * **屠宰场模块（气动刷怪笼）专用的并行 P**，默认 8。
      *
-     * <p>它的输入是 **0 数量的刷怪笼**（配方 `GTUtility.copyAmount(0, spawner)`，不消耗）⇒ 并行是纯倍率、
+     * <p>
+     * 它的输入是 **0 数量的刷怪笼**（配方 `GTUtility.copyAmount(0, spawner)`，不消耗）⇒ 并行是纯倍率、
      * 无需输入补偿。注意它与 GT 原生 processingLogic 交互，机器自身批处理开启时本模组会**放行不叠加**
      * （防双重放大，见 MixinSteamEntityCrusherTuning）。
      */
@@ -207,7 +216,10 @@ public final class SteamElevatorTuning {
                 getInt(o, "beeBreedingRoyalJellyPerBatch", beeBreedingRoyalJellyPerBatch),
                 0,
                 1000000);
-            greenhouseWaterPerCycle = clamp(getInt(o, "greenhouseWaterPerCycle", greenhouseWaterPerCycle), 0, 100000000);
+            greenhouseWaterPerCycle = clamp(
+                getInt(o, "greenhouseWaterPerCycle", greenhouseWaterPerCycle),
+                0,
+                100000000);
             oilDrillOutputClamp = getBool(o, "oilDrillOutputClamp", oilDrillOutputClamp);
             minBatchesToApplyTuning = clamp(getInt(o, "minBatchesToApplyTuning", minBatchesToApplyTuning), 1, 4096);
             moduleMaxParallel = clamp(getInt(o, "moduleMaxParallel", moduleMaxParallel), 1, 1024);
@@ -291,7 +303,8 @@ public final class SteamElevatorTuning {
     /**
      * 注入自检 + 一级结构指纹 + 二级数值指纹的**启动期**部分。
      *
-     * <p>为什么需要它：本模组已定案**不使用版本白名单**、注入器全部 {@code require=0}（永不崩）。
+     * <p>
+     * 为什么需要它：本模组已定案**不使用版本白名单**、注入器全部 {@code require=0}（永不崩）。
      * 代价是"注入失败"不再崩溃 ⇒ 必须由这里把"失效"变成**可见的日志**。
      * 判定手段是各 mixin 通过 {@code @Unique} 加在目标类上的标记方法 {@link #MARKER_METHOD}：
      * 它存在 ⇔ 该 mixin 真的被应用了。
@@ -418,7 +431,8 @@ public final class SteamElevatorTuning {
     /**
      * ItemStack[] × n。
      *
-     * <p><b>不切叠（重要）</b>：GT 自己的并列产出就是"**一个超大堆**"——`ParallelHelper.addItemsLong:633-641`
+     * <p>
+     * <b>不切叠（重要）</b>：GT 自己的并列产出就是"**一个超大堆**"——`ParallelHelper.addItemsLong:633-641`
      * 只在数量超过 {@code Integer.MAX_VALUE} 时才拆，而输出仓 `MTEHatchOutputBus.storePartial:185-216` 会
      * `stack.stackSize -= toInsert` 逐槽自行拆分。早先按 64 切叠会把 5 个堆变成**上万个 ItemStack**，
      * 反而放大输出路径开销（与"降卡顿"目标相反），故与 GT 保持一致。
@@ -463,11 +477,14 @@ public final class SteamElevatorTuning {
     /**
      * 逐份尝试消耗一份蜂王浆（{@code jellyPerBatch} 个），成功返回 true。
      *
-     * <p>走 {@code depleteInput(ItemStack)}，但该 API 要求"单个槽位内数量足够"，因此按 ≤64 分块多次调用。
+     * <p>
+     * 走 {@code depleteInput(ItemStack)}，但该 API 要求"单个槽位内数量足够"，因此按 ≤64 分块多次调用。
      */
-    /** 逐份尝试消耗一份蜂王浆（{@code jellyPerBatch} 个），成功返回 true。
+    /**
+     * 逐份尝试消耗一份蜂王浆（{@code jellyPerBatch} 个），成功返回 true。
      *
-     * <p>走 {@code depleteInput(ItemStack)}，但该 API 要求"单个槽位内数量足够"，因此按 ≤64 分块多次调用。
+     * <p>
+     * 走 {@code depleteInput(ItemStack)}，但该 API 要求"单个槽位内数量足够"，因此按 ≤64 分块多次调用。
      */
     public static boolean tryConsumeOneBatchJelly(SteamMultiMachineBase<?> machine, int jellyPerBatch) {
         if (jellyPerBatch <= 0) return true; // 配置为 0 ⇒ 视为不收费
@@ -530,7 +547,8 @@ public final class SteamElevatorTuning {
     /**
      * 批量扣除 k 份矿石（每份 {@code oresPerBatch} 个），返回**真正扣成功的份数**。
      *
-     * <p>性能：输入列表只取一次、ALL_PROCESSABLE 的反射句柄只解析一次（热路径，128 份/次操作）。
+     * <p>
+     * 性能：输入列表只取一次、ALL_PROCESSABLE 的反射句柄只解析一次（热路径，128 份/次操作）。
      * 语义：一份必须**能凑齐**才扣（先扫描、后消费），避免"扣了半份"的中间态。
      */
     public static int consumeOreBatches(SteamMultiMachineBase<?> machine, int oresPerBatch, int maxBatches) {
@@ -577,7 +595,8 @@ public final class SteamElevatorTuning {
     /**
      * 批量扣除 k 份蜂王浆（每份 {@code jellyPerBatch} 个），返回真正扣成功的份数。
      *
-     * <p>与上游 Apiary 的取料方式一致：直接改 {@code getStoredInputs()} 返回的 {@code ItemStack.stackSize}
+     * <p>
+     * 与上游 Apiary 的取料方式一致：直接改 {@code getStoredInputs()} 返回的 {@code ItemStack.stackSize}
      * （GTNL 的 {@code getAllStoredInputs()} 返回的是仓内真实对象引用）。列表只取一次。
      */
     public static int consumeJellyBatches(SteamMultiMachineBase<?> machine, int jellyPerBatch, int maxBatches) {
@@ -673,9 +692,7 @@ public final class SteamElevatorTuning {
                     oreSet = set;
                     oreSetContains = contains;
                 } catch (Throwable t) {
-                    warnOnce(
-                        "orefilter",
-                        "[AE2QoL] SteamElevator 调速: 矿石判定不可用，矿处模块将不做输入补偿（份数保持 1）: " + t);
+                    warnOnce("orefilter", "[AE2QoL] SteamElevator 调速: 矿石判定不可用，矿处模块将不做输入补偿（份数保持 1）: " + t);
                 }
             }
             if (oreSet == null || oreSetContains == null) return false;
@@ -725,7 +742,9 @@ public final class SteamElevatorTuning {
         for (Map.Entry<String, Integer> e : EXPECTED_SINGLE.entrySet()) {
             if (e.getValue() == observed) return;
         }
-        if (observed == 12000 || observed == 6000 || observed == 100 || observed == 1200
+        if (observed == 12000 || observed == 6000
+            || observed == 100
+            || observed == 1200
             || observed == 600
             || observed == 400) {
             return;

@@ -89,7 +89,8 @@ public class PacketSaveFields implements IMessage {
             // 3.22.0-fix47 **真 bug 修复**：这里原来只认移植过来的 ItemPatternGenerator，
             // 而实际注册使用的是本模组自己的 generator/ItemSmartPatternGenerator（extends Item）
             // ⇒ 判断恒为假、字段**从来没被保存过**（界面每次打开都是空的）。现在两者都认。
-            boolean ours = held != null && held.getItem() instanceof com.wztwzt.ae2_qof.generator.ItemSmartPatternGenerator;
+            boolean ours = held != null
+                && held.getItem() instanceof com.wztwzt.ae2_qof.generator.ItemSmartPatternGenerator;
             if (held != null && (held.getItem() instanceof ItemPatternGenerator || ours)) {
                 ItemPatternGenerator.saveAllFields(
                     held,
@@ -116,13 +117,8 @@ public class PacketSaveFields implements IMessage {
 
             // 3.22.0-fix47：对照表选行后由服务端重新打开生成器界面（独立 GuiScreen 关掉后要能回到主页）
             if (message.reopenGui) {
-                player.openGui(
-                    com.wztwzt.ae2_qof.MyMod.instance,
-                    ItemPatternGenerator.GUI_ID,
-                    player.worldObj,
-                    0,
-                    0,
-                    0);
+                player
+                    .openGui(com.wztwzt.ae2_qof.MyMod.instance, ItemPatternGenerator.GUI_ID, player.worldObj, 0, 0, 0);
             }
 
             return null;
