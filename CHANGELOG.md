@@ -34,6 +34,28 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-15 (112) - **3.35.0-fix4：四处电网转账失败语义修复——回滚/留痕分开处理（P1-13）**
+
+### 一、现象（GT 字节码 + 源码逐行实证）
+`WirelessNetworkManager.addEUToGlobalEnergyMap` 在"账相加为负"时 **return false 且不改账**（字节码 `signum<0 → iconst_0`）。
+本模组 4 处调用**全部不查返回值**：
+1. `AdaptiveNetDynamoHatch:181` / `AdaptiveNetLaserTargetHatch:181`（**正数存入**）：先 `decreaseStoredEnergyUnits(stored)` 再转账——
+   GT 拒收时电已从仓里扣掉却没进电网 = **真蒸发**；
+2. `AdaptiveNetHatch:132` / `AdaptiveNetLaserHatch:133`（**负数记账**，扣消耗）：GT 拒收时消耗留在电网（偏高而非蒸发）——
+   失败本身无害，但连续拒收说明"消耗上报"失效、账目持续偏高，必须留痕。
+同仓正确范式：`util/WirelessEnergyTransfer.deposit`（失败回滚 + markDirty）。
+
+### 二、本轮改动（用户拍板：修；按语义分两档）
+1. **正数存入**（Dynamo/LaserTarget）：失败 ⇒ `increaseStoredEnergyUnits(stored)` 把电**塞回仓**（回滚）+ WARN + return（本 tick 不再上报流量）；
+2. **负数记账**（Hatch/Laser）：失败 ⇒ WARN（带金额与 owner），不回滚（回滚会让机器白用电——消耗已发生）；
+3. 成功路径零变化。
+
+### 三、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.35.0-fix4.jar`。
+- 待游戏实测（用户执行）：① 正常发电/用电照常（核心验收——回滚不误触发）；② 电网余额极端场景（接近扣负）时日志出现 WARN 而非静默。
+
+---
+
 ## 工作区决策记录 2026-10-15 (111) - **3.35.0-fix3：读档兼容性丢弃留痕 + 迁移跳过可见（P1-12 + P2-A6）**
 
 ### 一、现象（源码实证）

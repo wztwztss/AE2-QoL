@@ -192,7 +192,17 @@ public class AdaptiveNetDynamoHatch extends MTEHatchDynamo {
         }
 
         aBase.decreaseStoredEnergyUnits(stored, false);
-        WirelessNetworkManager.addEUToGlobalEnergyMap(owner, stored);
+        // 3.35.0-fix4（审查 P1-13）：GT 的 addEUToGlobalEnergyMap 在账相加为负时 return false 且不改账
+        //（字节码 signum<0 → iconst_0）——旧代码不查返回值，拒收时电已从仓里扣掉却没进电网 = 静默蒸发。
+        // 失败时把电塞回仓（与 util/WirelessEnergyTransfer 的回滚范式统一）并留痕。
+        if (!WirelessNetworkManager.addEUToGlobalEnergyMap(owner, stored)) {
+            aBase.increaseStoredEnergyUnits(stored, false);
+            cn.dancingsnow.aeinfinitycell.AEInfinityCell.LOG.warn(
+                "[AE2QoL] 自适应仓向电网推电被拒（电网余额不足以扣负数？），{} EU 已回滚到仓内：owner={}",
+                stored,
+                owner);
+            return;
+        }
         // 3.32.0-fix4锛氭湰娆℃帹閫佺殑鏄?杩?4 tick 绐楀彛"绱鐨勭紦瀛橀噺锛屾崲绠楁垚 EU/t 鎵嶆槸閫熺巼
         helper.updateRealFlowEUt(stored);
     }

@@ -126,7 +126,14 @@ public class AdaptiveNetLaserHatch extends MTEHatchEnergy {
             long currentStored = aBase.getStoredEU();
             long consumed = lastStoredEU - currentStored;
             if (consumed > 0) {
-                WirelessNetworkManager.addEUToGlobalEnergyMap(owner, -consumed);
+                // 3.35.0-fix4（审查 P1-13）：负数记账（扣消耗）被 GT 拒绝时电留在电网（偏高而非蒸发），
+                // 失败本身无害——但必须留痕：连续拒收说明"消耗上报"失效，账目会持续偏高。
+                if (!WirelessNetworkManager.addEUToGlobalEnergyMap(owner, -consumed)) {
+                    cn.dancingsnow.aeinfinitycell.AEInfinityCell.LOG.warn(
+                        "[AE2QoL] 自适应仓消耗上报被拒（电网余额不足以扣负数），{} EU 未扣：owner={}",
+                        consumed,
+                        owner);
+                }
             }
             // 3.32.0-fix4锛歝onsumed 鏄?杩?4 tick 绐楀彛"鐨勫閲忥紝蹇呴』鎹㈢畻鎴?EU/t锛堝惁鍒欏垪琛ㄥ疄娴嬫斁澶?4 鍊嶏級
             helper.updateRealFlowEUt(consumed > 0 ? consumed : 0L);
