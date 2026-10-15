@@ -34,6 +34,35 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-14 (100) - **3.33.0-fix5：PH 编程电路转写注入目标改到父类 DualInputHatch——修"从未生效"（P0-5）**
+
+### 一、现象（日志 + 字节码双证）
+`MixinPatternDualInputHatchProgrammingCircuit` 的两个 `@Inject`（`func_70299_a` / `setInventorySlotContents`，均 `require=0`）
+从未命中：实例日志里该 Mixin 只有类级 `Mixing ...` 一行、**零 handler 注册行**，`grep -c wrapOnInsert` = 0。
+javap 实证（PH 0.2.0p24，编译基线与实例同 jar）：`func_70299_a` 声明在**父类 `DualInputHatch:88`**，
+`PatternDualInputHatch` 与中间层 `BufferedDualInputHatch` 均不声明 —— Mixin 的 `@Inject` 只匹配目标类自己声明的方法。
+即：fix20 钉错了类、fix21 换名字也没用（名字对了类还是错的）。历史注记：fix21 注释里"日志实证 Mixin apply failed"实为
+当年 MCP/SRG 名问题的一次失败申请记录，与本次的目标类问题叠加，导致从未生效。
+
+### 二、本轮改动
+1. `@Mixin` 目标：`PatternDualInputHatch` → **`DualInputHatch`**（方法真实声明处）。
+2. 回调收窄：`instanceof PatternDualInputHatch` —— 父类的其它子类（StockingDualInputHatchME、DualInputHatchSlave 系列、
+   各类输入总线等）一律原样放行，行为面与原意图完全一致。
+3. `MixinPatternDualInputHatchAccess`（同为 PatternDualInputHatch 的 accessor mixin）不受影响——它注入的是**字段 accessor**，
+   目标类的字段在自己的类里，继续有效（日志实证它一直正常）。
+4. 其余逻辑（RETURN 注入、双名挂钩、wrapPlainPattern 早退、失败 WARN）原样保留。
+
+### 三、影响面与风险
+- 只影响装了 PH 的环境（未装 PH 本 Mixin 不加载）；
+- 转写动作只在"样板被放进 PatternDualInputHatch 系仓"时发生，与原设计意图一致；
+- 极端场景：若某天 PH 把 `func_70299_a` 上移/改名，本注入再次失效 —— **require=0 会静默**，建议后续把 GTNL 式注入自检推广到本 Mixin（已列入报告建议）。
+
+### 四、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.33.0-fix5.jar`。
+- 待游戏实测（用户执行）：① 启动日志里本 Mixin 出现 handler 注册行（`ae2qol$wrapOnInsertSrg`）；② 往 PH 样板仓放一张带 GT 编程电路的样板，确认被转写为编程器电路；③ 往 StockingDualInputHatchME 等非样板仓放电路样板，确认**不**被转写（收窄生效）。
+
+---
+
 ## 工作区决策记录 2026-10-14 (99) - **3.33.0-fix4：MixinGuiMEMonitorable @Shadow 类型对齐 AE2 1083——救活 NEI 角标与 pin 行扩展（P0-4）**
 
 ### 一、现象（实例运行日志实证）
