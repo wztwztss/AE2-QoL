@@ -34,6 +34,30 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-15 (113) - **3.35.0-fix5：CraftingCPUCluster 注入成员加 ae2qol$ 前缀——消除与 wtct 的实测撞名（P1-14）**
+
+### 一、现象（运行日志实证）
+实例日志 `:93240/:93241`：
+```
+Method overwrite conflict for setAsNull / isSameNetworkKey ... from mod wtct,
+previously written by com.wztwzt.ae2_qof.mixin.ae.MixinCraftingCPUCluster. Skipping method.
+```
+我方 `@Unique` 成员用了未命名空间化的短名（`setAsNull`/`isSameNetworkKey` + 字段 `player`/`output`/`networkKey`），
+先加载占坑 ⇒ wtct 的同名成员被框架丢弃、字段被改名——**对方的调用点会落到我方实现上**（两模组状态串味）。
+这些成员在"合成完成通知"功能内被实际调用（`:180-247`），非死代码撞名。
+
+### 二、本轮改动（用户拍板：修；先问清方法用途再动手）
+5 个成员全部加 `ae2qol$` 前缀（与同文件其它 20+ 成员一致）：
+`setAsNull → ae2qol$setAsNull`、`isSameNetworkKey → ae2qol$isSameNetworkKey`、
+`player → ae2qol$player`、`output → ae2qol$output`、`networkKey → ae2qol$networkKey`。
+逻辑零改动（纯机械改名）；所有调用点都在本文件内（已穷举 grep），改名后编译零错误、旧名零残留。
+
+### 三、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.35.0-fix5.jar`。
+- 待游戏实测（用户执行）：① 合成完成通知照常（下单 → 完成 → 收到聊天提示/终端通知）；② 启动日志不再出现本模组相关的 overwrite conflict（wtct 侧方法恢复）。
+
+---
+
 ## 工作区决策记录 2026-10-15 (112) - **3.35.0-fix4：四处电网转账失败语义修复——回滚/留痕分开处理（P1-13）**
 
 ### 一、现象（GT 字节码 + 源码逐行实证）

@@ -147,13 +147,13 @@ public abstract class MixinCraftingCPUCluster {
     private long elapsedTime;
 
     @Unique
-    private EntityPlayer player;
+    private EntityPlayer ae2qol$player;
 
     @Unique
-    private ItemStack output;
+    private ItemStack ae2qol$output;
 
     @Unique
-    private long networkKey = 0;
+    private long ae2qol$networkKey = 0;
 
     @Inject(method = "submitJob", at = @At("RETURN"), remap = false)
     private void ae2qol$captureSubmitJob(IGrid g, ICraftingJob job, BaseActionSource src,
@@ -161,52 +161,52 @@ public abstract class MixinCraftingCPUCluster {
         if (src instanceof PlayerSource ps && job != null && cir.getReturnValue() != null) {
             // fix23：先无条件记录下单玩家与产物。原实现要求网络里必须存在 ME 安全终端，
             // 否则直接放弃捕获，导致「没有安全终端的网络合成完成后完全没有通知」。
-            this.player = ps.player;
+            this.ae2qol$player = ps.player;
             IAEStack<?> out = job.getOutput();
-            this.output = out instanceof IAEItemStack item ? item.getItemStack() : null;
-            this.networkKey = 0;
+            this.ae2qol$output = out instanceof IAEItemStack item ? item.getItemStack() : null;
+            this.ae2qol$networkKey = 0;
             java.util.Iterator<IGridNode> iterator = g.getMachines(TileSecurity.class)
                 .iterator();
             if (iterator.hasNext()) {
                 // 有安全终端时记录网络密钥，完成时可精确投递给持有同网络绑定无线终端的玩家
-                this.networkKey = ((TileSecurity) iterator.next()
+                this.ae2qol$networkKey = ((TileSecurity) iterator.next()
                     .getMachine()).getLocatableSerial();
             }
             return;
         }
         if (cir.getReturnValue() != null) {
             // 任务确实被接受但不是玩家下单（例如接口自动请求）：清空旧捕获，避免误报。
-            setAsNull();
+            ae2qol$setAsNull();
             return;
         }
         // P1-018：submitJob 返回 null 表示 CPU 正忙、本次订单被拒绝执行。
         // 此时不能清空现有捕获，否则正在运行的那个任务完成时不会再发通知。
         // 仅当此前没有待通知任务时，才做一次无害的清理。
-        if (this.player == null) {
-            setAsNull();
+        if (this.ae2qol$player == null) {
+            ae2qol$setAsNull();
         }
     }
 
     @Inject(method = "handleCraftBranchFailure", at = @At("TAIL"), remap = false)
     private void ae2qol$onBranchFailure(CraftBranchFailure e, BaseActionSource src, CallbackInfo ci) {
-        setAsNull();
+        ae2qol$setAsNull();
     }
 
     @Inject(method = "completeJob", at = @At("TAIL"), remap = false)
     private void ae2qol$onJobComplete(CallbackInfo ci) {
-        if (this.player == null || this.output == null) {
+        if (this.ae2qol$player == null || this.ae2qol$output == null) {
             return;
         }
-        if (this.player instanceof EntityPlayerMP playerMP && playerMP.playerNetServerHandler == null) {
+        if (this.ae2qol$player instanceof EntityPlayerMP playerMP && playerMP.playerNetServerHandler == null) {
             // 玩家已断线：放弃通知并清理捕获，避免 NPE 与内存滞留
-            setAsNull();
+            ae2qol$setAsNull();
             return;
         }
-        if (this.networkKey != 0) {
+        if (this.ae2qol$networkKey != 0) {
             // 有安全终端：优先投递给背包里持有同网络绑定无线终端的玩家
-            for (int i = 0; i < this.player.inventory.mainInventory.length; i++) {
-                ItemStack stack = this.player.inventory.mainInventory[i];
-                if (isSameNetworkKey(stack)) {
+            for (int i = 0; i < this.ae2qol$player.inventory.mainInventory.length; i++) {
+                ItemStack stack = this.ae2qol$player.inventory.mainInventory[i];
+                if (ae2qol$isSameNetworkKey(stack)) {
                     return;
                 }
             }
@@ -219,21 +219,21 @@ public abstract class MixinCraftingCPUCluster {
     /** 直接向下单玩家发送合成完成通知并清理捕获状态。 */
     @Unique
     private void ae2qol$notifyPlayer() {
-        if (!(this.player instanceof EntityPlayerMP playerMP) || playerMP.playerNetServerHandler == null) {
-            setAsNull();
+        if (!(this.ae2qol$player instanceof EntityPlayerMP playerMP) || playerMP.playerNetServerHandler == null) {
+            ae2qol$setAsNull();
             return;
         }
         long elapsedMillis = java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(this.elapsedTime);
         ModNetwork.CHANNEL
-            .sendTo(new CraftingCompletePacket(this.output, this.output.stackSize, elapsedMillis), playerMP);
-        setAsNull();
+            .sendTo(new CraftingCompletePacket(this.ae2qol$output, this.ae2qol$output.stackSize, elapsedMillis), playerMP);
+        ae2qol$setAsNull();
     }
 
     @Unique
-    private boolean isSameNetworkKey(ItemStack item) {
+    private boolean ae2qol$isSameNetworkKey(ItemStack item) {
         if (item != null && item.getItem() instanceof INetworkEncodable encodable) {
             String key = encodable.getEncryptionKey(item);
-            if (key != null && key.equals(Long.toString(this.networkKey)) && this.player instanceof EntityPlayerMP) {
+            if (key != null && key.equals(Long.toString(this.ae2qol$networkKey)) && this.ae2qol$player instanceof EntityPlayerMP) {
                 ae2qol$notifyPlayer();
                 return true;
             }
@@ -242,10 +242,10 @@ public abstract class MixinCraftingCPUCluster {
     }
 
     @Unique
-    private void setAsNull() {
-        this.player = null;
-        this.output = null;
-        this.networkKey = 0;
+    private void ae2qol$setAsNull() {
+        this.ae2qol$player = null;
+        this.ae2qol$output = null;
+        this.ae2qol$networkKey = 0;
     }
 
     // ---------------------------------------------------------------- 智能倍增
