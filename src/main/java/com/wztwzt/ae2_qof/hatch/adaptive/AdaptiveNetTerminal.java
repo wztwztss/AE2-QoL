@@ -2,6 +2,7 @@ package com.wztwzt.ae2_qof.hatch.adaptive;
 
 import static gregtech.api.enums.GTValues.V;
 
+import java.math.BigInteger;
 import java.util.UUID;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -1013,6 +1014,43 @@ public class AdaptiveNetTerminal extends MTEHatch {
         }
     }
 
+    /**
+     * 3.33.0-fix3：电网余额的 BigInteger 精确显示（去除 9.2E 显示上限）。
+     * <p>为什么需要：{@code getGridEULong} 把电网钳到 {@code Long.MAX_VALUE}（9.22E），
+     * 用户电网已实测超过 9.2E —— 监控页"电网蓄电"从此永远停在同一数字上。
+     * 这里直接读 {@code BigInteger} 并用 {@link #formatKMG(BigInteger)} 格式化，
+     * 超过 9.22E 也能显示真实值（如 15.80E）。统计/补电等算术路径仍用 long 快照（够用）。
+     */
+    private static String formatGridEUPrecise(long fallback, UUID owner) {
+        if (owner == null) return formatKMG(fallback);
+        BigInteger exact = AdaptiveHatchHelper.getGridEUBigInteger(owner);
+        if (exact.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) < 0) {
+            // 未超界：保持旧路径（含 0/负值的原样格式化），避免双轨显示不一致
+            return formatKMG(fallback);
+        }
+        return formatKMG(exact);
+    }
+
+    private static String formatKMG(BigInteger eu) {
+        if (eu.signum() < 0) return "-" + formatKMG(eu.negate());
+        BigInteger thousand = BigInteger.valueOf(1000);
+        String[] suffixes = { "", "K", "M", "G", "T", "P", "E" };
+        int tier = 0;
+        BigInteger val = eu;
+        while (val.compareTo(thousand) >= 0 && tier < suffixes.length - 1) {
+            val = val.divide(thousand);
+            tier++;
+        }
+        // 保留两位小数：用余数手工拼（BigInteger 没有 %f）
+        if (tier > 0) {
+            BigInteger frac = eu.divide(BigInteger.TEN.pow(tier * 3 - 2));
+            long frac100 = frac.mod(BigInteger.valueOf(100))
+                .longValue();
+            return String.format("%d.%02d%s", val.longValue(), frac100, suffixes[tier]);
+        }
+        return eu.toString();
+    }
+
     private static String formatRegular(long eu) {
         if (eu == 0) return "0";
         boolean neg = eu < 0;
@@ -1130,7 +1168,8 @@ public class AdaptiveNetTerminal extends MTEHatch {
                     new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.monitor.grid_energy")).size(labelW, 14))
                 .child(new TextWidget<>(IKey.dynamic(() -> {
                     long gridEU = gridEUSync.getLongValue();
-                    return EnumChatFormatting.WHITE + formatEU(gridEU, displayMode) + " EU";
+                    // 3.33.0-fix3：电网余额 >9.22E 时走 BigInteger 精确显示（其余情况与旧路径一致）
+                    return EnumChatFormatting.WHITE + formatGridEUPrecise(gridEU, networkOwner) + " EU";
                 })).size(valueW, 14)
                     .textAlign(com.cleanroommc.modularui.utils.Alignment.CenterRight)));
 

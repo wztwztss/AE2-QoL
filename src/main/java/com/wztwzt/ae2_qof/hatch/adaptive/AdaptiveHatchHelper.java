@@ -42,6 +42,14 @@ public class AdaptiveHatchHelper {
     private int lastVoltageTier = 0;
     private int lastAmps = 1;
     private long lastGridEU = 0L;
+    /**
+     * 3.33.0-fix3：电网余额的 BigInteger 快照（仅供 WAILA/GUI **显示**用）。
+     * <p>{@code lastGridEU} 是钳到 Long.MAX_VALUE 的 long 快照（统计/补电等算术路径仍用它，
+     * 避免热路径付 BigInteger 代价）；但用户电网已实测 >9.2E —— 显示层若只看 long 快照
+     * 就永远停在 9.22E。这里在 {@code setLastGridEU} 时顺带存一份精确值（客户端渲染读），
+     * NBT 只持久化 long 版（显示缓存不跨存档，丢了下一 tick 就会刷新，无需精确持久化）。
+     */
+    private BigInteger lastGridEUBigInteger = BigInteger.ZERO;
 
     public HatchType getHatchType() {
         return hatchType;
@@ -241,8 +249,24 @@ public class AdaptiveHatchHelper {
         return lastGridEU;
     }
 
+    /** 3.33.0-fix3：精确电网余额（显示专用；>9.22E 时与 long 快照不同）。 */
+    public BigInteger getLastGridEUBigInteger() {
+        return lastGridEUBigInteger;
+    }
+
     public void setLastGridEU(long eu) {
         this.lastGridEU = eu;
+    }
+
+    /**
+     * 3.33.0-fix3：与服务端读侧配套的精确写入。调用方（四个仓的 onPreTick）在
+     * {@code setLastGridEU(long)} 之后调用它，把 BigInteger 快照一并带给客户端渲染。
+     * <p>注意：helper 随 NBT 双端同步走的是自身字段序列化；BigInteger 不进 NBT
+     * （显示缓存下一 tick 就会刷新，无需持久化），因此客户端首帧可能短暂看到
+     * long 快照口径（9.22E 封顶），随后被本字段覆盖为精确值。
+     */
+    public void setLastGridEUBigInteger(BigInteger eu) {
+        this.lastGridEUBigInteger = eu == null ? BigInteger.ZERO : eu;
     }
 
     public static long getGridEULong(UUID owner) {

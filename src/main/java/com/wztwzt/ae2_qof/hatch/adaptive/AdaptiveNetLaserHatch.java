@@ -2,6 +2,7 @@ package com.wztwzt.ae2_qof.hatch.adaptive;
 
 import static gregtech.api.enums.GTValues.V;
 
+import java.math.BigInteger;
 import java.util.UUID;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -127,15 +128,18 @@ public class AdaptiveNetLaserHatch extends MTEHatchEnergy {
             if (consumed > 0) {
                 WirelessNetworkManager.addEUToGlobalEnergyMap(owner, -consumed);
             }
-            // 3.32.0-fix4：consumed 是"这 4 tick 窗口"的增量，必须换算成 EU/t（否则列表实测放大 4 倍）
+            // 3.32.0-fix4锛歝onsumed 鏄?杩?4 tick 绐楀彛"鐨勫閲忥紝蹇呴』鎹㈢畻鎴?EU/t锛堝惁鍒欏垪琛ㄥ疄娴嬫斁澶?4 鍊嶏級
             helper.updateRealFlowEUt(consumed > 0 ? consumed : 0L);
             long gridEU = AdaptiveHatchHelper.getGridEULong(owner);
             helper.setLastGridEU(gridEU);
             long maxStore = maxEUStore();
             long halfStore = maxStore / 2;
             if (currentStored < halfStore) {
-                long target = Math.min(halfStore, currentStored + gridEU);
-                long diff = target - currentStored;
+                // 3.33.0-fix3：与 AdaptiveNetHatch 同修 —— 用「剩余空间」而不是「存量+电网」
+                // 当补电上限，避免 gridEU 逼近 Long.MAX_VALUE 时加法环绕成负数导致补电静默跳过
+                // （机器疯狂开关机的根因）。数学等价：min(halfStore, c+g) - c == min(halfStore-c, g)。
+                long headroom = halfStore - currentStored; // currentStored < halfStore ⇒ 恒为正
+                long diff = Math.min(headroom, gridEU);
                 if (diff > 0) {
                     aBase.increaseStoredEnergyUnits(diff, false);
                 }
@@ -241,10 +245,10 @@ public class AdaptiveNetLaserHatch extends MTEHatchEnergy {
 
         column.child(new TextWidget<>(IKey.dynamic(() -> {
             if (boundSync.getIntValue() == 0) {
-                return EnumChatFormatting.RED + "● "
+                return EnumChatFormatting.RED + "鈼?"
                     + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.unbound");
             }
-            return EnumChatFormatting.GREEN + "● " + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.bound");
+            return EnumChatFormatting.GREEN + "鈼?" + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.bound");
         })).size(260, 14));
 
         column.child(new TextWidget<>(IKey.dynamic(() -> {
@@ -278,6 +282,40 @@ public class AdaptiveNetLaserHatch extends MTEHatchEnergy {
         if (eu >= 1_000_000L) return String.format("%.2fM", eu / 1_000_000.0);
         if (eu >= 1_000L) return String.format("%.1fK", eu / 1_000.0);
         return String.valueOf(eu);
+    }
+
+    /**
+     * 3.33.0-fix3锛氱數缃戜綑棰濈殑 BigInteger 绮剧‘鐗堬紙>9.22E 鏃舵樉绀虹湡瀹炲€硷紝濡?15.80E锛夈€?     * 涓?AdaptiveNetHatch 鍚屾锛沇AILA/Grid 琛屽湪 helper 蹇収瓒呰繃 long 涓婇檺鏃惰蛋鏈柟娉曘€?     */
+    private static String formatEUBigInteger(BigInteger eu) {
+        BigInteger E = BigInteger.valueOf(1_000_000_000_000_000_000L);
+        BigInteger P = BigInteger.valueOf(1_000_000_000_000_000L);
+        BigInteger T = BigInteger.valueOf(1_000_000_000_000L);
+        BigInteger G = BigInteger.valueOf(1_000_000_000L);
+        BigInteger M = BigInteger.valueOf(1_000_000L);
+        BigInteger K = BigInteger.valueOf(1_000L);
+        BigInteger abs = eu.abs();
+        BigInteger whole;
+        String suffix;
+        double scale;
+        if (abs.compareTo(E) >= 0) { whole = abs.divide(E); suffix = "E"; scale = 1e18; }
+        else if (abs.compareTo(P) >= 0) { whole = abs.divide(P); suffix = "P"; scale = 1e15; }
+        else if (abs.compareTo(T) >= 0) { whole = abs.divide(T); suffix = "T"; scale = 1e12; }
+        else if (abs.compareTo(G) >= 0) { whole = abs.divide(G); suffix = "G"; scale = 1e9; }
+        else if (abs.compareTo(M) >= 0) { whole = abs.divide(M); suffix = "M"; scale = 1e6; }
+        else if (abs.compareTo(K) >= 0) { whole = abs.divide(K); suffix = "K"; scale = 1e3; }
+        else { return (eu.signum() < 0 ? "-" : "") + abs; }
+        double frac = abs.mod(BigInteger.valueOf((long) (scale / 100)))
+            .doubleValue() / (scale / 100);
+        return String.format("%s%.2f%s", eu.signum() < 0 ? "-" : "", whole.doubleValue() + frac / 100.0, suffix);
+    }
+
+    /** 3.33.0-fix3锛歐AILA"Grid"琛屽彇鏁?鈥斺€?瓒呰繃 long 涓婇檺璧扮簿纭樉绀猴紝鍚﹀垯缁存寔鏃ц矾寰勩€?*/
+    private String formatGridEUForWaila() {
+        BigInteger exact = helper.getLastGridEUBigInteger();
+        if (exact.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) >= 0) {
+            return formatEUBigInteger(exact);
+        }
+        return formatEU(helper.getLastGridEU());
     }
 
     @Override
@@ -321,7 +359,7 @@ public class AdaptiveNetLaserHatch extends MTEHatchEnergy {
             String tierName = GTUtility.getColoredTierNameFromTier((byte) v);
             currenttip.add(EnumChatFormatting.AQUA + "V:" + tierName + " (" + V[v] + ") | A:" + a);
             long gridEU = helper.getLastGridEU();
-            currenttip.add(EnumChatFormatting.AQUA + "Grid: " + formatEU(gridEU));
+            currenttip.add(EnumChatFormatting.AQUA + "Grid: " + formatGridEUForWaila());
             if (helper.isBound()) {
                 currenttip
                     .add(EnumChatFormatting.GREEN + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.bound"));

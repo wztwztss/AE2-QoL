@@ -2,6 +2,7 @@ package com.wztwzt.ae2_qof.hatch.adaptive;
 
 import static gregtech.api.enums.GTValues.V;
 
+import java.math.BigInteger;
 import java.util.UUID;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -185,7 +186,7 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
 
         aBase.decreaseStoredEnergyUnits(stored, false);
         WirelessNetworkManager.addEUToGlobalEnergyMap(owner, stored);
-        // 3.32.0-fix4：本次推送的是"这 4 tick 窗口"累计的缓存量，换算成 EU/t 才是速率
+        // 3.32.0-fix4锛氭湰娆℃帹閫佺殑鏄?杩?4 tick 绐楀彛"绱鐨勭紦瀛橀噺锛屾崲绠楁垚 EU/t 鎵嶆槸閫熺巼
         helper.updateRealFlowEUt(stored);
     }
 
@@ -230,10 +231,10 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
 
         column.child(new TextWidget<>(IKey.dynamic(() -> {
             if (boundSync.getIntValue() == 0) {
-                return EnumChatFormatting.RED + "● "
+                return EnumChatFormatting.RED + "鈼?"
                     + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.unbound");
             }
-            return EnumChatFormatting.GREEN + "● " + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.bound");
+            return EnumChatFormatting.GREEN + "鈼?" + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.bound");
         })).size(260, 14));
 
         column.child(new TextWidget<>(IKey.dynamic(() -> {
@@ -267,6 +268,40 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
         if (eu >= 1_000_000L) return String.format("%.2fM", eu / 1_000_000.0);
         if (eu >= 1_000L) return String.format("%.1fK", eu / 1_000.0);
         return String.valueOf(eu);
+    }
+
+    /**
+     * 3.33.0-fix3锛氱數缃戜綑棰濈殑 BigInteger 绮剧‘鐗堬紙>9.22E 鏃舵樉绀虹湡瀹炲€硷紝濡?15.80E锛夈€?     * 涓?AdaptiveNetHatch 鍚屾锛沇AILA/Grid 琛屽湪 helper 蹇収瓒呰繃 long 涓婇檺鏃惰蛋鏈柟娉曘€?     */
+    private static String formatEUBigInteger(BigInteger eu) {
+        BigInteger E = BigInteger.valueOf(1_000_000_000_000_000_000L);
+        BigInteger P = BigInteger.valueOf(1_000_000_000_000_000L);
+        BigInteger T = BigInteger.valueOf(1_000_000_000_000L);
+        BigInteger G = BigInteger.valueOf(1_000_000_000L);
+        BigInteger M = BigInteger.valueOf(1_000_000L);
+        BigInteger K = BigInteger.valueOf(1_000L);
+        BigInteger abs = eu.abs();
+        BigInteger whole;
+        String suffix;
+        double scale;
+        if (abs.compareTo(E) >= 0) { whole = abs.divide(E); suffix = "E"; scale = 1e18; }
+        else if (abs.compareTo(P) >= 0) { whole = abs.divide(P); suffix = "P"; scale = 1e15; }
+        else if (abs.compareTo(T) >= 0) { whole = abs.divide(T); suffix = "T"; scale = 1e12; }
+        else if (abs.compareTo(G) >= 0) { whole = abs.divide(G); suffix = "G"; scale = 1e9; }
+        else if (abs.compareTo(M) >= 0) { whole = abs.divide(M); suffix = "M"; scale = 1e6; }
+        else if (abs.compareTo(K) >= 0) { whole = abs.divide(K); suffix = "K"; scale = 1e3; }
+        else { return (eu.signum() < 0 ? "-" : "") + abs; }
+        double frac = abs.mod(BigInteger.valueOf((long) (scale / 100)))
+            .doubleValue() / (scale / 100);
+        return String.format("%s%.2f%s", eu.signum() < 0 ? "-" : "", whole.doubleValue() + frac / 100.0, suffix);
+    }
+
+    /** 3.33.0-fix3锛歐AILA"Grid"琛屽彇鏁?鈥斺€?瓒呰繃 long 涓婇檺璧扮簿纭樉绀猴紝鍚﹀垯缁存寔鏃ц矾寰勩€?*/
+    private String formatGridEUForWaila() {
+        BigInteger exact = helper.getLastGridEUBigInteger();
+        if (exact.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) >= 0) {
+            return formatEUBigInteger(exact);
+        }
+        return formatEU(helper.getLastGridEU());
     }
 
     @Override
@@ -308,7 +343,7 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
             String tierName = GTUtility.getColoredTierNameFromTier((byte) v);
             currenttip.add(EnumChatFormatting.AQUA + "V:" + tierName + " (" + V[v] + ") | A:" + a);
             long gridEU = helper.getLastGridEU();
-            currenttip.add(EnumChatFormatting.AQUA + "Grid: " + formatEU(gridEU));
+            currenttip.add(EnumChatFormatting.AQUA + "Grid: " + formatGridEUForWaila());
             if (helper.isBound()) {
                 currenttip
                     .add(EnumChatFormatting.GREEN + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.bound"));

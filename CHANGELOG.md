@@ -34,6 +34,41 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-14 (98) - **3.33.0-fix3：补电加法溢出修复（修"电网>9.2E 后机器疯狂开关机"）＋ 去掉 9.2E 显示上限（P0-3 + P2-6）**
+
+### 一、现象（用户实测 + 精确算式复核）
+`AdaptiveNetHatch.java:141` / `AdaptiveNetLaserHatch.java:142` 的补电公式：
+```java
+long target = Math.min(halfStore, currentStored + gridEU);   // 溢出点
+long diff = target - currentStored;
+```
+`AdaptiveHatchHelper.getGridEULong` 把电网钳到 `Long.MAX_VALUE`（9.223e18）。用户电网实测 >9.2E 后：
+`currentStored + gridEU` 环绕为负（算式复核：存量 1 → 和 = −9.22e18；存量 1000 → −9.22e18+999）⇒ `target` 负 ⇒ `diff<0` ⇒
+**补电被静默跳过**，唯一例外是存量恰好为 0（0+Long.MAX 不溢出）。机器"抽干→停机→归零补满→重启→再抽干"——即用户实测的疯狂开关机。
+
+### 二、本轮改动（用户拍板：修，并顺带去掉 9.2E 显示上限）
+1. **补电算术**（两个文件同修）：改用数学等价的「剩余空间」式：
+   `long headroom = halfStore - currentStored; long diff = Math.min(headroom, gridEU);`
+   等价性：`min(halfStore, c+g) - c == min(halfStore-c, g)`；新式全部是"小数减小数"，永不溢出。
+2. **显示上限去除**（P2-6 一并修）：
+   - `AdaptiveHatchHelper` 新增 `lastGridEUBigInteger`（BigInteger 显示快照，不进 NBT——显示缓存下一 tick 即刷新）与 `getGridEUBigInteger` 已有的精确读数配套；
+   - `AdaptiveNetwork.updateAllHelpers()` 统一给**全部四类仓**推送 long 快照 + BigInteger 精确值（顺带修掉 Dynamo/LaserTarget 的 WAILA Grid 行长期显示 0/陈旧值的存量缺口）；
+   - `AdaptiveNetTerminal` GUI"电网蓄电"行走 `formatGridEUPrecise`（>9.22E 时按 BigInteger 格式化，如 15.80E；未超界维持旧路径显示，避免双轨不一致）；
+   - 四个仓 WAILA"Grid"行统一走 `formatGridEUForWaila()`（超界走新增的 `formatEUBigInteger`）。
+3. **算术路径不动**：补电/统计/tickStats 仍用 long 快照（getGridEULong 的钳制保留）——热路径零 BigInteger 代价。
+
+### 三、影响面与风险
+- 补电语义与旧式**数学等价**（仅在旧式会溢出的场景从"跳过"变为"正常补"）；
+- 显示层只有"电网余额"一处走精确格式，其余数字（总输入/变化量/清空时间估算）保持 long 口径（它们的饱和是另一条 P2，未列入本批）；
+- BigInteger 快照不进 NBT：客户端首帧可能短暂显示 9.22E 封顶值，下一 tick 被精确值覆盖。
+
+### 四、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.33.0-fix3.jar`。
+- 待游戏实测（用户执行）：① 电网 >9.2E 时机器不再周期性开关机（核心验收）；② 终端监控页"电网蓄电"显示真实值（如 15.80E）而非停在 9.22E；③ 四个仓 WAILA 的 Grid 行均有值且一致。
+- 过程事故记录：编辑期间因脚本重写导致 AdaptiveNetHatch.java 一度清空，已从 git 恢复并重放全部修改；期间曾误用 Set-Content 引入 BOM/CRLF，已按坑位 #17 规程清除（终检 15 个 adaptive 文件 BOM/CRLF 全 False，diff 无行尾噪声）。
+
+---
+
 ## 工作区决策记录 2026-10-14 (97) - **3.33.0-fix2：自适应动力仓 maxEUOutput 改回真实电压档——修"电压×安培"溢出炸多方块（P0-2）**
 
 ### 一、现象（静态审查 + GT 字节码双证）

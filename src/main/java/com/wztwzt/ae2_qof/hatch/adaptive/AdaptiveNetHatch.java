@@ -2,6 +2,7 @@ package com.wztwzt.ae2_qof.hatch.adaptive;
 
 import static gregtech.api.enums.GTValues.V;
 
+import java.math.BigInteger;
 import java.util.UUID;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -134,8 +135,14 @@ public class AdaptiveNetHatch extends MTEHatchEnergy {
             long maxStore = maxEUStore();
             long halfStore = maxStore / 2;
             if (currentStored < halfStore) {
-                long target = Math.min(halfStore, currentStored + gridEU);
-                long diff = target - currentStored;
+                // 3.33.0-fix3：补电上限改用「halfStore - currentStored」（剩余空间）而不是
+                // 「currentStored + gridEU」（目标值）。两者数学等价（min(halfStore, c+g) - c
+                // == min(halfStore-c, g)），但旧式在 gridEU 逼近 Long.MAX_VALUE（9.22e18，用户实测
+                // 已到 9.2E）时加法环绕成负数 ⇒ target 为负 ⇒ diff<0 ⇒ 补电被静默跳过，
+                // 只剩"恰好抽干到 0"才补一次 —— 表现为机器疯狂开关机。
+                // 新式全部是"小数减小数"，永不溢出；gridEU 已被 getGridEULong 钳到 ≤ Long.MAX_VALUE。
+                long headroom = halfStore - currentStored; // currentStored < halfStore ⇒ 恒为正
+                long diff = Math.min(headroom, gridEU);
                 if (diff > 0) {
                     aBase.increaseStoredEnergyUnits(diff, false);
                 }
@@ -280,6 +287,45 @@ public class AdaptiveNetHatch extends MTEHatchEnergy {
         return String.valueOf(eu);
     }
 
+    /**
+     * 3.33.0-fix3：电网余额的 BigInteger 精确版（>9.22E 时显示真实值，如 15.80E）。
+     * WAILA/Grid 行在 helper.lastGridEUBigInteger 超过 long 上限时走本方法，否则走旧路径。
+     */
+    private static String formatEUBigInteger(BigInteger eu) {
+        BigInteger E = BigInteger.valueOf(1_000_000_000_000_000_000L);
+        BigInteger P = BigInteger.valueOf(1_000_000_000_000_000L);
+        BigInteger T = BigInteger.valueOf(1_000_000_000_000L);
+        BigInteger G = BigInteger.valueOf(1_000_000_000L);
+        BigInteger M = BigInteger.valueOf(1_000_000L);
+        BigInteger K = BigInteger.valueOf(1_000L);
+        BigInteger abs = eu.abs();
+        BigInteger whole;
+        String suffix;
+        double scale;
+        if (abs.compareTo(E) >= 0) { whole = abs.divide(E); suffix = "E"; scale = 1e18; }
+        else if (abs.compareTo(P) >= 0) { whole = abs.divide(P); suffix = "P"; scale = 1e15; }
+        else if (abs.compareTo(T) >= 0) { whole = abs.divide(T); suffix = "T"; scale = 1e12; }
+        else if (abs.compareTo(G) >= 0) { whole = abs.divide(G); suffix = "G"; scale = 1e9; }
+        else if (abs.compareTo(M) >= 0) { whole = abs.divide(M); suffix = "M"; scale = 1e6; }
+        else if (abs.compareTo(K) >= 0) { whole = abs.divide(K); suffix = "K"; scale = 1e3; }
+        else { return (eu.signum() < 0 ? "-" : "") + abs; }
+        double frac = abs.mod(BigInteger.valueOf((long) (scale / 100)))
+            .doubleValue() / (scale / 100);
+        return String.format("%s%.2f%s", eu.signum() < 0 ? "-" : "", whole.doubleValue() + frac / 100.0, suffix);
+    }
+
+    /**
+     * 3.33.0-fix3：WAILA"Grid"行的取数逻辑 —— helper 的 BigInteger 快照超过 long 上限
+     * 就走精确显示（如 15.80E），否则维持旧的 long 路径（含负数/0 的原样格式）。
+     */
+    private String formatGridEUForWaila() {
+        BigInteger exact = helper.getLastGridEUBigInteger();
+        if (exact.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) >= 0) {
+            return formatEUBigInteger(exact);
+        }
+        return formatEU(helper.getLastGridEU());
+    }
+
     @Override
     public MetaTileEntity newMetaEntity(IGregTechTileEntity aTile) {
         return new AdaptiveNetHatch(mName, mTier, mDescriptionArray, mTextures);
@@ -320,8 +366,7 @@ public class AdaptiveNetHatch extends MTEHatchEnergy {
             int a = helper.getLastAmps();
             String tierName = GTUtility.getColoredTierNameFromTier((byte) v);
             currenttip.add(EnumChatFormatting.AQUA + "V:" + tierName + " (" + V[v] + ") | A:" + a);
-            long gridEU = helper.getLastGridEU();
-            currenttip.add(EnumChatFormatting.AQUA + "Grid: " + formatEU(gridEU));
+            currenttip.add(EnumChatFormatting.AQUA + "Grid: " + formatGridEUForWaila());
             if (helper.isBound()) {
                 currenttip
                     .add(EnumChatFormatting.GREEN + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.bound"));

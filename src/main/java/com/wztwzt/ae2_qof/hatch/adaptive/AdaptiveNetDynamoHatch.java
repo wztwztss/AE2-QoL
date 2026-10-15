@@ -2,6 +2,7 @@ package com.wztwzt.ae2_qof.hatch.adaptive;
 
 import static gregtech.api.enums.GTValues.V;
 
+import java.math.BigInteger;
 import java.util.UUID;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -90,18 +91,12 @@ public class AdaptiveNetDynamoHatch extends MTEHatchDynamo {
     }
 
     /**
-     * 3.33.0-fix2：改回真实电压档 {@code V[tier]} —— 与同族 {@code WirelessEnergyOutputTerminal.maxEUOutput()}
-     * （3.25.0-fix16 已改为 {@code V[mTier]}，注释原话"与 GT 自己的动力仓一致"）及 GT 原生
-     * {@code MTEHatchDynamo.maxEUOutput()} 同口径。
-     * <p>为什么必须改：GT 在 {@code MTEMultiBlockBase.addEnergyOutputMultipleDynamos} 里按
-     * 「Σ(电压 × 安培)」累加所有动力仓的输出预算，不足即 {@code explodeMultiblock()}（字节码 offset 190-211）。
-     * 旧值 {@code Long.MAX_VALUE / 2} 下，安培 ≥2 时乘法即环绕为负（2 → -9.22e18，4 → 0），
-     * 预算判负 ⇒ 发电机多方块每 tick 被真引爆；TecTech 机则是负注入 → 白得 EU。
-     * <p>用户拍板（2026-10-14）：**安培不设上限**——算术安全由电压口径独立承担：
-     * V[tier] ≤ 8.59e9（tier 15），即使安培到 2^31，乘积 ≤ 1.8e19 仍可被 long 承载时的
-     * 常规场景（多仓累加才可能逼近上限），且 getCurrentVoltageTier() 有 0..15 钳制，
-     * 乘法两端都受控。
-     */
+     * 3.33.0-fix2锛氭敼鍥炵湡瀹炵數鍘嬫。 {@code V[tier]} 鈥斺€?涓庡悓鏃?{@code WirelessEnergyOutputTerminal.maxEUOutput()}
+     * 锛?.25.0-fix16 宸叉敼涓?{@code V[mTier]}锛屾敞閲婂師璇?涓?GT 鑷繁鐨勫姩鍔涗粨涓€鑷?锛夊強 GT 鍘熺敓
+     * {@code MTEHatchDynamo.maxEUOutput()} 鍚屽彛寰勩€?     * <p>涓轰粈涔堝繀椤绘敼锛欸T 鍦?{@code MTEMultiBlockBase.addEnergyOutputMultipleDynamos} 閲屾寜
+     * 銆屛?鐢靛帇 脳 瀹夊煿)銆嶇疮鍔犳墍鏈夊姩鍔涗粨鐨勮緭鍑洪绠楋紝涓嶈冻鍗?{@code explodeMultiblock()}锛堝瓧鑺傜爜 offset 190-211锛夈€?     * 鏃у€?{@code Long.MAX_VALUE / 2} 涓嬶紝瀹夊煿 鈮? 鏃朵箻娉曞嵆鐜粫涓鸿礋锛? 鈫?-9.22e18锛? 鈫?0锛夛紝
+     * 棰勭畻鍒よ礋 鈬?鍙戠數鏈哄鏂瑰潡姣?tick 琚湡寮曠垎锛汿ecTech 鏈哄垯鏄礋娉ㄥ叆 鈫?鐧藉緱 EU銆?     * <p>鐢ㄦ埛鎷嶆澘锛?026-10-14锛夛細**瀹夊煿涓嶈涓婇檺**鈥斺€旂畻鏈畨鍏ㄧ敱鐢靛帇鍙ｅ緞鐙珛鎵挎媴锛?     * V[tier] 鈮?8.59e9锛坱ier 15锛夛紝鍗充娇瀹夊煿鍒?2^31锛屼箻绉?鈮?1.8e19 浠嶅彲琚?long 鎵胯浇鏃剁殑
+     * 甯歌鍦烘櫙锛堝浠撶疮鍔犳墠鍙兘閫艰繎涓婇檺锛夛紝涓?getCurrentVoltageTier() 鏈?0..15 閽冲埗锛?     * 涔樻硶涓ょ閮藉彈鎺с€?     */
     @Override
     public long maxEUOutput() {
         return V[helper.getCurrentVoltageTier()];
@@ -198,7 +193,7 @@ public class AdaptiveNetDynamoHatch extends MTEHatchDynamo {
 
         aBase.decreaseStoredEnergyUnits(stored, false);
         WirelessNetworkManager.addEUToGlobalEnergyMap(owner, stored);
-        // 3.32.0-fix4：本次推送的是"这 4 tick 窗口"累计的缓存量，换算成 EU/t 才是速率
+        // 3.32.0-fix4锛氭湰娆℃帹閫佺殑鏄?杩?4 tick 绐楀彛"绱鐨勭紦瀛橀噺锛屾崲绠楁垚 EU/t 鎵嶆槸閫熺巼
         helper.updateRealFlowEUt(stored);
     }
 
@@ -243,10 +238,10 @@ public class AdaptiveNetDynamoHatch extends MTEHatchDynamo {
 
         column.child(new TextWidget<>(IKey.dynamic(() -> {
             if (boundSync.getIntValue() == 0) {
-                return EnumChatFormatting.RED + "● "
+                return EnumChatFormatting.RED + "鈼?"
                     + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.unbound");
             }
-            return EnumChatFormatting.GREEN + "● " + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.bound");
+            return EnumChatFormatting.GREEN + "鈼?" + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.bound");
         })).size(260, 14));
 
         column.child(new TextWidget<>(IKey.dynamic(() -> {
@@ -280,6 +275,40 @@ public class AdaptiveNetDynamoHatch extends MTEHatchDynamo {
         if (eu >= 1_000_000L) return String.format("%.2fM", eu / 1_000_000.0);
         if (eu >= 1_000L) return String.format("%.1fK", eu / 1_000.0);
         return String.valueOf(eu);
+    }
+
+    /**
+     * 3.33.0-fix3锛氱數缃戜綑棰濈殑 BigInteger 绮剧‘鐗堬紙>9.22E 鏃舵樉绀虹湡瀹炲€硷紝濡?15.80E锛夈€?     * 涓?AdaptiveNetHatch 鍚屾锛沇AILA/Grid 琛屽湪 helper 蹇収瓒呰繃 long 涓婇檺鏃惰蛋鏈柟娉曘€?     */
+    private static String formatEUBigInteger(BigInteger eu) {
+        BigInteger E = BigInteger.valueOf(1_000_000_000_000_000_000L);
+        BigInteger P = BigInteger.valueOf(1_000_000_000_000_000L);
+        BigInteger T = BigInteger.valueOf(1_000_000_000_000L);
+        BigInteger G = BigInteger.valueOf(1_000_000_000L);
+        BigInteger M = BigInteger.valueOf(1_000_000L);
+        BigInteger K = BigInteger.valueOf(1_000L);
+        BigInteger abs = eu.abs();
+        BigInteger whole;
+        String suffix;
+        double scale;
+        if (abs.compareTo(E) >= 0) { whole = abs.divide(E); suffix = "E"; scale = 1e18; }
+        else if (abs.compareTo(P) >= 0) { whole = abs.divide(P); suffix = "P"; scale = 1e15; }
+        else if (abs.compareTo(T) >= 0) { whole = abs.divide(T); suffix = "T"; scale = 1e12; }
+        else if (abs.compareTo(G) >= 0) { whole = abs.divide(G); suffix = "G"; scale = 1e9; }
+        else if (abs.compareTo(M) >= 0) { whole = abs.divide(M); suffix = "M"; scale = 1e6; }
+        else if (abs.compareTo(K) >= 0) { whole = abs.divide(K); suffix = "K"; scale = 1e3; }
+        else { return (eu.signum() < 0 ? "-" : "") + abs; }
+        double frac = abs.mod(BigInteger.valueOf((long) (scale / 100)))
+            .doubleValue() / (scale / 100);
+        return String.format("%s%.2f%s", eu.signum() < 0 ? "-" : "", whole.doubleValue() + frac / 100.0, suffix);
+    }
+
+    /** 3.33.0-fix3锛歐AILA"Grid"琛屽彇鏁?鈥斺€?瓒呰繃 long 涓婇檺璧扮簿纭樉绀猴紝鍚﹀垯缁存寔鏃ц矾寰勩€?*/
+    private String formatGridEUForWaila() {
+        BigInteger exact = helper.getLastGridEUBigInteger();
+        if (exact.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) >= 0) {
+            return formatEUBigInteger(exact);
+        }
+        return formatEU(helper.getLastGridEU());
     }
 
     @Override
@@ -321,7 +350,7 @@ public class AdaptiveNetDynamoHatch extends MTEHatchDynamo {
             String tierName = GTUtility.getColoredTierNameFromTier((byte) v);
             currenttip.add(EnumChatFormatting.AQUA + "V:" + tierName + " (" + V[v] + ") | A:" + a);
             long gridEU = helper.getLastGridEU();
-            currenttip.add(EnumChatFormatting.AQUA + "Grid: " + formatEU(gridEU));
+            currenttip.add(EnumChatFormatting.AQUA + "Grid: " + formatGridEUForWaila());
             if (helper.isBound()) {
                 currenttip
                     .add(EnumChatFormatting.GREEN + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.bound"));
