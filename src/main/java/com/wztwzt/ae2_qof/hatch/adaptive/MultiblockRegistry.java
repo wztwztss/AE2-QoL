@@ -56,4 +56,14 @@ public class MultiblockRegistry {
             return base == null || base.getWorld() == null || base.isDead();
         });
     }
+
+    /**
+     * 3.35.0-fix7（审查 P1-16）：服务器停止时清空登记表。
+     * 旧实现注册后从不移除（unregister 全仓零调用、这里也没有 clear）——静态强引用
+     * （主机 ↔ World 互相持有）让旧世界的多方块跨存档滞留内存。由
+     * {@code CommonProxy.serverStopping} 调用，与 onUnload 注销配合形成完整生命周期。
+     */
+    public static void clear() {
+        REGISTRY.clear();
+    }
 }

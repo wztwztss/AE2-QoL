@@ -34,6 +34,32 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-15 (115) - **3.35.0-fix7：多方块登记簿补齐生命周期——卸载注销 + 停机清空（P1-16）**
+
+### 一、现象（grep 穷举实证）
+`MultiblockRegistry` 是静态强引用 Set，所有加载过的 `MTEMultiBlockBase` 在 `handleFirstTick` 注册后**从不移除**：
+`unregister()` 全仓零调用者、无 `clear()` 方法、`CommonProxy.serverStopping` 也不清。
+主机与 World 互相强引用 ⇒ `cleanupInvalid` 的 `base.getWorld() == null` 判据判不掉 ⇒
+旧世界的多方块跨存档滞留内存，`AdaptiveHostIndex.scan`/`findAttachedMachine` 还要遍历这些陈旧条目。
+（旧审计 P1-012 只清了 AdaptiveNetworkManager，登记表漏了——本轮闭合。）
+
+### 二、本轮改动（用户拍板：修）
+1. **新注入**：`MixinCommonBaseMetaTileEntityMultiblockRegistry` 增加 `onUnload` HEAD 注入 →
+   机器被拆/区块卸载时自动 `unregister`（GT `CommonBaseMetaTileEntity.onUnload` 非 final 可注入，字节码已核；从 Set 移除不存在的元素幂等）。
+2. **`MultiblockRegistry.clear()`** 新增，挂进 `CommonProxy.serverStopping`（与 AdaptiveNetworkManager.shutdown 等既有清理并列）。
+3. 原有 `cleanupInvalid`/`snapshot`/`register` 零改动。
+
+### 三、影响面与风险
+- 卸载的机器本来就该从登记表消失（下次加载 handleFirstTick 会重新注册）——行为闭环；
+- 服务器重启后 `AdaptiveHostIndex.scan` 从零开始扫真实加载的机器（更快）；
+- 无存档数据变化（登记表是纯内存索引）。
+
+### 四、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.35.0-fix7.jar`。
+- 待游戏实测（用户执行）：① 自适应仓照常识别主机（核心验收——注销不能误伤在线机器）；② 长时间游玩/多次换存档后内存平稳（可选）；③ 拆掉自适应仓后立即建新仓，列表/识别正常。
+
+---
+
 ## 工作区决策记录 2026-10-15 (114) - **3.35.0-fix6：子仓列表改数据驱动重建——首开即有数据、变化即时刷新（P1-15）**
 
 ### 一、现象（源码逐行实证）

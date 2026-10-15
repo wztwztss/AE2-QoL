@@ -533,6 +533,13 @@ public class CommonProxy {
         } catch (Throwable t) {
             MyMod.LOG.warn("[AE2QoL] provider cache cleanup failed", t);
         }
+        try {
+            // 3.35.0-fix7（审查 P1-16）：清空多方块登记表——配合 onUnload 注销，
+            // 保证换存档/重启后从零开始（旧世界的机器不再跨存档滞留内存）。
+            com.wztwzt.ae2_qof.hatch.adaptive.MultiblockRegistry.clear();
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] multiblock registry cleanup failed", t);
+        }
     }
 
     // ===== S2C 包客户端处理分发（#74）=====
