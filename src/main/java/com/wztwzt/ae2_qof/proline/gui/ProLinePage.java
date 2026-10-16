@@ -47,6 +47,7 @@ import com.wztwzt.ae2_qof.proline.ProLineData;
 import com.wztwzt.ae2_qof.proline.ProLineGate;
 import com.wztwzt.ae2_qof.proline.ProLineImporter;
 import com.wztwzt.ae2_qof.proline.ProLineManager;
+import com.wztwzt.ae2_qof.proline.ProLinePresets;
 import com.wztwzt.ae2_qof.proline.ProLineSummary;
 import com.wztwzt.ae2_qof.proline.ProductionLine;
 import com.wztwzt.ae2_qof.proline.ProductionStep;
@@ -206,7 +207,13 @@ public final class ProLinePage {
                 .overlay(IKey.lang("ae2_qof.proline.import"))
                 .syncHandler(clickServer(syncManager, pm -> importPanel.openPanel())));
         bar.child(
-            new TextWidget<>(IKey.lang("ae2_qof.proline.hint")).size(LIST_W - 152, 18)
+            new ButtonWidget<>().size(70, 18)
+                .background(GuiTextures.BUTTON_CLEAN)
+                .overlay(IKey.lang("ae2_qof.proline.presets"))
+                .tooltip(t -> t.addLine(IKey.lang("ae2_qof.proline.presets.tip")))
+                .syncHandler(clickServer(syncManager, pm -> presetsPanelOf(pm, terminal).openPanel())));
+        bar.child(
+            new TextWidget<>(IKey.lang("ae2_qof.proline.hint")).size(LIST_W - 224, 18)
                 .color(0xFF888888));
         column.child(bar);
         return column;
@@ -227,6 +234,80 @@ public final class ProLinePage {
             sm.getPlayer()
                 .getUniqueID() + ":cand",
             k -> sm.syncedPanel("proline_candidates", true, (pm, ph) -> buildCandidatesPanel(pm, ph)));
+    }
+
+    private static IPanelHandler presetsPanelOf(PanelSyncManager sm, StockMonitorTerminal terminal) {
+        return PANEL_CACHE.computeIfAbsent(
+            sm.getPlayer()
+                .getUniqueID() + ":presets",
+            k -> sm.syncedPanel("proline_presets", true, (pm, ph) -> buildPresetsPanel(pm, ph, terminal)));
+    }
+
+    private static ModularPanel buildPresetsPanel(PanelSyncManager syncManager, IPanelHandler panelHandler,
+        StockMonitorTerminal terminal) {
+        ModularPanel edit = ModularPanel.defaultPanel("proline_presets_panel", 320, 200);
+        GenericListSyncHandler<String> rows = GenericListSyncHandler.<String>builder()
+            .getter(cached(() -> {
+                List<String> out = new ArrayList<>();
+                for (ProLinePresets.Preset p : ProLinePresets.all()) {
+                    out.add(p.name);
+                }
+                return out;
+            }))
+            .serializer((buf, s) -> ByteBufUtils.writeUTF8String(buf, s))
+            .deserializer(buf -> ByteBufUtils.readUTF8String(buf))
+            .immutableCopy()
+            .build();
+        DynamicLinkedSyncHandler<GenericListSyncHandler<String>> dyn = new DynamicLinkedSyncHandler<>(rows)
+            .widgetProvider((dm, v) -> buildPresetList(v.getValue(), syncManager, terminal));
+        syncManager.syncValue("proline_presets_dyn", dyn);
+
+        edit.child(
+            new TextWidget<>(IKey.lang("ae2_qof.proline.presets.title")).pos(8, 6)
+                .size(300, 12));
+        edit.child(
+            new DynamicSyncedWidget<>().size(300, 150)
+                .initialChild(buildPresetList(rows.getValue(), syncManager, terminal))
+                .syncHandler(dyn));
+        InteractionSyncHandler closeBtn = new InteractionSyncHandler()
+            .setOnMousePressed(mouse -> panelHandler.closePanel());
+        edit.child(
+            new ButtonWidget<>().pos(8, 168)
+                .size(60, 18)
+                .background(GuiTextures.BUTTON_CLEAN)
+                .overlay(IKey.lang("ae2_qof.gui.stock_monitor.close"))
+                .syncHandler(closeBtn));
+        return edit;
+    }
+
+    private static IWidget buildPresetList(List<String> rows, PanelSyncManager syncManager,
+        StockMonitorTerminal terminal) {
+        PlList list = new PlList(300, 148);
+        if (rows == null || rows.isEmpty()) {
+            list.child(new TextWidget<>(IKey.lang("ae2_qof.proline.presets.empty")).size(290, 12));
+            return list;
+        }
+        for (final String name : rows) {
+            list.child(
+                new ButtonWidget<>().size(290, 20)
+                    .background(GuiTextures.BUTTON_CLEAN)
+                    .overlay(IKey.str(name))
+                    .tooltip(
+                        t -> t.addLine(IKey.str(name))
+                            .addLine(IKey.lang("ae2_qof.proline.presets.row_tip")))
+                    .syncHandler(clickServer(syncManager, sm -> {
+                        TileEntity base = terminalBase(terminal);
+                        ProLinePresets.create(
+                            sm.getPlayer(),
+                            name,
+                            terminalNetworkId(terminal),
+                            base == null ? 0 : base.getWorldObj().provider.dimensionId,
+                            base == null ? 0 : base.xCoord,
+                            base == null ? 0 : base.yCoord,
+                            base == null ? 0 : base.zCoord);
+                    })));
+        }
+        return list;
     }
 
     private static IPanelHandler importPanelOf(PanelSyncManager sm, StockMonitorTerminal terminal) {

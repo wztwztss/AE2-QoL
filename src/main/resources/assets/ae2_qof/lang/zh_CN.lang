@@ -749,6 +749,11 @@ gui.wildcardpattern.title=通配样板配置
 item.ae2_qof.proline_card.name=产线绑定卡
 item.ae2_qof.proline_card.desc=在库存统计终端·产线页选中步骤后，手持本卡对着要绑定的 GT 多方块 Shift+右键
 ae2_qof.terminal.page.proline=产线
+ae2_qof.proline.presets=预置产线
+ae2_qof.proline.presets.tip=内置产线模板，点选即建线（之后可 NEI 导入或自行修改）
+ae2_qof.proline.presets.title=预置产线：点击名称即创建
+ae2_qof.proline.presets.empty=预置列表为空（打包未包含数据）
+ae2_qof.proline.presets.row_tip=点击 = 以此模板建线
 ae2_qof.proline.new=+新建产线
 ae2_qof.proline.import=wiki 导入
 ae2_qof.proline.hint=点产线行选中；绑定卡须在终端写卡后 Shift+右键机器
