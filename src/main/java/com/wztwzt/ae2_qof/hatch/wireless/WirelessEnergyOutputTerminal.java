@@ -255,10 +255,11 @@ public class WirelessEnergyOutputTerminal extends MTEHatchDynamo {
 
         column.child(new TextWidget<>(IKey.dynamic(() -> {
             long gridEU = gridEUSync.getLongValue();
+            // 3.35.0-fix10（P2-1）：余额 >9.22E 时走 BigInteger 精确显示
             return EnumChatFormatting.GOLD + StatCollector.translateToLocal("ae2_qof.gui.wireless_output_terminal.grid")
                 + ": "
                 + EnumChatFormatting.RESET
-                + formatEU(gridEU);
+                + formatGridEUPrecise(gridEU);
         })).size(280, 14));
 
         column.child(
@@ -281,6 +282,42 @@ public class WirelessEnergyOutputTerminal extends MTEHatchDynamo {
         if (eu >= 1e6) return String.format("%.2fM", eu / 1e6);
         if (eu >= 1e3) return String.format("%.2fK", eu / 1e3);
         return String.valueOf(eu);
+    }
+
+    /**
+     * 3.35.0-fix10（审查 P2-1）：电网余额的 BigInteger 精确显示——去掉 9.22E 显示冻结。
+     * 与 3.33.0-fix3 的自适应终端同口径；算术路径（推送）仍用 long 快照，零性能代价。
+     */
+    private String formatGridEUPrecise(long fallback) {
+        if (ownerUuid == null) return formatEU(fallback);
+        BigInteger exact = WirelessNetworkManager.getUserEU(ownerUuid);
+        if (exact.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) < 0) {
+            return formatEU(fallback);
+        }
+        return formatEUBigInteger(exact);
+    }
+
+    private static String formatEUBigInteger(BigInteger eu) {
+        BigInteger E = BigInteger.valueOf(1_000_000_000_000_000_000L);
+        BigInteger P = BigInteger.valueOf(1_000_000_000_000_000L);
+        BigInteger T = BigInteger.valueOf(1_000_000_000_000L);
+        BigInteger G = BigInteger.valueOf(1_000_000_000L);
+        BigInteger M = BigInteger.valueOf(1_000_000L);
+        BigInteger K = BigInteger.valueOf(1_000L);
+        BigInteger abs = eu.abs();
+        BigInteger whole;
+        String suffix;
+        double scale;
+        if (abs.compareTo(E) >= 0) { whole = abs.divide(E); suffix = "E"; scale = 1e18; }
+        else if (abs.compareTo(P) >= 0) { whole = abs.divide(P); suffix = "P"; scale = 1e15; }
+        else if (abs.compareTo(T) >= 0) { whole = abs.divide(T); suffix = "T"; scale = 1e12; }
+        else if (abs.compareTo(G) >= 0) { whole = abs.divide(G); suffix = "G"; scale = 1e9; }
+        else if (abs.compareTo(M) >= 0) { whole = abs.divide(M); suffix = "M"; scale = 1e6; }
+        else if (abs.compareTo(K) >= 0) { whole = abs.divide(K); suffix = "K"; scale = 1e3; }
+        else { return (eu.signum() < 0 ? "-" : "") + abs; }
+        double frac = abs.mod(BigInteger.valueOf((long) (scale / 100)))
+            .doubleValue() / (scale / 100);
+        return String.format("%s%.2f%s", eu.signum() < 0 ? "-" : "", whole.doubleValue() + frac / 100.0, suffix);
     }
 
     @Override
@@ -324,7 +361,14 @@ public class WirelessEnergyOutputTerminal extends MTEHatchDynamo {
         try {
             BigInteger gridEU = BigInteger.ZERO;
             if (ownerUuid != null) gridEU = WirelessNetworkManager.getUserEU(ownerUuid);
-            currenttip.add(EnumChatFormatting.YELLOW + "Grid: " + formatEU(gridEU.longValue()) + " EU");
+            // 3.35.0-fix10（P2-1）：>9.22E 时精确显示
+            currenttip.add(
+                EnumChatFormatting.YELLOW
+                    + "Grid: "
+                    + (gridEU.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) >= 0
+                        ? formatEUBigInteger(gridEU)
+                        : formatEU(gridEU.longValue()))
+                    + " EU");
         } catch (Exception ignored) {}
     }
 }

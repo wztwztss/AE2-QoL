@@ -34,6 +34,26 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-16 (118) - **3.35.0-fix10：无线输入/输出终端的电网余额显示精确化（P2-1）**
+
+### 一、现象
+3.33.0-fix3 修了自适应终端监控页的 9.22E 显示冻结，但两个无线终端（`WirelessEnergyInputTerminal`/`WirelessEnergyOutputTerminal`）是漏网点：
+GUI"电网余额"行与 WAILA"Grid"行经 `eu.min(BigInteger.valueOf(Long.MAX_VALUE)).longValue()` 钳制 ——
+电网超 9.22E 后显示永远停在 9.22E（用户电网已实测超过）。
+
+### 二、本轮改动（用户拍板：修）
+两文件同款（与 3.33.0-fix3 的自适应终端口径一致）：
+1. 新增 `formatGridEUPrecise(long fallback)`（余额 ≥ Long.MAX_VALUE 时走 `formatEUBigInteger(BigInteger)`，
+   否则维持旧 `formatEU` 路径避免双轨不一致）与 `formatEUBigInteger`（精确 E/P/T/G/M/K 格式化）；
+2. GUI"电网余额"行与 WAILA"Grid"行切换到精确路径；输入终端 `ownerUuid == null` 时回退旧路径。
+3. **算术路径零改动**：补电/推送仍走 long 快照（`gridEUSync` 的钳制保留）——显示层修复不付性能代价。
+
+### 三、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.35.0-fix10.jar`。
+- 待游戏实测（用户执行）：电网 >9.22E 时两个无线终端的 GUI 与 WAILA 显示真实值（如 15.80E）。
+
+---
+
 ## 工作区决策记录 2026-10-16 (117) - **3.35.0-fix9：库存控制覆盖板流体"随机变换"修复——GT display 物品稳定键优先（用户实测恶劣 bug）**
 
 ### 一、现象（用户实测）
