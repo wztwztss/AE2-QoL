@@ -81,7 +81,11 @@ public class CoverRegistry extends WorldSavedData {
                 }
             }
             if (changed) target.markDirty();
-        } catch (Throwable ignored) {}
+        } catch (Throwable t) {
+            // 3.35.0-fix22（审查 P2-17）：旧实现整块静默吞——迁移合并失败时 legacy 覆盖板数据
+            // 没进新存储且零痕迹（老存档升级场景丢数据不可见）。补 WARN 留痕 + 保留原始异常。
+            com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 覆盖板 legacy 迁移合并失败（数据未并入，下个周期重试）", t);
+        }
     }
 
     /**

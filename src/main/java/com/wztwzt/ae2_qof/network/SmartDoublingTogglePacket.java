@@ -257,7 +257,10 @@ public class SmartDoublingTogglePacket implements IMessage {
                 }
                 try {
                     te.markDirty();
-                } catch (Throwable ignored) {}
+                } catch (Throwable t) {
+                    // 3.35.0-fix22（审查 P2-17）：留痕——开关状态可能延后到 MC 周期保存才落盘
+                    MyMod.LOG.warn("[AE2QoL] 智能倍增开关 markDirty 失败 @ {} d{} [{}, {}, {}]", msg.dim, msg.x, msg.y, msg.z, t);
+                }
                 boolean isProvider = mte instanceof ICraftingProvider;
                 if (before != msg.enabled) {
                     MyMod.LOG.debug(

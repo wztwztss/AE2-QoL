@@ -66,7 +66,10 @@ public class StockMonitorTerminal extends MTEHatch {
             // 让 GT 尽快把这份 NBT 落盘（否则要等到区块下一次自然保存）
             IGregTechTileEntity base = getBaseMetaTileEntity();
             if (base != null) base.markDirty();
-        } catch (Throwable ignored) {}
+        } catch (Throwable t) {
+            // 3.35.0-fix22（审查 P2-17）：留痕——翻页状态可能延后到 MC 周期保存才落盘
+            com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 库存统计终端翻页后 markDirty 失败（延后落盘兜底）", t);
+        }
     }
 
     private static int ae2qol$clampPage(int page) {
