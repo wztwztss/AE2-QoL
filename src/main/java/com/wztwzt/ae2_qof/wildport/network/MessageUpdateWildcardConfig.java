@@ -50,8 +50,7 @@ public class MessageUpdateWildcardConfig implements IMessage {
         public IMessage onMessage(MessageUpdateWildcardConfig message, MessageContext context) {
             EntityPlayerMP player = context.getServerHandler().playerEntity;
             // 3.34.0-fix7（审查 P1-8）：归队服务端 tick 线程 —— 本包写背包物品 NBT 并 markDirty。
-            com.wztwzt.ae2_qof.network.ServerTerminalHelper.scheduleServerTask(
-                () -> handleServerTask(player, message));
+            com.wztwzt.ae2_qof.network.ServerTerminalHelper.scheduleServerTask(() -> handleServerTask(player, message));
             return null;
         }
 

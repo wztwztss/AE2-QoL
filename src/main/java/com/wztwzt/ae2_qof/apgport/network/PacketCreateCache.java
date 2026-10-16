@@ -39,7 +39,11 @@ public class PacketCreateCache implements IMessage {
                     @Override
                     public void onProgress(String progressMessage, int current, int total) {
                         NetworkHandler.INSTANCE.sendTo(
-                            new PacketCacheProgress(PacketCacheProgress.STAGE_PROGRESS, progressMessage, current, total),
+                            new PacketCacheProgress(
+                                PacketCacheProgress.STAGE_PROGRESS,
+                                progressMessage,
+                                current,
+                                total),
                             player);
                     }
 

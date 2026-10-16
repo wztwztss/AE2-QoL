@@ -235,7 +235,8 @@ public class StockMonitorActionPacket implements IMessage {
         /**
          * 3.34.0-fix1（审查 P1-2）：目标必须属于终端所在的 AE 网络。
          *
-         * <p>覆盖板目标：方块本身不是 IGridHost —— 它的"网络归属"用服务端登记表
+         * <p>
+         * 覆盖板目标：方块本身不是 IGridHost —— 它的"网络归属"用服务端登记表
          * {@code CoverRegistry.getByNetwork(终端 networkId)}：该集合与 GUI 下发列表同源，
          * 坐标在其中 ⇒ 目标确实是本网络的覆盖板。伪造坐标要么不在集合里、要么属于别的网络。
          * 发信器/其它 AE 目标：直接比对 {@code IGrid.getId()}（AE2 1083 公开 API，

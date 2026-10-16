@@ -312,7 +312,8 @@ public class SmartWildcardRulesPacket implements IMessage {
         /**
          * 3.34.0-fix5（审查 P1-6）：模板产物合理性校验。
          *
-         * <p>两条判据（都不过即拒）：
+         * <p>
+         * 两条判据（都不过即拒）：
          * <ol>
          * <li>**物品真实存在**：{@code ItemStack.loadItemStackFromNBT} 解析结果非 null 且
          * {@code getItem() != null}——未注册 id（如伪造的 "xx:fake_item"）在这里被滤掉；</li>

@@ -67,8 +67,7 @@ public final class InfinityCellAccessPolicy {
      * 拒绝本身**不回数据**——防探测成功与否不可从响应区分。
      */
     private static final long DENY_WARN_INTERVAL_MS = 60_000L;
-    private static final Map<UUID, Long> DENY_WARN_AT =
-        new ConcurrentHashMap<UUID, Long>();
+    private static final Map<UUID, Long> DENY_WARN_AT = new ConcurrentHashMap<UUID, Long>();
 
     public static void warnDenied(EntityPlayer player, UUID id) {
         try {

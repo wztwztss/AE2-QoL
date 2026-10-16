@@ -644,15 +644,14 @@ public final class WildcardEditorPanel {
         scroll.child(pages);
         panel.child(scroll);
         // 3.35.0-fix20（P2-15）：电路选择直接由保存按钮的 lambda 捕获 circuit——不再经 static lastCircuit
-        //（旧写法在服务端 build/其他会话 build 时会被共享静态覆盖，保存可能写错电路号）
+        // （旧写法在服务端 build/其他会话 build 时会被共享静态覆盖，保存可能写错电路号）
         return panel;
     }
 
     /** 保存：客户端解析四页内容 → 既有 C2S 包 → 服务端写 NBT。 */
     private static void saveRules(SmartWildcardState base, List<String> blacklist, List<List<String>> ruleExcludes,
         List<ItemStack> nonConsumed, TextFieldWidget[] inFields, TextFieldWidget[] inAmounts,
-        TextFieldWidget[] outFields, TextFieldWidget[] outAmounts, boolean[] inOre, boolean[] outOre,
-        int[] circuit) {
+        TextFieldWidget[] outFields, TextFieldWidget[] outAmounts, boolean[] inOre, boolean[] outOre, int[] circuit) {
         try {
             SmartWildcardState edited = new SmartWildcardState();
             // 3.35.0-fix20（P2-15）：circuit 由调用方的会话局部数组传入（旧 = static lastCircuit）
@@ -810,13 +809,11 @@ public final class WildcardEditorPanel {
      * 客户端已注册的落点（NEI 拖入失效），多会话并存时互相破坏。改 WeakHashMap：
      * 控件随界面销毁被 GC 后自动出表（无泄漏、无跨会话清除），key 仍为控件实例
      * ⇒ 多个会话/双端构建可并存互不干扰（配合"只在客户端登记"）。identity 语义由
-     *控件对象自身等于提供（MUI2 IWidget 未重写 equals ⇒ 默认按引用相等，与旧 HashMap 行为一致）。
+     * 控件对象自身等于提供（MUI2 IWidget 未重写 equals ⇒ 默认按引用相等，与旧 HashMap 行为一致）。
      */
-    private static final java.util.Map<Object, DropTarget> DROP_TARGETS =
-        new java.util.WeakHashMap<>();
+    private static final java.util.Map<Object, DropTarget> DROP_TARGETS = new java.util.WeakHashMap<>();
     /** NEI 拖放落点：「加（拖入）」按钮 → 它要追加到的列表（目前是不消耗物品）。 */
-    private static final java.util.Map<Object, List<ItemStack>> DROP_APPEND_TARGETS =
-        new java.util.WeakHashMap<>();
+    private static final java.util.Map<Object, List<ItemStack>> DROP_APPEND_TARGETS = new java.util.WeakHashMap<>();
 
     /**
      * 3.35.0-fix20（P2-15）：拖放目标 = 行号 + 输入/输出侧 + **所属会话的矿辞数组**——

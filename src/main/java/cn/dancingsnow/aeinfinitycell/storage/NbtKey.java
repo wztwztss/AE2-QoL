@@ -35,8 +35,7 @@ public final class NbtKey {
      * 缓存有界：超过上限整体清空（驻留只是加速手段，清空无正确性影响）。
      */
     private static final int INTERN_MAX = 256;
-    private static final java.util.concurrent.ConcurrentHashMap<String, NbtKey> INTERN =
-        new java.util.concurrent.ConcurrentHashMap<String, NbtKey>();
+    private static final java.util.concurrent.ConcurrentHashMap<String, NbtKey> INTERN = new java.util.concurrent.ConcurrentHashMap<String, NbtKey>();
 
     private NbtKey(NBTTagCompound tag, String canonical) {
         this.tag = tag;

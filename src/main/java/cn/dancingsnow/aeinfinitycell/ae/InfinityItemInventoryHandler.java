@@ -51,9 +51,8 @@ public final class InfinityItemInventoryHandler extends AbstractInfinityInventor
                     .toString()
                 : "null";
             if (WARNED_KEYS.add(id)) {
-                cn.dancingsnow.aeinfinitycell.AEInfinityCell.LOG.warn(
-                    "[AE2QoL] 无限元件拒收无法解析注册身份的物品：{}（原样退回；该物品只会警告一次）",
-                    id);
+                cn.dancingsnow.aeinfinitycell.AEInfinityCell.LOG
+                    .warn("[AE2QoL] 无限元件拒收无法解析注册身份的物品：{}（原样退回；该物品只会警告一次）", id);
             }
         } catch (Throwable ignored) {}
     }

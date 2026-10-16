@@ -308,13 +308,33 @@ public class WirelessEnergyOutputTerminal extends MTEHatchDynamo {
         BigInteger whole;
         String suffix;
         double scale;
-        if (abs.compareTo(E) >= 0) { whole = abs.divide(E); suffix = "E"; scale = 1e18; }
-        else if (abs.compareTo(P) >= 0) { whole = abs.divide(P); suffix = "P"; scale = 1e15; }
-        else if (abs.compareTo(T) >= 0) { whole = abs.divide(T); suffix = "T"; scale = 1e12; }
-        else if (abs.compareTo(G) >= 0) { whole = abs.divide(G); suffix = "G"; scale = 1e9; }
-        else if (abs.compareTo(M) >= 0) { whole = abs.divide(M); suffix = "M"; scale = 1e6; }
-        else if (abs.compareTo(K) >= 0) { whole = abs.divide(K); suffix = "K"; scale = 1e3; }
-        else { return (eu.signum() < 0 ? "-" : "") + abs; }
+        if (abs.compareTo(E) >= 0) {
+            whole = abs.divide(E);
+            suffix = "E";
+            scale = 1e18;
+        } else if (abs.compareTo(P) >= 0) {
+            whole = abs.divide(P);
+            suffix = "P";
+            scale = 1e15;
+        } else if (abs.compareTo(T) >= 0) {
+            whole = abs.divide(T);
+            suffix = "T";
+            scale = 1e12;
+        } else if (abs.compareTo(G) >= 0) {
+            whole = abs.divide(G);
+            suffix = "G";
+            scale = 1e9;
+        } else if (abs.compareTo(M) >= 0) {
+            whole = abs.divide(M);
+            suffix = "M";
+            scale = 1e6;
+        } else if (abs.compareTo(K) >= 0) {
+            whole = abs.divide(K);
+            suffix = "K";
+            scale = 1e3;
+        } else {
+            return (eu.signum() < 0 ? "-" : "") + abs;
+        }
         double frac = abs.mod(BigInteger.valueOf((long) (scale / 100)))
             .doubleValue() / (scale / 100);
         return String.format("%s%.2f%s", eu.signum() < 0 ? "-" : "", whole.doubleValue() + frac / 100.0, suffix);
@@ -363,10 +383,8 @@ public class WirelessEnergyOutputTerminal extends MTEHatchDynamo {
             if (ownerUuid != null) gridEU = WirelessNetworkManager.getUserEU(ownerUuid);
             // 3.35.0-fix10（P2-1）：>9.22E 时精确显示
             currenttip.add(
-                EnumChatFormatting.YELLOW
-                    + "Grid: "
-                    + (gridEU.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) >= 0
-                        ? formatEUBigInteger(gridEU)
+                EnumChatFormatting.YELLOW + "Grid: "
+                    + (gridEU.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) >= 0 ? formatEUBigInteger(gridEU)
                         : formatEU(gridEU.longValue()))
                     + " EU");
         } catch (Exception ignored) {}

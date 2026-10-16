@@ -171,8 +171,7 @@ public class WirelessActionPacket implements IMessage {
             if (channelName.length() > MAX_CHANNEL_NAME_LENGTH) {
                 channelName = channelName.substring(0, MAX_CHANNEL_NAME_LENGTH);
                 player.addChatMessage(
-                    new ChatComponentText(
-                        EnumChatFormatting.YELLOW + "频道名过长，已截断为 " + MAX_CHANNEL_NAME_LENGTH + " 字符"));
+                    new ChatComponentText(EnumChatFormatting.YELLOW + "频道名过长，已截断为 " + MAX_CHANNEL_NAME_LENGTH + " 字符"));
             }
             if (WirelessData.instance()
                 .getGlobalChannels()
@@ -181,8 +180,7 @@ public class WirelessActionPacket implements IMessage {
                     .getGlobalChannels()
                     .contains(channelName)) {
                 player.addChatMessage(
-                    new ChatComponentText(
-                        EnumChatFormatting.RED + "频道数量已达上限（" + MAX_CHANNELS + "），请先删除不用的频道"));
+                    new ChatComponentText(EnumChatFormatting.RED + "频道数量已达上限（" + MAX_CHANNELS + "），请先删除不用的频道"));
                 syncChannelsToClient(player);
                 return;
             }

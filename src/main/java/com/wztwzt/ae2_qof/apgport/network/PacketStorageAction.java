@@ -66,7 +66,7 @@ public class PacketStorageAction implements IMessage {
         public IMessage onMessage(PacketStorageAction message, MessageContext ctx) {
             EntityPlayerMP player = ctx.getServerHandler().playerEntity;
             // 3.34.0-fix7（审查 P1-8）：归队服务端 tick 线程 —— 本包动玩家背包并同步容器
-            //（addItemStackToInventory / detectAndSendChanges / sendContainerToPlayer）。
+            // （addItemStackToInventory / detectAndSendChanges / sendContainerToPlayer）。
             com.wztwzt.ae2_qof.network.ServerTerminalHelper.scheduleServerTask(() -> {
                 UUID uuid = player.getUniqueID();
                 if (message.action == ACTION_EXTRACT) {

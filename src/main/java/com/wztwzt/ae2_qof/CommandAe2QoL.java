@@ -216,7 +216,8 @@ public class CommandAe2QoL extends CommandBase {
             page = Math.min(page, totalPages);
             sender.addChatMessage(
                 new ChatComponentText(
-                    EnumChatFormatting.AQUA + "[AE2QoL] 无限元件数据文件：共 " + all.size()
+                    EnumChatFormatting.AQUA + "[AE2QoL] 无限元件数据文件：共 "
+                        + all.size()
                         + " 个，第 "
                         + page
                         + "/"
@@ -228,12 +229,17 @@ public class CommandAe2QoL extends CommandBase {
                 cn.dancingsnow.aeinfinitycell.storage.InfinityCellStorage.CellFileInfo f = all.get(i);
                 sender.addChatMessage(
                     new ChatComponentText(
-                        String.format("  %6d B  %s  %s", f.sizeBytes, fmt.format(new java.util.Date(f.lastModifiedMs)), f.id)));
+                        String.format(
+                            "  %6d B  %s  %s",
+                            f.sizeBytes,
+                            fmt.format(new java.util.Date(f.lastModifiedMs)),
+                            f.id)));
             }
             return;
         }
         if (args.length < 3) {
-            sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "Usage: /ae2qof cell " + sub + " <uuid>"));
+            sender.addChatMessage(
+                new ChatComponentText(EnumChatFormatting.RED + "Usage: /ae2qof cell " + sub + " <uuid>"));
             return;
         }
         java.util.UUID id;
@@ -254,47 +260,38 @@ public class CommandAe2QoL extends CommandBase {
             sender.addChatMessage(new ChatComponentText(EnumChatFormatting.AQUA + "[AE2QoL] 元件 " + id + "："));
             sender.addChatMessage(
                 new ChatComponentText(
-                    "  物品   " + record.getUsedItemTypes()
-                        + " 类 / "
-                        + record.getStoredItemUnits()
-                        + " 件"));
+                    "  物品   " + record.getUsedItemTypes() + " 类 / " + record.getStoredItemUnits() + " 件"));
             sender.addChatMessage(
                 new ChatComponentText(
-                    "  流体   " + record.getUsedFluidTypes()
-                        + " 类 / "
-                        + record.getStoredFluidUnits()
-                        + " 毫升"));
+                    "  流体   " + record.getUsedFluidTypes() + " 类 / " + record.getStoredFluidUnits() + " 毫升"));
             sender.addChatMessage(
                 new ChatComponentText(
-                    "  源质   " + record.getUsedEssentiaTypes()
-                        + " 类 / "
-                        + record.getStoredEssentiaUnits()
-                        + " 单位"));
+                    "  源质   " + record.getUsedEssentiaTypes() + " 类 / " + record.getStoredEssentiaUnits() + " 单位"));
             sender.addChatMessage(
                 new ChatComponentText(
-                    "  电力   " + record.getUsedEUTypes()
-                        + " 类 / "
-                        + record.getStoredEUUnits()
-                        + " EU"));
+                    "  电力   " + record.getUsedEUTypes() + " 类 / " + record.getStoredEUUnits() + " EU"));
             return;
         }
         if ("archive".equals(sub)) {
             String result = storage.archiveCell(id);
             sender.addChatMessage(
                 new ChatComponentText(
-                    (result.startsWith("已归档") ? EnumChatFormatting.GREEN : EnumChatFormatting.RED) + "[AE2QoL] " + result));
+                    (result.startsWith("已归档") ? EnumChatFormatting.GREEN : EnumChatFormatting.RED) + "[AE2QoL] "
+                        + result));
             return;
         }
         if ("restore".equals(sub)) {
             String result = storage.restoreCell(id);
             sender.addChatMessage(
                 new ChatComponentText(
-                    (result.startsWith("已恢复") ? EnumChatFormatting.GREEN : EnumChatFormatting.RED) + "[AE2QoL] " + result));
+                    (result.startsWith("已恢复") ? EnumChatFormatting.GREEN : EnumChatFormatting.RED) + "[AE2QoL] "
+                        + result));
             return;
         }
         sender.addChatMessage(
             new ChatComponentText(
-                EnumChatFormatting.YELLOW + "Usage: /ae2qof cell list [页] | info <uuid> | archive <uuid> | restore <uuid>"));
+                EnumChatFormatting.YELLOW
+                    + "Usage: /ae2qof cell list [页] | info <uuid> | archive <uuid> | restore <uuid>"));
     }
 
     @Override

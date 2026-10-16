@@ -89,7 +89,7 @@ public class StockMonitorCoverGui extends CoverBaseGui<StockMonitorCover> {
                 networkPanel.openPanel();
             } else if (!syncManager.isClient()) {
                 // 3.35.0-fix12（审查 P2-3）：InteractionSyncHandler 回调双端各跑一次
-                //（MUI2 2.3.91 字节码：本地先执行 + syncToServer 再执行一次）——
+                // （MUI2 2.3.91 字节码：本地先执行 + syncToServer 再执行一次）——
                 // 聊天提示只该由服务端发，否则玩家看到两遍。
                 net.minecraft.entity.player.EntityPlayer player = syncManager.getPlayer();
                 if (player != null) {

@@ -1220,13 +1220,15 @@ public class PatternContainer implements IOptionalSlotHost {
         } else if (stack.stackTagCompound != null && stack.stackTagCompound.hasKey("Fluid")) {
             // 3.33.0-fix6：通用 NBT Fluid 标签 —— 按 ae2fc 原生口径写回。
             // ae2fc ItemFluidDrop 的存档格式（实例 jar 字节码，newStack）：
-            //   tag.setString("Fluid", fluid.getName())  +  stackSize = amount
+            // tag.setString("Fluid", fluid.getName()) + stackSize = amount
             // 而 getFluidStack 读取时 hasKey("Fluid", 8) **只认 NBTTagString**。
             // 旧代码在这里塞整个 FluidStack Compound（tag 类型 10），写完流体身份即被毁
             // （后续 getFluidStack 恒 null ⇒ 该格被当普通物品编码，机器永远凑不出料，全程静默）。
             fs.amount = newAmount;
-            stack.stackTagCompound.setString("Fluid", fs.getFluid()
-                .getName());
+            stack.stackTagCompound.setString(
+                "Fluid",
+                fs.getFluid()
+                    .getName());
             stack.stackSize = Math.max(1, Math.min(newAmount, Integer.MAX_VALUE));
         }
     }
@@ -1255,8 +1257,10 @@ public class PatternContainer implements IOptionalSlotHost {
             // 若历史版本已把 Fluid 写成 Compound（身份已坏），这里 getString 读到空串，
             // 上面 getFluidFromItem 的 ItemFluidDrop 分支会先返回 null 直接退出 —— 不再加重损坏。
             fs.amount = newAmount;
-            stack.stackTagCompound.setString("Fluid", fs.getFluid()
-                .getName());
+            stack.stackTagCompound.setString(
+                "Fluid",
+                fs.getFluid()
+                    .getName());
             stack.stackSize = Math.max(1, Math.min(newAmount, Integer.MAX_VALUE));
         }
     }

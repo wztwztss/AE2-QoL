@@ -156,8 +156,7 @@ public class AdaptiveNetwork {
         // 旧实现只有 AdaptiveNetHatch/AdaptiveNetLaserHatch 在自己的 onPreTick 里写 lastGridEU，
         // Dynamo/LaserTarget 的 WAILA"Grid"行长期显示 0 或陈旧值；且所有仓在余额 >9.22E 时
         // 只能显示钳制值。这里统一在此处刷新（long 快照 + BigInteger 精确值双份）。
-        BigInteger gridEUBigInteger =
-            owner == null ? BigInteger.ZERO : AdaptiveHatchHelper.getGridEUBigInteger(owner);
+        BigInteger gridEUBigInteger = owner == null ? BigInteger.ZERO : AdaptiveHatchHelper.getGridEUBigInteger(owner);
         long gridEULong = gridEUBigInteger.min(BigInteger.valueOf(Long.MAX_VALUE))
             .longValue();
         for (AdaptiveHatchHelper helper : helpers) {

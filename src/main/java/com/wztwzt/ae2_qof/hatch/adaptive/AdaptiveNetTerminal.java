@@ -24,15 +24,14 @@ import com.cleanroommc.modularui.drawable.ItemDrawable;
 import com.cleanroommc.modularui.factory.PosGuiData;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.screen.UISettings;
-import com.cleanroommc.modularui.value.sync.IntSyncValue;
 import com.cleanroommc.modularui.value.sync.DynamicLinkedSyncHandler;
 import com.cleanroommc.modularui.value.sync.GenericListSyncHandler;
+import com.cleanroommc.modularui.value.sync.IntSyncValue;
 import com.cleanroommc.modularui.value.sync.LongSyncValue;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
 import com.cleanroommc.modularui.value.sync.StringSyncValue;
 import com.cleanroommc.modularui.widgets.ButtonWidget;
 import com.cleanroommc.modularui.widgets.DynamicSyncedWidget;
-import com.cleanroommc.modularui.widgets.ListWidget;
 import com.cleanroommc.modularui.widgets.PageButton;
 import com.cleanroommc.modularui.widgets.PagedWidget;
 import com.cleanroommc.modularui.widgets.TextWidget;
@@ -1021,7 +1020,8 @@ public class AdaptiveNetTerminal extends MTEHatch {
 
     /**
      * 3.33.0-fix3：电网余额的 BigInteger 精确显示（去除 9.2E 显示上限）。
-     * <p>为什么需要：{@code getGridEULong} 把电网钳到 {@code Long.MAX_VALUE}（9.22E），
+     * <p>
+     * 为什么需要：{@code getGridEULong} 把电网钳到 {@code Long.MAX_VALUE}（9.22E），
      * 用户电网已实测超过 9.2E —— 监控页"电网蓄电"从此永远停在同一数字上。
      * 这里直接读 {@code BigInteger} 并用 {@link #formatKMG(BigInteger)} 格式化，
      * 超过 9.22E 也能显示真实值（如 15.80E）。统计/补电等算术路径仍用 long 快照（够用）。
@@ -1338,37 +1338,24 @@ public class AdaptiveNetTerminal extends MTEHatch {
         // 现在挂一个 DynamicLinkedSyncHandler：服务端 getter 从网络读最新缓存（列表 dirty 时
         // 自动 S2C），widgetProvider 在快照到达后**重建全部行控件**。首开即有数据、变化即时刷新。
         // 与范例同款：GLSH 本体留局部引用（initialChild 读当前快照），DLH 包它 + widgetProvider
-        GenericListSyncHandler<HatchListCache.HatchEntry> hatchRows = GenericListSyncHandler
-            .<HatchListCache.HatchEntry>builder()
+        GenericListSyncHandler<HatchListCache.HatchEntry> hatchRows = GenericListSyncHandler.<HatchListCache.HatchEntry>builder()
             .getter(() -> {
-                com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache c =
-                    com.wztwzt.ae2_qof.client.ClientState.hatchListCache;
+                com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache c = com.wztwzt.ae2_qof.client.ClientState.hatchListCache;
                 return c == null ? java.util.Collections.<HatchListCache.HatchEntry>emptyList() : c.entries;
             })
             .serializer(HatchListCache::writeEntry)
             .deserializer(HatchListCache::readEntry)
             .build();
-        DynamicLinkedSyncHandler<GenericListSyncHandler<HatchListCache.HatchEntry>> hatchListHandler =
-            new DynamicLinkedSyncHandler<>(hatchRows).widgetProvider((dynamicSyncManager, value) -> buildHatchListRows(
-                value.getValue(),
-                rowW,
-                ownerSync,
-                frequencySync,
-                displayMode));
+        DynamicLinkedSyncHandler<GenericListSyncHandler<HatchListCache.HatchEntry>> hatchListHandler = new DynamicLinkedSyncHandler<>(
+            hatchRows).widgetProvider(
+                (dynamicSyncManager,
+                    value) -> buildHatchListRows(value.getValue(), rowW, ownerSync, frequencySync, displayMode));
         syncManager.syncValue("wHL", hatchListHandler);
 
         // DynamicSyncedWidget 本身不滚动——滚动由 initialChild 的 ListWidget 承担（范例同款）
-        DynamicSyncedWidget<?> list = new DynamicSyncedWidget<>()
-            .size(CONTENT_W, PAGE_H - 30)
-            .initialChild(
-                buildHatchListRows(
-                    hatchRows.getValue(),
-                    rowW,
-                    ownerSync,
-                    frequencySync,
-                    displayMode))
+        DynamicSyncedWidget<?> list = new DynamicSyncedWidget<>().size(CONTENT_W, PAGE_H - 30)
+            .initialChild(buildHatchListRows(hatchRows.getValue(), rowW, ownerSync, frequencySync, displayMode))
             .syncHandler(hatchListHandler);
-
 
         tab.child(list);
         tab.child(separator(CONTENT_W));
@@ -1402,206 +1389,203 @@ public class AdaptiveNetTerminal extends MTEHatch {
 
         for (int i = 0; i < entries.size(); i++) {
             final com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache.HatchEntry entry = entries.get(i);
-                            // 3.32.0：名称与图标都在**客户端**按 MTE id 解析。旧实现把服务端算好的名字当字符串发下来，
-                // 专用服务器上必然是英文（服务端语言表只有 en_US）—— 与库存统计终端 3.31.0 同一个坑。
-                final net.minecraft.item.ItemStack iconStack = stackForMetaId(entry.displayMetaId);
-                final IWidget iconWidget = iconStack != null ? new ItemDrawable(iconStack).asWidget()
-                    .size(16, 16)
-                    : new ItemDrawable().asWidget()
-                        .size(16, 16);
-                final String hostLabel = hostLabelOf(iconStack);
-                final int textW = rowW - 16 - 46 - 8;
+            // 3.32.0：名称与图标都在**客户端**按 MTE id 解析。旧实现把服务端算好的名字当字符串发下来，
+            // 专用服务器上必然是英文（服务端语言表只有 en_US）—— 与库存统计终端 3.31.0 同一个坑。
+            final net.minecraft.item.ItemStack iconStack = stackForMetaId(entry.displayMetaId);
+            final IWidget iconWidget = iconStack != null ? new ItemDrawable(iconStack).asWidget()
+                .size(16, 16)
+                : new ItemDrawable().asWidget()
+                    .size(16, 16);
+            final String hostLabel = hostLabelOf(iconStack);
+            final int textW = rowW - 16 - 46 - 8;
 
-                // 右侧操作按钮：左键高亮 / Shift+左键传送。
-                // 3.32.0：改成**按坐标**寻址并定位到**主机**（旧实现按 helpers 的下标寻址，
-                // 列表重建/仓增删后索引会错位，可能跳到别的仓）。
-                ButtonWidget<?> actionBtn = new ButtonWidget<>().size(42, 18)
-                    .background(GuiTextures.BUTTON_CLEAN)
-                    .child(
-                        new TextWidget<>(IKey.str(EnumChatFormatting.WHITE + "定位"))
-                            .textAlign(com.cleanroommc.modularui.utils.Alignment.Center)
-                            .size(42, 18))
-                    .onMousePressed(event -> {
-                        String ownerStr = ownerSync.getValue();
-                        if (ownerStr == null || ownerStr.isEmpty()) return true;
-                        boolean shift = org.lwjgl.input.Keyboard.isKeyDown(org.lwjgl.input.Keyboard.KEY_LSHIFT)
-                            || org.lwjgl.input.Keyboard.isKeyDown(org.lwjgl.input.Keyboard.KEY_RSHIFT);
-                        int action = shift ? HatchActionPacket.ACTION_TELEPORT : HatchActionPacket.ACTION_HIGHLIGHT;
-                        // 主机行的着色：有输入仓用蓝色(1)，否则橙色(0)
-                        int colorType = entry.inCount > 0 ? 1 : 0;
-                        ModNetwork.CHANNEL.sendToServer(
-                            new HatchActionPacket(
-                                action,
-                                ownerStr,
-                                frequencySync.getIntValue(),
-                                entry.dim,
-                                entry.x,
-                                entry.y,
-                                entry.z,
-                                colorType));
-                        return true;
-                    });
-
-                // 行布局：图标 + 两行文字（主机名/耗电 + 仓数与额定·实测）+ 定位
-                Flow textCol = Flow.column()
-                    .size(textW, 24)
-                    .childPadding(0)
-                    .child(new TextWidget<>(IKey.dynamic(() -> {
-                        // 3.32.0-fix4：MUI2 面板是浅色底 ⇒ 一律用**深色**字，白/亮色在浅底上糊成一片（用户反馈"颜色不清晰"）
-                        String prefix = entry.hostKnown ? EnumChatFormatting.BLACK + hostLabel
-                            : EnumChatFormatting.GRAY
-                                + StatCollector
-                                    .translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.unknown_host")
-                                + EnumChatFormatting.BLACK
-                                + hostLabel;
-                        // 状态标签：GT 的 mEUt 停机不清零 ⇒ 显示耗电前必须先问"在不在跑"
-                        String state = entry.running
-                            ? EnumChatFormatting.DARK_GREEN
-                                + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.running")
-                            : EnumChatFormatting.GRAY
-                                + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.idle");
-                        // 主数值 = **实测流量**（我们自己的仓量到的真实吞吐；停机自然为 0）
-                        EnumChatFormatting flowColor = entry.realFlowEUt != 0 ? EnumChatFormatting.DARK_RED
-                            : EnumChatFormatting.DARK_GRAY;
-                        return prefix + EnumChatFormatting.DARK_GRAY
-                            + "  ·  "
-                            + state
-                            + EnumChatFormatting.DARK_GRAY
-                            + "  ·  "
-                            + EnumChatFormatting.DARK_AQUA
-                            + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.flow")
-                            + " "
-                            + flowColor
-                            + formatEU(entry.realFlowEUt, displayMode)
-                            + " EU/t";
-                    })).size(textW, 12))
-                    .child(
-                        new TextWidget<>(
-                            IKey.dynamic(
-                                () -> EnumChatFormatting.DARK_GRAY.toString() + entry.hatchCount
-                                    + StatCollector
-                                        .translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.hatch_unit")
-                                    + " · "
-                                    + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.in")
-                                    + " "
-                                    + entry.inCount
-                                    + " / "
-                                    + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.out")
-                                    + " "
-                                    + entry.outCount
-                                    + " · "
-                                    + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.rated")
-                                    + " "
-                                    + EnumChatFormatting.DARK_BLUE
-                                    + formatEU(entry.eut, displayMode)
-                                    // 配方 EUt（GT 的 mEUt）**只在运行时**显示：停机时它是上一次配方的残留值
-                                    + (entry.running
-                                        ? " · " + EnumChatFormatting.DARK_GRAY
-                                            + StatCollector
-                                                .translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.recipe")
-                                            + " "
-                                            + EnumChatFormatting.DARK_PURPLE
-                                            + formatEU(entry.hostEut, displayMode)
-                                        : ""))).size(textW, 11)
-                                            .scale(0.85F));
-
-                Flow rowFlow = Flow.row()
-                    .size(rowW, 24)
-                    .childPadding(2)
-                    .crossAxisAlignment(com.cleanroommc.modularui.utils.Alignment.CrossAxis.CENTER)
-                    .child(iconWidget)
-                    .child(textCol)
-                    .child(actionBtn);
-
-                rowFlow.tooltipBuilder(t -> {
-                    t.addLine(
-                        IKey.str(
-                            EnumChatFormatting.WHITE + hostLabel
-                                + (entry.hostKnown ? ""
-                                    : EnumChatFormatting.GRAY + " ("
-                                        + StatCollector
-                                            .translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.unknown_host")
-                                        + ")")));
-                    if (entry.ownerName != null && !entry.ownerName.isEmpty()) {
-                        t.addLine(
-                            IKey.str(
-                                EnumChatFormatting.AQUA
-                                    + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.owner")
-                                    + ": "
-                                    + entry.ownerName));
-                    }
-                    t.addLine(
-                        IKey.str(
-                            EnumChatFormatting.GRAY + "["
-                                + entry.x
-                                + ", "
-                                + entry.y
-                                + ", "
-                                + entry.z
-                                + "] dim:"
-                                + entry.dim));
-                    t.addLine(
-                        IKey.str(
-                            EnumChatFormatting.YELLOW
-                                + (entry.running
-                                    ? EnumChatFormatting.GREEN + StatCollector
-                                        .translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.running")
-                                    : EnumChatFormatting.GRAY + StatCollector
-                                        .translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.idle"))
-                                + EnumChatFormatting.YELLOW
-                                + " | "
-                                + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.flow")
-                                + ": "
-                                + formatEU(entry.realFlowEUt, displayMode)
-                                + " EU/t"
-                                + " | "
-                                + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.rated")
-                                + ": "
-                                + formatEU(entry.eut, displayMode)
-                                + " EU/t"
-                                + (entry.running
-                                    ? " | "
-                                        + StatCollector
-                                            .translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.recipe")
-                                        + ": "
-                                        + formatEU(entry.hostEut, displayMode)
-                                        + " EU/t"
-                                    : "")));
-                    // 明细：逐仓列出类型/档位/安培/额定/实测（名称同样客户端解析）
-                    for (com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache.Sub sub : entry.subs) {
-                        net.minecraft.item.ItemStack subStack = stackForMetaId(sub.metaId);
-                        String subName = subStack != null ? subStack.getDisplayName() : ("#" + sub.metaId);
-                        t.addLine(
-                            IKey.str(
-                                EnumChatFormatting.GRAY + " - "
-                                    + EnumChatFormatting.WHITE
-                                    + subName
-                                    + EnumChatFormatting.GRAY
-                                    + " "
-                                    + hatchTypeName(sub.hatchType)
-                                    + " "
-                                    + GTUtility.getColoredTierNameFromTier((byte) Math.max(0, Math.min(15, sub.tier)))
-                                    + EnumChatFormatting.GRAY
-                                    + " "
-                                    + sub.amps
-                                    + "A"
-                                    + " · "
-                                    + formatEU(sub.eut, displayMode)
-                                    + " / "
-                                    + formatEU(sub.realFlowEUt, displayMode)
-                                    + " ["
-                                    + sub.x
-                                    + ","
-                                    + sub.y
-                                    + ","
-                                    + sub.z
-                                    + "]"));
-                    }
-                    t.addLine(IKey.str(EnumChatFormatting.YELLOW + "左键定位: 高亮 | Shift+定位: 传送"));
+            // 右侧操作按钮：左键高亮 / Shift+左键传送。
+            // 3.32.0：改成**按坐标**寻址并定位到**主机**（旧实现按 helpers 的下标寻址，
+            // 列表重建/仓增删后索引会错位，可能跳到别的仓）。
+            ButtonWidget<?> actionBtn = new ButtonWidget<>().size(42, 18)
+                .background(GuiTextures.BUTTON_CLEAN)
+                .child(
+                    new TextWidget<>(IKey.str(EnumChatFormatting.WHITE + "定位"))
+                        .textAlign(com.cleanroommc.modularui.utils.Alignment.Center)
+                        .size(42, 18))
+                .onMousePressed(event -> {
+                    String ownerStr = ownerSync.getValue();
+                    if (ownerStr == null || ownerStr.isEmpty()) return true;
+                    boolean shift = org.lwjgl.input.Keyboard.isKeyDown(org.lwjgl.input.Keyboard.KEY_LSHIFT)
+                        || org.lwjgl.input.Keyboard.isKeyDown(org.lwjgl.input.Keyboard.KEY_RSHIFT);
+                    int action = shift ? HatchActionPacket.ACTION_TELEPORT : HatchActionPacket.ACTION_HIGHLIGHT;
+                    // 主机行的着色：有输入仓用蓝色(1)，否则橙色(0)
+                    int colorType = entry.inCount > 0 ? 1 : 0;
+                    ModNetwork.CHANNEL.sendToServer(
+                        new HatchActionPacket(
+                            action,
+                            ownerStr,
+                            frequencySync.getIntValue(),
+                            entry.dim,
+                            entry.x,
+                            entry.y,
+                            entry.z,
+                            colorType));
+                    return true;
                 });
 
-                list.child(rowFlow);
-                list.child(separator(rowW));
+            // 行布局：图标 + 两行文字（主机名/耗电 + 仓数与额定·实测）+ 定位
+            Flow textCol = Flow.column()
+                .size(textW, 24)
+                .childPadding(0)
+                .child(new TextWidget<>(IKey.dynamic(() -> {
+                    // 3.32.0-fix4：MUI2 面板是浅色底 ⇒ 一律用**深色**字，白/亮色在浅底上糊成一片（用户反馈"颜色不清晰"）
+                    String prefix = entry.hostKnown ? EnumChatFormatting.BLACK + hostLabel
+                        : EnumChatFormatting.GRAY
+                            + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.unknown_host")
+                            + EnumChatFormatting.BLACK
+                            + hostLabel;
+                    // 状态标签：GT 的 mEUt 停机不清零 ⇒ 显示耗电前必须先问"在不在跑"
+                    String state = entry.running
+                        ? EnumChatFormatting.DARK_GREEN
+                            + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.running")
+                        : EnumChatFormatting.GRAY
+                            + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.idle");
+                    // 主数值 = **实测流量**（我们自己的仓量到的真实吞吐；停机自然为 0）
+                    EnumChatFormatting flowColor = entry.realFlowEUt != 0 ? EnumChatFormatting.DARK_RED
+                        : EnumChatFormatting.DARK_GRAY;
+                    return prefix + EnumChatFormatting.DARK_GRAY
+                        + "  ·  "
+                        + state
+                        + EnumChatFormatting.DARK_GRAY
+                        + "  ·  "
+                        + EnumChatFormatting.DARK_AQUA
+                        + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.flow")
+                        + " "
+                        + flowColor
+                        + formatEU(entry.realFlowEUt, displayMode)
+                        + " EU/t";
+                })).size(textW, 12))
+                .child(
+                    new TextWidget<>(
+                        IKey.dynamic(
+                            () -> EnumChatFormatting.DARK_GRAY.toString() + entry.hatchCount
+                                + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.hatch_unit")
+                                + " · "
+                                + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.in")
+                                + " "
+                                + entry.inCount
+                                + " / "
+                                + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.out")
+                                + " "
+                                + entry.outCount
+                                + " · "
+                                + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.rated")
+                                + " "
+                                + EnumChatFormatting.DARK_BLUE
+                                + formatEU(entry.eut, displayMode)
+                                // 配方 EUt（GT 的 mEUt）**只在运行时**显示：停机时它是上一次配方的残留值
+                                + (entry.running
+                                    ? " · " + EnumChatFormatting.DARK_GRAY
+                                        + StatCollector
+                                            .translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.recipe")
+                                        + " "
+                                        + EnumChatFormatting.DARK_PURPLE
+                                        + formatEU(entry.hostEut, displayMode)
+                                    : ""))).size(textW, 11)
+                                        .scale(0.85F));
+
+            Flow rowFlow = Flow.row()
+                .size(rowW, 24)
+                .childPadding(2)
+                .crossAxisAlignment(com.cleanroommc.modularui.utils.Alignment.CrossAxis.CENTER)
+                .child(iconWidget)
+                .child(textCol)
+                .child(actionBtn);
+
+            rowFlow.tooltipBuilder(t -> {
+                t.addLine(
+                    IKey.str(
+                        EnumChatFormatting.WHITE + hostLabel
+                            + (entry.hostKnown ? ""
+                                : EnumChatFormatting.GRAY + " ("
+                                    + StatCollector
+                                        .translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.unknown_host")
+                                    + ")")));
+                if (entry.ownerName != null && !entry.ownerName.isEmpty()) {
+                    t.addLine(
+                        IKey.str(
+                            EnumChatFormatting.AQUA
+                                + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.owner")
+                                + ": "
+                                + entry.ownerName));
+                }
+                t.addLine(
+                    IKey.str(
+                        EnumChatFormatting.GRAY + "["
+                            + entry.x
+                            + ", "
+                            + entry.y
+                            + ", "
+                            + entry.z
+                            + "] dim:"
+                            + entry.dim));
+                t.addLine(
+                    IKey.str(
+                        EnumChatFormatting.YELLOW
+                            + (entry.running
+                                ? EnumChatFormatting.GREEN
+                                    + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.running")
+                                : EnumChatFormatting.GRAY
+                                    + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.idle"))
+                            + EnumChatFormatting.YELLOW
+                            + " | "
+                            + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.flow")
+                            + ": "
+                            + formatEU(entry.realFlowEUt, displayMode)
+                            + " EU/t"
+                            + " | "
+                            + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.rated")
+                            + ": "
+                            + formatEU(entry.eut, displayMode)
+                            + " EU/t"
+                            + (entry.running
+                                ? " | "
+                                    + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.hatch_list.recipe")
+                                    + ": "
+                                    + formatEU(entry.hostEut, displayMode)
+                                    + " EU/t"
+                                : "")));
+                // 明细：逐仓列出类型/档位/安培/额定/实测（名称同样客户端解析）
+                for (com.wztwzt.ae2_qof.hatch.adaptive.HatchListCache.Sub sub : entry.subs) {
+                    net.minecraft.item.ItemStack subStack = stackForMetaId(sub.metaId);
+                    String subName = subStack != null ? subStack.getDisplayName() : ("#" + sub.metaId);
+                    t.addLine(
+                        IKey.str(
+                            EnumChatFormatting.GRAY + " - "
+                                + EnumChatFormatting.WHITE
+                                + subName
+                                + EnumChatFormatting.GRAY
+                                + " "
+                                + hatchTypeName(sub.hatchType)
+                                + " "
+                                + GTUtility.getColoredTierNameFromTier((byte) Math.max(0, Math.min(15, sub.tier)))
+                                + EnumChatFormatting.GRAY
+                                + " "
+                                + sub.amps
+                                + "A"
+                                + " · "
+                                + formatEU(sub.eut, displayMode)
+                                + " / "
+                                + formatEU(sub.realFlowEUt, displayMode)
+                                + " ["
+                                + sub.x
+                                + ","
+                                + sub.y
+                                + ","
+                                + sub.z
+                                + "]"));
+                }
+                t.addLine(IKey.str(EnumChatFormatting.YELLOW + "左键定位: 高亮 | Shift+定位: 传送"));
+            });
+
+            list.child(rowFlow);
+            list.child(separator(rowW));
         }
 
         return list;

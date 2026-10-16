@@ -45,12 +45,14 @@ public final class InfinityCellRecord {
 
     /**
      * 3.35.0-fix1（审查 P1-9）：记录级锁。
-     * <p>账本（三个 LinkedHashMap）会被两个线程同时触碰：服务端 tick 线程（AE2 存储
+     * <p>
+     * 账本（三个 LinkedHashMap）会被两个线程同时触碰：服务端 tick 线程（AE2 存储
      * MODULATE 插入/抽取）与客户端 NEI 线程（单机 U 键预览直读 {@code getItemsView}）。
      * 旧实现零同步 ⇒ 遍历期间服务端插入/删除即 {@code ConcurrentModificationException}，
      * 或读到半更新状态。{@code InfinityCellStorage} 的 synchronized 罩不到记录内部
      * （getOrCreate 返回引用后锁即释放）。
-     * <p>改法：全部触碰 map 的公共方法挂本锁；对外视图改为**快照拷贝**（见
+     * <p>
+     * 改法：全部触碰 map 的公共方法挂本锁；对外视图改为**快照拷贝**（见
      * {@code getItemsView}），消费方拿到的不再是可以被并发改动的活账本。
      */
     private final Object lock = new Object();
@@ -302,9 +304,21 @@ public final class InfinityCellRecord {
             int loadedItems = readEntries(tag.getTagList(KEY_ITEMS, 10), items, ItemStackKey::readFromNBT);
             int loadedFluids = readEntries(tag.getTagList(KEY_FLUIDS, 10), fluids, FluidStackKey::readFromNBT);
             int loadedEssentia = readEntries(tag.getTagList(KEY_ESSENTIA, 10), essentia, EssentiaStackKey::readFromNBT);
-            logSkippedIfNeeded("items", loadedItems, tag.getTagList(KEY_ITEMS, 10).tagCount());
-            logSkippedIfNeeded("fluids", loadedFluids, tag.getTagList(KEY_FLUIDS, 10).tagCount());
-            logSkippedIfNeeded("essentia", loadedEssentia, tag.getTagList(KEY_ESSENTIA, 10).tagCount());
+            logSkippedIfNeeded(
+                "items",
+                loadedItems,
+                tag.getTagList(KEY_ITEMS, 10)
+                    .tagCount());
+            logSkippedIfNeeded(
+                "fluids",
+                loadedFluids,
+                tag.getTagList(KEY_FLUIDS, 10)
+                    .tagCount());
+            logSkippedIfNeeded(
+                "essentia",
+                loadedEssentia,
+                tag.getTagList(KEY_ESSENTIA, 10)
+                    .tagCount());
         }
     }
 
@@ -312,8 +326,7 @@ public final class InfinityCellRecord {
     private static void logSkippedIfNeeded(String channel, int loaded, int total) {
         if (loaded < total) {
             cn.dancingsnow.aeinfinitycell.AEInfinityCell.LOG.warn(
-                "[AE2QoL] 无限元件读档：{} 通道 {} 条中只有 {} 条载入，{} 条因数量字段为旧格式（long）被忽略"
-                    + "——这些内容无法恢复，重新存入即可",
+                "[AE2QoL] 无限元件读档：{} 通道 {} 条中只有 {} 条载入，{} 条因数量字段为旧格式（long）被忽略" + "——这些内容无法恢复，重新存入即可",
                 channel,
                 total,
                 loaded,

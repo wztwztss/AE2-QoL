@@ -188,7 +188,8 @@ public class SmartDoublingTogglePacket implements IMessage {
          * 服务端权威路径：按坐标重新定位机器 → 校验能力接口 → 写入开关 → 回读真值给客户端。
          * 这一路径不依赖任何客户端注入，因此**专用服务端也成立**。
          *
-         * <p>3.34.0-fix2（审查 P1-3）：入口加两道闸——
+         * <p>
+         * 3.34.0-fix2（审查 P1-3）：入口加两道闸——
          * <ol>
          * <li>**距离**：玩家必须离目标 8 格以内（与 {@code SmartWildcardSlotCircuitPacket} 的既有
          * 范式一致，其注释原话"防止构造包远程改别人机器"）。正常玩家只在打开机器界面时发包，
@@ -204,8 +205,7 @@ public class SmartDoublingTogglePacket implements IMessage {
             if (world == null) return;
             // 3.34.0-fix2：距离闸（8 格 = 64 平方距离；玩家在别的维度时 DistanceSq 对比的是
             // 自己所在世界的坐标，因此维度不同先按"过远"拒绝——正常玩法不会跨维度拨开关）
-            if (player.dimension != msg.dim
-                || player.getDistanceSq(msg.x + 0.5D, msg.y + 0.5D, msg.z + 0.5D) > 64.0D) {
+            if (player.dimension != msg.dim || player.getDistanceSq(msg.x + 0.5D, msg.y + 0.5D, msg.z + 0.5D) > 64.0D) {
                 MyMod.LOG.info(
                     "[AE2QoL] 智能倍增：玩家 {} 距目标 d{} [{}, {}, {}] 过远（>8 格或跨维度），请求已拒绝",
                     player.getCommandSenderName(),
@@ -259,7 +259,8 @@ public class SmartDoublingTogglePacket implements IMessage {
                     te.markDirty();
                 } catch (Throwable t) {
                     // 3.35.0-fix22（审查 P2-17）：留痕——开关状态可能延后到 MC 周期保存才落盘
-                    MyMod.LOG.warn("[AE2QoL] 智能倍增开关 markDirty 失败 @ {} d{} [{}, {}, {}]", msg.dim, msg.x, msg.y, msg.z, t);
+                    MyMod.LOG
+                        .warn("[AE2QoL] 智能倍增开关 markDirty 失败 @ {} d{} [{}, {}, {}]", msg.dim, msg.x, msg.y, msg.z, t);
                 }
                 boolean isProvider = mte instanceof ICraftingProvider;
                 if (before != msg.enabled) {

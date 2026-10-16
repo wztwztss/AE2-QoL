@@ -64,7 +64,7 @@ public class InfinityCellViewPacket implements IMessage {
                     // 只回传磁盘上已真实存在的元件，避免随机 UUID 触发缓存膨胀（P1-017）
                     // 3.35.0-fix19（审查 P2-13）：归属校验在前（无磁盘 IO）——请求场景里必须真实持有该元件，
                     // 防"凭泄漏 UUID 拉取他人元件完整内容分页"。拒绝时回 null 分页，与"存档不存在"同语义
-                    //（客户端缓存按已知无数据处理，不改变请求节奏）。
+                    // （客户端缓存按已知无数据处理，不改变请求节奏）。
                     if (!cn.dancingsnow.aeinfinitycell.storage.InfinityCellAccessPolicy.mayView(player, id)) {
                         cn.dancingsnow.aeinfinitycell.storage.InfinityCellAccessPolicy.warnDenied(player, id);
                         ModNetwork.CHANNEL.sendTo(new InfinityCellViewResponsePacket(id, null), player);

@@ -199,7 +199,8 @@ public class StockMonitorCoverData {
      * GT 写物品 NBT 的 {@code mFluidMaterialName} 是 GT 材料名（{@code Materials.FLUID_MAP
      * .get(fluid).mName}，字节码 GTUtility.getFluidDisplayStack offset 127-148 实证），
      * 跨版本/跨模组列表稳定；而 meta 是动态流体 ID，模组表一变就漂移。
-     * <p>材料名 → 流体的映射可能不止一个（GT 材料可对应多种流体，如 Pu 系列），
+     * <p>
+     * 材料名 → 流体的映射可能不止一个（GT 材料可对应多种流体，如 Pu 系列），
      * 所以遍历注册表时按 display item 的 {@code func_82790_a}（颜色）二次过滤不可靠，
      * 这里采用与 {@code PatternContainer.findFluidByName} 同口径的**精确名称匹配**，
      * 多义时按注册表第一个命中并接受（与 GT 自己的 tooltip 反查同口径）。

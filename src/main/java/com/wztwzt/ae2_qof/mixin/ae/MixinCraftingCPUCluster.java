@@ -224,8 +224,9 @@ public abstract class MixinCraftingCPUCluster {
             return;
         }
         long elapsedMillis = java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(this.elapsedTime);
-        ModNetwork.CHANNEL
-            .sendTo(new CraftingCompletePacket(this.ae2qol$output, this.ae2qol$output.stackSize, elapsedMillis), playerMP);
+        ModNetwork.CHANNEL.sendTo(
+            new CraftingCompletePacket(this.ae2qol$output, this.ae2qol$output.stackSize, elapsedMillis),
+            playerMP);
         ae2qol$setAsNull();
     }
 
@@ -233,7 +234,8 @@ public abstract class MixinCraftingCPUCluster {
     private boolean ae2qol$isSameNetworkKey(ItemStack item) {
         if (item != null && item.getItem() instanceof INetworkEncodable encodable) {
             String key = encodable.getEncryptionKey(item);
-            if (key != null && key.equals(Long.toString(this.ae2qol$networkKey)) && this.ae2qol$player instanceof EntityPlayerMP) {
+            if (key != null && key.equals(Long.toString(this.ae2qol$networkKey))
+                && this.ae2qol$player instanceof EntityPlayerMP) {
                 ae2qol$notifyPlayer();
                 return true;
             }

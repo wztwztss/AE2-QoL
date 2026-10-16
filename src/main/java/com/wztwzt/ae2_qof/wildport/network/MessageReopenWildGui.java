@@ -51,13 +51,11 @@ public class MessageReopenWildGui implements IMessage {
             EntityPlayerMP player = context.getServerHandler().playerEntity;
             if (player == null) return null;
             // 3.34.0-fix7（审查 P1-8）：归队服务端 tick 线程 —— openGui 在网络线程**不会生效**
-            //（项目已验证机制），这正是"改"对话框确认后界面不回来的根因。
+            // （项目已验证机制），这正是"改"对话框确认后界面不回来的根因。
             com.wztwzt.ae2_qof.network.ServerTerminalHelper.scheduleServerTask(() -> {
                 try {
                     player.openGui(MyMod.instance, ItemSmartWildcardPattern.GUI_ID, player.worldObj, 0, 0, 0);
-                    MyMod.LOG.info(
-                        "[AE2QoL] 「改」对话框确认后已重开通配样板界面（GUI {})",
-                        ItemSmartWildcardPattern.GUI_ID);
+                    MyMod.LOG.info("[AE2QoL] 「改」对话框确认后已重开通配样板界面（GUI {})", ItemSmartWildcardPattern.GUI_ID);
                 } catch (Throwable t) {
                     MyMod.LOG.warn("[AE2QoL] 重开通配样板界面失败", t);
                 }

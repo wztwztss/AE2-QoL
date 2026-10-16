@@ -93,10 +93,17 @@ public class AdaptiveNetDynamoHatch extends MTEHatchDynamo {
     /**
      * 3.33.0-fix2锛氭敼鍥炵湡瀹炵數鍘嬫。 {@code V[tier]} 鈥斺€?涓庡悓鏃?{@code WirelessEnergyOutputTerminal.maxEUOutput()}
      * 锛?.25.0-fix16 宸叉敼涓?{@code V[mTier]}锛屾敞閲婂師璇?涓?GT 鑷繁鐨勫姩鍔涗粨涓€鑷?锛夊強 GT 鍘熺敓
-     * {@code MTEHatchDynamo.maxEUOutput()} 鍚屽彛寰勩€?     * <p>涓轰粈涔堝繀椤绘敼锛欸T 鍦?{@code MTEMultiBlockBase.addEnergyOutputMultipleDynamos} 閲屾寜
-     * 銆屛?鐢靛帇 脳 瀹夊煿)銆嶇疮鍔犳墍鏈夊姩鍔涗粨鐨勮緭鍑洪绠楋紝涓嶈冻鍗?{@code explodeMultiblock()}锛堝瓧鑺傜爜 offset 190-211锛夈€?     * 鏃у€?{@code Long.MAX_VALUE / 2} 涓嬶紝瀹夊煿 鈮? 鏃朵箻娉曞嵆鐜粫涓鸿礋锛? 鈫?-9.22e18锛? 鈫?0锛夛紝
-     * 棰勭畻鍒よ礋 鈬?鍙戠數鏈哄鏂瑰潡姣?tick 琚湡寮曠垎锛汿ecTech 鏈哄垯鏄礋娉ㄥ叆 鈫?鐧藉緱 EU銆?     * <p>鐢ㄦ埛鎷嶆澘锛?026-10-14锛夛細**瀹夊煿涓嶈涓婇檺**鈥斺€旂畻鏈畨鍏ㄧ敱鐢靛帇鍙ｅ緞鐙珛鎵挎媴锛?     * V[tier] 鈮?8.59e9锛坱ier 15锛夛紝鍗充娇瀹夊煿鍒?2^31锛屼箻绉?鈮?1.8e19 浠嶅彲琚?long 鎵胯浇鏃剁殑
-     * 甯歌鍦烘櫙锛堝浠撶疮鍔犳墠鍙兘閫艰繎涓婇檺锛夛紝涓?getCurrentVoltageTier() 鏈?0..15 閽冲埗锛?     * 涔樻硶涓ょ閮藉彈鎺с€?     */
+     * {@code MTEHatchDynamo.maxEUOutput()} 鍚屽彛寰勩€? *
+     * <p>
+     * 涓轰粈涔堝繀椤绘敼锛欸T 鍦?{@code MTEMultiBlockBase.addEnergyOutputMultipleDynamos} 閲屾寜
+     * 銆屛?鐢靛帇 脳 瀹夊煿)銆嶇疮鍔犳墍鏈夊姩鍔涗粨鐨勮緭鍑洪绠楋紝涓嶈冻鍗?{@code explodeMultiblock()}锛堝瓧鑺傜爜 offset 190-211锛夈€? *
+     * 鏃у€?{@code Long.MAX_VALUE / 2} 涓嬶紝瀹夊煿 鈮? 鏃朵箻娉曞嵆鐜粫涓鸿礋锛? 鈫?-9.22e18锛? 鈫?0锛夛紝
+     * 棰勭畻鍒よ礋 鈬?鍙戠數鏈哄鏂瑰潡姣?tick 琚湡寮曠垎锛汿ecTech 鏈哄垯鏄礋娉ㄥ叆 鈫?鐧藉緱 EU銆? *
+     * <p>
+     * 鐢ㄦ埛鎷嶆澘锛?026-10-14锛夛細**瀹夊煿涓嶈涓婇檺**鈥斺€旂畻鏈畨鍏ㄧ敱鐢靛帇鍙ｅ緞鐙珛鎵挎媴锛? * V[tier] 鈮?8.59e9锛坱ier 15锛夛紝鍗充娇瀹夊煿鍒?2^31锛屼箻绉?鈮?1.8e19
+     * 浠嶅彲琚?long 鎵胯浇鏃剁殑
+     * 甯歌鍦烘櫙锛堝浠撶疮鍔犳墠鍙兘閫艰繎涓婇檺锛夛紝涓?getCurrentVoltageTier() 鏈?0..15 閽冲埗锛? * 涔樻硶涓ょ閮藉彈鎺с€?
+     */
     @Override
     public long maxEUOutput() {
         return V[helper.getCurrentVoltageTier()];
@@ -193,14 +200,12 @@ public class AdaptiveNetDynamoHatch extends MTEHatchDynamo {
 
         aBase.decreaseStoredEnergyUnits(stored, false);
         // 3.35.0-fix4（审查 P1-13）：GT 的 addEUToGlobalEnergyMap 在账相加为负时 return false 且不改账
-        //（字节码 signum<0 → iconst_0）——旧代码不查返回值，拒收时电已从仓里扣掉却没进电网 = 静默蒸发。
+        // （字节码 signum<0 → iconst_0）——旧代码不查返回值，拒收时电已从仓里扣掉却没进电网 = 静默蒸发。
         // 失败时把电塞回仓（与 util/WirelessEnergyTransfer 的回滚范式统一）并留痕。
         if (!WirelessNetworkManager.addEUToGlobalEnergyMap(owner, stored)) {
             aBase.increaseStoredEnergyUnits(stored, false);
-            cn.dancingsnow.aeinfinitycell.AEInfinityCell.LOG.warn(
-                "[AE2QoL] 自适应仓向电网推电被拒（电网余额不足以扣负数？），{} EU 已回滚到仓内：owner={}",
-                stored,
-                owner);
+            cn.dancingsnow.aeinfinitycell.AEInfinityCell.LOG
+                .warn("[AE2QoL] 自适应仓向电网推电被拒（电网余额不足以扣负数？），{} EU 已回滚到仓内：owner={}", stored, owner);
             return;
         }
         // 3.32.0-fix4锛氭湰娆℃帹閫佺殑鏄?杩?4 tick 绐楀彛"绱鐨勭紦瀛橀噺锛屾崲绠楁垚 EU/t 鎵嶆槸閫熺巼
@@ -288,7 +293,9 @@ public class AdaptiveNetDynamoHatch extends MTEHatchDynamo {
     }
 
     /**
-     * 3.33.0-fix3锛氱數缃戜綑棰濈殑 BigInteger 绮剧‘鐗堬紙>9.22E 鏃舵樉绀虹湡瀹炲€硷紝濡?15.80E锛夈€?     * 涓?AdaptiveNetHatch 鍚屾锛沇AILA/Grid 琛屽湪 helper 蹇収瓒呰繃 long 涓婇檺鏃惰蛋鏈柟娉曘€?     */
+     * 3.33.0-fix3锛氱數缃戜綑棰濈殑 BigInteger 绮剧‘鐗堬紙>9.22E 鏃舵樉绀虹湡瀹炲€硷紝濡?15.80E锛夈€? * 涓?AdaptiveNetHatch 鍚屾锛沇AILA/Grid 琛屽湪
+     * helper 蹇収瓒呰繃 long 涓婇檺鏃惰蛋鏈柟娉曘€?
+     */
     private static String formatEUBigInteger(BigInteger eu) {
         BigInteger E = BigInteger.valueOf(1_000_000_000_000_000_000L);
         BigInteger P = BigInteger.valueOf(1_000_000_000_000_000L);
@@ -300,19 +307,39 @@ public class AdaptiveNetDynamoHatch extends MTEHatchDynamo {
         BigInteger whole;
         String suffix;
         double scale;
-        if (abs.compareTo(E) >= 0) { whole = abs.divide(E); suffix = "E"; scale = 1e18; }
-        else if (abs.compareTo(P) >= 0) { whole = abs.divide(P); suffix = "P"; scale = 1e15; }
-        else if (abs.compareTo(T) >= 0) { whole = abs.divide(T); suffix = "T"; scale = 1e12; }
-        else if (abs.compareTo(G) >= 0) { whole = abs.divide(G); suffix = "G"; scale = 1e9; }
-        else if (abs.compareTo(M) >= 0) { whole = abs.divide(M); suffix = "M"; scale = 1e6; }
-        else if (abs.compareTo(K) >= 0) { whole = abs.divide(K); suffix = "K"; scale = 1e3; }
-        else { return (eu.signum() < 0 ? "-" : "") + abs; }
+        if (abs.compareTo(E) >= 0) {
+            whole = abs.divide(E);
+            suffix = "E";
+            scale = 1e18;
+        } else if (abs.compareTo(P) >= 0) {
+            whole = abs.divide(P);
+            suffix = "P";
+            scale = 1e15;
+        } else if (abs.compareTo(T) >= 0) {
+            whole = abs.divide(T);
+            suffix = "T";
+            scale = 1e12;
+        } else if (abs.compareTo(G) >= 0) {
+            whole = abs.divide(G);
+            suffix = "G";
+            scale = 1e9;
+        } else if (abs.compareTo(M) >= 0) {
+            whole = abs.divide(M);
+            suffix = "M";
+            scale = 1e6;
+        } else if (abs.compareTo(K) >= 0) {
+            whole = abs.divide(K);
+            suffix = "K";
+            scale = 1e3;
+        } else {
+            return (eu.signum() < 0 ? "-" : "") + abs;
+        }
         double frac = abs.mod(BigInteger.valueOf((long) (scale / 100)))
             .doubleValue() / (scale / 100);
         return String.format("%s%.2f%s", eu.signum() < 0 ? "-" : "", whole.doubleValue() + frac / 100.0, suffix);
     }
 
-    /** 3.33.0-fix3锛歐AILA"Grid"琛屽彇鏁?鈥斺€?瓒呰繃 long 涓婇檺璧扮簿纭樉绀猴紝鍚﹀垯缁存寔鏃ц矾寰勩€?*/
+    /** 3.33.0-fix3锛歐AILA"Grid"琛屽彇鏁?鈥斺€?瓒呰繃 long 涓婇檺璧扮簿纭樉绀猴紝鍚﹀垯缁存寔鏃ц矾寰勩€? */
     private String formatGridEUForWaila() {
         BigInteger exact = helper.getLastGridEUBigInteger();
         if (exact.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) >= 0) {

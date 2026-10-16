@@ -29,16 +29,14 @@ public class WirelessChannelSyncPacket implements IMessage {
             int size = buf.readInt();
             // 3.35.0-fix13（审查 P2-4）：恶意包防护保留（负值/巨型预分配仍拒收），
             // 但"合法超限"不再静默清空——旧式 size>256 → size=0 会把客户端列表永久清空
-            //（服务端频道数超 256 的合法场景被防攻击检查误伤，且无任何日志）。
+            // （服务端频道数超 256 的合法场景被防攻击检查误伤，且无任何日志）。
             // 现在负值才置空；超限改为**读前 256 条并 WARN**（服务端已在 addChannel 拒绝第 257 个，
             // 正常不会出现；出现即说明存量旧档超限，显示前 256 条好过全部消失）。
             if (size < 0) {
                 com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 频道同步包 size 为负（{}），按空列表处理", size);
                 size = 0;
             } else if (size > 256) {
-                com.wztwzt.ae2_qof.MyMod.LOG.warn(
-                    "[AE2QoL] 频道同步包含 {} 条（>256），仅载入前 256 条——请清理多余频道",
-                    size);
+                com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 频道同步包含 {} 条（>256），仅载入前 256 条——请清理多余频道", size);
                 size = 256;
             }
             channels = new ArrayList<String>(size);

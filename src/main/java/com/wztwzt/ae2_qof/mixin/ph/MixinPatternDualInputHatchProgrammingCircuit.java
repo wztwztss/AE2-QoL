@@ -29,7 +29,8 @@ import reobf.proghatches.gt.metatileentity.PatternDualInputHatch;
  * {@code DualInputHatch}**（实例 PH 0.2.0p24 javap 实证：子类与中间层 BufferedDualInputHatch
  * 都不声明它），而 Mixin 的 {@code @Inject(method=...)} 只匹配**目标类自己声明**的方法 ——
  * 两个注入器因此从未命中（实例日志零 handler 注册行），编程电路转写自交付日起静默失效。
- * <p>现在目标改为 {@code DualInputHatch}，方法真实存在 ⇒ 注入必然命中；回调里用
+ * <p>
+ * 现在目标改为 {@code DualInputHatch}，方法真实存在 ⇒ 注入必然命中；回调里用
  * {@code instanceof PatternDualInputHatch} 收窄，父类的其它子类
  * （StockingDualInputHatchME / DualInputHatchSlave 系列等）一律原样放行。
  *

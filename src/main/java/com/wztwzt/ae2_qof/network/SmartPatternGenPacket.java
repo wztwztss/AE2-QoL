@@ -29,7 +29,8 @@ public class SmartPatternGenPacket implements IMessage {
 
     /**
      * 3.34.0-fix3（审查 P1-4）：生成数量服务端上限。
-     * <p>客户端 UI 只护下界（≤0 → 512），旧链路对上界照单全收：一个
+     * <p>
+     * 客户端 UI 只护下界（≤0 → 512），旧链路对上界照单全收：一个
      * {@code maxPatterns=Integer.MAX_VALUE} 的包会让服务端对命中 RecipeMap 的**全部**配方
      * 逐条编码样板 —— 主线程冻结、内存峰值、装不下的 {@code entityDropItem} 成实体洪水。
      * 4096 远超正常单次需求（正常按几万分批），只截恶意/误输入。

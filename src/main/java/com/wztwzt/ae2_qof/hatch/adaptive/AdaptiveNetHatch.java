@@ -129,10 +129,8 @@ public class AdaptiveNetHatch extends MTEHatchEnergy {
                 // 3.35.0-fix4（审查 P1-13）：负数记账（扣消耗）被 GT 拒绝时电留在电网（偏高而非蒸发），
                 // 失败本身无害——但必须留痕：连续拒收说明"消耗上报"失效，账目会持续偏高。
                 if (!WirelessNetworkManager.addEUToGlobalEnergyMap(owner, -consumed)) {
-                    cn.dancingsnow.aeinfinitycell.AEInfinityCell.LOG.warn(
-                        "[AE2QoL] 自适应仓消耗上报被拒（电网余额不足以扣负数），{} EU 未扣：owner={}",
-                        consumed,
-                        owner);
+                    cn.dancingsnow.aeinfinitycell.AEInfinityCell.LOG
+                        .warn("[AE2QoL] 自适应仓消耗上报被拒（电网余额不足以扣负数），{} EU 未扣：owner={}", consumed, owner);
                 }
             }
             // 3.32.0-fix4：consumed 是"这 4 tick 窗口"的增量，必须换算成 EU/t（否则列表实测放大 4 倍）
@@ -309,13 +307,33 @@ public class AdaptiveNetHatch extends MTEHatchEnergy {
         BigInteger whole;
         String suffix;
         double scale;
-        if (abs.compareTo(E) >= 0) { whole = abs.divide(E); suffix = "E"; scale = 1e18; }
-        else if (abs.compareTo(P) >= 0) { whole = abs.divide(P); suffix = "P"; scale = 1e15; }
-        else if (abs.compareTo(T) >= 0) { whole = abs.divide(T); suffix = "T"; scale = 1e12; }
-        else if (abs.compareTo(G) >= 0) { whole = abs.divide(G); suffix = "G"; scale = 1e9; }
-        else if (abs.compareTo(M) >= 0) { whole = abs.divide(M); suffix = "M"; scale = 1e6; }
-        else if (abs.compareTo(K) >= 0) { whole = abs.divide(K); suffix = "K"; scale = 1e3; }
-        else { return (eu.signum() < 0 ? "-" : "") + abs; }
+        if (abs.compareTo(E) >= 0) {
+            whole = abs.divide(E);
+            suffix = "E";
+            scale = 1e18;
+        } else if (abs.compareTo(P) >= 0) {
+            whole = abs.divide(P);
+            suffix = "P";
+            scale = 1e15;
+        } else if (abs.compareTo(T) >= 0) {
+            whole = abs.divide(T);
+            suffix = "T";
+            scale = 1e12;
+        } else if (abs.compareTo(G) >= 0) {
+            whole = abs.divide(G);
+            suffix = "G";
+            scale = 1e9;
+        } else if (abs.compareTo(M) >= 0) {
+            whole = abs.divide(M);
+            suffix = "M";
+            scale = 1e6;
+        } else if (abs.compareTo(K) >= 0) {
+            whole = abs.divide(K);
+            suffix = "K";
+            scale = 1e3;
+        } else {
+            return (eu.signum() < 0 ? "-" : "") + abs;
+        }
         double frac = abs.mod(BigInteger.valueOf((long) (scale / 100)))
             .doubleValue() / (scale / 100);
         return String.format("%s%.2f%s", eu.signum() < 0 ? "-" : "", whole.doubleValue() + frac / 100.0, suffix);

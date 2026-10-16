@@ -186,14 +186,12 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
 
         aBase.decreaseStoredEnergyUnits(stored, false);
         // 3.35.0-fix4（审查 P1-13）：GT 的 addEUToGlobalEnergyMap 在账相加为负时 return false 且不改账
-        //（字节码 signum<0 → iconst_0）——旧代码不查返回值，拒收时电已从仓里扣掉却没进电网 = 静默蒸发。
+        // （字节码 signum<0 → iconst_0）——旧代码不查返回值，拒收时电已从仓里扣掉却没进电网 = 静默蒸发。
         // 失败时把电塞回仓（与 util/WirelessEnergyTransfer 的回滚范式统一）并留痕。
         if (!WirelessNetworkManager.addEUToGlobalEnergyMap(owner, stored)) {
             aBase.increaseStoredEnergyUnits(stored, false);
-            cn.dancingsnow.aeinfinitycell.AEInfinityCell.LOG.warn(
-                "[AE2QoL] 自适应仓向电网推电被拒（电网余额不足以扣负数？），{} EU 已回滚到仓内：owner={}",
-                stored,
-                owner);
+            cn.dancingsnow.aeinfinitycell.AEInfinityCell.LOG
+                .warn("[AE2QoL] 自适应仓向电网推电被拒（电网余额不足以扣负数？），{} EU 已回滚到仓内：owner={}", stored, owner);
             return;
         }
         // 3.32.0-fix4锛氭湰娆℃帹閫佺殑鏄?杩?4 tick 绐楀彛"绱鐨勭紦瀛橀噺锛屾崲绠楁垚 EU/t 鎵嶆槸閫熺巼
@@ -281,7 +279,9 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
     }
 
     /**
-     * 3.33.0-fix3锛氱數缃戜綑棰濈殑 BigInteger 绮剧‘鐗堬紙>9.22E 鏃舵樉绀虹湡瀹炲€硷紝濡?15.80E锛夈€?     * 涓?AdaptiveNetHatch 鍚屾锛沇AILA/Grid 琛屽湪 helper 蹇収瓒呰繃 long 涓婇檺鏃惰蛋鏈柟娉曘€?     */
+     * 3.33.0-fix3锛氱數缃戜綑棰濈殑 BigInteger 绮剧‘鐗堬紙>9.22E 鏃舵樉绀虹湡瀹炲€硷紝濡?15.80E锛夈€? * 涓?AdaptiveNetHatch 鍚屾锛沇AILA/Grid 琛屽湪
+     * helper 蹇収瓒呰繃 long 涓婇檺鏃惰蛋鏈柟娉曘€?
+     */
     private static String formatEUBigInteger(BigInteger eu) {
         BigInteger E = BigInteger.valueOf(1_000_000_000_000_000_000L);
         BigInteger P = BigInteger.valueOf(1_000_000_000_000_000L);
@@ -293,19 +293,39 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
         BigInteger whole;
         String suffix;
         double scale;
-        if (abs.compareTo(E) >= 0) { whole = abs.divide(E); suffix = "E"; scale = 1e18; }
-        else if (abs.compareTo(P) >= 0) { whole = abs.divide(P); suffix = "P"; scale = 1e15; }
-        else if (abs.compareTo(T) >= 0) { whole = abs.divide(T); suffix = "T"; scale = 1e12; }
-        else if (abs.compareTo(G) >= 0) { whole = abs.divide(G); suffix = "G"; scale = 1e9; }
-        else if (abs.compareTo(M) >= 0) { whole = abs.divide(M); suffix = "M"; scale = 1e6; }
-        else if (abs.compareTo(K) >= 0) { whole = abs.divide(K); suffix = "K"; scale = 1e3; }
-        else { return (eu.signum() < 0 ? "-" : "") + abs; }
+        if (abs.compareTo(E) >= 0) {
+            whole = abs.divide(E);
+            suffix = "E";
+            scale = 1e18;
+        } else if (abs.compareTo(P) >= 0) {
+            whole = abs.divide(P);
+            suffix = "P";
+            scale = 1e15;
+        } else if (abs.compareTo(T) >= 0) {
+            whole = abs.divide(T);
+            suffix = "T";
+            scale = 1e12;
+        } else if (abs.compareTo(G) >= 0) {
+            whole = abs.divide(G);
+            suffix = "G";
+            scale = 1e9;
+        } else if (abs.compareTo(M) >= 0) {
+            whole = abs.divide(M);
+            suffix = "M";
+            scale = 1e6;
+        } else if (abs.compareTo(K) >= 0) {
+            whole = abs.divide(K);
+            suffix = "K";
+            scale = 1e3;
+        } else {
+            return (eu.signum() < 0 ? "-" : "") + abs;
+        }
         double frac = abs.mod(BigInteger.valueOf((long) (scale / 100)))
             .doubleValue() / (scale / 100);
         return String.format("%s%.2f%s", eu.signum() < 0 ? "-" : "", whole.doubleValue() + frac / 100.0, suffix);
     }
 
-    /** 3.33.0-fix3锛歐AILA"Grid"琛屽彇鏁?鈥斺€?瓒呰繃 long 涓婇檺璧扮簿纭樉绀猴紝鍚﹀垯缁存寔鏃ц矾寰勩€?*/
+    /** 3.33.0-fix3锛歐AILA"Grid"琛屽彇鏁?鈥斺€?瓒呰繃 long 涓婇檺璧扮簿纭樉绀猴紝鍚﹀垯缁存寔鏃ц矾寰勩€? */
     private String formatGridEUForWaila() {
         BigInteger exact = helper.getLastGridEUBigInteger();
         if (exact.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) >= 0) {

@@ -150,8 +150,7 @@ public class HatchActionPacket implements IMessage {
          * 3.35.0-fix16（审查 P2-14）：畸形 owner 告警的限频表（玩家 → 上次告警时刻）。
          * 限频是必须的——告警本身若不限频，伪造包仍可刷屏（只是从 ERROR 变成 WARN）。
          */
-        private static final java.util.Map<UUID, Long> MALFORMED_WARN_AT =
-            new java.util.concurrent.ConcurrentHashMap<UUID, Long>();
+        private static final java.util.Map<UUID, Long> MALFORMED_WARN_AT = new java.util.concurrent.ConcurrentHashMap<UUID, Long>();
         private static final long MALFORMED_WARN_INTERVAL_MS = 60_000L;
 
         private static void ae2qol$warnMalformedOwner(EntityPlayerMP player, String owner) {
@@ -186,7 +185,7 @@ public class HatchActionPacket implements IMessage {
                 if (player.openContainer == null) return;
 
                 // 3.35.0-fix16（审查 P2-14）：hatchOwner 在协议里**允许为 null**
-                //（toBytes 用 writeBoolean 标记有无，见 :121）⇒ 伪造包可送 null。
+                // （toBytes 用 writeBoolean 标记有无，见 :121）⇒ 伪造包可送 null。
                 // UUID.fromString(null) 抛的是 NullPointerException，而旧代码只 catch
                 // IllegalArgumentException ⇒ NPE 逃到外层 catch (Throwable)，每个畸形包打一整条
                 // ERROR 堆栈（可刷屏日志/撑爆磁盘）。现在就地拦下（null/空串/NPE/IAE 全覆盖），
@@ -283,7 +282,8 @@ public class HatchActionPacket implements IMessage {
         /**
          * 3.34.0-fix1（审查 P1-2）：目标必须属于发起终端所在的电网。
          *
-         * <p>两条放行路径（满足其一即可）：
+         * <p>
+         * 两条放行路径（满足其一即可）：
          * <ol>
          * <li>目标是**本网络名单内的仓**：与 {@code network.getAllHelpers()} 的坐标逐一比对
          * （该名单由服务端维护，客户端伪造的坐标不可能混进来）；</li>
@@ -292,11 +292,11 @@ public class HatchActionPacket implements IMessage {
          * {@code IGrid.getId()}（AE2 1083 公开 API，返回 Grid 单例的 UUID）是可靠的网格判等手段。</li>
          * </ol>
          *
-         * <p>注意：这里不做区块加载（调用方已先做 {@code blockExists} 过滤，此处 TileEntity
+         * <p>
+         * 注意：这里不做区块加载（调用方已先做 {@code blockExists} 过滤，此处 TileEntity
          * 必然可取）；目标不是 IGridHost 也**不直接拒绝**——先走名单路径（情况①）。
          */
-        private static boolean isTargetOwnedByNetwork(AdaptiveNetwork network, WorldServer world, int x, int y,
-            int z) {
+        private static boolean isTargetOwnedByNetwork(AdaptiveNetwork network, WorldServer world, int x, int y, int z) {
             // ① 本网络名单内的仓
             for (AdaptiveHatchHelper h : network.getAllHelpers()) {
                 if (h.getDim() == world.provider.dimensionId && h.getX() == x && h.getY() == y && h.getZ() == z) {
@@ -335,8 +335,7 @@ public class HatchActionPacket implements IMessage {
                 net.minecraft.tileentity.TileEntity te = (net.minecraft.tileentity.TileEntity) terminal
                     .getBaseMetaTileEntity();
                 if (te instanceof appeng.me.helpers.IGridProxyable) {
-                    appeng.api.networking.IGridNode node = ((appeng.me.helpers.IGridProxyable) te)
-                        .getProxy()
+                    appeng.api.networking.IGridNode node = ((appeng.me.helpers.IGridProxyable) te).getProxy()
                         .getNode();
                     if (node != null) return node.getGrid();
                 }

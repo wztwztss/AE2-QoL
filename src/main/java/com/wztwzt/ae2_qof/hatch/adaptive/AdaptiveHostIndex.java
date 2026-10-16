@@ -473,10 +473,7 @@ public final class AdaptiveHostIndex {
             return true;
         } catch (Throwable t) {
             // 调用期失败不写负缓存（方法确实存在，可能是瞬时问题 ⇒ 下个周期应重试）
-            warnOnce(
-                "compatAmpsWrite:" + cls.getName(),
-                "给 TecTech 兼容激光仓写安培时调用失败: " + cls.getName(),
-                t);
+            warnOnce("compatAmpsWrite:" + cls.getName(), "给 TecTech 兼容激光仓写安培时调用失败: " + cls.getName(), t);
             return false;
         }
     }
