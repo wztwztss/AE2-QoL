@@ -38,6 +38,8 @@ import com.cleanroommc.modularui.widgets.TextWidget;
 import com.cleanroommc.modularui.widgets.layout.Flow;
 import com.cleanroommc.modularui.widgets.textfield.TextFieldWidget;
 import com.wztwzt.ae2_qof.MyMod;
+import com.wztwzt.ae2_qof.network.ModNetwork;
+import com.wztwzt.ae2_qof.network.StockMonitorActionPacket;
 import com.wztwzt.ae2_qof.proline.ItemProductionLineCard;
 import com.wztwzt.ae2_qof.proline.ItemRow;
 import com.wztwzt.ae2_qof.proline.MachineRef;
@@ -140,7 +142,8 @@ public final class ProLinePage {
                     v.getValue(),
                     syncManager,
                     stepPanelOf(syncManager, terminal),
-                    candidatesPanelOf(syncManager, terminal)));
+                    candidatesPanelOf(syncManager, terminal),
+                    terminal));
         syncManager.syncValue("proline_steps_dyn", stepsDyn);
 
         // ---- 汇总行 ----
@@ -168,7 +171,8 @@ public final class ProLinePage {
                         steps.getValue(),
                         syncManager,
                         stepPanelOf(syncManager, terminal),
-                        candidatesPanelOf(syncManager, terminal)))
+                        candidatesPanelOf(syncManager, terminal),
+                        terminal))
                 .syncHandler(stepsDyn));
 
         column.child(
@@ -366,24 +370,38 @@ public final class ProLinePage {
             + "/"
             + row.bound
             + "在产）";
-        return new ButtonWidget<>().size(ROW_W, ROW_H)
-            .background(GuiTextures.BUTTON_CLEAN)
-            .overlay(IKey.str(label))
-            .tooltip(
-                t -> t.addLine(IKey.str(label))
-                    .addLine(IKey.str(row.networkFlag)))
-            .syncHandler(new InteractionSyncHandler().setOnMousePressed(mouse -> {
-                // 服务端：选中该线 + 计入"活跃产线"（采样对象）
-                SELECTED_LINE.put(
-                    syncManager.getPlayer()
-                        .getUniqueID(),
-                    row.lineId);
-                ProLineManager.touchActive(row.lineId);
-            }));
+        Flow r = Flow.row()
+            .size(ROW_W, ROW_H)
+            .childPadding(2)
+            .crossAxisAlignment(Alignment.CrossAxis.CENTER);
+        r.child(
+            new ButtonWidget<>().size(ROW_W - 30, ROW_H)
+                .background(GuiTextures.BUTTON_CLEAN)
+                .overlay(IKey.str(label))
+                .tooltip(
+                    t -> t.addLine(IKey.str(label))
+                        .addLine(IKey.str(row.networkFlag)))
+                .syncHandler(new InteractionSyncHandler().setOnMousePressed(mouse -> {
+                    // 服务端：选中该线 + 计入"活跃产线"（采样对象）
+                    SELECTED_LINE.put(
+                        syncManager.getPlayer()
+                            .getUniqueID(),
+                        row.lineId);
+                    ProLineManager.touchActive(row.lineId);
+                })));
+        r.child(
+            new ButtonWidget<>().size(BTN_W + 2, ROW_H)
+                .background(GuiTextures.BUTTON_CLEAN)
+                .overlay(IKey.lang("ae2_qof.proline.btn_line"))
+                .tooltip(
+                    t -> t.addLine(IKey.lang("ae2_qof.proline.btn_line"))
+                        .addLine(IKey.lang("ae2_qof.proline.btn_line_tip")))
+                .syncHandler(clickServer(syncManager, pm -> linePanelOf(pm, null).openPanel())));
+        return r;
     }
 
     private static IWidget buildStepList(List<StepRow> rows, PanelSyncManager syncManager, IPanelHandler stepPanel,
-        IPanelHandler candidatesPanel) {
+        IPanelHandler candidatesPanel, StockMonitorTerminal terminal) {
         PlList list = new PlList(LIST_W, STEP_LIST_H);
         if (rows == null || rows.isEmpty()) {
             list.child(
@@ -392,13 +410,13 @@ public final class ProLinePage {
             return list;
         }
         for (StepRow row : rows) {
-            list.child(stepRowWidget(syncManager, row, stepPanel, candidatesPanel));
+            list.child(stepRowWidget(syncManager, row, stepPanel, candidatesPanel, terminal));
         }
         return list;
     }
 
     private static IWidget stepRowWidget(final PanelSyncManager syncManager, final StepRow row, IPanelHandler stepPanel,
-        IPanelHandler candidatesPanel) {
+        IPanelHandler candidatesPanel, StockMonitorTerminal terminal) {
         String badge = EnumChatFormatting.BOLD + StatCollector.translateToLocal("ae2_qof.proline.badge." + row.badge);
         Flow r = Flow.row()
             .size(ROW_W, ROW_H)
@@ -441,7 +459,46 @@ public final class ProLinePage {
                     clickServer(
                         syncManager,
                         pm -> { ProLineManager.removeStep(pm.getPlayer(), row.lineId, row.stepId); })));
+        if (row.pos != null) {
+            r.child(actionBtn(terminal, row.pos, StockMonitorActionPacket.ACTION_HIGHLIGHT));
+            r.child(actionBtn(terminal, row.pos, StockMonitorActionPacket.ACTION_TELEPORT));
+        } else {
+            Widget<?> ph1 = new Widget<>().size(24, ROW_H);
+            r.child(ph1);
+            Widget<?> ph2 = new Widget<>().size(24, ROW_H);
+            r.child(ph2);
+        }
         return r;
+    }
+
+    /** 高亮/传送（复用库存统计终端的 StockMonitorActionPacket；会话与 AE BUILD 校验都在该包服务端做）。 */
+    private static IWidget actionBtn(StockMonitorTerminal terminal, int[] pos, int action) {
+        String key = action == StockMonitorActionPacket.ACTION_HIGHLIGHT ? "ae2_qof.terminal.highlight"
+            : "ae2_qof.terminal.teleport";
+        return new ButtonWidget<>().size(24, ROW_H)
+            .background(GuiTextures.BUTTON_CLEAN)
+            .overlay(IKey.lang(key))
+            .tooltip(t -> t.addLine(IKey.lang(key)))
+            .onMousePressed(mouse -> {
+                // 客户端回调：只报坐标，判定/鉴权/执行全在服务端
+                try {
+                    TileEntity base = terminalBase(terminal);
+                    if (base == null) return true;
+                    ModNetwork.CHANNEL.sendToServer(
+                        new StockMonitorActionPacket(
+                            action,
+                            StockMonitorActionPacket.KIND_EMITTER,
+                            base.getWorldObj().provider.dimensionId,
+                            base.xCoord,
+                            base.yCoord,
+                            base.zCoord,
+                            pos[0],
+                            pos[1],
+                            pos[2],
+                            pos[3]));
+                } catch (Throwable ignored) {}
+                return true;
+            });
     }
 
     private static IWidget buildTextList(List<String> rows, int color, int rowH) {
@@ -516,6 +573,90 @@ public final class ProLinePage {
             .setOnMousePressed(mouse -> panelHandler.closePanel());
         edit.child(
             new ButtonWidget<>().pos(10, 64)
+                .size(60, 18)
+                .background(GuiTextures.BUTTON_CLEAN)
+                .overlay(IKey.lang("ae2_qof.gui.stock_monitor.close"))
+                .syncHandler(closeBtn));
+        return edit;
+    }
+
+    // ===== 子面板：产线设置（重命名 / 真暂停整线 / 删线两击确认，O4）=====
+
+    private static final ConcurrentHashMap<UUID, Long> DEL_ARM = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<UUID, String> DEL_ARM_LINE = new ConcurrentHashMap<>();
+
+    private static IPanelHandler linePanelOf(PanelSyncManager sm, StockMonitorTerminal ignored) {
+        return PANEL_CACHE.computeIfAbsent(
+            sm.getPlayer()
+                .getUniqueID() + ":line",
+            k -> sm.syncedPanel("proline_line_panel", true, (pm, ph) -> buildLinePanel(pm, ph)));
+    }
+
+    private static ModularPanel buildLinePanel(PanelSyncManager syncManager, IPanelHandler panelHandler) {
+        ModularPanel edit = ModularPanel.defaultPanel("proline_line_panel", PANEL_W2, PANEL_H2);
+        StringSyncValue nameSync = new StringSyncValue(() -> {
+            ProductionLine l = lineOf(syncManager.getPlayer());
+            return l == null ? "" : l.name;
+        }, value -> {
+            ProductionLine l = lineOf(syncManager.getPlayer());
+            if (l != null) ProLineManager.renameLine(syncManager.getPlayer(), l.id, value);
+        }).allowC2S();
+        syncManager.syncValue("proline_line_name2", nameSync);
+        BooleanSyncValue pauseSync = new BooleanSyncValue(() -> {
+            ProductionLine l = lineOf(syncManager.getPlayer());
+            return l != null && l.linePaused;
+        }, value -> {
+            ProductionLine l = lineOf(syncManager.getPlayer());
+            if (l != null) ProLineManager.setLinePaused(syncManager.getPlayer(), l.id, value);
+        }).allowC2S();
+        syncManager.syncValue("proline_line_pause2", pauseSync);
+
+        edit.child(
+            new TextWidget<>(IKey.lang("ae2_qof.proline.btn_line")).pos(10, 8)
+                .size(PANEL_W2 - 20, 12));
+        edit.child(
+            new TextWidget<>(IKey.lang("ae2_qof.proline.name")).pos(10, 26)
+                .size(50, 12));
+        edit.child(
+            new TextFieldWidget().pos(62, 24)
+                .size(PANEL_W2 - 72, 16)
+                .value(nameSync));
+        edit.child(
+            new ButtonWidget<>().pos(10, 46)
+                .size(120, 18)
+                .background(GuiTextures.BUTTON_CLEAN)
+                .overlay(IKey.lang("ae2_qof.proline.btn_pause_line"))
+                .syncHandler(clickServer(syncManager, pm -> pauseSync.setValue(!pauseSync.getValue()))));
+        edit.child(
+            new ButtonWidget<>().pos(136, 46)
+                .size(150, 18)
+                .background(GuiTextures.BUTTON_CLEAN)
+                .overlay(IKey.lang("ae2_qof.proline.btn_del_line_re"))
+                .syncHandler(clickServer(syncManager, pm -> {
+                    ProductionLine l = lineOf(pm.getPlayer());
+                    if (l == null) return;
+                    UUID id = pm.getPlayer()
+                        .getUniqueID();
+                    long now = System.currentTimeMillis();
+                    Long armedAt = DEL_ARM.get(id);
+                    boolean armed = armedAt != null && now - armedAt < 3000L && l.id.equals(DEL_ARM_LINE.get(id));
+                    if (armed) {
+                        DEL_ARM.remove(id);
+                        DEL_ARM_LINE.remove(id);
+                        ProLineManager.deleteLine(pm.getPlayer(), l.id, true);
+                    } else {
+                        DEL_ARM.put(id, now);
+                        DEL_ARM_LINE.put(id, l.id);
+                        pm.getPlayer()
+                            .addChatMessage(
+                                new net.minecraft.util.ChatComponentText(
+                                    EnumChatFormatting.YELLOW + "[产线] 再点一次【删除整线】才会真删（3 秒内有效）"));
+                    }
+                })));
+        InteractionSyncHandler closeBtn = new InteractionSyncHandler()
+            .setOnMousePressed(mouse -> panelHandler.closePanel());
+        edit.child(
+            new ButtonWidget<>().pos(10, 72)
                 .size(60, 18)
                 .background(GuiTextures.BUTTON_CLEAN)
                 .overlay(IKey.lang("ae2_qof.gui.stock_monitor.close"))
@@ -867,6 +1008,8 @@ public final class ProLinePage {
         final int badge;
         /** 主产物 icon（客户端渲染；服务端解析、快照下传）。 */
         final ItemStack icon;
+        /** 第一个绑定机器的坐标 {dim,x,y,z}（null=无绑定）：行内高亮/传送用。 */
+        final int[] pos;
 
         static StepRow of(int seq, ProductionLine l, ProductionStep s) {
             int[] st = ProLineManager.runState(l.id, s.id);
@@ -875,6 +1018,8 @@ public final class ProLinePage {
             int badge = ProLineSummary.badgeOf(l, s, st);
             ItemRow main = s.mainOutput();
             String outText = main == null ? "无产物" : "×" + main.amount;
+            int[] pos = s.machines.isEmpty() ? null
+                : new int[] { s.machines.get(0).dim, s.machines.get(0).x, s.machines.get(0).y, s.machines.get(0).z };
             return new StepRow(
                 seq,
                 l.id,
@@ -884,7 +1029,8 @@ public final class ProLinePage {
                 running + "/" + bound + " 在产",
                 outText,
                 badge,
-                mainIcon(main));
+                mainIcon(main),
+                pos);
         }
 
         private static ItemStack mainIcon(ItemRow main) {
@@ -898,7 +1044,7 @@ public final class ProLinePage {
         }
 
         StepRow(int seq, String lineId, String stepId, String name, String type, String runText, String outText,
-            int badge, ItemStack icon) {
+            int badge, ItemStack icon, int[] pos) {
             this.seq = seq;
             this.lineId = lineId;
             this.stepId = stepId;
@@ -908,6 +1054,7 @@ public final class ProLinePage {
             this.outText = outText;
             this.badge = badge;
             this.icon = icon;
+            this.pos = pos;
         }
 
         static void write(PacketBuffer buf, StepRow r) throws IOException {
@@ -920,9 +1067,20 @@ public final class ProLinePage {
             ByteBufUtils.writeUTF8String(buf, r.outText);
             buf.writeInt(r.badge);
             ByteBufUtils.writeItemStack(buf, r.icon);
+            buf.writeBoolean(r.pos != null);
+            if (r.pos != null) {
+                buf.writeInt(r.pos[0]);
+                buf.writeInt(r.pos[1]);
+                buf.writeInt(r.pos[2]);
+                buf.writeInt(r.pos[3]);
+            }
         }
 
         static StepRow read(PacketBuffer buf) throws IOException {
+            int[] pos = null;
+            if (buf.readBoolean()) {
+                pos = new int[] { buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt() };
+            }
             return new StepRow(
                 buf.readInt(),
                 ByteBufUtils.readUTF8String(buf),
@@ -932,7 +1090,8 @@ public final class ProLinePage {
                 ByteBufUtils.readUTF8String(buf),
                 ByteBufUtils.readUTF8String(buf),
                 buf.readInt(),
-                ByteBufUtils.readItemStack(buf));
+                ByteBufUtils.readItemStack(buf),
+                pos);
         }
 
         @Override

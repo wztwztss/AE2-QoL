@@ -193,6 +193,12 @@ public final class ProLineSampler {
                     if (mte instanceof MTEMultiBlockBase && ((MTEMultiBlockBase) mte).mMaxProgresstime > 0) {
                         running++;
                     }
+                    // 真暂停自愈（2026-10-16 拍板）：机器复活/换新后把停机位按线的暂停口径重新压上
+                    // （这一条是采样循环里唯一允许的写，且只在"该步确被暂停"时执行）
+                    if (line.isStepPausedByLineOrStep(s)
+                        && te instanceof gregtech.api.metatileentity.BaseMetaTileEntity) {
+                        ((gregtech.api.metatileentity.BaseMetaTileEntity) te).disableWorking();
+                    }
                 }
             }
             perStep.put(s.id, new int[] { running, s.machines.size() });

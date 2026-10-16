@@ -122,6 +122,10 @@ public final class ProLineManager {
         ProLineData data = dataOf(player);
         ProductionLine line = data == null ? null : data.findLine(lineId);
         if (line == null || !canEdit(player, line)) return false;
+        // 删线前把全部绑定机器恢复可工作（真暂停语义下的安全网）
+        for (ProductionStep s : line.steps) {
+            for (MachineRef ref : s.machines) applyWorkAllowed(ref, true);
+        }
         data.lines.remove(line);
         data.markDirty();
         RUNNING.remove(lineId);
@@ -186,13 +190,20 @@ public final class ProLineManager {
         return true;
     }
 
+    /**
+     * 暂停/恢复（2026-10-16 用户拍板：**真暂停**——写 GT 机器本体 disableWorking/enableWorking，
+     * 取代设计 §七 的"软暂停铁则"）。
+     */
     public static boolean setStepPaused(EntityPlayer player, String lineId, String stepId, boolean paused) {
         ProLineData data = dataOf(player);
         ProductionLine line = data == null ? null : data.findLine(lineId);
         if (line == null || !canEdit(player, line)) return false;
+        ProductionStep step = line.findStep(stepId);
+        if (step == null) return false;
         if (paused) line.pausedStepIds.add(stepId);
         else line.pausedStepIds.remove(stepId);
         data.markDirty();
+        applyPauseToStep(line, step);
         return true;
     }
 
@@ -202,7 +213,32 @@ public final class ProLineManager {
         if (line == null || !canEdit(player, line)) return false;
         line.linePaused = paused;
         data.markDirty();
+        for (ProductionStep s : line.steps) applyPauseToStep(line, s);
         return true;
+    }
+
+    /** 按线当前口径（整线或步骤暂停）把停机状态写到该步全部绑定机器。 */
+    public static void applyPauseToStep(ProductionLine line, ProductionStep step) {
+        boolean paused = line.isStepPausedByLineOrStep(step);
+        for (MachineRef ref : step.machines) applyWorkAllowed(ref, !paused);
+    }
+
+    /** 对单台机器写 GT 停机位（enable=复工）。区块未加载/TE 缺失直接跳过（自愈交采样轮重放）。 */
+    public static void applyWorkAllowed(MachineRef ref, boolean enable) {
+        try {
+            WorldServer world = net.minecraftforge.common.DimensionManager.getWorld(ref.dim);
+            if (world == null || !world.blockExists(ref.x, ref.y, ref.z)) return;
+            net.minecraft.tileentity.TileEntity te = world.getTileEntity(ref.x, ref.y, ref.z);
+            if (te instanceof gregtech.api.interfaces.tileentity.IGregTechTileEntity
+                && te instanceof gregtech.api.metatileentity.BaseMetaTileEntity) {
+                gregtech.api.metatileentity.BaseMetaTileEntity base = (gregtech.api.metatileentity.BaseMetaTileEntity) te;
+                if (enable) base.enableWorking();
+                else base.disableWorking();
+            }
+        } catch (Throwable t) {
+            com.wztwzt.ae2_qof.MyMod.LOG
+                .warn("[AE2QoL] 产线真暂停写机器失败 D" + ref.dim + "[" + ref.x + "," + ref.y + "," + ref.z + "]", t);
+        }
     }
 
     // ===== 机器绑定（§5：坐标身份 + 单机单线）=====
@@ -226,6 +262,8 @@ public final class ProLineManager {
         }
         if (!step.machines.contains(ref)) step.machines.add(ref);
         data.markDirty();
+        // 新绑定的机器若挂在被暂停的步骤上，立刻停掉它（真暂停语义）
+        applyWorkAllowed(ref, !line.isStepPausedByLineOrStep(step));
         return true;
     }
 
@@ -236,7 +274,11 @@ public final class ProLineManager {
         ProductionStep step = line.findStep(stepId);
         if (step == null) return false;
         boolean hit = step.machines.remove(ref);
-        if (hit) data.markDirty();
+        if (hit) {
+            data.markDirty();
+            // 解绑 = 机器归还自由身：恢复可工作（是否真的开机由机器自己的红石/维护逻辑决定）
+            applyWorkAllowed(ref, true);
+        }
         return hit;
     }
 

@@ -55,6 +55,64 @@ public final class ProLineImporter {
                 line.name = obj.get("name")
                     .getAsString();
             }
+            // ---- huijiwiki RecipeCalculator 原始格式（设计 §2.2：recipeQuery/branches/hierarchy/start/env）----
+            // 名称→key 的解析：单人（集成服端）走客户端语言表可解析中文；专用服解析不了会逐条报"未解析"。
+            if (obj.has("recipeQuery") && obj.get("recipeQuery")
+                .isJsonArray()) {
+                JsonArray steps = obj.getAsJsonArray("recipeQuery");
+                for (JsonElement el : steps) {
+                    if (!el.isJsonObject()) continue;
+                    JsonObject st = el.getAsJsonObject();
+                    ProductionStep ps = new ProductionStep();
+                    ps.name = jString(st, "name");
+                    ps.machineType = jString(st, "type");
+                    ps.branch = jString(st, "branch");
+                    ps.hierarchy = jString(st, "hierarchy");
+                    fillRows(tokenArray(st.get("input")), ps.inputs, result);
+                    fillRows(tokenArray(st.get("output")), ps.outputs, result);
+                    line.steps.add(ps);
+                }
+            }
+            if (obj.has("start") && obj.get("start")
+                .isJsonArray() && !obj.has("steps")) {
+                JsonArray start = obj.getAsJsonArray("start");
+                for (JsonElement el : start) {
+                    if (el.isJsonPrimitive()) {
+                        // 形如 "粉碎的独居石矿石 64"：最后一个空格分隔的整数为数量，缺省 1
+                        String token = el.getAsString()
+                            .trim();
+                        String name = token;
+                        long amount = 1L;
+                        int sp = token.lastIndexOf(' ');
+                        if (sp > 0) {
+                            try {
+                                amount = Long.parseLong(token.substring(sp + 1));
+                                name = token.substring(0, sp);
+                            } catch (NumberFormatException ignored) {}
+                        }
+                        ProductionStep ps = ensureStartStep(line);
+                        ps.inputs.add(new ItemRow("", amount, false));
+                        ps.inputs.get(ps.inputs.size() - 1).key = "";
+                        result.errors.add("start 名称未解析成注册键：" + name + "（数量 " + amount + "）");
+                    } else if (el.isJsonObject()) {
+                        JsonObject st = el.getAsJsonObject();
+                        fillRows(
+                            st.has("input") ? st.get("input") : new JsonArray(),
+                            ensureStartStep(line).inputs,
+                            result);
+                    }
+                }
+            }
+            if (obj.has("env") && obj.get("env")
+                .isJsonArray()) {
+                // 循环介质：v1 记进"起点记账"步骤（参与口径采样；无告警逻辑故无需豁免标记）
+                for (JsonElement el : obj.getAsJsonArray("env")) {
+                    if (!el.isJsonPrimitive()) continue;
+                    ProductionStep ps = ensureStartStep(line);
+                    ps.inputs.add(new ItemRow("", 0L, false));
+                    result.errors.add("env 循环介质未解析成注册键：" + el.getAsString());
+                }
+            }
             if (obj.has("steps") && obj.get("steps")
                 .isJsonArray()) {
                 // 内部精简格式（客户端打包后的产物）：steps[{id?,name,type,branch,hier,in:[{key,amount,fluid}],out:[…]}]
@@ -107,20 +165,48 @@ public final class ProLineImporter {
         return ps;
     }
 
+    /** wiki 的 input/output 可能是数组，也可能是逗号分隔串；统一折成 JSON 数组，元素为 "名字 数量" 记号。 */
+    private static JsonArray tokenArray(JsonElement raw) {
+        JsonArray arr = new JsonArray();
+        if (raw == null) return arr;
+        if (raw.isJsonArray()) return raw.getAsJsonArray();
+        if (raw.isJsonPrimitive()) {
+            for (String token : raw.getAsString()
+                .split(",")) {
+                if (!token.trim()
+                    .isEmpty()) arr.add(new com.google.gson.JsonPrimitive(token.trim()));
+            }
+        }
+        return arr;
+    }
+
     private static void fillRows(JsonElement rowsEl, List<ItemRow> into, Result result) {
         if (rowsEl == null || !rowsEl.isJsonArray()) return;
         for (JsonElement el : rowsEl.getAsJsonArray()) {
+            // 两种元素形态：{key,raw,amount}（客户端已解析）或 "名字 数量" 记号串（wiki 原始 token）
             JsonObject r = el.isJsonObject() ? el.getAsJsonObject() : null;
-            if (r == null) continue;
-            String key = jString(r, "key");
-            String raw = jString(r, "raw");
-            long amount = r.has("amount") ? jLong(r, "amount") : 1L;
-            if (r.has("amount")) {} else {
-                defaultAmountKeys.add(raw == null || raw.isEmpty() ? key : raw);
+            String key = r == null ? "" : jString(r, "key");
+            String raw = r == null ? (el.isJsonPrimitive() ? el.getAsString()
+                .trim() : "") : jString(r, "raw");
+            long amount = r != null && r.has("amount") ? jLong(r, "amount") : 1L;
+            if (r == null && !raw.isEmpty()) {
+                // 最后一个空格分隔的整数当数量（缺省 1）
+                int sp = raw.lastIndexOf(' ');
+                if (sp > 0) {
+                    try {
+                        amount = Long.parseLong(
+                            raw.substring(sp + 1)
+                                .trim());
+                        raw = raw.substring(0, sp);
+                    } catch (NumberFormatException ignored) {}
+                }
             }
             boolean fluid = key.startsWith("fluid:");
             if (key.isEmpty()) {
                 result.errors.add("未解析成注册键：" + (raw.isEmpty() ? "<空>" : raw));
+            }
+            if (r == null || !r.has("amount")) {
+                defaultAmountKeys.add(raw);
             }
             into.add(new ItemRow(key, amount, fluid));
         }
