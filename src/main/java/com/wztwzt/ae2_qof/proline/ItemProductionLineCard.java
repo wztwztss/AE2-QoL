@@ -30,6 +30,8 @@ public class ItemProductionLineCard extends Item {
         setTextureName("ae2_qof:proline_card");
         setMaxStackSize(1);
         setHasSubtypes(false);
+        // 泄漏/可发现性审计：不挂创造标签的话只能在 NEI 搜到——挂到主创造页保持可发现性
+        setCreativeTab(com.wztwzt.ae2_qof.AE2QoLCreativeTab.INSTANCE);
     }
 
     @SideOnly(Side.CLIENT)

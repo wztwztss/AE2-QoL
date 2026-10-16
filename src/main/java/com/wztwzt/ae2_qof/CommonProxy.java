@@ -160,6 +160,20 @@ public class CommonProxy {
         try {
             com.wztwzt.ae2_qof.proline.ItemProductionLineCard prolineCard = new com.wztwzt.ae2_qof.proline.ItemProductionLineCard();
             GameRegistry.registerItem(prolineCard, "proline_card", MyMod.MODID);
+            // 可发现性：生存获取——4 张纸 + 1 铁锭（形如纸 adamant 卡的通用习法）
+            try {
+                GameRegistry.addShapedRecipe(
+                    new net.minecraft.item.ItemStack(prolineCard),
+                    " p ",
+                    " i ",
+                    " p ",
+                    'p',
+                    new net.minecraft.item.ItemStack(net.minecraft.init.Items.paper),
+                    'i',
+                    new net.minecraft.item.ItemStack(net.minecraft.init.Items.iron_ingot));
+            } catch (Throwable t) {
+                MyMod.LOG.warn("[AE2QoL] 产线绑定卡合成配方注册失败（仅影响生存获取）", t);
+            }
             MyMod.LOG.info("[AE2QoL] 产线绑定卡已注册：proline_card（4.1.0）");
         } catch (Throwable t) {
             MyMod.LOG.error("[DIAG] ItemProductionLineCard registration FAILED", t);

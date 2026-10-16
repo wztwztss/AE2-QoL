@@ -10,13 +10,13 @@ An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI patte
 > Client-only installs will show the GUIs but the features will not work; server-only installs leave clients without them.
 > (If a Modrinth page marks this mod as client-only, that metadata is wrong — this note is authoritative.)
 
-**Author: wztwzt · Current source version: 3.35.0-fix7· Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 4.1.0 · Reference pack: GTNH 2.9.0-beta-3**
 
 
 ## Installation and upgrades
 
 1. Stop the game/server and back up the **complete world and configuration**, retaining the previous JAR for rollback. Infinity Cell contents live in the world save; backing up item NBT alone is insufficient.
-2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-3.35.0-fix7.jar`. Do not retain multiple versions.
+2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-4.1.0.jar`. Do not retain multiple versions.
 3. **Use the same version on client and server.** fix41 changed upload-related packets; upgrading only one side is unsupported.
 4. This JAR includes `aeinfinitycell` (bundled metadata remains `1.0.4-ae2qol`). Do not also install the standalone AE2 Infinity Cell JAR. Test old cells in a copied world before migrating.
 5. Check startup logs, generated configuration and Mixin loading, then exercise the features you use in a test world. Deployment to the development test instance requires separate approval.
