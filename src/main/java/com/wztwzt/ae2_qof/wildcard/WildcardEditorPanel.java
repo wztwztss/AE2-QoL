@@ -55,12 +55,14 @@ public final class WildcardEditorPanel {
     /** 预览页一次最多构建多少行（再多的候选请用「全部预览」看聊天栏）。 */
     private static final int PREVIEW_LIST_MAX = 64;
 
-    private static int PAGE = 0;
-    /** 预览页的搜索词与页码（客户端本地）。 */
-    private static String PREVIEW_SEARCH = "";
-    private static int PREVIEW_PAGE = 0;
-    /** 排除页当前编辑的规则号（1~9；0 = 总排除）。 */
-    private static int EXCLUDE_RULE = 0;
+    /**
+     * 3.35.0-fix20（审查 P2-15）：**面板会话状态全部改为 build 内局部变量**（经 lambda 捕获成为
+     * "每次打开一份"的会话数据）。旧实现是 static 可变字段：
+     * ① 双端 build 互覆盖——MUI2 面板在客户端与服务端各构建一次，共享 JVM（单机）下还与另一个
+     * 玩家的构建互踩；② 服务端重建会把客户端编辑中的矿辞开关/页面状态重置；③ NEI 拖放落点表
+     * 被"每次打开 clear 一把"跨会话清空。删静态后 javac 强制每一个引用点显式转为会话捕获。
+     * 行为差异（有意）：重开编辑器回到第 1 页——旧"记住上次页面"只是静态泄漏的副产品。
+     */
 
     private WildcardEditorPanel() {}
 
@@ -81,24 +83,31 @@ public final class WildcardEditorPanel {
         // 加入方式 = NEI/背包拖到「加」按钮上，或「手持加入」；不再用文本框输名字（那会与模型不符）。
         final List<ItemStack> nonConsumed = new ArrayList<>();
         nonConsumed.addAll(base.nonConsumed);
-        // 拖入落点表按本次打开重建（旧控件已随界面销毁）
-        NON_CONSUMED_REF = nonConsumed;
+
+        // 3.35.0-fix20（P2-15）：会话状态——每次打开一份（lambda 捕获），不再 static 共享
+        final int[] pageState = { 0 };
+        // 预览页的搜索词与页码（客户端本地；搜索读搜索框控件自身的文本）
+        final int[] previewPage = { 0 };
+        // 排除页当前编辑的规则号（1~9；0 = 总排除）
+        final int[] excludeRule = { 0 };
+        // 矿辞开关列：每次打开从样板基础状态重建一份（旧 = static 数组，双端/跨会话互覆盖）
+        final boolean[] inOre = new boolean[ROWS];
+        final boolean[] outOre = new boolean[ROWS];
+        java.util.Arrays.fill(inOre, true);
+        java.util.Arrays.fill(outOre, true);
+        for (int i = 0; i < ROWS; i++) {
+            SmartWildcardState.Rule rule = i < base.rules.size() ? base.rules.get(i) : null;
+            inOre[i] = rule == null || rule.oreDictMode;
+            outOre[i] = rule == null || rule.outOreDictMode;
+        }
+        // 电路页选择（保存按钮直接捕获 circuit —— 不再经 static lastCircuit 中转；
+        // 先声明在这里让保存按钮 lambda 能捕获，电路页只读写这个数组）
+        final int[] circuit = { base.circuit };
 
         TextFieldWidget[] inFields = new TextFieldWidget[ROWS];
         TextFieldWidget[] inAmounts = new TextFieldWidget[ROWS];
         TextFieldWidget[] outFields = new TextFieldWidget[ROWS];
         TextFieldWidget[] outAmounts = new TextFieldWidget[ROWS];
-        final boolean[] inOre = IN_ORE;
-        final boolean[] outOre = OUT_ORE;
-        java.util.Arrays.fill(IN_ORE, true);
-        java.util.Arrays.fill(OUT_ORE, true);
-        for (int i = 0; i < ROWS; i++) {
-            SmartWildcardState.Rule rule = i < base.rules.size() ? base.rules.get(i) : null;
-            IN_ORE[i] = rule == null || rule.oreDictMode;
-            OUT_ORE[i] = rule == null || rule.outOreDictMode;
-        }
-        // 重建 NEI 拖放落点表（面板每次打开都重建，旧的控件已随界面销毁）
-        DROP_TARGETS.clear();
 
         // ===================== 预览数据（构建期算一次，供预览页与计数说明用） =====================
         List<String> candidateNames = new ArrayList<>();
@@ -131,7 +140,7 @@ public final class WildcardEditorPanel {
                 new ButtonWidget<>().size(80, 16)
                     .overlay(IKey.str(tabNames[t]))
                     .onMouseTapped(ctx -> {
-                        PAGE = page;
+                        pageState[0] = page;
                         return true;
                     }));
         }
@@ -152,7 +161,7 @@ public final class WildcardEditorPanel {
                         outAmounts,
                         inOre,
                         outOre,
-                        base.circuit);
+                        circuit);
                     return true;
                 }));
         panel.child(tabBar);
@@ -161,7 +170,7 @@ public final class WildcardEditorPanel {
         Flow pageRules = Flow.column()
             .childPadding(GAP)
             .size(352, 226)
-            .setEnabledIf(w -> PAGE == 0);
+            .setEnabledIf(w -> pageState[0] == 0);
         pageRules.child(new TextWidget<>(IKey.str("输入匹配支持 ore:ingot* （矿辞）或 name:*锭 （显示名）；输出留空 = 自动配对")).size(348, 10));
 
         for (int i = 0; i < ROWS; i++) {
@@ -185,9 +194,12 @@ public final class WildcardEditorPanel {
             inAmounts[i] = inAmount;
             outFields[i] = outField;
             outAmounts[i] = outAmount;
-            // 登记为 NEI 拖放落点：{行号, 侧}（侧 0=输入 1=输出）
-            DROP_TARGETS.put(inField, new int[] { i, 0 });
-            DROP_TARGETS.put(outField, new int[] { i, 1 });
+            // 登记为 NEI 拖放落点（3.35.0-fix20：改登记目标持有会话数组引用——跨会话安全；
+            // 只在客户端登记——拖放只发生在客户端界面，服务端 build 从此不再污染落点表）
+            if (data.isClient()) {
+                DROP_TARGETS.put(inField, new DropTarget(i, true, inOre, outOre));
+                DROP_TARGETS.put(outField, new DropTarget(i, false, inOre, outOre));
+            }
 
             BooleanSyncValue inMode = new BooleanSyncValue(() -> inOre[index], v -> inOre[index] = v);
             BooleanSyncValue outMode = new BooleanSyncValue(() -> outOre[index], v -> outOre[index] = v);
@@ -309,11 +321,11 @@ public final class WildcardEditorPanel {
 
         // ===================== 页面 2：覆盖预览（搜索 + 翻页 + 逐行排除） =====================
         // MUI2 面板不能在原地重建，所以「搜索」和「翻页」都用 setEnabledIf 的**逐帧谓词**：
-        // 谓词在求值时读取搜索框的当前文本与 PREVIEW_PAGE，因此点按钮/打字即刻生效。
+        // 谓词在求值时读取搜索框的当前文本与 previewPage（会话局部），因此点按钮/打字即刻生效。
         Flow pagePreview = Flow.column()
             .childPadding(GAP)
             .size(352, 226)
-            .setEnabledIf(w -> PAGE == 1);
+            .setEnabledIf(w -> pageState[0] == 1);
 
         final TextFieldWidget searchField = new TextFieldWidget().setMaxLength(48)
             .size(180, 16);
@@ -325,14 +337,14 @@ public final class WildcardEditorPanel {
                 new ButtonWidget<>().size(40, 16)
                     .overlay(IKey.str("上一页"))
                     .onMouseTapped(ctx -> {
-                        if (PREVIEW_PAGE > 0) PREVIEW_PAGE--;
+                        if (previewPage[0] > 0) previewPage[0]--;
                         return true;
                     }))
             .child(
                 new ButtonWidget<>().size(40, 16)
                     .overlay(IKey.str("下一页"))
                     .onMouseTapped(ctx -> {
-                        PREVIEW_PAGE++;
+                        previewPage[0]++;
                         return true;
                     }))
             .child(new TextWidget<>(IKey.str("搜索：显示名/矿辞包含即可")).size(120, 16));
@@ -375,7 +387,7 @@ public final class WildcardEditorPanel {
                 // 搜索过滤（读搜索框当前文本）+ 分页（读 PREVIEW_PAGE）
                 line.setEnabledIf(
                     w -> ae2qol$matchSearch(searchField.getText(), candidateName)
-                        && candidateIndex / PAGE_SIZE == PREVIEW_PAGE);
+                        && candidateIndex / PAGE_SIZE == previewPage[0]);
                 pagePreview.child(line);
             }
         }
@@ -384,7 +396,7 @@ public final class WildcardEditorPanel {
         Flow pageExclude = Flow.column()
             .childPadding(GAP)
             .size(352, 226)
-            .setEnabledIf(w -> PAGE == 2);
+            .setEnabledIf(w -> pageState[0] == 2);
 
         // 工作副本 ruleExcludes / nonConsumed 已在方法开头声明（保存按钮的 lambda 要用）
 
@@ -450,7 +462,7 @@ public final class WildcardEditorPanel {
         Flow ruleSelector = Flow.row()
             .childPadding(GAP)
             .size(348, 18);
-        final int[] selected = { EXCLUDE_RULE };
+        final int[] selected = { excludeRule[0] };
         Flow[] ruleBars = new Flow[ROWS + 1];
         for (int r = -1; r < ROWS; r++) {
             final int ruleNo = r + 1; // 0 = 总排除（不在此编辑）；1..9 = 规则号
@@ -459,7 +471,7 @@ public final class WildcardEditorPanel {
                 new ButtonWidget<>().size(24, 16)
                     .overlay(IKey.str(String.valueOf(ruleNo)))
                     .onMouseTapped(ctx -> {
-                        EXCLUDE_RULE = ruleNo;
+                        excludeRule[0] = ruleNo;
                         selected[0] = ruleNo;
                         return true;
                     }));
@@ -480,7 +492,7 @@ public final class WildcardEditorPanel {
                     new ButtonWidget<>().size(40, 16)
                         .overlay(IKey.str("加"))
                         .onMouseTapped(ctx -> {
-                            int target = Math.max(1, EXCLUDE_RULE) - 1;
+                            int target = Math.max(1, excludeRule[0]) - 1;
                             String v = ruleExcludeField.getText();
                             if (v != null && !v.trim()
                                 .isEmpty()) {
@@ -507,7 +519,7 @@ public final class WildcardEditorPanel {
                             "共 " + ruleExcludes.get(i)
                                 .size() + " 项")).size(50, 16));
             // 只显示当前选中规则的这一行（谓词逐帧求值）
-            bar.setEnabledIf(w -> EXCLUDE_RULE == ruleIdx + 1);
+            bar.setEnabledIf(w -> excludeRule[0] == ruleIdx + 1);
             pageExclude.child(bar);
         }
 
@@ -526,7 +538,10 @@ public final class WildcardEditorPanel {
                 return true;
             });
         // 注册为 NEI 拖放落点：拖到它上面 = 把该物品记为不消耗
-        DROP_APPEND_TARGETS.put(ncAddButton, nonConsumed);
+        // 3.35.0-fix20（P2-15）：只在客户端登记（拖放只发生在客户端）
+        if (data.isClient()) {
+            DROP_APPEND_TARGETS.put(ncAddButton, nonConsumed);
+        }
         ncRow.child(ncAddButton)
             .child(
                 new ButtonWidget<>().size(66, 16)
@@ -584,9 +599,9 @@ public final class WildcardEditorPanel {
         Flow pageCircuit = Flow.column()
             .childPadding(GAP)
             .size(352, 226)
-            .setEnabledIf(w -> PAGE == 3);
+            .setEnabledIf(w -> pageState[0] == 3);
         pageCircuit.child(new TextWidget<>(IKey.str("内置编程电路（点选；优先级：样板自带 > 槽位 > 整机）")).size(348, 10));
-        final int[] circuit = { base.circuit };
+        // 3.35.0-fix20（P2-15）：circuit 已在 build 顶部作为会话状态声明并初始化为 base.circuit
         for (int rowIdx = 0; rowIdx < 3; rowIdx++) {
             Flow line = Flow.row()
                 .childPadding(GAP)
@@ -628,22 +643,20 @@ public final class WildcardEditorPanel {
             .setScrollSize(230);
         scroll.child(pages);
         panel.child(scroll);
-
-        // 每帧把电路页的选择同步回保存用的引用（简单起见：保存时读 lastCircuit）
-        lastCircuit = circuit;
+        // 3.35.0-fix20（P2-15）：电路选择直接由保存按钮的 lambda 捕获 circuit——不再经 static lastCircuit
+        //（旧写法在服务端 build/其他会话 build 时会被共享静态覆盖，保存可能写错电路号）
         return panel;
     }
-
-    /** 电路页当前选择（保存时读取；由 build 注入）。 */
-    private static int[] lastCircuit;
 
     /** 保存：客户端解析四页内容 → 既有 C2S 包 → 服务端写 NBT。 */
     private static void saveRules(SmartWildcardState base, List<String> blacklist, List<List<String>> ruleExcludes,
         List<ItemStack> nonConsumed, TextFieldWidget[] inFields, TextFieldWidget[] inAmounts,
-        TextFieldWidget[] outFields, TextFieldWidget[] outAmounts, boolean[] inOre, boolean[] outOre, int baseCircuit) {
+        TextFieldWidget[] outFields, TextFieldWidget[] outAmounts, boolean[] inOre, boolean[] outOre,
+        int[] circuit) {
         try {
             SmartWildcardState edited = new SmartWildcardState();
-            edited.circuit = lastCircuit != null ? lastCircuit[0] : baseCircuit;
+            // 3.35.0-fix20（P2-15）：circuit 由调用方的会话局部数组传入（旧 = static lastCircuit）
+            edited.circuit = circuit[0];
             edited.blacklist.addAll(blacklist);
             edited.whitelist.addAll(base.whitelist);
             // 不消耗物品用界面上的工作副本（含「手持加入」新加的），不再直接抄原值
@@ -790,15 +803,40 @@ public final class WildcardEditorPanel {
             .contains(q);
     }
 
-    /** 输入/输出模式（跨页签共享；NEI 拖入时会按物品自动切换）。 */
-    private static final boolean[] IN_ORE = new boolean[ROWS];
-    private static final boolean[] OUT_ORE = new boolean[ROWS];
-    /** NEI 拖放落点：匹配框控件 → {行号, 侧(0=输入,1=输出)}（每次打开面板重建）。 */
-    private static final java.util.Map<Object, int[]> DROP_TARGETS = new java.util.HashMap<>();
+    /**
+     * 3.35.0-fix20（审查 P2-15）：NEI 拖放落点的**弱引用注册表**。
+     * <p>
+     * 旧实现是 HashMap 且在 build 里 "clear 一把"——共享 JVM（单机）下服务端 build 会清掉
+     * 客户端已注册的落点（NEI 拖入失效），多会话并存时互相破坏。改 WeakHashMap：
+     * 控件随界面销毁被 GC 后自动出表（无泄漏、无跨会话清除），key 仍为控件实例
+     * ⇒ 多个会话/双端构建可并存互不干扰（配合"只在客户端登记"）。identity 语义由
+     *控件对象自身等于提供（MUI2 IWidget 未重写 equals ⇒ 默认按引用相等，与旧 HashMap 行为一致）。
+     */
+    private static final java.util.Map<Object, DropTarget> DROP_TARGETS =
+        new java.util.WeakHashMap<>();
     /** NEI 拖放落点：「加（拖入）」按钮 → 它要追加到的列表（目前是不消耗物品）。 */
-    private static final java.util.Map<Object, List<ItemStack>> DROP_APPEND_TARGETS = new java.util.HashMap<>();
-    /** 不消耗物品的工作副本引用（拖入时要用；每次打开面板重设）。 */
-    private static List<ItemStack> NON_CONSUMED_REF;
+    private static final java.util.Map<Object, List<ItemStack>> DROP_APPEND_TARGETS =
+        new java.util.WeakHashMap<>();
+
+    /**
+     * 3.35.0-fix20（P2-15）：拖放目标 = 行号 + 输入/输出侧 + **所属会话的矿辞数组**——
+     * 替代旧的共享 {@code DROP_TARGETS int[]{行,侧}} 与全局 IN_ORE/OUT_ORE：
+     * 会话数组随 build 生成并注册进落点，拖入时写到"正确会话"的列上。
+     */
+    private static final class DropTarget {
+
+        final int row;
+        final boolean input;
+        final boolean[] inOre;
+        final boolean[] outOre;
+
+        DropTarget(int row, boolean input, boolean[] inOre, boolean[] outOre) {
+            this.row = row;
+            this.input = input;
+            this.inOre = inOre;
+            this.outOre = outOre;
+        }
+    }
 
     /**
      * NEI 把物品拖到某个匹配框上时调用（由 {@code SmartWildcardNeiDragHandler} 转发）。
@@ -845,8 +883,8 @@ public final class WildcardEditorPanel {
                         .getItemStackDisplayName(stack));
                 return true;
             }
-            int[] pos = DROP_TARGETS.get(hoveredWidget);
-            if (pos == null) return false;
+            DropTarget target = DROP_TARGETS.get(hoveredWidget);
+            if (target == null) return false;
             if (!(hoveredWidget instanceof TextFieldWidget field)) return false;
 
             String orePrefix = null;
@@ -877,15 +915,16 @@ public final class WildcardEditorPanel {
                     stack.getItem()
                         .getItemStackDisplayName(stack));
             field.setText(matcher);
-            if (pos[1] == 0) {
-                IN_ORE[pos[0]] = oreMode;
+            // 3.35.0-fix20（P2-15）：矿辞开关写到**该落点所属会话**的列上（旧 = 共享 static 数组）
+            if (target.input) {
+                target.inOre[target.row] = oreMode;
             } else {
-                OUT_ORE[pos[0]] = oreMode;
+                target.outOre[target.row] = oreMode;
             }
             MyMod.LOG.info(
                 "[AE2QoL] NEI 拖入：第 {} 行{} ← {}（{} 模式，匹配串 {}）",
-                pos[0] + 1,
-                pos[1] == 0 ? "输入" : "输出",
+                target.row + 1,
+                target.input ? "输入" : "输出",
                 stack.getItem()
                     .getItemStackDisplayName(stack),
                 oreMode ? "矿辞" : "显示名",
