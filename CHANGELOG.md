@@ -34,6 +34,31 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-16 (127) - **3.35.0-fix19：无限元件内容/统计回传补归属校验（P2-13）**
+
+### 一、现象（触发面 + UUID 生成方式实证）
+`InfinityCellStatsPacket`（统计）与 `InfinityCellViewPacket`（**完整内容分页**）的服务端 handler 只凭
+请求里的 storageId 就把数据回传给请求者——元件 UUID 虽是 122 位随机数（`UUID.randomUUID()`，`ItemInfinityStorageCell:183`，
+存在物品 NBT 里不可枚举），但**一旦泄漏即无任何门槛**：知道 UUID 的人能拉走该元件的完整内容与统计。
+合法触发面取证：NEI U 键 / tooltip 的请求必然发生在"客户端正打开的 GUI 里悬停带 storageId NBT 的元件"
+（NEI 物品列表面板自身不带 NBT ⇒ 靠 `getStorageId==null` 短路，不会误伤）。
+
+### 二、本轮改动（用户拍板：修）
+新增 `cn/dancingsnow/aeinfinitycell/storage/InfinityCellAccessPolicy`：
+1. `mayView(player, id)`：**背包 ∪ 当前打开容器槽位**里必须真实持有该 UUID 的元件（1.7.10 的
+   `Container.inventorySlots` 含玩家自身 inventoryContainer ⇒ 空闲态也覆盖）——口径与合法触发面精确对应，
+   不破坏"元件在驱动器/箱里悬停"的流程；
+2. 两个 handler 接入（**放在 hasCellFile 磁盘 IO 之前**，拒得越早越省）：拒绝时 View 回 null 分页
+   （与"存档不存在"同语义，客户端缓存节奏不变）、Stats 回 null 统计；
+3. `warnDenied`：每玩家 60 秒限频 WARN（限频表有界 1024）——"有人在探测"必须可见，但不给攻击者频率反馈。
+
+### 三、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.35.0-fix19.jar`。
+- 待游戏实测（用户执行）：① **自己背包/已打开容器里的元件**：NEI U 键预览 + tooltip 统计照常（核心验收）；
+  ② 单人模式不受影响（本地直读路径不发包）。
+
+---
+
 ## 工作区决策记录 2026-10-16 (126) - **3.35.0-fix18：兼容仓安培写入的扫描节流——空网络短路 + 5 秒发现缓存（P2-12）**
 
 ### 一、现象（调用链 + 行号实证）

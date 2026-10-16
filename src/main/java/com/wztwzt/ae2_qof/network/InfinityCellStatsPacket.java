@@ -92,6 +92,13 @@ public class InfinityCellStatsPacket implements IMessage {
                     } catch (IllegalArgumentException bad) {
                         return;
                     }
+                    // 3.35.0-fix19（审查 P2-13）：归属校验——请求场景里必须真实持有该元件，
+                    // 防"凭泄漏 UUID 拉取他人元件统计"。放在 hasCellFile（磁盘 IO）之前，拒得越早越省。
+                    if (!cn.dancingsnow.aeinfinitycell.storage.InfinityCellAccessPolicy.mayView(player, id)) {
+                        cn.dancingsnow.aeinfinitycell.storage.InfinityCellAccessPolicy.warnDenied(player, id);
+                        ModNetwork.CHANNEL.sendTo(new InfinityCellStatsResponsePacket(id, null), player);
+                        return;
+                    }
                     // P1-017：先确认磁盘上真实存在该磁盘存档，再读取；绝不为随机 UUID 创建空记录，
                     // 否则伪造大量不同 UUID 的请求会让进程内缓存无界增长。
                     if (!cn.dancingsnow.aeinfinitycell.storage.InfinityCellStorage.getInstance()
