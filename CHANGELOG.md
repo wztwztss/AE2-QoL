@@ -34,6 +34,37 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-16 (131) - **3.35.0-fix23：监控页统计全 BigInteger 精确化——超 9.2E 不再截断（用户实测回归）**
+
+### 一、现象（用户实测）
+电网监控页统计超 9.2E 后被"截断"——fix11 的**饱和口径**把总量/窗口封顶在 9.22E，且变化/预测行的数据源
+更早一步失真：`getGridEULong` 把电网钳到 9.22E ⇒ 两个历史快照相减恒 0（变化行 = "↑ 0.00 EU"）。
+
+### 二、根因链（三处叠加）
+1. fix11 饱和：`totalInput/totalOutput/窗口和` 封顶不绕回但仍封顶；
+2. 统计数据源 `tickStats(getGridEULong(owner))`——**钳制值**进统计域；
+3. 显示格式化行内还有 long 运算（平均速率/预测分除）。
+
+### 三、本轮改动（用户拍板：全 BigInteger 精确化）
+1. `GridEnergyStats` **核心 BigInteger 化**：总量/100-tick 窗口和/lastEU/1h-10m 历史快照全 BigInteger；
+   `tick(BigInteger)`；精度不再退化。`saturatedAdd` 与全部 long 版 getter 退役（剩余调用者已穷举为空）。
+2. `AdaptiveNetwork.tickStats(BigInteger)`；调用源 = `getGridEUBigInteger(owner)`（fix3 的精确电网，`wGE` 总览行同源）——
+   **刻意保留 long 域的调用**（补电算术 `AdaptiveNetHatch/LaserHatch`、仓 WAILA、`wGE` 兜底）原样不动（它们是 3.33-fix3 定义的口径）。
+3. 7 个统计 sync（wTI/wTO/wII/wIO/wC1/wCM/wAO）改 **`StringSyncValue` 承载十进制串**（BigInteger 无原生 sync 类型）；
+   客户端 `biFromString` 解析 → **displayMode 感知格式化**（`formatEUBig`：常规千分位/科学 e 记法/KMG——
+   三种显示模式切换按钮继续有效）；安培档名对超 long 值封顶取量级（`capToLong`）。
+4. **预测行**分子分母都 BigInteger（`gridEU/avgOut` 的 divideAndRemainder + 进位取整），>100 年阈值 BigInteger 比较——
+   旧链在超限电网下恒"∞"。
+5. **存档兼容**：新十进制键 `gridTotalInX/OutX、gridEU10mX/1hX`（精确），**旧 long 键继续写**（钳制值，旧版本模组读新档不崩），
+   读档优先新键、缺失回退旧键（非法串 WARN + 回退，不许静默）。
+
+### 四、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0）+ **spotlessApply 后 spotlessCheck 本地绿**（fix22 的 CI 教训落实）。
+- 待游戏实测（用户执行）：① 电网 >9.2E 下：变化 1h/10m 显示真实数值（不再恒 0）、预测恢复合理、瞬时速率正确（核心验收）；
+  ② 总能量行不变（本来就是精确的）；③ 三种显示模式切换都作用于这些行；④ 读旧档打开监控页不出错（兼容路径）。
+
+---
+
 ## 工作区决策记录 2026-10-16 (130) - **3.35.0-fix22：空 catch 批量清理——高风险 3 处补 WARN + 余量口径登记（P2-17 收口）**
 
 ### 一、现象（复盘实测 204 处，比审计快照的 183 多）

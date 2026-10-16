@@ -510,7 +510,9 @@ public class AdaptiveNetTerminal extends MTEHatch {
         if (aBase.isServerSide() && networkOwner != null) {
             AdaptiveNetwork network = AdaptiveNetworkManager.getNetwork(networkOwner, networkFrequency);
             if (network != null) {
-                network.tickStats(AdaptiveHatchHelper.getGridEULong(networkOwner));
+                // 3.35.0-fix23：统计在 BigInteger 域推进（数据源 = fix3 的精确电网余额；
+                // 旧 getGridEULong 的 9.22E 钳制会让变化/预测行在超限电网下全程失真）
+                network.tickStats(AdaptiveHatchHelper.getGridEUBigInteger(networkOwner));
                 syncTick++;
                 if (syncTick >= 20) {
                     syncTick = 0;
@@ -684,33 +686,36 @@ public class AdaptiveNetTerminal extends MTEHatch {
             }, v -> {});
         }
 
-        LongSyncValue totalInputSync = new LongSyncValue(() -> {
+        // 3.35.0-fix23（用户实测：监控页统计超 9.2E 截断）：统计值经 **StringSyncValue 承载
+        // 十进制串**（BigInteger 无原生 sync 类型）——客户端按串解析后再按 displayMode 格式化。
+        // 数据源全部改为 NetworkStats 的 BigInteger 接口；旧 Long/getGridEULong 链退役。
+        StringSyncValue totalInputSync = new StringSyncValue(() -> {
             AdaptiveNetwork n = getCurrentNetwork();
-            if (n == null) return 0L;
-            return n.getStats()
-                .getTotalInput();
+            return n == null ? "0"
+                : n.getStats()
+                    .getTotalInput()
+                    .toString();
         }, v -> {});
-        LongSyncValue totalOutputSync = new LongSyncValue(() -> {
+        StringSyncValue totalOutputSync = new StringSyncValue(() -> {
             AdaptiveNetwork n = getCurrentNetwork();
-            if (n == null) return 0L;
-            return n.getStats()
-                .getTotalOutput();
+            return n == null ? "0"
+                : n.getStats()
+                    .getTotalOutput()
+                    .toString();
         }, v -> {});
-        // 3.35.0-fix11（审查 P2-2）：瞬时速率从 IntSyncValue 改 LongSyncValue ——
-        // 旧 (int) 截断在用户量级（速率 >2^31）下直接变错值/负数。
-        LongSyncValue instantInputSync = new LongSyncValue(() -> {
-            if (networkOwner == null) return 0L;
-            AdaptiveNetwork n = AdaptiveNetworkManager.getNetwork(networkOwner, networkFrequency);
-            if (n == null) return 0L;
-            return n.getStats()
-                .getInstantInputRate();
+        StringSyncValue instantInputSync = new StringSyncValue(() -> {
+            AdaptiveNetwork n = getCurrentNetwork();
+            return n == null ? "0"
+                : n.getStats()
+                    .getInstantInputRate()
+                    .toString();
         }, v -> {});
-        LongSyncValue instantOutputSync = new LongSyncValue(() -> {
-            if (networkOwner == null) return 0L;
-            AdaptiveNetwork n = AdaptiveNetworkManager.getNetwork(networkOwner, networkFrequency);
-            if (n == null) return 0L;
-            return n.getStats()
-                .getInstantOutputRate();
+        StringSyncValue instantOutputSync = new StringSyncValue(() -> {
+            AdaptiveNetwork n = getCurrentNetwork();
+            return n == null ? "0"
+                : n.getStats()
+                    .getInstantOutputRate()
+                    .toString();
         }, v -> {});
 
         syncManager.syncValue("wFr", frequencySync);
@@ -757,30 +762,32 @@ public class AdaptiveNetTerminal extends MTEHatch {
         }, v -> {});
         syncManager.syncValue("wNM", ownerNameSync);
 
-        final LongSyncValue change1hSync = new LongSyncValue(() -> {
+        // 3.35.0-fix23：变化/平均速率改用 **BigInteger 电网余额**做窗口比较源——
+        // 旧链先经 getGridEULong 钳制，电网超 9.22E 后两个快照相等 ⇒ 变化恒 0（用户实测的"截断"）。
+        final StringSyncValue change1hSync = new StringSyncValue(() -> {
             AdaptiveNetwork n = getCurrentNetwork();
-            if (n == null) return 0;
-            long gridEU = gridEUSync.getLongValue();
+            if (n == null) return "0";
             return n.getStats()
-                .getChange1h(gridEU);
+                .getChange1h(bigGrid(networkOwner))
+                .toString();
         }, v -> {});
         syncManager.syncValue("wC1", change1hSync);
 
-        final LongSyncValue change10mSync = new LongSyncValue(() -> {
+        final StringSyncValue change10mSync = new StringSyncValue(() -> {
             AdaptiveNetwork n = getCurrentNetwork();
-            if (n == null) return 0;
-            long gridEU = gridEUSync.getLongValue();
+            if (n == null) return "0";
             return n.getStats()
-                .getChange10min(gridEU);
+                .getChange10min(bigGrid(networkOwner))
+                .toString();
         }, v -> {});
         syncManager.syncValue("wCM", change10mSync);
 
-        final LongSyncValue avgOut10mSync = new LongSyncValue(() -> {
+        final StringSyncValue avgOut10mSync = new StringSyncValue(() -> {
             AdaptiveNetwork n = getCurrentNetwork();
-            if (n == null) return 0;
-            long gridEU = gridEUSync.getLongValue();
+            if (n == null) return "0";
             return n.getStats()
-                .getAvgOutputRate10min(gridEU);
+                .getAvgOutputRate10min(bigGrid(networkOwner))
+                .toString();
         }, v -> {});
         syncManager.syncValue("wAO", avgOut10mSync);
 
@@ -1026,6 +1033,93 @@ public class AdaptiveNetTerminal extends MTEHatch {
      * 这里直接读 {@code BigInteger} 并用 {@link #formatKMG(BigInteger)} 格式化，
      * 超过 9.22E 也能显示真实值（如 15.80E）。统计/补电等算术路径仍用 long 快照（够用）。
      */
+    // ==================== 3.35.0-fix23：统计 BigInteger 显示链 ====================
+
+    /**
+     * 把 StringSyncValue 承载的十进制串安全解析（空/失败 → 0）。
+     * StringSync 的值在上一次同步前可能为 null —— 面板首帧的兜底。
+     */
+    /** 3.35.0-fix23：统计窗口比较用的 BigInteger 电网余额（静态；owner 未知 → 0）。 */
+    private static BigInteger bigGrid(UUID owner) {
+        return owner == null ? BigInteger.ZERO : AdaptiveHatchHelper.getGridEUBigInteger(owner);
+    }
+
+    private static BigInteger biFromString(String text) {
+        if (text == null || text.isEmpty()) return BigInteger.ZERO;
+        try {
+            return new BigInteger(text.trim());
+        } catch (RuntimeException e) {
+            return BigInteger.ZERO;
+        }
+    }
+
+    /**
+     * 客户端可用的**精确电网余额**（与电网总能量行同源：owner 可知时读 helper 的 BigInteger
+     * 快照；不可知时回退钳制 long——与旧显示一致的可用上界）。
+     */
+    private BigInteger biGridExact() {
+        if (networkOwner == null) return BigInteger.ZERO;
+        return AdaptiveHatchHelper.getGridEUBigInteger(networkOwner);
+    }
+
+    /** 给 formatAmpTier（long 形参）的安培档名：绝对值封顶到 long——档位语义只看数量级。 */
+    private static long capToLong(BigInteger v) {
+        if (v == null) return 0;
+        if (v.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) return Long.MAX_VALUE;
+        if (v.compareTo(BigInteger.valueOf(Long.MIN_VALUE)) < 0) return Long.MIN_VALUE;
+        return v.longValue();
+    }
+
+    /**
+     * displayMode（常规/科学/KMG）感知的 BigInteger 格式化——对齐 {@link #formatEU(long, int)}：
+     * 常规=千分位分组；科学=【首位.三位尾数 E 指数】；KMG=两档位小数。>9.22E 显示真实值。
+     */
+    private static String formatEUBig(BigInteger eu, int mode) {
+        if (eu == null) return "0";
+        switch (mode) {
+            case 1:
+                return formatScientificBig(eu);
+            case 2:
+                return formatKMG(eu);
+            default:
+                return formatRegularBig(eu);
+        }
+    }
+
+    private static String formatRegularBig(BigInteger eu) {
+        int s = eu.signum();
+        if (s == 0) return "0";
+        String digits = eu.abs()
+            .toString();
+        StringBuilder sb = new StringBuilder(digits.length() + digits.length() / 3 + 1);
+        for (int i = 0; i < digits.length(); i++) {
+            if (i > 0 && (digits.length() - i) % 3 == 0) {
+                sb.append(',');
+            }
+            sb.append(digits.charAt(i));
+        }
+        return s < 0 ? "-" + sb : sb.toString();
+    }
+
+    private static String formatScientificBig(BigInteger eu) {
+        int s = eu.signum();
+        if (s == 0) return "0";
+        if (s < 0) return "-" + formatScientificBig(eu.negate());
+        String digits = eu.toString();
+        int exp = digits.length() - 1;
+        // 首位.三位尾数 —— 对齐 formatScientific(long) 的 %.2fe%d 口径
+        StringBuilder sb = new StringBuilder();
+        sb.append(digits.charAt(0))
+            .append('.');
+        for (int i = 1; i <= 2 && i < digits.length(); i++) {
+            sb.append(digits.charAt(i));
+        }
+        if (digits.length() < 3) sb.append('0');
+        sb.append('e')
+            .append(exp);
+        return sb.toString();
+    }
+
     private static String formatGridEUPrecise(long fallback, UUID owner) {
         if (owner == null) return formatKMG(fallback);
         BigInteger exact = AdaptiveHatchHelper.getGridEUBigInteger(owner);
@@ -1137,8 +1231,8 @@ public class AdaptiveNetTerminal extends MTEHatch {
     private static final String[] MODE_KEYS = { "ae2_qof.gui.adaptive_terminal.monitor.mode_regular",
         "ae2_qof.gui.adaptive_terminal.monitor.mode_scientific", "ae2_qof.gui.adaptive_terminal.monitor.mode_kmg" };
 
-    private Flow buildMonitorTab(LongSyncValue gridEUSync, LongSyncValue change1hSync, LongSyncValue change10mSync,
-        LongSyncValue avgOut10mSync, LongSyncValue instantInputSync, LongSyncValue instantOutputSync) {
+    private Flow buildMonitorTab(LongSyncValue gridEUSync, StringSyncValue change1hSync, StringSyncValue change10mSync,
+        StringSyncValue avgOut10mSync, StringSyncValue instantInputSync, StringSyncValue instantOutputSync) {
         Flow tab = Flow.column()
             .size(CONTENT_W, 0)
             .childPadding(2);
@@ -1187,13 +1281,16 @@ public class AdaptiveNetTerminal extends MTEHatch {
                 .childPadding(2)
                 .child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.monitor.change_1h")).size(labelW, 14))
                 .child(new TextWidget<>(IKey.dynamic(() -> {
-                    long change = change1hSync.getLongValue();
-                    long avgRate = Math.abs(change) / 72000L;
-                    String changeStr = formatEU(change, displayMode) + " EU";
-                    String rateStr = avgRate > 0
-                        ? " (" + formatEU(avgRate, displayMode) + " EU/t " + formatAmpTier(avgRate) + ")"
+                    // 3.35.0-fix23：BigInteger 精确值（串 → BigInt 客户端解析 → 按 displayMode 格式化）
+                    BigInteger change = biFromString(change1hSync.getValue());
+                    BigInteger avgRate = change.abs()
+                        .divide(BigInteger.valueOf(72000L));
+                    String changeStr = formatEUBig(change, displayMode) + " EU";
+                    String rateStr = avgRate.signum() > 0
+                        ? " (" + formatEUBig(avgRate, displayMode) + " EU/t " + formatAmpTier(capToLong(avgRate)) + ")"
                         : "";
-                    String arrow = change >= 0 ? EnumChatFormatting.GREEN + "↑ " : EnumChatFormatting.RED + "↓ ";
+                    String arrow = change.signum() >= 0 ? EnumChatFormatting.GREEN + "↑ "
+                        : EnumChatFormatting.RED + "↓ ";
                     return arrow + EnumChatFormatting.WHITE + changeStr + EnumChatFormatting.YELLOW + rateStr;
                 })).size(valueW, 14)
                     .textAlign(com.cleanroommc.modularui.utils.Alignment.CenterRight)));
@@ -1203,13 +1300,16 @@ public class AdaptiveNetTerminal extends MTEHatch {
                 .childPadding(2)
                 .child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.monitor.change_10m")).size(labelW, 14))
                 .child(new TextWidget<>(IKey.dynamic(() -> {
-                    long change = change10mSync.getLongValue();
-                    long avgRate = Math.abs(change) / 12000L;
-                    String changeStr = formatEU(change, displayMode) + " EU";
-                    String rateStr = avgRate > 0
-                        ? " (" + formatEU(avgRate, displayMode) + " EU/t " + formatAmpTier(avgRate) + ")"
+                    // 3.35.0-fix23：BigInteger 精确值（串 → BigInt 客户端解析 → 按 displayMode 格式化）
+                    BigInteger change = biFromString(change10mSync.getValue());
+                    BigInteger avgRate = change.abs()
+                        .divide(BigInteger.valueOf(72000L));
+                    String changeStr = formatEUBig(change, displayMode) + " EU";
+                    String rateStr = avgRate.signum() > 0
+                        ? " (" + formatEUBig(avgRate, displayMode) + " EU/t " + formatAmpTier(capToLong(avgRate)) + ")"
                         : "";
-                    String arrow = change >= 0 ? EnumChatFormatting.GREEN + "↑ " : EnumChatFormatting.RED + "↓ ";
+                    String arrow = change.signum() >= 0 ? EnumChatFormatting.GREEN + "↑ "
+                        : EnumChatFormatting.RED + "↓ ";
                     return arrow + EnumChatFormatting.WHITE + changeStr + EnumChatFormatting.YELLOW + rateStr;
                 })).size(valueW, 14)
                     .textAlign(com.cleanroommc.modularui.utils.Alignment.CenterRight)));
@@ -1225,16 +1325,19 @@ public class AdaptiveNetTerminal extends MTEHatch {
                     new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.monitor.estimated_empty"))
                         .size(labelW, 14))
                 .child(new TextWidget<>(IKey.dynamic(() -> {
-                    long avgOut = avgOut10mSync.getLongValue();
-                    long gridEU = gridEUSync.getLongValue();
+                    // 3.35.0-fix23：分子/分母都 BigInteger 精确（旧链被 9.22E 钳制 ⇒ 恒"无穷"）
+                    BigInteger avgOut = biFromString(avgOut10mSync.getValue());
+                    BigInteger gridBig = biGridExact();
                     String timeStr;
-                    if (avgOut <= 0 || gridEU <= 0) {
+                    if (avgOut.signum() <= 0 || gridBig.signum() <= 0) {
                         timeStr = "\u221e";
                     } else {
-                        long ticks = gridEU / avgOut;
-                        if (ticks > 6307200000L) {
+                        BigInteger[] q = gridBig.divideAndRemainder(avgOut);
+                        if (q[0].compareTo(BigInteger.valueOf(6307200000L)) > 0) {
                             timeStr = ">100年（近似无穷）";
                         } else {
+                            long ticks = q[0].longValue();
+                            if (q[1].signum() > 0) ticks++;
                             timeStr = formatDuration(ticks);
                         }
                     }
@@ -1252,8 +1355,10 @@ public class AdaptiveNetTerminal extends MTEHatch {
                 .child(
                     new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.monitor.instant_input")).size(labelW, 14))
                 .child(new TextWidget<>(IKey.dynamic(() -> {
-                    long inRate = instantInputSync.getLongValue();
-                    return EnumChatFormatting.GREEN + formatEU(inRate, displayMode) + " EU/t" + formatAmpTier(inRate);
+                    BigInteger inRate = biFromString(instantInputSync.getValue());
+                    return EnumChatFormatting.GREEN + formatEUBig(inRate, displayMode)
+                        + " EU/t"
+                        + formatAmpTier(capToLong(inRate));
                 })).size(valueW, 14)
                     .textAlign(com.cleanroommc.modularui.utils.Alignment.CenterRight)));
         tab.child(
@@ -1264,8 +1369,10 @@ public class AdaptiveNetTerminal extends MTEHatch {
                     new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.monitor.instant_output"))
                         .size(labelW, 14))
                 .child(new TextWidget<>(IKey.dynamic(() -> {
-                    long outRate = instantOutputSync.getLongValue();
-                    return EnumChatFormatting.RED + formatEU(outRate, displayMode) + " EU/t" + formatAmpTier(outRate);
+                    BigInteger outRate = biFromString(instantOutputSync.getValue());
+                    return EnumChatFormatting.RED + formatEUBig(outRate, displayMode)
+                        + " EU/t"
+                        + formatAmpTier(capToLong(outRate));
                 })).size(valueW, 14)
                     .textAlign(com.cleanroommc.modularui.utils.Alignment.CenterRight)));
 
@@ -1278,14 +1385,14 @@ public class AdaptiveNetTerminal extends MTEHatch {
                 .childPadding(2)
                 .child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.monitor.activity")).size(labelW, 14))
                 .child(new TextWidget<>(IKey.dynamic(() -> {
-                    long inRate = instantInputSync.getLongValue();
-                    long outRate = instantOutputSync.getLongValue();
-                    if (inRate == 0 && outRate == 0) {
+                    BigInteger inRate = biFromString(instantInputSync.getValue());
+                    BigInteger outRate = biFromString(instantOutputSync.getValue());
+                    if (inRate.signum() == 0 && outRate.signum() == 0) {
                         return EnumChatFormatting.GRAY
                             + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.monitor.no_activity");
                     }
-                    String inStr = formatEU(inRate, displayMode) + " EU/t" + formatAmpTier(inRate);
-                    String outStr = formatEU(outRate, displayMode) + " EU/t" + formatAmpTier(outRate);
+                    String inStr = formatEUBig(inRate, displayMode) + " EU/t" + formatAmpTier(capToLong(inRate));
+                    String outStr = formatEUBig(outRate, displayMode) + " EU/t" + formatAmpTier(capToLong(outRate));
                     return EnumChatFormatting.GREEN + "+"
                         + inStr
                         + EnumChatFormatting.WHITE

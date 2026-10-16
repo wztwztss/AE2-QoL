@@ -1,53 +1,55 @@
 package com.wztwzt.ae2_qof.hatch.adaptive;
 
+import java.math.BigInteger;
+
 import net.minecraft.nbt.NBTTagCompound;
 
+/**
+ * 3.35.0-fix23（用户实测：监控页统计超 9.2E 被"截断"）：统计核心从 long **饱和口径**升级为
+ * **BigInteger 精确口径**。
+ *
+ * <p>
+ * fix11 的饱和加法在南端解决了"绕回负数"，但用户电网量级（单 tick 增幅 1E18 级）下总量会很快
+ * 越过 {@code Long.MAX_VALUE} 并**永远停在该封顶**——мотitor 页"总输入/总输出/变化/预测"从此无法
+ * 看到真实值。本类全面 BigInteger 化：
+ * <ul>
+ * <li>总量/100-tick 窗口和/历史快照全部 {@link BigInteger} 精确累加；</li>
+ * <li>数据源换成 {@code tick(BigInteger)}（调用方从已经 BigInteger 化的电网余额直取，
+ * 不再经过 {@code getGridEULong} 的 9.22E 钳制）；</li>
+ * <li>存档写**新字符串键**（十进制精确）并兼容读旧 long 键；同时把旧键按钳制值写回——
+ * 降级到旧版本也不会崩。</li>
+ * </ul>
+ */
 public class GridEnergyStats {
 
-    private long totalInput;
-    private long totalOutput;
-    private long lastEU;
+    private BigInteger totalInput = BigInteger.ZERO;
+    private BigInteger totalOutput = BigInteger.ZERO;
+    private BigInteger lastEU = null;
     private boolean initialized;
-    private final long[] inputBuffer = new long[100];
-    private final long[] outputBuffer = new long[100];
+    private final BigInteger[] inputBuffer = new BigInteger[100];
+    private final BigInteger[] outputBuffer = new BigInteger[100];
     private int bufferIndex;
-    private long bufferSumInput;
-    private long bufferSumOutput;
+    private BigInteger bufferSumInput = BigInteger.ZERO;
+    private BigInteger bufferSumOutput = BigInteger.ZERO;
 
     private static final int WINDOW_10M = 12000;
     private static final int WINDOW_1H = 72000;
-    private long gridEU_10min_ago;
-    private long gridEU_1h_ago;
+    private BigInteger gridEU_10min_ago = BigInteger.ZERO;
+    private BigInteger gridEU_1h_ago = BigInteger.ZERO;
     private long snapshotTick;
 
-    /**
-     * 3.35.0-fix11（审查 P2-2）：饱和加法 —— 用户电网量级下单 tick 增幅可达 1E18，
-     * 累计量与 100-tick 窗口和都会越过 long 上限绕回负数（显示成乱码/负数）。
-     * 统计口径下"封顶在 Long.MAX_VALUE"远好于"绕回"，且小数值场合与普通加法完全一致。
-     */
-    private static long saturatedAdd(long a, long b) {
-        long r = a + b;
-        // 溢出判定：符号与两个加数都不同（正+正得负 / 负+负得正）
-        if (((a ^ r) & (b ^ r)) < 0) {
-            return b > 0 ? Long.MAX_VALUE : Long.MIN_VALUE;
-        }
-        return r;
-    }
+    private static final BigInteger ZERO = BigInteger.ZERO;
 
     public GridEnergyStats() {
-        totalInput = 0;
-        totalOutput = 0;
-        lastEU = 0;
-        initialized = false;
-        bufferIndex = 0;
-        bufferSumInput = 0;
-        bufferSumOutput = 0;
-        gridEU_10min_ago = 0;
-        gridEU_1h_ago = 0;
-        snapshotTick = 0;
+        for (int i = 0; i < inputBuffer.length; i++) {
+            inputBuffer[i] = ZERO;
+            outputBuffer[i] = ZERO;
+        }
     }
 
-    public void tick(long currentEU) {
+    /** 以 BigInteger 精确记一笔（deltas 来自调用方的精确电网余额）。 */
+    public void tick(BigInteger currentEU) {
+        if (currentEU == null) currentEU = ZERO;
         if (!initialized) {
             lastEU = currentEU;
             gridEU_10min_ago = currentEU;
@@ -55,26 +57,28 @@ public class GridEnergyStats {
             initialized = true;
             return;
         }
-        long delta = currentEU - lastEU;
-        if (delta > 0) {
-            totalInput = saturatedAdd(totalInput, delta);
-            bufferSumInput -= inputBuffer[bufferIndex];
+        BigInteger delta = currentEU.subtract(lastEU);
+        int sig = delta.signum();
+        if (sig > 0) {
+            totalInput = totalInput.add(delta);
+            bufferSumInput = bufferSumInput.subtract(inputBuffer[bufferIndex])
+                .add(delta);
             inputBuffer[bufferIndex] = delta;
-            bufferSumInput = saturatedAdd(bufferSumInput, delta);
-            bufferSumOutput -= outputBuffer[bufferIndex];
-            outputBuffer[bufferIndex] = 0;
-        } else if (delta < 0) {
-            totalOutput = saturatedAdd(totalOutput, -delta);
-            bufferSumOutput -= outputBuffer[bufferIndex];
-            outputBuffer[bufferIndex] = -delta;
-            bufferSumOutput = saturatedAdd(bufferSumOutput, -delta);
-            bufferSumInput -= inputBuffer[bufferIndex];
-            inputBuffer[bufferIndex] = 0;
+            bufferSumOutput = bufferSumOutput.subtract(outputBuffer[bufferIndex]);
+            outputBuffer[bufferIndex] = ZERO;
+        } else if (sig < 0) {
+            BigInteger mag = delta.negate();
+            totalOutput = totalOutput.add(mag);
+            bufferSumOutput = bufferSumOutput.subtract(outputBuffer[bufferIndex])
+                .add(mag);
+            outputBuffer[bufferIndex] = mag;
+            bufferSumInput = bufferSumInput.subtract(inputBuffer[bufferIndex]);
+            inputBuffer[bufferIndex] = ZERO;
         } else {
-            bufferSumInput -= inputBuffer[bufferIndex];
-            inputBuffer[bufferIndex] = 0;
-            bufferSumOutput -= outputBuffer[bufferIndex];
-            outputBuffer[bufferIndex] = 0;
+            bufferSumInput = bufferSumInput.subtract(inputBuffer[bufferIndex]);
+            inputBuffer[bufferIndex] = ZERO;
+            bufferSumOutput = bufferSumOutput.subtract(outputBuffer[bufferIndex]);
+            outputBuffer[bufferIndex] = ZERO;
         }
         lastEU = currentEU;
         bufferIndex = (bufferIndex + 1) % 100;
@@ -88,81 +92,123 @@ public class GridEnergyStats {
         }
     }
 
-    public long getTotalInput() {
+    public BigInteger getTotalInput() {
         return totalInput;
     }
 
-    public long getTotalOutput() {
+    public BigInteger getTotalOutput() {
         return totalOutput;
     }
 
-    public long getNetChange() {
-        return totalOutput - totalInput;
+    public BigInteger getNetChange() {
+        return totalOutput.subtract(totalInput);
     }
 
-    public long getInstantInputRate() {
-        return bufferSumInput / 100;
+    public BigInteger getInstantInputRate() {
+        return bufferSumInput.divide(BigInteger.valueOf(100));
     }
 
-    public long getInstantOutputRate() {
-        return bufferSumOutput / 100;
+    public BigInteger getInstantOutputRate() {
+        return bufferSumOutput.divide(BigInteger.valueOf(100));
     }
 
-    public long getChange1h(long currentEU) {
-        if (!initialized) return 0;
-        return currentEU - gridEU_1h_ago;
+    public BigInteger getChange1h(BigInteger currentEU) {
+        if (!initialized) return ZERO;
+        if (currentEU == null) currentEU = ZERO;
+        return currentEU.subtract(gridEU_1h_ago);
     }
 
-    public long getChange10min(long currentEU) {
-        if (!initialized) return 0;
-        return currentEU - gridEU_10min_ago;
+    public BigInteger getChange10min(BigInteger currentEU) {
+        if (!initialized) return ZERO;
+        if (currentEU == null) currentEU = ZERO;
+        return currentEU.subtract(gridEU_10min_ago);
     }
 
-    public long getAvgOutputRate1h(long currentEU) {
-        long change = getChange1h(currentEU);
-        if (change >= 0) return 0;
-        long rate = -change / WINDOW_1H;
-        return rate < 1 ? 0 : rate;
+    /** 1h 窗口的平均输出速率（只在净下降时为正，向下取整）。 */
+    public BigInteger getAvgOutputRate1h(BigInteger currentEU) {
+        BigInteger change = getChange1h(currentEU);
+        if (change.signum() >= 0) return ZERO;
+        BigInteger rate = change.negate()
+            .divide(BigInteger.valueOf(WINDOW_1H));
+        return rate.signum() < 1 ? ZERO : rate;
     }
 
-    public long getAvgOutputRate10min(long currentEU) {
-        long change = getChange10min(currentEU);
-        if (change >= 0) return 0;
-        long rate = -change / WINDOW_10M;
-        return rate < 1 ? 0 : rate;
+    /** 10 分钟窗口的平均输出速率（只在净下降时为正）。 */
+    public BigInteger getAvgOutputRate10min(BigInteger currentEU) {
+        BigInteger change = getChange10min(currentEU);
+        if (change.signum() >= 0) return ZERO;
+        BigInteger rate = change.negate()
+            .divide(BigInteger.valueOf(WINDOW_10M));
+        return rate.signum() < 1 ? ZERO : rate;
     }
 
     public void saveNBT(NBTTagCompound nbt) {
-        nbt.setLong("gridTotalIn", totalInput);
-        nbt.setLong("gridTotalOut", totalOutput);
-        nbt.setLong("gridEU10m", gridEU_10min_ago);
-        nbt.setLong("gridEU1h", gridEU_1h_ago);
+        // 3.35.0-fix23：新键 = 十进制精确串；旧 long 键继续写（钳制值）——
+        // 旧版本模组读新存档不崩（拿到封顶值，行为与旧版一致）
+        nbt.setString("gridTotalInX", totalInput.toString());
+        nbt.setString("gridTotalOutX", totalOutput.toString());
+        nbt.setString("gridEU10mX", gridEU_10min_ago.toString());
+        nbt.setString("gridEU1hX", gridEU_1h_ago.toString());
+        nbt.setLong(
+            "gridTotalIn",
+            totalInput.min(bi(Long.MAX_VALUE))
+                .longValueExact());
+        nbt.setLong(
+            "gridTotalOut",
+            totalOutput.min(bi(Long.MAX_VALUE))
+                .longValueExact());
+        nbt.setLong(
+            "gridEU10m",
+            gridEU_10min_ago.min(bi(Long.MAX_VALUE))
+                .longValueExact());
+        nbt.setLong(
+            "gridEU1h",
+            gridEU_1h_ago.min(bi(Long.MAX_VALUE))
+                .longValueExact());
         nbt.setLong("snapTick", snapshotTick);
     }
 
     public void loadNBT(NBTTagCompound nbt) {
-        totalInput = nbt.getLong("gridTotalIn");
-        totalOutput = nbt.getLong("gridTotalOut");
-        gridEU_10min_ago = nbt.getLong("gridEU10m");
-        gridEU_1h_ago = nbt.getLong("gridEU1h");
+        totalInput = readBig(nbt, "gridTotalInX", "gridTotalIn");
+        totalOutput = readBig(nbt, "gridTotalOutX", "gridTotalOut");
+        gridEU_10min_ago = readBig(nbt, "gridEU10mX", "gridEU10m");
+        gridEU_1h_ago = readBig(nbt, "gridEU1hX", "gridEU1h");
         snapshotTick = nbt.getLong("snapTick");
         initialized = false;
     }
 
+    private static BigInteger bi(long v) {
+        return BigInteger.valueOf(v);
+    }
+
+    /** 读新字符串键；缺失/解析失败回退旧 long 键（老存档兼容）。 */
+    private static BigInteger readBig(NBTTagCompound nbt, String newKey, String legacyKey) {
+        if (nbt.hasKey(newKey, 8)) {
+            try {
+                return new BigInteger(
+                    nbt.getString(newKey)
+                        .trim());
+            } catch (RuntimeException bad) {
+                com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 统计存档键 {} 不是合法十进制串，回退旧键 {}", newKey, bad);
+            }
+        }
+        return bi(nbt.getLong(legacyKey));
+    }
+
     public void reset() {
-        totalInput = 0;
-        totalOutput = 0;
-        lastEU = 0;
+        totalInput = ZERO;
+        totalOutput = ZERO;
+        lastEU = null;
         initialized = false;
         for (int i = 0; i < 100; i++) {
-            inputBuffer[i] = 0;
-            outputBuffer[i] = 0;
+            inputBuffer[i] = ZERO;
+            outputBuffer[i] = ZERO;
         }
         bufferIndex = 0;
-        bufferSumInput = 0;
-        bufferSumOutput = 0;
-        gridEU_10min_ago = 0;
-        gridEU_1h_ago = 0;
+        bufferSumInput = ZERO;
+        bufferSumOutput = ZERO;
+        gridEU_10min_ago = ZERO;
+        gridEU_1h_ago = ZERO;
         snapshotTick = 0;
     }
 }

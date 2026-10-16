@@ -180,7 +180,12 @@ public class AdaptiveNetwork {
         this.stats = newStats;
     }
 
-    public void tickStats(long currentEU) {
+    /**
+     * 3.35.0-fix23（用户实测：监控页超 9.2E 截断）：统计在 BigInteger 域推进——
+     * 数据源直接使用 {@code AdaptiveHatchHelper.getGridEUBigInteger(owner)} 的精确电网余额，
+     * 不再经过 {@code getGridEULong} 的 9.22E 钳制（钳制值会让变化/预测行在超限电网下全程失真）。
+     */
+    public void tickStats(BigInteger currentEU) {
         stats.tick(currentEU);
         saveCounter++;
         if (saveCounter >= 6000) {
