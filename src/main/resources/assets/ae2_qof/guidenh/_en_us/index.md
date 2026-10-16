@@ -9,7 +9,7 @@ author: wztwzt
 
 AE2 QoL brings a set of quality-of-life enhancements to Applied Energistics 2 (GTNH edition).
 
-## All Features (21)
+## All Features (24)
 
 | # | Feature | Summary | Page |
 |---|---|---|---|
@@ -36,6 +36,8 @@ AE2 QoL brings a set of quality-of-life enhancements to Applied Energistics 2 (G
 | 21 | Stock Monitor Terminal | Centrally view/edit AE2 level emitters and stock monitor covers, power-free with Nexus wireless | [Stock Monitor Terminal](stock_monitor_terminal.md) |
 | 22 | Smart Wildcard Pattern | One pattern covers a whole recipe class: 9 hand-editable rule rows + NEI's + derivation + built-in circuit + per-candidate exclusions | [Smart Wildcard Pattern](smart_wildcard.md) |
 | 23 | Pattern Generator | Bulk-produce concrete patterns from a GT RecipeMap (input/output blacklists, ore names, NC items; full counts) | [Pattern Generator](pattern_generator.md) |
+| 24 | Production Line Manager | Preset lines one-click, step-level real stop, candidate picker/card binding, BigInteger summary | [Production Line Manager](proline.md) |
+| 24 | Production Line Manager | Preset lines one-click, step-level real stop, candidate picker/card binding, BigInteger summary | [Production Line Manager](proline.md) |
 
 ## Quick Start
 
