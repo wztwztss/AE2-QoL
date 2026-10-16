@@ -59,4 +59,7 @@ dependencies {
     compileOnly(project.files("libs/ae_wireless_nexus-1.0.2.jar"))
     // StructureLib（GT 依赖，万能维护仓需要 IAlignment 接口）
     compileOnly("com.github.GTNewHorizons:StructureLib:1.4.42:dev")
+    // 4.1.0 产线管理器：ServerUtilities 团队/声明区 API（jar 从实例 mods 拷入并锁版本；
+    // modid=serverutilities 已用包内 mcmod.info 核对——坑 #18）
+    compileOnly(project.files("libs/ServerUtilities-2.4.9.jar"))
 }

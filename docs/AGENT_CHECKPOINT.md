@@ -12,6 +12,11 @@
 |项目|填写内容|
 |---|---|
 |工具平台|DeepSeek Harness（DSH Web GUI）|
+|模型信息|z-ai/glm-5.3-flash（会话中 DSH 审查器/执行策略两次故障，用户切审批=never 后恢复；ops_bash 在执行策略修复后可用）|
+|工作分支|master；本轮起点 `487a683`（3.35.0-fix23 docs），**未提交未部署**；本轮产出 **4.1.0**（产线管理器第 1 期）|
+|启动时间|2026-10-16（Asia/Shanghai，产线管理器轮：3.35.0-fix23 → 4.1.0）|
+|本次会话目标|**产线管理器第 1 期 = 4.1.0**：设计文档评审至 v6（缺口清单 A1–A7 + 产品拍板 O1–O8 全部落档）→ 9 新文件 + 6 处接线（数据模型/SU 门/控制面/Δ 采样/汇总/wiki 导入/绑定卡/终端第三页）→ `BUILD SUCCESSFUL`，产物 `AE2-QoL-4.1.0.jar`（SHA256 起 `5cfe44b3`）。**未提交、未部署、未推送**（推送前须 `spotlessApply`，部署须用户同意）。待实测 7 项见 CHANGELOG (132) §六；已知偏差 4 条见 §四（NEI 捕获按钮与重命名/删线面板为下一刀）|
+|工具平台|DeepSeek Harness（DSH Web GUI）|
 |模型信息|DeepSeek-V4.1-Flash|
 |本轮追加修复（3.32.0-fix4）|用户实测截图问"为什么实际消耗远高于额定"（实测 16,777,216 vs 额定 4,194,304 = **恰好 4 倍**）＋"中间小字看不清、颜色不清晰"。根因：① 四个仓都在 `aTick % 4 == 0` 采样（`AdaptiveNetHatch.onPreTick:118` 等），`consumed = lastStoredEU - currentStored` 是**4 tick 窗口增量**，却被直接当 EU/t 存进 `realFlowEUt`（动力/靶仓同理：把"每 4 tick 推给电网的累计缓存"当速率）⇒ 放大 4 倍；② 第二行 `GRAY`(§7)+scale 0.8 画在 **MUI2 浅色面板**上对比度极低，主机名用 WHITE 也发糊，`配方`值与`实测`值同为红分不清。改动：`AdaptiveHatchHelper` 新增 `FLOW_WINDOW_TICKS = 4` + `updateRealFlowEUt(deltaInWindow)`（内部 `/4`），四个仓改调它 ⇒ 实测=真 EU/t、与额定/配方同口径可比；配色改浅底深色（主机名 BLACK、运行 DARK_GREEN、实测标签 DARK_AQUA/值 DARK_RED、额定值 DARK_BLUE、配方值 DARK_PURPLE），第二行 10→11px、scale 0.8→0.85（行高保持 24）。**未部署**；待实测 3 项见 CHANGELOG (94) §五|
 |本轮追加修复（3.32.0-fix3）|用户实测截图报两条：① 列表**最上面那台机器根本没工作却写着 -458,752,000 EU/t**；② **玩家背包盖住列表尾部**。根因：① 我把 `MTEMultiBlockBase.mEUt` 当成"实时耗电"，它其实是 GT 的**配方口径 EUt**（含并行/倍率）且**停机后不清零**（截图值 ≈ 额定 4,194,304 × 109，作为输入不可能；而同行「实测 0」才是真相；在跑的机器上 实测 = mEUt × 并行数，如 -1,966,080 ↔ 7,864,320 = ×4）；② MUI2 的 `ModularPanel.bindPlayerInventory()` 把背包（36 格 ≈ 76–80px）画在**面板内部底部**且不自动扩大面板，而我们把 370×280 填满了（PagedWidget 高 260 直到 y=264）。改动：主数值改**实测流量** + 新增【运行/待机】标签（判据 `AdaptiveHostIndex.isRunning(host)` = `host.mMaxProgresstime > 0`，随行 S2C，`HatchListSyncPacket` +1 字节）；列表**按实测降序**；`mEUt` 只在运行中以「配方」显示；面板 `280 → 268` + `INV_RESERVED = 80` + `PAGE_H = PANEL_H-4-80-4 = 180`（列表高 = PAGE_H-30，约 6 行 + 滚动），其余四页自适应不受影响。**未部署**；待实测 4 项见 CHANGELOG (93) §五|

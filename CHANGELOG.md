@@ -34,6 +34,41 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-16 (132) - **4.1.0：产线管理器第 1 期（终端第三页 + Δ 采样 + 绑定 + wiki JSON 导入）**
+
+### 一、需求与拍板
+用户四点原始需求（自动检测团队已加载机器的工作情况 / 每步产物 / 停机记上次产物 / 在产排前）→ 设计文档 `docs/PRODUCTION_LINE_MANAGER_DESIGN.md` 评审至 v6（A1–A7 技术缺口 + O1–O8 产品决策全部拍板，详见文档 §十一）。第一期锚点 = **4.1.0**（用户 2026-10-16 定），第二期 4.2.0。
+
+### 二、实现清单（9 新文件 + 6 处接线）
+- `proline/{ItemRow, MachineRef, ProductionStep, ProductionLine, ProLineData}.java`：数据模型（**stepId 稳定键 A1**、`line.networkId+终端锚点 O2`、BigInteger 累计、schemaVersion B2、WorldSavedData 落盘）；
+- `proline/ProLineGate.java`：ServerUtilities 接入（compileOnly jar 锁 2.4.9 + modid `serverutilities`/关键类双判据 + 三态日志，O1/坑 #18#19）；
+- `proline/ProLineManager.java`：控制面（建/删线、步骤增删移、软暂停、绑定/解绑互斥、团队上限 16、活跃产线 FIFO）；
+- `proline/ProLineSampler.java`：10s Δ 采样（活跃线一次全表快照按键匹配 A3；`mMaxProgresstime` 只读；连败退避 5 分钟 B6）；
+- `proline/ProLineSummary.java`：总输入/总输出口径 + 累计/平均(BigInteger) + KMG 简写；
+- `proline/ProLineImporter.java`：huijiwiki RecipeCalculator JSON 解析（key 化条目；未解析项逐条报错不静默 A5）；
+- `proline/ItemProductionLineCard.java`：产线绑定卡（stepId 写卡 + §5.2 四条校验）；
+- `proline/gui/ProLinePage.java`：终端第三页（产线列表/步骤行+徽标/汇总行/步骤小面板/候选点选绑定 50ms 预算 B5/导入面板 ≤28KB O8）——名称与图标全部**客户端解析**（A2，专用服英文链路规避，fix31 范式）；
+- 接线：`StockMonitorTerminalGui`（第三页签）、`StockMonitorTerminal`（页夹取 0..2）、`CommonProxy`（注册卡+采样器）、`dependencies.gradle`（SU compileOnly）、lang 中英各 +22 条。
+
+### 三、实现效果（玩家视角）
+库存统计终端新增**「产线」页签**：新建产线（自动锁定创建时终端的 AE 网络口径）→ wiki 粘贴导入或手工建步骤 → 步骤行实时显示 `在产/绑定台数、状态徽标（在产/部分/空闲/已暂停/失效）、主产物每周期量` → 点选候选机器绑定（或绑定卡 Shift+右键兜底）→ 底部汇总行显示每外购物料的**累计（跨重启持久）与 ≈速率/小时**（10s 一拍，Δ存量口径）→ 软暂停只改状态位、绝不触碰 GT 机器。
+
+### 四、已知偏差与限制（诚实清单）
+1. 汇总口径 v1 不分 branch（branch chips 只过滤视图）——与 §6.2 的偏差已登记，4.2.0 补；
+2. wiki 导入单段 ≤28KB（分块上传留 4.2.0；超限明确拒绝）；wiki 中文名在**专用服**可能解析为"未注册"（服务端语言表英文），单人无此问题；
+3. NEI 配方界面捕获按钮未实现（下一刀，任务表 #3 余项）；重命名/删除整线的子面板入口未挂（数据模型与 Manager API 已就绪）；
+4. 累计计数器不随口径重置（A4 明示取舍）；采样网络口径 = 创建时刻锚定的那台终端（终端被拆 → 该线显示"口径失效"）。
+
+### 五、构建与产物
+`BUILD SUCCESSFUL`（离线，spotlessApply 后复建）；`build/libs/AE2-QoL-4.1.0.jar`（SHA256 `01a02efcdd087a97fc0c79dc59f558dc2c2bad7fb7af76b38d687ee0ff24ff7f`）；包内 proline 15 类核对在案；版本三处同步（gradle.properties / mcmod.info ×2）。已本地提交 `0b3a19d`（未推送、未部署）。
+
+### 六、待用户实测（部署后）
+① 终端第三页能开、三页切换记忆正常；② 新建产线 + wiki 粘贴导入一条真实产线；③ 步骤行徽标与"在产/总数"随机器启停变化（≤10s 延迟）；④ 候选面板点选绑定/解绑、跨产线互斥提示；⑤ 汇总累计重进存档不丢、速率随时间增长；⑥ 未装 ServerUtilities 的环境整页禁用 + 三态日志；⑦ 绑定卡写卡→Shift+右键绑定/团队外拒绝。
+
+### 七、下一步
+NEI 配方捕获按钮（任务 #3 余项）→ 重命名/删线子面板 → 部署实测（需用户同意）→ 推送前 `spotlessApply`。
+
+
 ## 工作区决策记录 2026-10-16 (131) - **3.35.0-fix23：监控页统计全 BigInteger 精确化——超 9.2E 不再截断（用户实测回归）**
 
 ### 一、现象（用户实测）

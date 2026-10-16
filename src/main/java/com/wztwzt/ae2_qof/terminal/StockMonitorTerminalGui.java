@@ -345,6 +345,8 @@ public class StockMonitorTerminalGui {
             .childPadding(0);
         tabStrip.child(pageTab(0, tabController, "ae2_qof.terminal.page.emitters"));
         tabStrip.child(pageTab(1, tabController, "ae2_qof.terminal.page.covers"));
+        // 4.1.0：第三页「产线」
+        tabStrip.child(pageTab(2, tabController, "ae2_qof.terminal.page.proline"));
         panel.child(tabStrip);
 
         PagedWidget<?> pages = new PagedWidget<>().controller(tabController)
@@ -360,7 +362,9 @@ public class StockMonitorTerminalGui {
                     player,
                     coverEditPanel,
                     terminal,
-                    hiddenCoversSync));
+                    hiddenCoversSync))
+            // 4.1.0：第三页「产线」
+            .addPage(com.wztwzt.ae2_qof.proline.gui.ProLinePage.buildPage(terminal, syncManager, player));
         // 客户端点页签 → 回写服务端 NBT
         pages.onPageChange(i -> { if (pageSync.getIntValue() != i) pageSync.setValue(i); });
         // 服务端存量的同步值晚于控件构建到达客户端，这里补一次切页，否则首次打开"记住上次选择"不生效

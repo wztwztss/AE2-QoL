@@ -73,7 +73,9 @@ public class StockMonitorTerminal extends MTEHatch {
     }
 
     private static int ae2qol$clampPage(int page) {
-        return page <= 0 ? 0 : 1;
+        // 4.1.0：新增第三页「产线」（0=发信器, 1=覆盖板, 2=产线）
+        if (page <= 0) return 0;
+        return page > 2 ? 1 : page;
     }
 
     public StockMonitorTerminal(int aID, String aName, String aNameRegional, int aTier) {

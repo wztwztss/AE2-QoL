@@ -744,3 +744,29 @@ gui.wildcardpattern.save=Save
 gui.wildcardpattern.search=Search
 gui.wildcardpattern.tab_pairs=Rules
 gui.wildcardpattern.title=Wildcard Pattern
+
+# ===== 4.1.0 Production Line Manager =====
+item.ae2_qof.proline_card.name=Production Line Binding Card
+item.ae2_qof.proline_card.desc=Select a step in the Stock Monitor Terminal > Production Lines, then Shift+right-click a GT multiblock machine with this card
+ae2_qof.terminal.page.proline=Lines
+ae2_qof.proline.new=+New Line
+ae2_qof.proline.import=Wiki Import
+ae2_qof.proline.hint=Click a line to select it; program the card in the terminal first
+ae2_qof.proline.no_lines=No production lines yet — use [+New Line]
+ae2_qof.proline.select_line_first=Select a line above first
+ae2_qof.proline.name=Name:
+ae2_qof.proline.btn_del_line=Delete whole line (confirm)
+ae2_qof.proline.btn_pause_toggle=Pause/Resume step
+ae2_qof.proline.btn_write_card=Write held binding card
+ae2_qof.proline.bind=Bind
+ae2_qof.proline.del=Del
+ae2_qof.proline.badge.-1=Paused
+ae2_qof.proline.badge.0=Idle
+ae2_qof.proline.badge.1=Partial
+ae2_qof.proline.badge.2=Running
+ae2_qof.proline.candidates.title=Candidate machines (loaded GT multiblocks in team claims; click to bind/unbind)
+ae2_qof.proline.candidates.empty=No candidates: no team claims loaded
+ae2_qof.proline.none_selected=No step selected (click a step row first)
+ae2_qof.proline.import.title=Paste huijiwiki RecipeCalculator JSON (<=28KB)
+ae2_qof.proline.import.go=Parse & Create
+ae2_qof.proline.import.chinese_names=Note: Chinese wiki names may resolve as "unregistered" on dedicated servers; singleplayer is fine
