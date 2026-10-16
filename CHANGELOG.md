@@ -34,6 +34,27 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-16 (122) - **3.35.0-fix14：库存统计终端 viewer 会话补齐注销——会话校验恢复真实语义（P2-5）**
+
+### 一、现象（grep 穷举实证）
+`StockMonitorTerminal.activeViewers` 只有 `registerActiveViewer`（GUI 打开时登记），**全仓无任何移除调用**
+——玩家开过一次界面就永久登记（TE 生命周期内），P1-011 的"只有正打开界面的玩家才能触发高亮/传送"
+会话保护退化为"曾经打开过就行"（第二道 `hasBuildPermission` 闸仍在，不构成越权，但保护打折）。
+
+### 二、本轮改动（用户拍板：修）
+1. `StockMonitorTerminal` 新增 `unregisterActiveViewer(EntityPlayer)`；
+2. `StockMonitorTerminalGui.build` 注册 **`PanelSyncManager.addCloseListener`**（MUI2 双端关闭路径，
+   携带与登记侧同源的 EntityPlayer）——GUI 关闭时注销该玩家的 viewer；
+3. 自适应终端的 `onCloseAction` 注销路径经审查确认只在客户端跑（P2-2 遗留问题），未照搬——本条用
+   `addCloseListener` 是确认可执行的关闭点。
+
+### 三、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.35.0-fix14.jar`。
+- 待游戏实测（用户执行）：① 打开终端 → 高亮/传送照常（核心验收——注销不能误伤打开中的会话）；
+  ② 关闭界面后用改包客户端发高亮/传送包被拒（可选，多人环境才有意义）。
+
+---
+
 ## 工作区决策记录 2026-10-16 (121) - **3.35.0-fix13：无线频道上限双向修复（P2-4 + P2-6 成对）**
 
 ### 一、现象（源码逐行实证）

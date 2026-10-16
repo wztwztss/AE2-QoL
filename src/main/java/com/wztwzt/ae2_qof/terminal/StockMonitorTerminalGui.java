@@ -201,6 +201,15 @@ public class StockMonitorTerminalGui {
             if (player != null && !player.worldObj.isRemote) terminal.registerActiveViewer(player);
         } catch (Throwable ignored) {}
 
+        // 3.35.0-fix14（审查 P2-5）：GUI 关闭时注销 viewer——activeViewers 只加不减会让
+        // P1-011 的会话保护退化成"曾经打开过就行"。addCloseListener 是 MUI2 双端关闭路径
+        //（PanelSyncManager.onClose），携带的 EntityPlayer 与登记侧同源。
+        syncManager.addCloseListener(p -> {
+            try {
+                if (p != null && !p.worldObj.isRemote) terminal.unregisterActiveViewer(p);
+            } catch (Throwable ignored) {}
+        });
+
         // ===== 两个列表的同步处理器：必须先建，编辑子面板要用它们的客户端行快照 =====
         final RowCache<EmitterRow> emitterCache = new RowCache<>();
         GenericListSyncHandler<EmitterRow> emitterRows = GenericListSyncHandler.<EmitterRow>builder()

@@ -142,6 +142,17 @@ public class StockMonitorTerminal extends MTEHatch {
         if (player != null) activeViewers.add(player.getUniqueID());
     }
 
+    /**
+     * 3.35.0-fix14（审查 P2-5）：GUI 关闭时注销 viewer。
+     * 旧实现只加不减——玩家开过一次界面就永久登记（TE 生命周期内），P1-011 的
+     * "只有正打开界面的玩家能触发高亮/传送"会话保护退化为"曾经打开过就行"
+     * （第二道 BUILD 权限闸仍在，不构成越权，但保护打折）。
+     * 由 {@code StockMonitorTerminalGui} 的 {@code PanelSyncManager.addCloseListener} 调用。
+     */
+    public void unregisterActiveViewer(EntityPlayer player) {
+        if (player != null) activeViewers.remove(player.getUniqueID());
+    }
+
     public boolean isActiveViewer(java.util.UUID id) {
         return id != null && activeViewers.contains(id);
     }
