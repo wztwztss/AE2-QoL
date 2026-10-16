@@ -42,6 +42,18 @@
 3. **lang 去重工具**：新增 `tools/wiki/dedup_proline_lang.mjs`（en 删除中文值行、zh 删除英文值行，proline 域），执行后 zh/en 各 724 键 0 重复 ✓。
 4. 修复 introduce 变量名冲突（`sl`/`sExp`）与 `EnumChatFormatting` 缺失 import。
 
+## 本轮已修（2026-10-16，第 5 轮：GuideNH 兼容 / 资产静态审计 / 指南文清修）
+
+1. **GuideNH 兼容性核对**：全仓只在一处引用 GuideNH（`GuideNHIntegration.register()` 只挂入口，不注册页面，安全）。但 **guide md 只有 23 项功能、头部却写 21，且缺产线页**→新增 `guidenh/_zh_cn/proline.md` + `_en_us/proline.md`（frontmatter `item_ids: [ae2_qof:proline_card]`，无 GT ICON 报错风险——它是**普通物品**，`icon` 字段可省缺以 item_ids 首个为准：核对无误）；`index.md` 两侧头部 (21)/(21) → **(24)** 并追加第 24 行；en 侧同样追至 24。
+2. **资产静态扫描**：
+   - `presets.json` 7 条均名唯一（无重名/无超长），`JSON.parse` 7/7 通过；
+   - lang 键名长度/空格/大小写 0 违例；`gradle.properties:modVersion == mcmod.info.version == 4.1.0`（@1 处稳定）。
+3. **docs/PRODUCTION_LINE_MANAGER.md 指南同清**：「奇怪 +++ 」残留、"选中会有绿色边框"不实际描述改为与实施一致、importer 的三形态/ignore groups 明确、添加 `期望边界(start)` 说明。
+
+### 实施备注
+- GuideNH icon 命名模板 `(guidenh page.md frontmatter icon:)` 不写 GT 机器注册名也 OK —— proline.md 首选物品 `ae2_qof:proline_card` 是**普通 item**（坑 #20 中的 "gt:blockmachines:ID" 不适用）。
+- en index 需要脚本替换核实（21→24 + 第 24 行追加），zh 索引手改核对一致。
+
 ## 待后续轮次处理（留档）
 
 - 产线 Manager 的聊天提示（`send()`）有硬编码中文，应走 StatCollector（**建议 4.2.0**，不影响 UI 主路径，也非玩家功能）。
@@ -69,5 +81,9 @@
 ### 轮次 4（2026-10-16）
 - 构建 `BUILD=0`；zh/en lang 724↔724、proline 域去重 0；jar `presets.json` 7 条 ✔；无删除复核 0。
 - 提交 `3d71f86`（startExpected 持久化 + 聊天 lang 化 + 去重工具 + 变量名修正）。
+
+### 轮次 5（2026-10-16）
+- 构建 `BUILD=0`；`assets/ae2_qof/guidenh/{_zh_cn,_en_us}/{index.md,proline.md}` 入 jar 核对通过。
+- 提交 `01d6c46`（GuideNH proline 页双语 + index 24 项）。
 
 > 提醒：本文件只做主记录，后续轮次请在末尾追加（保持上轮快照 + 新发现），便于跨会话追溯。
