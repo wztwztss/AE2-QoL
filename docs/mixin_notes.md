@@ -14,8 +14,11 @@
 > （`MTEMultiBlockBase.mEnergyHatches` / `mDynamoHatches` / `getExoticEnergyHatches()`，javap 实例 jar 已确认），
 > 因此不需要再往 GT 里注入；旧的多方块注册表 Mixin（`MixinCommonBaseMetaTileEntityMultiblockRegistry`）保持不变。
 > **3.31.0 轮核实并已修复的既有不一致**：仓库根 `mixins.ae2_qof.json` 曾缺 5 条 `gt.MixinSteam*Tuning`
-> （3.29.0 那轮只改了 `src/main/resources/` 那份）⇒ 两份不逐字节一致；已在 `b4a36e0` 补齐，
-> 现两份**逐字节一致（43 条）**。**改 mixin 配置永远两份一起改**——进 jar 的是 `src/main/resources` 那份。
+> （3.29.0 那轮只改了 `src/main/resources/` 那份）⇒ 两份不逐字节一致；已在 `b4a36e0` 补齐。
+> **3.35.0-fix16 再次发现同款漂移**：根副本缺 `gt.MixinSteamEntityCrusherTuning`（3.32.0-fix5 的
+> "第 6 个蒸汽 mixin"只加进了 `src/main/resources/` 那份），已在 fix16 一并补齐；
+> 现两份**逐字节一致（43 条 = mixins 27 + client 16）**，`cmp` 已校验。
+> **改 mixin 配置永远两份一起改**——进 jar 的是 `src/main/resources` 那份。
 >
 > **3.28.0 起两处"已停用但仍入包"的注入**（用户决定停用线程，代码保留）：
 > 1. `mixin/gt/MixinProcessingLogicSpeed.ae2qol$logParallelOnce`（并行设定诊断）—— `@Inject` **整段注释掉**，
@@ -119,15 +122,20 @@
 | `mixin/nei/MixinDefaultOverlayHandler.java` | `codechicken.nei.recipe.DefaultOverlayHandler` (remap=false) | `transferRecipe` HEAD | 拦截配方传输，捕获配方名和GT配方池ID，供自动样板上传使用。 |
 | `mixin/nei/MixinRecipeHandlerRef.java` | `codechicken.nei.recipe.RecipeHandlerRef` (remap=false) | `fillCraftingGrid` HEAD; `craft` HEAD | 在NEI配方引用的填充/合成操作前，捕获当前配方的handler名称和GT配方池ID，存储到ClientRecipeNameUtil。 |
 
-### 审查补录（3.35.0-fix7 台账补齐）- 5个Mixin
+### 审查补录（3.35.0-fix7 台账补齐，3.35.0-fix16 摘除 1 条）- 4个已注册Mixin
 
 | Mixin 类路径 | 目标类 | 注入点 | 风险/说明 |
 |---|---|---|---|
 | `mixin/gt/MixinPatternSlotAccess.java` | `appeng.parts.PatternSlot` (remap=false) | 纯 Accessor | 暴露 `pattern` 字段（protected final ItemStack），供通配样板包装读取。**3.35.0-fix7 补录**（此前台账缺失） |
 | `mixin/gt/MixinGtHostAccess.java` | GT `PatternSlot<...>` 内部类 (remap=false) | 纯 Accessor | 暴露 `internalInventory`，GT 样板输入机的槽位组。**3.35.0-fix7 补录** |
 | `mixin/gt/MixinGtnlPatternSlotAccess.java` | GTNL `SuperCraftingInputHatchME$PatternSlot` (remap=false) | 纯 Accessor | 暴露 `pattern`（public final ItemStack）。**3.35.0-fix7 补录** |
-| `mixin/gt/MixinBaseMetaTileEntityWaila.java` | `gregtech.api.metatileentity.BaseMetaTileEntity` (remap=false) | **零注入** | 已注册但全文无任何 `@Inject/@Overwrite` —— 只往 GT 基类塞了未 `@Unique` 的辅助方法与 `net.minecraft.client.Minecraft` 引用（双端段登记，专用服有 NoClassDefFoundError 风险）。**3.35.0-fix7 补录并标注**：待补 waila compileOnly 依赖后正式实施，或摘除 |
 | `mixin/ph/MixinPatternDualInputHatchProgrammingCircuit.java` | PH `DualInputHatch`（3.35.0-fix5 起，原误钉 `PatternDualInputHatch`——`func_70299_a` 声明在父类） | `func_70299_a`/`setInventorySlotContents` RETURN（双名各一个注入器，`require=0`） | PH 样板仓插入时把 GT 编程电路转写为编程器电路；回调内 `instanceof PatternDualInputHatch` 收窄。**fix5 修复"目标类钉错导致从未生效"**。**3.35.0-fix7 补录** |
+
+### 未注册（保留参考）- 1个Mixin
+
+| Mixin 类路径 | 目标类 | 状态 | 说明 |
+|---|---|---|---|
+| `mixin/gt/MixinBaseMetaTileEntityWaila.java` | `gregtech.api.metatileentity.BaseMetaTileEntity` (remap=false) | **已从 `mixins.ae2_qof.json` 摘除注册（3.35.0-fix16）** | 3.25.0-fix5 因"注入失败被视为致命 ⇒ BaseMetaTileEntity 类转换中断 ⇒ 启动崩溃"主动停用注入（方法体保留作参考）。3.35.0-fix7 补录时标注其"零注入却仍登记在双端段"的风险；**3.35.0-fix16 正式从配置摘除**——行为零变化（本来不注入任何东西），专用服少一处 `net.minecraft.client.Minecraft` 引用的潜在类加载风险。未来正式实施：加 waila 的 compileOnly 依赖 + 写全 4 个参数（不用 MixinExtras sugar）+ 重新登记 |
 
 ### 其他 QoL - 3个Mixin
 
@@ -228,7 +236,9 @@
 
 ## 按功能域汇总
 
-> 与 `mixins.ae2_qof.json` 对齐，共 **43 条**（与 `mixins.ae2_qof.json` 逐条对应；3.35.0-fix7 起 `MixinCommonBaseMetaTileEntityMultiblockRegistry` 另含 onUnload 注入）。
+> 与 `mixins.ae2_qof.json` 对齐，共 **43 条**（`mixins` 段 27 + `client` 段 16，逐条对应；
+> 3.35.0-fix16 摘除零注入的 `MixinBaseMetaTileEntityWaila` 后由 44 → 43；
+> 3.35.0-fix7 起 `MixinCommonBaseMetaTileEntityMultiblockRegistry` 另含 onUnload 注入）。
 
 | 功能域 | 文件数 | 涉及文件 |
 |--------|--------|----------|

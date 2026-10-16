@@ -34,6 +34,40 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-16 (124) - **3.35.0-fix16：畸形动作包 NPE 拦截 + 零注入死 Mixin 摘除 + 配置漂移补齐（P2-14 + P2-16 + 附带发现）**
+
+### 一、现象（源码 + 协议双重实证）
+1. **P2-14**：`HatchActionPacket.Handler.handleServer` 的 `UUID.fromString(msg.hatchOwner)` 只 catch
+   `IllegalArgumentException`，但 `hatchOwner` 在协议里**允许为 null**（`toBytes` 用
+   `writeBoolean(hatchOwner != null)` 标记有无）⇒ `UUID.fromString(null)` 抛 **NPE** 不被接住，
+   逃到外层 `catch (Throwable)` **每个畸形包打一整条 ERROR 堆栈**（伪造包可刷屏日志/撑爆磁盘）。
+2. **P2-16**：`MixinBaseMetaTileEntityWaila` 零 `@Inject`（3.25.0-fix5 因启动崩溃主动停用），
+   却仍登记在 `mixins.ae2_qof.json` 的 **`mixins`（双端）段** ⇒ `BaseMetaTileEntity` 在专用服上
+   也会被它转换，而类里引用 `net.minecraft.client.Minecraft`（潜在 NoClassDefFoundError）+ 死重量。
+3. **附带发现（本次取证时查出）**：仓库根 `mixins.ae2_qof.json` 与 `src/main/resources/` 那份
+   **又不一致**——根副本缺 `gt.MixinSteamEntityCrusherTuning`（3.32.0-fix5 只改了进 jar 的那份），
+   正是 mixin_notes 第 14-19 行警告过的同款漂移；且文档记的"43 条"实际是 44 条（本就差一）。
+
+### 二、本轮改动（用户拍板：一起修）
+1. **NPE 拦截**：`handleServer` 增加 `hatchOwner == null || isEmpty()` 前置判定，catch 从
+   `IllegalArgumentException` 放宽到 **`RuntimeException`**（NPE 也在此列，杜绝再次漏网）；
+   两条路径都调用新的 `ae2qol$warnMalformedOwner` —— **限频 60 秒/玩家**的 WARN
+   （限频必须有：否则告警本身仍可被伪造包刷屏），限频表有界（>1024 清空）。
+2. **死 Mixin 摘除**：从两份 `mixins.ae2_qof.json` 移除 `gt.MixinBaseMetaTileEntityWaila`；
+   类文件保留并加注释说明"已摘除 + 未来实施前提（waila compileOnly 依赖 + 写全 4 参数）"。
+   行为零变化（本来不注入任何东西）。
+3. **配置漂移补齐**：根副本补上 `gt.MixinSteamEntityCrusherTuning`，两份 `cmp` 校验**逐字节一致**。
+4. **文档同步**：`mixin_notes` 建"未注册（保留参考）"分区、计数改准为 **43 条 = mixins 27 + client 16**
+   （并记录 44→43 的来源）、根副本漂移的修复记录写入第 14-19 行警示段。
+
+### 三、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.35.0-fix16.jar`。
+- 配置校验：两份 `mixins.ae2_qof.json` **逐字节一致**（cmp 通过）；jar 内配置不含 Waila 条目。
+- 待游戏实测（用户执行）：① **高亮/传送照常**（核心验收——NPE 拦截不能误伤正常包）；
+  ② 启动日志无新增 Mixin 警告（摘除后条目数少 1 属预期）。
+
+---
+
 ## 工作区决策记录 2026-10-16 (123) - **3.35.0-fix15：无限元件原型缓存收缩 + NbtKey 驻留（P2-7 + P2-8 成对）**
 
 ### 一、现象（源码逐行实证）

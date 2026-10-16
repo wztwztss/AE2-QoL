@@ -146,6 +146,32 @@ public class HatchActionPacket implements IMessage {
 
     public static class Handler implements IMessageHandler<HatchActionPacket, IMessage> {
 
+        /**
+         * 3.35.0-fix16（审查 P2-14）：畸形 owner 告警的限频表（玩家 → 上次告警时刻）。
+         * 限频是必须的——告警本身若不限频，伪造包仍可刷屏（只是从 ERROR 变成 WARN）。
+         */
+        private static final java.util.Map<UUID, Long> MALFORMED_WARN_AT =
+            new java.util.concurrent.ConcurrentHashMap<UUID, Long>();
+        private static final long MALFORMED_WARN_INTERVAL_MS = 60_000L;
+
+        private static void ae2qol$warnMalformedOwner(EntityPlayerMP player, String owner) {
+            try {
+                long now = System.currentTimeMillis();
+                Long last = MALFORMED_WARN_AT.get(player.getUniqueID());
+                if (last != null && now - last < MALFORMED_WARN_INTERVAL_MS) {
+                    return;
+                }
+                if (MALFORMED_WARN_AT.size() > 1024) {
+                    MALFORMED_WARN_AT.clear(); // 有界：极端情况下不让限频表自身无界增长
+                }
+                MALFORMED_WARN_AT.put(player.getUniqueID(), now);
+                MyMod.LOG.warn(
+                    "[AE2QoL] 收到非法的自适应终端动作包（hatchOwner={}），已忽略；同一玩家 60 秒内只提示一次：player={}",
+                    owner,
+                    player.getCommandSenderName());
+            } catch (Throwable ignored) {}
+        }
+
         @Override
         public IMessage onMessage(HatchActionPacket msg, MessageContext ctx) {
             final EntityPlayerMP player = ctx.getServerHandler().playerEntity;
@@ -159,10 +185,24 @@ public class HatchActionPacket implements IMessage {
             try {
                 if (player.openContainer == null) return;
 
+                // 3.35.0-fix16（审查 P2-14）：hatchOwner 在协议里**允许为 null**
+                //（toBytes 用 writeBoolean 标记有无，见 :121）⇒ 伪造包可送 null。
+                // UUID.fromString(null) 抛的是 NullPointerException，而旧代码只 catch
+                // IllegalArgumentException ⇒ NPE 逃到外层 catch (Throwable)，每个畸形包打一整条
+                // ERROR 堆栈（可刷屏日志/撑爆磁盘）。现在就地拦下（null/空串/NPE/IAE 全覆盖），
+                // 并留一条限频 WARN 让"有人在发畸形包"可见（符合"不许静默"）。
+                if (msg.hatchOwner == null || msg.hatchOwner.isEmpty()) {
+                    ae2qol$warnMalformedOwner(player, "<null/empty>");
+                    return;
+                }
+
                 UUID uuid;
                 try {
                     uuid = UUID.fromString(msg.hatchOwner);
-                } catch (IllegalArgumentException e) {
+                } catch (RuntimeException e) {
+                    // RuntimeException 而非 IllegalArgumentException：NPE 也在此列（JVM 保证二者
+                    // 之外的 UUID 解析异常不存在），避免再次漏网
+                    ae2qol$warnMalformedOwner(player, msg.hatchOwner);
                     return;
                 }
 

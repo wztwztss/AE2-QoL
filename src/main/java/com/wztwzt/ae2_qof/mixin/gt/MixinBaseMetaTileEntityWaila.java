@@ -34,6 +34,13 @@ import gregtech.api.metatileentity.BaseMetaTileEntity;
  * 常态：1 行汇总 + **最慢的 2 条**；潜行（Shift）：展开到最多 **8 条**（发送侧上限也是 8）。
  * 取不到快照（机器没装我们的维护仓 / 线程=1 / 停转超过 2 秒）时**一行都不追加**，不影响其它信息。
  */
+// 3.35.0-fix16（审查 P2-16）：**已从 mixins.ae2_qof.json 摘除注册**。
+// 本类当前零 @Inject（3.25.0-fix5 因初始化崩溃主动停用，方法体保留作参考），
+// 但仍被登记在配置的 mixins（双端）段 —— BaseMetaTileEntity 在专用服上也会被它转换，
+// 而类里引用了 net.minecraft.client.Minecraft（潜在 NoClassDefFoundError），且纯属死重量。
+// 摘除后行为零变化（本来就不注入任何东西），专用服少一处类加载风险。
+// 未来正式实施时：加 waila 的 compileOnly 依赖 + 写全 4 个参数（不用 MixinExtras sugar），
+// 再把本类重新登记回配置。
 @Mixin(value = BaseMetaTileEntity.class, remap = false)
 public abstract class MixinBaseMetaTileEntityWaila {
 
