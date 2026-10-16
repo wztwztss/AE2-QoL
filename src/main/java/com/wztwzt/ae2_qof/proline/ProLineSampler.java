@@ -58,7 +58,8 @@ public final class ProLineSampler {
 
         java.util.List<String> active = ProLineManager.activeLineIds();
         // 长期驻留审计：非活跃/已删除产线的退避与连败表立即清理（防多轮记忆无界增长）
-        for (String stale : BACKOFF.keySet().toArray(new String[0])) {
+        for (String stale : BACKOFF.keySet()
+            .toArray(new String[0])) {
             if (!active.contains(stale)) {
                 BACKOFF.remove(stale);
                 streak.remove(stale);

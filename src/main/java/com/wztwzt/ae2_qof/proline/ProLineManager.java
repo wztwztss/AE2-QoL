@@ -85,14 +85,12 @@ public final class ProLineManager {
     public static ProductionLine createLine(EntityPlayer player, String name, String networkId, int dim, int x, int y,
         int z) {
         if (!ProLineGate.isPresent()) {
-            send(player, net.minecraft.util.StatCollector
-                .translateToLocal("ae2_qof.proline.chat.needs_su"));
+            send(player, net.minecraft.util.StatCollector.translateToLocal("ae2_qof.proline.chat.needs_su"));
             return null;
         }
         Object team = ProLineGate.teamOfPlayer(player);
         if (team == null) {
-            send(player, net.minecraft.util.StatCollector
-                .translateToLocal("ae2_qof.proline.chat.needs_team"));
+            send(player, net.minecraft.util.StatCollector.translateToLocal("ae2_qof.proline.chat.needs_team"));
             return null;
         }
         ProLineData data = dataOf(player);
@@ -102,8 +100,10 @@ public final class ProLineManager {
             if (l.ownerUuid != null && l.ownerUuid.equals(String.valueOf(player.getUniqueID()))) same++;
         }
         if (same >= ProductionLine.MAX_LINES_PER_TEAM) {
-            send(player, net.minecraft.util.StatCollector
-                .translateToLocalFormatted("ae2_qof.proline.chat.max_lines", ProductionLine.MAX_LINES_PER_TEAM));
+            send(
+                player,
+                net.minecraft.util.StatCollector
+                    .translateToLocalFormatted("ae2_qof.proline.chat.max_lines", ProductionLine.MAX_LINES_PER_TEAM));
             return null;
         }
         ProductionLine line = new ProductionLine();
@@ -135,8 +135,9 @@ public final class ProLineManager {
         RUNNING.remove(lineId);
         ACTIVE_LINES.remove(lineId);
         if (!confirmedByChat) MyMod.LOG.info("[AE2QoL] 产线 {} 已删除（GUI 二次确认）", lineId);
-        send(player, net.minecraft.util.StatCollector
-                .translateToLocalFormatted("ae2_qof.proline.chat.deleted", line.name));
+        send(
+            player,
+            net.minecraft.util.StatCollector.translateToLocalFormatted("ae2_qof.proline.chat.deleted", line.name));
         return true;
     }
 
@@ -160,8 +161,10 @@ public final class ProLineManager {
         ProductionLine line = data == null ? null : data.findLine(lineId);
         if (line == null || step == null || !canEdit(player, line)) return null;
         if (line.steps.size() >= ProductionLine.MAX_STEPS) {
-            send(player, net.minecraft.util.StatCollector
-                .translateToLocalFormatted("ae2_qof.proline.chat.max_steps", ProductionLine.MAX_STEPS));
+            send(
+                player,
+                net.minecraft.util.StatCollector
+                    .translateToLocalFormatted("ae2_qof.proline.chat.max_steps", ProductionLine.MAX_STEPS));
             return null;
         }
         line.steps.add(step);
@@ -261,8 +264,10 @@ public final class ProLineManager {
             for (ProductionStep os : other.steps) {
                 if (os.machines.contains(ref)) {
                     if (other == line) continue;
-                    send(player, net.minecraft.util.StatCollector
-                .translateToLocalFormatted("ae2_qof.proline.chat.machine_conflict", other.name, os.name));
+                    send(
+                        player,
+                        net.minecraft.util.StatCollector
+                            .translateToLocalFormatted("ae2_qof.proline.chat.machine_conflict", other.name, os.name));
                     return false;
                 }
             }

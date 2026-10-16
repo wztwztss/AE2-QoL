@@ -46,8 +46,10 @@ public class ItemProductionLineCard extends Item {
         if (world.isRemote || player == null) return true;
         NBTTagCompound tag = stack.getTagCompound();
         if (tag == null || !tag.hasKey("PLLine")) {
-            player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + net.minecraft.util.StatCollector.
-                translateToLocal("ae2_qof.proline.card.no_target")));
+            player.addChatMessage(
+                new ChatComponentText(
+                    EnumChatFormatting.RED
+                        + net.minecraft.util.StatCollector.translateToLocal("ae2_qof.proline.card.no_target")));
             return true;
         }
         String lineId = tag.getString("PLLine");
@@ -64,8 +66,10 @@ public class ItemProductionLineCard extends Item {
             }
         } catch (Throwable ignored) {}
         if (!ok) {
-            player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + net.minecraft.util.StatCollector.
-                translateToLocal("ae2_qof.proline.card.not_gt")));
+            player.addChatMessage(
+                new ChatComponentText(
+                    EnumChatFormatting.RED
+                        + net.minecraft.util.StatCollector.translateToLocal("ae2_qof.proline.card.not_gt")));
             return true;
         }
 
@@ -77,8 +81,8 @@ public class ItemProductionLineCard extends Item {
             if (chunkTeam != null && playerTeam != null && chunkTeam != playerTeam) {
                 player.addChatMessage(
                     new ChatComponentText(
-                        EnumChatFormatting.RED
-                            + net.minecraft.util.StatCollector.translateToLocal("ae2_qof.proline.card.chunk_not_team")));
+                        EnumChatFormatting.RED + net.minecraft.util.StatCollector
+                            .translateToLocal("ae2_qof.proline.card.chunk_not_team")));
                 return true;
             }
         }
@@ -86,9 +90,10 @@ public class ItemProductionLineCard extends Item {
         boolean done = ProLineManager.bindMachine(resolveMp(player), lineId, stepId, ref);
         player.addChatMessage(
             new ChatComponentText(
-                done
-                    ? EnumChatFormatting.GREEN + net.minecraft.util.StatCollector.translateToLocal("ae2_qof.proline.card.ok")
-                    : EnumChatFormatting.RED + net.minecraft.util.StatCollector.translateToLocal("ae2_qof.proline.card.fail")));
+                done ? EnumChatFormatting.GREEN
+                    + net.minecraft.util.StatCollector.translateToLocal("ae2_qof.proline.card.ok")
+                    : EnumChatFormatting.RED
+                        + net.minecraft.util.StatCollector.translateToLocal("ae2_qof.proline.card.fail")));
         return true;
     }
 

@@ -412,12 +412,16 @@ public final class ProLinePage {
         out.add(
             EnumChatFormatting.GRAY + line.name
                 + (line.linePaused
-                    ? EnumChatFormatting.DARK_PURPLE + "〔" + StatCollector.translateToLocal("ae2_qof.proline.line_paused") + "〕"
+                    ? EnumChatFormatting.DARK_PURPLE + "〔"
+                        + StatCollector.translateToLocal("ae2_qof.proline.line_paused")
+                        + "〕"
                     : "")
                 + (line.effectiveNetworkId()
                     .isEmpty()
-                    ? EnumChatFormatting.RED + "〔" + StatCollector.translateToLocal("ae2_qof.proline.scope_missing") + "〕"
-                    : ""));
+                        ? EnumChatFormatting.RED + "〔"
+                            + StatCollector.translateToLocal("ae2_qof.proline.scope_missing")
+                            + "〕"
+                        : ""));
         // wiki start[] 期望边界显示（4.2.0 名称解析前 raw 名直读）：正=外部投入，负=期望产出
         if (!line.startExpected.isEmpty()) {
             StringBuilder expect = new StringBuilder();
@@ -428,8 +432,7 @@ public final class ProLinePage {
                     .append(e.getValue());
             }
             out.add(
-                EnumChatFormatting.DARK_AQUA
-                    + StatCollector.translateToLocal("ae2_qof.proline.sum.target")
+                EnumChatFormatting.DARK_AQUA + StatCollector.translateToLocal("ae2_qof.proline.sum.target")
                     + " "
                     + expect);
         }
