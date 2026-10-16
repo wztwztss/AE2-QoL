@@ -787,3 +787,20 @@ ae2_qof.proline.none_selected=No step selected (click a step row first)
 ae2_qof.proline.import.title=Paste huijiwiki RecipeCalculator JSON (<=28KB)
 ae2_qof.proline.import.go=Parse & Create
 ae2_qof.proline.import.chinese_names=Note: Chinese wiki names may resolve as "unregistered" on dedicated servers; singleplayer is fine
+
+ae2_qof.proline.chat.prefix=Line
+ae2_qof.proline.chat.needs_su=ServerUtilities not detected; production-line feature disabled
+ae2_qof.proline.chat.needs_team=You have no team (create one with ServerUtilities first)
+ae2_qof.proline.chat.max_lines=Line limit reached (%s per team)
+ae2_qof.proline.chat.max_steps=Step limit reached (%s)
+ae2_qof.proline.chat.deleted=Deleted line: %s
+ae2_qof.proline.chat.machine_conflict=Machine already in line [%s / %s] - one machine belongs to one line
+ae2_qof.proline.card.no_target=Binding card has no target: select a step in the terminal first
+ae2_qof.proline.card.not_gt=Not a GT multiblock machine; cannot bind
+ae2_qof.proline.card.chunk_not_team=Machine chunk is no longer owned by your team
+ae2_qof.proline.card.ok=Machine bound
+ae2_qof.proline.card.fail=Binding failed (see chat/log)
+ae2_qof.proline.line_paused=Line paused
+ae2_qof.proline.scope_missing=scope: —
+ae2_qof.proline.sum.target=Boundary(start)
+

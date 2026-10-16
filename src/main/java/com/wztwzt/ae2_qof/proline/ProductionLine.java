@@ -62,6 +62,13 @@ public final class ProductionLine {
     /** 速率环形缓冲：key → 最近样本。10s 一个样本，环形上限 180 点=30 分钟。内存态。 */
     public final transient Map<String, DequeSample> samples = new LinkedHashMap<>();
 
+    /**
+     * 外部边界期望（wiki start[]）：raw 物品名 → 数量（正=外部净消耗，负=期望净产出）。
+     * 4.1.0 中 raw 名尚未解析成注册键，先原样持久化并在汇总页显示；4.2.0 名称解析器上线后
+     * 用它对照累计列亮"达标/未达标"。
+     */
+    public final Map<String, Long> startExpected = new LinkedHashMap<>();
+
     public ProductionLine() {
         this.id = newId();
         this.createdAtMs = System.currentTimeMillis();
@@ -137,6 +144,17 @@ public final class ProductionLine {
             cl.appendTag(ct);
         }
         tag.setTag("Cumu", cl);
+        // start[] 期望边界持久化（4.2.0 名称解析前原样存 raw）
+        if (!startExpected.isEmpty()) {
+            NBTTagList sExp = new NBTTagList();
+            for (Map.Entry<String, Long> e : startExpected.entrySet()) {
+                NBTTagCompound st = new NBTTagCompound();
+                st.setString("Raw", e.getKey());
+                st.setLong("Amt", e.getValue());
+                sExp.appendTag(st);
+            }
+            tag.setTag("SExp", sExp);
+        }
         return tag;
     }
 
@@ -167,6 +185,14 @@ public final class ProductionLine {
             if (pid.length() > 0) line.pausedStepIds.add(pid);
         }
         line.cumulative.clear();
+        line.startExpected.clear();
+        if (tag.hasKey("SExp")) {
+            NBTTagList sExp = tag.getTagList("SExp", 10);
+            for (int i = 0; i < sExp.tagCount(); i++) {
+                NBTTagCompound st = sExp.getCompoundTagAt(i);
+                if (st.hasKey("Raw")) line.startExpected.put(st.getString("Raw"), st.getLong("Amt"));
+            }
+        }
         NBTTagList cl = tag.getTagList("Cumu", 10);
         for (int i = 0; i < cl.tagCount(); i++) {
             NBTTagCompound ct = cl.getCompoundTagAt(i);

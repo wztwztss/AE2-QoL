@@ -788,3 +788,20 @@ ae2_qof.proline.none_selected=未选中步骤（先点步骤行）
 ae2_qof.proline.import.title=粘贴 huijiwiki RecipeCalculator JSON（≤28KB）
 ae2_qof.proline.import.go=解析并创建
 ae2_qof.proline.import.chinese_names=提示：名字用 wiki 中文名时，专用服上部分名称可能解析为“未注册”，单人客户端无此问题
+
+ae2_qof.proline.chat.prefix=产线
+ae2_qof.proline.chat.needs_su=未检测到 ServerUtilities，产线功能不可用
+ae2_qof.proline.chat.needs_team=你没有团队（用 ServerUtilities 建队后再来）——产线按团队归属
+ae2_qof.proline.chat.max_lines=产线数量已达上限（%s 条/团队）
+ae2_qof.proline.chat.max_steps=步骤数已达上限（%s）
+ae2_qof.proline.chat.deleted=已删除产线：%s
+ae2_qof.proline.chat.machine_conflict=该机器已在产线【%s · %s】里——一台机器只属一条产线
+ae2_qof.proline.card.no_target=绑定卡没有目标：先在库存统计终端·产线页选中步骤再写卡
+ae2_qof.proline.card.not_gt=这里不是 GT 多方块机器，不能绑
+ae2_qof.proline.card.chunk_not_team=该机器所在区块已不属于你的团队（目标区块被转他人）
+ae2_qof.proline.card.ok=绑定成功
+ae2_qof.proline.card.fail=绑定失败（产线/步骤校验未通过，见聊天与日志）
+ae2_qof.proline.line_paused=整线已暂停
+ae2_qof.proline.scope_missing=口径：—
+ae2_qof.proline.sum.target=期望边界(start)
+

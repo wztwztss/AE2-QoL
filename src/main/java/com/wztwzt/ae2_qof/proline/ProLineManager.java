@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.world.WorldServer;
 
 import com.wztwzt.ae2_qof.MyMod;
@@ -84,12 +85,14 @@ public final class ProLineManager {
     public static ProductionLine createLine(EntityPlayer player, String name, String networkId, int dim, int x, int y,
         int z) {
         if (!ProLineGate.isPresent()) {
-            send(player, "未检测到 ServerUtilities，产线功能不可用");
+            send(player, net.minecraft.util.StatCollector
+                .translateToLocal("ae2_qof.proline.chat.needs_su"));
             return null;
         }
         Object team = ProLineGate.teamOfPlayer(player);
         if (team == null) {
-            send(player, "你没有团队（用 ServerUtilities 建队后再来）——产线按团队归属");
+            send(player, net.minecraft.util.StatCollector
+                .translateToLocal("ae2_qof.proline.chat.needs_team"));
             return null;
         }
         ProLineData data = dataOf(player);
@@ -99,7 +102,8 @@ public final class ProLineManager {
             if (l.ownerUuid != null && l.ownerUuid.equals(String.valueOf(player.getUniqueID()))) same++;
         }
         if (same >= ProductionLine.MAX_LINES_PER_TEAM) {
-            send(player, "产线数量已达上限（" + ProductionLine.MAX_LINES_PER_TEAM + " 条/团队）");
+            send(player, net.minecraft.util.StatCollector
+                .translateToLocalFormatted("ae2_qof.proline.chat.max_lines", ProductionLine.MAX_LINES_PER_TEAM));
             return null;
         }
         ProductionLine line = new ProductionLine();
@@ -131,7 +135,8 @@ public final class ProLineManager {
         RUNNING.remove(lineId);
         ACTIVE_LINES.remove(lineId);
         if (!confirmedByChat) MyMod.LOG.info("[AE2QoL] 产线 {} 已删除（GUI 二次确认）", lineId);
-        send(player, "已删除产线：" + line.name);
+        send(player, net.minecraft.util.StatCollector
+                .translateToLocalFormatted("ae2_qof.proline.chat.deleted", line.name));
         return true;
     }
 
@@ -155,7 +160,8 @@ public final class ProLineManager {
         ProductionLine line = data == null ? null : data.findLine(lineId);
         if (line == null || step == null || !canEdit(player, line)) return null;
         if (line.steps.size() >= ProductionLine.MAX_STEPS) {
-            send(player, "步骤数已达上限（" + ProductionLine.MAX_STEPS + "）");
+            send(player, net.minecraft.util.StatCollector
+                .translateToLocalFormatted("ae2_qof.proline.chat.max_steps", ProductionLine.MAX_STEPS));
             return null;
         }
         line.steps.add(step);
@@ -255,7 +261,8 @@ public final class ProLineManager {
             for (ProductionStep os : other.steps) {
                 if (os.machines.contains(ref)) {
                     if (other == line) continue;
-                    send(player, "该机器已在产线【" + other.name + " · " + os.name + "】里——一台机器只属一条产线");
+                    send(player, net.minecraft.util.StatCollector
+                .translateToLocalFormatted("ae2_qof.proline.chat.machine_conflict", other.name, os.name));
                     return false;
                 }
             }
@@ -326,7 +333,12 @@ public final class ProLineManager {
 
     private static void send(EntityPlayer player, String msg) {
         if (player != null) {
-            player.addChatMessage(new net.minecraft.util.ChatComponentText("[产线] " + msg));
+            player.addChatMessage(
+                new net.minecraft.util.ChatComponentText(
+                    EnumChatFormatting.AQUA + "["
+                        + net.minecraft.util.StatCollector.translateToLocal("ae2_qof.proline.chat.prefix")
+                        + "] "
+                        + msg));
         }
     }
 }

@@ -92,13 +92,13 @@ public final class ProLineImporter {
                                 name = token.substring(0, sp);
                             } catch (NumberFormatException ignored) {}
                         }
-                        // v1 只报错不入行（空 key 行只会在汇总里产生空噪声；4.2.0 名称解析后转条目）
-                        result.errors.add("start 名称未解析成注册键：" + name + "（数量 " + amount + "）");
+                        // v1：raw 名先持久化为"外部边界期望"，不丢弃（4.2.0 名称解析后转真实键）
+                        line.startExpected.put(name, amount);
                     } else if (el.isJsonObject()) {
                         JsonObject st = el.getAsJsonObject();
                         if (st.has("name")) {
                             long amount = st.has("amount") ? jLong(st, "amount") : 1L;
-                            result.errors.add("start 名称未解析成注册键：" + jString(st, "name") + "（数量 " + amount + "）");
+                            line.startExpected.put(jString(st, "name"), amount);
                         } else {
                             fillRows(
                                 st.has("input") ? st.get("input") : new JsonArray(),
@@ -108,14 +108,14 @@ public final class ProLineImporter {
                     }
                 }
             }
-            // start 旧版对象形态（如 {"海晶酸": -80000}）：逐条报"未解析"，不做静默丢弃
+            // start 旧版对象形态（如 {"海晶酸": -80000}）：逐条存"外部边界期望"，不静默丢弃
             if (obj.has("start") && obj.get("start")
                 .isJsonObject()) {
                 for (java.util.Map.Entry<String, JsonElement> e : obj.getAsJsonObject("start")
                     .entrySet()) {
                     long amount = e.getValue()
                         .isJsonPrimitive() ? jPrimitiveLong(e.getValue()) : 1L;
-                    result.errors.add("start 名称未解析成注册键：" + e.getKey() + "（数量 " + amount + "）");
+                    line.startExpected.put(e.getKey(), amount);
                 }
             }
             if (obj.has("env") && obj.get("env")

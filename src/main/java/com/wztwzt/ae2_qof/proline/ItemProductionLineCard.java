@@ -46,7 +46,8 @@ public class ItemProductionLineCard extends Item {
         if (world.isRemote || player == null) return true;
         NBTTagCompound tag = stack.getTagCompound();
         if (tag == null || !tag.hasKey("PLLine")) {
-            player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "绑定卡没有目标：先在库存统计终端·产线页选中步骤再写卡"));
+            player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + net.minecraft.util.StatCollector.
+                translateToLocal("ae2_qof.proline.card.no_target")));
             return true;
         }
         String lineId = tag.getString("PLLine");
@@ -63,7 +64,8 @@ public class ItemProductionLineCard extends Item {
             }
         } catch (Throwable ignored) {}
         if (!ok) {
-            player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "这里不是 GT 多方块机器，不能绑"));
+            player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + net.minecraft.util.StatCollector.
+                translateToLocal("ae2_qof.proline.card.not_gt")));
             return true;
         }
 
@@ -73,7 +75,10 @@ public class ItemProductionLineCard extends Item {
             Object chunkTeam = ProLineGate.teamOfChunk(world.provider.dimensionId, x >> 4, z >> 4);
             Object playerTeam = ProLineGate.teamOfPlayer(resolveMp(player));
             if (chunkTeam != null && playerTeam != null && chunkTeam != playerTeam) {
-                player.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "该机器所在区块已不属于你的团队（目标区块被转他人）"));
+                player.addChatMessage(
+                    new ChatComponentText(
+                        EnumChatFormatting.RED
+                            + net.minecraft.util.StatCollector.translateToLocal("ae2_qof.proline.card.chunk_not_team")));
                 return true;
             }
         }
@@ -81,7 +86,9 @@ public class ItemProductionLineCard extends Item {
         boolean done = ProLineManager.bindMachine(resolveMp(player), lineId, stepId, ref);
         player.addChatMessage(
             new ChatComponentText(
-                done ? EnumChatFormatting.GREEN + "绑定成功" : EnumChatFormatting.RED + "绑定失败（产线/步骤校验未通过，见聊天与日志）"));
+                done
+                    ? EnumChatFormatting.GREEN + net.minecraft.util.StatCollector.translateToLocal("ae2_qof.proline.card.ok")
+                    : EnumChatFormatting.RED + net.minecraft.util.StatCollector.translateToLocal("ae2_qof.proline.card.fail")));
         return true;
     }
 

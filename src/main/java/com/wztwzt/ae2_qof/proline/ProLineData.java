@@ -81,6 +81,7 @@ public class ProLineData extends WorldSavedData {
     }
 
     public ProductionLine findLine(String lineId) {
+        // 占位字段 isDirty 已移除（父类 WorldSavedData 自带 markDirty），避免歧义
         if (lineId == null) return null;
         for (ProductionLine l : lines) if (l.id.equals(lineId)) return l;
         return null;
@@ -94,6 +95,4 @@ public class ProLineData extends WorldSavedData {
         }
         return null;
     }
-
-    public boolean isDirty;
 }

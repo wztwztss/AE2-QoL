@@ -411,9 +411,28 @@ public final class ProLinePage {
         if (line == null) return out;
         out.add(
             EnumChatFormatting.GRAY + line.name
-                + (line.linePaused ? EnumChatFormatting.DARK_PURPLE + "〔整线已暂停〕" : "")
+                + (line.linePaused
+                    ? EnumChatFormatting.DARK_PURPLE + "〔" + StatCollector.translateToLocal("ae2_qof.proline.line_paused") + "〕"
+                    : "")
                 + (line.effectiveNetworkId()
-                    .isEmpty() ? EnumChatFormatting.RED + "〔口径：—〕" : ""));
+                    .isEmpty()
+                    ? EnumChatFormatting.RED + "〔" + StatCollector.translateToLocal("ae2_qof.proline.scope_missing") + "〕"
+                    : ""));
+        // wiki start[] 期望边界显示（4.2.0 名称解析前 raw 名直读）：正=外部投入，负=期望产出
+        if (!line.startExpected.isEmpty()) {
+            StringBuilder expect = new StringBuilder();
+            for (Map.Entry<String, Long> e : line.startExpected.entrySet()) {
+                if (expect.length() > 0) expect.append("  ");
+                expect.append(e.getKey())
+                    .append('=')
+                    .append(e.getValue());
+            }
+            out.add(
+                EnumChatFormatting.DARK_AQUA
+                    + StatCollector.translateToLocal("ae2_qof.proline.sum.target")
+                    + " "
+                    + expect);
+        }
         for (String key : ProLineSummary.externalInputs(line)) {
             out.add(sumRow(StatCollector.translateToLocal("ae2_qof.proline.sum.in"), key, line, 0));
         }
