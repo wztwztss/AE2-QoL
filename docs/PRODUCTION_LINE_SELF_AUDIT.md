@@ -25,6 +25,16 @@
 1. **ProLinePage 关闭 清理**：addCloseListener 里清 `SELECTED_LINE / LAST_STEP / IMPORT_STAGED / IMPORT_FEEDBACK / DEL_ARM / DEL_ARM_LINE`（按玩家 UUID 匹配），不再长驻。
 2. **ProLineSampler 长期驻留 key GC**：每 10 秒对照活跃产线集合，将不在列表里的 lineId 从 `BACKOFF / streak` 移除，防长跑积累。
 
+## 本轮已修（2026-10-16，第 3 轮：可发现性/文档同步）
+
+1. **绑定卡挂主创造标签**：`ItemProductionLineCard` 构造器补 `setCreativeTab(AE2QoLCreativeTab.INSTANCE)`——未挂创造页时只能 `/give` 或 NEI 假槽搜到，生存模式不可发现。
+2. **绑定卡生存配方**：4 张纸 + 1 铁锭的 shaped（`GameRegistry.addShapedRecipe`，失败仅 WARN 不崩溃）。
+3. **README 版本同步**：`README.md` / `README.en.md` 版本行与安装文件名 3.35.0-fix7 → 4.1.0（`mcmod.info`/`gradle.properties` 已在 6c20bc6 同步）。
+
+### 审计备注（不改动，属文档化）
+- MixinCraftingCPUCluster 的 `@Shadow` 混淆映射提示为**存量警告**（AE2 上游字段）历轮存在，与本功能无关，不修（修法是升 AE2 依赖/改 mixin 目标，超出本功能范围）。
+- `Special:Export` 批量抓取链路已验证到 502/403 为站点故障，恢复后可直接用 `tools/wiki/presets_extract.mjs`/`xml_to_presets.mjs` 扩产线库。
+
 ## 待后续轮次处理（留档）
 
 - 产线 Manager 的聊天提示（`send()`）有硬编码中文，应走 StatCollector（**建议 4.2.0**，不影响 UI 主路径，也非玩家功能）。
@@ -43,5 +53,10 @@
 ### 轮次 2（2026-10-16）
 - 构建 `BUILD=0`（离线）。全搜索禁删除一致（git log --diff-filter=D 为 0）。
 - UI 关闭清理 + 采样 Map GC 两处改动，均已提交 `20b2fa4`。
+
+### 轮次 3（2026-10-16）
+- 构建 `BUILD=0`（离线），`presets: 7` 入 jar 核对。
+- 提交 `65134ba`：卡创造标签 + 生存配方 + README 4.1.0。
+- `git log --diff-filter=D --since=本日 | wc -l = 0`（无删除复核）。
 
 > 提醒：本文件只做主记录，后续轮次请在末尾追加（保持上轮快照 + 新发现），便于跨会话追溯。
