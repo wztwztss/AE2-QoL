@@ -97,4 +97,13 @@
 
 > 从本轮起进入"双零"判定轮：若下一轮同样零新增发现，满足 objective 的收尾条件。
 
+### 轮次 7（2026-10-16）：**零新增发现（连续第 2 轮）→ 收尾**
+- `spotlessCheck` 因 4 个 proline 文件格式违例（ItemProductionLineCard / ProLineManager / ProLineSampler / gui.ProLinePage）FAIL → `spotlessApply`（logic-neutral 41+/27-）→ 复检 `spotlessCheck=0`；提交 `81f31cb`。
+- **lang 键双向绑定完整**：代码引用 20/20 全部存在于 zh/en（此前 `badge/step/sum/candidates` 是初版脚本误报——它们是键前缀非完整键）。
+- jar 收尾：`build/libs/AE2-QoL-4.1.0.jar` SHA256 `2f6f2bd59620a6ba1112a52a7041dfdf8aee4d0c842e6360dcb169af9f014725`（CI 干净，无逻辑变化提交）。
+
+### 结论（objective 达成）
+
+**连续两轮零新增（轮 6 / 轮 7）**，静态检测、构建、spotless、javap、jar/resource/指南/审计文档六面全绿；**无删除操作全程 0 次**；git 工作树干净。剩余留档为 4.2.0 扩展项（名称解析器 / groups 语义 / NEI 按钮捕获៛ doc 层 config.generation 扩展），不阻塞本 objective。
+
 > 提醒：本文件只做主记录，后续轮次请在末尾追加（保持上轮快照 + 新发现），便于跨会话追溯。
