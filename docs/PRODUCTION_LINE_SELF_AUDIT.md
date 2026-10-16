@@ -86,4 +86,15 @@
 - 构建 `BUILD=0`；`assets/ae2_qof/guidenh/{_zh_cn,_en_us}/{index.md,proline.md}` 入 jar 核对通过。
 - 提交 `01d6c46`（GuideNH proline 页双语 + index 24 项）。
 
+### 轮次 6（2026-10-16）：**零新增发现**
+静态复检覆盖：
+- 数据流断点（sampler 定时/GC/存档 load+set+markDirty/startExpected 持久键）5 项全部命中预期路径；
+- ProLinePage→ProLineManager 调用面 **10/10 全部接线**；ProLinePage 内 `StatCollector` 15 处、硬编码 CJK 字符串 0 处；
+- 7 条预置产线的结构体检（steps=8~49、branch/branches 三形态、start arr/map 双形态）全部在 `MAX_STEPS=64` 内且解析器覆盖；
+- Guide md 36 个双语文件：title 有 36/36，链接 0 破损；
+- `javap` 产物字节码：`ProductionLine.startExpected/readNbt/writeNbt`、`ProLineManager.applyPauseToStep/applyWorkAllowed/runState/touchActive` 成员全部到位，与 src 一致；
+- 无删除复核仍为 0。
+
+> 从本轮起进入"双零"判定轮：若下一轮同样零新增发现，满足 objective 的收尾条件。
+
 > 提醒：本文件只做主记录，后续轮次请在末尾追加（保持上轮快照 + 新发现），便于跨会话追溯。
