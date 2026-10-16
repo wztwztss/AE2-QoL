@@ -44,6 +44,8 @@ public final class ProLineImporter {
         ProductionLine line = new ProductionLine();
         Result result = new Result(line);
         try {
+            // 玩家会原样粘贴 wiki 模板：剥掉 {{RecipeCalculator|...}} 模板头尾与 <!-- --> 注释（huijiwiki 实测形态）
+            json = sanitize(json);
             JsonElement root = new JsonParser().parse(json);
             if (!root.isJsonObject()) {
                 result.errors.add("顶层必须是 JSON 对象");
@@ -66,8 +68,8 @@ public final class ProLineImporter {
                     ProductionStep ps = new ProductionStep();
                     ps.name = jString(st, "name");
                     ps.machineType = jString(st, "type");
-                    ps.branch = jString(st, "branch");
-                    ps.hierarchy = jString(st, "hierarchy");
+                    ps.branch = jStringOrFirst(st, "branch");
+                    ps.hierarchy = jStringOrFirst(st, "hierarchy");
                     fillRows(tokenArray(st.get("input")), ps.inputs, result);
                     fillRows(tokenArray(st.get("output")), ps.outputs, result);
                     line.steps.add(ps);
@@ -96,10 +98,15 @@ public final class ProLineImporter {
                         result.errors.add("start 名称未解析成注册键：" + name + "（数量 " + amount + "）");
                     } else if (el.isJsonObject()) {
                         JsonObject st = el.getAsJsonObject();
-                        fillRows(
-                            st.has("input") ? st.get("input") : new JsonArray(),
-                            ensureStartStep(line).inputs,
-                            result);
+                        if (st.has("name")) {
+                            long amount = st.has("amount") ? jLong(st, "amount") : 1L;
+                            result.errors.add("start 名称未解析成注册键：" + jString(st, "name") + "（数量 " + amount + "）");
+                        } else {
+                            fillRows(
+                                st.has("input") ? st.get("input") : new JsonArray(),
+                                ensureStartStep(line).inputs,
+                                result);
+                        }
                     }
                 }
             }
@@ -163,6 +170,51 @@ public final class ProLineImporter {
         ps.name = "（起点记账）";
         line.steps.add(ps);
         return ps;
+    }
+
+    /**
+     * 粘贴净处理（huijiwiki 实测形态，2026-10-16 用户提供独居石主线原文）：
+     * ①剥 {@code <!-- -->}（wiki 注释会被 Gson 判错）；②若带 {@code {{RecipeCalculator|...}}}
+     * 模板头，从 "recipeQuery"/"groups" 锚点回退到真 JSON 的根 '{'；③尾部模板 '} }}' 残留逐个剥到可解析。
+     */
+    public static String sanitize(String in) {
+        if (in == null) return "";
+        in = in.replaceAll("(?s)<!--.*?-->", "")
+            .replaceAll("(?s)/\\*.*?\\*/", "");
+        String probe = null;
+        int a = in.indexOf("\"recipeQuery\"");
+        int b = in.indexOf("\"groups\"");
+        int anchor = Math.min(a == -1 ? Integer.MAX_VALUE : a, b == -1 ? Integer.MAX_VALUE : b);
+        if (anchor != Integer.MAX_VALUE) {
+            probe = in.substring(in.lastIndexOf('{', anchor));
+        }
+        if (probe != null) in = probe.trim();
+        // 尾部模板残留：多剥一个 '}' 重试（最多 3 次）
+        for (int i = 0; i < 3; i++) {
+            try {
+                new JsonParser().parse(in);
+                return in;
+            } catch (Throwable t) {
+                int e = in.lastIndexOf('}');
+                if (e > 0) in = in.substring(0, e);
+                else return in;
+            }
+        }
+        return in;
+    }
+
+    /** branch/hierarchy 在 wiki 里常是 ["名字"] 数组：取首元素；字符串形态直接用。 */
+    private static String jStringOrFirst(JsonObject o, String k) {
+        if (!o.has(k)) return "";
+        JsonElement el = o.get(k);
+        if (el.isJsonPrimitive()) return el.getAsString();
+        if (el.isJsonArray() && el.getAsJsonArray()
+            .size() > 0) {
+            JsonElement f = el.getAsJsonArray()
+                .get(0);
+            if (f.isJsonPrimitive()) return f.getAsString();
+        }
+        return "";
     }
 
     /** wiki 的 input/output 可能是数组，也可能是逗号分隔串；统一折成 JSON 数组，元素为 "名字 数量" 记号。 */
