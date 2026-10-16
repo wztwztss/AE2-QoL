@@ -34,6 +34,26 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-16 (120) - **3.35.0-fix12：覆盖板/终端 GUI 聊天提示去重——回调双端各跑一次（P2-3）**
+
+### 一、现象（MUI2 2.3.91 字节码实证）
+`InteractionSyncHandler.onMousePressed` **本地先执行一次回调、再 `syncToServer` 让服务端执行一次**——
+本模组 4 处"只该在服务端发生"的聊天提示没有做端判定 ⇒ 未装 Nexus 时的黄色提示、离线网络的红色提示**显示两遍**。
+
+### 二、本轮改动（用户拍板：修）
+四处回调统一加 `!syncManager.isClient()`（`PanelSyncManager.isClient` 是 MUI2 公开 API）端判定：
+1. `cover/stockmonitor/gui/StockMonitorCoverGui.java`（连接按钮的"未安装 Nexus"提示）；
+2. 同文件断开按钮的"邻接覆盖板不可断开"提示；
+3. `cover/stockmonitor/gui/NetworkSelectPanel.java`（离线网络绑定提示）；
+4. `terminal/StockMonitorTerminalNetworkPanel.java`（同款离线提示）。
+聊天之外的业务动作（开面板/写 networkId）不在本轮范围（多数本就只在服务端有效）。
+
+### 三、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.35.0-fix12.jar`。
+- 待游戏实测（用户执行）：未装 Nexus 点连接按钮、点离线网络、邻接覆盖板点断开——**每个提示只出现一次**（核心验收）。
+
+---
+
 ## 工作区决策记录 2026-10-16 (119) - **3.35.0-fix11：监控页统计饱和化 + 瞬时速率去 int 截断（P2-2）**
 
 ### 一、现象（用户量级下必然触发）

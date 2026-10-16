@@ -87,7 +87,10 @@ public class StockMonitorCoverGui extends CoverBaseGui<StockMonitorCover> {
         InteractionSyncHandler connectAction = new InteractionSyncHandler().setOnMousePressed(mouse -> {
             if (WirelessAeConnector.isNexusAvailable()) {
                 networkPanel.openPanel();
-            } else {
+            } else if (!syncManager.isClient()) {
+                // 3.35.0-fix12（审查 P2-3）：InteractionSyncHandler 回调双端各跑一次
+                //（MUI2 2.3.91 字节码：本地先执行 + syncToServer 再执行一次）——
+                // 聊天提示只该由服务端发，否则玩家看到两遍。
                 net.minecraft.entity.player.EntityPlayer player = syncManager.getPlayer();
                 if (player != null) {
                     player.addChatMessage(
@@ -184,12 +187,15 @@ public class StockMonitorCoverGui extends CoverBaseGui<StockMonitorCover> {
         // 断开连接
         InteractionSyncHandler disconnectAction = new InteractionSyncHandler().setOnMousePressed(mouse -> {
             if (channelSync.getValue() == AeConnector.CHANNEL_NEIGHBOR) {
-                net.minecraft.entity.player.EntityPlayer player = syncManager.getPlayer();
-                if (player != null) {
-                    player.addChatMessage(
-                        new net.minecraft.util.ChatComponentText(
-                            EnumChatFormatting.YELLOW + StatCollector
-                                .translateToLocal("ae2_qof.gui.stock_monitor.cannot_disconnect_neighbor")));
+                // 3.35.0-fix12（P2-3）：提示只由服务端发（回调双端各跑一次，见 connectAction 注释）
+                if (!syncManager.isClient()) {
+                    net.minecraft.entity.player.EntityPlayer player = syncManager.getPlayer();
+                    if (player != null) {
+                        player.addChatMessage(
+                            new net.minecraft.util.ChatComponentText(
+                                EnumChatFormatting.YELLOW + StatCollector
+                                    .translateToLocal("ae2_qof.gui.stock_monitor.cannot_disconnect_neighbor")));
+                    }
                 }
                 return;
             }

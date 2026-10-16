@@ -77,12 +77,15 @@ public final class StockMonitorTerminalNetworkPanel {
                     InteractionSyncHandler.class,
                     () -> new InteractionSyncHandler().setOnMousePressed(mouse -> {
                         if (!online) {
-                            EntityPlayer p = panelSyncManager.getPlayer();
-                            if (p != null) {
-                                p.addChatMessage(
-                                    new net.minecraft.util.ChatComponentText(
-                                        EnumChatFormatting.RED + StatCollector
-                                            .translateToLocal("ae2_qof.gui.stock_monitor.network_offline")));
+                            // 3.35.0-fix12（P2-3）：回调双端各跑一次——提示只由服务端发
+                            if (!panelSyncManager.isClient()) {
+                                EntityPlayer p = panelSyncManager.getPlayer();
+                                if (p != null) {
+                                    p.addChatMessage(
+                                        new net.minecraft.util.ChatComponentText(
+                                            EnumChatFormatting.RED + StatCollector
+                                                .translateToLocal("ae2_qof.gui.stock_monitor.network_offline")));
+                                }
                             }
                             return;
                         }
