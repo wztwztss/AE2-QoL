@@ -301,7 +301,7 @@ ae2_qof.gui.wireless_input_terminal.current_select=电流选择:
 ae2_qof.gui.wireless_input_terminal.voltage_ref=电压档位
 ae2_qof.gui.wireless_input_terminal.current_ref=电流档位
 
-ae2_qof.wireless.bind.success=§a已绑定到无线电网
+ae2_qof.wireless.bind.network.success=§a已绑定到无线电网
 ae2_qof.wireless.unbind.success=§e已解除绑定
 
 # ===== 库存检测覆盖板 =====
@@ -754,6 +754,15 @@ ae2_qof.proline.presets.tip=内置产线模板，点选即建线（之后可 NEI
 ae2_qof.proline.presets.title=预置产线：点击名称即创建
 ae2_qof.proline.presets.empty=预置列表为空（打包未包含数据）
 ae2_qof.proline.presets.row_tip=点击 = 以此模板建线
+ae2_qof.proline.sum.in=输入
+ae2_qof.proline.sum.out=输出
+ae2_qof.proline.sum.cum=累计
+ae2_qof.proline.run_tag=在产
+ae2_qof.proline.step.type=类型:
+ae2_qof.proline.step.out=主产物:
+ae2_qof.proline.bound=已绑
+ae2_qof.proline.no_output=无产物
+ae2_qof.threads.tab.threads=线程
 ae2_qof.proline.new=+新建产线
 ae2_qof.proline.import=wiki 导入
 ae2_qof.proline.hint=点产线行选中；绑定卡须在终端写卡后 Shift+右键机器

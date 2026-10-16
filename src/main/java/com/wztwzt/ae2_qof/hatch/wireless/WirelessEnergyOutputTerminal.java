@@ -177,7 +177,7 @@ public class WirelessEnergyOutputTerminal extends MTEHatchDynamo {
                     aPlayer.addChatMessage(
                         new net.minecraft.util.ChatComponentText(
                             EnumChatFormatting.GREEN
-                                + StatCollector.translateToLocal("ae2_qof.wireless.bind.success")));
+                                + StatCollector.translateToLocal("ae2_qof.wireless.bind.network.success")));
                 }
                 return true;
             }

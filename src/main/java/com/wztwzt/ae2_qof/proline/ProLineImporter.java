@@ -76,7 +76,7 @@ public final class ProLineImporter {
                 }
             }
             if (obj.has("start") && obj.get("start")
-                .isJsonArray() && !obj.has("steps")) {
+                .isJsonArray()) {
                 JsonArray start = obj.getAsJsonArray("start");
                 for (JsonElement el : start) {
                     if (el.isJsonPrimitive()) {
@@ -92,9 +92,7 @@ public final class ProLineImporter {
                                 name = token.substring(0, sp);
                             } catch (NumberFormatException ignored) {}
                         }
-                        ProductionStep ps = ensureStartStep(line);
-                        ps.inputs.add(new ItemRow("", amount, false));
-                        ps.inputs.get(ps.inputs.size() - 1).key = "";
+                        // v1 只报错不入行（空 key 行只会在汇总里产生空噪声；4.2.0 名称解析后转条目）
                         result.errors.add("start 名称未解析成注册键：" + name + "（数量 " + amount + "）");
                     } else if (el.isJsonObject()) {
                         JsonObject st = el.getAsJsonObject();
@@ -108,6 +106,16 @@ public final class ProLineImporter {
                                 result);
                         }
                     }
+                }
+            }
+            // start 旧版对象形态（如 {"海晶酸": -80000}）：逐条报"未解析"，不做静默丢弃
+            if (obj.has("start") && obj.get("start")
+                .isJsonObject()) {
+                for (java.util.Map.Entry<String, JsonElement> e : obj.getAsJsonObject("start")
+                    .entrySet()) {
+                    long amount = e.getValue()
+                        .isJsonPrimitive() ? jPrimitiveLong(e.getValue()) : 1L;
+                    result.errors.add("start 名称未解析成注册键：" + e.getKey() + "（数量 " + amount + "）");
                 }
             }
             if (obj.has("env") && obj.get("env")
@@ -268,6 +276,19 @@ public final class ProLineImporter {
         return o.has(k) && o.get(k)
             .isJsonPrimitive() ? o.get(k)
                 .getAsString() : "";
+    }
+
+    /** start 旧版对象形态里的 long（包装数字直接取，字符串数字也兜住）。 */
+    private static long jPrimitiveLong(JsonElement el) {
+        try {
+            if (el.isJsonPrimitive() && el.getAsJsonPrimitive()
+                .isNumber()) return el.getAsLong();
+            return Long.parseLong(
+                el.getAsString()
+                    .trim());
+        } catch (Throwable t) {
+            return 1L;
+        }
     }
 
     private static long jLong(JsonObject o, String k) {

@@ -110,7 +110,10 @@ public final class ProLineSampler {
         if (world != null && world.blockExists(line.terminalX, line.terminalY, line.terminalZ)) {
             try {
                 te = world.getTileEntity(line.terminalX, line.terminalY, line.terminalZ);
-            } catch (Throwable ignored) {}
+            } catch (Throwable t) {
+                com.wztwzt.ae2_qof.network.ServerTerminalHelper
+                    .warnOnce("proline:terminal-te-read", "锚定终端 TE 读取失败（可能与区块卸载竞态有关）：" + t);
+            }
         }
         IGrid grid = null;
         // 终端是 MTE（挂在 IGregTechTileEntity 上），不是 TileEntity 本体——先取 MTE 再判型
@@ -185,7 +188,10 @@ public final class ProLineSampler {
                 TileEntity te = null;
                 try {
                     te = world.getTileEntity(ref.x, ref.y, ref.z);
-                } catch (Throwable ignored) {}
+                } catch (Throwable t) {
+                    com.wztwzt.ae2_qof.network.ServerTerminalHelper
+                        .warnOnce("proline:machine-te-read", "绑定机器 TE 读取失败（可能与区块卸载竞态有关）：" + t);
+                }
                 if (te instanceof IGregTechTileEntity) {
                     ref.lastSeenEpochMs = nowMs;
                     gregtech.api.interfaces.metatileentity.IMetaTileEntity mte = ((IGregTechTileEntity) te)

@@ -302,7 +302,7 @@ ae2_qof.gui.wireless_input_terminal.current_select=Current:
 ae2_qof.gui.wireless_input_terminal.voltage_ref=Voltage Tiers
 ae2_qof.gui.wireless_input_terminal.current_ref=Current Tiers
 
-ae2_qof.wireless.bind.success=§aBound to wireless network
+ae2_qof.wireless.bind.network.success=§aBound to wireless network
 ae2_qof.wireless.unbind.success=§eUnbound
 
 # ===== Stock Monitor Cover =====
@@ -754,6 +754,14 @@ ae2_qof.proline.presets.tip=Built-in line templates; click to create, then NEI-i
 ae2_qof.proline.presets.title=Presets: click a name to create
 ae2_qof.proline.presets.empty=Empty preset list (no data packaged)
 ae2_qof.proline.presets.row_tip=Click = create line from template
+ae2_qof.proline.sum.in=IN
+ae2_qof.proline.sum.out=OUT
+ae2_qof.proline.sum.cum=Cum
+ae2_qof.proline.run_tag=running
+ae2_qof.proline.step.type=Type:
+ae2_qof.proline.step.out=Main out:
+ae2_qof.proline.bound=bound
+ae2_qof.proline.no_output=No output
 ae2_qof.proline.new=+New Line
 ae2_qof.proline.import=Wiki Import
 ae2_qof.proline.hint=Click a line to select it; program the card in the terminal first

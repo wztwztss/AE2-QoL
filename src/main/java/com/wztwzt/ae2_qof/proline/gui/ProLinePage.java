@@ -397,10 +397,10 @@ public final class ProLinePage {
                 + (line.effectiveNetworkId()
                     .isEmpty() ? EnumChatFormatting.RED + "〔口径：—〕" : ""));
         for (String key : ProLineSummary.externalInputs(line)) {
-            out.add(sumRow("输入", key, line, 0));
+            out.add(sumRow(StatCollector.translateToLocal("ae2_qof.proline.sum.in"), key, line, 0));
         }
         for (String key : ProLineSummary.externalOutputs(line)) {
-            out.add(sumRow("输出", key, line, 1));
+            out.add(sumRow(StatCollector.translateToLocal("ae2_qof.proline.sum.out"), key, line, 1));
         }
         return out;
     }
@@ -414,7 +414,9 @@ public final class ProLinePage {
         long perHour = rate == null || rate.isNaN() ? 0L : (long) (rate * 3600.0);
         return side + " "
             + displayKey(key)
-            + "  累计 "
+            + "  "
+            + StatCollector.translateToLocal("ae2_qof.proline.sum.cum")
+            + " "
             + ProLineSummary.kmg(cum)
             + "  "
             + (rate == null ? "" : "≈" + ProLineSummary.kmg(BigInteger.valueOf(perHour)) + "/h");
@@ -510,9 +512,9 @@ public final class ProLinePage {
                 .overlay(IKey.str((row.seq + 1) + " · " + row.name))
                 .tooltip(
                     t -> t.addLine(IKey.str(row.name))
-                        .addLine(IKey.str("类型: " + row.type))
+                        .addLine(IKey.str(StatCollector.translateToLocal("ae2_qof.proline.step.type") + row.type))
                         .addLine(IKey.str(badge))
-                        .addLine(IKey.str("主产物: " + row.outText)))
+                        .addLine(IKey.str(StatCollector.translateToLocal("ae2_qof.proline.step.out") + row.outText)))
                 .syncHandler(new InteractionSyncHandler().setOnMousePressed(mouse -> {
                     LAST_STEP.put(
                         syncManager.getPlayer()
@@ -809,7 +811,9 @@ public final class ProLinePage {
                 + ","
                 + row.z
                 + "]"
-                + (row.bound ? EnumChatFormatting.AQUA + " （已绑）" : "");
+                + (row.bound
+                    ? EnumChatFormatting.AQUA + "（" + StatCollector.translateToLocal("ae2_qof.proline.bound") + "）"
+                    : "");
             list.child(
                 new ButtonWidget<>().size(290, 20)
                     .background(GuiTextures.BUTTON_CLEAN)
@@ -868,7 +872,11 @@ public final class ProLinePage {
                     // A2：不传服务端定稿的名称串——只传 mteId 与坐标，名称/图标由客户端自己解析
                     out.add(
                         new CandidateRow(
-                            bound ? EnumChatFormatting.AQUA + "（已绑）" : "",
+                            bound
+                                ? EnumChatFormatting.AQUA + "（"
+                                    + StatCollector.translateToLocal("ae2_qof.proline.bound")
+                                    + "）"
+                                : "",
                             "点击绑定/解绑到当前步骤",
                             bound,
                             pos.dim,
@@ -1098,7 +1106,8 @@ public final class ProLinePage {
             int bound = st == null ? s.machines.size() : st[1];
             int badge = ProLineSummary.badgeOf(l, s, st);
             ItemRow main = s.mainOutput();
-            String outText = main == null ? "无产物" : "×" + main.amount;
+            String outText = main == null ? StatCollector.translateToLocal("ae2_qof.proline.no_output")
+                : "×" + main.amount;
             int[] pos = s.machines.isEmpty() ? null
                 : new int[] { s.machines.get(0).dim, s.machines.get(0).x, s.machines.get(0).y, s.machines.get(0).z };
             return new StepRow(
@@ -1107,7 +1116,7 @@ public final class ProLinePage {
                 s.id,
                 s.name == null ? "?" : s.name,
                 s.machineType == null ? "" : s.machineType,
-                running + "/" + bound + " 在产",
+                running + "/" + bound + " " + StatCollector.translateToLocal("ae2_qof.proline.run_tag"),
                 outText,
                 badge,
                 mainIcon(main),
