@@ -120,6 +120,24 @@ public final class ProLinePage {
         Flow column = Flow.column()
             .size(CONTENT_W, PAGE_H)
             .childPadding(2);
+        // P1-019 泄漏审计：产线页关闭时清本会话玩家的选中/绑定目标临时表，
+        // 避免 SELECTED_LINE/LAST_STEP/IMPORT_STAGED/IMPORT_FEEDBACK 在玩家退出后长期驻留。
+        try {
+            final UUID pid = player == null ? null : player.getUniqueID();
+            syncManager.addCloseListener(p -> {
+                try {
+                    if (p == null || p.worldObj.isRemote) return;
+                    UUID id = p.getUniqueID();
+                    if (pid != null && !pid.equals(id)) return; // 自宿主登出清理
+                    SELECTED_LINE.remove(id);
+                    LAST_STEP.remove(id);
+                    IMPORT_STAGED.remove(id);
+                    IMPORT_FEEDBACK.remove(id);
+                    DEL_ARM.remove(id);
+                    DEL_ARM_LINE.remove(id);
+                } catch (Throwable ignored) {}
+            });
+        } catch (Throwable ignored) {}
 
         // ---- 产线列表 ----
         GenericListSyncHandler<LineRow> lines = GenericListSyncHandler.<LineRow>builder()
