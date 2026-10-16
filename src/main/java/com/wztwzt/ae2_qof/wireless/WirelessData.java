@@ -81,6 +81,17 @@ public class WirelessData {
         }
     }
 
+    /**
+     * 3.35.0-fix13（审查 P2-6）：当前全局频道列表的**副本**——供 addChannel 前的上限校验，
+     * 避免暴露 WirelessWorldData 的内部列表。主世界未装载时返回空列表。
+     */
+    public java.util.List<String> getGlobalChannels() {
+        World overworld = net.minecraftforge.common.DimensionManager.getWorld(0);
+        if (overworld == null) return new java.util.ArrayList<String>();
+        return WirelessWorldData.get(overworld)
+            .getActiveChannels();
+    }
+
     public boolean isFrequencyTaken(String freq) {
         if (senderMap.containsKey(freq)) return true;
         World overworld = net.minecraftforge.common.DimensionManager.getWorld(0);

@@ -34,6 +34,28 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-16 (121) - **3.35.0-fix13：无线频道上限双向修复（P2-4 + P2-6 成对）**
+
+### 一、现象（源码逐行实证）
+1. **服务端无上限**（P2-6）：`WirelessActionPacket.handleAddChannel` 对频道名不截断（单条最长 32KB）、
+   总数不设限；`WirelessWorldData.activeChannels` 全部 `markDirty` 写进世界存档——恶意刷频道可撑大存档。
+2. **客户端误伤**（P2-4）：`WirelessChannelSyncPacket.fromBytes` 的 `size > 256 → size = 0` 防攻击夹紧，
+   在服务端频道数超 256 的**合法场景**下把客户端列表静默清空且无日志——两个 bug 组合成"频道一多界面就瞎"。
+
+### 二、本轮改动（用户拍板：成对修）
+1. `WirelessActionPacket` 新增 `MAX_CHANNELS=256`、`MAX_CHANNEL_NAME_LENGTH=64`：
+   `handleAddChannel` 对名字超长先截断并提示；**总数达 256 时拒绝新建**并给玩家明确提示（从源头保证 ≤256）。
+2. `WirelessData` 新增 `getGlobalChannels()`（返回副本，供上限校验）。
+3. `WirelessChannelSyncPacket.fromBytes`：负值才置空；**超限改为读前 256 条 + WARN**（防御纵深——
+   存量旧档超限时显示前 256 条好过全部消失，且服务端已从源头封死新增长）。
+4. 正常玩家（频道 <256、名字 ≤64 字符）零感知。
+
+### 三、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.35.0-fix13.jar`。
+- 待游戏实测（用户执行）：① 建/删频道照常（核心验收）；② 尝试建第 257 个频道被拒并有提示；③ 超长频道名被截断并提示。
+
+---
+
 ## 工作区决策记录 2026-10-16 (120) - **3.35.0-fix12：覆盖板/终端 GUI 聊天提示去重——回调双端各跑一次（P2-3）**
 
 ### 一、现象（MUI2 2.3.91 字节码实证）

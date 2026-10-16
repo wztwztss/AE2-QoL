@@ -32,6 +32,15 @@ public class WirelessActionPacket implements IMessage {
     public static final int ACTION_SET_FREQUENCY = 4;
     public static final int ACTION_TOGGLE_HIGHLIGHT = 5;
 
+    /**
+     * 3.35.0-fix13（审查 P2-4/P2-6 成对）：全局频道上限与名字长度上限。
+     * 客户端 {@code WirelessChannelSyncPacket} 的同步包只收 ≤256 条（防 OOM 夹紧）——
+     * 服务端不把总数封在 256 内，257 个起客户端列表就会"静默清空"（合法场景被误伤）。
+     * 名字限 64 字符：旧实现单条最长 32KB 且全部 markDirty 写进世界存档。
+     */
+    public static final int MAX_CHANNELS = 256;
+    public static final int MAX_CHANNEL_NAME_LENGTH = 64;
+
     private int action;
     private int x, y, z;
     private String channelName;
@@ -156,6 +165,27 @@ public class WirelessActionPacket implements IMessage {
                 .isEmpty()) return;
 
             String channelName = msg.channelName.trim();
+            // 3.35.0-fix13（审查 P2-6/P2-4 成对）：频道名限 64 字符 + 总数限 256。
+            // ① 旧实现名字无截断（单条最长 32KB）且总数无上限，全部 markDirty 写进世界存档；
+            // ② 客户端同步包只收 ≤256 条（超限静默清空）—— 服务端不放行新频道就无法触发误清空。
+            if (channelName.length() > MAX_CHANNEL_NAME_LENGTH) {
+                channelName = channelName.substring(0, MAX_CHANNEL_NAME_LENGTH);
+                player.addChatMessage(
+                    new ChatComponentText(
+                        EnumChatFormatting.YELLOW + "频道名过长，已截断为 " + MAX_CHANNEL_NAME_LENGTH + " 字符"));
+            }
+            if (WirelessData.instance()
+                .getGlobalChannels()
+                .size() >= MAX_CHANNELS
+                && !WirelessData.instance()
+                    .getGlobalChannels()
+                    .contains(channelName)) {
+                player.addChatMessage(
+                    new ChatComponentText(
+                        EnumChatFormatting.RED + "频道数量已达上限（" + MAX_CHANNELS + "），请先删除不用的频道"));
+                syncChannelsToClient(player);
+                return;
+            }
             WirelessData.instance()
                 .addGlobalChannel(channelName);
 
