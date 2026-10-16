@@ -34,6 +34,32 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-16 (125) - **3.35.0-fix17：仓识别反射补负缓存 + getter 缓存（P2-11）**
+
+### 一、现象（源码逐行实证）
+`AdaptiveHostIndex` 的三个反射点全在**周期性热路径**上（`AdaptiveNetTerminal.onPreTick` 每 20 tick 调一次
+`updateParamsFromSlots` + `applyCompatAmpsTick`），且旧实现反复重付代价：
+1. `ratedAmps`：类**没有** `maxAmperes` 字段时（普通 GT `MTEHatchEnergy`/`MTEHatchDynamo` —— 白名单允许放进
+   四个槽位，走的是同一 `else` 分支），`getField` 每次抛 `NoSuchFieldException`（构造异常要填栈），
+   且**失败结果从不写缓存** ⇒ 每个仓每 20 tick 重抛一次；
+2. `getAmperes`：`getMethod("getAmperes")` **完全没有缓存**，每次调用都做一次方法查找；
+3. `writeAmperes`：`setAmperes` 只缓存成功，失败每次重试。
+
+### 二、本轮改动（用户拍板：修）
+新增三组**负缓存**与一组 getter 缓存：`MAX_AMPERES_MISSING` / `GET_AMPERES`（新增缓存）+
+`GET_AMPERES_MISSING` / `SET_AMPERES_MISSING` —— 探测一次即永久跳过，`rateAmps` 的 WARN 语义不变
+（`warnOnce` 本来就按类名去重）。
+**关键设计约束**：负缓存**只对查找失败**（`NoSuchFieldException`/`NoSuchMethodException`）写入；
+**调用期失败不写**（`f.get()`/`invoke()` 抛可能是瞬时问题，下个周期必须仍能重试）——
+否则一次偶发异常会被固化成"该类永久禁用"，这正是审查里"不许静默降级"要避免的方向。
+
+### 三、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.35.0-fix17.jar`。
+- 待游戏实测（用户执行）：① 四个槽位的仓**档位/安培读数不变**（核心验收——负缓存只省代价，不改结果，
+  普通 GT 仓仍按 `maxAmperesIn/Out` 回退值显示）；② TecTech 兼容激光仓的安培周期写入照常生效。
+
+---
+
 ## 工作区决策记录 2026-10-16 (124) - **3.35.0-fix16：畸形动作包 NPE 拦截 + 零注入死 Mixin 摘除 + 配置漂移补齐（P2-14 + P2-16 + 附带发现）**
 
 ### 一、现象（源码 + 协议双重实证）

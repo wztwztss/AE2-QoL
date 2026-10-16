@@ -281,6 +281,33 @@ public final class AdaptiveHostIndex {
     private static final Map<Class<?>, java.lang.reflect.Field> MAX_AMPERES_FIELD = new java.util.concurrent.ConcurrentHashMap<>();
 
     /**
+     * 3.35.0-fix17（审查 P2-11）：反射**负缓存** + getter 缓存。
+     * <p>
+     * 旧实现的三个反射点都在周期性热路径上（{@code AdaptiveNetTerminal.onPreTick} 每 20 tick 一次）
+     * 反复重付代价：
+     * <ul>
+     * <li>{@code ratedAmps}：类**没有** {@code maxAmperes} 字段时（普通 GT {@code MTEHatchEnergy} /
+     * {@code MTEHatchDynamo} —— 白名单允许放进四个槽位），{@code getField} 每次都抛
+     * {@code NoSuchFieldException}（构造异常要填栈，代价远高于一次 map 查询），且失败结果**从不缓存**
+     * ⇒ 每个仓每 20 tick 重抛一次；</li>
+     * <li>{@code getAmperes}：{@code getMethod("getAmperes")} **完全没有缓存**，每次调用都做一次方法查找；</li>
+     * <li>{@code writeAmperes}：{@code setAmperes} 只缓存成功，失败同样每次重试。</li>
+     * </ul>
+     * 负缓存把"这个类没有该成员"也记下来——探测一次即永久跳过。
+     * <p>
+     * ⚠️ 只对**查找失败**（{@code NoSuchFieldException}/{@code NoSuchMethodException}）写负缓存；
+     * 调用期失败（{@code f.get()}/{@code invoke()} 抛）**不写**——那可能是瞬时问题，下个周期应当重试，
+     * 否则一次偶发异常会固化成永久禁用。
+     */
+    private static final java.util.Set<Class<?>> MAX_AMPERES_MISSING = java.util.concurrent.ConcurrentHashMap
+        .newKeySet();
+    private static final Map<Class<?>, Method> GET_AMPERES = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final java.util.Set<Class<?>> GET_AMPERES_MISSING = java.util.concurrent.ConcurrentHashMap
+        .newKeySet();
+    private static final java.util.Set<Class<?>> SET_AMPERES_MISSING = java.util.concurrent.ConcurrentHashMap
+        .newKeySet();
+
+    /**
      * 外来兼容仓的**额定安培**（3.32.0-fix1）。
      *
      * <p>
@@ -294,22 +321,32 @@ public final class AdaptiveHostIndex {
      */
     public static int ratedAmps(MetaTileEntity mte, boolean isOutput, int fallback) {
         if (mte == null) return fallback;
-        try {
-            java.lang.reflect.Field f = MAX_AMPERES_FIELD.get(mte.getClass());
-            if (f == null) {
-                f = mte.getClass()
-                    .getField("maxAmperes");
-                MAX_AMPERES_FIELD.put(mte.getClass(), f);
+        Class<?> cls = mte.getClass();
+        java.lang.reflect.Field f = MAX_AMPERES_FIELD.get(cls);
+        if (f == null && !MAX_AMPERES_MISSING.contains(cls)) {
+            try {
+                f = cls.getField("maxAmperes");
+                MAX_AMPERES_FIELD.put(cls, f);
+            } catch (NoSuchFieldException e) {
+                // 3.35.0-fix17：负缓存 —— 该类确认没有评级字段，此后直接走回退，不再付异常代价
+                MAX_AMPERES_MISSING.add(cls);
+                warnOnce(
+                    "maxAmperes:" + cls.getName(),
+                    "读不到评级字段 maxAmperes，退回 maxAmperesIn/Out（可能含 GT 的 ×1.25 派生）: " + cls.getName(),
+                    null);
+            } catch (Throwable t) {
+                warnOnce("maxAmperes:" + cls.getName(), "探测评级字段 maxAmperes 失败: " + cls.getName(), null);
             }
-            Object v = f.get(mte);
-            if (v instanceof Integer && (Integer) v > 0) return (Integer) v;
-        } catch (Throwable t) {
-            warnOnce(
-                "maxAmperes:" + mte.getClass()
-                    .getName(),
-                "读不到评级字段 maxAmperes，退回 maxAmperesIn/Out（可能含 GT 的 ×1.25 派生）: " + mte.getClass()
-                    .getName(),
-                null);
+        }
+        if (f != null) {
+            try {
+                Object v = f.get(mte);
+                if (v instanceof Integer && (Integer) v > 0) {
+                    return (Integer) v;
+                }
+            } catch (Throwable ignored) {
+                // 调用期失败不写负缓存：下个周期重试
+            }
         }
         try {
             long v = isOutput ? mte.maxAmperesOut() : mte.maxAmperesIn();
@@ -348,34 +385,56 @@ public final class AdaptiveHostIndex {
     }
 
     private static boolean writeAmperes(MetaTileEntity mte, HatchType type, int wanted) {
+        Class<?> cls = mte.getClass();
+        // 3.35.0-fix17（P2-11）：方法查找只做一次（成功入 GET 缓存，失败入负缓存）
+        Method setter = SET_AMPERES.get(cls);
+        if (setter == null) {
+            if (SET_AMPERES_MISSING.contains(cls)) return false;
+            try {
+                setter = cls.getMethod("setAmperes", int.class);
+                SET_AMPERES.put(cls, setter);
+            } catch (NoSuchMethodException e) {
+                SET_AMPERES_MISSING.add(cls);
+                warnOnce(
+                    "compatAmps:" + cls.getName(),
+                    "给 TecTech 兼容激光仓写安培失败（该类可能没有 setAmperes）: " + cls.getName(),
+                    null);
+                return false;
+            }
+        }
         try {
             long cap = type == HatchType.LASER_SOURCE ? mte.maxAmperesIn() : mte.maxAmperesOut();
             if (cap <= 0) cap = wanted;
             int value = (int) Math.min(wanted, cap);
-            Method setter = SET_AMPERES.get(mte.getClass());
-            if (setter == null) {
-                setter = mte.getClass()
-                    .getMethod("setAmperes", int.class);
-                SET_AMPERES.put(mte.getClass(), setter);
-            }
             if (getAmperes(mte) == value) return false;
             setter.invoke(mte, value);
             return true;
         } catch (Throwable t) {
+            // 调用期失败不写负缓存（方法确实存在，可能是瞬时问题 ⇒ 下个周期应重试）
             warnOnce(
-                "compatAmps:" + mte.getClass()
-                    .getName(),
-                "给 TecTech 兼容激光仓写安培失败（该类可能没有 setAmperes）: " + mte.getClass()
-                    .getName(),
+                "compatAmpsWrite:" + cls.getName(),
+                "给 TecTech 兼容激光仓写安培时调用失败: " + cls.getName(),
                 t);
             return false;
         }
     }
 
     private static int getAmperes(MetaTileEntity mte) {
+        Class<?> cls = mte.getClass();
+        // 3.35.0-fix17（P2-11）：旧实现每次调用都 getMethod("getAmperes")（无缓存），
+        // 而本方法在每个兼容仓每个写入周期都会被调用 ⇒ 方法查找被反复支付。
+        Method getter = GET_AMPERES.get(cls);
+        if (getter == null) {
+            if (GET_AMPERES_MISSING.contains(cls)) return -1;
+            try {
+                getter = cls.getMethod("getAmperes");
+                GET_AMPERES.put(cls, getter);
+            } catch (NoSuchMethodException e) {
+                GET_AMPERES_MISSING.add(cls);
+                return -1;
+            }
+        }
         try {
-            Method getter = mte.getClass()
-                .getMethod("getAmperes");
             Object v = getter.invoke(mte);
             return v instanceof Integer ? (Integer) v : -1;
         } catch (Throwable t) {
