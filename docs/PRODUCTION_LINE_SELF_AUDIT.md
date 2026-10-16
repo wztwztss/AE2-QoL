@@ -35,6 +35,13 @@
 - MixinCraftingCPUCluster 的 `@Shadow` 混淆映射提示为**存量警告**（AE2 上游字段）历轮存在，与本功能无关，不修（修法是升 AE2 依赖/改 mixin 目标，超出本功能范围）。
 - `Special:Export` 批量抓取链路已验证到 502/403 为站点故障，恢复后可直接用 `tools/wiki/presets_extract.mjs`/`xml_to_presets.mjs` 扩产线库。
 
+## 本轮已修（2026-10-16，第 4 轮：数据保真 + 聊天 lang 化 + lang 去重）
+
+1. **start[] 期望边界不再丢**：`ProductionLine.startExpected`（raw 名→数量，正=外部投入/负=期望产出）三形态全收（数组对象/旧对象 map/字符串 token），NBT 键 `SExp` 持久化，汇总页首行显示 `期望边界(start) ...`（4.2.0 名称解析后自动变成"达标/未达标"对照）——修复海晶酸线（旧 map）start 语义被当作"未解析错误丢掉"的数据保真 bug。
+2. **ProLineManager 聊天消息 lang 化**（`chat.needs_su/needs_team/max_lines/max_steps/deleted/machine_conflict`），`send()` 前缀 `[产线]` 也走键；绑定卡 5 条聊天同样键值化（`card.no_target/not_gt/chunk_not_team/ok/fail`）。zh/en 两侧 724↔724 无重复。
+3. **lang 去重工具**：新增 `tools/wiki/dedup_proline_lang.mjs`（en 删除中文值行、zh 删除英文值行，proline 域），执行后 zh/en 各 724 键 0 重复 ✓。
+4. 修复 introduce 变量名冲突（`sl`/`sExp`）与 `EnumChatFormatting` 缺失 import。
+
 ## 待后续轮次处理（留档）
 
 - 产线 Manager 的聊天提示（`send()`）有硬编码中文，应走 StatCollector（**建议 4.2.0**，不影响 UI 主路径，也非玩家功能）。
@@ -58,5 +65,9 @@
 - 构建 `BUILD=0`（离线），`presets: 7` 入 jar 核对。
 - 提交 `65134ba`：卡创造标签 + 生存配方 + README 4.1.0。
 - `git log --diff-filter=D --since=本日 | wc -l = 0`（无删除复核）。
+
+### 轮次 4（2026-10-16）
+- 构建 `BUILD=0`；zh/en lang 724↔724、proline 域去重 0；jar `presets.json` 7 条 ✔；无删除复核 0。
+- 提交 `3d71f86`（startExpected 持久化 + 聊天 lang 化 + 去重工具 + 变量名修正）。
 
 > 提醒：本文件只做主记录，后续轮次请在末尾追加（保持上轮快照 + 新发现），便于跨会话追溯。
