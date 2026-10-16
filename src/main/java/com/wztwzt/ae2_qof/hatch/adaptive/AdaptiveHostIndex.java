@@ -372,16 +372,78 @@ public final class AdaptiveHostIndex {
     public static void applyCompatAmps(UUID owner, int frequency, int sourceAmps, int targetAmps) {
         int wantedSource = Math.max(1, sourceAmps);
         int wantedTarget = Math.max(1, targetAmps);
+        // 3.35.0-fix18（审查 P2-12，第 1 级·可证明等价的短路）：网络里没有任何**本模组**仓时，
+        // scan() 内部本来就会把"只有兼容仓、没有本模组仓"的分组丢弃（`g.adaptive.isEmpty()` removeIf）
+        // ⇒ 此分支下必然写不到任何东西。直接返回，省掉每秒一次的全量多方块扫描。
+        AdaptiveNetwork network = AdaptiveNetworkManager.getNetwork(owner, frequency);
+        if (network == null || network.getAllHelpers()
+            .isEmpty()) {
+            return;
+        }
+        // 3.35.0-fix18（第 2 级）：**发现与写入解耦** —— 兼容仓清单按 (owner,frequency) 缓存 5 秒
+        // TTL；安培写入仍每秒执行（写到缓存清单上）。全量扫描 20 tick 一次 → 100 tick 一次；
+        // 新激光仓插上最多 5 秒被发现（安培本来就要周期重写——不进 NBT——5 秒发现延迟无感知）。
+        for (CompatEntry e : compatSnapshot(owner, frequency)) {
+            if (e.isSource) {
+                writeAmperes(e.mte, HatchType.LASER_SOURCE, wantedSource);
+            } else {
+                writeAmperes(e.mte, HatchType.LASER_TARGET, wantedTarget);
+            }
+        }
+    }
+
+    /** 3.35.0-fix18（P2-12）：一条兼容仓快照（mte + 槽位向）。 */
+    private static final class CompatEntry {
+
+        final MetaTileEntity mte;
+        final boolean isSource;
+
+        CompatEntry(MetaTileEntity mte, boolean isSource) {
+            this.mte = mte;
+            this.isSource = isSource;
+        }
+    }
+
+    private static final class CompatCache {
+
+        final long atMs;
+        final List<CompatEntry> entries;
+
+        CompatCache(long atMs, List<CompatEntry> entries) {
+            this.atMs = atMs;
+            this.entries = entries;
+        }
+    }
+
+    /** 3.35.0-fix18（P2-12）：发现节流窗口。5 秒 = 安培重写周期的 5 倍，语义无感、扫描降 5 倍。 */
+    private static final long COMPAT_SNAPSHOT_TTL_MS = 5_000L;
+    /** 3.35.0-fix18（P2-12）：缓存有界（条目 = 活跃终端数 × 频率数，极端情况整体清空）。 */
+    private static final int COMPAT_CACHE_MAX = 256;
+    private static final Map<String, CompatCache> COMPAT_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static List<CompatEntry> compatSnapshot(UUID owner, int frequency) {
+        String key = (owner == null ? "null" : owner.toString()) + ':' + frequency;
+        CompatCache cached = COMPAT_CACHE.get(key);
+        long now = System.currentTimeMillis();
+        if (cached != null && now - cached.atMs < COMPAT_SNAPSHOT_TTL_MS) {
+            return cached.entries;
+        }
+        List<CompatEntry> entries = new ArrayList<>();
         for (HostGroup group : scan(owner, frequency)) {
             for (MetaTileEntity mte : group.compat) {
                 if (mte == null) continue;
                 if (HatchType.isTecTechLaserSource(mte)) {
-                    writeAmperes(mte, HatchType.LASER_SOURCE, wantedSource);
+                    entries.add(new CompatEntry(mte, true));
                 } else if (HatchType.isTecTechLaserTarget(mte)) {
-                    writeAmperes(mte, HatchType.LASER_TARGET, wantedTarget);
+                    entries.add(new CompatEntry(mte, false));
                 }
             }
         }
+        if (COMPAT_CACHE.size() >= COMPAT_CACHE_MAX && !COMPAT_CACHE.containsKey(key)) {
+            COMPAT_CACHE.clear();
+        }
+        COMPAT_CACHE.put(key, new CompatCache(now, entries));
+        return entries;
     }
 
     private static boolean writeAmperes(MetaTileEntity mte, HatchType type, int wanted) {
