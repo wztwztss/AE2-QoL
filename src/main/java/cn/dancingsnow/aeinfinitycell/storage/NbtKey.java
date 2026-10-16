@@ -19,6 +19,25 @@ public final class NbtKey {
     private final NBTTagCompound tag;
     private final String canonical;
 
+    /**
+     * 3.35.0-fix15（审查 P2-8）：NbtKey **驻留缓存**。
+     * <p>
+     * 每次物品操作都会走 {@code ItemStackKey.from → NbtKey.of}，而旧实现固定付两次全树遍历：
+     * {@code canonicalizeCompound}（深拷贝整棵 NBT 树 + 排序）+ {@code canonicalString}（再次遍历建串）。
+     * 同一物品（编码样板、带 NBT 的工具/机器）在一个会话里会被查询成千上万次 ⇒ 这份代价被反复支付。
+     * <p>
+     * canonical 串是**内容的纯函数**（键排序、列表保序、叶子值不参与规范化）⇒ 用它当驻留键，
+     * 命中即完全跳过深拷贝，只剩一次建串遍历。
+     * <p>
+     * ⚠️ 语义严格不变：{@code NbtKey} 不可变（{@code tag} 只在构造期写入、{@code copyTag()} 返回副本），
+     * 驻留只是让内容相等的 key **共享实例**；equals/hashCode 仍按 canonical 串比较 ⇒ 存档身份不变
+     * （这也正是不能改 canonical 规则的原因：改了老存档的条目会匹配不上 ⇒ 重复记账）。
+     * 缓存有界：超过上限整体清空（驻留只是加速手段，清空无正确性影响）。
+     */
+    private static final int INTERN_MAX = 256;
+    private static final java.util.concurrent.ConcurrentHashMap<String, NbtKey> INTERN =
+        new java.util.concurrent.ConcurrentHashMap<String, NbtKey>();
+
     private NbtKey(NBTTagCompound tag, String canonical) {
         this.tag = tag;
         this.canonical = canonical;
@@ -28,9 +47,18 @@ public final class NbtKey {
         if (tag == null) {
             return NONE;
         }
-
-        NBTTagCompound canonicalTag = canonicalizeCompound(tag);
-        return new NbtKey(canonicalTag, canonicalString(canonicalTag));
+        // 单次遍历先算规范串（不深拷贝）：命中驻留即省掉整棵树的拷贝
+        String canonical = canonicalString(tag);
+        NbtKey cached = INTERN.get(canonical);
+        if (cached != null) {
+            return cached;
+        }
+        NbtKey fresh = new NbtKey(canonicalizeCompound(tag), canonical);
+        if (INTERN.size() >= INTERN_MAX) {
+            INTERN.clear();
+        }
+        INTERN.putIfAbsent(canonical, fresh);
+        return fresh;
     }
 
     public NBTTagCompound copyTag() {

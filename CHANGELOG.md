@@ -34,6 +34,37 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-16 (123) - **3.35.0-fix15：无限元件原型缓存收缩 + NbtKey 驻留（P2-7 + P2-8 成对）**
+
+### 一、现象（源码逐行实证）
+1. **P2-7**：`InfinityItemInventoryHandler.prototypes` 只在 `addAvailable` 里 `put`，**全类无移除路径**——
+   元件里存过又取空的物品，其原型（`ItemStackKey` + `IAEItemStack` + NBT）永久驻留，
+   长期反复存删不同物品时内存只涨不消（含"解析不出物品"的 null 哨兵）。
+2. **P2-8**：`NbtKey.of` 固定付**两次全树遍历**——`canonicalizeCompound`（深拷贝整棵树 + 键排序）
+   + `canonicalString`（再次遍历建串）；而每次物品存取（注入/抽取/数量查询）都经
+   `ItemStackKey.from → NbtKey.of`。同一物品（编码样板、带 NBT 的工具/机器）在会话内被查询成千上万次，
+   这份代价被反复支付。
+
+### 二、本轮改动（用户拍板：成对修）
+1. **P2-7 收缩**：`addAvailable` 枚举结束后调 `ae2qol$prunePrototypes(record)` ——
+   仅在 `prototypes.size() > 账本条目数 + 64` 时动作（判断是 O(1) 的 `items.size()`，正常枚举零额外开销），
+   真正清理时用 `getItemsView().keySet()`（fix1 起返回快照副本）`retainAll` 掉**已不在账本**的键。
+   仍在账本里的键（含 null 哨兵）一律保留 —— 避免反复重试失败的注册表反查。
+2. **P2-8 驻留**：`NbtKey.of` 改为**单次遍历先算 canonical 串**（不深拷贝）→ 命中驻留缓存即直接返回；
+   未命中才深拷贝并 `putIfAbsent`。缓存 `ConcurrentHashMap`、上限 256 条、超限整体清空（有界）。
+3. **语义严格不变（关键约束）**：canonical 串决定账本条目匹配身份，**规则一字未改**（仍是键排序、
+   列表保序、叶子取 `id:toString`）；`NbtKey` 不可变，驻留只是让内容相等的 key 共享实例 ⇒
+   老存档条目照样匹配（改了 canonical 规则才会导致重复记账）。
+   同时附带收益：`FluidStackKey`/`EssentiaStackKey` 走同一 `NbtKey.of`，一并受益。
+
+### 三、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.35.0-fix15.jar`。
+- 待游戏实测（用户执行）：① **无限元件存取照常**（核心验收——尤其带 NBT 的物品：编码样板、
+  带附魔/自定义名的物品）；② 反复存删多种带 NBT 物品后内存平稳（可选，长时间观察）；
+  ③ **旧存档兼容**：读档后原有条目数量与内容不变（驻留不改身份，理论上必然兼容）。
+
+---
+
 ## 工作区决策记录 2026-10-16 (122) - **3.35.0-fix14：库存统计终端 viewer 会话补齐注销——会话校验恢复真实语义（P2-5）**
 
 ### 一、现象（grep 穷举实证）

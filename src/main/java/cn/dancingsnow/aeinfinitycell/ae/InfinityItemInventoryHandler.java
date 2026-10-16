@@ -118,6 +118,34 @@ public final class InfinityItemInventoryHandler extends AbstractInfinityInventor
             aeStack.setStackSize(aeAmount);
             out.addStorage(aeStack);
         }
+
+        // 3.35.0-fix15（审查 P2-7）：枚举结束后按当前账本收缩原型缓存。
+        // 旧实现只增不减 —— 元件里存过又取空的物品，其原型（ItemStackKey + IAEItemStack + NBT）
+        // 会永久留在 map 里，长期反复存删不同物品时内存只涨不消。
+        ae2qol$prunePrototypes(record);
+    }
+
+    /**
+     * 3.35.0-fix15（审查 P2-7）：原型缓存收缩。
+     * <p>
+     * 只在"缓存明显大于账本"时才动作（{@code size > 账本条目数 + 余量}）——判断是 O(1) 的
+     * {@code items.size()}，所以正常枚举零额外开销；真正清理时才付一次
+     * {@code getItemsView()} 的快照拷贝（fix1 起它返回副本）与 {@code retainAll}。
+     * <p>
+     * 清理掉的是**已不在账本里**的键（含"解析不出物品"的 null 哨兵）——它们不可能再被枚举命中，
+     * 留着只是占内存。仍在账本里的键（哪怕哨兵）一律保留，避免反复重试失败的注册表反查。
+     */
+    private static final int PROTOTYPE_PRUNE_SLACK = 64;
+
+    private void ae2qol$prunePrototypes(InfinityCellRecord record) {
+        long used = record.getUsedItemTypes();
+        if (prototypes.size() <= used + PROTOTYPE_PRUNE_SLACK) {
+            return;
+        }
+        prototypes.keySet()
+            .retainAll(
+                record.getItemsView()
+                    .keySet());
     }
 
     @Override
