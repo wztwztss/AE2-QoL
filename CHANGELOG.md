@@ -34,6 +34,27 @@
 
 > 注：`3.20.0` 本身（基准）与更早的 `3.19.0-fixNN` **不改**；本表与全文的替换只涉及上表左列这些号。
 
+## 工作区决策记录 2026-10-16 (119) - **3.35.0-fix11：监控页统计饱和化 + 瞬时速率去 int 截断（P2-2）**
+
+### 一、现象（用户量级下必然触发）
+`GridEnergyStats`：`totalInput += delta`、100-tick 窗口和 `bufferSumInput` 均为裸 long 累加 ——
+用户电网单 tick 增幅 1E18 级，几十 tick 即越过 long 上限绕回负数 ⇒ 监控页"总输入/总输出"显示乱码；
+`AdaptiveNetTerminal` 的瞬时速率 `(int) getInstantInputRate()` 把 long 强转 int —— 速率 >2^31 直接变错值/负数。
+
+### 二、本轮改动（用户拍板：修；口径=饱和而非 BigInteger）
+1. `GridEnergyStats` 新增 `saturatedAdd(a, b)`（符号判定溢出 → 封顶 `Long.MAX_VALUE`/`MIN_VALUE`），
+   应用于 `totalInput/totalOutput` 累加与 `bufferSumInput/bufferSumOutput` 窗口和 ——
+   极端值显示"封顶在 9.22E"（信息量上限）而非绕回负数；小数值场合与普通加法完全一致。
+2. `AdaptiveNetTerminal`：`instantInputSync/instantOutputSync` 从 `IntSyncValue` 改 **`LongSyncValue`**
+   （消费点 4 处 `getIntValue()` → `getLongValue()`、`int` → `long`；`buildMonitorTab` 签名同步）。
+3. 不改用 BigInteger 统计：每 tick 大数运算代价不值，饱和口径已保证正负与量级正确。
+
+### 三、验证
+- 构建：BUILD SUCCESSFUL（EXIT=0），产物 `build/libs/AE2-QoL-3.35.0-fix11.jar`。
+- 待游戏实测（用户执行）：电网量级下监控页"总输入/总输出/瞬时速率"不再显示负数或乱码（封顶 9.22E 为正常表现）。
+
+---
+
 ## 工作区决策记录 2026-10-16 (118) - **3.35.0-fix10：无线输入/输出终端的电网余额显示精确化（P2-1）**
 
 ### 一、现象

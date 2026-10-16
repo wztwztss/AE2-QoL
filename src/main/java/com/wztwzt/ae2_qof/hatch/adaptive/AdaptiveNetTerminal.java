@@ -697,18 +697,20 @@ public class AdaptiveNetTerminal extends MTEHatch {
             return n.getStats()
                 .getTotalOutput();
         }, v -> {});
-        IntSyncValue instantInputSync = new IntSyncValue(() -> {
-            if (networkOwner == null) return 0;
+        // 3.35.0-fix11（审查 P2-2）：瞬时速率从 IntSyncValue 改 LongSyncValue ——
+        // 旧 (int) 截断在用户量级（速率 >2^31）下直接变错值/负数。
+        LongSyncValue instantInputSync = new LongSyncValue(() -> {
+            if (networkOwner == null) return 0L;
             AdaptiveNetwork n = AdaptiveNetworkManager.getNetwork(networkOwner, networkFrequency);
-            if (n == null) return 0;
-            return (int) n.getStats()
+            if (n == null) return 0L;
+            return n.getStats()
                 .getInstantInputRate();
         }, v -> {});
-        IntSyncValue instantOutputSync = new IntSyncValue(() -> {
-            if (networkOwner == null) return 0;
+        LongSyncValue instantOutputSync = new LongSyncValue(() -> {
+            if (networkOwner == null) return 0L;
             AdaptiveNetwork n = AdaptiveNetworkManager.getNetwork(networkOwner, networkFrequency);
-            if (n == null) return 0;
-            return (int) n.getStats()
+            if (n == null) return 0L;
+            return n.getStats()
                 .getInstantOutputRate();
         }, v -> {});
 
@@ -1136,7 +1138,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
         "ae2_qof.gui.adaptive_terminal.monitor.mode_scientific", "ae2_qof.gui.adaptive_terminal.monitor.mode_kmg" };
 
     private Flow buildMonitorTab(LongSyncValue gridEUSync, LongSyncValue change1hSync, LongSyncValue change10mSync,
-        LongSyncValue avgOut10mSync, IntSyncValue instantInputSync, IntSyncValue instantOutputSync) {
+        LongSyncValue avgOut10mSync, LongSyncValue instantInputSync, LongSyncValue instantOutputSync) {
         Flow tab = Flow.column()
             .size(CONTENT_W, 0)
             .childPadding(2);
@@ -1250,7 +1252,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
                 .child(
                     new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.monitor.instant_input")).size(labelW, 14))
                 .child(new TextWidget<>(IKey.dynamic(() -> {
-                    int inRate = instantInputSync.getIntValue();
+                    long inRate = instantInputSync.getLongValue();
                     return EnumChatFormatting.GREEN + formatEU(inRate, displayMode) + " EU/t" + formatAmpTier(inRate);
                 })).size(valueW, 14)
                     .textAlign(com.cleanroommc.modularui.utils.Alignment.CenterRight)));
@@ -1262,7 +1264,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
                     new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.monitor.instant_output"))
                         .size(labelW, 14))
                 .child(new TextWidget<>(IKey.dynamic(() -> {
-                    int outRate = instantOutputSync.getIntValue();
+                    long outRate = instantOutputSync.getLongValue();
                     return EnumChatFormatting.RED + formatEU(outRate, displayMode) + " EU/t" + formatAmpTier(outRate);
                 })).size(valueW, 14)
                     .textAlign(com.cleanroommc.modularui.utils.Alignment.CenterRight)));
@@ -1276,8 +1278,8 @@ public class AdaptiveNetTerminal extends MTEHatch {
                 .childPadding(2)
                 .child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.monitor.activity")).size(labelW, 14))
                 .child(new TextWidget<>(IKey.dynamic(() -> {
-                    int inRate = instantInputSync.getIntValue();
-                    int outRate = instantOutputSync.getIntValue();
+                    long inRate = instantInputSync.getLongValue();
+                    long outRate = instantOutputSync.getLongValue();
                     if (inRate == 0 && outRate == 0) {
                         return EnumChatFormatting.GRAY
                             + StatCollector.translateToLocal("ae2_qof.gui.adaptive_terminal.monitor.no_activity");

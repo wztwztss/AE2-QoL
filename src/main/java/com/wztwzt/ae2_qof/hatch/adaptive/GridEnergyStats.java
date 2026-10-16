@@ -20,6 +20,20 @@ public class GridEnergyStats {
     private long gridEU_1h_ago;
     private long snapshotTick;
 
+    /**
+     * 3.35.0-fix11（审查 P2-2）：饱和加法 —— 用户电网量级下单 tick 增幅可达 1E18，
+     * 累计量与 100-tick 窗口和都会越过 long 上限绕回负数（显示成乱码/负数）。
+     * 统计口径下"封顶在 Long.MAX_VALUE"远好于"绕回"，且小数值场合与普通加法完全一致。
+     */
+    private static long saturatedAdd(long a, long b) {
+        long r = a + b;
+        // 溢出判定：符号与两个加数都不同（正+正得负 / 负+负得正）
+        if (((a ^ r) & (b ^ r)) < 0) {
+            return b > 0 ? Long.MAX_VALUE : Long.MIN_VALUE;
+        }
+        return r;
+    }
+
     public GridEnergyStats() {
         totalInput = 0;
         totalOutput = 0;
@@ -43,17 +57,17 @@ public class GridEnergyStats {
         }
         long delta = currentEU - lastEU;
         if (delta > 0) {
-            totalInput += delta;
+            totalInput = saturatedAdd(totalInput, delta);
             bufferSumInput -= inputBuffer[bufferIndex];
             inputBuffer[bufferIndex] = delta;
-            bufferSumInput += delta;
+            bufferSumInput = saturatedAdd(bufferSumInput, delta);
             bufferSumOutput -= outputBuffer[bufferIndex];
             outputBuffer[bufferIndex] = 0;
         } else if (delta < 0) {
-            totalOutput += -delta;
+            totalOutput = saturatedAdd(totalOutput, -delta);
             bufferSumOutput -= outputBuffer[bufferIndex];
             outputBuffer[bufferIndex] = -delta;
-            bufferSumOutput += -delta;
+            bufferSumOutput = saturatedAdd(bufferSumOutput, -delta);
             bufferSumInput -= inputBuffer[bufferIndex];
             inputBuffer[bufferIndex] = 0;
         } else {
