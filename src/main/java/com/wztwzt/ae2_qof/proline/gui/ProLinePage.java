@@ -212,7 +212,7 @@ public final class ProLinePage {
             new ButtonWidget<>().size(70, 18)
                 .background(GuiTextures.BUTTON_CLEAN)
                 .overlay(IKey.lang("ae2_qof.proline.new"))
-                .syncHandler(clickServer(syncManager, pm -> {
+                .syncHandler(serverClick(syncManager, "proline.new", pm -> {
                     TileEntity base = terminalBase(terminal);
                     ProLineManager.createLine(
                         pm.getPlayer(),
@@ -227,13 +227,13 @@ public final class ProLinePage {
             new ButtonWidget<>().size(70, 18)
                 .background(GuiTextures.BUTTON_CLEAN)
                 .overlay(IKey.lang("ae2_qof.proline.import"))
-                .syncHandler(clickServer(syncManager, pm -> importPanelHandle.openPanel())));
+                .syncHandler(serverClick(syncManager, "proline.import.open", pm -> importPanelHandle.openPanel())));
         bar.child(
             new ButtonWidget<>().size(70, 18)
                 .background(GuiTextures.BUTTON_CLEAN)
                 .overlay(IKey.lang("ae2_qof.proline.presets"))
                 .tooltip(t -> t.addLine(IKey.lang("ae2_qof.proline.presets.tip")))
-                .syncHandler(clickServer(syncManager, pm -> presetsPanelHandle.openPanel())));
+                .syncHandler(serverClick(syncManager, "proline.presets.open", pm -> presetsPanelHandle.openPanel())));
         bar.child(
             new TextWidget<>(IKey.lang("ae2_qof.proline.hint")).size(LIST_W - 224, 18)
                 .color(0xFF888888));
@@ -284,9 +284,13 @@ public final class ProLinePage {
     }
 
     /** 服务端回调：syncManager 在构建期捕获（回调在服务端执行，getPlayer 即会话玩家）。 */
-    private static InteractionSyncHandler clickServer(final PanelSyncManager syncManager,
+    /** fix2：所有交互 handler 必须 getOrCreateSyncHandler 编号（"Widgets created by DynamicSyncHandler…"规则）。 */
+    private static InteractionSyncHandler serverClick(final PanelSyncManager syncManager, String key,
         java.util.function.Consumer<PanelSyncManager> action) {
-        return new InteractionSyncHandler().setOnMousePressed(mouse -> action.accept(syncManager));
+        return syncManager.getOrCreateSyncHandler(
+            key,
+            InteractionSyncHandler.class,
+            () -> new InteractionSyncHandler().setOnMousePressed(mouse -> action.accept(syncManager)));
     }
 
     // ===== 列表收集（服务端）=====
@@ -413,7 +417,7 @@ public final class ProLinePage {
                 .tooltip(
                     t -> t.addLine(IKey.str(label))
                         .addLine(IKey.str(row.networkFlag)))
-                .syncHandler(new InteractionSyncHandler().setOnMousePressed(mouse -> {
+                .syncHandler(serverClick(syncManager, "proline.line.select_" + row.index, pm -> {
                     // 服务端：选中该线 + 计入"活跃产线"（采样对象）
                     SELECTED_LINE.put(
                         syncManager.getPlayer()
@@ -428,7 +432,8 @@ public final class ProLinePage {
                 .tooltip(
                     t -> t.addLine(IKey.lang("ae2_qof.proline.btn_line"))
                         .addLine(IKey.lang("ae2_qof.proline.btn_line_tip")))
-                .syncHandler(clickServer(syncManager, pm -> linePanelHandle.openPanel())));
+                .syncHandler(
+                    serverClick(syncManager, "proline.line.cfg_" + row.index, pm -> linePanelHandle.openPanel())));
         return r;
     }
 
@@ -464,9 +469,9 @@ public final class ProLinePage {
                         .addLine(IKey.str(StatCollector.translateToLocal("ae2_qof.proline.step.type") + row.type))
                         .addLine(IKey.str(badge))
                         .addLine(IKey.str(StatCollector.translateToLocal("ae2_qof.proline.step.out") + row.outText)))
-                .syncHandler(new InteractionSyncHandler().setOnMousePressed(mouse -> {
+                .syncHandler(serverClick(syncManager, "proline.step.open_" + row.seq, pm -> {
                     LAST_STEP.put(
-                        syncManager.getPlayer()
+                        pm.getPlayer()
                             .getUniqueID(),
                         row.stepId);
                     stepPanel.openPanel();
@@ -475,9 +480,9 @@ public final class ProLinePage {
             new ButtonWidget<>().size(VALUE_W, ROW_H)
                 .background(GuiTextures.BUTTON_CLEAN)
                 .overlay(IKey.str(row.runText + " · " + row.outText))
-                .syncHandler(new InteractionSyncHandler().setOnMousePressed(mouse -> {
+                .syncHandler(serverClick(syncManager, "proline.step.bind_" + row.seq, pm -> {
                     LAST_STEP.put(
-                        syncManager.getPlayer()
+                        pm.getPlayer()
                             .getUniqueID(),
                         row.stepId);
                     candidatesPanel.openPanel();
@@ -488,8 +493,9 @@ public final class ProLinePage {
                 .overlay(IKey.lang("ae2_qof.proline.del"))
                 .tooltip(t -> t.addLine(IKey.lang("ae2_qof.proline.del")))
                 .syncHandler(
-                    clickServer(
+                    serverClick(
                         syncManager,
+                        "proline.step.del_" + row.seq,
                         pm -> { ProLineManager.removeStep(pm.getPlayer(), row.lineId, row.stepId); })));
         if (row.pos != null) {
             r.child(actionBtn(terminal, row.pos, StockMonitorActionPacket.ACTION_HIGHLIGHT));
@@ -586,13 +592,17 @@ public final class ProLinePage {
                 .size(120, 18)
                 .background(GuiTextures.BUTTON_CLEAN)
                 .overlay(IKey.lang("ae2_qof.proline.btn_pause_toggle"))
-                .syncHandler(clickServer(syncManager, pm -> pausedSync.setValue(!pausedSync.getValue()))));
+                .syncHandler(
+                    serverClick(
+                        syncManager,
+                        "proline.stepui.pause",
+                        pm -> pausedSync.setValue(!pausedSync.getValue()))));
         edit.child(
             new ButtonWidget<>().pos(136, 38)
                 .size(150, 18)
                 .background(GuiTextures.BUTTON_CLEAN)
                 .overlay(IKey.lang("ae2_qof.proline.btn_write_card"))
-                .syncHandler(clickServer(syncManager, pm -> {
+                .syncHandler(serverClick(syncManager, "proline.stepui.card", pm -> {
                     ProductionLine l = lineOf(pm.getPlayer());
                     ProductionStep s = stepOf(pm.getPlayer());
                     if (l != null && s != null) {
@@ -601,8 +611,10 @@ public final class ProLinePage {
                         ItemProductionLineCard.programCard(hand, l.id, s.id);
                     }
                 })));
-        InteractionSyncHandler closeBtn = new InteractionSyncHandler()
-            .setOnMousePressed(mouse -> panelHandler.closePanel());
+        InteractionSyncHandler closeBtn = syncManager.getOrCreateSyncHandler(
+            "proline.close",
+            InteractionSyncHandler.class,
+            () -> new InteractionSyncHandler().setOnMousePressed(mouse -> panelHandler.closePanel()));
         edit.child(
             new ButtonWidget<>().pos(10, 64)
                 .size(60, 18)
@@ -651,13 +663,14 @@ public final class ProLinePage {
                 .size(120, 18)
                 .background(GuiTextures.BUTTON_CLEAN)
                 .overlay(IKey.lang("ae2_qof.proline.btn_pause_line"))
-                .syncHandler(clickServer(syncManager, pm -> pauseSync.setValue(!pauseSync.getValue()))));
+                .syncHandler(
+                    serverClick(syncManager, "proline.lineui.pause", pm -> pauseSync.setValue(!pauseSync.getValue()))));
         edit.child(
             new ButtonWidget<>().pos(136, 46)
                 .size(150, 18)
                 .background(GuiTextures.BUTTON_CLEAN)
                 .overlay(IKey.lang("ae2_qof.proline.btn_del_line_re"))
-                .syncHandler(clickServer(syncManager, pm -> {
+                .syncHandler(serverClick(syncManager, "proline.lineui.delete", pm -> {
                     ProductionLine l = lineOf(pm.getPlayer());
                     if (l == null) return;
                     UUID id = pm.getPlayer()
@@ -678,8 +691,10 @@ public final class ProLinePage {
                                     EnumChatFormatting.YELLOW + "[产线] 再点一次【删除整线】才会真删（3 秒内有效）"));
                     }
                 })));
-        InteractionSyncHandler closeBtn = new InteractionSyncHandler()
-            .setOnMousePressed(mouse -> panelHandler.closePanel());
+        InteractionSyncHandler closeBtn = syncManager.getOrCreateSyncHandler(
+            "proline.close",
+            InteractionSyncHandler.class,
+            () -> new InteractionSyncHandler().setOnMousePressed(mouse -> panelHandler.closePanel()));
         edit.child(
             new ButtonWidget<>().pos(10, 72)
                 .size(60, 18)
@@ -710,8 +725,10 @@ public final class ProLinePage {
             new DynamicSyncedWidget<>().size(300, 148)
                 .initialChild(buildCandidateList(rows.getValue(), syncManager))
                 .syncHandler(dyn));
-        InteractionSyncHandler closeBtn = new InteractionSyncHandler()
-            .setOnMousePressed(mouse -> panelHandler.closePanel());
+        InteractionSyncHandler closeBtn = syncManager.getOrCreateSyncHandler(
+            "proline.close",
+            InteractionSyncHandler.class,
+            () -> new InteractionSyncHandler().setOnMousePressed(mouse -> panelHandler.closePanel()));
         edit.child(
             new ButtonWidget<>().pos(8, 168)
                 .size(60, 18)
@@ -763,19 +780,28 @@ public final class ProLinePage {
                     .tooltip(
                         t -> t.addLine(IKey.str(candLabel))
                             .addLine(IKey.str(row.tip)))
-                    .syncHandler(clickServer(syncManager, sm -> {
-                        EntityPlayer p = sm.getPlayer();
-                        ProductionLine l = lineOf(p);
-                        ProductionStep s = stepOf(p);
-                        if (l != null && s != null) {
-                            MachineRef ref = new MachineRef(row.dim, row.x, row.y, row.z, System.currentTimeMillis());
-                            if (row.bound) {
-                                ProLineManager.unbindMachine(p, l.id, s.id, ref);
-                            } else {
-                                ProLineManager.bindMachine(p, l.id, s.id, ref);
-                            }
-                        }
-                    })));
+                    .syncHandler(
+                        serverClick(
+                            syncManager,
+                            "proline.cand." + row.dim + "_" + row.x + "_" + row.y + "_" + row.z,
+                            sm -> {
+                                EntityPlayer p = sm.getPlayer();
+                                ProductionLine l = lineOf(p);
+                                ProductionStep s = stepOf(p);
+                                if (l != null && s != null) {
+                                    MachineRef ref = new MachineRef(
+                                        row.dim,
+                                        row.x,
+                                        row.y,
+                                        row.z,
+                                        System.currentTimeMillis());
+                                    if (row.bound) {
+                                        ProLineManager.unbindMachine(p, l.id, s.id, ref);
+                                    } else {
+                                        ProLineManager.bindMachine(p, l.id, s.id, ref);
+                                    }
+                                }
+                            })));
         }
         return list;
     }
@@ -852,19 +878,19 @@ public final class ProLinePage {
             list.child(new TextWidget<>(IKey.lang("ae2_qof.proline.presets.empty")).size(290, 12));
             return list;
         }
-        for (final String name : rows) {
+        for (final String presetName : rows) {
             list.child(
                 new ButtonWidget<>().size(290, 20)
                     .background(GuiTextures.BUTTON_CLEAN)
-                    .overlay(IKey.str(name))
+                    .overlay(IKey.str(presetName))
                     .tooltip(
-                        t -> t.addLine(IKey.str(name))
+                        t -> t.addLine(IKey.str(presetName))
                             .addLine(IKey.lang("ae2_qof.proline.presets.row_tip")))
-                    .syncHandler(clickServer(syncManager, sm -> {
+                    .syncHandler(serverClick(syncManager, "proline.preset.row." + presetName, sm -> {
                         TileEntity base = terminalBase(terminal);
                         ProLinePresets.create(
                             sm.getPlayer(),
-                            name,
+                            presetName,
                             terminalNetworkId(terminal),
                             base == null ? 0 : base.getWorldObj().provider.dimensionId,
                             base == null ? 0 : base.xCoord,
@@ -901,8 +927,10 @@ public final class ProLinePage {
             new DynamicSyncedWidget<>().size(300, 150)
                 .initialChild(buildPresetList(rows.getValue(), syncManager, terminal))
                 .syncHandler(dyn));
-        InteractionSyncHandler closeBtn = new InteractionSyncHandler()
-            .setOnMousePressed(mouse -> panelHandler.closePanel());
+        InteractionSyncHandler closeBtn = syncManager.getOrCreateSyncHandler(
+            "proline.close",
+            InteractionSyncHandler.class,
+            () -> new InteractionSyncHandler().setOnMousePressed(mouse -> panelHandler.closePanel()));
         edit.child(
             new ButtonWidget<>().pos(8, 168)
                 .size(60, 18)
@@ -937,7 +965,7 @@ public final class ProLinePage {
                 .size(90, 18)
                 .background(GuiTextures.BUTTON_CLEAN)
                 .overlay(IKey.lang("ae2_qof.proline.import.go"))
-                .syncHandler(clickServer(syncManager, pm -> runImport(pm, terminal))));
+                .syncHandler(serverClick(syncManager, "proline.import.run", pm -> runImport(pm, terminal))));
         edit.child(new TextWidget<>(IKey.dynamic(() -> {
             UUID id = syncManager.getPlayer() == null ? null
                 : syncManager.getPlayer()
@@ -945,8 +973,10 @@ public final class ProLinePage {
             return id == null ? "" : String.valueOf(IMPORT_FEEDBACK.get(id));
         })).pos(8, 92)
             .size(320, 70));
-        InteractionSyncHandler closeBtn = new InteractionSyncHandler()
-            .setOnMousePressed(mouse -> panelHandler.closePanel());
+        InteractionSyncHandler closeBtn = syncManager.getOrCreateSyncHandler(
+            "proline.close",
+            InteractionSyncHandler.class,
+            () -> new InteractionSyncHandler().setOnMousePressed(mouse -> panelHandler.closePanel()));
         edit.child(
             new ButtonWidget<>().pos(8, 148)
                 .size(60, 16)
