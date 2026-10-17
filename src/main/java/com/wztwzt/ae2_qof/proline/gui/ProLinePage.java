@@ -243,7 +243,28 @@ public final class ProLinePage {
             new TextWidget<>(IKey.lang("ae2_qof.proline.hint")).size(LIST_W - 224, 18)
                 .color(0xFFCCCCCC));
         column.child(bar);
+        // 4.2.0：客户端触发名称解析（延迟到 sync 数据到达后再执行）
+        if (player != null && player.worldObj.isRemote) {
+            triggerClientResolve(
+                player.getUniqueID()
+                    .toString());
+        }
         return column;
+    }
+
+    /** 4.2.0：客户端名称解析触发（@SideOnly 隔离：server 不加载 Minecraft 类）。 */
+    @cpw.mods.fml.relauncher.SideOnly(cpw.mods.fml.relauncher.Side.CLIENT)
+    private static void triggerClientResolve(String playerId) {
+        new Thread(() -> {
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                return;
+            }
+            try {
+                com.wztwzt.ae2_qof.proline.client.ProLineNameResolver.resolveAndSend(playerId, null);
+            } catch (Throwable ignored) {}
+        }, "proline-resolve").start();
     }
 
     // ===== 面板句柄（懒建：syncedPanel 的 builder 在打开时才执行）=====
