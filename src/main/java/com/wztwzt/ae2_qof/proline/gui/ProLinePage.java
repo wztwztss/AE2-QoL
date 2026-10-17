@@ -188,7 +188,7 @@ public final class ProLinePage {
             .immutableCopy()
             .build();
         DynamicLinkedSyncHandler<GenericListSyncHandler<String>> summaryDyn = new DynamicLinkedSyncHandler<>(summary)
-            .widgetProvider((dm, v) -> buildTextList(v.getValue(), 0xFF303030, 11));
+            .widgetProvider((dm, v) -> buildTextList(v.getValue(), 0xFFE0E0E0, 11));
         syncManager.syncValue("proline_summary_dyn", summaryDyn);
 
         column.child(
@@ -206,7 +206,7 @@ public final class ProLinePage {
 
         column.child(
             new DynamicSyncedWidget<>().size(LIST_W, SUMM_LIST_H)
-                .initialChild(buildTextList(summary.getValue(), 0xFF303030, 11))
+                .initialChild(buildTextList(summary.getValue(), 0xFFE0E0E0, 11))
                 .syncHandler(summaryDyn));
 
         // ---- 顶栏 ----
@@ -241,7 +241,7 @@ public final class ProLinePage {
                 .syncHandler(serverClick(syncManager, "proline.presets.open", pm -> presetsPanelHandle.openPanel())));
         bar.child(
             new TextWidget<>(IKey.lang("ae2_qof.proline.hint")).size(LIST_W - 224, 18)
-                .color(0xFF888888));
+                .color(0xFFCCCCCC));
         column.child(bar);
         return column;
     }
@@ -392,7 +392,7 @@ public final class ProLinePage {
         PlList list = new PlList(LIST_W, LINE_LIST_H);
         if (rows == null || rows.isEmpty()) {
             list.child(
-                new TextWidget<>(IKey.lang("ae2_qof.proline.no_lines")).color(0xFFAAAAAA)
+                new TextWidget<>(IKey.lang("ae2_qof.proline.no_lines")).color(0xFFCCCCCC)
                     .size(LIST_W - 8, 12));
             return list;
         }
@@ -447,7 +447,7 @@ public final class ProLinePage {
         PlList list = new PlList(LIST_W, STEP_LIST_H);
         if (rows == null || rows.isEmpty()) {
             list.child(
-                new TextWidget<>(IKey.lang("ae2_qof.proline.select_line_first")).color(0xFFAAAAAA)
+                new TextWidget<>(IKey.lang("ae2_qof.proline.select_line_first")).color(0xFFCCCCCC)
                     .size(LIST_W - 8, 12));
             return list;
         }
