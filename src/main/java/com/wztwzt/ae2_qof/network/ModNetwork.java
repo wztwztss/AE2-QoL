@@ -225,5 +225,11 @@ public final class ModNetwork {
             SmartDoublingStatePacket.class,
             discriminator++,
             Side.CLIENT);
+        // 4.2.0：产线名称解析（客户端中文→key 回传）
+        CHANNEL.registerMessage(
+            com.wztwzt.ae2_qof.proline.network.ProLineResolvePacket.Handler.class,
+            com.wztwzt.ae2_qof.proline.network.ProLineResolvePacket.class,
+            discriminator++,
+            Side.SERVER);
     }
 }

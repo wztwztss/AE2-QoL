@@ -99,6 +99,7 @@ public final class ProLineImporter {
                         if (st.has("name")) {
                             long amount = st.has("amount") ? jLong(st, "amount") : 1L;
                             line.startExpected.put(jString(st, "name"), amount);
+                        ensureStartStep(line).inputs.add(new ItemRow("", jString(st, "name"), amount, false));
                         } else {
                             fillRows(
                                 st.has("input") ? st.get("input") : new JsonArray(),
@@ -268,7 +269,7 @@ public final class ProLineImporter {
             if (r == null || !r.has("amount")) {
                 defaultAmountKeys.add(raw);
             }
-            into.add(new ItemRow(key, amount, fluid));
+            into.add(new ItemRow(key, raw != null ? raw : "", amount, fluid));
         }
     }
 

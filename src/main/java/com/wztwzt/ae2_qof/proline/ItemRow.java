@@ -15,6 +15,8 @@ import net.minecraftforge.fluids.FluidStack;
 public final class ItemRow {
 
     public String key;
+    /** wiki 原始名（未解析成注册键时保留，4.2.0 解析器据此回填 key）。 */
+    public String raw;
     /** 每周期数量（理论配比，wiki 导入或手工录入）。 */
     public long amount;
     public boolean isFluid;
@@ -23,6 +25,13 @@ public final class ItemRow {
 
     public ItemRow(String key, long amount, boolean isFluid) {
         this.key = key;
+        this.amount = amount;
+        this.isFluid = isFluid;
+    }
+
+    public ItemRow(String key, String raw, long amount, boolean isFluid) {
+        this.key = key;
+        this.raw = raw;
         this.amount = amount;
         this.isFluid = isFluid;
     }
@@ -69,6 +78,7 @@ public final class ItemRow {
 
     public NBTTagCompound writeNbt(NBTTagCompound tag) {
         tag.setString("Key", key);
+        if (raw != null && !raw.isEmpty()) tag.setString("Raw", raw);
         tag.setLong("Amt", amount);
         tag.setBoolean("Fluid", isFluid);
         return tag;
@@ -77,6 +87,7 @@ public final class ItemRow {
     public static ItemRow readNbt(NBTTagCompound tag) {
         ItemRow r = new ItemRow();
         r.key = tag.getString("Key");
+        r.raw = tag.hasKey("Raw") ? tag.getString("Raw") : "";
         r.amount = tag.getLong("Amt");
         r.isFluid = tag.getBoolean("Fluid");
         return r;
