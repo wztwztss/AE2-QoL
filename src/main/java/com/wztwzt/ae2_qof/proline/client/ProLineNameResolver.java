@@ -5,10 +5,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
@@ -62,7 +60,8 @@ public final class ProLineNameResolver {
                     itemByName.put(normalize(name), ItemRow.keyOf(probe));
                 }
             }
-            for (Fluid fluid : FluidRegistry.getRegisteredFluids().values()) {
+            for (Fluid fluid : FluidRegistry.getRegisteredFluids()
+                .values()) {
                 if (fluid == null) continue;
                 String name = fluid.getLocalizedName(new FluidStack(fluid, 1000));
                 if (name != null && !name.isEmpty()) {
@@ -97,12 +96,14 @@ public final class ProLineNameResolver {
         if (hit != null) return hit;
         // 包含匹配：raw 包含在 display name 里（如"独居石"匹配"粉碎的独居石矿石"）
         for (Map.Entry<String, String> e : itemByName.entrySet()) {
-            if (e.getKey().contains(norm) && norm.length() >= 2) {
+            if (e.getKey()
+                .contains(norm) && norm.length() >= 2) {
                 return e.getValue();
             }
         }
         for (Map.Entry<String, String> e : fluidByName.entrySet()) {
-            if (e.getKey().contains(norm) && norm.length() >= 2) {
+            if (e.getKey()
+                .contains(norm) && norm.length() >= 2) {
                 return e.getValue();
             }
         }
@@ -141,8 +142,8 @@ public final class ProLineNameResolver {
 
         // 发包给服务端
         try {
-            com.wztwzt.ae2_qof.network.ModNetwork.CHANNEL.sendToServer(
-                new com.wztwzt.ae2_qof.proline.network.ProLineResolvePacket(lineId, resolved));
+            com.wztwzt.ae2_qof.network.ModNetwork.CHANNEL
+                .sendToServer(new com.wztwzt.ae2_qof.proline.network.ProLineResolvePacket(lineId, resolved));
         } catch (Throwable t) {
             MyMod.LOG.warn("[AE2QoL] 名称解析发包失败", t);
             return 0;

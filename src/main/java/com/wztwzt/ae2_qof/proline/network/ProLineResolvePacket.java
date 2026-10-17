@@ -1,28 +1,23 @@
 package com.wztwzt.ae2_qof.proline.network;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.network.PacketBuffer;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.DimensionManager;
 
 import com.wztwzt.ae2_qof.MyMod;
-import com.wztwzt.ae2_qof.network.ModNetwork;
 import com.wztwzt.ae2_qof.network.ServerTerminalHelper;
 import com.wztwzt.ae2_qof.proline.ItemRow;
+import com.wztwzt.ae2_qof.proline.ProLineData;
 import com.wztwzt.ae2_qof.proline.ProductionLine;
 import com.wztwzt.ae2_qof.proline.ProductionStep;
-import com.wztwzt.ae2_qof.proline.ProLineData;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-import cpw.mods.fml.relauncher.Side;
 import io.netty.buffer.ByteBuf;
-import cpw.mods.fml.common.network.ByteBufUtils;
-import net.minecraftforge.common.DimensionManager;
 
 /**
  * 4.2.0：客户端名称解析结果 C2S 包。
@@ -92,7 +87,8 @@ public class ProLineResolvePacket implements IMessage {
                 items += resolveRows(s.outputs, msg.resolved);
             }
             // startExpected：raw 名匹配则迁移键
-            java.util.Iterator<Map.Entry<String, Long>> it = line.startExpected.entrySet().iterator();
+            java.util.Iterator<Map.Entry<String, Long>> it = line.startExpected.entrySet()
+                .iterator();
             Map<String, Long> migrated = new java.util.LinkedHashMap<>();
             while (it.hasNext()) {
                 Map.Entry<String, Long> e = it.next();
@@ -109,9 +105,7 @@ public class ProLineResolvePacket implements IMessage {
 
             if (items > 0 || starts > 0) {
                 data.markDirty();
-                MyMod.LOG.info(
-                    "[AE2QoL] 产线 {} 名称解析回填：{} 物品行 + {} 期望边界",
-                    line.id, items, starts);
+                MyMod.LOG.info("[AE2QoL] 产线 {} 名称解析回填：{} 物品行 + {} 期望边界", line.id, items, starts);
             }
         }
 

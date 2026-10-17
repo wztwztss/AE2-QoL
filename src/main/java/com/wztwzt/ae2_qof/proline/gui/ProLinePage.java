@@ -76,9 +76,9 @@ public final class ProLinePage {
     private static final int CONTENT_W = 336; // 380 - 40(页签) - 4
     private static final int PAGE_H = 220; // PAGE_H = 252-26-6
     private static final int LIST_W = CONTENT_W - 8;
-    private static final int LINE_LIST_H = 44;
-    private static final int STEP_LIST_H = 96;
-    private static final int SUMM_LIST_H = 40;
+    private static final int LINE_LIST_H = 56;
+    private static final int STEP_LIST_H = 102;
+    private static final int SUMM_LIST_H = 36;
     private static final int ROW_H = 22;
     private static final int ROW_W = LIST_W - 8;
     private static final int ICON = 16;
@@ -144,7 +144,7 @@ public final class ProLinePage {
         // buildUI 期间 container 尚未建立会 NPE，导致**整个终端 GUI 打不开**。
         // 句柄创建本身不触碰 getPlayer；getPlayer 只允许出现在 builder lambda / 点击回调内。）
         IPanelHandler stepPanelHandle = syncManager
-            .syncedPanel("proline_step_ui", true, (pm, ph) -> buildStepPanel(pm, ph));
+            .syncedPanel("proline_step_ui", true, (pm, ph) -> buildStepPanel(pm, ph, terminal));
         IPanelHandler candidatesPanelHandle = syncManager
             .syncedPanel("proline_candidates", true, (pm, ph) -> buildCandidatesPanel(pm, ph));
         IPanelHandler linePanelHandle = syncManager
@@ -497,15 +497,6 @@ public final class ProLinePage {
                         syncManager,
                         "proline.step.del_" + row.seq,
                         pm -> { ProLineManager.removeStep(pm.getPlayer(), row.lineId, row.stepId); })));
-        if (row.pos != null) {
-            r.child(actionBtn(terminal, row.pos, StockMonitorActionPacket.ACTION_HIGHLIGHT));
-            r.child(actionBtn(terminal, row.pos, StockMonitorActionPacket.ACTION_TELEPORT));
-        } else {
-            Widget<?> ph1 = new Widget<>().size(24, ROW_H);
-            r.child(ph1);
-            Widget<?> ph2 = new Widget<>().size(24, ROW_H);
-            r.child(ph2);
-        }
         return r;
     }
 
@@ -563,7 +554,8 @@ public final class ProLinePage {
 
     // ===== 子面板：产线元数据（重命名 / 删除整线 / 整线暂停）=====
 
-    private static ModularPanel buildStepPanel(PanelSyncManager syncManager, IPanelHandler panelHandler) {
+    private static ModularPanel buildStepPanel(PanelSyncManager syncManager, IPanelHandler panelHandler,
+        StockMonitorTerminal terminal) {
         ModularPanel edit = ModularPanel.defaultPanel("proline_step_panel", PANEL_W2, PANEL_H2);
         BooleanSyncValue pausedSync = new BooleanSyncValue(() -> {
             ProductionStep s = stepOf(syncManager.getPlayer());
@@ -622,6 +614,19 @@ public final class ProLinePage {
                 .overlay(IKey.lang("ae2_qof.gui.stock_monitor.close"))
                 .syncHandler(closeBtn));
         return edit;
+    }
+
+    /** 当前选中步骤的第一台绑定机器坐标（null=无绑定）。 */
+    private static int[] stepPos(EntityPlayer player) {
+        ProductionLine l = lineOf(player);
+        ProductionStep s = stepOf(player);
+        if (l == null || s == null || s.machines.isEmpty()) return null;
+        MachineRef m = s.machines.get(0);
+        return new int[] { m.dim, m.x, m.y, m.z };
+    }
+
+    private static boolean stepHasPos(EntityPlayer player) {
+        return stepPos(player) != null;
     }
 
     // ===== 子面板：产线设置（重命名 / 真暂停整线 / 删线两击确认，O4）=====
