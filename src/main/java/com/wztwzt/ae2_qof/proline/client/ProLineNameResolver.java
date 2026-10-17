@@ -1,4 +1,4 @@
-package com.wztwzt.ae2_qof.proline;
+package com.wztwzt.ae2_qof.proline.client;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,6 +12,9 @@ import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
 
 import com.wztwzt.ae2_qof.MyMod;
+import com.wztwzt.ae2_qof.proline.ItemRow;
+import com.wztwzt.ae2_qof.proline.ProductionLine;
+import com.wztwzt.ae2_qof.proline.ProductionStep;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;

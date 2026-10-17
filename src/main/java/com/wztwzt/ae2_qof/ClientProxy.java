@@ -66,6 +66,8 @@ public class ClientProxy extends CommonProxy {
         KeyInputHandler.register();
         KnifeNameCopyHandler.register();
         GuideNHIntegration.register();
+        // 4.2.0：产线名称解析 ticker（客户端定时触发）
+        com.wztwzt.ae2_qof.proline.client.ProLineResolveTicker.register();
         // fix54：整合包内 sciencenotleisure 会在中键取物例程的 HEAD 取消原版流程，
         // 导致 GTNHLib 的 PickBlockEvent 不发出、AE2 永不发送 PacketPickBlock。
         // 本钩子在客户端另取触发点补发该包，把 AE2 的中键取物行为还回来。

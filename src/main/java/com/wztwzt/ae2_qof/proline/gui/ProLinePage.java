@@ -99,6 +99,11 @@ public final class ProLinePage {
 
     private ProLinePage() {}
 
+    /** 4.2.0：供客户端解析器读取当前选中的 lineId（无反射）。 */
+    public static String getSelectedLineIdForResolve(UUID playerId) {
+        return SELECTED_LINE.get(playerId);
+    }
+
     private static ProductionLine lineOf(EntityPlayer player) {
         if (player == null || player.worldObj == null || player.worldObj.isRemote) return null;
         String id = SELECTED_LINE.get(player.getUniqueID());
