@@ -115,3 +115,11 @@
 - 构建 `BUILD=0` + spotlessApply；jar SHA256 `15be70be…6a656`；tag `4.1.0-fix1` 已推；Release 已自动发布并核对（body = `.changelogs/4.1.0-fix1.md`，三资产齐）。
 - gpt6.1sol 报告其余项去向：P0-1 验收清单文件 / P1-3 未解析徽标 / P1-4 分支口径提示 / P2 清洗项 → 并入 4.2.0 与实测记录留档（多数与 4.2.0 移交项重合）。
 - **待用户复测**：同一存档，右键终端 → 第 3 页「产线」应正常打开；先前给出 A/B/C/D 测试单继续用。
+
+## 实测回归第 2 轮（2026-10-17，fix1 装机后）
+
+- **P0 回归 2**：产线页三个按钮（新建/导入/预置）一点 GUI 就被踢出。实例日志确诊：`IllegalStateException: Widgets created by DynamicSyncHandler can't have implicitly registered sync handlers`。根因 = MUI2 2.3.88 规矩：**DynamicSync 系 widget 子树内所有 sync handler 必须 `getOrCreateSyncHandler(唯一键,…)` 编号注册**（1/2 页签 `buildActionRow` 证人模式）；产线页 15 个交互点是隐式 `new InteractionSyncHandler().syncHandler(...)`。
+- **修法**（`4.1.0-fix2`）：新增 `serverClick(syncManager, "唯一键", action)` 工具，15 个交互点全改编号键（主页 bar ×3、产线行 select/cfg、步骤行 open/bind/del、步骤小面板 pause/card、线面板 pause/delete、候选行按坐标键、预置行按名键、导入 run、关闭按钮 ×5 走统一 `proline.close` 键）。
+- 构建 `BUILD=0` + spotless；jar SHA256 `5eec5426…b291`；tag `4.1.0-fix2` 已推；Release 已核对（三资产齐）。
+- **教训**：写 DynamicSyncedWidget 子树的按钮时，凡是"点击有服务端副作用"的 handler 一律 `getOrCreateSyncHandler`，宁多勿少——此坑已录入自审第 2 轮。
+- **待用户复测**：fix2 装机后重测 C 类（点三个按钮不退出、点步骤行、预置建线、真停机）。
