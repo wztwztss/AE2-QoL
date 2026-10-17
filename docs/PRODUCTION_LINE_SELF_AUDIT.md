@@ -107,3 +107,11 @@
 **连续两轮零新增（轮 6 / 轮 7）**，静态检测、构建、spotless、javap、jar/resource/指南/审计文档六面全绿；**无删除操作全程 0 次**；git 工作树干净。剩余留档为 4.2.0 扩展项（名称解析器 / groups 语义 / NEI 按钮捕获៛ doc 层 config.generation 扩展），不阻塞本 objective。
 
 > 提醒：本文件只做主记录，后续轮次请在末尾追加（保持上轮快照 + 新发现），便于跨会话追溯。
+
+## 实测回归第 1 轮（2026-10-17，用户首次进游戏）
+
+- **P0 回归**：库存统计终端右键打不开。实例日志确诊：`StockMonitorTerminal.buildUI FAILED: NPE: ModularContainer.getPlayer() because "this.container" is null`。根因 = 产线页在 **buildUI 阶段**经 `PANEL_CACHE.computeIfAbsent(sm.getPlayer(), …)` 建 5 个面板句柄；MUI2 `container` 在 buildUI 时尚未建立。
+- **修法**（`4.1.0-fix1`）：句柄改在 `buildPage` 内 `syncManager.syncedPanel(...)` 直接创建（与 1/2 页签的 cover_edit/net_select 同款证人模式），`getPlayer()` 只存在于面板打开期 builder/点击回调；附带恢复被脚本误删的 `buildPresetsPanel/buildPresetList`；CHANGELOG 顶行日期更新（3.32.0-fix4 → 4.1.0-fix1，报告 P1-5）。
+- 构建 `BUILD=0` + spotlessApply；jar SHA256 `15be70be…6a656`；tag `4.1.0-fix1` 已推；Release 已自动发布并核对（body = `.changelogs/4.1.0-fix1.md`，三资产齐）。
+- gpt6.1sol 报告其余项去向：P0-1 验收清单文件 / P1-3 未解析徽标 / P1-4 分支口径提示 / P2 清洗项 → 并入 4.2.0 与实测记录留档（多数与 4.2.0 移交项重合）。
+- **待用户复测**：同一存档，右键终端 → 第 3 页「产线」应正常打开；先前给出 A/B/C/D 测试单继续用。
