@@ -36,6 +36,25 @@ public final class ItemRow {
         this.isFluid = isFluid;
     }
 
+    /**
+     * 用于汇总/采样/去重的**有效键**（4.1.0-fix6）：
+     * key 已解析 → key；未解析 → {@code raw:<原始名>} 占位。
+     *
+     * <p>
+     * 为什么必须这样：未解析条目原先 key=""，于是**所有**未解析物品在
+     * {@code Set<String>} 里被当成同一个物品——一个步骤产出的未解析物会"抵消"
+     * 另一个步骤消耗的未解析物，总输入/总输出直接算错，采样也全取 0。
+     */
+    public String effectiveKey() {
+        if (key != null && !key.isEmpty()) return key;
+        return raw == null || raw.isEmpty() ? "raw:?" : "raw:" + raw;
+    }
+
+    /** 未解析（4.2.0 名称解析器还没回填）——UI 上应显示原始名而非留白。 */
+    public boolean isUnresolved() {
+        return key == null || key.isEmpty();
+    }
+
     /** 统一串格式：物品取注册名@meta（无 meta 时省略），流体前缀 fluid:。注册名取法与终端 stackKey 同源。 */
     public static String keyOf(ItemStack stack) {
         if (stack == null || stack.getItem() == null) return "";

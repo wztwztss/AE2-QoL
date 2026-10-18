@@ -817,3 +817,6 @@ ae2_qof.proline.import.nostep=No step parsed
 ae2_qof.proline.import.fail=Line creation failed (team gate/limit, see chat & log)
 ae2_qof.proline.import.ok=Created [%s] with %s steps
 ae2_qof.proline.scope.all=All
+ae2_qof.proline.preset.missing=No such preset: %s
+ae2_qof.proline.preset.nostep=Preset %s produced no steps
+ae2_qof.proline.preset.ok=Created [%s] from preset: %s steps (%s unresolved)

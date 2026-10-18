@@ -818,3 +818,6 @@ ae2_qof.proline.import.nostep=没有解析出任何步骤
 ae2_qof.proline.import.fail=建线失败（团队门/上限，见聊天与日志）
 ae2_qof.proline.import.ok=已创建【%s】并导入 %s 步
 ae2_qof.proline.scope.all=全部
+ae2_qof.proline.preset.missing=预置里没有：%s
+ae2_qof.proline.preset.nostep=预置 %s 没有解析出步骤
+ae2_qof.proline.preset.ok=已从预置创建【%s】：%s 步（未解析 %s 项）

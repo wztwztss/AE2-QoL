@@ -53,7 +53,8 @@ public final class ProductionStep {
 
     /** 链扣假设判断：本步骤 outputs 是否提供 key（供自动连线与汇总口径使用）。 */
     public boolean produces(String key) {
-        for (ItemRow o : outputs) if (o.key.equals(key)) return true;
+        for (ItemRow o : outputs) if (o.effectiveKey()
+            .equals(key)) return true;
         return false;
     }
 

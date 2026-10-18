@@ -24,7 +24,7 @@ import gregtech.api.metatileentity.implementations.MTEMultiBlockBase;
  *
  * <h2>口径（v6 安装在案）</h2>
  * <ul>
- * <li><b>10s/轮</b>，只采"打开过界面的活跃产线"（{@link ProLineManager#activeLineIds}，≤16）；</li>
+ * <li><b>10s/轮</b>，采样**全部产线**（每轮上限 {@link #MAX_LINES_PER_ROUND} 条，按存档顺序）；</li>
  * <li><b>规格不允许逐物品查询（A3）</b>：每条活跃线一轮做<b>一次网络全表快照</b>：
  * 物品 = {@code 注册名@meta}，流体 = {@code fluid:名}，之后按键匹配；
  * 线的网络来源 = <b>创建时刻锚定的终端 TE</b>（O2：锁定锚点，不随"哪台终端打开"漂移；
@@ -40,6 +40,8 @@ public final class ProLineSampler {
     private static final long LINE_BUDGET_MS = 3L;
     private static final long BACKOFF_MS = 5 * 60_000L;
     private static final int MAX_MACHINES_PER_ROUND = 128;
+    /** 每轮最多采样多少条产线（防全服产线过多时单轮超时）。 */
+    private static final int MAX_LINES_PER_ROUND = 16;
 
     private static long nextRound = 0L;
     private static final Map<String, Long> BACKOFF = new HashMap<>();
@@ -56,7 +58,14 @@ public final class ProLineSampler {
         ProLineData data = ProLineData.get(w);
         int machinesThisRound = 0;
 
-        java.util.List<String> active = ProLineManager.activeLineIds();
+        // 4.1.0-fix6：**所有产线都要采样**（原先只采「打开过界面的活跃线」，
+        // 导致没开界面时累计/速率永远停在 0——这是核心功能失效，不是优化取舍）。
+        // 采样成本由 LINE_BUDGET_MS + 每轮上限控制。
+        java.util.List<String> active = new java.util.ArrayList<>();
+        for (ProductionLine pl : data.lines) {
+            if (active.size() >= MAX_LINES_PER_ROUND) break;
+            active.add(pl.id);
+        }
         // 长期驻留审计：非活跃/已删除产线的退避与连败表立即清理（防多轮记忆无界增长）
         for (String stale : BACKOFF.keySet()
             .toArray(new String[0])) {
@@ -167,6 +176,8 @@ public final class ProLineSampler {
         Map<String, long[]> targets = ProLineSummary.externalKeys(line);
         for (Map.Entry<String, long[]> e : targets.entrySet()) {
             String key = e.getKey();
+            // 未解析条目（raw: 前缀）无法在 AE 网络里查，跳过采样（4.1.0-fix6）
+            if (key.startsWith("raw:")) continue;
             long stock = stocks.containsKey(key) ? stocks.get(key) : 0L;
             DequeSample dq = line.samples.get(key);
             if (dq == null) {
@@ -174,9 +185,12 @@ public final class ProLineSampler {
                 line.samples.put(key, dq);
             }
             if (!dq.points.isEmpty()) {
-                long prev = dq.points.get(dq.points.size() - 1)[1];
-                long delta = stock - prev;
-                line.addCumulative(key, delta);
+                long[] last = dq.points.get(dq.points.size() - 1);
+                // 基准过期（>30 分钟没采到）或产线刚建：重新取基准，不把这段时间的存量差算进累计
+                boolean stale = nowMs - last[0] > 30L * 60_000L;
+                if (!stale) {
+                    line.addCumulative(key, stock - last[1]);
+                }
             }
             dq.push(nowMs, stock);
         }

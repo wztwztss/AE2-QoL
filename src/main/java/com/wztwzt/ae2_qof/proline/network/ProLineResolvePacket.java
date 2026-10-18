@@ -103,10 +103,39 @@ public class ProLineResolvePacket implements IMessage {
             line.startExpected.clear();
             line.startExpected.putAll(migrated);
 
-            if (items > 0 || starts > 0) {
+            // 4.1.0-fix6：key 回填后，累计/样本还挂在旧的 raw: 键上——必须迁移，
+            // 否则解析成功了汇总仍显示 0（真 bug）。
+            int moved = migrateCounters(line, msg.resolved);
+            if (items > 0 || starts > 0 || moved > 0) {
                 data.markDirty();
                 MyMod.LOG.info("[AE2QoL] 产线 {} 名称解析回填：{} 物品行 + {} 期望边界", line.id, items, starts);
             }
+        }
+
+        /** 把 raw:xxx 的累计与速率样本迁到解析后的真实 key。 */
+        private int migrateCounters(ProductionLine line, Map<String, String> resolved) {
+            int n = 0;
+            for (Map.Entry<String, String> e : resolved.entrySet()) {
+                String oldKey = "raw:" + e.getKey();
+                String newKey = e.getValue();
+                if (oldKey.equals(newKey) || newKey.isEmpty()) continue;
+                java.math.BigInteger[] twin = line.cumulative.remove(oldKey);
+                if (twin != null) {
+                    java.math.BigInteger[] dst = line.cumulative.get(newKey);
+                    if (dst == null) line.cumulative.put(newKey, twin);
+                    else {
+                        dst[0] = dst[0].add(twin[0]);
+                        dst[1] = dst[1].add(twin[1]);
+                    }
+                    n++;
+                }
+                ProductionLine.DequeSample dq = line.samples.remove(oldKey);
+                if (dq != null && line.samples.get(newKey) == null) {
+                    line.samples.put(newKey, dq);
+                    n++;
+                }
+            }
+            return n;
         }
 
         private int resolveRows(java.util.List<ItemRow> rows, Map<String, String> resolved) {

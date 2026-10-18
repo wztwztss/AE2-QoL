@@ -82,12 +82,20 @@ public final class ProLinePresets {
             }
         }
         if (hit == null) {
-            chat(player, EnumChatFormatting.RED, "预置里没有：" + presetName);
+            chat(
+                player,
+                EnumChatFormatting.RED,
+                net.minecraft.util.StatCollector
+                    .translateToLocalFormatted("ae2_qof.proline.preset.missing", presetName));
             return false;
         }
         ProLineImporter.Result r = ProLineImporter.parse(hit.json);
         if (r.line.steps.isEmpty()) {
-            chat(player, EnumChatFormatting.RED, "预置 " + presetName + " 没有解析出步骤");
+            chat(
+                player,
+                EnumChatFormatting.RED,
+                net.minecraft.util.StatCollector
+                    .translateToLocalFormatted("ae2_qof.proline.preset.nostep", presetName));
             return false;
         }
         ProductionLine created = ProLineManager.createLine(
@@ -99,6 +107,8 @@ public final class ProLinePresets {
             y,
             z);
         if (created == null) return false;
+        // 4.1.0-fix6：wiki 的 start[] 期望边界必须一并迁移（原先丢了）
+        created.startExpected.putAll(r.line.startExpected);
         int n = 0;
         for (ProductionStep src : r.line.steps) {
             ProductionStep copy = new ProductionStep();
@@ -113,11 +123,8 @@ public final class ProLinePresets {
         chat(
             player,
             EnumChatFormatting.GREEN,
-            "已从预置创建【" + created.name
-                + "】："
-                + n
-                + " 步"
-                + (r.errors.isEmpty() ? "" : "；未解析项 " + r.errors.size() + " 条（详见导入报告）"));
+            net.minecraft.util.StatCollector
+                .translateToLocalFormatted("ae2_qof.proline.preset.ok", created.name, n, r.errors.size()));
         for (String e : r.errors) {
             MyMod.LOG.info("[AE2QoL] 预置 {} 未解析项：{}", presetName, e);
         }

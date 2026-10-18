@@ -29,7 +29,7 @@ public final class ProLineSummary {
         Set<String> out = new HashSet<>();
         if (line == null) return out;
         for (ProductionStep s : line.steps) for (ItemRow r : s.inputs) {
-            if (!isProducedInternally(line, r.key)) out.add(r.key);
+            if (!isProducedInternally(line, r.effectiveKey())) out.add(r.effectiveKey());
         }
         return out;
     }
@@ -39,7 +39,7 @@ public final class ProLineSummary {
         Set<String> out = new HashSet<>();
         if (line == null) return out;
         for (ProductionStep s : line.steps) for (ItemRow r : s.outputs) {
-            if (!isConsumedInternally(line, r.key)) out.add(r.key);
+            if (!isConsumedInternally(line, r.effectiveKey())) out.add(r.effectiveKey());
         }
         return out;
     }
@@ -58,7 +58,8 @@ public final class ProLineSummary {
     }
 
     private static boolean isConsumedInternally(ProductionLine line, String key) {
-        for (ProductionStep s : line.steps) for (ItemRow r : s.inputs) if (r.key.equals(key)) return true;
+        for (ProductionStep s : line.steps) for (ItemRow r : s.inputs) if (r.effectiveKey()
+            .equals(key)) return true;
         return false;
     }
 
