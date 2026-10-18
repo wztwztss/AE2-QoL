@@ -805,3 +805,16 @@ ae2_qof.proline.line_paused=整线已暂停
 ae2_qof.proline.scope_missing=口径：—
 ae2_qof.proline.sum.target=期望边界(start)
 
+ae2_qof.proline.no_selection=未选中产线
+ae2_qof.proline.hier.main=主线
+ae2_qof.proline.branch.all=全部
+ae2_qof.proline.step.branch=分支: 
+ae2_qof.proline.step.bind_tip=点击选择绑定机器
+ae2_qof.proline.del_confirm=再点一次【删除整线】才会真删（3 秒内有效）
+ae2_qof.proline.candidates.click=点击绑定/解绑到当前步骤
+ae2_qof.proline.import.empty=先粘贴 JSON
+ae2_qof.proline.import.toolong=超长（%s 字符 > 28000）：请拆分产线后再导入
+ae2_qof.proline.import.nostep=没有解析出任何步骤
+ae2_qof.proline.import.fail=建线失败（团队门/上限，见聊天与日志）
+ae2_qof.proline.import.ok=已创建【%s】并导入 %s 步
+ae2_qof.proline.scope.all=全部

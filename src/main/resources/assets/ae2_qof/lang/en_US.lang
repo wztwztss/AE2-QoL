@@ -804,3 +804,16 @@ ae2_qof.proline.line_paused=Line paused
 ae2_qof.proline.scope_missing=scope: —
 ae2_qof.proline.sum.target=Boundary(start)
 
+ae2_qof.proline.no_selection=no line selected
+ae2_qof.proline.hier.main=Main
+ae2_qof.proline.branch.all=All
+ae2_qof.proline.step.branch=Branch: 
+ae2_qof.proline.step.bind_tip=Click to pick machines to bind
+ae2_qof.proline.del_confirm=Click Delete line again within 3s to confirm
+ae2_qof.proline.candidates.click=Click to bind/unbind to current step
+ae2_qof.proline.import.empty=Paste JSON first
+ae2_qof.proline.import.toolong=Too long (%s chars > 28000): split the line
+ae2_qof.proline.import.nostep=No step parsed
+ae2_qof.proline.import.fail=Line creation failed (team gate/limit, see chat & log)
+ae2_qof.proline.import.ok=Created [%s] with %s steps
+ae2_qof.proline.scope.all=All
