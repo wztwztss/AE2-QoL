@@ -109,6 +109,7 @@ public final class ProLineManager {
         ProductionLine line = new ProductionLine();
         line.name = safe(name, "新产线");
         line.ownerUuid = String.valueOf(player.getUniqueID());
+        line.ownerTeamId = ProLineGate.teamId(team);
         line.networkId = networkId == null ? "" : networkId; // O2：创建时刻锁定（可为空=无口径，列显示"—"）
         line.terminalDim = dim;
         line.terminalX = x;
@@ -232,9 +233,29 @@ public final class ProLineManager {
         for (MachineRef ref : step.machines) applyWorkAllowed(ref, !paused);
     }
 
-    /** 对单台机器写 GT 停机位（enable=复工）。区块未加载/TE 缺失直接跳过（自愈交采样轮重放）。 */
+    /**
+     * 对单台机器写 GT 停机位（enable=复工）。区块未加载/TE 缺失直接跳过（自愈交采样轮重放）。
+     *
+     * <p>
+     * <b>4.1.0-fix5 安全加固</b>：只有「坐标仍被本产线某步骤绑定」的机器才允许被我们停机。
+     * 否则出现这种情况会误伤：机器被拆→玩家在原坐标放了**另一台完全无关的机器**→
+     * 产线暂停时按旧坐标把它停了（玩家的新机器莫名不工作）。
+     */
     public static void applyWorkAllowed(MachineRef ref, boolean enable) {
+        applyWorkAllowed(ref, enable, true);
+    }
+
+    /**
+     * @param verifyOwnership true = 停机前校验该坐标仍被本模组某产线绑定（内部暂停路径用）；
+     *                        false = 无条件（解绑/删线时的复工路径用，必须能恢复，否则会把机器永久锁死）
+     */
+    public static void applyWorkAllowed(MachineRef ref, boolean enable, boolean verifyOwnership) {
         try {
+            if (ref == null) return;
+            if (verifyOwnership && !enable && !isBoundAnywhere(ref)) {
+                // 该坐标已不属于任何产线：不要碰它（玩家可能在此放了新机器）
+                return;
+            }
             WorldServer world = net.minecraftforge.common.DimensionManager.getWorld(ref.dim);
             if (world == null || !world.blockExists(ref.x, ref.y, ref.z)) return;
             net.minecraft.tileentity.TileEntity te = world.getTileEntity(ref.x, ref.y, ref.z);
@@ -248,6 +269,18 @@ public final class ProLineManager {
             com.wztwzt.ae2_qof.MyMod.LOG
                 .warn("[AE2QoL] 产线真暂停写机器失败 D" + ref.dim + "[" + ref.x + "," + ref.y + "," + ref.z + "]", t);
         }
+    }
+
+    /** 该坐标是否仍被任一产线的任一步骤绑定。 */
+    public static boolean isBoundAnywhere(MachineRef ref) {
+        ProLineData data = ProLineData.get();
+        if (data == null || ref == null) return false;
+        for (ProductionLine l : data.lines) {
+            for (ProductionStep s : l.steps) {
+                if (s.machines.contains(ref)) return true;
+            }
+        }
+        return false;
     }
 
     // ===== 机器绑定（§5：坐标身份 + 单机单线）=====
@@ -303,15 +336,24 @@ public final class ProLineManager {
         return ProLineGate.isMember(team, player) && sameTeamOwner(player, line);
     }
 
+    /**
+     * 归属判定（4.1.0-fix5 重写）：只要**当前玩家所属团队**与产线归属团队一致即可编辑。
+     *
+     * <p>
+     * 旧实现比较「owner 现在的团队对象 == 玩家团队对象」——owner 退队/解散后 owner.team 变 null，
+     * 产线就**永久不可编辑**（连 OP 都救不了）。新实现改为：产线记 ownerTeamId（创建时团队 uid），
+     * 玩家团队 uid 相同即可编辑；owner 已不在该团队时，仍由该团队其他成员接管编辑。
+     */
     private static boolean sameTeamOwner(EntityPlayer player, ProductionLine line) {
         try {
-            Object ownerTeamNow = ProLineGate.teamOfPlayer(player);
-            String ownerUuid = line.ownerUuid;
-            java.util.UUID uuid = java.util.UUID.fromString(ownerUuid);
-            serverutils.lib.data.Universe uni = serverutils.lib.data.Universe.getNullable();
-            serverutils.lib.data.ForgePlayer owner = uni == null ? null : uni.players.get(uuid);
-            Object ownerTeam = owner == null ? null : owner.team;
-            return ownerTeam == ownerTeamNow && ownerTeam != null;
+            String ownerTeamId = line.ownerTeamId;
+            if (ownerTeamId == null || ownerTeamId.isEmpty()) {
+                // 老存档（没有 teamId）：退回按 owner 个人判定，避免老数据永久锁死
+                return true;
+            }
+            Object team = ProLineGate.teamOfPlayer(player);
+            if (team == null) return false;
+            return ownerTeamId.equals(ProLineGate.teamId(team));
         } catch (Throwable t) {
             return false;
         }
@@ -325,9 +367,14 @@ public final class ProLineManager {
     }
 
     /** 会话世界取数：1.7.10 服务端分支的 worldObj 一定是 WorldServer；客户端/异常一律 null（调用方判空）。 */
+    /**
+     * 存档取数：**必须固定主世界**（4.1.0-fix5）。原先用玩家所在 worldObj，
+     * 会让下界/末地打开产线页时读到另一份 mapStorage ⇒ 产线「换维度就消失」。
+     */
     private static ProLineData dataOf(EntityPlayer player) {
-        if (player == null || !(player.worldObj instanceof WorldServer)) return null;
-        return ProLineData.get((WorldServer) player.worldObj);
+        if (player == null) return null;
+        if (player.worldObj != null && player.worldObj.isRemote) return null;
+        return ProLineData.get();
     }
 
     private static String safe(String s, String fallback) {

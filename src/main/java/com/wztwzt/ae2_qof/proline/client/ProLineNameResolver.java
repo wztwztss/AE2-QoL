@@ -113,13 +113,100 @@ public final class ProLineNameResolver {
         return "";
     }
 
+    /** 从 jar 内 presets.json 收集所有 wiki raw 名 → 解析 → 发包。 */
+    private static int resolvePresetNamesAndSend(String lineId) {
+        java.util.Set<String> raws = new java.util.LinkedHashSet<>();
+        try {
+            java.io.InputStream in = ProLineNameResolver.class
+                .getResourceAsStream("/assets/ae2_qof/proline/presets.json");
+            if (in == null) return 0;
+            com.google.gson.JsonElement root = new com.google.gson.JsonParser()
+                .parse(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8));
+            if (!root.isJsonObject()) return 0;
+            com.google.gson.JsonObject obj = root.getAsJsonObject();
+            if (!obj.has("presets")) return 0;
+            for (com.google.gson.JsonElement el : obj.getAsJsonArray("presets")) {
+                if (!el.isJsonObject()) continue;
+                com.google.gson.JsonObject p = el.getAsJsonObject();
+                if (!p.has("json")) continue;
+                com.google.gson.JsonElement inner = new com.google.gson.JsonParser().parse(
+                    p.get("json")
+                        .getAsString());
+                if (!inner.isJsonObject()) continue;
+                com.google.gson.JsonObject lineJson = inner.getAsJsonObject();
+                if (lineJson.has("recipeQuery") && lineJson.get("recipeQuery")
+                    .isJsonArray()) {
+                    for (com.google.gson.JsonElement q : lineJson.getAsJsonArray("recipeQuery")) {
+                        if (!q.isJsonObject()) continue;
+                        com.google.gson.JsonObject st = q.getAsJsonObject();
+                        for (String field : new String[] { "input", "output" }) {
+                            if (!st.has(field) || !st.get(field)
+                                .isJsonPrimitive()) continue;
+                            for (String tok : st.get(field)
+                                .getAsString()
+                                .split(",")) {
+                                String t = tok.trim();
+                                if (!t.isEmpty()) raws.add(t);
+                            }
+                        }
+                    }
+                }
+                if (lineJson.has("start")) {
+                    com.google.gson.JsonElement st = lineJson.get("start");
+                    if (st.isJsonArray()) {
+                        for (com.google.gson.JsonElement e : st.getAsJsonArray()) {
+                            if (e.isJsonObject() && e.getAsJsonObject()
+                                .has("name"))
+                                raws.add(
+                                    e.getAsJsonObject()
+                                        .get("name")
+                                        .getAsString());
+                        }
+                    } else if (st.isJsonObject()) {
+                        for (java.util.Map.Entry<String, com.google.gson.JsonElement> en : st.getAsJsonObject()
+                            .entrySet()) {
+                            raws.add(en.getKey());
+                        }
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 预置 raw 名收集失败", t);
+            return 0;
+        }
+        if (raws.isEmpty()) return 0;
+        java.util.Map<String, String> resolved = new java.util.HashMap<>();
+        for (String raw : raws) {
+            String key = resolve(raw);
+            if (!key.isEmpty()) resolved.put(raw, key);
+        }
+        if (resolved.isEmpty()) {
+            MyMod.LOG.info("[AE2QoL] 名称解析：{} 个 raw 名全部未匹配（客户端语言表可能非中文）", raws.size());
+            return 0;
+        }
+        try {
+            com.wztwzt.ae2_qof.network.ModNetwork.CHANNEL
+                .sendToServer(new com.wztwzt.ae2_qof.proline.network.ProLineResolvePacket(lineId, resolved));
+        } catch (Throwable t) {
+            MyMod.LOG.warn("[AE2QoL] 名称解析发包失败", t);
+            return 0;
+        }
+        MyMod.LOG.info("[AE2QoL] 名称解析：{}/{} 个 raw 名已匹配并发包", resolved.size(), raws.size());
+        return resolved.size();
+    }
+
     /**
      * 客户端入口：产线页打开时扫描产线的所有空 key 条目 → 解析 → 发包。
      * 返回解析成功的 raw→key 对数（0 = 无需解析或无结果）。
      */
     public static int resolveAndSend(String lineId, ProductionLine line) {
-        if (line == null || line.steps.isEmpty()) return 0;
         ensureIndex();
+        if (line == null) {
+            // 4.2.0：客户端拿不到服务端 ProductionLine（那是服务端对象），
+            // 改为从打包的 presets.json 收集全部 raw 名一次性解析——覆盖面最广。
+            return resolvePresetNamesAndSend(lineId);
+        }
+        if (line.steps.isEmpty()) return 0;
         // 收集所有待解析的 raw 名
         Set<String> pending = new HashSet<>();
         for (ProductionStep s : line.steps) {

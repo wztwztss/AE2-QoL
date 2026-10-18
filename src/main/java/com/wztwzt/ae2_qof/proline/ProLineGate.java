@@ -82,6 +82,16 @@ public final class ProLineGate {
         return Su.isMember(teamObj, player);
     }
 
+    /** 团队稳定 uid（4.1.0-fix5）：用于产线归属判定，跨 owner 退队仍稳定。 */
+    public static String teamId(Object teamObj) {
+        if (!isPresent() || teamObj == null) return "";
+        try {
+            return String.valueOf(Su.uid(teamObj));
+        } catch (Throwable t) {
+            return "";
+        }
+    }
+
     /** 团队标题（展示用）；异常兜底返回团队 uid 串。 */
     public static String teamTitle(Object teamObj) {
         if (!isPresent() || teamObj == null) return "?";
@@ -128,6 +138,10 @@ public final class ProLineGate {
                 MyMod.LOG.warn("[AE2QoL] 产线成员校验失败", t);
                 return false;
             }
+        }
+
+        static short uid(Object teamObj) {
+            return ((ForgeTeam) teamObj).getUID();
         }
 
         static String teamTitle(Object teamObj) {

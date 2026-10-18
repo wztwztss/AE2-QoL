@@ -36,6 +36,8 @@ public final class ProductionLine {
     public String name;
     /** 创建者所属 ServerUtilities 团队的成员标识（我们存**玩家 UUID 串**，团队解析交给 ProLineGate）。 */
     public String ownerUuid;
+    /** 归属团队 uid（4.1.0-fix5）：编辑权限按团队判，owner 退队不再锁死产线。 */
+    public String ownerTeamId = "";
     /** 锁定的 AE 网络 id（创建者终端绑定网络的 id；仅展示口径，采样的网络锚点看下面四项）。 */
     public String networkId;
     /**
@@ -119,6 +121,7 @@ public final class ProductionLine {
         tag.setString("Id", id);
         tag.setString("Name", name == null ? "" : name);
         tag.setString("Owner", ownerUuid == null ? "" : ownerUuid);
+        tag.setString("OwnerTeam", ownerTeamId == null ? "" : ownerTeamId);
         tag.setString("Net", effectiveNetworkId());
         tag.setInteger("TDim", terminalDim);
         tag.setInteger("TX", terminalX);
@@ -165,6 +168,7 @@ public final class ProductionLine {
             tag.hasKey("Created") ? tag.getLong("Created") : System.currentTimeMillis());
         line.name = tag.getString("Name");
         line.ownerUuid = tag.getString("Owner");
+        line.ownerTeamId = tag.hasKey("OwnerTeam") ? tag.getString("OwnerTeam") : "";
         line.networkId = tag.getString("Net");
         if (tag.hasKey("TDim")) {
             line.terminalDim = tag.getInteger("TDim");

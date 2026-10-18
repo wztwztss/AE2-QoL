@@ -112,7 +112,7 @@ public final class ProLinePage {
         if (player == null || player.worldObj == null || player.worldObj.isRemote) return null;
         String id = SELECTED_LINE.get(player.getUniqueID());
         if (id == null) return null;
-        WorldServer w = ProLineData.anyLoadedServerWorld();
+        WorldServer w = ProLineData.world();
         return w == null ? null
             : ProLineData.get(w)
                 .findLine(id);
@@ -348,7 +348,7 @@ public final class ProLinePage {
 
     private static List<LineRow> collectLineRows() {
         List<LineRow> out = new ArrayList<>();
-        WorldServer w = ProLineData.anyLoadedServerWorld();
+        WorldServer w = ProLineData.world();
         if (w == null) return out;
         for (ProductionLine l : ProLineData.get(w).lines) out.add(LineRow.of(l));
         return out;
@@ -828,7 +828,7 @@ public final class ProLinePage {
         if (player == null || player.worldObj.isRemote || !ProLineGate.isPresent()) return out;
         Object myTeam = ProLineGate.teamOfPlayer(player);
         if (myTeam == null) return out;
-        WorldServer any = ProLineData.anyLoadedServerWorld();
+        WorldServer any = ProLineData.world();
         ProLineData data = any == null ? null : ProLineData.get(any);
         if (data == null) return out;
         long t0 = System.nanoTime();

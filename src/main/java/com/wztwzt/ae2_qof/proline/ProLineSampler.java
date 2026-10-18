@@ -51,7 +51,7 @@ public final class ProLineSampler {
         if (now < nextRound) return;
         nextRound = now + INTERVAL_MS;
 
-        WorldServer w = ProLineData.anyLoadedServerWorld();
+        WorldServer w = ProLineData.world();
         if (w == null) return;
         ProLineData data = ProLineData.get(w);
         int machinesThisRound = 0;
