@@ -429,7 +429,10 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
                         String suffix = serializeSuffix(viewable.getNameSuffix());
                         if (!Objects.equals(tracker.name, rawName) || !Objects.equals(tracker.suffix, suffix)) {
                             if (p == null) p = new PacketInterfaceTerminalUpdate();
-                            p.addRenamedEntry(tracker.id, rawName, suffix);
+                            // AE2 rv3-beta-1083（RC-2）：addRenamedEntry 新增第 4 参 ItemStack = 该接口的展示代表物
+                            // （原版 ContainerInterfaceTerminal.updateList 传 machine.getDisplayRep()）。
+                            // 该值只在"改名"时一起下发，用于客户端刷新图标；不传会让编译器直接拒绝。
+                            p.addRenamedEntry(tracker.id, rawName, suffix, viewable.getDisplayRep());
                             tracker.name = rawName;
                             tracker.suffix = suffix;
                         }
@@ -494,7 +497,11 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
                             .setP2POutput(viewable instanceof PartP2PTunnel && ((PartP2PTunnel) viewable).isOutput())
                             .setSupportedStackTypes(tracker.supportedStackTypes)
                             .setPriority(tracker.priority)
-                            .setTerminalVisible(tracker.shouldDisplay);
+                            .setTerminalVisible(tracker.shouldDisplay)
+                            // AE2 rv3-beta-1083（RC-2）新增：标记"这是样板供应器型接口"。
+                            // 客户端的新过滤器（只显示样板供应器）完全依赖这个标志，
+                            // 不传的话该过滤器打开后列表恒空——属于会让人以为"终端坏了"的静默退化。
+                            .setIsCraftingPatternProvider(viewable.isCraftingPatternProvider());
                         p.addOverwriteEntry(tracker.id)
                             .setTerminalVisible(tracker.shouldDisplay);
                         this.tracked.put(viewable, tracker);

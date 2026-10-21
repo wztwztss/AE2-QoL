@@ -11,7 +11,6 @@ import net.minecraft.item.ItemStack;
 
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -22,19 +21,31 @@ import com.wztwzt.ae2_qof.util.CountFormatter;
 
 import appeng.api.AEApi;
 import codechicken.nei.PositionedStack;
-import codechicken.nei.recipe.NEIRecipeWidget;
 import codechicken.nei.recipe.RecipeHandlerRef;
+import codechicken.nei.recipe.widget.RecipeWidget;
 
 /**
  * 在 NEI 配方界面（任意配方页）的每个物品格上叠加：
  * 1. 该物品在 AE 网络中可合成 -> 编码样板小图标；
  * 2. 该物品在 AE 网络中有存量 -> 数量角标。
  * 数据来源 {@link NetworkInventoryCache}（由 AE 终端 postUpdate 填充）。
+ *
  * <p>
- * 注意：NEI 2.8.19-GTNH 的 NEIRecipeWidget 没有 drawItem(PositionedStack,...) 方法，
+ * 版本适配记录（GTNH 2.9.0-RC-2 的 NEI 2.8.155-GTNH）：
+ * <ul>
+ * <li>旧目标 {@code codechicken.nei.recipe.NEIRecipeWidget} 已被删除，
+ * 新版对应类是 {@code codechicken.nei.recipe.widget.RecipeWidget}（继承 {@code Widget}）。</li>
+ * <li>新版 {@code RecipeWidget} <b>没有 {@code handlerRef} 字段</b>，
+ * 改为通过 public 方法 {@code getRecipeHandlerRef()} 取得 {@link RecipeHandlerRef}。</li>
+ * <li>{@code draw(int,int)}、{@code PositionedStack.relx/rely/item}、
+ * {@code GuiContainerManager.drawItem(int,int,ItemStack)} 在新版中均保留，无需改动。</li>
+ * </ul>
+ *
+ * <p>
+ * 历史记录：NEI 2.8.19-GTNH 的 NEIRecipeWidget 没有 drawItem(PositionedStack,...) 方法，
  * 旧注入点无效，改为在 draw(int,int) 末尾叠加，直接遍历真实绘制的物品格。
  */
-@Mixin(value = NEIRecipeWidget.class, remap = false)
+@Mixin(value = RecipeWidget.class, remap = false)
 public abstract class MixinNEIRecipeWidget {
 
     private static final ItemStack PATTERN = AEApi.instance()
@@ -44,35 +55,35 @@ public abstract class MixinNEIRecipeWidget {
         .maybeStack(1)
         .orNull();
 
-    @Shadow(remap = false)
-    protected RecipeHandlerRef handlerRef;
-
     @Inject(method = "draw(II)V", at = @At("TAIL"), remap = false)
     private void ae2qol$overlayRecipeSlots(int mousex, int mousey, CallbackInfo ci) {
         try {
             if (!OverlayConfig.isEnabled() || !NetworkInventoryCache.hasData()) {
                 return;
             }
-            if (handlerRef == null || handlerRef.handler == null) {
+
+            // 新版 NEI：handlerRef 字段已移除，改由 getRecipeHandlerRef() 取得
+            RecipeHandlerRef ref = ((RecipeWidget) (Object) this).getRecipeHandlerRef();
+            if (ref == null || ref.handler == null) {
                 return;
             }
 
-            int index = handlerRef.recipeIndex;
+            int index = ref.recipeIndex;
             List<PositionedStack> stacks = new ArrayList<PositionedStack>();
             try {
-                List<PositionedStack> ing = handlerRef.handler.getIngredientStacks(index);
+                List<PositionedStack> ing = ref.handler.getIngredientStacks(index);
                 if (ing != null) {
                     stacks.addAll(ing);
                 }
             } catch (Throwable ignored) {}
             try {
-                List<PositionedStack> other = handlerRef.handler.getOtherStacks(index);
+                List<PositionedStack> other = ref.handler.getOtherStacks(index);
                 if (other != null) {
                     stacks.addAll(other);
                 }
             } catch (Throwable ignored) {}
             try {
-                PositionedStack result = handlerRef.handler.getResultStack(index);
+                PositionedStack result = ref.handler.getResultStack(index);
                 if (result != null) {
                     stacks.add(result);
                 }

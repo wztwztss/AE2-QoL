@@ -1607,3 +1607,65 @@ JAVA_HOME=/e/java17 bash docs/tooltip-fix42-regression.sh
 2. 每次打开智能体干活前，先让 AI 读取本文档，填写「当前会话元数据」。
 3. 每次结束工作或切换智能体前，让 AI 更新本文档全部进度内容，并追加操作日志。
 4. 下一个智能体启动后自动读取本文档，通过日志和进度无缝承接任务。
+
+---
+
+## 十二、4.2.0：GTNH 2.9.0-RC-2 全量兼容（2026-10-21）
+
+### 12.1 会话元数据
+
+- 平台/模型：DeepSeek Harness（DSH）· deepseek/deepseek-v4.1-flash-fast
+- 用户诉求原文要点：整合包整体更新到 **GTNH 2.9.0-RC-2**；「MK3 和 4 的总成的样板数量都变回去了」是巨大问题；
+  还有很多小问题；按最新模组版本重新修复全部功能；参考源码看 RC-2，缺失的自己去 GitHub 下对应版本源码。
+- 用户拍板（6 问）：① 混合基线（能 Maven 走 Maven，其余拷实例 jar）；② MK.III/IV 目标槽数**恢复 144/360**；
+  ③ 先由我做全量审计出清单，用户再补现象；④ **产线管理器 WIP 先 stash**，本轮只做 RC-2 兼容；
+  ⑤ 客户端铺实例 + 给服务端 jar；⑥ 版本号 **4.2.0**。
+
+### 12.2 本轮已完成
+
+- **基线整体换代**：GT 5.09.54.133→**205**、AE2 rv3-beta-1050→**1083**、AE2FC 1.5.106→**113**、
+  MUI2 2.3.88→**92**、NEI 2.8.130→**155**、PH p24→**p31**、StructureLib 1.4.42→**45**、
+  GuideNH 1.3.29→**41**、GTNL dev-290→**rc2**、ServerUtilities 2.4.9→**2.4.14**。
+- **GTNH Maven 不可用（Cloudflare 525）** ⇒ AE2/AE2FC 走「实例 jar → `libs/` → `rfg.deobf()`」；
+  文件依赖无传递依赖 ⇒ 显式补 GTNHLib 0.11.52、waila 1.19.34、JOML 1.10.8、fastutil 8.5.18；
+  Maven 依赖全部 `transitive = false`（新版 POM 会拖 GTNHExtLib 1.0.5 / lwjgl3ify 3.0.34，离线缓存没有）。
+- **P0 修复（用户最在意的「样板数量变回去」）**：PH p31 把 `createPatternWindow2` 改成
+  `(PanelSyncManager, IPanelHandler)`，我们 MK.III/MK.IV 的旧签名重写**不再构成重写** ⇒ 退回 PH 原版 36 格窗。
+  已改签名，并对齐 p31 三处行为：槽位 `panelHandler.isPanelOpen()` 守卫、
+  `POPUP_SLOT_SHIFT_PRIORITY`、`ProghatchesUtil.sortShiftTargetsOfPopup()`。
+- **P1 修复**：`addRenamedEntry` 第 4 参 `viewable.getDisplayRep()`；合并终端补发
+  `setIsCraftingPatternProvider(...)`（否则 AE2 新版「只看样板供应器」过滤器列表恒空）。
+- **保留并确认生效**：`MixinNEIRecipeWidget` 的 RC-2 适配（`RecipeWidget` + `getRecipeHandlerRef()`），
+  运行日志已见注入成功。
+- **产线 WIP**：`git stash@{0}`（Binder 面板、改名解析、配套 lang/docs）——**未删除**，恢复用 `git stash pop`。
+- **产物**：`build/libs/AE2-QoL-4.2.0.jar`（2,062,445 B，SHA256 `7F88634B…26CC`）；
+  已铺到 RC2 实例 `mods/【自制】AE2-QoL-4.2.0.jar`（mods 内 AE2-QoL 数量=1，旧 fix8 已移至 `build/rollback/`）；
+  同一份 jar 复制到 `D:\下载\【自制】AE2-QoL-4.2.0.jar` 供服务端上传（本模组无端侧拆分，同一 jar 双端通用）。
+
+### 12.3 审计方法与结论（可复用）
+
+1. 编译期断裂：4 处（PH 窗签名 2 处、AE2 `addRenamedEntry`、fastutil 缺失）——已修。
+2. **静默重写失效**：把「我们所有类的直接父类」与新旧 jar 的成员表逐一对比（37 个外部父类），
+   只发现 `createPatternWindow2` 一处真断裂；其余 `jvmdowngrader$…` / `lambda$…` 是合成方法噪声。
+3. 描述符比对（同名不同参、无 `@Override` 时编译器不报）只命中 `getIdleDrain(ItemStack)`——
+   经核对是**我们自己的重载**，AE2 两版都只有无参版本，非退化。
+4. Mixin：RC-2 运行日志中本模组注入**零失败**；`require = 0` 的注入器（6 个蒸汽调速 + PH 编程电路）
+   目标成员在 GTNL rc2 / PH p31 中均存在。
+5. **无法静态证明的**：行为层（配方、AE2 网络交互、GUI 手感）。必须进游戏实测。
+
+### 12.4 待实测（未验证，不算通过）
+
+| 项 | 预期 |
+|---|---|
+| MK.III 样板窗 | 9 列 × 可见 9 行，可滚动到 144 格；三页 tab 可用 |
+| MK.IV 样板窗 | 同上，可滚动到 360 格 |
+| 关窗后 shift 样板 | 不应掉进看不见的槽 |
+| 合并终端接口改名 | 图标随名字一起刷新；「只看样板供应器」过滤器可用 |
+| NEI 配方页 | 样板图标/数量角标仍显示 |
+| 其它功能 | 无限元件、自适应电网、万能维护仓、库存监控覆盖板、通配样板、产线管理器——逐项过 |
+
+### 12.5 下一步
+
+1. 用户启动 RC-2 客户端，确认启动日志出现 `AE2 QoL:4.2.0` 且无本模组异常。
+2. 按 12.4 逐项实测，把「很多小问题」的具体现象贴回来（最好带截图/日志行）。
+3. 本轮结束前**产线 WIP 仍留在 stash**；下一轮开工先 `git stash pop` 再继续。

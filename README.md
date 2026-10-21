@@ -9,13 +9,17 @@
 > 注册网络通道并运行线程引擎。只装客户端会出现"界面在但功能不生效/连不上"，只装服务端则客户端看不到相关界面与提示。
 > （Modrinth 页面上若有"客户端专用"标记，那是页面元数据不准，请以本条为准。）
 
-**作者：wztwzt · 当前源码版本：4.1.0 · 对照整合包：GTNH 2.9.0-beta-3**
+**作者：wztwzt · 当前源码版本：4.2.0 · 对照整合包：GTNH 2.9.0-RC-2**
+
+> **4.2.0 是本模组对 GTNH 2.9.0-RC-2 的全量兼容版本**：编译基线与依赖表整体换到 RC-2 实机版本，
+> 并修掉了 RC-2 下 MK.III / MK.IV 样板窗退回原版 36 格的问题（详见 [CHANGELOG.md](CHANGELOG.md) 顶部）。
+> **旧版本（4.1.0-fix8 及更早）在 RC-2 上 MK.III/IV 的样板窗是坏的**，请勿混用。
 
 
 ## 安装与升级
 
 1. 关闭游戏/服务器，备份**完整世界存档和配置**，保留可回退的旧 JAR。无限存储元件的数据在世界存档内，不能只备份物品 NBT。
-2. 在与本项目匹配的 GTNH 环境中，用 `AE2-QoL-4.1.0.jar` 替换旧的 AE2 QoL JAR，不要同时保留多个版本。
+2. 在与本项目匹配的 GTNH 环境中，用 `AE2-QoL-4.2.0.jar` 替换旧的 AE2 QoL JAR，不要同时保留多个版本。
 3. **客户端与服务端使用同一版本**。fix41 改过上传相关网络包，不能只升级一端。
 4. 本 JAR 已并入 `aeinfinitycell`（内置元数据版本为 `1.0.5-ae2qol`，3.27.0 起并入上游 1.0.5 计数模型）；不要与原独立 AE2 Infinity Cell JAR 同时安装。迁移前备份，在副本存档中验证旧元件。
 5. 首次启动后检查日志、配置生成与 Mixin 加载，再在测试存档中验证所用功能。开发协作中，向测试实例部署仍须单独授权。
@@ -24,25 +28,27 @@
 
 本项目使用 **GTNH 分支 API**，不是任意 Forge 1.7.10 装上 AE2/NEI 就能保证运行。完整声明见 [dependencies.gradle](dependencies.gradle) 与 [gradle.properties](gradle.properties)；`compileOnly` 不等于相关集成已经过缺模组启动验证。
 
-| 组件 | 当前编译依据（fix49） | 对照实例 |
+| 组件 | 当前编译依据（4.2.0 / RC-2） | 对照实例 |
 |---|---|---|
-| Minecraft / Forge | 1.7.10 / 10.13.4.1614；MCP stable 12 | GTNH 2.9.0-beta-3 |
-| AE2 Unofficial | rv3-beta-1050-GTNH | 同左 |
-| AE2FluidCraft-Rework | 1.5.106-gtnh | 同左 |
-| GregTech | 5.09.54.133 | 同左 |
-| ModularUI2 | 2.3.88-1.7.10 | 同左 |
-| NEI | 2.8.130-GTNH | 同左 |
+| Minecraft / Forge | 1.7.10 / 10.13.4.1614；MCP stable 12 | GTNH 2.9.0-RC-2 |
+| AE2 Unofficial | rv3-beta-1083-GTNH（实例 jar + `rfg.deobf`） | 同左 |
+| AE2FluidCraft-Rework | 1.5.113-gtnh（实例 jar + `rfg.deobf`） | 同左 |
+| GregTech | 5.09.54.205 | 同左 |
+| ModularUI2 | 2.3.92-1.7.10 | 同左 |
+| NEI | 2.8.155-GTNH | 同左 |
 | NotEnoughEnergistics | 1.7.41 | 同左 |
-| GT Not Leisure | 0.2.7-pre3-dev-290 | 同左 |
-| Programmable Hatches / Wireless Nexus | 0.2.0p24 / 1.0.2 | 同左 |
+| GT Not Leisure | 0.2.7-rc2 | 同左 |
+| Programmable Hatches / Wireless Nexus | 0.2.0p31 / 1.0.2 | 同左 |
 | BetterQuesting | 3.8.84-GTNH | 任务检测接口按 3.8.70 审查，编译用 3.8.84 |
-| GuideNH | 1.3.29 | 同左 |
+| GuideNH | 1.3.41 | 同左 |
 | Thaumic Energistics | 1.7.60-GTNH | 同左 |
 | Avaritia | 1.99 | 同左 |
-| StructureLib | 1.4.42 | 同左 |
+| StructureLib | 1.4.45 | 同左 |
+| 其它显式补齐 | GTNHLib 0.11.52、waila 1.19.34、JOML 1.10.8、fastutil 8.5.18 | 文件依赖不带传递依赖，必须显式声明 |
 
-fix49 之前本表停留在 beta-1 时代（AE2 977 / GT 5.09.52.594 / NEI 2.8.19 / MUI2 2.3.73 / NEE 1.7.14 / GTNL pre1 / PH 0.2.0p8 / BQ 3.8.70），
-属"能编译但未对齐 b3"；现已全量升级，升级过程暴露并修复了 6 处 API 断裂。
+4.2.0 把本表从 beta-3 基线整体换到 RC-2 基线（GT 133→205、AE2 1050→1083、AE2FC 106→113、
+MUI2 88→92、NEI 130→155、PH p24→p31、StructureLib 42→45、GuideNH 29→41、GTNL dev290→rc2、
+ServerUtilities 2.4.9→2.4.14）。升级过程暴露并修复了 4 处 API 断裂 + 1 处静默重写失效。
 
 另涉及 CodeChickenLib、Thaumcraft、Eternal Singularity 等。Chromatic Tooltips 不是本模组依赖，而是 F4/F5 的对照环境（fix42 核对版本为 Chromatic 1.0.29 / Compat 1.0.31 / NEI 2.8.101）。构建使用 Java 17 / Jabel，目标字节码为 JVM 8；实际游戏 Java 要遵循所用整合包的 lwjgl3ify/启动器配置。
 

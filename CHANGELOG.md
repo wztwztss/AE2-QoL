@@ -1,3 +1,74 @@
+# 4.2.0 —— GTNH 2.9.0-RC-2 全量兼容（2026-10-21）
+
+> 用户拍板：本次按 **4.2.0** 发布（不是 `-fixN`），因为「换整合包基线」被视作一次功能性发布；
+> 编译器、依赖表、README 依赖表一并换到 RC-2 实机版本。
+
+## 背景：整合包从 beta-3 换到 RC-2
+
+| 依赖 | beta-3（旧基线） | **RC-2（新基线）** | 变化 |
+|---|---|---|---|
+| GregTech | 5.09.54.133 | **5.09.54.205** | 新增 JOML 数学库依赖 |
+| AE2 Unofficial | rv3-beta-1050 | **rv3-beta-1083** | `addRenamedEntry` 多一个 ItemStack 参数；接口终端新增「样板供应器」标志 |
+| AE2FC | 1.5.106 | **1.5.113** | — |
+| ModularUI2 | 2.3.88 | **2.3.92** | — |
+| NEI | 2.8.130 | **2.8.155** | `NEIRecipeWidget` 被 `codechicken.nei.recipe.widget.RecipeWidget` 取代 |
+| ProgrammableHatches | 0.2.0p24 | **0.2.0p31** | 样板窗方法签名变化、shift 槽位排序变化 |
+| StructureLib / GuideNH / GTNL / ServerUtilities | 1.4.42 / 1.3.29 / 0.2.7-dev-290 / 2.4.9 | **1.4.45 / 1.3.41 / 0.2.7-rc2 / 2.4.14** | — |
+
+## 本次修的问题（按严重度）
+
+### P0：MK.III / MK.IV 的样板窗退回原版 36 格
+
+- **现象**：整合包更新后，MK.III（144 槽）/ MK.IV（360 槽）打开样板窗只显示 PH 原版的 4×9=36 格，
+  等于「样板数量变回去了」；方块本体与存档里的槽位其实仍是 144/360（启动日志有
+  `样板槽=144/360` 为证），坏的是**窗口**。
+- **根因（字节码证据）**：PH 0.2.0p31 把 `createPatternWindow2` 的签名从
+  `(PanelSyncManager)` 改成 `(PanelSyncManager, IPanelHandler)`。我们两个子类重写的是旧签名，
+  **不再构成重写**（编译期只报 `method does not override or implement a method from a supertype`，
+  若去掉 `@Override` 就会完全静默），于是 PH 父类那套原版窗被调用。
+- **修法**：两个子类改重写新签名；同时跟齐 PH p31 的三处行为变化：
+  1. 槽位过滤器加 `panelHandler.isPanelOpen()`（关窗后 shift 进来的样板会掉进看不见的槽）；
+  2. `registerSlotGroup("pattern_inv", 9, ProghatchesUtil.POPUP_SLOT_SHIFT_PRIORITY)`
+     （原 `-1` 会让 shift 排序落在错误的槽组）；
+  3. 补 `ProghatchesUtil.sortShiftTargetsOfPopup(syncManager)`（MUI2 晚注册槽位排序 bug 的规避）。
+- **验证**：`javap` 产物确认 `MTEPatternCraftingBufferMKIII/MKIV.createPatternWindow2` 已是新描述符。
+
+### P1：库存统计终端（合并终端）的两个静默退化
+
+- **`PacketInterfaceTerminalUpdate.addRenamedEntry` 第 4 参**：AE2 1083 新增 `ItemStack`（接口展示代表物，
+  原版传 `machine.getDisplayRep()`）。不补则编译失败；补了之后「接口改名」才会连图标一起刷新。
+- **`setIsCraftingPatternProvider`**：AE2 1083 新增该标志与配套的「只看样板供应器」过滤器。
+  我们这份 fork 不发送该标志 ⇒ 用户一旦开启该过滤器，列表恒空（看起来像终端坏了）。已补发。
+
+### P1：依赖/编译基线
+
+- AE2 1083、AE2FC 1.5.113 在 GTNH Maven 上取不到（Cloudflare 525），改为
+  「实例 jar → `libs/` → `rfg.deobf()`」，既与实机同字节码，又保证编译期拿到 MCP 名。
+- 文件依赖没有 POM 传递依赖，显式补 `GTNHLib 0.11.52`、`waila 1.19.34`、`org.joml:joml:1.10.8`、
+  `it.unimi.dsi:fastutil:8.5.18`；Maven 依赖加 `transitive = false`（新版 POM 会拖 GTNHExtLib/lwjgl3ify，离线缓存没有）。
+
+### P2：NEI 配方页叠加层（此前已改，本次确认生效）
+
+- `MixinNEIRecipeWidget` 目标从 `codechicken.nei.recipe.NEIRecipeWidget` 改为
+  `codechicken.nei.recipe.widget.RecipeWidget`，`handlerRef` 字段改为 `getRecipeHandlerRef()`。
+- 运行日志已见 `Mixing nei.MixinNEIRecipeWidget ... into codechicken.nei.recipe.widget.RecipeWidget`，
+  注入点 `draw(II)V` 命中。
+
+## 待实测（未验证，不算通过）
+
+1. MK.III 打开样板窗应显示 9 列、可见 9 行、可滚动到 144 格；MK.IV 同样可见 9 行、可滚动到 360 格。
+2. 两窗的「样板 / 单独倍率 / 批量倍率 + 退货」三页仍可用；关窗后从背包 shift 点样板**不应**消失。
+3. 库存统计终端：接口改名后图标随之刷新；开「只看样板供应器」过滤器能看到样板供应器接口。
+4. 其余功能（NEI 上传、无限元件、自适应电网、万能维护仓、库存监控覆盖板、通配样板、产线管理器）
+   仅在「编译 + Mixin 应用」层面确认，需进游戏逐项过一遍。
+
+## 回退
+
+- `git revert <本次提交>`；或把实例 mods 里的 JAR 换回 `4.1.0-fix8`（RC-2 上该版本 MK.III/IV 窗是坏的）。
+- 依赖回退需同时回退 `dependencies.gradle` 与 `libs/` 新拷入的 5 个 jar。
+
+---
+
 # 版本号规则与「旧号 ↔ 新号」对照表（2026-09-27 起）
 
 **规则（用户定）**：只有**新增功能**才升 **0.1** 个小版本；之后**所有修 bug 的发布一律挂 `-fixN`**，

@@ -10,13 +10,17 @@ An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI patte
 > Client-only installs will show the GUIs but the features will not work; server-only installs leave clients without them.
 > (If a Modrinth page marks this mod as client-only, that metadata is wrong — this note is authoritative.)
 
-**Author: wztwzt · Current source version: 4.1.0 · Reference pack: GTNH 2.9.0-beta-3**
+**Author: wztwzt · Current source version: 4.2.0 · Reference pack: GTNH 2.9.0-RC-2**
+
+> **4.2.0 is the full RC-2 compatibility release.** The build baseline and dependency table moved to the
+> exact RC-2 versions, and it fixes the RC-2 regression where the MK.III / MK.IV pattern window fell back
+> to PH's stock 36 slots. **Versions 4.1.0-fix8 and older have a broken MK.III/IV pattern window on RC-2.**
 
 
 ## Installation and upgrades
 
 1. Stop the game/server and back up the **complete world and configuration**, retaining the previous JAR for rollback. Infinity Cell contents live in the world save; backing up item NBT alone is insufficient.
-2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-4.1.0.jar`. Do not retain multiple versions.
+2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-4.2.0.jar`. Do not retain multiple versions.
 3. **Use the same version on client and server.** fix41 changed upload-related packets; upgrading only one side is unsupported.
 4. This JAR includes `aeinfinitycell` (bundled metadata remains `1.0.4-ae2qol`). Do not also install the standalone AE2 Infinity Cell JAR. Test old cells in a copied world before migrating.
 5. Check startup logs, generated configuration and Mixin loading, then exercise the features you use in a test world. Deployment to the development test instance requires separate approval.
@@ -25,22 +29,23 @@ An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI patte
 
 The mod uses **GTNH fork APIs**, not arbitrary Forge 1.7.10/AE2/NEI combinations. See [dependencies.gradle](dependencies.gradle) and [gradle.properties](gradle.properties) for the full build declarations. A `compileOnly` declaration does not prove that startup without that integration has been tested.
 
-| Component | Build reference (fix49) | Compared instance |
+| Component | Build reference (4.2.0 / RC-2) | Compared instance |
 |---|---|---|
-| Minecraft / Forge | 1.7.10 / 10.13.4.1614; MCP stable 12 | GTNH 2.9.0-beta-3 |
-| AE2 Unofficial | rv3-beta-1050-GTNH | Same |
-| AE2FluidCraft-Rework | 1.5.106-gtnh | Same |
-| GregTech | 5.09.54.133 | Same |
-| ModularUI2 | 2.3.88-1.7.10 | Same |
-| NEI | 2.8.130-GTNH | Same |
+| Minecraft / Forge | 1.7.10 / 10.13.4.1614; MCP stable 12 | GTNH 2.9.0-RC-2 |
+| AE2 Unofficial | rv3-beta-1083-GTNH (instance jar + `rfg.deobf`) | Same |
+| AE2FluidCraft-Rework | 1.5.113-gtnh (instance jar + `rfg.deobf`) | Same |
+| GregTech | 5.09.54.205 | Same |
+| ModularUI2 | 2.3.92-1.7.10 | Same |
+| NEI | 2.8.155-GTNH | Same |
 | NotEnoughEnergistics | 1.7.41 | Same |
-| GT Not Leisure | 0.2.7-pre3-dev-290 | Same |
-| Programmable Hatches / Wireless Nexus | 0.2.0p24 / 1.0.2 | Same |
+| GT Not Leisure | 0.2.7-rc2 | Same |
+| Programmable Hatches / Wireless Nexus | 0.2.0p31 / 1.0.2 | Same |
 | BetterQuesting | 3.8.84-GTNH | Quest API reviewed against 3.8.70; built against 3.8.84 |
-| GuideNH | 1.3.29 | Same |
+| GuideNH | 1.3.41 | Same |
 | Thaumic Energistics | 1.7.60-GTNH | Same |
 | Avaritia | 1.99 | Same |
-| StructureLib | 1.4.42 | Same |
+| StructureLib | 1.4.45 | Same |
+| Explicit extras | GTNHLib 0.11.52, waila 1.19.34, JOML 1.10.8, fastutil 8.5.18 | File dependencies carry no transitives, so they must be declared |
 
 Before fix49 this table still listed beta-1-era versions (AE2 977 / GT 5.09.52.594 / NEI 2.8.19 /
 MUI2 2.3.73 / NEE 1.7.14 / GTNL pre1 / PH 0.2.0p8 / BQ 3.8.70) — compile-capable but not aligned with b3.

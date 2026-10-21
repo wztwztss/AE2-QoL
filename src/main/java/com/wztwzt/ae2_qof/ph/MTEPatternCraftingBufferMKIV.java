@@ -8,6 +8,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.StatCollector;
 
+import com.cleanroommc.modularui.api.IPanelHandler;
 import com.cleanroommc.modularui.api.drawable.IDrawable;
 import com.cleanroommc.modularui.api.drawable.IKey;
 import com.cleanroommc.modularui.drawable.GuiTextures;
@@ -42,6 +43,7 @@ import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.modularui2.GTGuiTextures;
 import gregtech.common.gui.modularui.util.PatternSlot;
 import reobf.proghatches.gt.metatileentity.PatternDualInputHatch;
+import reobf.proghatches.util.ProghatchesUtil;
 
 /**
  * 编程样板输入总成 MK.III —— Programmable-Hatches「编程样板输入总成」的**扩容克隆版**。
@@ -278,7 +280,7 @@ public class MTEPatternCraftingBufferMKIV extends PatternDualInputHatch {
      * 结构（三页 tab：样板 / 单独倍率 / 批量倍率 + 退款）与 PH 保持一致。
      */
     @Override
-    protected ModularPanel createPatternWindow2(PanelSyncManager syncManager) {
+    protected ModularPanel createPatternWindow2(PanelSyncManager syncManager, IPanelHandler panelHandler) {
         final MixinPatternDualInputHatchAccess acc = (MixinPatternDualInputHatchAccess) this;
         final int WIDTH = 18 * GRID_COLS + 6;
         final int HEIGHT = 18 * VISIBLE_ROWS + 6;
@@ -421,8 +423,12 @@ public class MTEPatternCraftingBufferMKIV extends PatternDualInputHatch {
         // Arrays.asList(pattern)（已按 2.3.88 字节码核对），所以写入会直接落到 PH 的 pattern 数组上。
         ItemStackHandler sharedHandler = new ItemStackHandler(acc.getAe2qolPattern());
 
-        // 槽组要在槽位引用它之前注册；rowSize 传网格宽度（9），shift 优先级 -1 与 PH 一致
-        syncManager.registerSlotGroup("pattern_inv", GRID_COLS, -1);
+        // 槽组要在槽位引用它之前注册；rowSize 传网格宽度（9）。
+        // PH 0.2.0p31（RC-2）把这里的 shift 优先级从 -1 改成 POPUP_SLOT_SHIFT_PRIORITY，
+        // 并新增 sortShiftTargetsOfPopup()（MUI2 的"晚注册槽位排序"bug 规避）：
+        // 不跟这两处，背包里 shift 点样板会落到错误的槽组、甚至生成幽灵堆叠。
+        ProghatchesUtil.sortShiftTargetsOfPopup(syncManager);
+        syncManager.registerSlotGroup("pattern_inv", GRID_COLS, ProghatchesUtil.POPUP_SLOT_SHIFT_PRIORITY);
 
         // 滚动内容：9 列 × 40 行 = 360。可见区只有 9 行，其余靠 ScrollWidget 滚动。
         ParentWidget<?> content1 = new ParentWidget<>().size(18 * GRID_COLS, SCROLL_H);
@@ -459,7 +465,9 @@ public class MTEPatternCraftingBufferMKIV extends PatternDualInputHatch {
             content1.child(
                 new PatternSlot().slot(
                     new ModularSlot(sharedHandler, i).slotGroup("pattern_inv")
-                        .filter(stack -> stack.getItem() instanceof ICraftingPatternItem)
+                        // PH 0.2.0p31（RC-2）新增：窗口关闭后槽位仍留在容器里当 shift 目标，
+                        // 不加 isPanelOpen() 判定时，关窗后 shift 进来的样板会进"看不见的槽"而消失。
+                        .filter(stack -> panelHandler.isPanelOpen() && stack.getItem() instanceof ICraftingPatternItem)
                         .changeListener(
                             (newItem, onlyAmountChanged, client, init) -> acc.invokeAe2qolOnPatternChange()))
                     .pos(sx, sy)
