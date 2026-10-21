@@ -178,6 +178,16 @@ public final class NetworkInventoryCache {
         if (stack == null) {
             return null;
         }
+        // 4.2.1（RC-2 / NEI 2.8.155）：NEI 自己新增了流体展示物识别 API
+        // （codechicken.nei.recipe.StackInfo.isFluidDisplayItem / getFluid）。
+        // 这是**版本无关**的权威入口：GT 的 Display_Fluid、ae2fc 的 packet、以及其它模组
+        // 注册了 IStackStringifyHandler 的流体展示物都走它。放在最前面，避免我们只认
+        // "gregtech.common.items.ItemFluidDisplay" 这一个类名 + mFluidMaterialName 一个键，
+        // 换整合包/换展示物实现就整片失效（表现为"流体格完全没有角标"）。
+        FluidStack neiFluid = readNeiFluidDisplay(stack);
+        if (neiFluid != null && neiFluid.getFluid() != null) {
+            return neiFluid.getFluid();
+        }
         if (isAe2fcFluidPacket(stack)) {
             FluidStack packetFluid = readPacketFluid(stack);
             return packetFluid != null ? packetFluid.getFluid() : null;
@@ -193,6 +203,58 @@ public final class NetworkInventoryCache {
         }
         String fluidName = fluidItemMap.get(key(stack));
         return fluidName != null ? FluidRegistry.getFluid(fluidName) : null;
+    }
+
+    /**
+     * 4.2.1：经 NEI 的官方流体展示物 API 解析流体。
+     *
+     * <p>
+     * 为什么放在 GT/ae2fc 专用路径之前：NEI 2.8.155 把"流体怎么显示"收敛成了
+     * {@code StackInfo}（按 {@code IStackStringifyHandler} 分派），GT 与 ae2fc 的展示物都在其
+     * 覆盖范围内。用它可以避免"类名 + NBT 键"双重硬编码——那套写法在展示物实现一变时就整片
+     * 失效，而症状恰好是"物品角标正常、流体角标全没有"。
+     *
+     * <p>
+     * 这个方法在客户端热路径上（每个配方格每帧最多一次），所以只做一次
+     * {@code isFluidDisplayItem} 快速判定；NEI 未加载时抛 {@link Throwable} 被吞掉并返回 null，
+     * 不影响专用加载器（本类也可能被服务端侧的 tooltip 逻辑间接引用）。
+     */
+    private static FluidStack readNeiFluidDisplay(ItemStack stack) {
+        try {
+            // 3.1.2 的口径必须保住：桶/单元这类**真实流体容器**按物品计数，不按流体量显示。
+            // NEI 的 isFluidDisplayItem 分派给各模组的 IStackStringifyHandler，无法保证
+            // 它对"装了流体的容器"一定返回 false，所以这里先排除掉真正的容器。
+            if (net.minecraftforge.fluids.FluidContainerRegistry.isFilledContainer(stack)) {
+                return null;
+            }
+            if (!codechicken.nei.recipe.StackInfo.isFluidDisplayItem(stack)) {
+                return null;
+            }
+            FluidStack fs = codechicken.nei.recipe.StackInfo.getFluid(stack);
+            if (fs == null || fs.getFluid() == null || fs.amount <= 0) {
+                return null;
+            }
+            return fs;
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    /**
+     * 4.2.1 诊断用：该物品在 NEI 眼里是不是"流体展示物"。
+     *
+     * <p>
+     * 角标路径需要对两种失败做区分：①展示物压根没被识别成流体（识别层问题）；
+     * ②识别到了但缓存里没有这项流体（数据层问题——终端快照没带流体）。只靠现象无法区分，
+     * 所以角标在"跳过某个格子"时用它决定要不要打一行限频日志。
+     */
+    public static boolean isFluidStack(ItemStack stack) {
+        return getFluid(stack) != null;
+    }
+
+    /** 4.2.1 诊断用：当前流体缓存条目数（配合角标 miss 日志判断"数据没到"还是"识别失败"）。 */
+    public static int fluidCacheSize() {
+        return fluidCache.size();
     }
 
     /**

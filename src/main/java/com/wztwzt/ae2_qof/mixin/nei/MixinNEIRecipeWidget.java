@@ -55,6 +55,30 @@ public abstract class MixinNEIRecipeWidget {
         .maybeStack(1)
         .orNull();
 
+    /**
+     * 4.2.1 诊断：流体格"识别到了但缓存没数据"和"压根没识别成流体"是两种完全不同的故障，
+     * 现象都是"没有角标"。这里对跳过且被判定为流体展示物的格子打一行限频日志，
+     * 带上流体缓存条目数——15 秒最多一行，不会刷屏。
+     */
+    private static long ae2qol$lastFluidMissLog = 0L;
+
+    private static void ae2qol$logFluidMiss(ItemStack item) {
+        try {
+            if (!NetworkInventoryCache.isFluidStack(item)) {
+                return;
+            }
+            long now = System.currentTimeMillis();
+            if (now - ae2qol$lastFluidMissLog < 15000L) {
+                return;
+            }
+            ae2qol$lastFluidMissLog = now;
+            com.wztwzt.ae2_qof.MyMod.LOG.info(
+                "[AE2QoL] NEI fluid badge miss: item={} fluidCacheSize={} (识别成功但缓存无此流体 = 终端快照没带流体)",
+                item.getDisplayName(),
+                NetworkInventoryCache.fluidCacheSize());
+        } catch (Throwable ignored) {}
+    }
+
     @Inject(method = "draw(II)V", at = @At("TAIL"), remap = false)
     private void ae2qol$overlayRecipeSlots(int mousex, int mousey, CallbackInfo ci) {
         try {
@@ -100,6 +124,7 @@ public abstract class MixinNEIRecipeWidget {
                 long count = NetworkInventoryCache.getCount(item);
                 boolean craftable = NetworkInventoryCache.isCraftable(item);
                 if (count <= 0 && !craftable) {
+                    ae2qol$logFluidMiss(item);
                     continue;
                 }
 

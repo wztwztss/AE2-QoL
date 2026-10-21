@@ -1,3 +1,38 @@
+# 4.2.0-fix1 —— NEI 流体角标：改用 NEI 官方识别入口 + 可判定诊断（2026-10-21）
+
+## 现象（用户报 A）
+
+GT 配方页上的**流体格完全没有角标**（物品格正常）。历史口径是"支持流体"（3.0.1 起），
+所以要么识别层断了，要么数据层没数据——两者现象完全一样。
+
+## 取证
+
+- GT 流体格是 `GTNEIDefaultHandler$FixedPositionedStack`，它的 `draw()` 里用
+  `codechicken.nei.recipe.StackInfo.getFluid(this.item)` 自绘流体 ⇒ `stack.item` 非空，
+  我们角标循环能走到 `getCount(item)`，不是被 `item == null` 挡掉。
+- 旧识别的三条路径全是**硬编码**：GT 类名 `gregtech.common.items.ItemFluidDisplay` + NBT
+  `mFluidMaterialName`、ae2fc `ItemFluidPacket` + NBT `FluidStack`、流体方块映射。
+- NEI 2.8.155 把"流体怎么显示"收敛成 `StackInfo`（按 `IStackStringifyHandler` 分派，
+  `isFluidDisplayItem` / `getFluid`）——这是旧版本没有的权威入口。
+- 数据来源**只有一处**：`MixinGuiMEMonitorable` 在终端 `postUpdate` 里 `putFluid`。
+  终端快照不带流体（类型过滤关闭 / 普通物品终端）时，`fluidCache` 恒为 0 条。
+
+## 改动
+
+1. `NetworkInventoryCache.getFluid` 优先走 `StackInfo.isFluidDisplayItem / getFluid`（版本无关）；
+   新增加 `FluidContainerRegistry.isFilledContainer` 守卫，保住 3.1.2 的"桶/单元按物品计数"口径。
+2. 角标跳过流体格时打一行**限频**日志（15 秒最多一条）：
+   `[AE2QoL] NEI fluid badge miss: item=<名> fluidCacheSize=<N>`。
+   这行的作用是把"识别失败"和"缓存没数据"分开——两者在画面上都是"什么都没有"。
+
+## 待实测（未验证）
+
+- 有角标且无 miss 日志 ⇒ 识别层修好。
+- 有 miss 日志且 `fluidCacheSize=0` ⇒ 数据层问题，需要下一步做"按需向服务端查询流体"（动网络包）。
+- 有 miss 日志且 `fluidCacheSize>0` ⇒ 流体键不匹配，按日志里的名字对键。
+
+---
+
 # 4.2.0 —— GTNH 2.9.0-RC-2 全量兼容（2026-10-21）
 
 > 用户拍板：本次按 **4.2.0** 发布（不是 `-fixN`），因为「换整合包基线」被视作一次功能性发布；
