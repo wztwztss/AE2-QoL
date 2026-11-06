@@ -33,7 +33,8 @@ public class CommandAe2QoL extends CommandBase {
     @Override
     public String getCommandUsage(ICommandSender sender) {
         return "/ae2qof reload | /ae2qof status | /ae2qof smbind <networkId> | /ae2qof wildcard [矿辞前缀] "
-            + "| /ae2qof cell list [页] | /ae2qof cell info|archive|restore <uuid>";
+            + "| /ae2qof cell list [页] | /ae2qof cell info|archive|restore <uuid> "
+            + "| /ae2qof machindex status|validate|rebuild|clear_cache|clear";
     }
 
     @Override
@@ -180,6 +181,27 @@ public class CommandAe2QoL extends CommandBase {
             handleCell(sender, args);
             return;
         }
+        if ("machindex".equalsIgnoreCase(args[0])) {
+            // 4.5.0：机器功能—电压等级索引（子命令内部各自做 OP 校验：status 只读免 OP）。
+            // 这里用 forName 再调，而不是直接写死类引用：MachIndexCommand 会链到 BQ 写入器，
+            // 未装 BetterQuesting 的环境里若在命令类加载期就解析，会连带把 BQ 类拖进来（隔离纪律）。
+            if (!sender.canCommandSenderUseCommand(2, getCommandName())
+                && !"status".equalsIgnoreCase(args.length >= 2 ? args[1] : "status")) {
+                sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "No permission"));
+                return;
+            }
+            try {
+                Class.forName(
+                    "com.wztwzt.ae2_qof.machindex.MachIndexCommand",
+                    true,
+                    CommandAe2QoL.class.getClassLoader());
+                com.wztwzt.ae2_qof.machindex.MachIndexCommand.handle(sender, args);
+            } catch (Throwable t) {
+                sender.addChatMessage(new ChatComponentText(EnumChatFormatting.RED + "machindex 不可用：" + t));
+                MyMod.LOG.error("[AE2QoL] machindex 命令分发失败", t);
+            }
+            return;
+        }
         sender.addChatMessage(new ChatComponentText(getCommandUsage(sender)));
     }
 
@@ -303,12 +325,20 @@ public class CommandAe2QoL extends CommandBase {
             list.add("smbind");
             list.add("wildcard");
             list.add("cell");
+            list.add("machindex");
         }
         if (args.length == 2 && "cell".equalsIgnoreCase(args[0])) {
             list.add("list");
             list.add("info");
             list.add("archive");
             list.add("restore");
+        }
+        if (args.length == 2 && "machindex".equalsIgnoreCase(args[0])) {
+            list.add("status");
+            list.add("validate");
+            list.add("rebuild");
+            list.add("clear_cache");
+            list.add("clear");
         }
         return list;
     }

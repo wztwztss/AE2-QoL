@@ -6,6 +6,7 @@ import net.minecraftforge.fluids.FluidContainerRegistry;
 import net.minecraftforge.fluids.FluidStack;
 
 import appeng.api.AEApi;
+import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.util.Platform;
@@ -22,6 +23,8 @@ public class StockMonitorCoverData {
     public static final String NBT_NETWORK_ID = "NetworkId";
     public static final String NBT_MODE = "Mode";
     public static final String NBT_SLOTS = "Slots";
+    /** 性能修复版新增：每盖板读取间隔覆盖（0=跟随 config 默认），仅新增键，不动旧字段。 */
+    public static final String NBT_READ_INTERVAL = "ReadInterval";
 
     // 旧版单槽 NBT 键（向后兼容）
     private static final String NBT_OLD_THRESHOLD = "Threshold";
@@ -52,6 +55,9 @@ public class StockMonitorCoverData {
     private String networkId = "";
     private ThresholdMode mode = ThresholdMode.BELOW_THRESHOLD_RUN;
     private final MonitorSlot[] slots = new MonitorSlot[MAX_SLOTS];
+
+    /** 每盖板读取间隔覆盖（tick，0=跟随 {@code Config.stockMonitorReadIntervalTicks}）。 */
+    private int readInterval = 0;
 
     private int lastChannel = 0;
     private boolean lastShouldWork = false;
@@ -112,6 +118,17 @@ public class StockMonitorCoverData {
 
     public void setMode(ThresholdMode mode) {
         this.mode = mode == null ? ThresholdMode.BELOW_THRESHOLD_RUN : mode;
+    }
+
+    // ===== Read interval (每盖板覆盖) =====
+
+    public int getReadInterval() {
+        return readInterval;
+    }
+
+    /** 0 = 跟随 config；负数一律按 0 处理。 */
+    public void setReadInterval(int readInterval) {
+        this.readInterval = readInterval < 0 ? 0 : readInterval;
     }
 
     // ===== Runtime State =====
@@ -282,9 +299,18 @@ public class StockMonitorCoverData {
 
     // ===== NBT =====
 
+    /**
+     * 槽位级新增键（4.3.0-fix2）：流体目标的**注册名**。
+     * 与 AE2 原版发信器同方案（{@code AEFluidStack.writeToNBT} 写的就是 {@code FluidName} 字符串）——
+     * 流体注册 ID 按加载顺序动态分配，任何按数字 ID/damage 存的身份都会在模组增删后漂移，
+     * 只有注册名跨版本稳定。仅新增键，不改已有键含义。
+     */
+    private static final String KEY_TARGET_FLUID = "TargetFluid";
+
     public void saveToNbt(NBTTagCompound nbt) {
         nbt.setString(NBT_NETWORK_ID, networkId);
         nbt.setByte(NBT_MODE, (byte) mode.ordinal());
+        nbt.setInteger(NBT_READ_INTERVAL, readInterval);
 
         NBTTagCompound slotsTag = new NBTTagCompound();
         for (int i = 0; i < MAX_SLOTS; i++) {
@@ -301,6 +327,15 @@ public class StockMonitorCoverData {
                 NBTTagCompound targetTag = new NBTTagCompound();
                 Platform.writeStackNBT(slot.monitorTarget, targetTag);
                 slotTag.setTag("Target", targetTag);
+                if (slot.monitorTarget instanceof IAEFluidStack) {
+                    net.minecraftforge.fluids.FluidStack fs = ((IAEFluidStack) slot.monitorTarget).getFluidStack();
+                    if (fs != null && fs.getFluid() != null) {
+                        slotTag.setString(
+                            KEY_TARGET_FLUID,
+                            fs.getFluid()
+                                .getName());
+                    }
+                }
             }
             slotsTag.setTag(String.valueOf(i), slotTag);
         }
@@ -311,6 +346,7 @@ public class StockMonitorCoverData {
         networkId = nbt.getString(NBT_NETWORK_ID);
         if (networkId == null) networkId = "";
         mode = ThresholdMode.fromOrdinal(nbt.getByte(NBT_MODE));
+        setReadInterval(nbt.getInteger(NBT_READ_INTERVAL));
 
         // 重置所有槽位
         for (int i = 0; i < MAX_SLOTS; i++) {
@@ -323,32 +359,84 @@ public class StockMonitorCoverData {
             for (int i = 0; i < MAX_SLOTS; i++) {
                 String key = String.valueOf(i);
                 if (!slotsTag.hasKey(key)) continue;
-                NBTTagCompound slotTag = slotsTag.getCompoundTag(key);
-                MonitorSlot slot = slots[i];
-                slot.threshold = slotTag.getLong("Threshold");
-                if (slotTag.hasKey("Phantom")) {
-                    slot.phantomStack = ItemStack.loadItemStackFromNBT(slotTag.getCompoundTag("Phantom"));
-                }
-                if (slotTag.hasKey("Target")) {
-                    slot.monitorTarget = Platform.readStackNBT(slotTag.getCompoundTag("Target"));
-                }
-                // phantom 存在时一律以重建结果为准
-                if (slot.phantomStack != null) {
-                    slot.monitorTarget = resolveTarget(slot.phantomStack);
-                }
+                readSlot(slotsTag.getCompoundTag(key), slots[i]);
             }
         } else {
             // 旧版单槽格式 → 读入 slot[0]
-            MonitorSlot slot = slots[0];
-            slot.threshold = nbt.getLong(NBT_OLD_THRESHOLD);
-            if (nbt.hasKey(NBT_OLD_PHANTOM)) {
-                slot.phantomStack = ItemStack.loadItemStackFromNBT(nbt.getCompoundTag(NBT_OLD_PHANTOM));
+            readSlot(nbt, slots[0]);
+        }
+    }
+
+    /**
+     * 读入单个槽位（4.3.0-fix2 重写解析顺序）。
+     *
+     * <p>
+     * 历史 bug：旧实现"phantom 存在时一律以重建结果为准"。phantom（GT 流体显示物品）的
+     * damage = 动态流体 ID，非 GT 材料的流体又没有 {@code mFluidMaterialName} NBT ⇒
+     * 模组列表一变、流体 ID 重排，监测目标就被换成"该 ID 现在对应的另一个流体"。
+     *
+     * <p>
+     * 现在的解析顺序（名字优先，对齐 AE2 原版发信器的 {@code FluidName} 方案）：
+     * <ol>
+     * <li>{@code TargetFluid}（新键）：流体注册名，绝对稳定；</li>
+     * <li>{@code Target}（既有键）：AE2 Platform 格式——流体侧本来就按 {@code FluidName}
+     * 字符串存（稳定！），物品侧按物品 NBT（物品 ID 由配置锁定，稳定）。
+     * **这同时是旧档自愈通道**：即使本次加载前流体已被换错，存档里的名字仍是当年正确的那个；</li>
+     * <li>兜底：按 phantom 重建（最老存档 / Target 缺失；GT 显示物品无 NBT 名时仍可能漂移，
+     * 但已是最后手段）。</li>
+     * </ol>
+     * 目标确定后若 phantom 解析出**不同的流体**（= 已漂移），用正确流体重建 phantom 显示物品，
+     * 让 GUI 图标与后续存档一并归位。
+     */
+    private static void readSlot(NBTTagCompound slotTag, MonitorSlot slot) {
+        slot.threshold = slotTag.getLong("Threshold");
+        if (slotTag.hasKey("Phantom")) {
+            slot.phantomStack = ItemStack.loadItemStackFromNBT(slotTag.getCompoundTag("Phantom"));
+        } else if (slotTag.hasKey(NBT_OLD_PHANTOM)) {
+            // 旧版单槽格式（键名 PhantomItem / MonitorTarget，与新格式并存于同一张 tag 上判读）
+            slot.phantomStack = ItemStack.loadItemStackFromNBT(slotTag.getCompoundTag(NBT_OLD_PHANTOM));
+        }
+
+        IAEStack<?> target = null;
+        try {
+            if (slotTag.hasKey(KEY_TARGET_FLUID)) {
+                net.minecraftforge.fluids.Fluid fluid = net.minecraftforge.fluids.FluidRegistry
+                    .getFluid(slotTag.getString(KEY_TARGET_FLUID));
+                if (fluid != null) {
+                    target = AEApi.instance()
+                        .storage()
+                        .createFluidStack(new FluidStack(fluid, FluidContainerRegistry.BUCKET_VOLUME));
+                }
             }
-            if (nbt.hasKey(NBT_OLD_TARGET)) {
-                slot.monitorTarget = Platform.readStackNBT(nbt.getCompoundTag(NBT_OLD_TARGET));
-            }
-            if (slot.phantomStack != null) {
-                slot.monitorTarget = resolveTarget(slot.phantomStack);
+        } catch (Throwable ignored) {}
+        if (target == null && slotTag.hasKey("Target")) {
+            try {
+                target = Platform.readStackNBT(slotTag.getCompoundTag("Target"));
+            } catch (Throwable ignored) {}
+        }
+        if (target == null && slotTag.hasKey(NBT_OLD_TARGET)) {
+            try {
+                target = Platform.readStackNBT(slotTag.getCompoundTag(NBT_OLD_TARGET));
+            } catch (Throwable ignored) {}
+        }
+        if (target == null && slot.phantomStack != null) {
+            target = resolveTarget(slot.phantomStack);
+        }
+        slot.monitorTarget = target;
+
+        // 自愈：流体目标与 phantom 重建结果不一致（数字 ID 漂移的直接证据）⇒ 换上正确流体的显示物品
+        if (target instanceof IAEFluidStack && slot.phantomStack != null) {
+            IAEStack<?> fromPhantom = resolveTarget(slot.phantomStack);
+            boolean drifted = !(fromPhantom instanceof IAEFluidStack) || ((IAEFluidStack) fromPhantom).getFluid()
+                .getID()
+                != ((IAEFluidStack) target).getFluid()
+                    .getID();
+            if (drifted) {
+                try {
+                    ItemStack fresh = gregtech.api.util.GTUtility
+                        .getFluidDisplayStack(((IAEFluidStack) target).getFluid());
+                    if (fresh != null) slot.phantomStack = fresh;
+                } catch (Throwable ignored) {}
             }
         }
     }
@@ -356,6 +444,7 @@ public class StockMonitorCoverData {
     public void clear() {
         networkId = "";
         mode = ThresholdMode.BELOW_THRESHOLD_RUN;
+        readInterval = 0;
         for (int i = 0; i < MAX_SLOTS; i++) {
             slots[i] = new MonitorSlot();
         }

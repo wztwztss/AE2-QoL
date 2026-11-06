@@ -10,7 +10,7 @@ An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI patte
 > Client-only installs will show the GUIs but the features will not work; server-only installs leave clients without them.
 > (If a Modrinth page marks this mod as client-only, that metadata is wrong — this note is authoritative.)
 
-**Author: wztwzt · Current source version: 4.2.0 · Reference pack: GTNH 2.9.0-RC-2**
+**Author: wztwzt · Current source version: 4.5.0-fix15 · Reference pack: GTNH 2.9.0-RC-2**
 
 > **4.2.0 is the full RC-2 compatibility release.** The build baseline and dependency table moved to the
 > exact RC-2 versions, and it fixes the RC-2 regression where the MK.III / MK.IV pattern window fell back
@@ -20,7 +20,7 @@ An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI patte
 ## Installation and upgrades
 
 1. Stop the game/server and back up the **complete world and configuration**, retaining the previous JAR for rollback. Infinity Cell contents live in the world save; backing up item NBT alone is insufficient.
-2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-4.2.0.jar`. Do not retain multiple versions.
+2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-4.5.0-fix15.jar`. Do not retain multiple versions.
 3. **Use the same version on client and server.** fix41 changed upload-related packets; upgrading only one side is unsupported.
 4. This JAR includes `aeinfinitycell` (bundled metadata remains `1.0.4-ae2qol`). Do not also install the standalone AE2 Infinity Cell JAR. Test old cells in a copied world before migrating.
 5. Check startup logs, generated configuration and Mixin loading, then exercise the features you use in a test world. Deployment to the development test instance requires separate approval.
@@ -207,6 +207,26 @@ Configurable tuning for GT-Not-Leisure's Steam Elevator (MTE 21155) attachment m
 - **Auto-degrade when inputs run short**; the **anti-lag gate** (`minBatchesToApplyTuning`, default 8) keeps upstream behaviour instead of raising the check rate.
 - ⚠️ Do not stack acceleration torches / time bottles on these modules; use ME output for the large settlements.
 - Design and numbers: [GTNL_STEAM_ELEVATOR_DESIGN.md](docs/GTNL_STEAM_ELEVATOR_DESIGN.md).
+
+### F25 · Machine Index: feature × voltage auto-index (4.5.0, needs BetterQuesting + NEI)
+
+Aggregates every machine in the pack by "recipe/feature type → voltage tier" and writes the result into a
+dedicated quest-book chapter, answering "which machines at this tier can do this job".
+
+- **Chapter**: `机器索引` (single chapter, 300 quests per volume, then `机器索引 II/III…`); machines with an
+  unresolvable voltage go to a separate `机器索引·未知` volume. Chapter icon = AE2 ME Controller.
+- **Quest granularity**: all machines of the same "feature type + tier" are **merged into one quest**
+  (e.g. `[HV] 洗矿机 ×3`); the quest detail page lists each machine and every slot supports the NEI shortcuts.
+- **Completion**: index cards **never complete** and do not count toward quest totals (by design, not a bug).
+- **Voltage rule**: single-block machines report their own tier; **multiblocks use "the lowest voltage needed to
+  craft the machine"** (scanning the controller recipe for the highest-tier circuit/casing); only when that is
+  unavailable does it fall back to "lowest recipe voltage of the feature".
+- **Trigger**: one scan on world join, cached to `config/ae2_qof/machindex/cache.dat`; later logins only reconcile
+  (also self-heals after `/bq_admin default load` wipes the database).
+- **Commands**: `/ae2qol machindex status` (read-only), `validate` (reconcile from cache), `rebuild` (rescan,
+  client side), `clear_cache`, `clear` (delete only this mod's chapters/quests).
+- **Dependencies**: no NEI → no scanning (server can still reconcile from an existing cache); no BQ → the whole
+  feature is disabled. Both skip branches log a line, so "not working" is distinguishable from "guard misjudged".
 
 ## Known issues and verification scope
 

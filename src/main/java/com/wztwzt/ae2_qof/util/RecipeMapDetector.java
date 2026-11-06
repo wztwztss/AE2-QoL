@@ -45,7 +45,8 @@ public final class RecipeMapDetector {
             ITEMS_METHOD = QUERY_CLASS.getMethod("items", ItemStack[].class);
             FIND_METHOD = QUERY_CLASS.getMethod("find");
             try {
-                Class<?> gtRecipeClass = Class.forName("gregtech.api.objects.GT_Recipe");
+                // GT 5.09.54 起配方类已从 gregtech.api.objects.GT_Recipe 更名/迁移到 gregtech.api.util.GTRecipe
+                Class<?> gtRecipeClass = Class.forName("gregtech.api.util.GTRecipe");
                 OUTPUTS_FIELD = gtRecipeClass.getField("mOutputs");
             } catch (Throwable ignored) {}
             NAME_FIELD = RECIPE_MAP_CLASS.getField("unlocalizedName");
@@ -156,7 +157,7 @@ public final class RecipeMapDetector {
         return firstInputMatch;
     }
 
-    /** 校验 GT 配方（GT_Recipe.mOutputs）的输出是否包含用户面板上填写的任一输出物品 */
+    /** 校验 GT 配方（GTRecipe.mOutputs）的输出是否包含用户面板上填写的任一输出物品 */
     private static boolean recipeMatchesOutputs(Object recipe, Field recipeOutputsField, ItemStack[] userOutputs) {
         try {
             ItemStack[] recipeOutputs = (ItemStack[]) recipeOutputsField.get(recipe);

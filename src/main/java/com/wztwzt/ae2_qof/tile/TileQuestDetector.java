@@ -25,15 +25,21 @@ import io.netty.buffer.ByteBuf;
 
 /**
  * 「ME 任务检测器」（3.11.0）：接入 ME 网络的方块设备。放置时绑定放置者 UUID，
- * 每 20 tick 将网络中的物品以只读方式喂给 BetterQuesting 检索型任务（consume=false），
+ * 周期性将网络中的物品以只读方式喂给 BetterQuesting 检索型任务（consume=false），
  * 库存达标即由 BQ 官方逻辑自动完成任务；不消耗任何物品。
+ * <p>
+ * 性能修复版：检测间隔由 {@code Config.questDetectIntervalTicks} 控制（默认 80t，可配 20~1200，
+ * settings.json 热加载）；每轮检测包含一次全网络存储快照 + BQ 任务匹配，spark 实测旧版
+ * 每 20t 一次占全服 ~3% CPU。取模对齐让同网络的多个检测器落在同一 tick，共享 AE2 的
+ * 存储列表重建。任务完成反馈最多延迟一个周期，检测数值本身不变。
  * <p>
  * 供电/通道状态经 {@link IPowerChannelState} 供渲染与 WAILA 展示；BQ 未安装时
  * tick 内首行守卫直接返回（详见 {@link QuestDetectLogic} 隔离约定）。
  */
 public class TileQuestDetector extends AENetworkTile implements IPowerChannelState {
 
-    private static final int SCAN_INTERVAL = 20;
+    /** 检测间隔下限（tick），与 Config 的钳制口径一致。 */
+    private static final int MIN_SCAN_INTERVAL = 20;
 
     private UUID owner;
     private boolean powered = false;
@@ -115,7 +121,8 @@ public class TileQuestDetector extends AENetworkTile implements IPowerChannelSta
         if (worldObj.isRemote) return;
         if (!powered) return;
         if (owner == null) return;
-        if (worldObj.getTotalWorldTime() % SCAN_INTERVAL != 0L) return;
+        int interval = Math.max(MIN_SCAN_INTERVAL, com.wztwzt.ae2_qof.Config.questDetectIntervalTicks);
+        if (worldObj.getTotalWorldTime() % interval != 0L) return;
         EntityPlayerMP player = findOnlinePlayer(owner);
         if (player == null) return;
         try {

@@ -27,6 +27,9 @@ public class CoverRegistry extends WorldSavedData {
 
     private final Map<String, CoverEntry> entries = new HashMap<>();
 
+    /** 性能修复版：每个维度只做一次 legacy 迁移合并（成功后记录；失败保留下次重试）。 */
+    private transient java.util.Set<Integer> migratedLegacyDims = new java.util.HashSet<>();
+
     public CoverRegistry(String name) {
         super(name);
     }
@@ -58,8 +61,13 @@ public class CoverRegistry extends WorldSavedData {
             created = true;
         }
         // 旧数据迁移：把各已加载维度的 perWorldStorage 旧注册表合并进来（只做增量，不覆盖已有条目）。
-        if (world != null) {
-            migrateFromLegacy(world, data);
+        // 性能修复版：每个维度成功合并一次后记录维度号，之后 get() 不再反复扫 legacy 条目
+        // （get() 在覆盖板每次读取周期都会被调用，旧实现每次全量重扫 legacy + 拼键字符串）。
+        if (data.migratedLegacyDims == null) data.migratedLegacyDims = new java.util.HashSet<>();
+        if (world != null && world.provider != null && !data.migratedLegacyDims.contains(world.provider.dimensionId)) {
+            if (data.migrateFromLegacy(world, data)) {
+                data.migratedLegacyDims.add(world.provider.dimensionId);
+            }
         }
         if (created) {
             overworld.setItemData(DATA_ID, data);
@@ -67,12 +75,12 @@ public class CoverRegistry extends WorldSavedData {
         return data;
     }
 
-    /** 从旧的 per-dimension 存储合并数据（老存档兼容，幂等）。 */
-    private static void migrateFromLegacy(net.minecraft.world.World world, CoverRegistry target) {
+    /** 从旧的 per-dimension 存储合并数据（老存档兼容，幂等）。@return 是否成功（失败下次重试）。 */
+    private boolean migrateFromLegacy(net.minecraft.world.World world, CoverRegistry target) {
+        boolean changed = false;
         try {
             CoverRegistry legacy = (CoverRegistry) world.perWorldStorage.loadData(CoverRegistry.class, DATA_ID);
-            if (legacy == null || legacy == target) return;
-            boolean changed = false;
+            if (legacy == null || legacy == target) return true;
             for (CoverEntry e : legacy.getAll()) {
                 String k = key(e.dim, e.x, e.y, e.z, e.side);
                 if (!target.entries.containsKey(k)) {
@@ -81,10 +89,12 @@ public class CoverRegistry extends WorldSavedData {
                 }
             }
             if (changed) target.markDirty();
+            return true;
         } catch (Throwable t) {
             // 3.35.0-fix22（审查 P2-17）：旧实现整块静默吞——迁移合并失败时 legacy 覆盖板数据
             // 没进新存储且零痕迹（老存档升级场景丢数据不可见）。补 WARN 留痕 + 保留原始异常。
             com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 覆盖板 legacy 迁移合并失败（数据未并入，下个周期重试）", t);
+            return false;
         }
     }
 
@@ -159,7 +169,11 @@ public class CoverRegistry extends WorldSavedData {
         return dim + ":" + x + ":" + y + ":" + z + ":" + side;
     }
 
-    /** 注册或更新覆盖板 */
+    /**
+     * 注册或更新覆盖板。
+     * 性能修复版：只在内容真正变化时 markDirty（调用方每个读取周期都会来一次，
+     * 旧实现每次无条件 markDirty + 全量重建摘要 = 无意义的存档脏标记与对象churn）。
+     */
     public void upsert(int dim, int x, int y, int z, int side, StockMonitorCoverData data) {
         String k = key(dim, x, y, z, side);
         CoverEntry entry = entries.get(k);
@@ -167,9 +181,12 @@ public class CoverRegistry extends WorldSavedData {
             entry = new CoverEntry(dim, x, y, z, side);
             entries.put(k, entry);
         }
-        entry.updateFrom(data);
-        entry.online = true;
-        markDirty();
+        boolean changed = entry.updateFrom(data);
+        if (!entry.online) {
+            entry.online = true;
+            changed = true;
+        }
+        if (changed) markDirty();
     }
 
     /** 移除覆盖板 */
@@ -266,54 +283,116 @@ public class CoverRegistry extends WorldSavedData {
             return targetItem != null || (targetFluidName != null && !targetFluidName.isEmpty());
         }
 
-        public void updateFrom(StockMonitorCoverData data) {
-            this.networkId = data.getNetworkId();
-            this.modeOrdinal = data.getMode()
+        /**
+         * 用覆盖板数据刷新摘要。@return 内容是否变化（不变则调用方不必 markDirty）。
+         * 性能修复版：摘要的贵重部分（displayName 解析、ItemStack 拷贝）只在签名变化时重建。
+         */
+        public boolean updateFrom(StockMonitorCoverData data) {
+            boolean changed = false;
+
+            String newNetworkId = data.getNetworkId();
+            int newModeOrdinal = data.getMode()
                 .ordinal();
-            this.activeSlotCount = data.getActiveSlotCount();
+            int newActiveSlotCount = data.getActiveSlotCount();
+            if (!java.util.Objects.equals(this.networkId, newNetworkId)) {
+                this.networkId = newNetworkId;
+                changed = true;
+            }
+            if (this.modeOrdinal != newModeOrdinal) {
+                this.modeOrdinal = newModeOrdinal;
+                changed = true;
+            }
+            if (this.activeSlotCount != newActiveSlotCount) {
+                this.activeSlotCount = newActiveSlotCount;
+                changed = true;
+            }
+
             // 取第一个有效槽位作为摘要
-            boolean found = false;
+            int newSlotIndex = 0;
+            StockMonitorCoverData.MonitorSlot slot = null;
             for (int i = 0; i < StockMonitorCoverData.MAX_SLOTS; i++) {
-                StockMonitorCoverData.MonitorSlot slot = data.getSlot(i);
-                if (slot.monitorTarget != null) {
-                    this.targetName = slot.monitorTarget.getDisplayName();
-                    this.targetIsFluid = slot.monitorTarget instanceof IAEFluidStack;
-                    this.threshold = slot.threshold;
-                    this.slotIndex = i;
-                    // 3.31.0：连"本体"一起存下来。只存名字的话，专用服上目标名会一直是英文
-                    // （服务端语言表只有 en_US），而且终端根本没有东西可画图标。
-                    this.targetItem = null;
-                    this.targetFluidName = "";
-                    if (slot.monitorTarget instanceof IAEFluidStack) {
-                        net.minecraftforge.fluids.FluidStack fs = ((IAEFluidStack) slot.monitorTarget).getFluidStack();
-                        if (fs != null && fs.getFluid() != null) {
-                            this.targetFluidName = fs.getFluid()
-                                .getName();
-                        }
-                    } else if (slot.monitorTarget instanceof IAEItemStack) {
-                        ItemStack is = ((IAEItemStack) slot.monitorTarget).getItemStack();
-                        if (is != null && is.getItem() != null) {
-                            this.targetItem = is.copy();
-                            this.targetItem.stackSize = 1;
-                        }
-                    }
-                    // 兜底：本体取不到（异常流体/第三方堆）时用覆盖板 GUI 里放的那个幻影物品当图标
-                    if (!hasTargetIdentity() && slot.phantomStack != null && slot.phantomStack.getItem() != null) {
-                        this.targetItem = slot.phantomStack.copy();
-                        this.targetItem.stackSize = 1;
-                    }
-                    found = true;
+                StockMonitorCoverData.MonitorSlot s = data.getSlot(i);
+                if (s.monitorTarget != null) {
+                    slot = s;
+                    newSlotIndex = i;
                     break;
                 }
             }
-            if (!found) {
-                this.targetName = "";
-                this.targetIsFluid = false;
-                this.threshold = 0;
-                this.slotIndex = 0;
+
+            if (slot == null) {
+                if (this.targetName.length() != 0 || this.targetIsFluid
+                    || this.threshold != 0
+                    || this.slotIndex != 0
+                    || this.targetItem != null
+                    || (this.targetFluidName != null && !this.targetFluidName.isEmpty())) {
+                    this.targetName = "";
+                    this.targetIsFluid = false;
+                    this.threshold = 0;
+                    this.slotIndex = 0;
+                    this.targetItem = null;
+                    this.targetFluidName = "";
+                    changed = true;
+                }
+                return changed;
+            }
+
+            boolean newIsFluid = slot.monitorTarget instanceof IAEFluidStack;
+            // 廉价签名：摘要槽位号 / 阈值 / 是否流体 / 目标本体等价。全一致 ⇒ 跳过重建。
+            if (this.slotIndex != newSlotIndex || this.threshold != slot.threshold
+                || this.targetIsFluid != newIsFluid
+                || !sameTargetIdentity(slot)) {
+                this.targetName = slot.monitorTarget.getDisplayName();
+                this.targetIsFluid = newIsFluid;
+                this.threshold = slot.threshold;
+                this.slotIndex = newSlotIndex;
+                // 3.31.0：连"本体"一起存下来。只存名字的话，专用服上目标名会一直是英文
+                // （服务端语言表只有 en_US），而且终端根本没有东西可画图标。
                 this.targetItem = null;
                 this.targetFluidName = "";
+                if (newIsFluid) {
+                    net.minecraftforge.fluids.FluidStack fs = ((IAEFluidStack) slot.monitorTarget).getFluidStack();
+                    if (fs != null && fs.getFluid() != null) {
+                        this.targetFluidName = fs.getFluid()
+                            .getName();
+                    }
+                } else if (slot.monitorTarget instanceof IAEItemStack) {
+                    ItemStack is = ((IAEItemStack) slot.monitorTarget).getItemStack();
+                    if (is != null && is.getItem() != null) {
+                        this.targetItem = is.copy();
+                        this.targetItem.stackSize = 1;
+                    }
+                }
+                // 兜底：本体取不到（异常流体/第三方堆）时用覆盖板 GUI 里放的那个幻影物品当图标
+                if (!hasTargetIdentity() && slot.phantomStack != null && slot.phantomStack.getItem() != null) {
+                    this.targetItem = slot.phantomStack.copy();
+                    this.targetItem.stackSize = 1;
+                }
+                changed = true;
             }
+            return changed;
+        }
+
+        /** 摘要槽位的目标本体是否与已缓存的一致（避免每个读取周期重建 displayName / ItemStack 拷贝）。 */
+        private boolean sameTargetIdentity(StockMonitorCoverData.MonitorSlot slot) {
+            appeng.api.storage.data.IAEStack<?> t = slot.monitorTarget;
+            if (t == null) return false;
+            if (t instanceof IAEFluidStack) {
+                if (this.targetIsFluid) {
+                    net.minecraftforge.fluids.FluidStack fs = ((IAEFluidStack) t).getFluidStack();
+                    String name = fs != null && fs.getFluid() != null ? fs.getFluid()
+                        .getName() : "";
+                    return name.equals(this.targetFluidName == null ? "" : this.targetFluidName);
+                }
+                return false;
+            }
+            if (this.targetIsFluid) return false;
+            if (this.targetItem == null || this.targetItem.getItem() == null) return false;
+            if (!(t instanceof IAEItemStack)) return false;
+            ItemStack is = ((IAEItemStack) t).getItemStack();
+            if (is == null || is.getItem() == null) return false;
+            is = is.copy();
+            is.stackSize = 1;
+            return ItemStack.areItemStacksEqual(this.targetItem, is);
         }
 
         public NBTTagCompound writeToNBT() {

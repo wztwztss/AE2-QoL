@@ -75,6 +75,27 @@ public class Config {
      */
     public static volatile String v7Textures = "auto";
 
+    /**
+     * 库存检测覆盖板真正读取 AE2 网络的间隔（tick，热加载字段，性能修复版）。
+     * 每次读取会把整个 ME 网络的存储列表物化一遍（大网络开销极高），默认 20t（1 秒）
+     * 比旧版每 10t×每槽一次降低一个数量级；其余 tick 直接使用缓存值。
+     * 覆盖板 NBT 的 ReadInterval>0 时按覆盖板自身值生效。
+     */
+    public static volatile int stockMonitorReadIntervalTicks = 20;
+
+    /**
+     * 库存检测覆盖板 GUI 打开时的读取间隔（tick，热加载字段）。
+     * GUI 打开时（服务端检测到 MUI sync supplier 正在被轮询）取 min(常规间隔, 本值)。
+     */
+    public static volatile int stockMonitorGuiIntervalTicks = 5;
+
+    /**
+     * ME 任务检测器的检测间隔（tick，热加载字段，性能修复版）。
+     * 每轮检测要全量快照网络库存并喂给 BQ 检索任务，默认 80t（4 秒）；
+     * 任务完成反馈最多延迟一个周期，数值本身不变。
+     */
+    public static volatile int questDetectIntervalTicks = 80;
+
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting()
         .disableHtmlEscaping()
         .create();
@@ -147,6 +168,9 @@ public class Config {
         boolean pinRow = pinRowEnabled;
         String presets = stockMonitorPresets;
         String v7 = v7Textures;
+        int smRead = stockMonitorReadIntervalTicks;
+        int smGui = stockMonitorGuiIntervalTicks;
+        int quest = questDetectIntervalTicks;
         try {
             if (!Files.exists(SETTINGS_FILE)) {
                 writeFile(io, rounds, overlay, pinRow, presets, v7);
@@ -194,6 +218,18 @@ public class Config {
                             v7 = raw;
                         }
                     }
+                    value = obj.get("stock_monitor_read_interval");
+                    if (value != null && value.isJsonPrimitive()) {
+                        smRead = clamp(value.getAsInt(), 5, 1200, smRead);
+                    }
+                    value = obj.get("stock_monitor_gui_interval");
+                    if (value != null && value.isJsonPrimitive()) {
+                        smGui = clamp(value.getAsInt(), 2, 40, smGui);
+                    }
+                    value = obj.get("quest_detect_interval");
+                    if (value != null && value.isJsonPrimitive()) {
+                        quest = clamp(value.getAsInt(), 20, 1200, quest);
+                    }
                 }
             }
         } catch (Throwable t) {
@@ -207,6 +243,9 @@ public class Config {
         pinRowEnabled = pinRow;
         stockMonitorPresets = presets;
         v7Textures = v7;
+        stockMonitorReadIntervalTicks = smRead;
+        stockMonitorGuiIntervalTicks = smGui;
+        questDetectIntervalTicks = quest;
         // 同步到贴图工具：auto/on → 0/1 自动判定与强制开，off → -1 强制关闭
         com.wztwzt.ae2_qof.util.ModTextures.forceMode = "off".equals(v7) ? -1 : ("on".equals(v7) ? 1 : 0);
         lastLoadedMtime = currentMtime();
@@ -298,6 +337,27 @@ public class Config {
                 case "pin_row_enabled":
                     pinRowEnabled = Boolean.parseBoolean(value.trim());
                     break;
+                case "stock_monitor_read_interval":
+                    stockMonitorReadIntervalTicks = clamp(
+                        Integer.parseInt(value.trim()),
+                        5,
+                        1200,
+                        stockMonitorReadIntervalTicks);
+                    break;
+                case "stock_monitor_gui_interval":
+                    stockMonitorGuiIntervalTicks = clamp(
+                        Integer.parseInt(value.trim()),
+                        2,
+                        40,
+                        stockMonitorGuiIntervalTicks);
+                    break;
+                case "quest_detect_interval":
+                    questDetectIntervalTicks = clamp(
+                        Integer.parseInt(value.trim()),
+                        20,
+                        1200,
+                        questDetectIntervalTicks);
+                    break;
                 default:
                     return false;
             }
@@ -380,6 +440,23 @@ public class Config {
 
     private static boolean writeFile(int ioRate, int rounds, boolean overlay, boolean pinRow, String presets, String v7,
         int pushCap, int wildcardCap) {
+        // 性能修复版：节流字段同样从静态字段取值，既有调用点签名不动。
+        return writeFile(
+            ioRate,
+            rounds,
+            overlay,
+            pinRow,
+            presets,
+            v7,
+            pushCap,
+            wildcardCap,
+            stockMonitorReadIntervalTicks,
+            stockMonitorGuiIntervalTicks,
+            questDetectIntervalTicks);
+    }
+
+    private static boolean writeFile(int ioRate, int rounds, boolean overlay, boolean pinRow, String presets, String v7,
+        int pushCap, int wildcardCap, int smRead, int smGui, int quest) {
         try {
             Path parent = SETTINGS_FILE.getParent();
             if (parent != null && !Files.exists(parent)) {
@@ -394,6 +471,9 @@ public class Config {
             root.addProperty("pin_row_enabled", pinRow);
             root.addProperty("stock_monitor_presets", presets);
             root.addProperty("v7_textures", v7);
+            root.addProperty("stock_monitor_read_interval", smRead);
+            root.addProperty("stock_monitor_gui_interval", smGui);
+            root.addProperty("quest_detect_interval", quest);
             try (OutputStreamWriter writer = new OutputStreamWriter(
                 Files.newOutputStream(SETTINGS_FILE),
                 StandardCharsets.UTF_8)) {

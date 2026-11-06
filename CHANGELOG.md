@@ -1,3 +1,1209 @@
+# 4.5.0-fix15 —— 自适应仓「档位接口」与「供电接口」不同源（2026-11-06）
+
+## 现象（用户实测）
+
+GTNH 2.9.0-RC-2，自适配能源仓（32102）绑到 UEV 档网络后：
+
+- 调试扫描仪（丝之歌 19008）显示
+  `Max Energy Input: 8,388,608 EU/t (1024A IV) Power Tier: UEV`
+  ——同一行里分子按 UEV 算、除数却按 IV 算；
+- TenkeiTech 线缆机模板输入总线的「当前电压」显示 **IV**，只放出 61/69 配方；
+- 更换机器/机器型号不同，有的显示正确、有的恒为 IV；
+- 同位置换成两个普通 IV 能源仓则一切正常。
+
+## 根因
+
+GT 存在两族互不相干的读取路径（均以实例 `gregtech-5.09.54.205.jar` 的 `javap` 核对）：
+
+| 族 | 实现 | 自适应仓返回值 |
+|---|---|---|
+| **供电族** | `BaseMetaTileEntity.getInputVoltage()` → `maxEUInput()`；`getMaxInputEu()` / `getAverageInputVoltage()` 均基于它 | **动态，正确** |
+| **档位族** | `MTETieredMachineBlock.getInputTier()` = `getfield mTier; i2l`（`final`，注册档 5 = IV）；`MTEHatch.getTierForStructure()` = `getfield mTier` | **恒为 IV，错误** |
+
+四个自适应仓只 override 了 `maxEUInput/maxEUOutput`、`maxAmperesIn/maxAmperesOut`、`maxEUStore`，
+**没有** override `getInputTier()/getOutputTier()`。于是：
+
+- `ProcessingLogic.setAvailableVoltage(getAverageInputVoltage())` 走供电族 ⇒ 配方电压与超频一直正确
+  （这正是"机器看起来能识别高电压"的来源）；
+- `MTEMultiBlockBase.getInputVoltageTier()`（= `mEnergyHatches.get(0).getInputTier()`）、
+  扫描仪 WAILA 的 MEI 行、WAILA `energyTier`、Bartworks `MTEManualTrafo`、
+  `MTENanochipAssemblyComplex.getEnergyHatchTier()`、gtnhlanth `MTELINAC/MTESourceChamber/MTETargetChamber`
+  的 `VP[getInputVoltageTier()]`、TenkeiTech `getCurrentMachineTier()` 全走档位族 ⇒ 拿到 IV。
+
+**哪台机器显示正确，取决于它读哪一族**——这就是"按机器型号固定、有的识别不到"的成因。
+普通能源仓两族恒等（都取 `mTier`），所以从不暴露该差异，与"SAME 电压下放两个普通仓正常"一致。
+
+## 改动（四个仓，各 3 行实现 + Why 注释）
+
+- `AdaptiveNetHatch.getInputTier()` → `helper.isBound() ? helper.getCurrentVoltageTier() : mTier`
+- `AdaptiveNetLaserHatch.getInputTier()` → 同上（回报**网络档位**，不回报 `V[tier]*2` 浮上去的 tier+1，
+  理由见该类 javadoc：需与终端设置值一致；精确电压请读 `maxEUInput()`）
+- `AdaptiveNetDynamoHatch.getOutputTier()` → 同上
+- `AdaptiveNetLaserTargetHatch.getOutputTier()` → 同上（该仓 `maxEUOutput()` 是 `Long.MAX_VALUE/2`，
+  不能用 `GTUtility.getTier(getOutputVoltage())` 反推，只能直取网络档位）
+
+未绑定时回落 `mTier` 而非 0：`getInputVoltageTier()` 里 0 是"各仓档位不一致"的哨兵，
+且 TenkeiTech 等第三方把 `<=0` 当"特殊模式/不限电压"全量放行配方。
+
+**未改动** `getTierForStructure()`（保持静态 `mTier`）：它是放置/结构门槛
+（`GTStructureUtility.filterByMTETier`、`MTELargeFusionComputer:552` 的 `if (getTierForStructure() < tier()) return false`），
+跟着动态档走会导致换档后无法放置/拆出仓，属于新回归。
+
+## 影响面
+
+- 修复：扫描仪 MEI 行的档位/安培、WAILA 能源等级、TenkeiTech 模板总线放行档位与配方可用数、
+  Bartworks/nanochip/gtnhlanth 基于档位的计算。
+- 不变：配方电压、超频、EU/t 吞吐（供电族本就正确）。
+- 已知口径（非本次缺陷）：同机混插自适应仓 + 普通仓 ⇒ `getInputVoltageTier()` 返回 0（GT 自身语义）；
+  网络档位设为 ULV 时单仓同样返回 0。见 4.3.0-fix1 的已知口径说明。
+- 结构档位门槛不变，所以融合机/化工厂等 `filterByMTETier` 的最小档要求仍按注册档判定。
+
+## 验证（待游戏实测）
+
+- 构建通过；产物 `javap` 核对：四个仓均出现 `getInputTier()/getOutputTier()`，
+  字节码为 `isBound → getCurrentVoltageTier:i2l / mTier:i2l`。
+- 实测项：① 单自适应仓 + UEV 网络，扫描仪应显示 `8,388,608 EU/t (1A UEV)`（不再 `1024A IV`）；
+  ② 线缆机模板总线「当前电压」由 IV → UEV，可用配方数增加；③ 把网络档调回 IV，显示应回落 IV；
+  ④ 回归：两个普通 IV 仓、单个普通 UEV 仓显示与改前一致。
+
+---
+
+# 4.5.0-fix14 —— 修复扩展样板终端（Ex）输出槽反射必败（2026-11-04）
+
+## 问题（2.9.0 适配审计 P0-3，既有缺陷）
+
+5 处代码在 `ContainerPatternTermEx` 分支用
+`ContainerPatternTermEx.class.getDeclaredField("outputs" / "patternSlotOUT")` 取字段，但这两个
+字段声明在**父类** `ContainerPatternTerm`（AE2 1095 `ContainerPatternTerm.java:76,81`；1083 基线
+同样如此——非 2.9.0 回归）。`getDeclaredField` 只查目标类自身、不沿父类查找 → Ex 分支每次必抛
+`NoSuchFieldException`，被 `catch (Throwable ignored)` 吞掉；普通样板终端（Term）分支正常。
+
+## 后果（修复前）
+
+扩展样板终端（Ex）下：客户端输出槽回放不刷新（ClientProxy）、上传/撤回/换位/上传按钮的
+OUT 槽与 outputs 解析失败（对应各 Packet）——全部静默降级。
+
+## 改动（5 处同构，一行级）
+
+Ex 分支的 `getDeclaredField` 目标类 `ContainerPatternTermEx.class` → 父类
+`ContainerPatternTerm.class`（`field.get(pte)` 传 Ex 实例取继承字段，语义不变）：
+
+- `ClientProxy.java`（outputs，输出槽回放）
+- `network/SwapPatternPacket.java`（outputs，换位）
+- `network/RecallPatternPacket.java`（patternSlotOUT，撤回）
+- `network/UploadPatternPacket.java`（patternSlotOUT，上传）
+- `client/event/GuiUploadButtonHandler.java`（patternSlotOUT，上传按钮）
+
+## 验证（未实测）
+
+- 编译通过；进游戏用扩展样板终端：编码后 OUT 槽显示、上传到样板供应器/装配矩阵、
+  撤回、换位、上传按钮均应恢复正常；普通样板终端行为不变（路径未动）。
+
+# 4.5.0-fix13 —— 修复二合一终端→装配矩阵样板上传静默失效（2026-11-04）
+
+## 问题（2.9.0 适配审计 P0-2，既有缺陷）
+
+`MergedTerminalMatrixUploadPacket` 第二轮用
+`AssemblerMatrix.getMethod("insertPattern", ItemStack.class)` 插样板。但 GTNL 的
+`insertPattern` 声明在其**内部类** `CombinationPatternsIInventory` 上（GTNL 源码
+`AssemblerMatrix.java:1770`，rc2/v0.2.3/dev-290 三口径一致，编译基线 rc2 即如此——非 2.9.0
+回归），主类上不存在 → `NoSuchMethodException` 被 `catch (Throwable ignored)` 无痕吞掉。
+
+## 后果（修复前）
+
+二合一终端「上传到装配矩阵」完全静默失效：查重命中时返还空白样板，否则按钮无任何反应、
+无日志，样板留在终端 OUT 槽。
+
+## 改动
+
+- `network/MergedTerminalMatrixUploadPacket.java`：改走主类 public `getPatterns()`
+  （dev-290 实机 javap 实证存在，返回内部类实例）拿样板库再调 `insertPattern`；
+  `insert` Method 按首个非空样板库的运行时类解析一次并复用。
+  第二轮独立 try-catch 并打 WARN（能走到该轮说明 GTNL 已装、主类已解析成功，此阶段失败
+  属 GTNL 内部结构变化，必须留痕）；「GTNL 未装时静默忽略」的外层兜底语义不变。
+
+## 验证（未实测）
+
+- 编译通过；进游戏：对装配矩阵上传样板应成功插入并清空 OUT 槽；样板库满时 insertPattern
+  返回 false（样板保留、无异常）；GTNL 移除该内部类签名时日志出现 WARN 而非静默。
+
+# 4.5.0-fix12 —— 修复 GTNL 超级样板总成 GUI 智能倍增开关失效（2.9.0 正式版回归，2026-11-04）
+
+## 问题（2.9.0 适配审计 P0-1，唯一 2.9.0 新回归）
+
+GTNH 2.9.0 正式实例的 GTNL（`sciencenotleisure-dev-290`）把 `SuperCraftingInputHatchMEGui`
+从 `com.science.gtnl.common.gui.modularui` 移入 `...gui.modularui.hatch` 子包
+（rc2 旧包 / dev-290 新包，双 jar `unzip -l` 实证）。`MixinSuperCraftingInputHatchMEGui`
+按旧包名编译 → 运行时目标类永不加载，mixin 静默不应用（required=false 跳过）。
+RC-2 实机（旧包）上它是生效的，2.9.0 正式起失效。
+
+## 后果（修复前）
+
+GTNL「超级样板输入总成 (ME)」（meta 21504/21505）GUI 上的智能倍增开关消失；
+机器本体倍增能力与 NBT 持久化经 `MixinMTEHatchInputBus`（挂基类）不受影响，
+只是无 UI 可勾选。不崩溃、无日志。
+
+## 改动
+
+- `mixin/gt/MixinSuperCraftingInputHatchMEGui.java`：import/@Mixin 目标改新包名
+  `com.science.gtnl.common.gui.modularui.hatch.SuperCraftingInputHatchMEGui`（全项目仅此一处引用）。
+- `dependencies.gradle`：GTNL 编译基线由 `libs/sciencenotleisure-0.2.7-rc2.jar` 换为
+  `libs/sciencenotleisure-dev-290.jar`（从 2.9.0 实例 mods 拷入，SHA256 f24749b4…与实机 jar 一致）。
+  dev-290 javap 已核：GUI 构造器 `(SuperCraftingInputHatchME)` 与
+  `createBottomLeftCornerFlow(ModularPanel, PanelSyncManager)` 签名未变，仅包名漂移。
+- 旧 rc2 jar 保留在 libs 作历史基线，不再被引用。
+
+## 验证（未实测）
+
+- 编译通过（编译期即真验 dev-290 GUI 类签名）；mixin refmap 指向新包名。
+- 进游戏开 2.9.0 实例：GTNL 超级样板总成 (ME) GUI 底部应出现智能倍增开关（贴图
+  OVERLAY_BUTTON_PATTERN_OPTIMIZE），勾选后写回仓 NBT 并走 N× 推样板。
+
+
+
+# 4.5.0-fix11 —— 修复配方池检测的输出校验失效（2026-11-04）
+
+## 问题
+
+`RecipeMapDetector` 反射初始化用旧类名 `gregtech.api.objects.GT_Recipe` 取 `mOutputs` 字段。
+GT 5.09.54（含 2.9.0 正式版 264/265 与旧基线 205）里该类早已更名 `gregtech.api.util.GTRecipe`
+（字段签名 `public ItemStack[] mOutputs` 未变），`Class.forName` 从未命中 → `OUTPUTS_FIELD=null`
+静态降级，配方池识别退化为「仅按输入匹配」。
+
+## 后果（修复前）
+
+同一输入物品存在于多个配方池时（如钢锭同时是高炉/电解机输入），仅凭输入反查随 HashMap
+遍历顺序随机命中——影响「配方参考」页与自动上传的配方池标注正确性。失效为静默降级，
+不崩溃、无日志。
+
+## 改动
+
+- `util/RecipeMapDetector.java`：反射目标类名 `gregtech.api.objects.GT_Recipe` →
+  `gregtech.api.util.GTRecipe`（已在 GT 205/264 基线 javap 核对 `mOutputs` 可用），
+  输出校验恢复生效；同步修正注释类名。其余逻辑零改动。
+
+## 验证（未实测）
+
+- 编译通过；进游戏后在同输入多配方池场景（如钢锭）编码/自动上传，配方池名应稳定命中
+  与输出物匹配的池，不再随机漂移。
+
+# 4.5.0-fix10 —— 库存监控盖板：跨盖板共享物化快照 + 全局对齐读取（2026-10-31）
+
+## 背景（spark SsMNj7bsBU / ZEAsUk3fja，2026-10-31）
+
+- 服务器 44 块库存监控盖板全部挂在**同一张** ME 网络上（`ae2_qof_cover_registry.dat`：44 条记录、
+  1 个 networkId、44 个不同方块、每块 1 个活动槽）。
+- 盖板按 20t 各读一次 ⇒ 平均 **2.2 次读取/tick**；每次 `readStocks` 都对 `NetworkItemList` 调
+  `buildFinalItemList()` 全表物化（~2ms 常态）⇒ `doCoverThings` 常态 **4.5ms/tick**。
+- 网络变化后第一次读取会触发 AE2 的 `NetworkMonitor.getStorageList` 全量重建（**44ms**，其中无限
+  存储单元枚举 22ms、最终列表物化 14ms），实测 **1.2 次/秒**；该 tick 若同时撞上 GT 机器 20t
+  配方完成突发（43ms），单 tick 达 **133ms**（慢 tick 占 16.5% 墙钟，TPS 掉到 18.9）。
+
+## 改动
+
+1. **AeStockReader：按网络共享物化快照**（`WeakHashMap<IGrid, Snapshot>`，TTL 250ms）。
+   44 块盖板在同一刷新窗口内只物化一次；物品表压成可复用的 `IItemList`，流体表压成
+   `fluidId -> 数量` 的 HashMap（原实现每次读取都要重扫流体表）。
+   数值新鲜度仍 ≤ 一个刷新周期，与旧行为一致；GUI 5t 刷新时 TTL 250ms 对齐。
+2. **StockMonitorCover：全局对齐读取**。`nextReadTick = ((now / interval) + 1) * interval + 7`：
+   同一间隔的所有盖板落在同一 tick 读取（AE2 重建只付一次），整体偏移 7 tick 避开 GT 机器
+   20t 配方完成的节拍，避免「重建 44ms + 机器突发 43ms」叠成 133ms。
+3. 新增 `AeStockReader.invalidate(IGrid)` 供网络重建/调试时强制失效。
+
+## 预期
+
+- 常态 `doCoverThings`：4.5 → ~0.5 ms/tick（44 次物化/秒 → ≤4 次/秒）
+- 慢 tick（>100ms）：重建不再与机器突发同 tick，预计从 1.2 次/秒降到 ≤0.2 次/秒
+- MSPT 均值：51.2 → 约 47；TPS 1m：18.9 → 19.9+
+
+## 验证（未实测）
+
+```
+/spark sampler --only-ticks-over 100 --timeout 60
+/spark sampler --timeout 60
+```
+判据：`StockMonitorCover.doCoverThings` 常态 self 降到 <1ms/tick；慢 tick 频率 ≤0.2/s；MSPT 均值 ≤49。
+
+## 回滚
+
+`_backup_before_fix10/`（StockMonitorCover.java / AeStockReader.java / CHANGELOG.md 原件），
+jar：`build/libs/AE2-QoL-4.5.0-fix10.jar`，SHA256 `36cf4778ce1c700d7fbea2bb51d2fe825a7d87593a2e31a045954957c35e4108`。
+
+---
+
+# 4.5.0-fix9 —— 章节内改行优先矩阵布局（2026-10-29）
+
+用户：「做成矩阵，别老是一个长竖条」。
+
+## 问题
+
+fix6 起的布局是「**竖向**填满 14 行再开右栏」。48 条任务算下来正好是 **14 行 × 4 列** ——
+一个细长竖条，横屏下极难看，也浪费横向空间。
+
+## 改法
+
+- 改成**行优先矩阵**：`x = (i % 6) * 48`、`y = (i / 6) * 48`；
+- 步长 `STEP = 24 + 24 = 48`：24 是任务框边长，另 24 是留白 ——
+  紧贴（步长 24）时 BQ 的边框/选中高亮会压在相邻框上，看着像粘连；
+- 列数 `COLUMNS = 6`：加工 26 条 → 5 行（末行 2 个）、生产 22 条 → 4 行，画布约 288×240，接近正方；
+- **坐标必须幂等**：直接用 `i` 计算，不用累加偏移 —— 进服自愈与 rebuild 都会重跑，累加写法会二次偏移；
+- 不动 `lineOrder`：章节置顶（fix7）归 lineOrder 管，矩阵只管坐标，两者互不影响。
+
+## 版本标识
+
+`CACHE_SCHEMA_VERSION` 7 → **8**（布局算法变了，坐标存在扫描缓存里，必须重扫才能生效）。
+
+## 产物与部署
+
+- `build/libs/AE2-QoL-4.5.0-fix9.jar`（SHA256 `2a16e6c941e3d2931dcbc0230ccac70ced0eb227648ba9ea60a418d27c0f7156`）
+- 已部署实例 + `D:\下载\`（mods 内唯一一份，SHA 一致）；旧 fix8 移入 `_ae2qol_jar_backup/`
+- 字节码核对：`bipush 6`（列数）与 `bipush 48`（步长）在 `QuestAggregator.layout` 内、schema=8
+
+## 待实测
+
+1. 任务在章节里呈 **6 列网格**、不再是竖排；加工章 5 行、生产章 4 行；
+2. 框之间不粘连、无重叠（BQ 对同格叠放不报错，只能肉眼看）；
+3. 章节仍置顶，章节内顺序（类别 → 电压降 → 名称）不变；
+4. 重进世界后布局保持，不回到竖条。
+
+---
+
+# 4.5.0-fix8 —— 只留 UHV 及以上 / 按「同系列 + 同功能」合并任务（2026-10-29）
+
+用户：「我看机器还是太多了，把 UHV 之下的机器删掉吧」「处理相同工作的放一起，同一系列的可以放一起，比如刚才的束流系列」。
+
+## ① 电压闸门（MachineFilter）
+
+- `MIN_TIER = 9`（UHV）：只保留**合成电压 ≥ UHV** 的多方块主机；
+- 实测效果（13:30 缓存，fix6 已修好 meta 索引）：571 台 → 保留 181 台（UHV 37 / UEV 55 / UIV 38 / UMV 16 / UXV 22 / MAX 13）；
+- 分档自证：UHV 及以上 181 + 低于 UHV 336 + 电压未知 54 = **571** ✓
+- 闸门做成常量，改一个数即可放宽/收紧，不用重做分类。
+
+## ② 电压未知的 54 台：默认保留 + 人工点名剔除
+
+- 未知＝**解析缺口**，不等于低档：里面既有不可视之触、兰波顿工厂、特大等离子涡轮、终极压缩巨型加工厂等终局机器，也有地热锅炉、焦炉这类低压机器；
+- 用户挑出 16 台确认属于低档/蒸汽的，按 `registry:meta` 显式列入 `UNKNOWN_EXCLUDE`：加固砖高炉、焦炉、熔炉组、地热锅炉、大型焦炉、大型蒸汽洗矿厂/机、工业洗矿厂、原木拟生场 ×2、藻类农场、大气离心机、空气压缩机、蒸汽流体钻井、自驱式机械蒸汽压缩机、自动售货机；
+- 其余 38 台保留（单列在各自功能组里，描述标 `?`）。
+
+## ③ 任务合并：先同系列，再同功能（MachineGrouping）
+
+- **系列优先**（16 个）：纳米铸造厂、生态圈、合金炉、束流系列、研磨机、锻造锤、恒星锻炉、压模机、流体固化器、流体提取机、电弧炉、魔力灌注、太空采矿、奇迹顶点、合金冶炼炉、稀土综合处理；
+- **其余按功能类别**合并；
+- 原「其他」89 项再拆成 10 组（太空/戴森球、核/反应堆、粒子/对撞/激光、超维度/奇点、炼金/魔法/仪式、净化/水处理/热交换、蒸汽系列、矿石/粉体/铸造、大型工厂综合体、信息/模拟），杂物堆消失；
+- 筛选后结构：**48 条任务、181 台机器**（加工 26 / 生产 22），单条最多 31 台（之前最多 84 台）。
+
+## ④ 版本标识
+
+`CACHE_SCHEMA_VERSION` 6 → **7**；`QUEST_NAMESPACE` v4 → **v5**（分组口径与筛选都变了，必须重建）。
+
+## 产物与部署
+
+- `build/libs/AE2-QoL-4.5.0-fix8.jar`（SHA256 `60cfe8778d59db1efe45a9b7ccd36a3564efd4be24ca433c68650c8fb88b4efc`）
+- 已部署实例 + `D:\下载\`（mods 内唯一一份，SHA 一致）；旧 fix7 移入 `_ae2qol_jar_backup/`
+- 字节码核对：`MachineFilter`/`MachineGrouping` 入包、schema=7、`quest:v5:`、排除项字符串存在
+
+## 待实测
+
+1. 任务数约 48 条，机器约 181 台（+38 台未知）；
+2. 低档机器（LV/HV/EV/IV 等）不再出现在任何任务里；
+3. 束流系列、纳米铸造厂、生态圈等各自成一条，不再被埋进「其他」；
+4. 章节仍只有「机器索引·加工」「机器索引·生产」且置顶；
+5. 每条任务内多台机器之间显示 `OR`。
+
+---
+
+# 4.5.0-fix7 —— 两章置顶 + 333 项分类清单（2026-10-29）
+
+用户：「把俩任务章节放最上面，然后这300多个你给我选择题我给你分」。
+
+## ① 章节置顶
+
+- BQ 的章节显示顺序由 `QuestLineDatabase.lineOrder` 决定；
+  `setOrderIndex(id, i)` 的实现（字节码核对）是 `lineOrder.remove(id)` 后
+  `lineOrder.add(clamp(i,0,size), id)`，因此对「加工」「生产」依次传 `0`、`1` 即可稳定占住表头，
+  **其它章节保持原有相对顺序顺延**（不重排别人的顺序）。
+- 放在 `BqQuestWriter.apply()` 里（新增 `pinIndexChapters()`），而不是单开命令：
+  `repairFromCache`（进服自愈）与 `/bq_admin default load` 之后的修复都会走 apply，
+  等于顺手把顺序也修回来 —— 否则章节一被重载，置顶就丢了。
+- 只对**存在**的章节调用（`containsKey` 判空），不会凭空造章节。
+
+## ② 333 项分类清单
+
+- 生成 `docs/machindex-categories.csv`（334 行，含表头）与 `docs/machindex-categories.md`：
+  编号｜显示名｜typeId｜主机数｜二级类别｜**默认章节（可改）**。
+- 默认分配（按既有规则）：**加工 169 项 / 生产 164 项**；
+  其中「其他（未命中规则）」100 项**默认落在生产章**，正是需要人工裁决的部分。
+- 编号在会话里可直接引用（例：`#012 B` 表示把第 12 项改到生产章）。
+
+## 产物与部署
+
+- `build/libs/AE2-QoL-4.5.0-fix7.jar`（SHA256 `378bca2ef9c3a1bf48d29608cd061671ad83e2625f89c85153c6a6ce975bdffb`）
+- 已部署实例 + `D:\下载\`（mods 内唯一一份，SHA 一致）；旧 fix6 移入 `_ae2qol_jar_backup/`
+- 字节码核对：`setOrderIndex` / `pinIndexChapters` 均已入包
+
+## 待实测
+
+1. 任务书章节列表最上方是「机器索引·加工」「机器索引·生产」两章；
+2. 其余章节顺序未被打乱；
+3. 重进世界（自愈路径）后仍保持置顶。
+
+---
+
+# 4.5.0-fix6 —— 修「571 台全被标 ULV」+ 两章（加工/生产）+ 每配方类型一条 + 章内文字目录（2026-10-29）
+
+## ① 致命 bug：GT 装配索引漏 meta ⇒ 571 台多方块全部 ULV
+
+**证据**（解析实例 `config/ae2_qof/machindex/cache.dat`，2026-10-29 12:07 实机扫描）：
+
+```
+多方块按电压分布: [(0, 571)]        ← 571 台全是 tier 0
+超维度等离子锻炉            tier=0  src=crafting_recipe  meta=1004
+超维度物质等离子锻炉原型机MK-II  tier=0  src=crafting_recipe  meta=19054
+枢纽卫星工厂 MkII          tier=0  src=crafting_recipe  meta=28540
+```
+
+**根因**（`VoltageResolver.ensureGtIndex`）：GT 装配类配方索引只按 `Item` 建键、**不带 meta**：
+
+```java
+idx.computeIfAbsent(out.getItem(), ...)   // 所有 GT 机器共用 gregtech:gt.blockmachines
+```
+
+查询时取该 Item 下**全部配方的最低档** ⇒ 命中上万条机器配方 ⇒ 恒等于 ULV(0)。
+原版工作台索引有 `sameStack` 校验（带 meta）所以正确，**只有 GT 索引漏了这层**。
+
+**修复**：新增内部类 `GtTier(int meta, int tier)`，索引改存 `(meta, tier)`，查询时
+`if (c.meta != target.getItemDamage()) continue;`。这是「电压一直不对」的真正原因
+（此前误判为「多方块退回配方电压」）。
+
+## ② 章节收敛为两个（用户拍板「最多加工章节和生产章节」）
+
+- `MachineCategory.chapterOf(category)`：**加工**＝改变物品/流体形态成分的工序
+  （研磨、洗矿、离心、电解、化学反应、蒸馏、加热/熔炼/低温、卷板、压模、压缩、切割、组装、线材、极性、车床、扫描、包装/装罐）；
+  **生产**＝持续产能或产出资源（发电、聚变/核/加速器、种植/生物、废料处理、太空/行星、复制/增殖、特殊、未归类）。
+- `groupByChapter()` 不再按电压/上限滚动切卷，改为按 `q.groupKey`（章节标签）分卷，
+  章节名 `机器索引·加工` / `机器索引·生产`。
+- `isOurChapterName` / `clearAll` 三处判定补上 `机器索引·` 前缀，保证新章节被识别与清理。
+
+## ③ 任务粒度回到「每配方类型一条」
+
+用户 2026-10-29 用实例确认：「超维度等离子锻炉的 4 台多方块主机 = 一条任务」。
+`aggregate()` 按 `typeId` 分桶（约 333 条），组内按**合成电压降序**；
+全局排序 `章节 → 类别 → 电压降 → 类型名`，决定章内目录顺序。
+`layout()` 改为纯矩阵填充（每栏 14 行、排满右移）——旧版按 typeId 强制换栏会让一栏只放一条。
+
+## ④ 「或」= 单任务内 OR（用户拍板）
+
+`retrieval.requireOnlyOneItem = true`：BQ 的 `PanelTaskRetrieval` 会在每两个物品之间画
+`OR`（**写死的英文，不是翻译键**），且每项占 48px。
+不用任务级 `EnumLogic.OR` 的原因：`OR.getResult = inputs > 0`，而 `TaskOptionalRetrieval.ignored()`
+恒 true ⇒ `done = total` ⇒ **索引卡立刻被打勾**；保持 `NAND` + 单任务内 OR 才能「显示或、但永不完成」。
+
+## ⑤ 任务书里写字（回答用户「不能写字吗」）
+
+能写：`NativeProps.NAME` / `DESC` 是纯文本，支持 `\n` 与 `§` 颜色码。
+- **章节 DESC** 改为**文字目录**：收录数量 + 排序规则 + 按类别分组的类型清单；
+- **任务 DESC** 改为带颜色的明细：章节/类别、类型 ID、主机数、电压口径、逐台 `名称 [电压] 来源`。
+
+## ⑥ 版本标识
+
+`CACHE_SCHEMA_VERSION` 5 → **6**；`QUEST_NAMESPACE` v3 → **v4**（粒度与章节都变了，必须重建）。
+
+## 产物与部署
+
+- `build/libs/AE2-QoL-4.5.0-fix6.jar`（SHA256 `4db203e36201dda5d75fba109d7538b49b0ce4fb06ebcf6db7b79d1d501fbf46`）
+- 已部署实例 + `D:\下载\`（mods 内唯一一份，SHA 一致）；旧 fix5 移入 `_ae2qol_jar_backup/`
+- 字节码核对：`GtTier` 类已入包、`加工`/`生产` 常量在 `MachineCategory`、`requireOnlyOneItem` 引用存在、schema=6、`quest:v4:`
+
+## 待实测
+
+1. **电压**：多方块应出现 HV/EV/IV/LuV/ZPM/UV/UHV 等分布，而不是清一色 ULV；
+   抽查「超维度物质等离子锻炉原型机MK-II」应为高档（用户实测为 UXV）；
+2. **章节**：任务书只有「机器索引·加工」「机器索引·生产」两章；
+3. **粒度**：超维度等离子锻炉一条任务，内含 4 台主机、按电压降序、之间有 `OR`；
+4. **文字**：章节详情页能看到分类目录；任务详情页有彩色机器清单；
+5. **永不完成**：索引卡不应自己打勾。
+
+---
+
+# 4.5.0-fix5 —— 按功能大类合并 / 服务器双轨生成 / 旧分卷清理 / 导出未归类（2026-10-29）
+
+用户 2026-10-29 反馈四条，逐条对应：
+
+| 用户反馈 | 取证结论 | 本版处置 |
+|---|---|---|
+| 「其他任务没有消失」 | 存档里我们的任务实际 **1241 条**（应 333）：旧版分卷「机器索引 II/III/IV/·未知」不再被写入，而孤儿清理只遍历「本轮写入的卷」⇒ **旧卷里的任务永远清不掉** | 新增 `removeObsoleteChapters()`：清理「属于本模组命名空间、但不在本轮期望卷集合」的章节及其任务（用户已授权） |
+| 「任务数量确实偏多」 | 一配方类型一条 ⇒ 333 条 | 改为**按功能大类合并**：一个大类一条（约 25~30 条） |
+| 「任务能不能分类」 | — | 新增 `MachineCategory`：48 个 GT 配方表 + 9 个显式 category 归到 23 个大类（研磨/粉碎、卷板/弯曲、压模/成型、发电…），单章内按类别分区 |
+| 「服务器没有」 | **双因**：① 服务器用的 `GTNH-sync/mods` 里是 **4.2.0-fix1**，`jar tf` 核 **0 个 machindex 类**；② 即使换 jar，专用服也不会生成——NEI 是客户端 mod，且原实现只在「集成服务器（单机）」时写库 | **C 轨（A+B）**：A 新增 `MachIndexSyncPacket`（C2S 分片同步，OP 鉴权）；B 新增 `ServerSideIndexBuilder`（服务端枚举 GT 注册表兜底） |
+
+## A 轨：客户端 → 服务端同步
+
+- 新增 `machindex/network/MachIndexSyncPacket`：`ScanResult` → NBT → gzip → 按 **16 KB** 分片（1.7.10 自定义 payload 上限约 32 KB）；
+- 服务端按 `transferId` 重组，全部到齐后反序列化并写库；
+- **安全**：只接受 **OP（权限等级 2）** 推送，避免任意客户端污染任务库；
+- `ScanPipeline` 判断「是否多人」后传参给桥接层 —— 桥接类被双端共用，**里面不能出现 `net.minecraft.client.*`**（本项目踩过同类坑；`javap` 已核 `MachIndexServerBridge` 的客户端类引用 = **0**）。
+
+## B 轨：服务端兜底
+
+- 新增 `machindex/server/ServerSideIndexBuilder`：遍历 `GregTechAPI.METATILEENTITIES` 取 `MTEMultiBlockBase`，
+  分类取 `getRecipeMap()`（GTNG 等有 `getAvailableRecipeMaps()` 的用反射取全部），
+  电压走同一套 `VoltageResolver`（合成电压）；
+- `repairFromCache` 在**无缓存**时自动启用它；
+- **已知边界**：只覆盖 GT 注册表里的多方块，第三方自注册 MTE 会漏 —— 所以它是兜底，主路径仍是 A 轨。
+
+## 分类（新）
+
+`MachineCategory` 规则表（按顺序命中，先具体后宽泛）：
+研磨/粉碎 · 卷板/弯曲 · 压模/成型 · 压缩 · 切割 · 洗矿 · 离心 · 电解 · 化学反应 · 蒸馏 · 加热/熔炼 ·
+组装/装配 · 线材/拉丝 · 极性/磁化 · 车床/加工 · 扫描/研究 · 包装 · 复制/增殖 · 聚变/核 · 发电 · 种植/生物 · 废料处理 · **其他**
+
+匹配顺序：先按 **typeId 后缀**（英文，稳定），再按**显示名**兜底；都不命中 → `其他`，
+并可用 `/ae2qol machindex export` 导出成 JSON 供人工指定。
+
+## 新指令
+
+`/ae2qol machindex export` —— 把「自动归类失败」的多方块导出到
+`config/ae2_qof/machindex/unclassified.json`（字段：显示名/注册名/meta/合成电压档/配方类型/来源模组 + 空 `category` 待填）。
+
+## 缓存与 ID
+
+- `CACHE_SCHEMA_VERSION` 4 → **5**（聚合算法变了，必须强制重扫）；
+- `QUEST_NAMESPACE` v2 → **v3**（任务身份从「配方类型」改成「功能大类」，旧任务靠孤儿清理+废弃卷清理删除）。
+
+## 产物与部署
+
+- `build/libs/AE2-QoL-4.5.0-fix5.jar`（SHA256 `4b8275770f0c4b01c95bd591277a679e415cadc7572efd36c4704e2790b603fa`）
+- 已部署到实例与 `D:\下载\`（三处 SHA 一致，mods 内唯一一份）
+- **服务器 jar 未动**：`E:\wzt\MC\GTNH-sync\mods\` 是 git 同步仓库，更换需你确认
+
+## 待实测
+
+1. 任务数应从 333 降到约 25~30（按大类合并）；
+2. 章节只剩一卷「机器索引」，旧的 II/III/IV/·未知 及其任务被清掉（日志应有「清理废弃旧分卷 N 个，连带任务 M 条」）；
+3. 单机：进世界即有；专用服：客户端扫描后日志出现「已向服务端发送索引（N 片）」，服务端出现「收到客户端索引 … → 写库」；
+4. `/ae2qol machindex export` 生成 JSON，可交给人工指定未归类项；
+5. 任务描述里有「电压口径：合成该机器所需电压（非工作电压），从高到低」。
+
+---
+
+# 4.5.0-fix4 —— 任务粒度重构：只留多方块主机 / 一个类型一条任务 / 四卷合一（2026-10-27）
+
+用户实测 fix3 后提出新口径（原话要点）：「把单方块的机器都删掉」「也不用按电压等级了，
+研磨机就一个任务，把能处理研磨配方的**多方块机器的主机**都标进去，里面按主机的**合成电压等级从上往下**
+排序」「按矩阵排」「四页合成一页」。
+
+## 为什么这样改是对的（与旧口径的对照）
+
+| 维度 | 旧（fix3 及以前） | 新（fix4） | 收益 |
+|---|---|---|---|
+| 机器范围 | 单方块 + 多方块全收 | **只留多方块主机** | 单方块是「每电压档一台」的廉价变体，占了任务量九成以上；多方块才是「这功能有哪些高级机器」的真正答案 |
+| 任务粒度 | (类型 × 电压) 一条 | **一个类型一条** | 研磨机不再拆成 15 条，任务数从 1438 量级降到几百 |
+| 组内排序 | 按显示名 | **按合成电压从高到低** | 玩家一眼看到顶配；低档变体沉底 |
+| 分卷 | 300/卷 ⇒ 4~5 卷 | **2000/卷 ⇒ 1 卷**（用户「四页合一」） | 不用翻卷 |
+| 任务 ID | `quest:v1:typeId|tier` | **`quest:v2:typeId`** | 粒度变了，旧 UUID 全作废；旧任务靠孤儿清理自动删除 |
+
+标题也相应简化：去掉 `[电压]` 前缀（电压明细在 DESC 逐台列），变为 `研磨机 ×3`。
+DESC 明确标注「仅多方块主机，按合成电压从高到低」。
+
+## 实现要点
+
+- `QuestAggregator.aggregate()`：入口处 `if (!machine.isMultiblock) continue;` 过滤；
+  分桶键从 `typeId|tier` 改回纯 `typeId`；组内排序 `Comparator.comparingInt(m -> -sortKey(m.mainTier))`（降序）；
+  任务主电压 = 组内**最高档**（顶配）；图标 = 排序后首台（最高档机器）。
+- `IndexConfig`：`maxQuestsPerChapter` 300 → **2000**；`QUEST_NAMESPACE` v1 → **v2**；
+  `CACHE_SCHEMA_VERSION` 3 → **4**（三处全部字节码核对入包）。
+- 「没变化」的说明：fix3 构建了但**未部署**（上一轮止于产物核对），用户实测的仍是 fix2；本轮 fix4 已部署。
+
+## 产物与部署
+
+- `build/libs/AE2-QoL-4.5.0-fix4.jar`（SHA256 `3becc0031de5ef10429b73ff13bcaf922eb3a41e1cfb0e55dd5b6a6632963cdd`）
+- 字节码核对：`CACHE_SCHEMA_VERSION=4`、`quest:v2:`、`isMultiblock` 过滤全部入包
+- **已部署**：实例 mods 唯一一份、SHA 一致；旧 fix2 移入 `_ae2qol_jar_backup/`；`D:\下载\` 同步
+
+## 待实测
+
+1. 任务书**只有一卷**「机器索引」（不再有 II/III/·未知）；
+2. 每条任务 = 一个配方类型，标题无电压前缀；任务内机器全部是**多方块**；
+3. 组内机器按电压**从高到低**（抽查：同类型里 UXV/UV 的排前面、HV/LV 排后面）；
+4. 分栏布局不变：每栏 14 行、排满右移；
+5. 旧的多条任务被自动清理（孤儿清理 + v2 命名空间双保险）。
+
+---
+
+# 4.5.0-fix2 —— 修「布局叠成一条竖线」+「电压全表错档」（像素网格 / GT 装配类配方反查）（2026-10-27）
+
+用户实测反馈两条（附 6 张截图）：**任务全部挤成一条竖线**、**抽查多台机器电压错**（例：「枢纽卫星工厂 MkII」
+真值 UXV，被标成 LV）。这两个是**独立**缺陷，各有明确根因，本版一并修。
+
+## 缺陷 A：布局叠成一条竖线
+
+**根因（我自己的单位错误）**：`QuestLineEntry` 的坐标单位是**像素**、条目默认 **24×24**，
+而我 4.5.0 写的是 `q.x = 列 * 2`、`q.y = 行 * 2` —— 把「格数」当成了像素，
+等于每 2 像素摆一个 24 像素的方块 ⇒ 全部重叠在一条线上（截图现象完全吻合）。
+
+**修复**：改为像素网格。`CELL=24 / GAP_X=8 / GAP_Y=10 / PER_ROW=8 / GROUP_GAP=24`
+⇒ 列宽 **32**、行高 **34**；按「功能类型」分段（段间留 24 像素），段内从左到右填、满 8 列换行。
+排序主键改用 **typeId**（稳定英文键），不再用本地化显示名——否则本地化一改整卷位移。
+
+## 缺陷 B：电压错档（系统性，不是个别机器）
+
+**根因 1（主因）：只反查了原版工作台，漏掉 GT 装配类配方表。**
+GT 的高压机器几乎不用工作台；装配机（`assemblerRecipes`）/装配线（`assemblylineVisualRecipes`）/
+电路装配机才是主途径。4.5.0 的 `resolveByCrafting` 只查 `CraftingManager` ⇒ 这一整类反查失败
+⇒ 退回「配方表最低电压」⇒ 被压到 LV。
+
+洞察「枢纽卫星工厂 MkII」的实证：
+- 配方在 `LightHunterSpaceStationRecipes`，走 **`assemblerRecipes`**；
+- 字节码里 **`TierEU.RECIPE_UXV`** + **`OrePrefixes.circuit × Materials.UXV`** 双证据；
+- ⇒ 真值 **UXV(tier 14)**，与用户判断一致。
+
+**根因 2：万能工厂的 `getRecipeMap()` 不可信。**
+「枢纽卫星工厂」一台挂几十张配方表（`getFactoryRecipeMaps()`），
+其 `getRecipeMap()` = `getFactoryRecipeMaps()[machineMode]`，而**原型实例的 `machineMode` 恒为 0**
+⇒ 永远拿到第一张表（`minEUt` 极低）⇒ 拉到 LV。修复：用反射调 `getAvailableRecipeMaps()`，
+表数 > 1 时直接判定 `recipe_voltage` **不可信**，不再用它定档。
+
+**根因 3：配方表名写错（自查发现，用户尚未看到）。**
+初版写的 `gt.recipe.assemblyline`、`gt.recipe.partsassembler` 在 GT 里**根本不存在**，
+从字节码读到的真名是：
+| 用途 | 真实 unlocalizedName |
+|---|---|
+| 装配机 | `gt.recipe.assembler` |
+| 装配线 | `gt.recipe.fakeAssemblylineProcess` |
+| 电路装配 | `gt.recipe.circuitassembler` |
+| 芯片组装 | `gt.recipe.nanochip.assemblymatrix` |
+写错会**静默跳过**（`ALL_RECIPE_MAPS.get()` 返回 null 后 `continue`），
+因此本版加了 **缺表 WARN** 与 **每表配方条数 INFO**，让「名字错」在日志里可见。
+
+**修复后的解析优先级**：
+1. `machine_tier`（单方块读 `MTETieredMachineBlock.mTier`，最可靠）；
+2. `crafting_recipe` = 工作台 **+ GT 装配类表**，取全部候选的**最低档**（= 最容易造出它的电压）；
+3. `machine_tier` 兜底（非 Tiered 的 `maxEUInput()`，> 0 才算）；
+4. `recipe_voltage`（仅**单表**机器可信）；
+5. UNKNOWN。
+
+GT 配方档位取「<b>成分最高档</b>」与「<b>配方 mEUt 档</b>」的**较大者**：成分里的 UXV 电路代表
+「你得先有这个电压才能造」，`mEUt` 代表「运行至少要这个电」，取门槛更高者。
+
+## 缺陷 C（连带修的）：缓存会让修复「看不见」
+
+**根因**：`CACHE_SCHEMA_VERSION` 仍是 1，而本次改的是**电压口径与布局算法**——
+两者都不在缓存键的其它字段里 ⇒ 老缓存继续命中 ⇒ 用户看不到任何修复效果。
+
+**修复**：`CACHE_SCHEMA_VERSION` 1 → **2**（字节码已核 `ConstantValue = Integer 2`）。
+凡改动扫描/聚合/布局算法都必须递增此值，已写入代码注释。
+
+## 产物与部署
+
+- `build/libs/AE2-QoL-4.5.0-fix2.jar`（2,158,339 B，SHA256 `4ad21ae054d34f67f9021b60f5d90ab3fa7c49e59829dfeb6ec2b214e4b052ab`）
+- 字节码核对：四个配方表名全对、`CACHE_SCHEMA_VERSION=2`、布局常量 `24/32/34` 全部入包
+- **已部署**：实例 mods 内 `【自制】AE2-QoL-4.5.0-fix2.jar` 唯一一份，SHA256 一致；
+  旧 `4.5.0-fix1` 移入 `_ae2qol_jar_backup/prev-…`；`D:\下载\` 同步同一份
+
+## 待实测
+
+1. **布局**：任务成块排列、不再重叠；同类机器聚在一起，段与段之间有留白；
+2. **电压**：「枢纽卫星工厂 MkII」= **UXV**；抽 2~3 台单方块机器（对照 NEI 页电压）应一致；
+3. **日志**（新增，能直接判定电压推断是否生效）：
+   - `machindex GT 表 gt.recipe.assembler：配方 N 条`（四张表各一行；**缺表会 WARN**）；
+   - `machindex GT 装配类配方索引：4 表 / N 配方 / M 输出物品`（若 `4 表` 少于 4 ⇒ 名字又错了）；
+4. **缓存重建**：日志应出现 `machindex 缓存 schema 不符（1 != 2），视为无效`（这条即「已强制重扫」的证据）；
+5. 其余 4.5.0 待测项不变。
+
+---
+
+# 4.5.0-fix1 —— 修「扫描到 537 个类型但 0 台机器」（NEI 催化剂 API 用错入口）（2026-10-27）
+
+## 现象（用户实机，日志 11:01:14）
+
+```
+[AE2QoL] machindex 扫描完成：配方类型数=537；机器主机数=0；任务数=0；
+         来源模组数=0；多方块数=0；UNKNOWN 电压数=0；耗时ms=181
+[AE2QoL] machindex 缓存已写入：…\config\ae2_qof\machindex\cache.dat（任务 0 条）
+```
+
+任务书里没有「机器索引」章节。**不是没扫描、不是开关没开、不是需要重新载入**——
+事件收到了、扫描跑完了、缓存也写了，问题在**催化剂取到 0 条**。
+
+## 根因（字节码实证，决定性）
+
+`RecipeCatalysts.getPositionedRecipeCatalystMap()` 在 **NEI 2.8.155 里是空实现**：
+
+```
+javap -p -c codechicken.nei.recipe.RecipeCatalysts
+  public static java.util.Map<...> getPositionedRecipeCatalystMap();
+     0: new           #225   // class java/util/HashMap
+     3: dup
+     4: invokespecial #226   // Method java/util/HashMap."<init>":()V
+     7: areturn                      ← 直接返回一个空 HashMap，永远如此
+```
+
+我 4.5.0 按 prompt 的「getPositionedRecipeCatalystMap() 返回整张 Map」写死了遍历入口，
+于是**催化剂循环从未执行过一次** ⇒ 机器 0、任务 0。类型 537 之所以有值，
+是因为类型来自 handler 列表（那条路是对的），不是我误以为的催化剂表。
+
+## 正确入口（已用字节码逐环验证）
+
+```
+getRecipeCatalysts(IRecipeHandler)
+  → getRecipeID(handler)          // = getOverlayIdentifier() 优先，否则 getHandlerId()
+  → getRecipeCatalysts(String)    // getstatic recipeCatalystMap → getOrDefault
+  → 私有 Map<String, List<PositionedStack>> recipeCatalystMap   ← 真数据在这
+```
+
+填充链路也核实了：
+- `NEIClientConfig$25.run()` 字节码顺序 = `loadCatalystInfo()`（idx 42）→ **之后**才 `post(NEIConfigsLoadedEvent)`（idx 65-72）
+  ⇒ 事件到达时催化剂表**已经**建好，时机无问题；
+- `loadCatalystInfo()` 末尾 = `recipeCatalystMap.clear()` → 遍历 `resolveAdderQueue` 的结果 `put(...)`；
+- `resolveAdderQueue` 读 `catalystsAdderFromAPI`（GT 走 `API.addRecipeCatalyst(...)` 填的就是这张表）；
+- GT 侧键一致性：`GTNEIDefaultHandler.getOverlayIdentifier()` 返回 `recipeCategory.unlocalizedName`，
+  而 `NEIGTConfig.registerCatalysts()` 调 `API.addRecipeCatalyst(mte.getStackForm(1), recipeCategory.unlocalizedName, ...)`
+  —— 两边**同一个字符串**，键对得上。
+
+## 修复
+
+`NeiScanService`：改为**按 handler 实例**逐一取催化剂，并保留 handlerId → 实例的映射：
+
+- `buildTypeIndex(handlers)` 不再接收催化剂表键集，`TypeAccumulator` 新增 `handlersById`（`Map<String, IRecipeHandler>`）；
+- 扫描时对每个类型的每个 handler 调 `RecipeCatalysts.getRecipeCatalysts(handler)`，汇总后再解析机器；
+- 删除 `snapshotCatalysts()`，原位留一段**废弃说明**（防后来者"顺手再用"那个空方法）；
+- 新增一行可判定诊断日志：`催化剂遍历：有催化剂的类型=N，无催化剂的类型=M，催化剂条目=K`
+  —— 下次若仍为 0，一眼就能看出是「类型侧没绑 handler」还是「催化剂真空」。
+
+## 产物与部署
+
+- `build/libs/AE2-QoL-4.5.0-fix1.jar`（2,156,796 B，SHA256 `dd2cffbedf45cc8b3f3331153f9ff548a8f31459ea567cd2987f82d1ca1e1d1e`）
+- jar 内 `mcmod.info` 两处版本 = `4.5.0-fix1`
+- **已部署**：实例 mods 内 `【自制】AE2-QoL-4.5.0-fix1.jar` 唯一一份，SHA256 与本地一致；
+  旧 `4.5.0` 移入 `_ae2qol_jar_backup/prev-【自制】AE2-QoL-4.5.0.jar`（只移不删）；
+  `D:\下载\` 同步同一份供服务端。
+
+## 待实测
+
+1. 日志新增的 `催化剂遍历：有催化剂的类型=…` 中，**有催化剂的类型数应远大于 0**；
+2. `扫描完成` 行的 `机器主机数` / `任务数` 应为非零；
+3. 任务书出现「机器索引」章节（若机器非 0 但仍无章节，则下一个怀疑点是 lineOrder，见 4.5.0 记录）；
+4. 其余 4.5.0 待测项不变。
+
+---
+
+# 4.5.0 —— 新功能：GTNH「机器功能—电压等级」自动索引（写进 Better Questing）（2026-10-27）
+
+## 需求
+
+把整合包里所有机器按「配方/功能类型 → 电压等级 → 机器主机」聚合，写进 BQ 任务书的专用章节，
+让玩家在任务界面里按电压翻阅每个功能有哪些机器，并能用 NEI 快捷键在任务详情页查配方/加书签。
+
+用户 2026-10-27 拍板的六项口径（**与本轮实现一一对应**）：
+
+| # | 拍板 | 实现落点 |
+|---|---|---|
+| Q1 | 落在 ae2_qof 新顶层包 | `com.wztwzt.ae2_qof.machindex`（复用 MyMod 生命周期/命令/构建链） |
+| Q2 | **多方块按「合成该机器所需的最低电压」算** | `VoltageResolver.resolve()`：多方块优先 `crafting_recipe`（反查合成表取成分最高档），`recipe_voltage` 仅兜底 |
+| Q3 | `includeUnknown=true` + UNKNOWN 单独分卷 | `IndexConfig.includeUnknown` + `IndexConfig.CHAPTER_UNKNOWN_NAME`「机器索引·未知」 |
+| Q4 | 单卷 + **同类型同电压的机器合并成一个任务** | `QuestAggregator.aggregate()`：按 `(typeId, mainTier)` 分桶，一桶一任务，桶内逐台列进任务物品列表 |
+| Q5 | `/ae2qol machindex` 子命令 | `MachIndexCommand` + `CommandAe2QoL` 分发 |
+| Q6 | 先升 libs 再写码 | `libs/BetterQuesting-3.8.89-GTNH.jar` + `dependencies.gradle`；NEI 2.8.155 编译依赖本已存在 |
+
+## 实现结构（8 新文件 + 3 处接线）
+
+```
+machindex/
+├─ MachIndexPlugin.java        总开关：NEI/BQ 双守卫 + NEI 事件注册（@SideOnly CLIENT）
+├─ MachIndexCommand.java       /ae2qol machindex status|validate|rebuild|clear_cache|clear
+├─ common/
+│  ├─ IndexModel.java          POJO（ScanResult / RecipeTypeIndex / MachineEntry / QuestDefinition）+ NBT 编解码
+│  ├─ IndexConfig.java         口径常量与开关（默认值 = 用户拍板值）
+│  ├─ VoltageResolver.java     电压解析（machine_tier → crafting_recipe → recipe_voltage → UNKNOWN）
+│  ├─ ModSourceResolver.java   来源模组（findUniqueIdentifierFor → Block 兜底 → 注册名前缀）
+│  ├─ QuestAggregator.java     聚合/布局/签名（同类型同电压合并）
+│  └─ MachineIndexCache.java   缓存键 + cache.dat 读写（NBT，先写 tmp 再改名）
+├─ client/
+│  ├─ NeiScanService.java      **唯一 import codechicken.nei.\* 的类**
+│  └─ ScanPipeline.java        扫描编排（NEI 后台事件 → 主线程）
+└─ server/
+   ├─ BqQuestWriter.java       **唯一 import betterquesting.\* / bq_standard.\* 的类**
+   ├─ MachIndexServerBridge.java  跨端桥（写缓存 / 反射调用写库，**零 BQ 类型引用**）
+   └─ JoinRepairHandler.java   首个玩家进服后 60t 对账（BQ 清库自愈）
+```
+
+接线：`MyMod.init()`（插件初始化 + 进服自愈注册）、`CommandAe2QoL`（machindex 分发 + tab 补全）、`dependencies.gradle`（BQ 3.8.89）。
+
+## 关键设计决策（都带"为什么"）
+
+### 1. recipeId → handler 的桥接（方案里未提的必要环节）
+
+`RecipeCatalysts.getPositionedRecipeCatalystMap()` **只返回 `recipeId → List<PositionedStack>`，没有 handler 实例**；
+而「类型显示名」与 `GTNEIDefaultHandler.getRecipeMap()` 都必须拿到实例。
+因此扫描时同时遍历 `GuiCraftingRecipe.craftinghandlers` + `GuiUsageRecipe.usagehandlers`，
+按 `RecipeCatalysts.getRecipeID(handler)` 建 recipeId → handler 索引，再与催化剂表**求并集**：
+只在 handler 侧出现 → 标 `noCatalyst`；只在催化剂侧出现 → 保留（displayName 回落 typeId）。
+**不做这层桥接，`recipe_voltage` 兜底根本无法实现**。
+
+### 2. 不碰 `TemplateRecipeHandler.arecipes`
+
+它是懒加载（打开对应 GUI 才填充），离线读既不可靠又会触发大量无谓配方计算。
+本索引只需类型元数据 + 催化剂列表；电压走 `VoltageResolver`（只有兜底路径才读 GT 的 `RecipeMap.getAllRecipes()`，
+且按 map 名缓存结果，同一张表只遍历一次）。
+
+### 3. 任务 ID **不含**坐标与机器清单
+
+`questUuid = nameUUIDFromBytes("ae2qof:machindex:quest:v1:" + typeId + "|" + mainTier)`。
+理由：机器增减/布局重排只改内容，不该改身份；否则整合包加一台变体，玩家已读状态会整卷丢失。
+内容变更检测靠塞进 DESC 末尾的 `[sig:...]` 签名（标题+描述+图标+机器集+坐标的 SHA-256）。
+
+### 4. 完成态：`TaskOptionalRetrieval` + 显式 `LOGIC_TASK = NAND`
+
+- `TaskOptionalRetrieval.ignored(uuid)` **恒 true** → 计入 `done`；
+- `QuestInstance.update()` 里 `qInfo.getProperty(LOGIC_TASK).getResult(done, tasks.size())`；
+- `EnumLogic.NAND.getResult(n, n) = (n < n) = false` ⇒ **永不完成**（索引卡的正确语义）；
+- 另设 `COUNT_AS_QUEST=false`，不污染玩家的任务完成数统计。
+
+**为什么不用纯图标 quest（无 task）**：`tasks.size() <= 0` 时 BQ 直接 `setComplete` ⇒ 一进世界就自动打勾，
+且 quest 的 ICON **不接 NEI**（已核实：`betterquesting` 包内 grep `codechicken` 零命中）。
+挂 `TaskOptionalRetrieval` 才能同时满足「图标是机器」+「可用 NEI 快捷键」（`PanelInteractiveItemSlot` → `ShortcutInputHandler`）。
+
+### 5. 三段隔离（专用服务器生存的关键）
+
+| 层 | 禁止内容 | 验证方式 |
+|---|---|---|
+| `common/*` | 任何 `codechicken.*` / `betterquesting.*` | `javap` 核 `IndexModel` 常量池命中数 = **0** |
+| `client/NeiScanService` | 只此一个类 import NEI | `javap` 核其余类无 NEI 引用 |
+| `server/BqQuestWriter` | 只此一个类 import BQ | `javap` 核 `MachIndexServerBridge` 的**类型引用** = 0（只剩两处字符串常量：反射类名 + `isModLoaded("betterquesting")`） |
+
+`MachIndexServerBridge` 用**反射**调 `BqQuestWriter.apply`，就是为了让这个被双端共用的桥接类在字节码层面
+不出现 BQ 类型——否则未装 BQ 的整合包会在类解析阶段 `NoClassDefFoundError`。
+
+### 6. 线程
+
+`NEIConfigsLoadedEvent` 由 NEI 的**后台线程** post（已核实 `NEIClientConfig$25 extends Thread`），
+所以监听器只做一件事：`Minecraft.func_152344_a(...)` 切主线程后再扫描（碰 NEI 集合与 ItemStack 必须主线程）。
+
+## 本轮修复的实现期问题（自测记录）
+
+| 问题 | 根因 | 处置 |
+|---|---|---|
+| `cannot access ISpecialElectricItem` | `MetaBaseItem` 实现 IC2 接口，项目从不依赖 IC2，javac 解析成员签名时读不到类文件 | 改为反射调 `getTier`，不引入 IC2 依赖 |
+| `GameRegistry.findUniqueIdentifierFor` 返回类型写错 | 实际是 `GameRegistry.UniqueIdentifier`（字段 `modId`），不是 `String[]` | 改按真实类型取，并加 Block/注册名前缀两级兜底 |
+| AE2 控制器图标取不到 | `blocks()` 是方法但 `blockController` 是 **public 字段**（`AEItemDefinition`），无 `controller()` 方法 | 改 `blocks().blockController.stack(1)` |
+| `BigItemStack(ItemStack,int)` 不存在 | 只有 `BigItemStack(ItemStack)`（数量取自堆本身） | 先把 `stackSize=1` 再构造 |
+| 布局重叠 | 初版「先电压后类型」排序导致同一 (类型,电压) 反复落到同一 y | 改为「先类型分段、段内按电压」，y 全局递增 |
+| 签名没写进库 | `writeQuest` 写的是 `def.desc`，签名另存他处 | 改为 `appendSignature(def.desc, def.signature)` 一起写 |
+| `MinecraftServer.func_152344_a` 不存在 | 那是客户端 `Minecraft` 的方法 | 单机里客户端线程 == 集成服务器线程，直接调用 |
+
+## 产物
+
+- `build/libs/AE2-QoL-4.5.0.jar`（2,156,737 B，SHA256 `abc2a14dd2e2ac4aa243b3e033ca13b98661f0b7b35ec984c5011c925877bd44`）
+- jar 内 25 个 machindex 类全部入包（`jar tf` 核对）
+- `.\gradlew.bat build --offline -x spotlessJavaCheck -x spotlessCheck` → **BUILD SUCCESSFUL**（`GRADLE_EXIT=0`）
+- `spotlessApply` 已跑（只改动新增文件，无无关文件被格式化）
+
+## 部署（2026-10-27，已执行）
+
+- **前置判据**：`java`/`javaw` 进程数 = 0，且按「命令行含实例路径 / `launchwrapper` / `net.minecraft`」严格判据复核**零命中** ⇒ 游戏完全退出，才动手。
+- **顺序**：移出旧 jar → 复制新 jar → 比对 SHA256 → 确认 mods 内只有一份。
+- **结果**：
+  - 实例 mods 内 `【自制】AE2-QoL-4.5.0.jar`（2,156,737 B），SHA256 `ABC2A14D…BD44` 与本地**一致**；
+  - 旧 `【自制】AE2-QoL-4.4.0-fix1.jar` 移入 `mods/_ae2qol_jar_backup/prev-【自制】AE2-QoL-4.4.0-fix1.jar`（**只移不删**）；
+  - `AE2QOL_JAR_COUNT = 1`（无重名 mod 风险）；
+  - 同一份 jar 复制到 `D:\下载\【自制】AE2-QoL-4.5.0.jar`（SHA256 相同）供服务端上传——本模组无端侧拆分，**同一 jar 双端通用**。
+
+## 待实测（未验证，不算通过）
+
+1. **首次进世界**：日志出现 `machindex 收到 NEIConfigsLoadedEvent（线程=...）` + `machindex 扫描完成：...`，
+   `config/ae2_qof/machindex/cache.dat` 生成，「机器索引」章节出现在任务书里；
+2. **任务形态**：同类型同电压只有一条任务；标题形如 `[HV] 洗矿机 ×3`；任务详情页逐台列出且可滚动；
+3. **完成态**：任务**不会**自动打勾、不计入完成数（COUNT_AS_QUEST=false）；
+4. **NEI 交互**：任务详情页物品槽悬浮按 A 加书签、按 U 出配方（对应验证清单 #3，需实机记录 `bookmark.add` 键位）；
+5. **再次进世界**：0 次 NEI 扫描（缓存命中），无重复任务、无重复章节；
+6. **`/ae2qol machindex status`**：分卷数/任务数/缓存键/上次写入统计齐全；
+7. **`validate`**：diff=0（内容未变时不产生改动）；
+8. **`/bq_admin default load` 清库后进服**：任务自动重建（自愈）；
+9. **GT 三档抽查**：洗矿机（单方块，machine_tier）、蒸馏塔/装配线（多方块，crafting_recipe）、
+   无合成表第三方机器（UNKNOWN，进「机器索引·未知」卷）；
+10. **未装 BQ**：启动日志出现 `未检测到 BetterQuesting` 跳过行，无异常、无崩溃；
+11. **旧存档**：不覆盖官方章节，玩家自建任务不受影响。
+
+---
+
+
+
+## A. 修「打开剪贴板 GUI 被服务器踢出」（服务器实测，日志 14:55:48）
+
+- **现象**：右键空中打开样板剪贴板 GUI ⇒ 服务器 `NullPointerException: this.container is null →
+  ModularSyncManager.getPlayer → PatternClipboardGui.buildUI:84` ⇒ `Failed to handle packet`
+  ⇒ 玩家被踢（`Internal server error`）。
+- **根因**：与 4.4.0-fix1 的产线页 NPE **同一类坑**（纪律见 `ProLinePage` 头注第 1 条）：
+  `buildUI` 构建期 `syncManager.getPlayer()` 必 NPE——`ModularContainer` 尚未建立。fix1 修产线页
+  时只扫了 proline 包，漏了 4.4.0 自己新写的 `PatternClipboardGui`。
+- **修复**：`buildUI` 改从**工厂入参**取玩家：`guiData.getPlayer()`（构建期可用、对本面板实例
+  恒定）。全仓扫描复核：其余 `getPlayer()` 调用点全部在「子面板打开回调 / sync getter /
+  点击回调」（container 已建立），构建期违例仅此一处。
+
+## B. 镜像可用性（用户实测反馈：没标 ae2qof、想直达主仓页面）
+
+1. **绑定后右击 = 直接打开主仓样板页**：`onRightclick` 路由改为「数据棒绑定最优先 →
+   已绑定且未潜行 = `master.onRightclick`（与父类左击转发同一条服务端线程安全路径）→
+   其余 = 本镜像设置面板」；潜行 + 右击 = 本镜像设置。父类的左击转发保留。
+   数据棒处理按父类私有 `tryLinkDataStick` 行为复刻（跨包无法调用，含"不支持GT5u总成"拒绝提示）。
+2. **镜像 GUI 补品牌与状态**：父类面板只有一个排序按钮，无归属无状态——`buildUI` 追加
+   「[AE2 QoL] 编程样板输入总成镜像」标题行 + 绑定状态行（未绑定红字提示 / 已绑定绿字显示
+   主仓名与坐标；S2C sync value 下发，getter 延迟求值，构建期安全）。
+3. **tooltip / desc 补交互说明**（中英）：绑定后右击/潜行右击的口径写进物品说明。
+
+## 待实测（未验证）
+
+- 右键空中打开剪贴板 GUI 不再被踢，四个模式按钮/预览/翻页/清空正常（双端）；
+- 镜像：tooltip 有 [AE2 QoL + ProgrammableHatches] 行；GUI 显示标题与绑定状态；
+  绑定后右击直接打开主仓样板页；潜行+右击打开镜像设置；数据棒重绑/格雷棒拒绝不变；
+- 启动日志无 already registered / MK.III 注册失败；服务器启动无 TextureMap not found；
+- 切割刀对单方块 GT 机器复制出「冲压机床」式短名；产线第三页零 WARN。
+
+---
+
+# 4.4.0-fix1 —— 修「GUI 工厂双重注册 / 切割刀英文前缀 / 产线页 NPE」（2026-10-25）
+
+来源：RC2 全量审计（客户端日志 + 服务器日志 `fml-server-latest.log` 双端取证）+ 用户实测切割刀。
+
+## P0-1：MUI2 GUI 工厂双重注册（4.3.0-fix1 引入）
+
+- **现象**：客户端与服务器每次启动各一条
+  `[ERROR] 编程样板输入总成 MK.III 注册失败` + `IllegalArgumentException: Factory with name
+  'ae2_qof:pattern_clipboard' is already registered!`（客户端 12:09:38 / 服务器 12:02:52）。
+- **根因**（字节码实证）：MUI2 `ItemStackGuiFactory` **构造器自带
+  `GuiManager.registerFactory(this)`**；4.3.0-fix1 修「玩家被踢」时在 `PatternClipboardGui.init()`
+  里构造后又显式注册了一次 ⇒ 第二次必抛。物品与 GUI 实际都注册成功（第一次生效），
+  但异常中断了 `PhIntegration.register()` 的 try 块尾部并误导排查。
+- **修复**：`init()` 只构造不再显式注册（-1 行），注释写明"构造即注册"防再犯。
+
+## P0-2：切割刀复制名称带英文前缀（用户实测「内容不对」）
+
+- **根因**：GT 5.09.54.205 的 `zh_CN.lang` **没有任何单方块机器翻译**
+  （en_US 有 604 条 `basicmachine.*` 键，zh 为 0）⇒ 中文客户端拿到英文全名
+  （"Basic/Advanced Assembling Machine II" 等）；`getGTSingleBlockName` 的前缀剥离正则
+  只认中文（基础|进阶|精英|史诗|终极）⇒ 英文原样保留。
+- **修复**：正则双语化（新增 Basic/Advanced/Elite/Epic/Ultimate/Extreme/Insane/
+  Imprecise/Primitive + MV/HV/EV/IV 电压前缀组，`replaceFirst` 只剥开头一次）；
+  罗马/阿拉伯数字尾巴的正则本就兼容英文。多方块名、AE 部件名链路经核实无恙。
+
+## P0-3：产线页「数据收集异常」——每次开终端 12 条 WARN + 列表空窗（服务器实锤）
+
+- **现象**：服务器日志 12 次 `产线页数据收集异常`，堆栈
+  `NPE: this.container is null → ModularSyncManager.getPlayer → ProLinePage.lambda$buildPage$6:168`。
+- **根因**（MUI2 字节码实证）：`GenericListSyncHandler` **构造器立即调用一次 getter**
+  （构造内 `Supplier.get() → setCache`）；chips/steps/summary 三个 getter 是
+  `cached(() -> collect*(syncManager.getPlayer()))`——`buildPage` 阶段 container 未建立 ⇒ 必 NPE。
+  `ProLinePage.java:59-60` 的注释本就写着"buildUI 期不碰 getPlayer"，getter 违反了它；
+  `cached()` 吞异常导致首次打开列表短暂为空。
+- **修复**：新增 `ae2qol$playerAware(syncManager, collector)` 包装——getter 内**每次现取
+  player 并判空**（null 返回空列表），三处 getter 同改。
+
+## P1-4：`client.MixinTextureMap` 放错段（服务器每次启动 WARN）
+
+通用列表里的客户端专用 mixin 在专用服上 target 加载不到（`Attempted to load class bpz for
+invalid side SERVER`）⇒ 每服每启动一条 `@Mixin target TextureMap was not found`。
+移入 `mixins.ae2_qof.json` 的 `client` 段（**改的是打包正本 `src/main/resources/`，
+根目录副本同步**）。
+
+## 其余扫描结论（不修，登记）
+
+- SteamElevator「未登记上游单份时长」WARN 为设计内留痕（SNL dirty 构建数值漂移，已按运行期读回处理）；
+- `stock_monitor_cover` 图标 MISSING_ICON 为日志噪声（运行时借 GT 图标逻辑有效）；
+- 自适应仓电网记账 WARN 零出现；服务器无 TPS 告警；36 条 mixin 对 RC2 实例 jar 全部验活命中。
+
+## 待实测（未验证）
+
+- 启动日志无 `pattern_clipboard is already registered` 与 `MK.III 注册失败`（双端）；
+- 切割刀对单方块 GT 机器复制出「冲压机床」式短名（中英前缀均剥）；
+- 开库存统计终端第三页：日志零 `产线页数据收集异常`，chips/步骤/汇总首次打开即有数据；
+- 服务器启动无 `TextureMap was not found`。
+
+---
+
+# 4.4.0 —— 新功能「编程样板输入总成镜像」+ 修「4.3.0 从属机 mixin 从未进包」（2026-10-25）
+
+## 新功能：编程样板输入总成镜像（MTE 32112）
+
+GTNG / Apeiron / 原版格雷都有「总成 + 镜像」配对，唯独 PH 缺「编程样板输入总成」
+（`BufferedDualInputHatch`）的专用镜像。本版补上：多台「支持样板输入总成」的机器共用一台主总成。
+
+- **实现**（方案 A，`ph/MTEBufferedDualInputMirror`）：`extends DualInputHatchSlave<BufferedDualInputHatch>`，
+  仅 override 四处——`trySetMasterFromCoord`（主仓校验：全家族 = PH 直系 MK.I/II/III/配方表/Quad +
+  PatternDualInputHatch 家族 + 本模组 MK.III/MK.IV）、`getTierForStructure`（委托主仓，对齐格雷 Slave）、
+  `getDescription`/`newMetaEntity`。委托面（inventories 三态/watcher 转发/配方处理链/MUI2 GUI/
+  WAILA/NBT/100t 重连）全部继承，**零新增每 tick 逻辑**（性能红线达标）。
+- **绑定 UX**：PH 同款闪存链（空手持数据棒左击主仓 → 右击镜像）。
+- **配方**（装配机，5s/16EUt）：编程样板输入总成 MK.I + 数据棒 + 虚拟电路(16) + 灰烬粉×2 + 萤石粉×2；
+  基底 meta 用 `Config.metaTileEntityOffset + Registration.BufferedDualInputHatchOffset` 拼（默认 22032）。
+- **ID 32112**：对实例 40+ jar 做字节码审计（'gregtech/' 引用类 + sipush 321xx，javap 复核），
+  32112-32139 全段无注册/无引用（自家 32102-32111；OTH 配方引用段 32140-32184；MessTech 32400）。
+- **守卫**：`PhIntegration` 锚类扩为三个（Pattern/Buffered/Slave），PH 缺失时整体不注册（留跳过日志）。
+
+## 修复：4.3.0 的从属机 mixin 从未进包（打包正本搞错）
+
+- **现象链**：`src/main/resources/mixins.ae2_qof.json`（真正打包进 jar 的正本）在 4.3.0 漏了
+  `ph.MixinPatternDualInputHatchMappingSlaveAccess` 条目——当时改的是仓库**根目录**的同名副本
+  （不进包）。后果：样板剪贴板右键「库存映射从属机」时 accessor 强转 ClassCastException
+  ⇒ 玩家被踢（与 4.3.0-fix1 修的 GUI 工厂问题同症状叠加）。
+- **修复**：正本补上条目（根目录副本与正本同步为同一内容）；`PatternHostAdapter.resolveHost`
+  加防御——bind 失败按「不受支持」降级 + WARN 留痕，不再让 mixin 缺失变成踢人。
+- 顺带：`mcmod.info` 版本号自 4.2.0-fix1 起一直滞后，本版与 gradle.properties 一并对齐 4.4.0。
+
+## 待实测（未验证）
+
+- 绑定链：左击 MK.I 写棒 → 右击镜像绑定成功；两台机器共用一台总成各跑不同配方、物料隔离不串；
+- 主仓增删样板/改缓冲 → 接入机器配方重检；镜像 GUI 缓冲顺序三态独立生效；
+- 主仓被拆/区块卸载重载/NBT 恢复自动重连；格雷系闪存被拒（提示同 PH）；
+- MK.III/MK.IV 作主仓可用；PH 未装时启动无注册、日志出现跳过行；
+- 未绑定镜像放输入仓位不识别 / 输入总线位识别（GT 消费条件不对称，属预期）；
+- 装配机配方产出与 NEI 可查；创造页仅 ae2qof 页出现（若 PH 页也出现会有 WARN 可查）；
+- 剪贴板右键「库存映射从属机」不再踢人（本次 mixin 正本修复的回归验证）。
+
+---
+
+# 4.3.0-fix5 —— 修「自适应仓 WAILA 悬浮提示显示旧档/旧余额」（2026-10-25）
+
+## 根因
+
+WAILA 的正确架构：**服务端** `getWailaNBTData` 把动态值写进同步 tag（每次请求约 250ms）→
+**客户端** `getWailaBody` 读 `accessor.getNBTData()`（GT 基类即此模式）。四个仓只重写了客户端
+`getWailaBody` 且读**本地 helper 字段** —— GT 的 MTE 没有 TE 描述包，客户端字段只在区块(重)加载
+时从 NBT 恢复一次 ⇒ 悬浮提示的档位/安培/电网余额永远是旧值（改档不刷新、余额不动、
+>9.22E 时因 BigInteger 不进 NBT 而显示 0）。
+
+## 修复
+
+- `AdaptiveHatchHelper` 新增共享 WAILA 通道：`writeWailaNBT`（服务端写实时档/安培/余额，
+  余额超 long 时附精确十进制串）+ `appendWailaBody`（客户端渲染 V/A、Grid、绑定行）+
+  共享 `formatEU/formatEUExact`；
+- 四个仓（能源/动力/激光源/激光靶）各自重写 `getWailaNBTData` 写 tag、`getWailaBody` 改为委托
+  共享渲染（读 tag），并清理各自已死的 `formatGridEUForWaila/formatEUBigInteger`。
+
+## 待实测（未验证）
+
+- 对着仓看悬浮提示：改档后 ~0.25s 内档位/安培刷新；电网余额实时变化；绑定状态正确；
+- 电网 >9.22E 时 Grid 行显示精确值（如 15.80E）而不是 0/9.22E 停住。
+
+---
+
+# 4.3.0-fix4 —— 修「双仓升压有时不生效」（2026-10-25）
+
+## 机制（字节码取证）
+
+GT5u 多方块：配方可用电压 = 各能源仓电压**平均**（`getAverageInputVoltage`→`ProcessingLogic`）；
+允许最大电压 = 各仓电压**之和**（`getMaxInputVoltage`）。GT 电压每档翻倍 ⇒ 双仓玩法成立的前提是
+**两块仓的档位在同一时刻完全一致**——任何一块在判定瞬间档位偏低，升压就失效。
+
+## 四个失效窗口与处置
+
+| 窗口 | 场景 | 处置 |
+|---|---|---|
+| ① 终端不在已加载区块 | 机器+仓的区块加载了、放终端的区块没加载 ⇒ 网络重建档位表全 0，仓一注册就被打到 ULV（自身存档档位也被覆盖） | **已修**：`AdaptiveNetwork.addHelper` 在档位表为空且仓存档有档时，**用仓的存档档位回填网络**；终端随后加载时其持久化配置仍为权威 |
+| ② 改档后几秒 | 推送/拉取相位差 | **核实无需改码**：终端改档走 `applySettings→updateAllHelpers`，同 tick 同步写全部仓；仓的 4t 拉取读的是同一张共享表，不存在读到中间态 |
+| ③ 运行期动了终端槽位 | 旧实现任一槽变化就把四格档位全部按槽内物品重算 ⇒ 玩家手改值被顺带弹回默认 | **已修**：`updateParamsFromSlots` 改为**只重算发生变化的槽位**，未变化的保留现值；总档位在重算后按整表取最大 |
+| ④ 混插异档仓 | 同机混插普通能源仓/异网络自适应仓 ⇒ GT 按平均/最低识别 | **已加提示**：终端设置页新增灰字说明（中英），明示"同机全部能源仓须同档" |
+
+## 待实测（未验证）
+
+- 双仓升压：重启后**不去终端附近**（终端区块不加载）直接看机器电压/超频档是否保持；
+- 在终端槽位放/取物品后，其它类型的手改档位不再回弹；
+- 终端设置页显示三行混插提示。
+
+---
+
+# 4.3.0-fix3 —— 修「自适应能源仓系列：每次重启/更新模组后机器电压识别错乱」（2026-10-25）
+
+## 根因（已完整取证，见上一轮根查报告）
+
+1. **主因：冷启动配置回弹**。终端每 20 tick 跑 `updateParamsFromSlots`，防覆盖保护是
+   "槽位签名没变就跳过"，但对照数组 `lastSlotSignature` **不持久化、冷启动全 null** ⇒
+   重启后第一次巡检必判"槽位变了"⇒ 玩家在终端配置的档位/安培被整体回弹
+   （自家能源/动力仓→LV 1A、激光仓→LuV，槽空/不足 64→ULV），并 `applySettings`
+   推给全网；各仓 `maxEUInput()=V[tier]` 随之回弹，机器按 `getInputVoltage()` 读到
+   回弹后的电压 —— 表现为"电压识别有问题"。
+2. **次因：启动空窗**。`registerTerminal→setTerminal` 只同步 voltageTier/autoReconnect，
+   网络的 `hatchTiers[]`（纯内存，重启即 0）只在玩家操作时才被 `applySettings` 推送 ⇒
+   重启后到玩家首次操作前，网络档位恒为 0，各仓被拉到 ULV。
+
+## 修复（AdaptiveNetTerminal，两处）
+
+1. `loadNBTData` 末尾**预热槽位签名**：把 `lastSlotSignature` 对齐到当前实际槽内容，
+   第一次巡检即走"未变化"早退 —— NBT 恢复的档位/安培不再被回弹覆盖；
+2. `onFirstTick` 注册终端后**立即 `applySettings()`**：把 NBT 恢复的 hatchTiers/hatchAmps
+   推给网络，消除启动空窗。
+
+## 已知口径（不属缺陷，使用注意）
+
+- GT5u 多方块的电压语义：所有能源仓 `getInputTier()` 必须一致，否则监控显示按 ULV；
+  配方电压=各仓平均。**同一台机器混挂"自适应仓+普通能源仓"或两块绑不同网络/频率的
+  自适应仓**时，机器会按上述语义识别（显示 ULV/平均电压）——同机请保持全部自适应仓
+  且同一网络。
+- 存档里已被旧版回弹过的值（`ae2qolHT`）按现状保留，需在终端 GUI **重新设置一次**
+  档位/安培，此后重启不再丢。
+
+## 待实测（未验证）
+
+- 终端配好 UMV/16A 之类的档位 → 完全重启游戏/服务器 → 仓的 WAILA 与机器面板应保持
+  该档，不再回弹 LV/ULV；机器配方超频档正常。
+
+---
+
+# 4.3.0-fix2 —— 修「每次更新模组，库存检测覆盖板的流体标记变成另一个流体」（2026-10-25）
+
+## 现象（用户实测）
+
+每次更新 ae2qof（或整合包内模组列表变动）后，库存检测覆盖板内部标记的流体会被替换成
+**另一个流体**。用户建议参考 AE2 原版发信器的标记方式。
+
+## 取证（javap AE2 rv3-beta-1083 实证）
+
+- **AE2 原版方案就是按名字**：`AEFluidStack.writeToNBT` 写的是 `FluidName`（fluid.getName()
+  字符串）+ Cnt/Req/Craft；读回走 `FluidStack.loadFluidStackFromNBT`（按 FluidName 反查）。
+  发信器的标记即此链路 —— 跨版本/模组增删稳定。
+- 我们的存档**一直有一份按名字存的 Target 标签**（`Platform.writeStackNBT` 泛型路径 =
+  `writeToNBTGeneric` = `StackType` 判别 + 委托 `writeToNBT`，流体侧即 FluidName）。
+- 病根：`readFromNbt` 的"**phantom 存在时一律以重建结果为准**"。phantom（GT 流体显示物品，
+  `ItemFluidDisplay`）的 damage = **动态流体 ID**（按模组加载顺序分配）；非 GT 材料的流体
+  没有 `mFluidMaterialName` NBT（3.35.0-fix9 只救了 GT 材料流体）⇒ 重建走到
+  `FluidRegistry.getFluid(damage)` 数字 ID 兜底 ⇒ 流体 ID 一重排，标记就变成"该 ID 现在
+  对应的另一个流体"——稳定名字存了却不用，被不稳定的数字覆盖。
+
+## 修复（对齐 AE2 发信器：名字优先）
+
+`StockMonitorCoverData.readSlot`（新槽位读取入口，新旧存档格式统一走它）解析顺序：
+
+1. **`TargetFluid`（新键）**：流体注册名，saveToNbt 对流体目标额外写入（仅新增键，存档兼容）；
+2. **`Target`（既有键）**：AE2 Platform 格式，流体侧本就按 FluidName 字符串存；
+   **这同时是旧档自愈通道**——即使此前已被换错，存档里的名字仍是当年正确的那个，加载即还原；
+3. 兜底：按 phantom 重建（最老存档 / Target 缺失；数字 ID 兜底仍是最后手段）。
+
+目标确定后若 phantom 重建出**不同的流体**（= 漂移证据），用
+`GTUtility.getFluidDisplayStack` 重建 phantom 显示物品，GUI 图标与后续存档一并归位。
+旧单槽格式键名（PhantomItem / MonitorTarget）由 readSlot 一并兼容。
+
+## 待实测（未验证）
+
+- 复现路径回归：标记一个**非 GT 材料**流体（如其它模组流体）→ 增删任一模组使流体 ID 重排
+  → 重进世界，覆盖板应仍监测原流体（含已被换错的老存档，加载即自愈）；
+- 物品目标监测不受影响；GUI phantom 图标在自愈后显示正确流体。
+
+---
+
+# 4.3.0-fix1 —— 修「复制/粘贴/剪切把玩家踢下线」（2026-10-25）
+
+## 现象（用户实测）
+
+4.3.0 里复制、粘贴、剪切都会把玩家**强制退出服务器**，服务器本身不崩。
+
+## 根因
+
+MUI2 的 `OpenGuiPacket` 在**客户端**按工厂名走 `GuiManager.getFactory(name)` 查客户端自己的
+注册表。4.3.0 的 GUI 工厂只在服务端 `open()` 时懒构造、从未注册，更没注册到客户端 ⇒
+服务端发开屏包 → 客户端查不到工厂 → 包处理抛异常 → 踢下线。
+
+触发路径与"三个操作都踢"完全吻合：玩家沿 3.24.0 的旧习惯**右键空中切模式**来切换
+复制/粘贴/剪切，而新版右键空中改为**打开 GUI**——每次切模式都发一个必然踢人的开屏包。
+
+## 修复
+
+`PatternClipboardGui.init()`：构造工厂并 `GuiManager.registerFactory`（双端），在
+`PhIntegration.register()`（CommonProxy.init，客户端/服务端都会走到、PH 守卫之后）调用；
+`open()` 复用已注册实例。
+
+## 待实测（未验证）
+
+- 右键空中开 GUI 不再踢人，GUI 内可正常选模式/翻页/清空；
+- 复制 / 覆盖粘贴（含二次确认）/ 剪切 / 追加粘贴在 MK.III/MK.IV 与 PH 家族机器上的完整流程。
+
+---
+
+# 4.3.0 —— 样板剪贴板重做：管理 GUI + 全家族适配 + 破坏操作二次确认（2026-10-25）
+
+## 彻查结论（旧版 3.24.0 的问题清单）
+
+1. **只认自家机器**：`resolveOurMachine` 用 instanceof 白名单只接受 MK.III/MK.IV，对 PH 自带的总成
+   （原版 36 槽 / MK.II / 仅物品变体）、超级样板总成（`SuperPatternDualInputHatch`）、库存映射从属机
+   （`PatternDualInputHatchInventoryMappingSlave`）一律报「不是本模组的样板总成」。
+2. **没有 UI**：模式靠右键空中循环切换（复制→粘贴→剪切），剪贴板内容只有聊天栏一行字，
+   看不到具体样板与倍率，也无法选择粘贴策略。
+3. **操作逻辑的破坏性**：粘贴=静默整体覆盖目标已有样板（无确认）；360→144 截断只在事后提示；
+   模式存在每个物品各自的 NBT 里，多块剪贴板模式不一致易误操作。
+
+## PH 样板总成家族盘点（javap libs/programmablehatches-0.2.0p31 实证）
+
+- **主流支系**（共享 `pattern[]/multiplier[]/patternItemCache[]/patternDetailCache[]` 字段与
+  `onPatternChange()`）：`PatternDualInputHatch`（PH 原版/MK.II/仅物品三种注册实例）、
+  `SuperPatternDualInputHatch`（继承，`setPattern` 写的就是父类 `pattern[]`）、本模组 MK.III/MK.IV。
+- **从属支系**（独立类，同名字段，自己的 `onPatternChange()`）：`PatternDualInputHatchInventoryMappingSlave`。
+- `PatternHousing` 无样板数组（纯外壳），不适用。
+
+## 新设计
+
+- **右键空中 = 打开管理 GUI**（MUI2 `ItemStackGuiFactory`，服务端权威，专用服可用）：四个模式按钮
+  （复制/覆盖粘贴/剪切/追加粘贴，选中高亮）、剪贴板概要、9 行/页的样板预览（槽位号+名称+倍率，可翻页）、
+  清空按钮、随模式变化的说明文字。
+- **右键机器 = 快捷执行当前模式**（保留老肌肉记忆）；右键非样板总成不再拦截原版交互。
+- **破坏性操作二次确认**：覆盖粘贴遇目标非空或需截断时，先黄字告知将清除/丢弃几张，
+  10 秒内对**同一台机器**再右键一次才执行。
+- **追加粘贴**（新模式 3）：按槽位号只填目标空槽，绝不覆盖已有样板，适合合并搬家。
+- **适配层 `PatternHostAdapter`**：`DUAL_INPUT`（instanceof 基类，全覆盖主流支系）+
+  `MAPPING_SLAVE`（新 accessor mixin）两个适配器，写入统一收尾（清缓存→onPatternChange→
+  refresh→markDirty→区块跟踪者 TE 同步）。老 mixin 只用于主流支系，语义不变。
+- 存档兼容：物品模式 NBT 旧值 0/1/2 含义不变（追加=新增 3）；剪贴板 NBT 键名沿用 3.24.0。
+
+## 待实测（未验证）
+
+- 各家族机器上复制/剪切/覆盖（含二次确认）/追加的实际效果与样板窗即时刷新；
+- GUI 预览翻页、模式切换持久到物品、清空按钮；
+- 旧存档里已复制的剪贴板数据可继续粘贴。
+
+---
+
+# 4.2.0-fix2 —— 服务器性能：库存监控盖板/任务检测器节流 + 批量读取（2026-10-25）
+
+## 背景（spark 9M1qle327X，2026-10-24，TPS 14.25）
+
+- `StockMonitorCover.doCoverThings` 占全服 **7.82%**：每 10 tick、每槽位（最多 9）各调一次
+  `AeStockReader.readStock`。每次调用 = `NetworkMonitor.getStorageList`（网络有变化时**全网络
+  重扫**，含无限存储元件/存储总线/样板缓存，7.17%）+ 返回的 `NetworkItemList.findPrecise`
+  每次又 `buildFinalItemList()` 把整张表**重新物化**（1.97%）。9 槽 = 最多 18 次全网络遍历。
+- `TileQuestDetector.onQuestDetectTick` 占 **3.01%**：每 20 tick 全表快照 + `findFuzzy` 收集
+  （每轮 new 两个大集合）+ BQ `retrieveItems` 匹配。
+- 附带：`CoverRegistry.upsert` 每个盖板 tick 无条件 `markDirty` + 重建摘要（displayName
+  解析 / ItemStack 拷贝）；`CoverRegistry.get` 每次调用重扫 legacy 迁移数据。
+
+## 改动
+
+1. **AeStockReader 批量读取**：新增 `readStocks(grid, targets, results)` —— 物品表一次
+   `buildFinalItemList` 物化后全部槽位退化为哈希查找；流体表单次遍历同时匹配所有目标。
+   旧单目标 `readStock` 保留（内部走批量实现）。
+2. **StockMonitorCover 节流**：真正读网络的间隔默认 **20t**（`stock_monitor_read_interval`，
+   5~1200 可配，settings.json 热加载），盖板 NBT 新增 `ReadInterval`（>0 时按盖板自身值，
+   仅新增键，存档兼容；GUI 主面板新增"刷新间隔"输入框）。其余 tick 直接用缓存判定。
+3. **GUI 打开提频**：GUI 的 MUI sync supplier 打开期间每 tick 被服务端求值，回调
+   `noteGuiPoll()` 即可零开销检测"有人在看"⇒ 读取间隔压到 `stock_monitor_gui_interval`
+   （默认 5t）；关闭后自动回落。盖板最小 tick 率 10→5 以便 5t 可达。GUI 库存数字改由
+   MUI 同步值驱动（打开时实时刷新，比旧的"仅打开瞬间同步一次"更好）。
+4. **TileQuestDetector 节流**：检测间隔改 `quest_detect_interval`（默认 **80t**，20~1200 可配）；
+   取模对齐让同网络多检测器共享 AE2 存储列表重建。
+5. **QuestDetectLogic 集合复用**：每轮 `available` 列表（上限 2048 项）与去重集挂到玩家缓存
+   对象上 clear 复用，不再每轮重建。
+6. **CoverRegistry**：`upsert` 只在摘要真正变化时 `markDirty`（displayName/ItemStack 拷贝
+   只在签名变化时重建）；legacy 迁移每维度成功一次后不再重扫。
+
+## 行为口径
+
+- 库存数值与任务检测**数值本身不变**，可见反馈最多延迟一个刷新周期（默认 1s / 4s，可配）；
+- 盖板 NBT 仅新增 `ReadInterval` 键，不改任何已有键含义；公开 API 无变化；
+- 未订阅每 tick 注册/反注册的监听器（无监听器生命周期风险，缓存为纯时间节流）。
+
+## 待实测（未验证）
+
+- 单机开档：ME 网络 + 盖板 + 任务检测器，数据显示正确、间隔按配置生效、GUI 打开时刷新更快；
+- spark 对比：`doCoverThings` ~7.8% → <1%，`onQuestDetectTick` ~3.0% → <1%。
+
+---
+
 # 4.2.0-fix1 —— NEI 流体角标：改用 NEI 官方识别入口 + 可判定诊断（2026-10-21）
 
 ## 现象（用户报 A）
@@ -5930,8 +7136,10 @@ adaptive_net_terminal[_top|_side] UV=[0.17187744,0.5273462]-[0.1757788,0.5312475
 
 ### 重测判读（logs\fml-client-latest.log 的 [AE2QoL-TEX]）
 
-- esource OK ae2_qof:textures/blocks/machine/xxx.png + 	ex() created GT-queue container + 方块显示 v7 → 方案 P 成功。
-- esource MISSING → 资源包未启用/未生效，检查 Resource Packs 列表。
+- 
+esource OK ae2_qof:textures/blocks/machine/xxx.png + 	ex() created GT-queue container + 方块显示 v7 → 方案 P 成功。
+- 
+esource MISSING → 资源包未启用/未生效，检查 Resource Packs 列表。
 - getIcon MISS ... fallback GT casing → GT 队列 mIcon null 且 ICONS 空（注册未命中），游戏显示机箱贴图（安全），继续查注册时机。
 - 仍紫黑且 getIcon HIT size=16x16 → UV/stitch 层问题与资源来源无关（代码方案终局失败），维持回退版。
 
@@ -5955,7 +7163,8 @@ adaptive_net_terminal[_top|_side] UV=[0.17187744,0.5273462]-[0.1757788,0.5312475
 ### 材质包交付
 
 - AE2-QoL-v7-材质包.zip（16,356 B，27 张 PNG + pack.mcmeta pack_format=1）：ssets/ae2_qof/textures/blocks/machine/（25 张）+ items/merged_terminal_part.png、merged_terminal_wireless.png。
-- 已复制到游戏 esourcepacks\ 目录 + 项目根目录。**注意**：当前回退代码不引用 ae2_qof 路径（GT 机器渲染走 GT 内置图标），资源包启用后不会立即改变 8 机器外观；其价值是**贴图资源与 mod 解耦**——如需恢复 v7 专属外观，恢复 8 机器面级 getTexture 引用（ae2_qof 路径）即可，PNG 全由资源包提供、无需重打包 mod。
+- 已复制到游戏 
+esourcepacks\ 目录 + 项目根目录。**注意**：当前回退代码不引用 ae2_qof 路径（GT 机器渲染走 GT 内置图标），资源包启用后不会立即改变 8 机器外观；其价值是**贴图资源与 mod 解耦**——如需恢复 v7 专属外观，恢复 8 机器面级 getTexture 引用（ae2_qof 路径）即可，PNG 全由资源包提供、无需重打包 mod。
 
 ### 后续可选路径（未执行，待用户决定）
 
@@ -5969,14 +7178,16 @@ adaptive_net_terminal[_top|_side] UV=[0.17187744,0.5273462]-[0.1757788,0.5312475
 
 ### 修复 #4 实测结果（用户 fml-client-latest.log，20:18-20:21）
 
-- **资源层完全可达**：25 条 esource OK ae2_qof:textures/blocks/machine/xxx.png（getResource 读取成功）。
+- **资源层完全可达**：25 条 
+esource OK ae2_qof:textures/blocks/machine/xxx.png（getResource 读取成功）。
 - **注册成功**：25 张 registered，iconCount=25。
 - **渲染图标命中且数据正常**：getIcon HIT ... -> ae2_qof:... size=16x16（全部命中、尺寸 16x16 = sprite 数据正常，非 missingno 数据）。
 - **结论（决定性）**：sprite 条目存在、PNG 数据加载正常，但渲染仍紫黑 → **sprite 未被 GTNH 2.9 的 atlas stitch 阶段纳入 UV 分配**（TextureStitchEvent.Pre 注册时机晚于 stitch，或 mixin 改写后 Pre 注册的 sprite 被跳过 stitch），渲染时取到 atlas 错误区域（左上角 missingno 附近）→ 紫黑。
 
 ### 本轮改动（修复 #5：GT 官方图标队列）
 
-- util/ModTextures.java：客户端 	ex() 改用 **GTCustomBlockIconContainer.create(path)**（gregtech.client.iconContainers.blocks）——构造即入队 GregTechAPI.sGTBlockIconload，在 GT egisterBlockIcons 阶段（**TextureStitchEvent.Pre 之前**）由 sBlockIcons.registerIcon 注册，与 GT++（GTNH 2.9 正常显示）同路径；外层包 GtFallbackContainer：GT mIcon 为 null 时兜底到 Pre 注册 ICONS → GT 机箱图标，渲染永不为 null。
+- util/ModTextures.java：客户端 	ex() 改用 **GTCustomBlockIconContainer.create(path)**（gregtech.client.iconContainers.blocks）——构造即入队 GregTechAPI.sGTBlockIconload，在 GT 
+egisterBlockIcons 阶段（**TextureStitchEvent.Pre 之前**）由 sBlockIcons.registerIcon 注册，与 GT++（GTNH 2.9 正常显示）同路径；外层包 GtFallbackContainer：GT mIcon 为 null 时兜底到 Pre 注册 ICONS → GT 机箱图标，渲染永不为 null。
 - 服务端：ServerSafeContainer（纯接口实现，无 gregtech.client 依赖，服务端安全）。
 - 保留 ClientTextureRegistry Pre 事件双通道注册（幂等不冲突）+ 诊断日志。
 - 产物：uild\libs\AE2-QoL-3.19.0-fix44.jar（1,132,722 B，20:28 构建），已覆盖复制到游戏 mods。
@@ -5993,20 +7204,25 @@ adaptive_net_terminal[_top|_side] UV=[0.17187744,0.5273462]-[0.1757788,0.5312475
 
 ### 修复 #3 实测结果（用户上传 fml-client-latest.log，20:01-20:04）
 
-- **实例注册生效**：TextureStitchEvent.Pre fired, textureType=0 + 25 行全部 egistered ae2_qof:blocks/machine/xxx -> ae2_qof:...（图标名正确、非 missingno 字符串）+ stitch complete, iconCount=25；Mipmap 生成与 blocks atlas 重载正常完成（6.165s）。
+- **实例注册生效**：TextureStitchEvent.Pre fired, textureType=0 + 25 行全部 
+egistered ae2_qof:blocks/machine/xxx -> ae2_qof:...（图标名正确、非 missingno 字符串）+ stitch complete, iconCount=25；Mipmap 生成与 blocks atlas 重载正常完成（6.165s）。
 - **渲染图标命中**：getIcon MISS 0 条（无兜底触发）；4 台基地机器（adaptive_net_terminal、wireless_energy_input、universal_maintenance_hatch、casing_side 底面）的 	ex() created container 说明面级 getTexture override 确实被调用。
 - **结论**：注册条目成功、getIcon 命中，但纹理数据仍紫黑 = **sprite 数据是 missingno（PNG 数据加载失败但 1.7.10/MCPatcher 静默不报错）**。PNG 源文件与 jar 内字节完全一致（377 B 逐字节比对）、16x16 RGBA 标准格式，构建未破坏。
 
 ### 本轮改动（修复 #4：定位资源层）
 
-- ClientTextureRegistry.register()：注册前用 Minecraft.getMinecraft().getResourceManager().getResource(new ResourceLocation(domain, "textures/.../x.png")) 直接读 PNG 前 16 字节，打印 esource OK head=89504E47... 或 esource MISSING——一锤定音区分「资源层不可达」（TX Loader/资源包）与「atlas 解码层问题」；注册后打印 icon 尺寸（16x16 为正常数据，0x0/异常为 missingno）。
+- ClientTextureRegistry.register()：注册前用 Minecraft.getMinecraft().getResourceManager().getResource(new ResourceLocation(domain, "textures/.../x.png")) 直接读 PNG 前 16 字节，打印 
+esource OK head=89504E47... 或 
+esource MISSING——一锤定音区分「资源层不可达」（TX Loader/资源包）与「atlas 解码层问题」；注册后打印 icon 尺寸（16x16 为正常数据，0x0/异常为 missingno）。
 - ModTextures.IconContainer.getIcon()：命中时一次性打印 getIcon HIT <path> -> <iconName> size=WxH，确认渲染实际拿到的图标与数据。
 - 产物：uild\libs\AE2-QoL-3.19.0-fix44.jar（1,131,708 B，20:13 构建），已覆盖复制到游戏 mods。
 
 ### 重测判读
 
-- esource OK ... 89504E47 + getIcon HIT ... size=16x16 → 资源可读、图标正常，紫黑来自其他渲染层（查 GTRendererBlock/atlas 绑定），下一步换渲染通道（GT 队列 / 直接 TextureAtlasSprite）。
-- esource MISSING → ae2_qof 资源在运行时不可达，换资源投放方式（复制进 GT 命名空间 / 资源包 / 改 TX Loader 配置）。
+- 
+esource OK ... 89504E47 + getIcon HIT ... size=16x16 → 资源可读、图标正常，紫黑来自其他渲染层（查 GTRendererBlock/atlas 绑定），下一步换渲染通道（GT 队列 / 直接 TextureAtlasSprite）。
+- 
+esource MISSING → ae2_qof 资源在运行时不可达，换资源投放方式（复制进 GT 命名空间 / 资源包 / 改 TX Loader 配置）。
 
 ---
 ## 工作区决策记录 2026-09-18 - v7 材质修复 #3：实例注册 + GT 图标兜底 + 全链路诊断日志
@@ -6015,8 +7231,10 @@ adaptive_net_terminal[_top|_side] UV=[0.17187744,0.5273462]-[0.1757788,0.5312475
 
 ### 决定性根因（实证，崩溃报告 + fml-client-latest.log 98756-98762 行）
 
-- Caused by: NullPointerException: Cannot invoke "IIcon.func_94215_i()" because "this.baseIcon" is null at GTIconFlipped.getIconName:89 ← GTRenderedTexture.renderFaceYNeg:244 ← enderYNeg:152（Waila 触发渲染）。
-- 即：8 机器面级 getTexture 返回的 ITexture 内部 IIconContainer.getIcon() 为 **null**，GT 渲染器对 null icon 提前 return 留下未关闭 Tessellator → 下一帧 enderSky 抛 IllegalStateException: Already tesselating! 崩溃。
+- Caused by: NullPointerException: Cannot invoke "IIcon.func_94215_i()" because "this.baseIcon" is null at GTIconFlipped.getIconName:89 ← GTRenderedTexture.renderFaceYNeg:244 ← 
+enderYNeg:152（Waila 触发渲染）。
+- 即：8 机器面级 getTexture 返回的 ITexture 内部 IIconContainer.getIcon() 为 **null**，GT 渲染器对 null icon 提前 return 留下未关闭 Tessellator → 下一帧 
+enderSky 抛 IllegalStateException: Already tesselating! 崩溃。
 - [AE2QoL-TEX] 注册诊断 **0 条输出**：修复 #2 用 MinecraftForge.EVENT_BUS.register(ClientTextureRegistry.class) 静态类注册，GTNH 2.9 + Angelica 环境下事件未命中（静态 @SubscribeEvent 注册不可靠）。
 - 同时确认：CommonProxy.init() 的 isClient 分支正确编译进 jar（javap 反编译验证）；FMLInitializationEvent 正常发送（日志 29107/29109 行）；ae2_qof mod 正常加载；STDOUT 捕获机制正常（其他 mod 的 System.out 可见于日志）；GregTech.log 2744-2749 行 GT 自身图标注册流程（Setting up Icon Register → Block Icon Load Phase）执行正常。
 
@@ -6029,8 +7247,10 @@ adaptive_net_terminal[_top|_side] UV=[0.17187744,0.5273462]-[0.1757788,0.5312475
 ### 重测与判读指引
 
 覆盖安装后进游戏，看 logs\fml-client-latest.log：
-- 有 [AE2QoL-TEX] TextureStitchEvent.Pre fired + 25 行 egistered ae2_qof:blocks/machine/xxx -> ae2_qof:... → 注册成功、getIcon 命中、v7 材质正常显示。
-- 有 Pre fired 但 egistered ... -> missingno → PNG 加载失败（资源层问题，查 TX Loader/MCPatcher）。
+- 有 [AE2QoL-TEX] TextureStitchEvent.Pre fired + 25 行 
+egistered ae2_qof:blocks/machine/xxx -> ae2_qof:... → 注册成功、getIcon 命中、v7 材质正常显示。
+- 有 Pre fired 但 
+egistered ... -> missingno → PNG 加载失败（资源层问题，查 TX Loader/MCPatcher）。
 - 无 Pre fired、有 getIcon MISS ... -> fallback GT casing → 事件未命中，但游戏不再紫黑/崩溃（兜底显示 GT 机箱贴图），继续查事件注册时机。
 - 无 Pre fired 也无 MISS → 8 机器 getTexture override 未被调用（渲染链路问题），查 GTRendererBlock 纹理数组来源。
 

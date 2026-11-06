@@ -2,7 +2,6 @@ package com.wztwzt.ae2_qof.hatch.adaptive;
 
 import static gregtech.api.enums.GTValues.V;
 
-import java.math.BigInteger;
 import java.util.UUID;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -107,6 +106,35 @@ public class AdaptiveNetHatch extends MTEHatchEnergy {
     @Override
     public long maxAmperesIn() {
         return helper.getCurrentAmps();
+    }
+
+    /**
+     * 4.5.0-fix15：档位 accessor 必须与供电 accessor 同源，否则机器读到的是两个互相矛盾的电压。
+     * <p>
+     * GT 有两族互不相干的读取路径（均以实例 GT 5.09.54.205 jar 的 javap 核对）：
+     * <ul>
+     * <li><b>供电族</b>：{@code BaseMetaTileEntity.getInputVoltage()} → {@link #maxEUInput()}（动态）⇒
+     * {@code getMaxInputVoltage/getAverageInputVoltage/getMaxInputEu} 全部正确，
+     * 所以配方电压与超频一直是对的（这也是"机器看起来能识别高电压"的来源）；</li>
+     * <li><b>档位族</b>：{@code MTETieredMachineBlock.getInputTier()} 字节码就是
+     * {@code getfield mTier; i2l}（本仓注册档 = 5 = IV，final 字段）⇒
+     * {@code MTEMultiBlockBase.getInputVoltageTier()}、调试扫描仪的 "xxxA IV"、
+     * WAILA 的能源等级、TenkeiTech 模板总线的"当前电压"全部拿到 IV。</li>
+     * </ul>
+     * 两族数值相等但档位不同，表现就是扫描仪同一行里 {@code 8,388,608 EU/t (1024A IV) Power Tier: UEV}
+     * ——分子对、除数错。普通能源仓两族恒等（都取 mTier），所以从不暴露这个差异。
+     * <p>
+     * 覆盖后与 GT 自己的通用定义 {@code GTUtility.getTier(getInputVoltage())} 等价
+     * （因为 {@link #maxEUInput()} 正是 {@code V[tier]}），不引入任何新语义。
+     * <p>
+     * <b>未绑定时回落 {@code mTier} 而不是 0</b>：{@code getInputVoltageTier()} 里 0 是"各仓档位不一致"
+     * 的哨兵值，且第三方（如 TenkeiTech）会把 {@code <=0} 当成"特殊模式/不限电压"而全量放行配方。
+     *
+     * @see #maxEUInput() 供电口径，两者必须同源
+     */
+    @Override
+    public long getInputTier() {
+        return helper.isBound() ? helper.getCurrentVoltageTier() : mTier;
     }
 
     @Override
@@ -292,65 +320,6 @@ public class AdaptiveNetHatch extends MTEHatchEnergy {
         return String.valueOf(eu);
     }
 
-    /**
-     * 3.33.0-fix3：电网余额的 BigInteger 精确版（>9.22E 时显示真实值，如 15.80E）。
-     * WAILA/Grid 行在 helper.lastGridEUBigInteger 超过 long 上限时走本方法，否则走旧路径。
-     */
-    private static String formatEUBigInteger(BigInteger eu) {
-        BigInteger E = BigInteger.valueOf(1_000_000_000_000_000_000L);
-        BigInteger P = BigInteger.valueOf(1_000_000_000_000_000L);
-        BigInteger T = BigInteger.valueOf(1_000_000_000_000L);
-        BigInteger G = BigInteger.valueOf(1_000_000_000L);
-        BigInteger M = BigInteger.valueOf(1_000_000L);
-        BigInteger K = BigInteger.valueOf(1_000L);
-        BigInteger abs = eu.abs();
-        BigInteger whole;
-        String suffix;
-        double scale;
-        if (abs.compareTo(E) >= 0) {
-            whole = abs.divide(E);
-            suffix = "E";
-            scale = 1e18;
-        } else if (abs.compareTo(P) >= 0) {
-            whole = abs.divide(P);
-            suffix = "P";
-            scale = 1e15;
-        } else if (abs.compareTo(T) >= 0) {
-            whole = abs.divide(T);
-            suffix = "T";
-            scale = 1e12;
-        } else if (abs.compareTo(G) >= 0) {
-            whole = abs.divide(G);
-            suffix = "G";
-            scale = 1e9;
-        } else if (abs.compareTo(M) >= 0) {
-            whole = abs.divide(M);
-            suffix = "M";
-            scale = 1e6;
-        } else if (abs.compareTo(K) >= 0) {
-            whole = abs.divide(K);
-            suffix = "K";
-            scale = 1e3;
-        } else {
-            return (eu.signum() < 0 ? "-" : "") + abs;
-        }
-        double frac = abs.mod(BigInteger.valueOf((long) (scale / 100)))
-            .doubleValue() / (scale / 100);
-        return String.format("%s%.2f%s", eu.signum() < 0 ? "-" : "", whole.doubleValue() + frac / 100.0, suffix);
-    }
-
-    /**
-     * 3.33.0-fix3：WAILA"Grid"行的取数逻辑 —— helper 的 BigInteger 快照超过 long 上限
-     * 就走精确显示（如 15.80E），否则维持旧的 long 路径（含负数/0 的原样格式）。
-     */
-    private String formatGridEUForWaila() {
-        BigInteger exact = helper.getLastGridEUBigInteger();
-        if (exact.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) >= 0) {
-            return formatEUBigInteger(exact);
-        }
-        return formatEU(helper.getLastGridEU());
-    }
-
     @Override
     public MetaTileEntity newMetaEntity(IGregTechTileEntity aTile) {
         return new AdaptiveNetHatch(mName, mTier, mDescriptionArray, mTextures);
@@ -382,20 +351,26 @@ public class AdaptiveNetHatch extends MTEHatchEnergy {
         return false;
     }
 
+    /**
+     * 4.3.0-fix5：服务端把实时档位/安培/电网余额写进 WAILA 同步 tag（每次请求约 250ms 一次）。
+     * 旧实现只重写客户端 getWailaBody、读本地 helper 字段 —— 那份字段只在区块(重)加载时
+     * 从 NBT 恢复一次，悬浮提示永远是旧值（"WAILA 显示不正常"的根因）。
+     */
+    @Override
+    public void getWailaNBTData(net.minecraft.entity.player.EntityPlayerMP player,
+        net.minecraft.tileentity.TileEntity te, net.minecraft.nbt.NBTTagCompound tag, net.minecraft.world.World world,
+        int x, int y, int z) {
+        super.getWailaNBTData(player, te, tag, world, x, y, z);
+        AdaptiveHatchHelper
+            .writeWailaNBT(tag, helper.getNetworkOwner(), helper.getCurrentVoltageTier(), helper.getCurrentAmps());
+    }
+
     @Override
     public void getWailaBody(ItemStack itemStack, java.util.List<String> currenttip,
         mcp.mobius.waila.api.IWailaDataAccessor accessor, mcp.mobius.waila.api.IWailaConfigHandler config) {
         super.getWailaBody(itemStack, currenttip, accessor, config);
         try {
-            int v = helper.getLastVoltageTier();
-            int a = helper.getLastAmps();
-            String tierName = GTUtility.getColoredTierNameFromTier((byte) v);
-            currenttip.add(EnumChatFormatting.AQUA + "V:" + tierName + " (" + V[v] + ") | A:" + a);
-            currenttip.add(EnumChatFormatting.AQUA + "Grid: " + formatGridEUForWaila());
-            if (helper.isBound()) {
-                currenttip
-                    .add(EnumChatFormatting.GREEN + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.bound"));
-            }
+            AdaptiveHatchHelper.appendWailaBody(currenttip, accessor);
         } catch (Exception ignored) {}
     }
 }

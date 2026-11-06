@@ -2,7 +2,6 @@ package com.wztwzt.ae2_qof.hatch.adaptive;
 
 import static gregtech.api.enums.GTValues.V;
 
-import java.math.BigInteger;
 import java.util.UUID;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -107,6 +106,23 @@ public class AdaptiveNetLaserHatch extends MTEHatchEnergy {
     @Override
     public long maxAmperesIn() {
         return helper.getCurrentAmps();
+    }
+
+    /**
+     * 4.5.0-fix15：与 {@link AdaptiveNetHatch#getInputTier()} 同因同修（详见该处 javadoc）。
+     * <p>
+     * 注意本仓的<b>供电电压是 {@code V[tier] * 2}</b>（激光版每安培翻倍），所以"网络档位"与
+     * "实际每安培电压所处档位"（{@code GTUtility.getTier(V[tier] * 2) == tier + 1}）差一档。
+     * 此处刻意回报<b>网络档位</b>而不是浮上去的档位：
+     * <ul>
+     * <li>回报值要与玩家在终端里设置的档位一致，否则会出现"设 LuV 却显示 ZPM"的困惑；</li>
+     * <li>需要精确电压的调用方本来就该读 {@link #maxEUInput()}，那是唯一权威的供电口径。</li>
+     * </ul>
+     * 未绑定时同样回落 {@code mTier}，理由见 {@link AdaptiveNetHatch#getInputTier()}。
+     */
+    @Override
+    public long getInputTier() {
+        return helper.isBound() ? helper.getCurrentVoltageTier() : mTier;
     }
 
     @Override
@@ -289,62 +305,6 @@ public class AdaptiveNetLaserHatch extends MTEHatchEnergy {
         return String.valueOf(eu);
     }
 
-    /**
-     * 3.33.0-fix3锛氱數缃戜綑棰濈殑 BigInteger 绮剧‘鐗堬紙>9.22E 鏃舵樉绀虹湡瀹炲€硷紝濡?15.80E锛夈€? * 涓?AdaptiveNetHatch 鍚屾锛沇AILA/Grid 琛屽湪
-     * helper 蹇収瓒呰繃 long 涓婇檺鏃惰蛋鏈柟娉曘€?
-     */
-    private static String formatEUBigInteger(BigInteger eu) {
-        BigInteger E = BigInteger.valueOf(1_000_000_000_000_000_000L);
-        BigInteger P = BigInteger.valueOf(1_000_000_000_000_000L);
-        BigInteger T = BigInteger.valueOf(1_000_000_000_000L);
-        BigInteger G = BigInteger.valueOf(1_000_000_000L);
-        BigInteger M = BigInteger.valueOf(1_000_000L);
-        BigInteger K = BigInteger.valueOf(1_000L);
-        BigInteger abs = eu.abs();
-        BigInteger whole;
-        String suffix;
-        double scale;
-        if (abs.compareTo(E) >= 0) {
-            whole = abs.divide(E);
-            suffix = "E";
-            scale = 1e18;
-        } else if (abs.compareTo(P) >= 0) {
-            whole = abs.divide(P);
-            suffix = "P";
-            scale = 1e15;
-        } else if (abs.compareTo(T) >= 0) {
-            whole = abs.divide(T);
-            suffix = "T";
-            scale = 1e12;
-        } else if (abs.compareTo(G) >= 0) {
-            whole = abs.divide(G);
-            suffix = "G";
-            scale = 1e9;
-        } else if (abs.compareTo(M) >= 0) {
-            whole = abs.divide(M);
-            suffix = "M";
-            scale = 1e6;
-        } else if (abs.compareTo(K) >= 0) {
-            whole = abs.divide(K);
-            suffix = "K";
-            scale = 1e3;
-        } else {
-            return (eu.signum() < 0 ? "-" : "") + abs;
-        }
-        double frac = abs.mod(BigInteger.valueOf((long) (scale / 100)))
-            .doubleValue() / (scale / 100);
-        return String.format("%s%.2f%s", eu.signum() < 0 ? "-" : "", whole.doubleValue() + frac / 100.0, suffix);
-    }
-
-    /** 3.33.0-fix3锛歐AILA"Grid"琛屽彇鏁?鈥斺€?瓒呰繃 long 涓婇檺璧扮簿纭樉绀猴紝鍚﹀垯缁存寔鏃ц矾寰勩€? */
-    private String formatGridEUForWaila() {
-        BigInteger exact = helper.getLastGridEUBigInteger();
-        if (exact.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) >= 0) {
-            return formatEUBigInteger(exact);
-        }
-        return formatEU(helper.getLastGridEU());
-    }
-
     @Override
     public MetaTileEntity newMetaEntity(IGregTechTileEntity aTile) {
         return new AdaptiveNetLaserHatch(mName, mTier, mDescriptionArray, mTextures);
@@ -376,21 +336,26 @@ public class AdaptiveNetLaserHatch extends MTEHatchEnergy {
         return false;
     }
 
+    /**
+     * 4.3.0-fix5：服务端把实时档位/安培/电网余额写进 WAILA 同步 tag（每次请求约 250ms 一次）。
+     * 旧实现只重写客户端 getWailaBody、读本地 helper 字段 —— 那份字段只在区块(重)加载时
+     * 从 NBT 恢复一次，悬浮提示永远是旧值（"WAILA 显示不正常"的根因）。
+     */
+    @Override
+    public void getWailaNBTData(net.minecraft.entity.player.EntityPlayerMP player,
+        net.minecraft.tileentity.TileEntity te, net.minecraft.nbt.NBTTagCompound tag, net.minecraft.world.World world,
+        int x, int y, int z) {
+        super.getWailaNBTData(player, te, tag, world, x, y, z);
+        AdaptiveHatchHelper
+            .writeWailaNBT(tag, helper.getNetworkOwner(), helper.getCurrentVoltageTier(), helper.getCurrentAmps());
+    }
+
     @Override
     public void getWailaBody(ItemStack itemStack, java.util.List<String> currenttip,
         mcp.mobius.waila.api.IWailaDataAccessor accessor, mcp.mobius.waila.api.IWailaConfigHandler config) {
         super.getWailaBody(itemStack, currenttip, accessor, config);
         try {
-            int v = helper.getLastVoltageTier();
-            int a = helper.getLastAmps();
-            String tierName = GTUtility.getColoredTierNameFromTier((byte) v);
-            currenttip.add(EnumChatFormatting.AQUA + "V:" + tierName + " (" + V[v] + ") | A:" + a);
-            long gridEU = helper.getLastGridEU();
-            currenttip.add(EnumChatFormatting.AQUA + "Grid: " + formatGridEUForWaila());
-            if (helper.isBound()) {
-                currenttip
-                    .add(EnumChatFormatting.GREEN + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.bound"));
-            }
+            AdaptiveHatchHelper.appendWailaBody(currenttip, accessor);
         } catch (Exception ignored) {}
     }
 }

@@ -37,6 +37,16 @@ public class MyMod {
     @SidedProxy(clientSide = "com.wztwzt.ae2_qof.ClientProxy", serverSide = "com.wztwzt.ae2_qof.CommonProxy")
     public static CommonProxy proxy;
 
+    /**
+     * 4.5.0 machindex 的进服自愈监听器。
+     *
+     * <p>
+     * 只持有引用、不在字段初始化时构造：它的类本身引用 BQ 类型（写库路径），
+     * 未装 BQ 的环境里字段初始化会在 {@code MyMod} 类加载阶段就炸。
+     * 因此改成 init 阶段「先判 hasBq 再新建」。
+     */
+    private Object machIndexJoinRepair;
+
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         proxy.preInit(event);
@@ -55,6 +65,27 @@ public class MyMod {
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
         proxy.init(event);
+        // 4.5.0：机器功能—电压等级索引。init 阶段注册（此时 NEI 插件类已可发现，
+        // 但真正的 NEI 配置加载要等进世界；扫描触发点在 NEIConfigsLoadedEvent）。
+        com.wztwzt.ae2_qof.machindex.MachIndexPlugin.init(event.getSide());
+        // 进服自愈：BQ 清库/换存档后自动重建索引章节。只在装了 BQ 时注册（守卫内置）。
+        if (com.wztwzt.ae2_qof.machindex.MachIndexPlugin.hasBq()) {
+            try {
+                Object handler = Class
+                    .forName(
+                        "com.wztwzt.ae2_qof.machindex.server.JoinRepairHandler",
+                        true,
+                        MyMod.class.getClassLoader())
+                    .getConstructor()
+                    .newInstance();
+                machIndexJoinRepair = handler;
+                FMLCommonHandler.instance()
+                    .bus()
+                    .register(handler);
+            } catch (Throwable t) {
+                LOG.error("[AE2QoL] machindex 进服自愈注册失败（索引仍可用命令重建）", t);
+            }
+        }
     }
 
     @Mod.EventHandler

@@ -12,7 +12,7 @@ import com.cleanroommc.modularui.value.sync.BooleanSyncValue;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
 import com.cleanroommc.modularui.widgets.ToggleButton;
 import com.cleanroommc.modularui.widgets.layout.Flow;
-import com.science.gtnl.common.gui.modularui.SuperCraftingInputHatchMEGui;
+import com.science.gtnl.common.gui.modularui.hatch.SuperCraftingInputHatchMEGui;
 import com.science.gtnl.common.machine.hatch.SuperCraftingInputHatchME;
 import com.wztwzt.ae2_qof.api.ISmartDoublingMedium;
 
@@ -31,6 +31,9 @@ import gregtech.api.modularui2.GTGuiTextures;
  * 构造器末尾捕获仓引用（对继承字段不做 @Shadow）。
  * GTNL 为运行时可选依赖（compileOnly），缺失时 mixin 静默跳过。
  * 均为 GTNH 模组类，编译名即运行时名，无需 remap。
+ * 4.5.0-fix12：GTNL 2.9.0 正式（dev-290）把该 GUI 类从 common.gui.modularui 移入
+ * .hatch 子包，旧包名目标类永不加载 → mixin 静默失效；对齐新包名并把编译基线换为
+ * 实机 dev-290 jar（构造器与 createBottomLeftCornerFlow 签名未变，javap 已核）。
  */
 @Mixin(SuperCraftingInputHatchMEGui.class)
 public abstract class MixinSuperCraftingInputHatchMEGui {

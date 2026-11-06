@@ -371,19 +371,23 @@ public class AdaptiveNetTerminal extends MTEHatch {
     private void updateParamsFromSlots() {
         // ① 槽位内容没变就直接返回（保住玩家手改的档位/安培）
         boolean slotsChanged = false;
+        boolean[] changed = new boolean[HatchType.COUNT];
         for (int i = 0; i < HatchType.COUNT; i++) {
             String sig = slotSignature(mInventory[i]);
             if (!sig.equals(lastSlotSignature[i])) {
                 lastSlotSignature[i] = sig;
+                changed[i] = true;
                 slotsChanged = true;
             }
         }
         if (!slotsChanged) return;
 
-        boolean anyValid = false;
-        int bestTier = 0;
-
+        // 4.3.0-fix4（窗口③）：只重算**发生变化的那几格**。
+        // 旧实现任一槽位变化就把四格全部按槽内物品重算 ⇒ 玩家在 GUI 里手改的其它类型
+        // 档位/安培被顺带弹回默认（"动了一下槽，双仓升压就失效"的运行期版本）。
+        // 未变化的槽保留现值（可能是玩家手改值）；bestTier 在重算后按整表取最大。
         for (int i = 0; i < 4; i++) {
+            if (!changed[i]) continue;
             ItemStack stack = mInventory[i];
             HatchType ht = HatchType.fromSlotIndex(i);
             if (stack != null && stack.stackSize >= REQUIRED_STACK_SIZE && ht != null) {
@@ -402,19 +406,15 @@ public class AdaptiveNetTerminal extends MTEHatch {
                         // 本模组自己的仓：规格=该类的出厂额定（不读实例——实例返回的是当前配置值）
                         hatchTiers[i] = ht.defaultTier;
                         hatchAmps[i] = ht.defaultAmps;
-                        if (ht.defaultTier > bestTier) bestTier = ht.defaultTier;
                     } else {
                         // TecTech 兼容仓：档位由物品决定；安培取评级字段（避开 ×1.25 派生值）
                         int tier = (int) (isOutput ? mte.getOutputTier() : mte.getInputTier());
                         hatchTiers[i] = (tier >= 0) ? tier : ht.defaultTier;
-                        if (tier > bestTier) bestTier = tier;
                         hatchAmps[i] = AdaptiveHostIndex.ratedAmps(mte, isOutput, ht.defaultAmps);
                     }
-                    anyValid = true;
                 } else {
                     hatchTiers[i] = ht.defaultTier;
                     hatchAmps[i] = ht.defaultAmps;
-                    if (ht.defaultTier > bestTier) bestTier = ht.defaultTier;
                 }
             } else {
                 hatchTiers[i] = 0;
@@ -422,6 +422,11 @@ public class AdaptiveNetTerminal extends MTEHatch {
             }
         }
 
+        // 总档位 = 全表最大（无效/空槽恒为 0，天然不参与）
+        int bestTier = 0;
+        for (int i = 0; i < HatchType.COUNT; i++) {
+            if (hatchTiers[i] > bestTier) bestTier = hatchTiers[i];
+        }
         currentVoltageTier = bestTier;
         applySettings();
     }
@@ -536,6 +541,11 @@ public class AdaptiveNetTerminal extends MTEHatch {
             networkOwner = AdaptiveTeamHelper.resolveLeader(aBase.getOwnerUuid());
             if (networkOwner != null) {
                 AdaptiveNetworkManager.registerTerminal(this, world);
+                // 4.3.0-fix3：注册后立刻把 NBT 恢复的档位/安培推给网络。
+                // 旧实现 registerTerminal→setTerminal 只同步 voltageTier/autoReconnect，
+                // hatchTiers 只在玩家操作时才推 ⇒ 重启后到首次操作前网络的 hatchTiers
+                // 全 0，各仓（含其自身 NBT 的临时档）被拉回 ULV。
+                applySettings();
             }
         }
     }
@@ -957,6 +967,10 @@ public class AdaptiveNetTerminal extends MTEHatch {
         tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.settings.title")).size(CONTENT_W, 16));
         tab.child(separator(CONTENT_W));
         tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.settings.slots")).size(CONTENT_W, 14));
+        // 4.3.0-fix4（窗口④）：GT5u 的电压识别口径是"同机全部能源仓同档"（配方电压取平均、
+        // 监控档位要求全等），混插必然降档 —— 在设置页明示，而不是让玩家以为坏了。
+        tab.child(
+            new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.settings.mix_tier_hint")).size(CONTENT_W, 40));
 
         String[] slotLabels = { "ae2_qof.gui.adaptive_terminal.dynamo_slot",
             "ae2_qof.gui.adaptive_terminal.energy_slot", "ae2_qof.gui.adaptive_terminal.laser_source_slot",
@@ -1774,6 +1788,14 @@ public class AdaptiveNetTerminal extends MTEHatch {
             hatchTiers[i] = aNBT.getInteger("ae2qolHT" + i);
             hatchAmps[i] = aNBT.getInteger("ae2qolHA" + i);
             if (hatchAmps[i] <= 0) hatchAmps[i] = HatchType.values()[i].defaultAmps;
+        }
+        // 4.3.0-fix3：冷启动签名预热。lastSlotSignature 不持久化、冷启动全 null，
+        // 旧实现第一次 updateParamsFromSlots 必判"槽位变了"⇒ 把玩家配置的档位/安培
+        // 整体回弹为默认（自家仓 LV/LuV、空槽 ULV）并 applySettings 推给全网 ——
+        // 这就是"每次重启/更新模组后机器电压识别错乱"的主因。读档时把签名对齐到
+        // 当前实际槽内容，第一次巡检即走"未变化"早退，保住 NBT 恢复的配置。
+        for (int i = 0; i < HatchType.COUNT; i++) {
+            lastSlotSignature[i] = slotSignature(mInventory[i]);
         }
     }
 

@@ -42,6 +42,11 @@ public class AE2QoLCreativeTab extends CreativeTabs {
         if (mkiv != null) {
             list.add(mkiv.copy());
         }
+        // 4.4.0：编程样板输入总成镜像，同为 GT 机器；未装 PH 时为 null。
+        ItemStack mirror = com.wztwzt.ae2_qof.ph.PhIntegration.mirrorStack;
+        if (mirror != null) {
+            list.add(mirror.copy());
+        }
     }
 
     @Override

@@ -66,11 +66,35 @@ public class StockMonitorCoverGui extends CoverBaseGui<StockMonitorCover> {
             ordinal -> coverData.setMode(ThresholdMode.fromOrdinal(ordinal))).allowC2S();
         syncManager.syncValue("mode", modeSync);
 
-        // 运行态（S2C）
-        final IntSyncValue channelSync = new IntSyncValue(coverData::getLastChannel);
+        // 每盖板读取间隔覆盖（0=跟随 config；C2S+S2C，性能修复版）
+        final LongSyncValue readIntervalSync = new LongSyncValue(() -> coverData.getReadInterval(), v -> {
+            long clamped = Math.max(0L, Math.min(1200L, v));
+            coverData.setReadInterval((int) clamped);
+            if (!syncManager.isClient()) cover.markCoverDirty();
+        }).allowC2S();
+        syncManager.syncValue("read_interval", readIntervalSync);
+
+        // 运行态（S2C）。性能修复版：GUI 打开期间这些 supplier 每 tick 被服务端求值
+        // （ModularContainer.detectAndSendChanges），顺带回调 noteGuiPoll() ——
+        // 服务端据此把真实读取频率提到 GUI 间隔（默认 5t），GUI 关闭后自动回落。
+        final IntSyncValue channelSync = new IntSyncValue(() -> {
+            cover.noteGuiPoll();
+            return coverData.getLastChannel();
+        });
         final BooleanSyncValue shouldWorkSync = new BooleanSyncValue(coverData::isLastShouldWork);
         syncManager.syncValue("channel", channelSync);
         syncManager.syncValue("should_work", shouldWorkSync);
+
+        // 各槽位库存（S2C；GUI 打开时随真实读取实时刷新，比旧的"仅开 GUI 时同步一次"更好）
+        final LongSyncValue[] stockSyncs = new LongSyncValue[StockMonitorCoverData.MAX_SLOTS];
+        for (int i = 0; i < StockMonitorCoverData.MAX_SLOTS; i++) {
+            final int idx = i;
+            stockSyncs[i] = new LongSyncValue(() -> {
+                cover.noteGuiPoll();
+                return coverData.getSlot(idx).lastStock;
+            });
+            syncManager.syncValue("stock_" + i, stockSyncs[i]);
+        }
 
         // ===== 网络选择子面板 =====
         IPanelHandler networkPanel = syncManager
@@ -165,6 +189,24 @@ public class StockMonitorCoverGui extends CoverBaseGui<StockMonitorCover> {
                 .child(new TextWidget<>(IKey.lang("ae2_qof.gui.stock_monitor.mode")).size(60, 14))
                 .child(modeToggleButton(modeSync)));
 
+        // 读取间隔（性能修复版：0=跟随 config 默认，>0=本盖板固定间隔 tick）
+        column.child(
+            Flow.row()
+                .coverChildren()
+                .childPadding(4)
+                .child(new TextWidget<>(IKey.lang("ae2_qof.gui.stock_monitor.read_interval")).size(110, 14))
+                .child(
+                    new TextFieldWidget().size(60, 16)
+                        .numbersLong(0, 1200)
+                        .value(readIntervalSync))
+                .child(
+                    new TextWidget<>(
+                        IKey.dynamic(
+                            () -> readIntervalSync.getValue() > 0 ? EnumChatFormatting.GRAY + "t"
+                                : EnumChatFormatting.GRAY + StatCollector
+                                    .translateToLocal("ae2_qof.gui.stock_monitor.read_interval_default")))
+                                        .size(60, 14)));
+
         // 更多按钮
         column.child(
             new ButtonWidget<>().size(PANEL_W, 16)
@@ -178,8 +220,8 @@ public class StockMonitorCoverGui extends CoverBaseGui<StockMonitorCover> {
         // 分隔线
         column.child(new TextWidget<>(IKey.str("")).size(PANEL_W, 2));
 
-        // 当前库存（所有有效槽位）
-        column.child(stockDisplayWidget(coverData));
+        // 当前库存（所有有效槽位；读 MUI 同步值，GUI 打开时随真实读取实时变化）
+        column.child(stockDisplayWidget(coverData, stockSyncs));
 
         // 机器状态
         column.child(machineStatusWidget(shouldWorkSync));
@@ -300,8 +342,8 @@ public class StockMonitorCoverGui extends CoverBaseGui<StockMonitorCover> {
             });
     }
 
-    /** 显示所有有效槽位的库存 */
-    private TextWidget<?> stockDisplayWidget(StockMonitorCoverData coverData) {
+    /** 显示所有有效槽位的库存（库存数读 MUI 同步值，其余读本地 coverData） */
+    private TextWidget<?> stockDisplayWidget(StockMonitorCoverData coverData, LongSyncValue[] stockSyncs) {
         return new TextWidget<>(IKey.dynamic(() -> {
             StringBuilder sb = new StringBuilder();
             sb.append(EnumChatFormatting.AQUA)
@@ -318,7 +360,7 @@ public class StockMonitorCoverGui extends CoverBaseGui<StockMonitorCover> {
                     .append(" ")
                     .append(slot.monitorTarget.getDisplayName())
                     .append(": ")
-                    .append(slot.lastStock)
+                    .append(stockSyncs[i].getValue())
                     .append(" / ")
                     .append(slot.threshold)
                     .append("\n");

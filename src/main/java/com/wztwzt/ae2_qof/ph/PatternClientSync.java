@@ -55,9 +55,17 @@ public final class PatternClientSync {
 
     /** 把该机器的 TE 数据推给它所在区块的跟踪者；失败只记日志。 */
     public static void notifyClients(PatternDualInputHatch machine) {
+        if (machine == null) return;
+        notifyClients(machine.getBaseMetaTileEntity(), machine.getMetaName());
+    }
+
+    /**
+     * 4.3.0 通用版：PH 家族不止 {@code PatternDualInputHatch} 一支
+     * （库存映射从属机独立成类），按 {@code IGregTechTileEntity} 下发即可 ——
+     * 载荷是该 TE 的整份 NBT，与机器的 MTE 类型无关。
+     */
+    public static void notifyClients(IGregTechTileEntity base, String name) {
         try {
-            if (machine == null) return;
-            IGregTechTileEntity base = machine.getBaseMetaTileEntity();
             if (base == null) return;
             World world = base.getWorld();
             // 只在服务端发；客户端调用直接忽略（剪贴板本身也只在服务端执行）
@@ -87,8 +95,7 @@ public final class PatternClientSync {
                     sent++;
                 }
             }
-            MyMod.LOG
-                .info("[AE2QoL] 样板同步：{} @ {},{},{} 的 TE 数据已下发给 {} 名跟踪该区块的玩家", machine.getMetaName(), x, y, z, sent);
+            MyMod.LOG.info("[AE2QoL] 样板同步：{} @ {},{},{} 的 TE 数据已下发给 {} 名跟踪该区块的玩家", name, x, y, z, sent);
         } catch (Throwable t) {
             // 静默兜底会掩盖故障：这里必须留痕，但不改变服务端数据与业务流程
             MyMod.LOG.warn("[AE2QoL] 样板同步：通知客户端失败（服务端数据不受影响）", t);

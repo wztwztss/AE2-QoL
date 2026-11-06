@@ -171,6 +171,9 @@ ae2_qof.gui.adaptive_terminal.laser_source=Laser Source
 ae2_qof.gui.adaptive_terminal.laser_target=Laser Target
 ae2_qof.gui.adaptive_terminal.settings.title=Adaptive Settings
 ae2_qof.gui.adaptive_terminal.settings.slots=Network Hatch Slots
+ae2_qof.gui.adaptive_terminal.settings.mix_tier_hint=§7Note: GT machines identify voltage by "ALL energy hatches same tier" (recipes use the average).
+Do not mix on one machine: vanilla energy hatches, or adaptive hatches bound to other networks/frequencies or different tiers,
+otherwise the machine runs at the lower/average tier and dual-hatch voltage boosting stops working.
 ae2_qof.gui.adaptive_terminal.settings.hint=Place 64 hatches of each type to auto-configure.
 ae2_qof.gui.adaptive_terminal.settings.all_slots_required=All slots must have 64 items.
 ae2_qof.gui.adaptive_terminal.permission.title=Permission Control
@@ -322,6 +325,8 @@ ae2_qof.gui.stock_monitor.threshold=Threshold:
 ae2_qof.gui.stock_monitor.mode=Mode:
 ae2_qof.gui.stock_monitor.mode_below=Below N → Run
 ae2_qof.gui.stock_monitor.mode_above=Above N → Run
+ae2_qof.gui.stock_monitor.read_interval=Refresh Interval:
+ae2_qof.gui.stock_monitor.read_interval_default=(default)
 ae2_qof.gui.stock_monitor.more=More Monitor Slots (2-9)
 ae2_qof.gui.stock_monitor.more_slots=More Monitor Slots
 ae2_qof.gui.stock_monitor.back=Back
@@ -381,6 +386,23 @@ ae2_qof.info.upload_rejected=Upload failed: the target machine rejected this pat
 ae2_qof.info.upload_no_permission=Upload failed: you do not have INJECT permission on this AE network.
 
 # ===== Programmable Crafting Input Buffer MK.III (optional ProgrammableHatches dependency) =====
+gt.blockmachines.ae2qof.hatch.input.buffered.mirror.name=Programmable Crafting Input Mirror
+ae2_qof.gui.pattern_mirror.title=Programmable Crafting Input Mirror
+ae2_qof.gui.pattern_mirror.bound=Bound: 
+ae2_qof.gui.pattern_mirror.unbound=Unbound: left-click the host with a Data Stick, then right-click this mirror
+gt.blockmachines.ae2qof.hatch.input.buffered.mirror.tooltip=§6Programmable Crafting Input Mirror
+§7Holds no patterns itself; binds to one Programmable Crafting Input
+§7Buffer family host and delegates its pattern/material view to this machine
+§aOnce bound: right-click = open the host's pattern page; sneak+right-click = this mirror's settings
+§8[AE2 QoL + ProgrammableHatches]
+§7Holds no patterns itself; binds to one Programmable Crafting Input
+§7Buffer family host and delegates its pattern/material view to this machine
+§8[AE2 QoL + ProgrammableHatches]
+gt.blockmachines.ae2qof.hatch.input.buffered.mirror.desc=Share one Programmable Crafting Input Buffer between machines
+gt.blockmachines.ae2qof.hatch.input.buffered.mirror.desc.0=Bind: left-click the host with a Data Stick, then right-click this mirror
+gt.blockmachines.ae2qof.hatch.input.buffered.mirror.desc.1=Hosts: MK.I/II/III, recipe table and the Pattern family (incl. our MK.III/MK.IV)
+gt.blockmachines.ae2qof.hatch.input.buffered.mirror.desc.2=When unbound place it on an input BUS slot (input hatch slots accept it only once bound)
+gt.blockmachines.ae2qof.hatch.input.buffered.mirror.desc.3=Once bound: right-click = host pattern page; sneak+right-click = mirror settings
 gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.name=Programmable Crafting Input Buffer MK.III
 gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.tooltip=§6Programmable Crafting Input Buffer MK.III\n§7144 pattern slots (4x the original 36)\n§7Up to 32 item + 32 fluid inputs per order\n§724 isolated internal buffers\n§8[AE2 QoL + ProgrammableHatches]
 gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.desc=AE-direct item/fluid pattern buffer for multiblocks (expanded)
@@ -398,24 +420,36 @@ gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiv.desc.2=Requires Programmabl
 
 # ===== Pattern clipboard (3.24.0; registered only with PH) =====
 item.ae2_qof.pattern_clipboard.name=Pattern Clipboard
-ae2_qof.clipboard.tooltip.0=§dRight-click air: cycle mode (copy / paste / cut) — purple icon, distinct from Wild (green) and Generator (cyan)
-ae2_qof.clipboard.tooltip.1=Right-click a machine: run the current mode (MK.III / MK.IV only)
-ae2_qof.clipboard.tooltip.2=Sneak + right-click air: show clipboard status
+ae2_qof.clipboard.tooltip.0=§dRight-click air: open the manager GUI (mode / preview / clear) — purple icon, distinct from Wild (green) and Generator (cyan)
+ae2_qof.clipboard.tooltip.1=Right-click a pattern buffer: run the current mode (whole PH family: original/MK.II/items-only/Super/MappingSlave, plus our MK.III / MK.IV)
+ae2_qof.clipboard.tooltip.2=Sneak + right-click air: clipboard status; overwrite-paste onto a non-empty target needs a second click within 10s
 ae2_qof.clipboard.mode=Mode: 
 ae2_qof.clipboard.mode.copy=Copy
-ae2_qof.clipboard.mode.paste=Paste
+ae2_qof.clipboard.mode.paste=Paste (overwrite)
 ae2_qof.clipboard.mode.cut=Cut
+ae2_qof.clipboard.mode.append=Paste (append)
 ae2_qof.clipboard.amount=%s patterns / %s slots
 ae2_qof.clipboard.copied=Copied
 ae2_qof.clipboard.pasted=Pasted
 ae2_qof.clipboard.cut=Cut (source machine cleared)
 ae2_qof.clipboard.empty=Clipboard is empty (use Copy or Cut on a pattern buffer first)
-ae2_qof.clipboard.not_ours=Target is not one of our pattern buffers (MK.III / MK.IV)
-ae2_qof.clipboard.bad_mode=Invalid mode, ignored
 ae2_qof.clipboard.copy_failed=Copy failed: source machine's pattern array is invalid (see log)
 ae2_qof.clipboard.paste_failed=Paste failed: target machine's pattern array is invalid (see log)
 ae2_qof.clipboard.status=Clipboard: 
 ae2_qof.clipboard.truncated=Clipboard has %s patterns but the target only has %s slots; the rest was not moved
+ae2_qof.clipboard.confirm_overwrite=Overwrite paste needs confirmation — right-click the SAME machine again within 10s:
+ae2_qof.clipboard.confirm_will_clear=the target's %s existing patterns will be cleared
+ae2_qof.clipboard.confirm_will_drop=%s patterns beyond the target's slots will be dropped
+ae2_qof.clipboard.append_none=Nothing to append (matching slots occupied or beyond target size)
+ae2_qof.clipboard.appended=Appended %s (skipped %s occupied, dropped %s beyond size)
+ae2_qof.gui.pattern_clipboard.title=Pattern Clipboard
+ae2_qof.gui.pattern_clipboard.prev=< Prev
+ae2_qof.gui.pattern_clipboard.next=Next >
+ae2_qof.gui.pattern_clipboard.clear=Clear clipboard
+ae2_qof.gui.pattern_clipboard.mode_hint.0=Copy: read all patterns + multipliers into the clipboard; machine unchanged
+ae2_qof.gui.pattern_clipboard.mode_hint.1=Overwrite paste: clears the target first; needs double-click confirm if target is non-empty or truncating
+ae2_qof.gui.pattern_clipboard.mode_hint.2=Cut: copy, then clear the source (only after the clipboard write succeeded)
+ae2_qof.gui.pattern_clipboard.mode_hint.3=Append paste: fill only empty slots by index; never overwrites
 
 # ===== Stock Monitor Terminal (keys added in 3.20.3) =====
 ae2_qof.terminal.status.bound=§a● Bound to wireless network

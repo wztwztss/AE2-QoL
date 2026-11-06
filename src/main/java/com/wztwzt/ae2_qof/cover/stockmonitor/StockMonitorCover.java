@@ -20,8 +20,32 @@ import gregtech.common.gui.modularui.cover.base.CoverBaseGui;
 
 public class StockMonitorCover extends Cover {
 
+    /** GUI（MUI sync supplier）最近一次求值后多久仍视为"GUI 打开"（容忍网络抖动）。 */
+    private static final int GUI_POLL_STALE_TICKS = 10;
+    /** 读取间隔的下限（tick）。 */
+    private static final int MIN_READ_INTERVAL = 5;
+    /** 读取间隔的上限（tick）。 */
+    private static final int MAX_READ_INTERVAL = 1200;
+
     private final StockMonitorCoverData data = new StockMonitorCoverData();
     private final PhantomInventory phantomInventory = new PhantomInventory();
+
+    // ===== 节流运行态（不持久化；性能修复版） =====
+    /** 下次允许真正读网络的 world time（tick），未到期直接沿用缓存判定。 */
+    private long nextReadTick = Long.MIN_VALUE;
+    /** 最近一次 GUI sync supplier 求值时的 world time；久未求值 ⇒ GUI 已关闭，回落常规频率。 */
+    private long guiPollTick = Long.MIN_VALUE;
+    /** 批量读复用缓冲：9 个槽位的 monitorTarget（空槽放 null 占位，下标即槽位号）。 */
+    private final java.util.ArrayList<appeng.api.storage.data.IAEStack<?>> readTargets = new java.util.ArrayList<>(
+        StockMonitorCoverData.MAX_SLOTS);
+    /** 批量读结果（下标即槽位号），与 readTargets 配套复用。 */
+    private final long[] readResults = new long[StockMonitorCoverData.MAX_SLOTS];
+    /**
+     * 全局读取相位（tick）。所有盖板共用同一相位，保证同一间隔内只有一次「全网重建」，
+     * 同时把这次重建错开 GT 机器 20t 配方完成的节拍。
+     * spark 实测：重建（44ms）与机器突发（43ms）同 tick 时该 tick 达 133ms。
+     */
+    private static final int READ_PHASE_TICKS = 7;
 
     public StockMonitorCover(CoverContext context, ITexture coverTexture) {
         super(context, coverTexture);
@@ -34,6 +58,35 @@ public class StockMonitorCover extends Cover {
     /** 获取 PhantomInventory 的 InvWrapper（GUI 用 ModularSlot(handler, slotIndex) 指定槽位） */
     public InvWrapper getPhantomSlot() {
         return new InvWrapper(phantomInventory);
+    }
+
+    /**
+     * GUI 打开检测（性能修复版）：GUI 的 MUI sync value supplier 在容器打开期间每 tick 被
+     * 服务端求值一次（ModularContainer.detectAndSendChanges），GUI 的 stock/channel supplier
+     * 里回调本方法即可让服务端零开销地知道"有人正看着这块盖板"。
+     */
+    public void noteGuiPoll() {
+        ICoverable ct = coveredTile.get();
+        if (ct instanceof net.minecraft.tileentity.TileEntity) {
+            net.minecraft.world.World w = ((net.minecraft.tileentity.TileEntity) ct).getWorldObj();
+            if (w != null) guiPollTick = w.getTotalWorldTime();
+        }
+    }
+
+    /** 当前生效的读取间隔：盖板 NBT 覆盖 > config 默认；GUI 打开时再压到 config 的 GUI 间隔。 */
+    private int effectiveReadInterval(long now) {
+        int interval = data.getReadInterval() > 0 ? data.getReadInterval()
+            : com.wztwzt.ae2_qof.Config.stockMonitorReadIntervalTicks;
+        if (interval < MIN_READ_INTERVAL) interval = MIN_READ_INTERVAL;
+        if (interval > MAX_READ_INTERVAL) interval = MAX_READ_INTERVAL;
+        // 注意溢出：guiPollTick 初值 MIN_VALUE 时 now-guiPollTick 会回绕成负数，
+        // 必须先确认 guiPollTick <= now（即确实发生过轮询）再比较差值。
+        if (guiPollTick != Long.MIN_VALUE && guiPollTick <= now && now - guiPollTick <= GUI_POLL_STALE_TICKS) {
+            int gui = com.wztwzt.ae2_qof.Config.stockMonitorGuiIntervalTicks;
+            if (gui < 2) gui = 2;
+            if (gui < interval) interval = gui;
+        }
+        return interval;
     }
 
     /** 标记覆盖板数据已变更（供统计终端远程修改后调用） */
@@ -56,7 +109,7 @@ public class StockMonitorCover extends Cover {
         return true;
     }
 
-    // ===== 覆盖板行为（多槽位 OR 判定 fix14）=====
+    // ===== 覆盖板行为（多槽位 OR 判定 fix14；性能修复版加节流+批量读）=====
 
     @Override
     public void doCoverThings(byte aRedstone, long aTickTimer) {
@@ -65,14 +118,31 @@ public class StockMonitorCover extends Cover {
 
         IMachineProgress machine = (IMachineProgress) tile;
 
-        // 1. 获取 IGrid（双通道）
-        int x = tile.getXCoord();
-        int y = tile.getYCoord();
-        int z = tile.getZCoord();
         net.minecraft.world.World world = null;
         if (tile instanceof net.minecraft.tileentity.TileEntity) {
             world = ((net.minecraft.tileentity.TileEntity) tile).getWorldObj();
         }
+        long now = world != null ? world.getTotalWorldTime() : aTickTimer;
+
+        // 0. 节流门控：未到读取周期时直接沿用缓存判定（库存数值最多延迟一个周期）。
+        // 读取一次要把整个 AE2 网络的存储列表物化一遍，大网络上开销极高（spark 实测
+        // 旧版每 10t×9 槽 ≈ 全服 7.8% CPU），默认 20t 读一次已足够控制机器启停。
+        if (now < nextReadTick) {
+            return;
+        }
+        // 全局对齐调度（4.5.0-fix10）：同一间隔的所有盖板落在同一 tick 读取，
+        // AE2 的全网重建只付一次；整体再偏移 READ_PHASE_TICKS，避开 GT 机器 20t 配方完成的
+        // 同一 tick（spark 实测：重建 44ms 与机器突发 43ms 撞在同一 tick 时该 tick 达 133ms）。
+        int interval = effectiveReadInterval(now);
+        if (interval < 1) interval = 1;
+        long next = (now / interval + 1) * interval + READ_PHASE_TICKS;
+        if (next <= now) next += interval;
+        nextReadTick = next;
+
+        // 1. 获取 IGrid（双通道）
+        int x = tile.getXCoord();
+        int y = tile.getYCoord();
+        int z = tile.getZCoord();
         AeConnector.GridResult result = AeConnector.getGrid(data.getNetworkId(), world, x, y, z, coverSide);
 
         if (result.grid == null) {
@@ -87,7 +157,18 @@ public class StockMonitorCover extends Cover {
 
         data.setLastChannel(result.channel);
 
-        // 2. 遍历所有有效槽位，查询库存并 OR 判定
+        // 2. 一次性批量读取所有有效槽位（复用缓冲，整个网络列表只物化一次）
+        readTargets.clear();
+        for (int i = 0; i < StockMonitorCoverData.MAX_SLOTS; i++) {
+            StockMonitorCoverData.MonitorSlot slot = data.getSlot(i);
+            if (slot.isEmpty() || slot.monitorTarget == null) {
+                readTargets.add(null);
+                continue;
+            }
+            readTargets.add(slot.monitorTarget);
+        }
+        AeStockReader.readStocks(result.grid, readTargets, readResults);
+
         boolean anyActive = false;
         boolean hasValidSlot = false;
         for (int i = 0; i < StockMonitorCoverData.MAX_SLOTS; i++) {
@@ -97,7 +178,7 @@ public class StockMonitorCover extends Cover {
                 continue;
             }
             hasValidSlot = true;
-            long count = AeStockReader.readStock(result.grid, slot.monitorTarget);
+            long count = readResults[i];
             slot.lastStock = count;
             if (data.getMode()
                 .shouldWork(count, slot.threshold)) {
@@ -115,7 +196,7 @@ public class StockMonitorCover extends Cover {
             if (!anyActive && machine.isAllowedToWork()) machine.disableWorking();
         }
 
-        // 3. 注册到全局 CoverRegistry（供统计终端集中查看）
+        // 3. 注册到全局 CoverRegistry（供统计终端集中查看；只在读取 tick 做，注册表自带变更检测）
         try {
             ICoverable ct = coveredTile.get();
             if (ct instanceof net.minecraft.tileentity.TileEntity) {
@@ -159,7 +240,8 @@ public class StockMonitorCover extends Cover {
 
     @Override
     public int getMinimumTickRate() {
-        return 10;
+        // 性能修复版：10 → 5，让 GUI 打开时的 5t 快速刷新可达；非读取 tick 的门控只是一次比较
+        return 5;
     }
 
     @Override

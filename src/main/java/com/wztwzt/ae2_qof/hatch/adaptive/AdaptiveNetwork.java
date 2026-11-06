@@ -105,6 +105,15 @@ public class AdaptiveNetwork {
         helpers.add(helper);
         HatchType ht = helper.getHatchType();
         if (ht != null) {
+            // 4.3.0-fix4（窗口①）：网络档位表为空（重启后尚未被终端回填）而仓自身存档里有档 ⇒
+            // 以仓的存档档位**回填网络**，而不是拿空表把仓打到 ULV。
+            // 这堵住"机器+仓所在区块已加载、放终端的区块没加载"时双仓升压整体失效的窗口；
+            // 终端随后加载时会 applySettings 推送自己的持久化配置，重新成为权威值。
+            // 档位一致的例外：玩家若真把网络档配成 0(ULV)，仓存档也会同步成 0，不会触发回填。
+            if (hatchTiers[ht.slotIndex] == 0 && helper.getCurrentVoltageTier() > 0) {
+                hatchTiers[ht.slotIndex] = helper.getCurrentVoltageTier();
+                markHatchListDirty();
+            }
             helper.setVoltageTier(hatchTiers[ht.slotIndex]);
             helper.setAmps(hatchAmps[ht.slotIndex]);
         }

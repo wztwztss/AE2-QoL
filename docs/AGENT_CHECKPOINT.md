@@ -12,6 +12,26 @@
 |项目|填写内容|
 |---|---|
 |工具平台|DeepSeek Harness（DSH Web GUI）|
+|模型信息|DeepSeek-V4.1-Flash|
+|工作分支|HEAD（4.2.0-fix1 后全部未提交：4.2.0-fix2→4.4.0→fix1→fix2→**4.5.0** 积压）|
+|启动时间|2026-10-27（第八段：**machindex 实施轮**，接第七段的只读取证）|
+|本次会话目标|**4.5.0-fix6 = 修「571 台全标 ULV」+ 两章（加工/生产）+ 每配方类型一条 + 章内文字目录**（2026-10-29）。**已完成并部署客户端**（SHA256 `4db203e3…bf46`，实例/本地/D:\下载 一致，旧 fix5 已移入备份目录）。① **电压真根因**：`VoltageResolver.ensureGtIndex` 只按 `Item` 建键、漏 meta，而所有 GT 机器共用 `gregtech:gt.blockmachines` ⇒ 查一台命中全部上万条机器配方再取最低档 ⇒ **571 台多方块全部 ULV(0)**；新增 `GtTier(meta,tier)` 存查都精确比对 meta。② **章节收敛为 2**（用户否决 28 章方案）：`MachineCategory.chapterOf()` 分「加工/生产」，`groupByChapter()` 按 `q.groupKey` 分卷，章节名 `机器索引·加工`/`机器索引·生产`；三处 ours 判定补 `机器索引·` 前缀。③ **粒度回到每配方类型一条**（约 333 条），`layout()` 改纯矩阵填充。④ **「或」= 单任务内 OR**（`requireOnlyOneItem=true`，BQ 写死英文 `OR`、每项 48px）；不用任务级 `EnumLogic.OR` 是因为 `OR.getResult=done>0` 会让 `ignored` 任务立刻打勾。⑤ **任务书能写字**：章节 DESC = 文字目录，任务 DESC = 彩色机器清单（`§` 码 + `\n`）。schema 5→**6**、quest ns v3→**v4**。**待实测 5 项**见 CHANGELOG 4.5.0-fix6「待实测」|
+
+|上一轮会话目标（第七段 · 2026-10-27，已被本轮取代，留档）|**machindex 只读取证轮**（任务书 prompt 已给出完整设计：NEI 催化剂表只读扫描 → 电压聚合 → BetterQuesting「机器索引」章节；架构 `machindex/`：client/NeiScanService 隔离 codechicken.nei、server/BqQuestWriter 隔离 betterquesting；缓存 + 稳定 UUID + 进服自愈；零 mixin）。**该轮停在只读取证 5/7**，本轮已把剩余取证补齐并进入实施。|
+|
+|**machindex §3 验证进度（中断于 2026-10-27，用户令停，进度如下）**|**已完成 5/7**：①§3-1 BQ 完成态（**关键结论**：`QuestInstance.update` L134 `tasks.size()<=0` ⇒ 立即 setComplete ⇒ 纯图标 quest 恶性；`ignored` 计入 done ⇒ OptionalRetrieval 在默认 AND 下 1/1 也会自动打勾；**正确组合 = 显式 `setProperty(NativeProps.LOGIC_TASK, EnumLogic.NAND)`** ⇒ NAND(1,1)=false 永不完成——索引卡的正确语义；`TaskRetrieval.requiredItems` 是 public `List<BigItemStack>` 直接 add，consume 默认 false，NBT 键 `requiredItems`（JsonHelper.ItemStackToJson）；`EnumLogic` 无 NOT，NAND/NOR/XNOR 均可，选 NAND）②§3-2 bqapi（字节码：BQReinjector→BQApi.reinject→各家 loader 只 put/更新**自家确定性 UUID** 章节；MixinQuestCommandDefaults 用 `getSaveFilteredChapterUuids` 把自家章节排除在 default-load 清库外；**不删非 bqapi 任务**，共存无冲突，我们靠 JoinRepair 自愈）③§3-3 NEI 键位（`API.addKeyBind("bookmark.add", 30)` ⇒ **默认 B 键**（LWJGL 30），bookmark.favorite=33=F）④§3-4 NEIConfigsLoadedEvent（类在 `codechicken.nei.event`；post 者 = `NEIClientConfig$25 extends Thread`——**后台线程**跑 loadCatalystInfo 等后 post ⇒ 消费端必须 `Minecraft.addScheduledTask` 切主线程 + 催化剂表防御性快照，与任务书一致）⑤§3-5 电压口径（`MTETieredMachineBlock.mTier` public final ✓；`MTEBasicMachine` 有覆写 `maxEUInput()` ✓；`RecipeMap.getAllRecipes()` → `Collection<GTRecipe>` ✓ + `GTRecipe.mEUt` public int ✓ + `MTEMultiBlockBase.getRecipeMap()` ✓——recipe_voltage 最小 mEUt 路径可行）⑥§3-6 BQ 版本 diff（betterquesting/api 79 类 3.8.84↔3.8.89 **零增零删**，QuestingAPI/NativeProps 双版本都在 ⇒ 升 libs 编译兼容预期无破坏；BigItemStack 实际包路径 `betterquesting/api/utils/BigItemStack`、ApiReference 在 `api/factories`——扫描前缀窄了属扫描方法问题，实现时以 2.1 节路径为准）。**未完成 2 项**：§3-7 第三方机器 ItemStack 抽查（需实机，已列入实测清单）；`/bq_admin default load` 实测自愈（需实机）。**下一步（新会话接手）**：① 按上述结论写实现方案（模块结构照任务书 §4，注意 includeUnknown 默认 true→UNKNOWN 单独分卷「机器索引·未知」、命令挂 /ae2qol 子命令、NAND 完成态、章节图标=AE2 ME 控制器）→ 报告用户等「确认方案，开始修改」；② 实施前先把 libs/BetterQuesting 升 3.8.89（从实例 mods 拷 jar 改 dependencies.gradle:46）+ 拷 NEI 2.8.155 进 libs 加 compileOnly；③ **挂起**：4.4.0-fix2 部署（游戏退出后跑 /tmp/deployfix2.ps1：移旧→拷新→拷 D:/下载→SHA 校验 `f38d5d19…`），**服务器现在跑 fix1**（剪贴板 GUI 踢人 bug 未修），提醒用户两端都换 fix2。⚠️ **上一轮挂起**：4.4.0-fix2 已 BUILD SUCCESSFUL（SHA `f38d5d19…`）但**未部署**——游戏当时在运行；部署脚本 `/tmp/deployfix2.ps1` 已备好（移旧→拷新→拷 D:/下载→SHA 校验），等游戏退出后执行；**服务器现在跑 fix1**（剪贴板 GUI 在 fix1 有构建期 NPE 踢人 bug，fix2 才修），务必提醒用户两端都换 fix2。fix2 内容：A 剪贴板 GUI 构建期 NPE（guiData.getPlayer）+ B 镜像可用性（绑定后右击=主仓样板页/潜行右击=镜像设置/GUI 品牌与绑定状态行/tooltip 补交互说明）。CHANGELOG 已记。|
+
+|工具平台|ZCode（GLM-5.3）|
+|模型信息|account:zai-start-plan/GLM-5.3|
+|工作分支|HEAD（积压未提交：4.2.0-fix2→4.4.0-fix1）；本轮追加 **4.4.0-fix1**|
+|启动时间|2026-10-25（第六段：RC2 全量审计 + 修复）|
+|本次会话目标|**RC2 全量审计**（36 条 mixin 对实例 jar 逐 javap 验活 = 36/36 命中；客户端+服务器双端日志审计）→ 修复 P0×3（GUI 工厂双重注册=构造器自带注册、切割刀英文前缀=GT205 zh 语言缺失、产线页 NPE=GenericListSyncHandler 构造期求值 getter）+ P1×1（MixinTextureMap 移入 client 段）。产物 **4.4.0-fix2**（fix1 后用户实测剪贴板 GUI 仍被踢：PatternClipboardGui.buildUI 构建期 getPlayer NPE，与产线页同类坑——改从 guiData.getPlayer() 取；全仓扫描确认无其它构建期违例）。审计结论：RC2 依赖面健康，无签名漂移|
+|模型信息|account:zai-start-plan/GLM-5.3|
+|工作分支|HEAD（4.2.0-fix1 提交后多轮未提交积压：4.2.0-fix2→4.4.0）；本轮产出 **4.4.0**|
+|启动时间|2026-10-25（性能修复 → 剪贴板重做 → 流体标记 → 自适应仓系列 → 镜像新功能，五段连续会话）|
+|本次会话目标|**4.4.0 = 新功能「编程样板输入总成镜像」**（MTE 32112，`ph/MTEBufferedDualInputMirror`，方案 A 继承 PH `DualInputHatchSlave<BufferedDualInputHatch>`，4 处 override，装配机配方，全包 ID 审计）+ **修复 4.3.0 mixin 打包正本缺失**（`src/main/resources/mixins.ae2_qof.json` 才是打包正本，根目录副本不进包；补 MappingSlaveAccess 条目 + resolveHost 防御）。产物 `AE2-QoL-4.4.0.jar`，jar 内已核：镜像类 + mixin 条目齐。**未提交**（4.2.0-fix2 起全部积压待补 commit）。待实测清单见 CHANGELOG 4.4.0「待实测」|
+
+|工具平台|DeepSeek Harness（DSH Web GUI）|
 |模型信息|z-ai/glm-5.3-flash（会话中 DSH 审查器/执行策略两次故障，用户切审批=never 后恢复；ops_bash 在执行策略修复后可用）|
 |工作分支|master；本轮起点 `487a683`（3.35.0-fix23 docs），**未提交未部署**；本轮产出 **4.1.0**（产线管理器第 1 期）|
 |启动时间|2026-10-16（Asia/Shanghai，产线管理器轮：3.35.0-fix23 → 4.1.0）|

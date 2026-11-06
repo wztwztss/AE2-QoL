@@ -29,12 +29,13 @@
     "gt.MixinProcessingLogicSpeed",
     "gt.MixinBaseMetaTileEntityIdMigration",
     "TileDriveMixin",
-    "client.MixinTextureMap",
     "ph.MixinPatternDualInputHatchAccess",
     "ph.MixinPatternDualInputHatchWildcard",
-    "ph.MixinPatternDualInputHatchProgrammingCircuit"
+    "ph.MixinPatternDualInputHatchProgrammingCircuit",
+    "ph.MixinPatternDualInputHatchMappingSlaveAccess"
   ],
   "client": [
+    "client.MixinTextureMap",
     "nei.MixinRecipeHandlerRef",
     "nei.MixinDefaultOverlayHandler",
     "nei.MixinGuiOverlayButton",

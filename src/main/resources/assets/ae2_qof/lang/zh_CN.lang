@@ -170,6 +170,9 @@ ae2_qof.gui.adaptive_terminal.laser_source=激光源仓
 ae2_qof.gui.adaptive_terminal.laser_target=激光靶仓
 ae2_qof.gui.adaptive_terminal.settings.title=自适配设置
 ae2_qof.gui.adaptive_terminal.settings.slots=网络仓室槽位
+ae2_qof.gui.adaptive_terminal.settings.mix_tier_hint=§7提示:GT 机器按「全部能源仓同档」识别电压(配方电压取平均)。
+同一台机器请勿混插:普通能源仓、或绑定其它网络/频率、档位不同的自适应仓,
+否则机器会按低档/平均档工作,双仓升压也会失效。
 ae2_qof.gui.adaptive_terminal.settings.hint=放入64个同类型仓室自动配置。
 ae2_qof.gui.adaptive_terminal.settings.all_slots_required=所有槽位必须放满64个物品。
 ae2_qof.gui.adaptive_terminal.permission.title=权限控制
@@ -321,6 +324,8 @@ ae2_qof.gui.stock_monitor.threshold=目标数量:
 ae2_qof.gui.stock_monitor.mode=模式:
 ae2_qof.gui.stock_monitor.mode_below=低于N开机
 ae2_qof.gui.stock_monitor.mode_above=高于N开机
+ae2_qof.gui.stock_monitor.read_interval=刷新间隔(t):
+ae2_qof.gui.stock_monitor.read_interval_default=(默认)
 ae2_qof.gui.stock_monitor.more=更多检测槽位 (2-9)
 ae2_qof.gui.stock_monitor.more_slots=更多检测槽位
 ae2_qof.gui.stock_monitor.back=返回
@@ -381,6 +386,23 @@ ae2_qof.info.upload_rejected=上传失败：目标机器拒绝了这张样板（
 ae2_qof.info.upload_no_permission=上传失败：你在该 AE 网络上没有注入权限
 
 # ===== 编程样板输入总成 MK.III（ProgrammableHatches 可选依赖；仅装 PH 时注册，见 docs/MOD_MAP.md）=====
+gt.blockmachines.ae2qof.hatch.input.buffered.mirror.name=编程样板输入总成镜像
+ae2_qof.gui.pattern_mirror.title=编程样板输入总成镜像
+ae2_qof.gui.pattern_mirror.bound=已绑定：
+ae2_qof.gui.pattern_mirror.unbound=未绑定：空手拿数据棒左击主仓总成，再右击本镜像
+gt.blockmachines.ae2qof.hatch.input.buffered.mirror.tooltip=§6编程样板输入总成镜像
+§7不持有任何样板，绑定一台「编程样板输入总成」家族主仓后，
+§7把主仓的样板/物料视图原样委托给所在机器（多机共用一台总成）
+§a绑定后：右击 = 打开主仓样板页；潜行+右击 = 本镜像设置
+§8[AE2 QoL + ProgrammableHatches]
+§7不持有任何样板，绑定一台「编程样板输入总成」家族主仓后，
+§7把主仓的样板/物料视图原样委托给所在机器（多机共用一台总成）
+§8[AE2 QoL + ProgrammableHatches]
+gt.blockmachines.ae2qof.hatch.input.buffered.mirror.desc=让多台「支持样板输入总成」的机器共用一台编程样板输入总成
+gt.blockmachines.ae2qof.hatch.input.buffered.mirror.desc.0=绑定：空手拿数据棒左击主仓总成 → 右击本镜像（与 PH 镜像同款）
+gt.blockmachines.ae2qof.hatch.input.buffered.mirror.desc.1=主仓支持 MK.I/II/III、配方表与 Pattern 家族（含本模组 MK.III/MK.IV）
+gt.blockmachines.ae2qof.hatch.input.buffered.mirror.desc.2=未绑定时请装在输入总线位（输入仓位需绑定后才识别）
+gt.blockmachines.ae2qof.hatch.input.buffered.mirror.desc.3=绑定后：右击 = 打开主仓样板页；潜行+右击 = 本镜像设置
 gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.name=编程样板输入总成 MK.III
 gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.tooltip=§6编程样板输入总成 MK.III\n§7144 个样板槽（原版的 4 倍）\n§7每份订单最多 32 物品 + 32 流体\n§724 个彼此隔离的内部缓冲区\n§8[AE2 QoL + ProgrammableHatches]
 gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiii.desc=同时支持物品与流体的 AE 直连样板仓室（扩容版）
@@ -398,24 +420,36 @@ gt.blockmachines.ae2qof.hatch.input.buffered.me.mkiv.desc.2=需要安装 Program
 
 # ===== 样板剪贴板（3.24.0；只在装 PH 时注册）=====
 item.ae2_qof.pattern_clipboard.name=样板剪贴板
-ae2_qof.clipboard.tooltip.0=§d右键空中：切换模式（复制 / 粘贴 / 剪切）—— 图标为紫色，与通配样板「绿」、生成器「青」区分
-ae2_qof.clipboard.tooltip.1=右键机器：按当前模式执行（只支持本模组的 MK.III / MK.IV）
-ae2_qof.clipboard.tooltip.2=潜行 + 右键空中：查看剪贴板状态
+ae2_qof.clipboard.tooltip.0=§d右键空中：打开管理界面（选模式 / 预览 / 清空）—— 图标为紫色，与通配样板「绿」、生成器「青」区分
+ae2_qof.clipboard.tooltip.1=右键样板总成：按当前模式执行（支持 PH 全家族：原版/MK.II/仅物品/超级/从属机，及本模组 MK.III / MK.IV）
+ae2_qof.clipboard.tooltip.2=潜行 + 右键空中：查看剪贴板状态；「粘贴(覆盖)」对非空目标需 10 秒内点两次确认
 ae2_qof.clipboard.mode=模式：
 ae2_qof.clipboard.mode.copy=复制
-ae2_qof.clipboard.mode.paste=粘贴
+ae2_qof.clipboard.mode.paste=粘贴(覆盖)
 ae2_qof.clipboard.mode.cut=剪切
+ae2_qof.clipboard.mode.append=粘贴(追加)
 ae2_qof.clipboard.amount=%s 张 / 共 %s 槽
 ae2_qof.clipboard.copied=已复制
 ae2_qof.clipboard.pasted=已粘贴
 ae2_qof.clipboard.cut=已剪切（源机器已清空）
 ae2_qof.clipboard.empty=剪贴板是空的（先用「复制」或「剪切」从一台样板总成取）
-ae2_qof.clipboard.not_ours=目标不是本模组的样板总成（MK.III / MK.IV）
-ae2_qof.clipboard.bad_mode=模式异常，已忽略
 ae2_qof.clipboard.copy_failed=复制失败：源机器的样板数组异常（详见日志）
 ae2_qof.clipboard.paste_failed=粘贴失败：目标机器的样板数组异常（详见日志）
 ae2_qof.clipboard.status=剪贴板：
 ae2_qof.clipboard.truncated=剪贴板有 %s 张，目标只有 %s 槽，超出部分未搬入
+ae2_qof.clipboard.confirm_overwrite=覆盖粘贴需要确认，10 秒内对同一台机器再右键一次才会执行：
+ae2_qof.clipboard.confirm_will_clear=目标已有 %s 张样板将被清除
+ae2_qof.clipboard.confirm_will_drop=超出目标槽位的 %s 张将被丢弃
+ae2_qof.clipboard.append_none=没有可追加的样板（对应槽位已占用或超出目标槽数）
+ae2_qof.clipboard.appended=已追加 %s 张（跳过已占用 %s 格，丢弃超出 %s 格）
+ae2_qof.gui.pattern_clipboard.title=样板剪贴板
+ae2_qof.gui.pattern_clipboard.prev=< 上一页
+ae2_qof.gui.pattern_clipboard.next=下一页 >
+ae2_qof.gui.pattern_clipboard.clear=清空剪贴板
+ae2_qof.gui.pattern_clipboard.mode_hint.0=复制：读取机器全部样板+倍率到剪贴板，机器不变
+ae2_qof.gui.pattern_clipboard.mode_hint.1=覆盖粘贴：清空目标后写入；目标非空或需截断时要点两次确认
+ae2_qof.gui.pattern_clipboard.mode_hint.2=剪切：复制后清空源机器（写入成功后才清）
+ae2_qof.gui.pattern_clipboard.mode_hint.3=追加粘贴：按槽位号只填目标的空槽，绝不覆盖已有样板
 
 # ===== 库存统计终端（3.20.3：修复“只有两行字”时新增的键）=====
 ae2_qof.terminal.status.bound=§a● 已连接无线网络

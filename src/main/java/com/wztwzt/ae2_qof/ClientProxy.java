@@ -318,7 +318,9 @@ public class ClientProxy extends CommonProxy {
             } catch (Throwable ignored) {}
         } else if (container instanceof ContainerPatternTermEx pte) {
             try {
-                Field outputsField = ContainerPatternTermEx.class.getDeclaredField("outputs");
+                // 4.5.0-fix14：outputs 声明在父类 ContainerPatternTerm（AE2 ContainerPatternTerm.java:76），
+                // getDeclaredField 不查父类——原 Ex 分支必抛 NoSuchFieldException 被吞，输出槽回放静默失效
+                Field outputsField = ContainerPatternTerm.class.getDeclaredField("outputs");
                 outputsField.setAccessible(true);
                 clientOutputs = (IAEStackInventory) outputsField.get(pte);
             } catch (Throwable ignored) {}

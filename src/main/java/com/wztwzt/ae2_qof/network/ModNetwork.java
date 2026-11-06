@@ -231,5 +231,14 @@ public final class ModNetwork {
             com.wztwzt.ae2_qof.proline.network.ProLineResolvePacket.class,
             discriminator++,
             Side.SERVER);
+
+        // 4.5.0-fix5：机器索引结果同步（C2S，分片）。
+        // 专用服务器没有 NEI，扫不出「哪些机器能处理哪个配方」；任务库又是服务端权威，
+        // 所以必须把客户端扫描结果送到服务端写库（仅接受 OP 推送）。
+        CHANNEL.registerMessage(
+            com.wztwzt.ae2_qof.machindex.network.MachIndexSyncPacket.Handler.class,
+            com.wztwzt.ae2_qof.machindex.network.MachIndexSyncPacket.class,
+            discriminator++,
+            Side.SERVER);
     }
 }

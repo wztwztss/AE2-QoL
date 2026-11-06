@@ -226,7 +226,8 @@ public class SwapPatternPacket implements IMessage {
                     return (IAEStackInventory) field.get(pt);
                 }
                 if (container instanceof ContainerPatternTermEx pte) {
-                    Field field = ContainerPatternTermEx.class.getDeclaredField("outputs");
+                    // 4.5.0-fix14：outputs 声明在父类 ContainerPatternTerm，getDeclaredField 不查父类
+                    Field field = ContainerPatternTerm.class.getDeclaredField("outputs");
                     field.setAccessible(true);
                     return (IAEStackInventory) field.get(pte);
                 }

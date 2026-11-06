@@ -164,8 +164,12 @@ public final class ProLinePage {
             .build();
         syncManager.syncValue("proline_lines", lines);
 
+        // 4.4.0-fix1：GenericListSyncHandler 的构造器会**立即调用一次 getter**（MUI2 字节码实证：
+        // 构造内 Supplier.get() → setCache），而 buildPage 阶段 container 还没建立 ⇒ getter 里的
+        // syncManager.getPlayer() 必 NPE（服务器实测每次开终端 12 条 WARN + 列表短暂为空）。
+        // 修复 = getter 内**每次现取 player 并判空**（null 返回空列表），不在构造期解引用。
         GenericListSyncHandler<String> chips = GenericListSyncHandler.<String>builder()
-            .getter(cached(() -> collectBranchChips(syncManager.getPlayer())))
+            .getter(cached(ae2qol$playerAware(syncManager, ProLinePage::collectBranchChips)))
             .serializer(ByteBufUtils::writeUTF8String)
             .deserializer(ByteBufUtils::readUTF8String)
             .immutableCopy()
@@ -173,7 +177,7 @@ public final class ProLinePage {
         syncManager.syncValue("proline_chips", chips);
 
         GenericListSyncHandler<StepRow> steps = GenericListSyncHandler.<StepRow>builder()
-            .getter(cached(() -> collectStepRows(syncManager.getPlayer())))
+            .getter(cached(ae2qol$playerAware(syncManager, ProLinePage::collectStepRows)))
             .serializer(StepRow::write)
             .deserializer(StepRow::read)
             .immutableCopy()
@@ -181,7 +185,7 @@ public final class ProLinePage {
         syncManager.syncValue("proline_steps", steps);
 
         GenericListSyncHandler<String> summary = GenericListSyncHandler.<String>builder()
-            .getter(cached(() -> collectSummaryRows(syncManager.getPlayer())))
+            .getter(cached(ae2qol$playerAware(syncManager, ProLinePage::collectSummaryRows)))
             .serializer(ByteBufUtils::writeUTF8String)
             .deserializer(ByteBufUtils::readUTF8String)
             .immutableCopy()
@@ -302,6 +306,19 @@ public final class ProLinePage {
             key,
             InteractionSyncHandler.class,
             () -> new InteractionSyncHandler().setOnMousePressed(mouse -> action.accept(sm)));
+    }
+
+    /**
+     * 4.4.0-fix1：把「按玩家收集」的收集器包装成惰性判空的 getter。
+     * syncManager 的 getter 调用发生在容器已建立之后（detectAndSendChanges），此时
+     * getPlayer() 可用；仅构造期那次立即求值会拿不到 player —— 返回空列表兜底。
+     */
+    private static <T> java.util.function.Supplier<List<T>> ae2qol$playerAware(PanelSyncManager syncManager,
+        java.util.function.Function<EntityPlayer, List<T>> collector) {
+        return () -> {
+            EntityPlayer p = syncManager.getPlayer();
+            return p == null ? java.util.Collections.<T>emptyList() : collector.apply(p);
+        };
     }
 
     private static <T> java.util.function.Supplier<List<T>> cached(java.util.function.Supplier<List<T>> compute) {

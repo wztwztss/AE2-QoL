@@ -48,6 +48,12 @@ public final class PhIntegration {
     public static com.wztwzt.ae2_qof.item.ItemPatternClipboard patternClipboard;
 
     /**
+     * 「编程样板输入总成镜像」注册成功后的物品堆（4.4.0，创造页用，同 {@link #mkiiiStack}）。
+     * 未装 PH 或注册失败时保持 null。
+     */
+    public static ItemStack mirrorStack;
+
+    /**
      * ProgrammableHatches 的**真实 modid**。来源是它的 {@code @Mod(modid = MyMod.MODID)}：
      * {@code MyMod.MODID = "programmablehatches"}`，与 jar 内 `mcmod.info` 一致。
      *
@@ -63,8 +69,11 @@ public final class PhIntegration {
     /**
      * PH 的关键类。真正决定「这个功能能不能跑」的是**类是否存在**而不是 modid，
      * 所以两道判据都用上：modid 走常规路径，类存在性兜住 modid 变更的情况。
+     * 4.4.0 起镜像功能还需要从仓基类与 Buffered 家族，一并纳入锚点。
      */
-    private static final String PH_ANCHOR_CLASS = "reobf.proghatches.gt.metatileentity.PatternDualInputHatch";
+    private static final String[] PH_ANCHOR_CLASSES = { "reobf.proghatches.gt.metatileentity.PatternDualInputHatch",
+        "reobf.proghatches.gt.metatileentity.BufferedDualInputHatch",
+        "reobf.proghatches.gt.metatileentity.DualInputHatchSlave" };
 
     private PhIntegration() {}
 
@@ -167,11 +176,50 @@ public final class PhIntegration {
                     + MTEPatternCraftingBufferMKIV.GRID_COLS
                     + " 列）");
 
+            // ===== 4.4.0：编程样板输入总成镜像（BufferedDualInputHatch 家族的专用镜像从仓）=====
+            // 继承 PH 的 DualInputHatchSlave：委托面（inventories/watcher/配方处理链/GUI/WAILA/NBT）
+            // 全部继承，仅 override 主仓类型校验/描述/newMetaEntity/结构档位四处，零新增每 tick 逻辑。
+            MTEBufferedDualInputMirror mirror = new MTEBufferedDualInputMirror(
+                MTEBufferedDualInputMirror.MTE_ID,
+                MTEBufferedDualInputMirror.MTE_NAME,
+                "Programmable Crafting Input Mirror");
+            mirrorStack = mirror.getStackForm(1L);
+
+            // 配方（装配机）：编程样板输入总成 MK.I + 数据棒 + 虚拟电路(16) + 灰烬粉×2 + 萤石粉×2。
+            // 基底用 Config.metaTileEntityOffset + Registration.BufferedDualInputHatchOffset 拼
+            // （玩家可改 offset，不能写死 22032——与上面 originalBuffer 同一纪律）。
+            ItemStack bufferedBase = new ItemStack(
+                GregTechAPI.sBlockMachines,
+                1,
+                reobf.proghatches.main.Config.metaTileEntityOffset
+                    + reobf.proghatches.main.registration.Registration.BufferedDualInputHatchOffset);
+            gregtech.api.enums.GTValues.RA.stdBuilder()
+                .itemInputs(
+                    bufferedBase,
+                    ItemList.Tool_DataStick.get(1),
+                    gregtech.api.util.GTUtility.getIntegratedCircuit(16),
+                    gregtech.api.enums.Materials.Ash.getDust(2),
+                    gregtech.api.enums.Materials.Glowstone.getDust(2))
+                .itemOutputs(mirror.getStackForm(1L))
+                .duration(100)
+                .eut(16)
+                .addTo(gregtech.api.recipe.RecipeMaps.assemblerRecipes);
+
+            MyMod.LOG.info(
+                "[AE2QoL] PH 编程样板输入总成镜像已注册：id=" + MTEBufferedDualInputMirror.MTE_ID
+                    + "（绑定 BufferedDualInputHatch 全家族主仓；装配机配方基底 meta="
+                    + bufferedBase.getItemDamage()
+                    + "）");
+
             // ===== 3.24.0：样板剪贴板（144 → 360 搬家 / 备份）=====
             // 物品在这里注册而不是 CommonProxy：它引用了 PH 家族类型，必须与上面两台机器同一套守卫纪律。
             patternClipboard = new com.wztwzt.ae2_qof.item.ItemPatternClipboard();
             patternClipboard.register();
-            MyMod.LOG.info("[AE2QoL] 样板剪贴板已注册：pattern_clipboard（复制 / 粘贴 / 剪切 MK.III·MK.IV 的全部样板）");
+            // 4.3.0-fix1：GUI 工厂必须在**双端**注册（CommonProxy.init 客户端/服务端都会走到这里）。
+            // MUI2 的 OpenGuiPacket 在客户端按工厂名查客户端注册表，漏了客户端注册 = 玩家被踢下线。
+            PatternClipboardGui.init();
+            MyMod.LOG.info(
+                "[AE2QoL] 样板剪贴板已注册：pattern_clipboard（复制 / 覆盖粘贴 / 剪切 / 追加粘贴，支持 PH 全家族样板总成 + MK.III·MK.IV，右键空中开管理 GUI）");
         } catch (Throwable t) {
             // 注册失败不影响本模组其它功能；吞掉会让「物品不出现」变成无痕迹故障，所以必须记日志
             MyMod.LOG.error("[AE2QoL] 编程样板输入总成 MK.III 注册失败（已跳过该物品）", t);
@@ -185,7 +233,9 @@ public final class PhIntegration {
                 return false;
             }
             // initialize=false：只确认类可解析，不触发它的静态初始化
-            Class.forName(PH_ANCHOR_CLASS, false, PhIntegration.class.getClassLoader());
+            for (String anchor : PH_ANCHOR_CLASSES) {
+                Class.forName(anchor, false, PhIntegration.class.getClassLoader());
+            }
             return true;
         } catch (Throwable t) {
             return false;

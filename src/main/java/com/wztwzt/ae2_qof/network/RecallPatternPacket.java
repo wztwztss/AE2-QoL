@@ -230,7 +230,8 @@ public class RecallPatternPacket implements IMessage {
                     return (SlotRestrictedInput) field.get(term);
                 }
                 if (container instanceof appeng.container.implementations.ContainerPatternTermEx termEx) {
-                    Field field = appeng.container.implementations.ContainerPatternTermEx.class
+                    // 4.5.0-fix14：patternSlotOUT 声明在父类 ContainerPatternTerm，getDeclaredField 不查父类
+                    Field field = appeng.container.implementations.ContainerPatternTerm.class
                         .getDeclaredField("patternSlotOUT");
                     field.setAccessible(true);
                     return (SlotRestrictedInput) field.get(termEx);

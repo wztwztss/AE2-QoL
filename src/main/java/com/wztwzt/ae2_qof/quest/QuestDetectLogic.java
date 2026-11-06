@@ -60,6 +60,9 @@ public final class QuestDetectLogic {
     private static final class Cache {
 
         List<IAEItemStack> keys = new ArrayList<>();
+        /** 性能修复版：复用的中间集合（每轮检测 clear 后重填，不再每次 new 2048 项列表+去重集）。 */
+        final List<ItemStack> available = new ArrayList<>();
+        final Set<com.wztwzt.ae2_qof.util.ItemIdentity> availableDedupe = new HashSet<>();
         long at;
     }
 
@@ -98,10 +101,11 @@ public final class QuestDetectLogic {
             Map<UUID, IQuest> quests = db.filterKeys(pInfo.getSharedQuests());
             if (quests.isEmpty()) return;
 
-            List<IAEItemStack> keys = cachedKeys(quests, pInfo.UUID);
+            Cache cache = cachedKeys(quests, pInfo.UUID);
+            List<IAEItemStack> keys = cache.keys;
             if (keys.isEmpty()) return;
 
-            List<ItemStack> available = gatherAvailable(all, keys);
+            List<ItemStack> available = gatherAvailable(all, keys, cache);
             if (available.isEmpty()) return;
 
             ItemStack[] arr = available.toArray(new ItemStack[available.size()]);
@@ -148,12 +152,12 @@ public final class QuestDetectLogic {
         } catch (Throwable ignored) {}
     }
 
-    private static List<IAEItemStack> cachedKeys(Map<UUID, IQuest> quests, UUID playerId) {
+    private static Cache cachedKeys(Map<UUID, IQuest> quests, UUID playerId) {
         long now = System.currentTimeMillis();
         synchronized (CACHES) {
             Cache c = CACHES.get(playerId);
             if (c != null && now - c.at < CACHE_MS) {
-                return c.keys;
+                return c;
             }
             Cache fresh = new Cache();
             fresh.at = now;
@@ -163,7 +167,7 @@ public final class QuestDetectLogic {
                 MyMod.LOG.warn("[QuestDetector] rebuild keys failed: " + t);
             }
             CACHES.put(playerId, fresh);
-            return fresh.keys;
+            return fresh;
         }
     }
 
@@ -208,10 +212,15 @@ public final class QuestDetectLogic {
         }
     }
 
-    /** 按候选键从网络收集实际存在的物品（PERCENT_99 近似忽略 NBT，多给无害由任务侧过滤）。 */
-    private static List<ItemStack> gatherAvailable(IItemList<IAEItemStack> all, List<IAEItemStack> keys) {
-        List<ItemStack> available = new ArrayList<>();
-        Set<com.wztwzt.ae2_qof.util.ItemIdentity> dedupe = new HashSet<>();
+    /**
+     * 按候选键从网络收集实际存在的物品（PERCENT_99 近似忽略 NBT，多给无害由任务侧过滤）。
+     * 性能修复版：输出列表与去重集来自玩家缓存对象，clear 复用，不每轮重建。
+     */
+    private static List<ItemStack> gatherAvailable(IItemList<IAEItemStack> all, List<IAEItemStack> keys, Cache cache) {
+        List<ItemStack> available = cache.available;
+        Set<com.wztwzt.ae2_qof.util.ItemIdentity> dedupe = cache.availableDedupe;
+        available.clear();
+        dedupe.clear();
         for (IAEItemStack key : keys) {
             if (available.size() >= MAX_AVAILABLE) break;
             try {

@@ -442,4 +442,125 @@ public class AdaptiveHatchHelper {
         this.networkFrequency = newFrequency;
         AdaptiveNetworkManager.registerHatch(this);
     }
+
+    // ==================== WAILA 数据通道（4.3.0-fix5） ====================
+
+    /**
+     * WAILA 同步 tag 的键。WAILA 的正确架构是：**服务端** {@code getWailaNBTData} 把动态值写进 tag
+     * （每次请求约 250ms 一次），**客户端** {@code getWailaBody} 读 {@code accessor.getNBTData()}。
+     * 旧实现四个仓只在客户端读自己 TE 的 helper 字段 —— 而 GT 的 MTE 没有 TE 描述包，客户端字段
+     * 只在区块(重)加载时从 NBT 恢复一次 ⇒ WAILA 永远显示旧档/旧余额（用户实测"显示不正常"）。
+     */
+    public static final String WAILA_TIER = "ae2qolWT";
+    public static final String WAILA_AMPS = "ae2qolWA";
+    public static final String WAILA_GRID = "ae2qolWG";
+    /** 电网余额超过 long 上限时的精确十进制串（BigInteger 不进 NBT 主存档，这里按需随查随写）。 */
+    public static final String WAILA_GRID_EXACT = "ae2qolWGX";
+    public static final String WAILA_BOUND = "ae2qolWB";
+
+    /** 服务端：WAILA 请求时写 tag。档位/安培取**实时**配置值，电网余额按当前余额现算。 */
+    public static void writeWailaNBT(net.minecraft.nbt.NBTTagCompound tag, java.util.UUID owner, int tier, int amps) {
+        tag.setInteger(WAILA_TIER, Math.max(0, Math.min(tier, 15)));
+        tag.setInteger(WAILA_AMPS, Math.max(1, amps));
+        tag.setBoolean(WAILA_BOUND, owner != null);
+        if (owner != null) {
+            BigInteger exact = getGridEUBigInteger(owner);
+            long clamped = exact.min(BigInteger.valueOf(Long.MAX_VALUE))
+                .longValue();
+            tag.setLong(WAILA_GRID, clamped);
+            if (exact.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
+                tag.setString(WAILA_GRID_EXACT, exact.toString());
+            }
+        } else {
+            tag.setLong(WAILA_GRID, 0L);
+        }
+    }
+
+    /** 客户端：四个仓共用的 WAILA 行（V/A、Grid、绑定状态），全部读服务端同步 tag。 */
+    public static void appendWailaBody(java.util.List<String> currenttip,
+        mcp.mobius.waila.api.IWailaDataAccessor accessor) {
+        net.minecraft.nbt.NBTTagCompound tag = accessor.getNBTData();
+        int v = Math.max(0, Math.min(tag.getInteger(WAILA_TIER), 15));
+        int a = Math.max(1, tag.getInteger(WAILA_AMPS));
+        String tierName = gregtech.api.util.GTUtility.getColoredTierNameFromTier((byte) v);
+        currenttip.add(
+            net.minecraft.util.EnumChatFormatting.AQUA + "V:"
+                + tierName
+                + " ("
+                + gregtech.api.enums.GTValues.V[v]
+                + ") | A:"
+                + a);
+        currenttip.add(net.minecraft.util.EnumChatFormatting.AQUA + "Grid: " + formatGridEUFromTag(tag));
+        if (tag.getBoolean(WAILA_BOUND)) {
+            currenttip.add(
+                net.minecraft.util.EnumChatFormatting.GREEN
+                    + net.minecraft.util.StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.bound"));
+        }
+    }
+
+    /** Grid 行：超 long 上限用精确串格式化，否则按 long。 */
+    private static String formatGridEUFromTag(net.minecraft.nbt.NBTTagCompound tag) {
+        String exact = tag.hasKey(WAILA_GRID_EXACT) ? tag.getString(WAILA_GRID_EXACT) : null;
+        if (exact != null && !exact.isEmpty()) {
+            try {
+                return formatEUExact(new BigInteger(exact));
+            } catch (NumberFormatException ignored) {}
+        }
+        return formatEU(tag.getLong(WAILA_GRID));
+    }
+
+    /** long 电网余额的 K/M/G/T/P/E 缩写（与各仓 GUI 同口径）。 */
+    public static String formatEU(long eu) {
+        if (eu >= 1_000_000_000_000_000_000L) return String.format("%.2fE", eu / 1_000_000_000_000_000_000.0);
+        if (eu >= 1_000_000_000_000_000L) return String.format("%.2fP", eu / 1_000_000_000_000_000.0);
+        if (eu >= 1_000_000_000_000L) return String.format("%.2fT", eu / 1_000_000_000_000.0);
+        if (eu >= 1_000_000_000L) return String.format("%.2fG", eu / 1_000_000_000.0);
+        if (eu >= 1_000_000L) return String.format("%.2fM", eu / 1_000_000.0);
+        if (eu >= 1_000L) return String.format("%.1fK", eu / 1_000.0);
+        return String.valueOf(eu);
+    }
+
+    /** BigInteger 电网余额的精确缩写（>9.22E 时显示真实值）。 */
+    public static String formatEUExact(BigInteger eu) {
+        BigInteger E = BigInteger.valueOf(1_000_000_000_000_000_000L);
+        BigInteger P = BigInteger.valueOf(1_000_000_000_000_000L);
+        BigInteger T = BigInteger.valueOf(1_000_000_000_000L);
+        BigInteger G = BigInteger.valueOf(1_000_000_000L);
+        BigInteger M = BigInteger.valueOf(1_000_000L);
+        BigInteger K = BigInteger.valueOf(1_000L);
+        BigInteger abs = eu.abs();
+        BigInteger whole;
+        String suffix;
+        double scale;
+        if (abs.compareTo(E) >= 0) {
+            whole = abs.divide(E);
+            suffix = "E";
+            scale = 1e18;
+        } else if (abs.compareTo(P) >= 0) {
+            whole = abs.divide(P);
+            suffix = "P";
+            scale = 1e15;
+        } else if (abs.compareTo(T) >= 0) {
+            whole = abs.divide(T);
+            suffix = "T";
+            scale = 1e12;
+        } else if (abs.compareTo(G) >= 0) {
+            whole = abs.divide(G);
+            suffix = "G";
+            scale = 1e9;
+        } else if (abs.compareTo(M) >= 0) {
+            whole = abs.divide(M);
+            suffix = "M";
+            scale = 1e6;
+        } else if (abs.compareTo(K) >= 0) {
+            whole = abs.divide(K);
+            suffix = "K";
+            scale = 1e3;
+        } else {
+            return (eu.signum() < 0 ? "-" : "") + abs;
+        }
+        double frac = abs.mod(BigInteger.valueOf((long) (scale / 100)))
+            .doubleValue() / (scale / 100);
+        return String.format("%s%.2f%s", eu.signum() < 0 ? "-" : "", whole.doubleValue() + frac / 100.0, suffix);
+    }
 }

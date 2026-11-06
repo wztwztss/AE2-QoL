@@ -213,7 +213,8 @@ public class GuiUploadButtonHandler {
                 field.setAccessible(true);
                 outputSlot = (Slot) field.get(pt);
             } else if (container instanceof ContainerPatternTermEx pte) {
-                Field field = ContainerPatternTermEx.class.getDeclaredField("patternSlotOUT");
+                // 4.5.0-fix14：patternSlotOUT 声明在父类 ContainerPatternTerm，getDeclaredField 不查父类
+                Field field = ContainerPatternTerm.class.getDeclaredField("patternSlotOUT");
                 field.setAccessible(true);
                 outputSlot = (Slot) field.get(pte);
             }

@@ -278,6 +278,12 @@ public class KnifeNameCopyHandler {
      * 单方块机器：去掉"基础""进阶""精英""史诗""终极"前缀和罗马数字，仅保留配方类型名。
      * 如 "基础冲压机床 III" → "冲压机床"
      * 如 "进阶线材轧机 II" → "线材轧机"
+     * <p>
+     * 4.4.0-fix1：前缀剥离**双语化**。GT 5.09.54.205 的 zh_CN.lang 完全没有单方块机器翻译
+     * （en_US 有 604 条 basicmachine.* 键，zh 为 0）⇒ 中文客户端拿到的是英文全名
+     * （"Basic/Advanced Assembling Machine" 等），旧正则只认中文前缀 ⇒ 英文原样保留 =
+     * 用户实测「复制的内容不对」。英文组按 GT 5.09.54 梯度命名惯例覆盖
+     * （Basic/Advanced/Elite/Epic/Ultimate/Extreme/Insane + TLS/HV/LV 电压前缀兜底）。
      */
     private String getGTSingleBlockName(Object mte, TileEntity te) {
         String localizedName = getGTLocalizedName(mte);
@@ -285,9 +291,12 @@ public class KnifeNameCopyHandler {
             localizedName = getGTViaInventoryName(te);
         }
 
-        // 去掉前缀
+        // 去掉前缀（中文组 + 英文组；忽略大小写，仅剥开头一次）
         String cleaned = localizedName;
-        cleaned = cleaned.replaceAll("^(基础|进阶|精英|史诗|终极)", "");
+        cleaned = cleaned.replaceFirst("^(基础|进阶|精英|史诗|终极)", "");
+        cleaned = cleaned.replaceFirst(
+            "^(Basic|Advanced|Elite|Epic|Ultimate|Extreme|Insane|Imprecise|Primitive|MV |HV |EV |IV )\\s*",
+            "");
         // 去掉尾部罗马数字（I, II, III, IV, V, VI, VII, VIII, IX, X, XI, XII）
         cleaned = cleaned.replaceAll("\\s+(I{1,3}|IV|V|VI{0,3}|IX|X|XI{0,3})\\s*$", "");
         // 去掉尾部阿拉伯数字

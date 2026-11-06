@@ -103,15 +103,32 @@ public class MergedTerminalMatrixUploadPacket implements IMessage {
                 }
             }
 
-            // 第二轮：插入第一个有空的矩阵
-            java.lang.reflect.Method insert = matrixClass.getMethod("insertPattern", ItemStack.class);
-            for (IGridNode node : nodes) {
-                Object matrix = matrixClass.cast(node.getMachine());
-                if ((Boolean) insert.invoke(matrix, patternStack)) {
-                    cmt.getMergedEncodedSlot()
-                        .putStack(null);
-                    break;
+            // 第二轮：插入第一个有空的矩阵。
+            // 4.5.0-fix13：insertPattern 声明在 AssemblerMatrix 内部类 CombinationPatternsIInventory 上
+            // （GTNL 源码 AssemblerMatrix.java:1770，rc2/dev-290 javap 同），主类上不存在——
+            // 旧代码直接 matrixClass.getMethod 必抛 NoSuchMethodException 被外层吞掉，上传全程静默失效。
+            // 改走主类 public getPatterns()（dev-290 javap 实证存在）拿内部类实例再插入；
+            // 走到这里说明 GTNL 主类已解析成功，此阶段失败属于 GTNL 内部结构变化，必须留痕。
+            try {
+                java.lang.reflect.Method getPatterns = matrixClass.getMethod("getPatterns");
+                java.lang.reflect.Method insert = null;
+                for (IGridNode node : nodes) {
+                    Object matrix = matrixClass.cast(node.getMachine());
+                    Object inventory = getPatterns.invoke(matrix);
+                    if (inventory == null) continue;
+                    if (insert == null) {
+                        // getPatterns 编译期返回类型是 IInventory 接口，insertPattern 只在运行时子类上
+                        insert = inventory.getClass()
+                            .getMethod("insertPattern", ItemStack.class);
+                    }
+                    if ((Boolean) insert.invoke(inventory, patternStack)) {
+                        cmt.getMergedEncodedSlot()
+                            .putStack(null);
+                        break;
+                    }
                 }
+            } catch (Throwable t) {
+                com.wztwzt.ae2_qof.MyMod.LOG.warn("[AE2QoL] 装配矩阵样板上传失败（GTNL 内部结构变化?）：上传中断，样板保留在终端 OUT 槽", t);
             }
         } catch (Throwable ignored) {}
     }
