@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>AE2-QoL 产线管理器 UI 预览（4.1.0-fix6）</title>
+<style>
+  body{background:#1b1b1b;color:#e0e0e0;font:13px "Microsoft YaHei",sans-serif;margin:0;padding:24px}
+  h1{font-size:18px;margin:0 0 4px;color:#7fd4a0}
+  h2{font-size:14px;margin:28px 0 8px;color:#8ec8ff;border-left:3px solid #8ec8ff;padding-left:8px}
+  .note{color:#999;font-size:12px;margin:4px 0 14px}
+  .wrap{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+  .stage{background:#111;padding:10px;border-radius:4px;box-shadow:0 0 0 1px #333}
+  .cap{font-size:11px;color:#888;margin-top:6px;text-align:center}
+  /* ===== 终端面板 380x252 ===== */
+  .panel{position:relative;width:380px;height:252px;background:#c6c6c6;border:2px solid #373737;
+         box-sizing:content-box;font-family:"Microsoft YaHei",monospace;color:#111}
+  .panel .inner{position:absolute;left:2px;top:2px;right:2px;bottom:2px;background:#d8d8d8}
+  .tabs{position:absolute;left:2px;top:2px;width:40px;display:flex;flex-direction:column;gap:2px;padding-top:2px}
+  .tab{width:40px;height:28px;background:#9a9a9a;border:1px solid #6b6b6b;font-size:10px;
+       display:flex;align-items:center;justify-content:center;color:#eee;text-align:center;line-height:1.1}
+  .tab.on{background:#e6e6e6;color:#111;font-weight:bold}
+  .title{position:absolute;left:42px;top:6px;font-size:11px;color:#222}
+  .content{position:absolute;left:42px;top:26px;width:334px;height:220px}
+  /* 顶栏 */
+  .bar{display:flex;gap:3px;height:18px;margin-bottom:2px;align-items:center}
+  .btn{height:18px;background:linear-gradient(#e9e9e9,#c9c9c9);border:1px solid #8a8a8a;
+       font-size:10px;display:flex;align-items:center;justify-content:center;color:#111;padding:0 6px;
+       box-sizing:border-box;white-space:nowrap}
+  .btn.sm{width:56px}
+  .line-name{margin-left:auto;font-size:11px;color:#1a5c2a;font-weight:bold}
+  /* 产线列表 */
+  .linelist{height:40px;overflow:hidden;margin-bottom:2px}
+  .linerow{height:22px;display:flex;align-items:center;gap:4px;background:#cfcfcf;border:1px solid #a5a5a5;
+           margin-bottom:2px;padding:0 4px;font-size:10px}
+  .linerow.sel{background:#d8ecd8;border-color:#5f9b5f}
+  .dot{color:#2e8b2e}
+  .paused{color:#7a3fa0}
+  /* chips */
+  .chips{display:flex;gap:2px;height:16px;margin-bottom:2px;align-items:center;overflow:hidden}
+  .chip{height:16px;background:linear-gradient(#e9e9e9,#c9c9c9);border:1px solid #8a8a8a;font-size:9px;
+        display:flex;align-items:center;padding:0 5px;white-space:nowrap;box-sizing:border-box}
+  .chip.on{background:#bcdcbc;border-color:#4f8f4f;font-weight:bold}
+  /* 步骤区 */
+  .steps{height:96px;overflow:hidden;position:relative}
+  .seg{height:13px;font-size:9px;color:#0d6b7a;font-weight:bold;display:flex;align-items:center;padding-left:2px}
+  .step{height:22px;display:flex;align-items:center;gap:2px;background:#cfcfcf;border:1px solid #a5a5a5;
+        margin-bottom:0;padding:0 2px;font-size:10px}
+  .ico{width:16px;height:16px;background:#7a7a7a;border:1px solid #555;flex:0 0 16px;font-size:8px;
+       display:flex;align-items:center;justify-content:center;color:#fff}
+  .seq{width:14px;text-align:center;color:#666;font-size:9px;flex:0 0 14px}
+  .sname{width:148px;flex:0 0 148px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .sval{width:82px;flex:0 0 82px;font-size:9px;white-space:nowrap;overflow:hidden}
+  .sdel{width:26px;flex:0 0 26px;text-align:center;color:#c0392b;font-weight:bold}
+  .g{color:#2e8b2e}.y{color:#b8860b}.gr{color:#777}.p{color:#7a3fa0}
+  /* 汇总 */
+  .summ{height:30px;overflow:hidden;border-top:1px solid #a5a5a5;padding-top:1px}
+  .srow{font-size:9px;line-height:10px;color:#222;white-space:nowrap;overflow:hidden}
+  /* 子面板 */
+  .sub{position:relative;width:300px;height:150px;background:#d8d8d8;border:2px solid #373737;
+       box-sizing:content-box;color:#111;font-size:10px}
+  .sub .hd{position:absolute;left:0;top:0;right:0;height:14px;background:#a8a8a8;font-size:10px;
+           display:flex;align-items:center;padding-left:4px;font-weight:bold}
+  .abtn{position:absolute;height:18px;background:linear-gradient(#e9e9e9,#c9c9c9);border:1px solid #8a8a8a;
+        font-size:9px;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
+  .txt{position:absolute;font-size:9px;color:#222;white-space:nowrap;overflow:hidden}
+  .field{position:absolute;height:16px;background:#fff;border:1px solid #7a7a7a;font-size:9px;
+         display:flex;align-items:center;padding-left:3px;color:#333;box-sizing:border-box}
+</style>
+</head>
+<body>
+<h1>AE2-QoL 产线管理器 · UI 预览（4.1.0-fix6）</h1>
+<div class="note">按源码真实像素尺寸 1:1 绘制：终端面板 380×252，页签 40 宽，内容区 334×220，行宽 320（视口 328，留 8px 滚动条）。颜色/文案取自 lang 键与代码常量。</div>
+
+<h2>① 产线页 · 主界面（选中产线 + 分支过滤 + 层级分段）</h2>
+<div class="wrap">
+  <div>
+    <div class="stage">
+      <div class="panel">
+        <div class="inner"></div>
+        <div class="tabs">
+          <div class="tab">发信器</div>
+          <div class="tab">覆盖板</div>
+          <div class="tab on">产线</div>
+        </div>
+        <div class="title">库存统计终端</div>
+        <div class="content">
+          <div class="bar">
+            <div class="btn sm">+新建产线</div>
+            <div class="btn sm">预置产线</div>
+            <div class="btn sm">wiki 导入</div>
+            <div class="btn sm">设置</div>
+            <div class="line-name">▸ 独居石主线</div>
+          </div>
+          <div class="linelist">
+            <div class="linerow"><span class="dot">▸</span> 独居石主线　50步 3/5</div>
+            <div class="linerow sel"><span class="dot">▸</span> <b>独居石主线</b>　50步 3/5</div>
+          </div>
+          <div class="chips">
+            <div class="chip">全部</div>
+            <div class="chip on">不添加富铈混合物粉</div>
+            <div class="chip">添加富铈混合物粉</div>
+            <div class="chip">不添加钐精粉</div>
+          </div>
+          <div class="steps">
+            <div class="seg">▸ 主线</div>
+            <div class="step"><div class="ico">矿</div><div class="seq">1</div>
+              <div class="sname">粉碎的独居石矿石煮解</div>
+              <div class="sval"><span class="g">●</span> 2/3 ×1</div><div class="sdel">✕</div></div>
+            <div class="step"><div class="ico">液</div><div class="seq">2</div>
+              <div class="sname">独居石稀土浊溶液溶解</div>
+              <div class="sval"><span class="g">●</span> 1/1 ×1</div><div class="sdel">✕</div></div>
+            <div class="step"><div class="ico">浆</div><div class="seq">3</div>
+              <div class="sname">稀释独居石稀土泥浆筛选</div>
+              <div class="sval"><span class="y">◐</span> 1/2 ×1</div><div class="sdel">✕</div></div>
+            <div class="seg">▸ 铪锆分支</div>
+            <div class="step"><div class="ico">粉</div><div class="seq">4</div>
+              <div class="sname">铪锆分离</div>
+              <div class="sval"><span class="gr">○</span> 0/2 ×1</div><div class="sdel">✕</div></div>
+            <div class="step"><div class="ico">粉</div><div class="seq">5</div>
+              <div class="sname">氧化锆粉酸洗</div>
+              <div class="sval"><span class="p">⏸</span> 0/1 ×1</div><div class="sdel">✕</div></div>
+          </div>
+          <div class="summ">
+            <div class="srow">独居石主线</div>
+            <div class="srow">输入 粉碎的独居石矿石 累计 1.2K ≈34/h</div>
+            <div class="srow">输出 氧化铪粉 累计 128 ≈4/h</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="cap">主界面：顶栏 4 按钮 · 产线列表 · 分支 chip · 层级分段 · 步骤行 · 汇总</div>
+  </div>
+</div>
+
+<h2>② 步骤小面板（点步骤名打开）</h2>
+<div class="wrap">
+  <div>
+    <div class="stage">
+      <div class="sub">
+        <div class="hd">步骤</div>
+        <div class="txt" style="left:10px;top:20px;width:280px">独居石主线 ▸ 粉碎的独居石矿石煮解</div>
+        <div class="abtn" style="left:10px;top:36px;width:130px">暂停/恢复步骤</div>
+        <div class="abtn" style="left:146px;top:36px;width:140px">写入手持绑定卡</div>
+        <div class="abtn" style="left:10px;top:60px;width:70px">高亮</div>
+        <div class="abtn" style="left:86px;top:60px;width:70px">传送</div>
+        <div class="abtn" style="left:10px;top:120px;width:60px">关闭</div>
+      </div>
+    </div>
+    <div class="cap">300×150：暂停/写卡/高亮/传送/关闭</div>
+  </div>
+
+  <div>
+    <div class="stage">
+      <div class="sub">
+        <div class="hd">设置</div>
+        <div class="txt" style="left:10px;top:26px">名称：</div>
+        <div class="field" style="left:62px;top:24px;width:228px">独居石主线</div>
+        <div class="abtn" style="left:10px;top:48px;width:120px">暂停/恢复整线</div>
+        <div class="abtn" style="left:136px;top:48px;width:150px">删除整线</div>
+        <div class="abtn" style="left:10px;top:120px;width:60px">关闭</div>
+      </div>
+    </div>
+    <div class="cap">产线设置：重命名 / 整线暂停 / 删除（两击确认）</div>
+  </div>
+</div>
+
+<h2>③ 预置产线面板 / 候选机器面板</h2>
+<div class="wrap">
+  <div>
+    <div class="stage">
+      <div class="sub" style="width:320px;height:200px">
+        <div class="hd">预置产线</div>
+        <div class="txt" style="left:8px;top:20px;width:304px">预置产线：点击名称即创建</div>
+        <div class="abtn" style="left:8px;top:36px;width:296px">硅岩</div>
+        <div class="abtn" style="left:8px;top:58px;width:296px">独居石主线</div>
+        <div class="abtn" style="left:8px;top:80px;width:296px">氟碳镧铈主线</div>
+        <div class="abtn" style="left:8px;top:102px;width:296px">钐精粉主线</div>
+        <div class="abtn" style="left:8px;top:124px;width:296px">海晶酸线</div>
+        <div class="abtn" style="left:8px;top:146px;width:296px">湿件线</div>
+        <div class="abtn" style="left:8px;top:168px;width:60px">关闭</div>
+      </div>
+    </div>
+    <div class="cap">320×200：7 条内置产线，点击即建</div>
+  </div>
+
+  <div>
+    <div class="stage">
+      <div class="sub" style="width:320px;height:200px">
+        <div class="hd">候选机器</div>
+        <div class="txt" style="left:8px;top:20px;width:304px">候选机器（团队声明区块内已加载的 GT 多方块）</div>
+        <div class="abtn" style="left:8px;top:36px;width:296px;justify-content:flex-start;padding-left:6px">
+          ✔ MTE 32107　D0 [120,64,-380]</div>
+        <div class="abtn" style="left:8px;top:58px;width:296px;justify-content:flex-start;padding-left:6px">
+          · MTE 1132　D0 [124,64,-380]</div>
+        <div class="abtn" style="left:8px;top:80px;width:296px;justify-content:flex-start;padding-left:6px">
+          · MTE 1172　D0 [130,64,-376]</div>
+        <div class="abtn" style="left:8px;top:168px;width:60px">关闭</div>
+      </div>
+    </div>
+    <div class="cap">✔=已绑 · 点击绑定/解绑 · 50ms 扫描预算</div>
+  </div>
+</div>
+
+<h2>④ wiki 导入面板</h2>
+<div class="wrap">
+  <div>
+    <div class="stage">
+      <div class="sub" style="width:340px;height:170px">
+        <div class="hd">wiki 导入</div>
+        <div class="txt" style="left:8px;top:20px;width:324px">粘贴 huijiwiki RecipeCalculator JSON（≤28KB）</div>
+        <div class="field" style="left:8px;top:36px;width:324px;height:40px;align-items:flex-start;padding-top:3px">
+          {"recipeQuery":[{"name":"粉碎的独居石矿石煮解", ...</div>
+        <div class="abtn" style="left:8px;top:82px;width:90px">解析并创建</div>
+        <div class="txt" style="left:8px;top:106px;width:324px;color:#1a5c2a">已创建【独居石主线】并导入 50 步（未解析 0 项）</div>
+        <div class="abtn" style="left:8px;top:148px;width:60px">关闭</div>
+      </div>
+    </div>
+    <div class="cap">340×170：粘贴 → 解析 → 报告</div>
+  </div>
+</div>
+
+<h2>⑤ 操作流程（点击路径）</h2>
+<div class="stage" style="padding:16px;width:640px">
+<pre style="color:#cfcfcf;font-size:12px;line-height:1.7;margin:0">
+右键库存统计终端
+ └─ 第 3 页「产线」
+     ├─【+新建产线】──→ 建空线（锁定当前终端 AE 网络）
+     ├─【预置产线】───→ 点名称 ──→ 一键建整线（含分支/层级/start）
+     ├─【wiki 导入】──→ 粘贴 JSON ──→ 解析并创建
+     ├─【设置】───────→ 重命名 / 暂停整线 / 删除整线(两击)
+     ├─ 点产线行 ─────→ 选中该线（下方步骤/汇总切换）
+     ├─ 点分支 chip ──→ 过滤步骤视图
+     ├─ 点步骤名 ─────→ 步骤小面板：暂停 / 写绑定卡 / 高亮 / 传送
+     ├─ 点步骤数值区 ─→ 候选机器面板：点机器=绑定，再点=解绑
+     └─ 点步骤 ✕ ─────→ 删除该步骤
+</pre>
+</div>
+
+<div class="note" style="margin-top:24px">
+状态徽标：<span class="g">●</span> 在产　<span class="y">◐</span> 部分在产　<span class="gr">○</span> 空闲　<span class="p">⏸</span> 已暂停（真停机）<br>
+行宽预算：16(图标)+14(序号)+148(名称)+82(状态)+26(删除)+5×2(间距)=296 ≤ 320 ✓ 右侧永不被裁
+</div>
+</body>
+</html>

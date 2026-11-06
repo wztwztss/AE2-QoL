@@ -1,0 +1,105 @@
+{
+  "task": "AE2-QoL 产线检测全流程自主测试-修复闭环",
+  "goal_id": "goal-8614eb92-fbc9-4524-ac7e-e4901a1be96a",
+  "updated": "2026-10-18T21:50:00+08:00",
+  "phase": "ROUND-1 测试中（世界已进入，终端产线页已打开）",
+  "build_under_test": {
+    "version": "4.1.0-fix7",
+    "jar": "【自制】AE2-QoL-4.1.0-fix7.jar",
+    "sha256": "3d97d1e7a33786e14af94c17448b46c71821db3bc697ab9046bd41df89cda77c",
+    "deployed": ["实例 mods", "D:\\下载"]
+  },
+  "environment": {
+    "instance": "E:/wzt/MC/PL genmulu/GT_New_Horizons_2.9.0-beta-3_Java_17-26/.minecraft",
+    "log": ".minecraft/logs/fml-client-latest.log",
+    "save": "world",
+    "game_pid": 22572,
+    "window_id": 525346,
+    "window_rect": "L=67 T=63 R=1347 B=863 (1280x800)",
+    "client_rect": "1265x762 at screen (74,93)",
+    "screenshot_size": "1568x981 (scale 1.225)",
+    "coord_formula": "screen_x = 67 + sx/1.225 ; screen_y = 63 + sy/1.225  (FROZEN, verified by cursor readback)"
+  },
+  "confirmed_findings": [
+    {
+      "id": "B12",
+      "severity": "CRITICAL",
+      "title": "预置建线只建出空壳：16 条产线全部 steps=0，且占满团队上限 16 条",
+      "evidence": "解析 saves/world/data/AE2QoLProductionLines.dat（gzip+NBT，Schema=2）：Lines=16，逐条 steps=0 machines=0 in=0 out=0 cumu=0 net=''；名称为 产线928/产线81/独居石主线×6/氟碳镧铈主线×2/钐精粉主线/海晶酸线/湿件线×2/异氚线。而终端 UI 只显示 2 条（产线928、产线81）",
+      "root_cause_chain": "① GUI 建线（+新建产线 或 预置产线）成功创建 ProductionLine 壳；② ProLinePresets.create / runImport 随后循环 appendStep(...) 导入步骤，但步骤全未落地 => 每条线 0 步；③ 反复尝试累积 16 条空壳 => 命中 MAX_LINES_PER_TEAM=16，之后所有建线被拒（聊天栏两次『产线数量已达上限（16 条/团队）』）；④ 全链路无任何日志（B10）=> 现象表现为『点了没反应』",
+      "impact": "产线功能在这个存档里完全不可用：既建不了新线，也看不到已有线；空壳线还会永久占用团队配额",
+      "status": "待修（需先定位 appendStep 失败原因）",
+      "secondary_finding": "B12b：终端产线列表只渲染 2/16 条（UI 与存档不一致），疑与 B9（chips getter 在 build 期 NPE）或 LineRow 列表快照有关，待查"
+    },
+    {
+      "id": "B9",
+      "severity": "HIGH",
+      "title": "产线页 build 期调用 syncManager.getPlayer() 抛 NPE（违反自订硬纪律#1）",
+      "evidence": "fml-client-latest.log:21:25:02 共 6 次 '产线页数据收集异常' NPE；堆栈 ProLinePage.lambda$buildPage$5(ProLinePage.java:167) <- ProLinePage$1.get(:318/307) <- GenericListSyncHandler.<init>(:28) <- Builder.build(:115) <- ProLinePage.buildPage(:171)",
+      "root_cause": "chips 列表的 getter 写成 cached(() -> collectBranchChips(syncManager.getPlayer()))；GenericListSyncHandler 构造期立即拉取 getter，此时 ModularContainer 尚未建立 => getPlayer() NPE。被 cached() 的 catch 吞成 WARN",
+      "impact": "分支 chip 列表恒为空（或依赖 1s 缓存后偶发恢复）；日志刷异常",
+      "status": "待修",
+      "fix_direction": "getter 内不得出现 syncManager.getPlayer()；改用与其它 collector 一致的安全取玩家方式或延后求值"
+    },
+    {
+      "id": "B10",
+      "severity": "HIGH",
+      "title": "createLine 团队门失败时只发聊天、不写日志，导致现象不可判定",
+      "evidence": "点击 [+新建产线] 与 [预置产线->独居石主线] 后，日志中 'grep 新建产线' 零命中、'已从预置创建' 零命中；ProLineManager.createLine:87-95 的失败分支只调 send()（addChatMessage 不进日志）",
+      "root_cause": "ProLineManager 的失败分支 send() 无 LOG；成功分支也有 log 但未触发 => 命中失败分支",
+      "impact": "无法区分『点击未送达』与『创建被业务规则拒绝』，本次排障反复误判为『没点上』",
+      "status": "待修",
+      "fix_direction": "send() 同时打 LOG.info/warn（含原因码）"
+    },
+    {
+      "id": "B11",
+      "severity": "HIGH",
+      "title": "建线被拒的真实原因：团队产线数已达上限 16 条（MAX_LINES_PER_TEAM）",
+      "evidence": "聊天栏历史截图（2026-10-18 22:1x）出现两次 '[产线] 产线数量已达上限（16 条/团队）'；同时确认 '当前游戏模式：创造模式'、'本地游戏已在端口 25565 上开启'（作弊生效）",
+      "root_cause": "ProductionLine.MAX_LINES_PER_TEAM=16，ProLineManager.createLine:98-108 按 ownerUuid 统计同 owner 产线数，达到上限即 send(max_lines) 并 return null",
+      "impact": "终端产线页只显示 2 条（产线928/产线81），但实际团队已有 16 条占满上限 => 任何新建/预置建线都被静默拒绝（除聊天外无任何日志），排障时极易误判成『点击没生效』",
+      "status": "已确认（非代码 bug，是测试环境状态；但暴露 B10 日志缺失）",
+      "resolution": "清理测试存档里的旧产线后复测"
+    },
+    {
+      "id": "B10",
+      "severity": "HIGH",
+      "title": "建线被业务规则拒绝时只发聊天、不写日志，导致现象完全不可判定",
+      "evidence": "点击 [+新建产线] / [预置产线→独居石主线] 后日志零命中；而聊天栏有『产线数量已达上限』。ProLineManager.createLine 的 3 个失败分支（needs_su / needs_team / max_lines）与 appendStep 的 max_steps 都只调 send()，无 LOG",
+      "root_cause": "send() 只做 addChatMessage，不进日志文件",
+      "impact": "本次排障为此反复误判为『GUI 点击未送达』，浪费多轮；用户侧也看不到失败原因（聊天栏还被 MUI2 面板遮挡 => UX1）",
+      "status": "待修",
+      "fix_direction": "ProLineManager.send() 增加 LOG.info/warn（含原因），或在各拒绝分支补日志"
+    },
+    {
+      "id": "UX1",
+      "severity": "MEDIUM",
+      "title": "反人类：MUI2 界面吞掉键盘，且面板遮挡聊天栏",
+      "evidence": "在终端界面内按 T 无效（无法查看聊天）；ESC 亦未关闭面板；建线失败的提示只出现在被遮挡的聊天栏",
+      "impact": "玩家看不到失败原因；自动化取证受阻",
+      "status": "记录",
+      "fix_direction": "关键失败提示除聊天外应落到界面内可见位置（如导入面板那样的 feedback 行）"
+    }
+  ],
+  "cases": {
+    "C1_enter_world": "PASS（截图+日志 Loading dimension / 名称解析索引 34685 物品 + 1628 流体）",
+    "C2_open_terminal_proline_page": "PASS（截图：三页签+产线页，中文正常，无候选面板按钮=B8生效）",
+    "C3_name_resolver": "PARTIAL（131/249 raw 名已匹配并发包，待验证回填落库）",
+    "C4_create_line_new": "BLOCKED(待证团队门)",
+    "C5_create_line_preset": "BLOCKED(同上)",
+    "C6_sampling": "未开始",
+    "C7_reload_persistence": "未开始",
+    "C8_binder_open": "未开始"
+  },
+  "session_facts": {
+    "cheat_enabled": true,
+    "creative_enabled": true,
+    "note": "用户于 2026-10-18 22:0x 手动开启作弊模式与创造模式；LAN 已开放。命令通道可用。重启游戏后失效。"
+  },
+  "next_step": "① 用命令 /team 建队并复测建线（验证 B11）；② 修复 B9/B10 需另次构建；③ 继续 C6-C8",
+  "safety_valve": {
+    "max_rounds": 30,
+    "same_bug_max_fix": 3,
+    "stall_timeout_min": 10
+  }
+}
