@@ -881,44 +881,116 @@ public abstract class MixinCraftingCPUCluster {
                     boolean smartPushed = false;
                     if (useMulti && effectiveN > 1) {
                         // ---- 智能倍增（PH）：pushPatternMulti 一次接受 N 轮 ----
-                        final int[] result = ((IMultiplePatternPushable) medium)
-                            .pushPatternMulti(details, craftingInventory, effectiveN);
-                        final int accepted = result == null || result.length == 0 ? 0 : Math.max(0, result[0]);
-                        if (accepted > 0) {
-                            this.somethingChanged = true;
-                            this.remainingOperations--;
-                            pushedPattern = true;
-                            smartPushed = true;
-
-                            eg.extractAEPower(sum * accepted, Actionable.MODULATE, PowerMultiplier.CONFIG);
-                            ae2qol$accountSmartPush(accepted, details, craftingEntry.getValue());
-
-                            craftingInventory = null; // hand off complete!
-                            didPatternCraft = true;
-                            this.markDirty();
-
-                            // PH 仓的 isBusy() 可能同样不可靠，添加冷却防止每 tick 重复推送。
-                            knownBusyMediums.add(medium);
-
-                            executedTasks += accepted;
-                            ae2qol$taskValueAdd(craftingEntry.getValue(), -accepted);
-                            if (ae2qol$taskValue(craftingEntry.getValue()) <= 0) {
-                                // This craftingEntry is done.
-                                break doWhileCraftingLoop;
+                        // Why（4.5.0-fix17，对齐 PH 官方 MixinMultiPattern 调用契约）：
+                        // PH 仓 pushPatternMulti 内部会按 maxTodo 把 (accepted-1) 轮材料直接
+                        // "计数物化"进缓冲（BufferedDualInputHatch.addExtraRuns），其前提是调用方
+                        // 已从 CPU 侧扣住这部分材料并在推送后归还差额。旧实现只传 1× 材料且不
+                        // 预提取 ⇒ (accepted-1) 轮材料凭空进入机器缓冲、CPU 却按 accepted 轮
+                        // 记账 ⇒ 材料/产物守恒破坏（大订单放大：下单 100 发 200 份材料）。
+                        // 现改为：推送前预提取至多 (effectiveN-1) 轮的额外材料；accepted 返回后
+                        // 把 (预提取量 - (accepted-1)×单轮用量) injectItems 归还；accepted==0
+                        // （含回退单轮）时全额归还。
+                        final int slotCount = craftingInventory.getSizeInventory();
+                        final IAEStack<?>[] extraStack = new IAEStack<?>[slotCount];
+                        final long[] extraPer = new long[slotCount];
+                        int maxtry = effectiveN - 1;
+                        for (int x = 0; x < slotCount; x++) {
+                            final IAEStack<?> slotInput = craftingInventory.getAEStackInSlot(x);
+                            if (slotInput == null) {
+                                continue;
                             }
-
-                            if (this.remainingOperations == 0) {
-                                if (mediumListCheck != null) parallelismProvider.put(details, mediumListCheck);
-                                return;
+                            final long perRound = slotInput.getStackSize();
+                            if (perRound <= 0) {
+                                continue;
                             }
-
-                            final List<IAEStack<?>> condensedInputsForRetry = getExpandedCondensedInputs(details, cc);
-                            if (condensedInputsForRetry == null) {
-                                throw new IllegalStateException("Input-only pattern expansion failed");
-                            }
-                            if (!this.canCraft(details, condensedInputsForRetry)) {
-                                sr = ScheduledReason.NOT_ENOUGH_INGREDIENTS;
+                            // 只探取需要的量（(effectiveN-1)×单轮用量），比官方 Long.MAX_VALUE
+                            // 探针更保守：网络瞬时变化更小，归还逻辑等价。
+                            long wantExtra = (long) (effectiveN - 1) * perRound;
+                            @SuppressWarnings("rawtypes")
+                            final IAEStack probe = slotInput.copy()
+                                .setStackSize(wantExtra);
+                            @SuppressWarnings("rawtypes")
+                            final IAEStack gotRaw = this.inventory.extractItems(probe, Actionable.MODULATE);
+                            final IAEStack<?> got = gotRaw;
+                            if (got == null || got.getStackSize() <= 0) {
+                                maxtry = 0;
                                 break;
+                            }
+                            extraStack[x] = got;
+                            extraPer[x] = perRound;
+                            this.postChange(got, this.machineSrc);
+                            final long rounds = got.getStackSize() / perRound;
+                            if (rounds < maxtry) {
+                                maxtry = (int) Math.min(rounds, (long) (Integer.MAX_VALUE - 1));
+                            }
+                        }
+
+                        if (maxtry < 1) {
+                            // 额外材料不足一轮：归还已扣部分，本轮退回单轮推送。
+                            for (int x = 0; x < slotCount; x++) {
+                                if (extraStack[x] != null) {
+                                    this.inventory.injectItems(extraStack[x], Actionable.MODULATE);
+                                    extraStack[x] = null;
+                                }
+                            }
+                            useMulti = false;
+                            effectiveN = 1;
+                        } else {
+                            effectiveN = maxtry + 1;
+                            final int[] result = ((IMultiplePatternPushable) medium)
+                                .pushPatternMulti(details, craftingInventory, effectiveN);
+                            final int accepted = result == null || result.length == 0 ? 0 : Math.max(0, result[0]);
+                            // 归还差额：预提取量 - 实际消耗（accepted-1 轮）。
+                            final long consumeRounds = Math.max(0, accepted - 1);
+                            for (int x = 0; x < slotCount; x++) {
+                                final IAEStack<?> got = extraStack[x];
+                                if (got == null) {
+                                    continue;
+                                }
+                                final long back = got.getStackSize() - consumeRounds * extraPer[x];
+                                if (back > 0) {
+                                    this.inventory
+                                        .injectItems(got.copy()
+                                            .setStackSize(back), Actionable.MODULATE);
+                                }
+                                extraStack[x] = null;
+                            }
+                            if (accepted > 0) {
+                                this.somethingChanged = true;
+                                this.remainingOperations--;
+                                pushedPattern = true;
+                                smartPushed = true;
+
+                                eg.extractAEPower(sum * accepted, Actionable.MODULATE, PowerMultiplier.CONFIG);
+                                ae2qol$accountSmartPush(accepted, details, craftingEntry.getValue());
+
+                                craftingInventory = null; // hand off complete!
+                                didPatternCraft = true;
+                                this.markDirty();
+
+                                // PH 仓的 isBusy() 可能同样不可靠，添加冷却防止每 tick 重复推送。
+                                knownBusyMediums.add(medium);
+
+                                executedTasks += accepted;
+                                ae2qol$taskValueAdd(craftingEntry.getValue(), -accepted);
+                                if (ae2qol$taskValue(craftingEntry.getValue()) <= 0) {
+                                    // This craftingEntry is done.
+                                    break doWhileCraftingLoop;
+                                }
+
+                                if (this.remainingOperations == 0) {
+                                    if (mediumListCheck != null) parallelismProvider.put(details, mediumListCheck);
+                                    return;
+                                }
+
+                                final List<IAEStack<?>> condensedInputsForRetry = getExpandedCondensedInputs(details, cc);
+                                if (condensedInputsForRetry == null) {
+                                    throw new IllegalStateException("Input-only pattern expansion failed");
+                                }
+                                if (!this.canCraft(details, condensedInputsForRetry)) {
+                                    sr = ScheduledReason.NOT_ENOUGH_INGREDIENTS;
+                                    break;
+                                }
                             }
                         }
                     }

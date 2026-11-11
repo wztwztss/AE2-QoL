@@ -118,6 +118,7 @@
 | 自适应电网管理器（仓注册/迁移） | `src/main/java/com/wztwzt/ae2_qof/hatch/adaptive/AdaptiveNetworkManager.java` |
 | 自适应电网网络（4类型仓集合） | `src/main/java/com/wztwzt/ae2_qof/hatch/adaptive/AdaptiveNetwork.java` |
 | 自适应仓组合Helper（绑定/NBT/电压） | `src/main/java/com/wztwzt/ae2_qof/hatch/adaptive/AdaptiveHatchHelper.java` |
+| 跨模组档位适配器（**4.5.0-fix16**） | `src/main/java/com/wztwzt/ae2_qof/hatch/adaptive/AdaptiveTierAdapter.java` | `effectiveTier(hatch, site)` = `(byte) clamp(getInputTier(), 0, 15)`；把第三方机器里 `getfield mTier:B` 的读取换成动态档位。每个站点首次调用打一行 INFO「电压档位适配生效」，**这行日志就是"mixin 是否命中"的唯一判据**（`require=0` 静默跳过时不报错） |
 | 仓类型枚举（DYNAMO/ENERGY/LASER_SOURCE/LASER_TARGET） | `src/main/java/com/wztwzt/ae2_qof/hatch/adaptive/HatchType.java` |
 | 无线能源输入终端 | `src/main/java/com/wztwzt/ae2_qof/hatch/wireless/WirelessEnergyInputTerminal.java` |
 | 无线能源输出终端（ID 32110 / 输入 32111） | `src/main/java/com/wztwzt/ae2_qof/hatch/wireless/WirelessEnergyOutputTerminal.java` |
@@ -127,7 +128,7 @@
 
 ## Mixin列表
 
-> 与 `src/main/resources/mixins.ae2_qof.json`（及根目录同内容副本）逐条对齐：通用段 13 条、client 段 16 条，共 **29 条**。
+> 与 `src/main/resources/mixins.ae2_qof.json`（及根目录同内容副本）逐条对齐：通用段 30 条、client 段 17 条，共 **47 条**。
 > 配置列统一为 `mixins.ae2_qof.json`，下表不再重复填写。
 
 | 段 | Mixin类路径 | 目标类 | 注入点/备注 |
@@ -144,6 +145,9 @@
 | 通用 | `mixin/gt/MixinProcessingLogicSpeed.java` | `gregtech.api.recipe.ProcessingLogic`（GT 跨配方并行） | threads>1 时接管 `process()`；EU/时长/输出合并的饱和判界 |
 | 通用 | `mixin/gt/MixinBaseMetaTileEntityIdMigration.java` | `gregtech.api.metatileentity.BaseMetaTileEntity` | `setInitialValuesAsNBT` HEAD，`remap=false`；**fix48** 旧存档 32100/32101 → 32106/32107（仅当 NBT 带 `ae2qol*` 专属键） |
 | 通用 | `mixin/TileDriveMixin.java` | `appeng.tile.storage.TileDrive` | `updateState` RETURN，`remap=false`；Infinity Cell 挂载 cellsMap |
+| 通用 | `mixin/compat/MixinTSTIntegratedAssemblyMatrix.java` | TST `com.Nxer.TwistSpaceTechnology.common.machine.TST_IntegratedAssemblyMatrix` | **4.5.0-fix16**：`checkEnergyLimitation()` 内两处 `getfield MTEHatchEnergy/mTier:B`（偏移 33/75）改为 `AdaptiveTierAdapter.effectiveTier(...)`。原因：该方法把 `mTier` 缓存成 `maxVoltage`，自适应仓接高等级电网仍按 IV 封顶配方。`remap=false`、`require=0` |
+| 通用 | `mixin/compat/MixinGtnlEnergyHatchTier.java` | GTNL `com.science.gtnl.common.machine.multiMachineBase.MultiMachineBase` | **4.5.0-fix16**：`checkEnergyHatchTier()` 两处 `mTier` 读取（偏移 33/75）同上；`mEnergyHatchTier` 被 `PrecisionAssembler`/`EngravingLaserPlant`/`IntegratedAssemblyFacility`/`NanoAssemblerMarkL`/`EdenGarden`/`GrandAssemblyLine` 当电压上限 |
+| 通用 | `mixin/compat/MixinOthLargeCircuitAssemblerTier.java` | OTH(123) `com.newmaa.othtech.machine.OTELargeCircuitAssembler` | **4.5.0-fix16**：`checkEnergyHatchTier()` 两处 `mTier` 读取（偏移 36/83）同上；结果进 `machineLimitedVoltage` → `logic.setAvailableVoltage` |
 | 通用 | `mixin/client/MixinTextureMap.java` | `net.minecraft.client.renderer.texture.TextureMap` | **每次** `registerIcons()`/`func_110573_f()` 尾部补注册 25 张 v7 路径（仅 `textureType == 0`）；图标回填 `ModTextures.registerBaked` |
 | client | `mixin/nei/MixinRecipeHandlerRef.java` | `codechicken.nei.recipe.RecipeHandlerRef` | `fillCraftingGrid`/`craft` HEAD，`remap=false`；捕获配方 handler 名与 GT 配方池 ID |
 | client | `mixin/nei/MixinDefaultOverlayHandler.java` | `codechicken.nei.recipe.DefaultOverlayHandler` | `transferRecipe` HEAD(cancellable) + `@Overwrite assignIngredients`；合并终端 NEI 直传 + 书签优先级 |

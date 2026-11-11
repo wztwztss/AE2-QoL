@@ -1,3 +1,136 @@
+# 4.5.0-fix17 —— 智能倍增 PH 介质多轮推送守恒修复（对齐 PH 官方调用契约）（2026-11-11）
+
+## 现象（用户实测）
+
+下单 100 个最终产物时，前一层的中间材料被发布 200 份（且产物只有 100 个），多余材料最终回流到 AE 网络存储；小订单一般正常，大订单（触发智能倍增的大 N 推送）明显。
+
+## 根因（行号级证据）
+
+介质为 **ProgrammableHatches 双口输入仓**（`IMultiplePatternPushable`，走 `pushPatternMulti`）时：
+
+- PH 官方调用契约（reference_src_2.9.0/programmablehatches-v0.2.0p38-beta 的
+  `reobf/proghatches/main/mixin/mixins/part2/MixinMultiPattern.java`）：调用 `pushPatternMulti` **之前**，
+  调用方必须先从 CPU 的 `MECraftingInventory` 预提取多轮材料（`nums[x]`），推送后在 finally 里
+  `injectItems(nums[x] - used×单轮用量)` 归还差额。因为 PH 仓内部
+  `PatternDualInputHatch.pushPatternMulti`（:1278-1347）→ `BufferedDualInputHatch.addExtraRuns`（:1620）
+  会把 `(todo)×单轮用量` **直接计数物化进缓冲**（`stackSizeInc`），其物理背书就是调用方扣住的那些材料。
+- AE2-QoL 旧实现（`MixinCraftingCPUCluster.ae2qol$executeCraftingSmart` 的 useMulti 分支）：
+  `craftingInventory` 只装 1× 单轮材料（`target = useMulti ? slotInput : slotInput×N`），**从不预提取
+  第 2..N 轮材料，也不归还差额**，但按 `accepted` 轮记账（taskValue 扣 accepted、waitingFor 记
+  accepted×产出、扣 accepted 轮电费）。
+- ⇒ `(accepted-1)×单轮用量` 的材料凭空物化进机器缓冲，CPU 侧却按 accepted 轮扣账：
+  机器做掉缓冲里的材料后，多出来的量回流 AE 存储（现象吻合）；大订单 accepted 可达数千，放大明显；
+  小订单 accepted 常为 1，守恒恰好成立。
+
+## 修复
+
+`MixinCraftingCPUCluster.java` useMulti 分支重写为与官方契约同构：
+
+1. 推送前：从 `craftingInventory` 逐槽（`getAEStackInSlot`）预提取 `(effectiveN-1)×单轮用量` 的额外材料
+   （`this.inventory.extractItems(MODULATE)` + `postChange`），并按实际取到的轮数把 `maxtry` 收缩；
+2. 额外材料不足一轮时全额归还并退回单轮推送（`useMulti=false, effectiveN=1`，走原版逐轮记账）；
+3. `pushPatternMulti` 返回 `accepted` 后：`injectItems(预提取量 - (accepted-1)×单轮用量)` 归还差额
+   （`accepted==0` 时全额归还）；
+4. 记账语义不变：按 `accepted` 轮记账、扣 `sum×accepted` 功率。
+
+与官方探针（`Long.MAX_VALUE`）不同，本实现只探取需要的量（更保守，归还逻辑等价）。
+
+## 影响面与风险
+
+- 仅影响 PH 双口输入仓 + 智能倍增开启 + 非 craftable 样板的路径；ME 接口 / GT 样板输入机路径不变；
+- 智能倍增关闭、craftable 样板、假合成模式均不走该分支，零影响；
+- 失败模式：预提取失败时退回单轮推送（性能退化为逐轮，不破坏守恒），不会静默丢料。
+
+## 验证结果
+
+- 构建通过（`gradlew build --offline`，BUILD SUCCESSFUL，版本 4.5.0-fix17）；
+- 产物核对：`build/libs/AE2-QoL-4.5.0-fix17.jar`（SHA256 前 16 位 `ce3e3eff20d37632`），
+  `MixinCraftingCPUCluster.class` 字节码含 1 处 `pushPatternMulti` 调用、2 处 `injectItems` 归还调用；
+- 待游戏内验收：① 下单 100 个（1出1样板、PH 双口仓）材料发布量恰为 100 份、无回流；
+  ② 大订单（如 45869）总量守恒；③ 智能倍增关闭后行为与旧版一致。
+
+# 4.5.0-fix16 —— 第三方多方块「按注册档封顶电压」的适配（TST / GTNL / OTH-123）（2026-11-11）
+
+## 现象（用户实测）
+
+对照实例 `GT New Horizons 2.9.0_migrated`（GT 5.09.54.265，AE2-QoL 4.5.0-fix15）：
+
+- TST「集成装配矩阵」（`TST_IntegratedAssemblyMatrix`，配方池显示名就叫「巨型装配线」）等部分机器，
+  能源仓换成自适应仓、接高等级电网后**仍只按 IV 判电压**，高电压配方一律「电压不足」；
+- 同一批机器里有的显示正常、有的恒为 IV；换成同档位普通能源仓则正常；
+- 用户原话：「针对tst，gtnl，gtnotgood，123机器等进行特殊适配一下，部分机器还是无法识别到正确的电压，
+  就比如tst的大型装配线（功能是装配线，名字不确定是不是这个），先探查原因然后修复」。
+
+## 根因（字节码实证）
+
+1. **仓侧无法修**：实例 `gregtech-5.09.54.265.jar` 的 `MTETieredMachineBlock` 里档位是
+   `public final byte mTier`（`javap -p` 实证）。`final` ⇒ 自适应仓**没有任何合法手段**让这个字段
+   跟着电网档位走；fix15 只能覆写 `getInputTier()` 这类 accessor。
+2. **机器侧直接读字段**：下列模组在自己的多方块里读 `MTEHatchEnergy.mTier` / `MTEHatch.mTier`
+   （均为 `javap -p -c` 的 `getfield`），并在**结构检查时**把结果缓存成电压上限：
+
+| 模组 / 类 | 方法 | 字节码偏移 | 缓存字段 | 用途 |
+|---|---|---|---|---|
+| TST `TST_IntegratedAssemblyMatrix` | `checkEnergyLimitation()` | 33 / 75 | `maxVoltage` | `validateRecipe` 里 `recipe.mEUt > maxVoltage → insufficientVoltage` |
+| GTNL `MultiMachineBase` | `checkEnergyHatchTier()` | 33 / 75 | `mEnergyHatchTier`（`setupParameters()`） | `getMachineVoltageLimit()`；被 `PrecisionAssembler`、`EngravingLaserPlant`、`IntegratedAssemblyFacility`、`NanoAssemblerMarkL`、`EdenGarden`、`GrandAssemblyLine` 直接当电压上限 |
+| OTH(123) `OTELargeCircuitAssembler` | `checkEnergyHatchTier()` | 36 / 83 | `machineLimitedVoltage` | `setProcessingLogicPower()` 的 `logic.setAvailableVoltage(...)` |
+
+3. 普通能源仓不受影响：它们的 `getInputTier()` 就是 `mTier`，读数相同。
+
+## 改动（只改读取来源，**不动对方 jar 文件**）
+
+- 新增 `hatch/adaptive/AdaptiveTierAdapter.java`：`effectiveTier(hatch, site)` = `(byte) clamp(getInputTier(), 0, 15)`，
+  每个站点首次被调用打一行 INFO（判据见下）。
+- 新增三个跨模组 Mixin（`mixin/compat/`），用 `@Redirect` 只替换那两处 `getfield ...mTier:B`：
+  - `MixinTSTIntegratedAssemblyMatrix` → `checkEnergyLimitation`
+  - `MixinGtnlEnergyHatchTier` → `MultiMachineBase.checkEnergyHatchTier`
+  - `MixinOthLargeCircuitAssemblerTier` → `OTELargeCircuitAssembler.checkEnergyHatchTier`
+  - 三者均 `remap = false`、`require = 0`（对方未装/换版本时静默跳过而不崩游戏）。
+- `mixins.ae2_qof.json` 注册三项；`dependencies.gradle` 新增两条 `compileOnly(libs/TwistSpaceTechnology-0.8.1.jar)`、
+  `compileOnly(libs/OTHTechnology-2.2.1.1.jar)`——Mixin 注解处理器要求目标类在编译期可解析，
+  字符串 `targets` 也逃不掉这层校验（第一版构建就报 `Mixin target ... could not be found`）。
+  两个 jar 直接从实例 `mods/` 拷入 `libs/`，不做 `rfg.deobf`，不改编译基线语义。
+- 版本号 `4.5.0-fix16`。
+
+## 刻意不动（附理由）
+
+- **结构 / 玻璃等级校验**：`TST_BigBroArray.checkMachine`、`TST_SwelegfyrBlastFurnace.checkMachine`、
+  `TST_IndistinctTentacle.checkMachine`、`TST_CoreDeviceOfHumanPowerGenerationFacility.checkMachine`、
+  `MM_BottledChaos.checkMachineMM`、GTNL `checkGlassEnergyHatchRequirement` / `PrecisionAssembler.checkHatch` /
+  `LargeEssentiaGenerator.checkHatch`、OTH `OTEMegaEBFGTpp.checkMachine`。
+  这些是放置门槛（仓档 ≤ 玻璃/外壳档），应随**注册档**走；跟电网档位联动会导致换档后放不进/拆不出仓。
+- **GTNotGood**：对实例 `gtnotgood-1.7.0.jar` 的 2188 个类做了 `javap -p -c` 全量扫描，
+  命中的 `mTier` 读点都在无线仓配方目录 / 命名（`EasyWirelessRecipes.supports`、`findWiredLaser`、
+  `NativeWirelessMultiAmpMixin`），**没有**「用能源仓 mTier 当电压上限」的读点 ⇒ 本轮无改动。
+
+## 风险与限制
+
+- **命中依赖对方符号**：TST 0.8.1 / GTNL dev-290 / OTH 2.2.1.1 的方法名与字段描述符。上游改名后
+  `require = 0` 会静默跳过（不崩游戏），**判据是启动日志里没有**「`[AE2QoL] 电压档位适配生效：…`」这一行。
+- **缓存时机未改**：三个缓存字段仍只在结构检查时写入。若电网档位是在机器成型**之后**才升高，
+  需让机器重检结构（重成型/拆装仓）才刷新；GT 的 `mUpdated → mUpdate = 50` 只在特定事件触发。
+  本轮刻意不注入"强制重检"，避免把结构检查变成每 tick 行为。
+- **不改源码重构建的原因**：本地 `Twist-Space-Technology-Mod-main` / `GT-Not-Leisure-dev-290` /
+  `2.9.0\CallmeSHaobe__123Technology-2.2.0.1` 三份源码都比实例 jar **旧**
+  （类集对比：TST 少 98 个类、GTNL 少 20 个、OTH 少 50 个），重构建等于给模组降级，
+  与「尽量贴合游戏内模组的文件版本」冲突。
+
+## 验证
+
+- 构建：`BUILD SUCCESSFUL`；产物 `build/libs/AE2-QoL-4.5.0-fix16.jar`（2,190,567 B）。
+- 产物核对：`javap -v` 显示三个 Mixin 的 `@Redirect` 目标描述符
+  `Lgregtech/api/metatileentity/implementations/MTEHatchEnergy;mTier:B`、
+  `Lgregtech/api/metatileentity/implementations/MTEHatch;mTier:B` 与实例 jar 的 `getfield` 偏移一一对应。
+- 实机待测（用户手动替换 jar 后）：
+  1. TST 集成装配矩阵挂自适应仓、接 UEV 网络：配方 EU/t 上限应为 `V[10]`，不再报「电压不足」；
+  2. 日志出现 `[AE2QoL] 电压档位适配生效：TST/集成装配矩阵 改为读取 getInputTier()，首个读数 tier=10`；
+  3. 同机器换普通 IV 仓 ⇒ 仍按 `V[5]` 封顶（行为与旧版一致，证明没有放宽普通仓）；
+  4. GTNL：`PrecisionAssembler` / `EngravingLaserPlant` / `IntegratedAssemblyFacility` / `NanoAssemblerMarkL` /
+     `EdenGarden` / `GrandAssemblyLine` 的可用电压是否跟随电网档位；
+  5. OTH 大型电路装配机：并行逻辑可用电压是否跟随。
+
+---
+
 # 4.5.0-fix15 —— 自适应仓「档位接口」与「供电接口」不同源（2026-11-06）
 
 ## 现象（用户实测）

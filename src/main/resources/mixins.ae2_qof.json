@@ -32,7 +32,10 @@
     "ph.MixinPatternDualInputHatchAccess",
     "ph.MixinPatternDualInputHatchWildcard",
     "ph.MixinPatternDualInputHatchProgrammingCircuit",
-    "ph.MixinPatternDualInputHatchMappingSlaveAccess"
+    "ph.MixinPatternDualInputHatchMappingSlaveAccess",
+    "compat.MixinTSTIntegratedAssemblyMatrix",
+    "compat.MixinGtnlEnergyHatchTier",
+    "compat.MixinOthLargeCircuitAssemblerTier"
   ],
   "client": [
     "client.MixinTextureMap",

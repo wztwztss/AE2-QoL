@@ -7,6 +7,38 @@
 
 ---
 
+## 本轮：2026-11-11 · 4.5.0-fix17（智能倍增 PH 介质守恒修复）
+
+|项目|内容|
+|---|---|
+|工具平台 / 模型|DeepSeek Harness（DSH Web GUI）· DeepSeek-V4.1-Flash|
+|任务（用户原话）|「智能倍增的功能，怀疑有发配问题，比如我下单 100 个物品后，他会发布 200 个份材料…（大订单出问题、小订单正常；怀疑只有这个功能改了发配逻辑）」|
+|用户拍板|方案 A（对齐 PH 官方调用契约：预提取多轮材料 + 差额归还）；版本 4.5.0-fix17；连续工作不等逐点确认|
+|根因（行号级证据）|PH 双口输入仓 `pushPatternMulti` 的官方调用契约（MixinMultiPattern）：推送前必须从 CPU 预提取多轮材料、推送后归还差额——因 PH 仓 `addExtraRuns` 会把 (todo)×单轮用量直接计数物化进缓冲，物理背书靠调用方扣料。旧实现只传 1× 且不预提取 ⇒ (accepted-1) 轮材料凭空物化、CPU 按 accepted 轮扣账 ⇒ 多余材料回流 AE 存储（用户现象吻合），大订单放大|
+|改动|`mixin/ae/MixinCraftingCPUCluster.java` useMulti 分支重写：推送前从 craftingInventory 逐槽预提取 (effectiveN-1)×单轮用量（extractItems+postChange），maxtry 按实际取到轮数收缩；不足一轮全额归还退回单轮；accepted 后 injectItems 归还 (预提取量-(accepted-1)×单轮)；记账/功率语义不变。版本 `4.5.0-fix17`|
+|刻意不动|ME 接口 / GT 样板输入机路径、功率钳制、push_cap、accountSmartPush 记账逻辑|
+|产物|`build/libs/AE2-QoL-4.5.0-fix17.jar`（SHA256 前 16 位 `ce3e3eff20d37632`），字节码核对：pushPatternMulti 调用 1 处、injectItems 归还 2 处|
+|待实测|① 下单 100（1出1、PH 双口仓）材料发布恰 100 份、无回流；② 大订单（45869）总量守恒；③ 关闭智能倍增后与旧版一致|
+|已知限制|预提取失败退回单轮推送（性能退化但不破坏守恒）；额外材料不足一轮时该 tick 倍增不生效|
+
+---
+
+## 上一轮：2026-11-11 · 4.5.0-fix16（跨模组档位适配）
+
+|项目|内容|
+|---|---|
+|工具平台 / 模型|DeepSeek Harness（DSH Web GUI）· DeepSeek-V4.1-Flash|
+|任务（用户原话）|「针对tst，gtnl，gtnotgood，123机器等进行特殊适配一下，部分机器还是无法识别到正确的电压，就比如tst的大型装配线（功能是装配线，名字不确定是不是这个），先探查原因然后修复…尽量贴合游戏内模组的文件版本，差异过大的去GitHub下载最新的源码替换掉老源码。」|
+|节奏约定变更|用户 2026-11-11 取消「一轮只改一个点并等确认」：改为连续工作，需要拍板时用提问工具直接问|
+|结论（字节码实证）|`MTETieredMachineBlock.mTier` 是 `public final byte`（GT 5.09.54.265）⇒ 仓侧无法让字段跟随电网档位；TST `TST_IntegratedAssemblyMatrix.checkEnergyLimitation()`、GTNL `MultiMachineBase.checkEnergyHatchTier()`、OTH `OTELargeCircuitAssembler.checkEnergyHatchTier()` 直接读该字段，并在结构检查时缓存成电压上限|
+|改动|新增 `hatch/adaptive/AdaptiveTierAdapter.java` + 3 个 `mixin/compat/*`（`@Redirect` GETFIELD → `getInputTier()`，`remap=false`/`require=0`）；`mixins.ae2_qof.json` 注册 3 条；`dependencies.gradle` 加 TST/OTH 两条 `compileOnly`（jar 已拷入 `libs/`）；版本 `4.5.0-fix16`|
+|刻意不动|结构 / 玻璃等级校验（TST 多台 `checkMachine`、GTNL `checkGlassEnergyHatchRequirement`/`PrecisionAssembler.checkHatch`、OTH `OTEMegaEBFGTpp.checkMachine`）；GTNotGood 全量字节码扫描无电压封顶读点|
+|产物|`build/libs/AE2-QoL-4.5.0-fix16.jar`（2,190,567 B，SHA256 `22fadca5…b6e2`），已拷 `D:/下载/需更新模组/`（hash 一致）|
+|待实测|① TST 集成装配矩阵接 UEV 网络不再「电压不足」；② 日志出现「电压档位适配生效」；③ 普通 IV 仓行为不变；④ GTNL 六台机器 / OTH 大型电路装配机电压跟随|
+|已知限制|缓存只在结构检查时写；电网档位在成型后升高需重成型才刷新。上游改类名/方法名时 `require=0` 静默跳过，靠日志判据|
+
+---
+
 ## 一、当前会话元数据（每次启动工作必须先填写）
 
 |项目|填写内容|

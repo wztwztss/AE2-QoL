@@ -64,6 +64,12 @@ dependencies {
     // 编译基线必须同步换 jar，否则 mixin 按旧包名编译、运行时永不命中（静默失效）。
     // 判定口径以实机 jar 为准（参考源码 v0.2.3 比实机构建还旧）。
     compileOnly(project.files("libs/sciencenotleisure-dev-290.jar"))
+    // 4.5.0-fix16：跨模组「档位读取」适配需要把 TST / OTH(123Technology) 的目标类放进编译期，
+    // 否则 Mixin 注解处理器报 "Mixin target ... could not be found"（即便用字符串 targets 也逃不掉这层校验）。
+    // 两个 jar 直接取自实例 mods（TwistSpaceTechnology-0.8.1.jar、OTHTechnology-2.2.1.1.jar），
+    // 只用于解析类名/字段；不加 rfg.deobf，避免改变编译基线。
+    compileOnly(project.files("libs/TwistSpaceTechnology-0.8.1.jar"))
+    compileOnly(project.files("libs/OTHTechnology-2.2.1.1.jar"))
     compileOnly(project.files("libs/gregtech-5.09.54.205.jar"))
     compileOnly(project.files("libs/modularui2-2.3.92-1.7.10.jar"))
     // 3.24.x：GTNH-MUI（com.gtnewhorizons.modularui）。整窗移植 WildcardPatternforGTNH 的界面需要它（对方也是
