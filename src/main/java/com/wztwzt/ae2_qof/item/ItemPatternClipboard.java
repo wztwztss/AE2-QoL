@@ -149,6 +149,18 @@ public class ItemPatternClipboard extends Item {
 
     // ===================== 复制 / 剪切 =====================
 
+    /** 4.5.0-fix18：事件拦截层入口（PatternClipboardInterceptHandler 调用）。 */
+    public static void doCopyIntercepted(EntityPlayer player, PatternHostAdapter.Host host, int x, int y, int z,
+        boolean clearSource) {
+        doCopy(player, host, x, y, z, clearSource);
+    }
+
+    /** 4.5.0-fix18：事件拦截层入口（PatternClipboardInterceptHandler 调用）。 */
+    public static void doPasteIntercepted(EntityPlayer player, PatternHostAdapter.Host host, int x, int y, int z,
+        boolean overwrite) {
+        doPaste(player, host, x, y, z, overwrite);
+    }
+
     private static void doCopy(EntityPlayer player, PatternHostAdapter.Host host, int x, int y, int z,
         boolean clearSource) {
         ItemStack[] patterns = host.readPatterns();
@@ -441,6 +453,7 @@ public class ItemPatternClipboard extends Item {
         tooltip.add(EnumChatFormatting.GRAY + t(LANG + "tooltip.0"));
         tooltip.add(EnumChatFormatting.GRAY + t(LANG + "tooltip.1"));
         tooltip.add(EnumChatFormatting.GRAY + t(LANG + "tooltip.2"));
+        tooltip.add(EnumChatFormatting.GRAY + t(LANG + "tooltip.3"));
         tooltip
             .add(EnumChatFormatting.DARK_GRAY + t(LANG + "mode") + EnumChatFormatting.WHITE + modeName(getMode(stack)));
     }

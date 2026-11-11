@@ -423,6 +423,7 @@ item.ae2_qof.pattern_clipboard.name=Pattern Clipboard
 ae2_qof.clipboard.tooltip.0=§dRight-click air: open the manager GUI (mode / preview / clear) — purple icon, distinct from Wild (green) and Generator (cyan)
 ae2_qof.clipboard.tooltip.1=Right-click a pattern buffer: run the current mode (whole PH family: original/MK.II/items-only/Super/MappingSlave, plus our MK.III / MK.IV)
 ae2_qof.clipboard.tooltip.2=Sneak + right-click air: clipboard status; overwrite-paste onto a non-empty target needs a second click within 10s
+ae2_qof.clipboard.tooltip.3=§7Sneak + right-click a pattern buffer = open machine GUI (since 4.5.0-fix18 plain right-click runs the clipboard)
 ae2_qof.clipboard.mode=Mode: 
 ae2_qof.clipboard.mode.copy=Copy
 ae2_qof.clipboard.mode.paste=Paste (overwrite)
@@ -450,6 +451,9 @@ ae2_qof.gui.pattern_clipboard.mode_hint.0=Copy: read all patterns + multipliers 
 ae2_qof.gui.pattern_clipboard.mode_hint.1=Overwrite paste: clears the target first; needs double-click confirm if target is non-empty or truncating
 ae2_qof.gui.pattern_clipboard.mode_hint.2=Cut: copy, then clear the source (only after the clipboard write succeeded)
 ae2_qof.gui.pattern_clipboard.mode_hint.3=Append paste: fill only empty slots by index; never overwrites
+ae2_qof.gui.pattern_buffer.dismantle=Dismantle
+ae2_qof.gui.pattern_buffer.dismantle.hint=Click twice within 10s: machine + all patterns + custom name move into your inventory as one item (full NBT)
+ae2_qof.gui.pattern_buffer.dismantle.confirm=[AE2 QoL] Click Dismantle again within 10 seconds to confirm.
 
 # ===== Stock Monitor Terminal (keys added in 3.20.3) =====
 ae2_qof.terminal.status.bound=§a● Bound to wireless network

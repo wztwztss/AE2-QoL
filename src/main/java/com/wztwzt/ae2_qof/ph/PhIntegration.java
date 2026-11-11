@@ -218,6 +218,8 @@ public final class PhIntegration {
             // 4.3.0-fix1：GUI 工厂必须在**双端**注册（CommonProxy.init 客户端/服务端都会走到这里）。
             // MUI2 的 OpenGuiPacket 在客户端按工厂名查客户端注册表，漏了客户端注册 = 玩家被踢下线。
             PatternClipboardGui.init();
+            // 4.5.0-fix18：非潜行右键总成时剪贴板优先（事件层拦截，修复「服务器上 GUI 能开但操作无效」）。
+            PatternClipboardInterceptHandler.register();
             MyMod.LOG.info(
                 "[AE2QoL] 样板剪贴板已注册：pattern_clipboard（复制 / 覆盖粘贴 / 剪切 / 追加粘贴，支持 PH 全家族样板总成 + MK.III·MK.IV，右键空中开管理 GUI）");
         } catch (Throwable t) {

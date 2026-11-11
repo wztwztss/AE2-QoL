@@ -419,6 +419,24 @@ public class MTEPatternCraftingBufferMKIV extends PatternDualInputHatch {
                 .asWidget()
                 .pos(3 + 18, 3 + 32 + 18 + 18 + 4 + 4));
 
+        // 4.5.0-fix18：拆除按钮（与 MK.III 同构）：机器本体含完整 NBT + 内部样板 + 改名一起进背包。
+        page3.child(
+            new com.cleanroommc.modularui.widgets.ButtonWidget<>().size(16, 16)
+                .background(GTGuiTextures.BUTTON_STANDARD, GTGuiTextures.OVERLAY_BUTTON_CROSS)
+                .tooltip(
+                    t -> t.addLine(IKey.lang("ae2_qof.gui.pattern_buffer.dismantle"))
+                        .addLine(IKey.lang("ae2_qof.gui.pattern_buffer.dismantle.hint")))
+                .syncHandler(
+                    PatternBufferWidgets.makeDismantleHandler(
+                        syncManager,
+                        "dismantle",
+                        () -> getBaseMetaTileEntity()))
+            .pos(3, 3 + 32 + 18 + 18 + 4 + 22));
+        page3.child(
+            IKey.lang("ae2_qof.gui.pattern_buffer.dismantle")
+                .asWidget()
+                .pos(3 + 18, 3 + 32 + 18 + 18 + 4 + 22 + 4));
+
         // 样板槽与显示槽共用一个 handler：MUI2 的 ItemStackHandler(ItemStack[]) 内部是
         // Arrays.asList(pattern)（已按 2.3.88 字节码核对），所以写入会直接落到 PH 的 pattern 数组上。
         ItemStackHandler sharedHandler = new ItemStackHandler(acc.getAe2qolPattern());

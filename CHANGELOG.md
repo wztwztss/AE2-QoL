@@ -1,3 +1,164 @@
+# 4.5.0-fix18 —— 服务器剪贴板失效修复 + 样板总成拆除按钮（2026-11-11）
+
+## 需求（用户原话）
+
+「修复样板剪切复制工具在服务器上失效，然后再把我们目前的样板总成 mk3 和 mk4，增加一个拆除按钮
+点击后直接拆除保留完整的 nbt，保留内部样板，保留总成改名情况，并直接显示改名的名字」
+
+用户拍板：① 触发方式 = **反转优先级**（非潜行右键 = 剪贴板，潜行右键 = 机器 GUI）；
+② 拦截范围 = **整个总成家族**（PH 原版 / MK.II / Only Items / Super / MappingSlave / 本模组 MK.III / MK.IV）；
+③ 两件事共用 fix18。
+
+---
+
+## A. 剪贴板在服务器失效
+
+### 现象
+
+单机能用（GUI 能开、按钮有反应），**服务器上**对着样板总成右键毫无效果；GUI 打开的是机器自己的界面。
+
+### 根因（行号级证据，双端都已核对）
+
+1. **GT 先吃掉了右键**：`gregtech/common/blocks/BlockMachines.java:402-440`
+   `onBlockActivated` → 对非潜行右键直接 `return gtTE.onRightclick(...)`（返回 true）。
+   `Item.onItemUse` 只在 block 返回 **false** 时才被 `ItemInWorldManager` 调用，而该 false 仅出现在
+   「潜行 + 手持非工具物品」（`BlockMachines:411-420`）。
+   ⇒ **非潜行右键永远到不了 `ItemPatternClipboard.onItemUse`**，剪贴板自然是死的。
+2. **客户端不能取消事件**：`Minecraft.java:1528-1529`（build/rfg 反编译源码）——
+   `boolean result = !ForgeEventFactory.onPlayerInteract(...).isCanceled();`
+   `if (result && playerController.onPlayerRightClick(...))`；
+   而发往服务端的 C08 包是在 `PlayerControllerMP.onPlayerRightClick`（:389）里发出的。
+   ⇒ **客户端一 cancel，包就不发**，服务端事件也不触发，业务永远不执行。
+3. **服务端取消才是正确语义**：`ItemInWorldManager.activateBlockOrUseItem`（:386-390）——
+   事件被取消后直接 `return false`，既不走 `item.onItemUseFirst`，也不走 `block.onBlockActivated`
+   （即 GT 的机器 GUI）。
+
+### 修复
+
+新增 `ph/PatternClipboardInterceptHandler`（注册于 `MinecraftForge.EVENT_BUS`，`PlayerInteractEvent`
+由 `ForgeEventFactory#onPlayerInteract` 投递到该总线，**不是** FML 总线）：
+
+| 场景 | 行为 |
+|---|---|
+| 非潜行 + 手持剪贴板 + 右键总成家族 | **仅服务端** `setCanceled(true)`，按剪贴板当前模式执行复制/剪切/粘贴（覆盖/追加）；GT GUI 与 `item.onItemUse` 都不执行 |
+| 潜行 + 手持剪贴板 + 右键总成家族 | **仅服务端** `setCanceled(true)`，手动分发 `IMetaTileEntity#onRightclick` → 机器自己的 GUI（含 PH 切割刀改名、文件/锯子开关） |
+| 客户端（两种场景） | **什么都不做**（不 cancel）—— 保证 C08 包正常发出 |
+
+潜行分支为何要自己分发：`BaseMetaTileEntity#onRightclick`（:1643）末尾是
+`if (!aPlayer.isSneaking() && hasValidMetaTileEntity()) return mMetaTileEntity.onRightclick(...)`
+—— GT **故意**在潜行时不分发给 MTE；且上游 `ItemInWorldManager:405-412` 在「潜行 + 手持物品」时
+已把 `useBlock` 置 false，`block.onBlockActivated` 根本不会被调用。两条路都断，必须显式调 MTE 层。
+
+**权限守卫（自查发现并修复）**：手动调 MTE 层会跳过 GT 原有的两道校验，因此潜行分支补
+`if (!gtTE.isUseableByPlayer(player)) { setCanceled; return; }`。`BaseMetaTileEntity.isUseableByPlayer`
+（:896-903）本就聚合了 `canAccessData` / `playerOwnsThis(..,false)` / `mTickTimer` / 距离 64 /
+`mMetaTileEntity.isAccessAllowed`，等价于 `BlockMachines:432-437` + `BaseMetaTileEntity:1417`
+那两处判断，直接复用不重复实现策略。**不补的话「非主人手持剪贴板 + 潜行右键」能打开别人私有机器的 GUI。**
+
+`ItemPatternClipboard` 新增两个 public 包装 `doCopyIntercepted` / `doPasteIntercepted`
+（薄委托，逻辑仍走原私有方法，不改既有语义）。剪贴板 tooltip 增第 4 行说明新交互语义（中英）。
+
+### 影响面与风险
+
+- 只影响「手持剪贴板 + 右键样板总成」；手持其它物品、或目标不是总成家族时**完全不接管**；
+- 客户端预测性执行不会造成重复：`ItemPatternClipboard.onItemUse`/`onItemRightClick` 均有
+  `if (world.isRemote) return` 守卫（:115 / :130）；
+- GT 的 GUI 打开入口 `CommonMetaTileEntity#openGui`（:630）内部有 `NetworkUtils.isClient` 守卫，
+  客户端不会误开；
+- 取消事件的副作用：服务端会给客户端回一个 `S23PacketBlockChange`（`ItemInWorldManager:389`），
+  仅用于纠正客户端预测，属正常行为。
+
+---
+
+## B. MK.III / MK.IV 拆除按钮
+
+### 语义（用户拍板）
+
+点一下「拆除」→ 机器**整机**（完整 NBT）+ **内部样板**（保留在机器里，不掉出来）+ **改名**
+一起进玩家背包，作为**一个物品**；物品名直接显示改名后的名字。
+
+### 实现
+
+新增 `ph/PatternBufferDismantle`（服务端逻辑）+ `ph/PatternBufferWidgets`（按钮 handler）。
+MK.III / MK.IV 的批量页各加一个 16×16 拆除按钮（`GTGuiTextures.BUTTON_STANDARD` +
+`OVERLAY_BUTTON_CROSS`）+ 一行标签。
+
+**执行顺序（每一步都为防数据丢失/防复制而设计）**：
+
+1. `te.writeToNBT(teNbt)` —— 序列化完整 TE NBT；
+2. `new ItemStack(GregTechAPI.sBlockMachines, 1, gtTE.getMetaTileID())` + `setTagCompound(teNbt)`；
+3. `stampCustomName` —— 把 `ICustomNameObject.getCustomName()` 写进原版 `display.Name`
+   （GT `ItemMachines.getItemStackDisplayName`（:231-241）只返回模板 `getLocalName()`、不读 NBT，
+   但 `ItemStack.getDisplayName()` → `getTooltip` 首行会优先读 `display.Name`，见 vanilla
+   `ItemStack.java:520-535` 与 `:587-595`）；
+4. `player.inventory.addItemStackToInventory(machine)` —— **先入包**，背包满就直接中止、
+   世界里的机器与样板原样不动（零丢失）；
+5. `clearTileContents` —— 清空 `pattern[]`（PH `onBlockDestroyed` 的 refundAll 来源）与
+   `getRealInventory()`（GT `breakBlock` 的掉落来源），这两份内容此时已在物品 NBT 里；
+6. `setBlockToAir` + `removeTileEntity`；
+7. `player.closeScreen()`。
+
+**为什么 NBT 能原样复活**（对称性已字节码核对）：
+`BaseMetaTileEntity.writeToNBT`（:127-158）→ `saveMetaTileNBT`（`CommonBaseMetaTileEntity.java:302-331`，
+写 `Inventory` + `getMetaTileEntity().saveNBTData(aNBT)`）→ MK.III/MK.IV 的 `PatternSlotPersistence.save`
+与 PH 的 `patternSlots`/`customName`/`multiplier`；放置侧 `ItemMachines.placeBlockAt`（:254-320）
+对物品 NBT 调 `setInitialValuesAsNBT` → `loadMetaTileNBT`，与存档读档同一条路径、幂等。
+cover NBT 也已核对对称（`writeCoverNBT` :138 ↔ `readCoverNBT` :205）。
+
+**二次确认**：10 秒内点两次才真拆（MK.IV 有 360 格样板，误点代价高），第一次点击发黄字提示。
+
+**线程安全（自查发现并修复）**：MUI2 的 C2S 回调（`PacketSyncHandler.executeServer`
+→ `ModularNetworkSide.receivePacket` → `ReceiveWidgetUpdate` → `readOnServer`）注册在
+`SimpleNetworkWrapper` 的裸 handler 上，**没有主线程归队**（MUI2 的
+`SimpleNetworkWrapperMixin` 只插 handler 槽位、不切线程，已用字节码核对）。拆除要做
+`setBlockToAir` / `removeTileEntity` / 写玩家背包，都是主线程独占操作（本项目 2026-09 踩过
+同类坑：AE2 包处理器在 Netty 线程里改容器无效），因此改为经
+`com.gtnewhorizon.gtnhlib.util.ServerThreadUtil.addScheduledTask` 归队主线程执行，
+并在任务内**重新校验** TE（排队的若干 tick 里玩家可能已手动拆掉该机器，含维度校验）；
+PH 自带的 refund 按钮没归队（它只动 NBT + spawn 实体，影响面小），我们动的是方块级生命周期，
+不能照抄。
+
+### 影响面与风险
+
+- 仅 MK.III / MK.IV 开放（`PatternBufferDismantle` 内类型判定），PH 原版仓不受影响；
+- 拆除后 ME 代理随 `invalidate()`（`BaseMetaTileEntity:911-920` → `invalidateAE`）正常摘除，
+  重放机器时重新注册，不会留幽灵样板；
+- 未调用 GT 的 `onBlockDestroyed` 退款路径（有意）：样板要留在 NBT 里，`pattern[]` 在清方块前已置空；
+- 若玩家背包已满：`addItemStackToInventory` 返回 false → 直接中止，**不消耗任何东西**。
+
+---
+
+## 验证
+
+- `compileJava --offline` 通过；`build --offline -x spotless*` **BUILD SUCCESSFUL**；
+- 产物 `build/libs/AE2-QoL-4.5.0-fix18.jar`，`jar tf` 核对新增三类的 class 都已入包；
+  解包 `javap -p` 核对：`PatternBufferDismantle.dismantle/clearTileContents/displayName/stampCustomName`、
+  `PatternClipboardInterceptHandler.register/onRightClickBlock`、
+  `PatternBufferWidgets.makeDismantleHandler` 签名与源码一致，未被重混淆；
+- MUI2 API 已按实际编译用的 `libs/modularui2-2.3.92-1.7.10.jar` 用 `javap` 核对：
+  `PanelSyncManager.isClient()/getPlayer()`、`ISyncRegistrar.syncValue(String, SyncHandler)`、
+  `ButtonWidget.syncHandler(...)` → `InteractionSyncHandler.onMousePressed` 均存在且签名匹配。
+
+## 待实测（用户端）
+
+1. **服务器**（专服，非单机）：非潜行右键样板总成 → 剪贴板按模式执行（复制/剪切/粘贴覆盖/追加）；
+2. 服务器：潜行右键同一台 → 正常打开机器 GUI（含 PH 切割刀改名、文件/锯子开关）；
+3. 手持其它物品右键总成 → 行为与升级前完全一致（不被接管）；
+4. MK.III 放若干样板 + 改名 → 点「拆除」两次 → 背包出现**一个**物品，名字是改名后的名字，
+   样板数量与改名前一致，世界里没有掉落一地的样板；
+5. MK.IV 同上（360 格）；
+6. 拆出来的物品重新放置 → 样板、倍率、改名、朝向、cover 全部还原；
+7. 背包满时点拆除 → 提示中止，机器与样板原样留在世界里。
+
+## 已知限制
+
+- 拆除时会关闭玩家当前 GUI（`player.closeScreen()`），因为面板里的槽位/syncHandler 都指向已销毁的 TE
+  （GT 自己的多块 GUI 也是这么收尾的：`MTEMultiBlockBaseGui:404`）；
+- 二次确认的待确认表是**服务端进程内静态表**（`ConcurrentHashMap<UUID, Long>`），重启即清空，无持久化需求；
+- `display.Name` 在 tooltip 里会被原版按「有自定义名」渲染成斜体（`ItemStack:592-595`），属原版行为。
+
+---
+
 # 4.5.0-fix17 —— 智能倍增 PH 介质多轮推送守恒修复（对齐 PH 官方调用契约）（2026-11-11）
 
 ## 现象（用户实测）

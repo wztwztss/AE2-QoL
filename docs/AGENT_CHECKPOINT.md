@@ -7,7 +7,26 @@
 
 ---
 
-## 本轮：2026-11-11 · 4.5.0-fix17（智能倍增 PH 介质守恒修复）
+## 本轮：2026-11-11 · 4.5.0-fix18（服务器剪贴板失效 + MK.III/MK.IV 拆除按钮）
+
+|项目|内容|
+|---|---|
+|工具平台 / 模型|DeepSeek Harness（DSH Web GUI）· DeepSeek-V4.1-Flash|
+|任务（用户原话）|「新功能需求，先修复样板剪切复制工具在服务器上失效，然后再把我们目前的样板总成 mk3 和 mk4，增加一个拆除按钮 点击后直接拆除保留完整的 nbt，保留内部样板，保留总成改名情况，并直接显示改名的名字」|
+|用户拍板|① 触发方式 = **反转优先级**（非潜行右键 = 剪贴板，潜行右键 = 机器 GUI）；② 拦截范围 = **整个总成家族**（PH 原版/MK.II/Only Items/Super/MappingSlave/MK.III/MK.IV）；③ 共用 fix18；④ 拆除后样板**留在机器物品里不掉出来**；⑤ 物品名**直接显示改名**|
+|A. 剪贴板根因（行号级证据）|① GT `BlockMachines.onBlockActivated`（:402-440）非潜行右键直接 `return gtTE.onRightclick(...)`=true ⇒ `Item.onItemUse` 只在 block 返回 false 时才被调，而该 false 仅出现在「潜行+非工具」（:411-420）⇒ **非潜行右键永远到不了 `ItemPatternClipboard.onItemUse`**；② `Minecraft.java:1528-1529`：客户端 cancel 后根本不调 `playerController.onPlayerRightClick`，而 C08 包在 `PlayerControllerMP:389` 才发出 ⇒ **客户端取消=包不发=服务端收不到**；③ `ItemInWorldManager:386-390`：服务端 cancel 直接 `return false`，既不 `onItemUseFirst` 也不 `onBlockActivated` ⇒ 服务端取消才是正确语义|
+|A. 改动|新增 `ph/PatternClipboardInterceptHandler`（`MinecraftForge.EVENT_BUS` + `HIGH`）：非潜行+剪贴板+总成 → 仅服务端 cancel（客户端一律不 cancel 以保证发包）并按模式执行；潜行 → 仅服务端 cancel 并手动分发 `IMetaTileEntity#onRightclick`（因 `BaseMetaTileEntity:1643` 潜行时**故意**不分发给 MTE，且上游 :405-412 已把 `useBlock` 置 false，两条路都断）。`ItemPatternClipboard` 加 `doCopyIntercepted/doPasteIntercepted` 薄包装；tooltip 第 4 行说明新语义（中英）；`PhIntegration` 注册|
+|B. 拆除实现|新增 `ph/PatternBufferDismantle` + `ph/PatternBufferWidgets`；MK.III/MK.IV 批量页各加 16×16 按钮（`BUTTON_STANDARD`+`OVERLAY_BUTTON_CROSS`）。顺序：`writeToNBT` → 建 `ItemStack(sBlockMachines,1,metaId)`+挂 NBT → 写 `display.Name` → **先入包（背包满即中止，零丢失）** → 清 `pattern[]`+`getRealInventory()`（防 GT `breakBlock` 掉一地 / PH `refundAll` 退款双份）→ `setBlockToAir`+`removeTileEntity` → `closeScreen()`。10 秒内点两次二次确认|
+|B. NBT 对称性（已字节码核对）|`BaseMetaTileEntity.writeToNBT`（:127-158）→ `saveMetaTileNBT`（`CommonBaseMetaTileEntity:302-331`，写 `Inventory`+`saveNBTData`）→ MK.III/MK.IV `PatternSlotPersistence.save` + PH `patternSlots`/`customName`/`multiplier`；放置侧 `ItemMachines.placeBlockAt`（:254-320）→ `setInitialValuesAsNBT`→`loadMetaTileNBT`，与读档同路径；cover 也对称（`writeCoverNBT:138` ↔ `readCoverNBT:205`）|
+|B. 改名显示依据|GT `ItemMachines.getItemStackDisplayName`（:231-241）只返回模板 `getLocalName()`、**不读 NBT**；但 vanilla `ItemStack.getDisplayName()`（:520-535）优先读 `display.Name`，`getTooltip`（:587-595）首行走它 ⇒ 写原版 `display.Name` 即可显示，且对放置侧无害（只读已知键）|
+|刻意不动|剪贴板既有的 `doCopy`/`doPaste` 业务逻辑；PH 原版仓（拆除只开放 MK.III/MK.IV）；GT `onBlockDestroyed` 退款路径（有意不调，样板要留在 NBT）|
+|产物|`build/libs/AE2-QoL-4.5.0-fix18.jar`（2,200,175 B）；`jar tf` 三类均入包；`javap -p` 核对 4+2+1 个方法签名未被重混淆；MUI2 API 按**实际编译用**的 `libs/modularui2-2.3.92-1.7.10.jar` 核对通过|
+|待实测|见 CHANGELOG 4.5.0-fix18「待实测」7 项（服务器剪贴板、服务器潜行开 GUI、其它物品不受影响、MK.III/MK.IV 拆除+改名+重放还原、背包满中止）|
+|已知限制|拆除会 `player.closeScreen()`（面板槽位指向已销毁 TE）；二次确认表是服务端进程内静态表（重启清空）；`display.Name` 会让 tooltip 名字变斜体（原版行为）|
+
+---
+
+## 上一轮：2026-11-11 · 4.5.0-fix17（智能倍增 PH 介质守恒修复）
 
 |项目|内容|
 |---|---|
@@ -23,7 +42,7 @@
 
 ---
 
-## 上一轮：2026-11-11 · 4.5.0-fix16（跨模组档位适配）
+## 更早：2026-11-11 · 4.5.0-fix16（跨模组档位适配）
 
 |项目|内容|
 |---|---|

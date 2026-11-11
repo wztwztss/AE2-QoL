@@ -423,6 +423,7 @@ item.ae2_qof.pattern_clipboard.name=样板剪贴板
 ae2_qof.clipboard.tooltip.0=§d右键空中：打开管理界面（选模式 / 预览 / 清空）—— 图标为紫色，与通配样板「绿」、生成器「青」区分
 ae2_qof.clipboard.tooltip.1=右键样板总成：按当前模式执行（支持 PH 全家族：原版/MK.II/仅物品/超级/从属机，及本模组 MK.III / MK.IV）
 ae2_qof.clipboard.tooltip.2=潜行 + 右键空中：查看剪贴板状态；「粘贴(覆盖)」对非空目标需 10 秒内点两次确认
+ae2_qof.clipboard.tooltip.3=§7潜行 + 右键样板总成 = 打开机器界面（4.5.0-fix18 起：非潜行右键才执行剪贴板）
 ae2_qof.clipboard.mode=模式：
 ae2_qof.clipboard.mode.copy=复制
 ae2_qof.clipboard.mode.paste=粘贴(覆盖)
@@ -450,6 +451,9 @@ ae2_qof.gui.pattern_clipboard.mode_hint.0=复制：读取机器全部样板+倍�
 ae2_qof.gui.pattern_clipboard.mode_hint.1=覆盖粘贴：清空目标后写入；目标非空或需截断时要点两次确认
 ae2_qof.gui.pattern_clipboard.mode_hint.2=剪切：复制后清空源机器（写入成功后才清）
 ae2_qof.gui.pattern_clipboard.mode_hint.3=追加粘贴：按槽位号只填目标的空槽，绝不覆盖已有样板
+ae2_qof.gui.pattern_buffer.dismantle=拆除
+ae2_qof.gui.pattern_buffer.dismantle.hint=10 秒内点两次：机器+全部样板+改名整包进背包（NBT 完整）
+ae2_qof.gui.pattern_buffer.dismantle.confirm=[AE2 QoL] 10 秒内再点一次「拆除」以确认。
 
 # ===== 库存统计终端（3.20.3：修复“只有两行字”时新增的键）=====
 ae2_qof.terminal.status.bound=§a● 已连接无线网络
