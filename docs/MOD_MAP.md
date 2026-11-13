@@ -132,7 +132,8 @@
 | 无线能源输入终端 | `src/main/java/com/wztwzt/ae2_qof/hatch/wireless/WirelessEnergyInputTerminal.java` |
 | 无线能源输出终端（ID 32110 / 输入 32111） | `src/main/java/com/wztwzt/ae2_qof/hatch/wireless/WirelessEnergyOutputTerminal.java` |
 | 网络数据棒（自适应电网配置读写） | `src/main/java/com/wztwzt/ae2_qof/item/ItemNetworkDataStick.java` |
-| 配置与热加载 | `src/main/java/com/wztwzt/ae2_qof/Config.java`（`smartDoublingMaxRounds`、`ioPortRate`、`v7Textures` 等；`ensureFresh()` 已 synchronized，见 P1-031） |
+| 配置与热加载 | `src/main/java/com/wztwzt/ae2_qof/Config.java`（`smartDoublingMaxRounds`、`ioPortRate`、`v7Textures` 等；`ensureFresh()` 已 synchronized，见 P1-031；4.5.0-fix27 增加 BOM 容错、`getSettingsPath()`/`getLastReloadError()` 诊断） |
+| 游戏内配置页 NEI 开关 | `src/main/java/com/wztwzt/ae2_qof/client/gui/GuiConfigScreen.java`：`nei_overlay_enabled` 为客户端本地偏好，直接走 `OverlayConfig.setEnabled`/`Config.setNeiOverlayEnabled` 写 `settings.json`，**不经过 OP 校验**；其它 io/倍增字段仍走 `ConfigSetPacket` |
 | 命令入口 | `src/main/java/com/wztwzt/ae2_qof/CommandAe2QoL.java`（`/ae2qof reload|status`、覆盖板 `smbind`） |
 
 ## Mixin列表

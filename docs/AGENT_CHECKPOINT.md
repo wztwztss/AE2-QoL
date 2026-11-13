@@ -7,6 +7,21 @@
 
 ---
 
+## 本轮：2026-11-13 · 4.5.0-fix27（GitHub issue #2：单人配置页 NEI 开关不生效）
+
+|项目|内容|
+|---|---|
+|工具平台 / 模型|Doubao（本地桌面 Agent）· 当前会话|
+|任务（用户原话）|「然后又有新的issue，https://github.com/wztwztss/AE2-QoL/issues/2，找到原因修，修复完发release，然后给他回复」|
+|Issue|GitHub issue #2（`skyjack2033`，2026-11-13）：单人游戏内修改 NEI overlay 不生效；退出游戏改 `config/ae2_qof` 也不生效|
+|根因|`nei_overlay_enabled` 是纯客户端开关，但配置页把它与 io/倍增字段一起发 `ConfigSetPacket`；服务端要求 OP 等级 2，单人未开作弊时包被静默丢弃，页面仍显示“已应用”。另外配置页打开时未主动 `ensureFresh()`，Gson 也不容忍 UTF-8 BOM，手动改文件可能被解析失败并保留旧值|
+|修复|`GuiConfigScreen` 的 NEI 开关改为直接 `OverlayConfig.setEnabled` 写本地 `settings.json`（不经过 OP）；打开页面先 `Config.ensureFresh()`；`Config.reload` 剥离 BOM、记录 `lastReloadError`；`/ae2qof status` 输出实际配置文件路径与解析错误；合并终端 OV 按钮即时刷新标签|
+|刻意不动|其它 io/倍增字段仍由服务端 OP 校验；不改变服务端配置同步协议；不把 NEI 开关改成服务端全局设置|
+|产物|`build/libs/AE2-QoL-4.5.0-fix27.jar`（构建通过后核对）；按用户要求不替换游戏内 mods，复制到 `D:\下载\需更新模组`|
+|待实测|单人未开作弊：配置页切换 NEI 开关立即生效并持久化；外部编辑 `settings.json`（含 UTF-8 BOM）后打开配置页/NEI 页面生效；`/ae2qof status` 显示正确路径与值|
+
+---
+
 ## 本轮：2026-11-13 · 4.5.0-fix26（候选 1 无线分配器迁移 + 候选 5 混合自动上传）
 
 |项目|内容|

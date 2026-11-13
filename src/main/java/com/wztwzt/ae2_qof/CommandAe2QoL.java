@@ -77,6 +77,10 @@ public class CommandAe2QoL extends CommandBase {
                         + Config.smartDoublingPushCap
                         + ", nei_overlay_enabled="
                         + Config.neiOverlayEnabled
+                        + ", settings="
+                        + Config.getSettingsPath()
+                        + (Config.getLastReloadError().isEmpty() ? ""
+                            : ", load_error=" + Config.getLastReloadError())
                         + ", recipe_mappings="
                         + RecipeNameUtil.getMappingsView()
                             .size()));

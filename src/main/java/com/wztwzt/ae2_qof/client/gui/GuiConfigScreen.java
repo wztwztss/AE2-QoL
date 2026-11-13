@@ -15,6 +15,7 @@ import org.lwjgl.opengl.GL11;
 
 import com.wztwzt.ae2_qof.Config;
 import com.wztwzt.ae2_qof.client.ClientState;
+import com.wztwzt.ae2_qof.client.OverlayConfig;
 import com.wztwzt.ae2_qof.common.RecipeMapNameConfig;
 import com.wztwzt.ae2_qof.network.ConfigSetPacket;
 import com.wztwzt.ae2_qof.network.ModNetwork;
@@ -26,7 +27,8 @@ import cpw.mods.fml.relauncher.SideOnly;
 /**
  * 游戏内配置页面（Mods → AE2 QoL → Config）：
  * - 配置页：编辑 io_port_rate / smart_doubling_max_rounds / nei_overlay_enabled，
- * 点击「应用」对改动项发送 C2S 包，由服务端校验 OP 权限并广播回所有客户端。
+ *   io/倍增字段发送 C2S 包由服务端校验 OP 权限；NEI 开关是纯客户端渲染偏好，
+ *   直接写本地 settings.json，不能经过 OP 校验（单人未开作弊时也必须生效）。
  * - 映射页（三个子页）：展示并编辑配方名映射（recipe_names.json）、记住的供应器
  * （remembered_providers.json），以及全部 GT 配方池 UID 参考（配方参考）。
  */
@@ -83,6 +85,9 @@ public class GuiConfigScreen extends GuiScreen {
 
     @Override
     public void initGui() {
+        // 页面打开时先按 mtime 重读一次：外部编辑 settings.json 后，
+        // 不必等 NEI 下一次渲染才看到新值（尤其是 NEI 开关关闭时）。
+        Config.ensureFresh();
         this.buttonList.clear();
         int left = this.width / 2 - 110;
         int y0 = 40;
@@ -443,10 +448,29 @@ public class GuiConfigScreen extends GuiScreen {
     private void applyConfigChanges() {
         String status = this.applySingle("io_port_rate", this.ioField.getText());
         String status2 = this.applySingle("smart_doubling_max_rounds", this.roundsField.getText());
-        String status3 = this.applySingle("nei_overlay_enabled", this.overlayField.getText());
+        String status3 = this.applyOverlaySetting(this.overlayField.getText());
         String status4 = this.applySingle("smart_doubling_push_cap", this.pushCapField.getText());
         String combined = joinStatus(status, status2, status3, status4);
-        this.statusText = combined.isEmpty() ? "已应用（多人服务器需 OP 权限）" : combined;
+        this.statusText = combined.isEmpty() ? "已应用（NEI 开关本地立即生效；io/倍增项在多人服务器需 OP 权限）" : combined;
+    }
+
+    /**
+     * NEI 叠加层是纯客户端渲染开关，不能像 io/倍增那样走需要 OP 的 ConfigSetPacket：
+     * 单人未开作弊时服务端会丢弃该包，旧实现因此表现为“界面显示已应用但开关不变”。
+     * 这里直接写本地 settings.json（OverlayConfig 内部已保证只改 overlay 字段、不覆盖其它键）。
+     */
+    private String applyOverlaySetting(String value) {
+        String trimmed = value == null ? "" : value.trim();
+        if (trimmed.isEmpty()) {
+            return "请输入 nei_overlay_enabled 的值";
+        }
+        String lower = trimmed.toLowerCase(Locale.ROOT);
+        if (!lower.equals("true") && !lower.equals("false")) {
+            return "nei_overlay_enabled 输入无效";
+        }
+        OverlayConfig.setEnabled(Boolean.parseBoolean(lower));
+        this.overlayField.setText(Boolean.toString(Config.neiOverlayEnabled));
+        return "";
     }
 
     private String applySingle(String key, String value) {

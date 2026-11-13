@@ -1,3 +1,31 @@
+# 4.5.0-fix27 —— 修单人配置页 NEI 开关不生效（2026-11-13）
+
+## 现象
+
+- GitHub issue #2（`skyjack2033`）：单人游戏内修改 NEI overlay 开关不生效；退出游戏后改 `config/ae2_qof` 也不生效。
+
+## 根因
+
+- `nei_overlay_enabled` 在文档和实现中都是**纯客户端渲染偏好**，但 `GuiConfigScreen` 仍把它和其它服务端玩法参数一起发 `ConfigSetPacket`；
+- `ConfigSetPacket` 服务端要求权限等级 2。单人世界未开作弊时该包被静默丢弃，配置页却显示“已应用”；
+- 配置页不会主动按文件 mtime 重读，手动改 `settings.json` 后若 NEI 渲染路径没有触发 `ensureFresh()`，页面仍显示旧值；
+- `settings.json` 用 Gson 直接解析，Windows 记事本保存的 UTF-8 BOM 会导致解析失败并保留旧值，现象同样像“改了不生效”。
+
+## 变更
+
+- `client/gui/GuiConfigScreen`：NEI 开关改为直接调用 `OverlayConfig.setEnabled` 写本地 `settings.json`，不走 OP 校验；打开配置页时先 `Config.ensureFresh()`；
+- `Config`：`reload()` 改按字节读取并剥离 UTF-8 BOM，`/ae2qof status` 新增 `settings=` 实际路径与 `load_error=` 解析错误；配置文件不存在时补写后同步 mtime；
+- `MergedTerminalPanelHandler`：OV 按钮点击后立即刷新 `OV/--` 标签，不再等下一次布局；
+- README 明确配置页 NEI 开关为本地设置、无需 OP。
+
+## 验证
+
+- `JAVA_HOME=E:\java17`、离线 Gradle `build` 通过，产物 `build/libs/AE2-QoL-4.5.0-fix27.jar`。
+- 待实测：单人未开作弊时配置页切换 NEI 开关立即生效并写入 `settings.json`；外部编辑该文件（含 UTF-8 BOM）后重开配置页/NEI 页面生效；
+  `/ae2qof status` 能看到实际路径和 `nei_overlay_enabled`。
+
+---
+
 # 4.5.0-fix26 —— 迁移 AE2Things 1.3.0 无线分配器 + 混合自动上传（2026-11-13）
 
 ## 变更

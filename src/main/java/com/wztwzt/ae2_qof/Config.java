@@ -1,7 +1,6 @@
 package com.wztwzt.ae2_qof;
 
 import java.io.File;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -114,6 +113,9 @@ public class Config {
 
     private static Path SETTINGS_FILE;
 
+    /** 最近一次解析 settings.json 的错误；供 /ae2qof status 暴露“改了但没加载”的原因。 */
+    private static volatile String lastReloadError = "";
+
     private static long lastCheck = 0L;
     private static long lastLoadedMtime = -1L;
 
@@ -164,6 +166,19 @@ public class Config {
     }
 
     /**
+     * 当前配置文件的绝对路径；未初始化时返回提示串。用于状态命令和 issue 诊断，
+     * 避免玩家把旧 config/ae2_qof.cfg 当成现行配置文件。
+     */
+    public static String getSettingsPath() {
+        return SETTINGS_FILE == null ? "<not initialized>" : SETTINGS_FILE.toAbsolutePath().toString();
+    }
+
+    /** 最近一次 settings.json 解析失败原因；空串表示最近一次加载成功。 */
+    public static String getLastReloadError() {
+        return lastReloadError;
+    }
+
+    /**
      * 立即重新读取配置文件（同时供 {@code /ae2qof reload} 命令调用）。
      */
     public static synchronized void reload() {
@@ -185,70 +200,77 @@ public class Config {
         try {
             if (!Files.exists(SETTINGS_FILE)) {
                 writeFile(io, rounds, overlay, pinRow, presets, v7);
+                lastLoadedMtime = currentMtime();
+                lastReloadError = "";
                 return;
             }
-            try (InputStreamReader reader = new InputStreamReader(
-                Files.newInputStream(SETTINGS_FILE),
-                StandardCharsets.UTF_8)) {
-                JsonElement elem = GSON.fromJson(reader, JsonElement.class);
-                if (elem != null && elem.isJsonObject()) {
-                    JsonObject obj = elem.getAsJsonObject();
-                    JsonElement value;
-                    value = obj.get("io_port_rate");
-                    if (value != null && value.isJsonPrimitive()) {
-                        io = clamp(value.getAsInt(), 1, Integer.MAX_VALUE, io);
-                    }
-                    value = obj.get("smart_doubling_max_rounds");
-                    if (value != null && value.isJsonPrimitive()) {
-                        rounds = clamp(value.getAsInt(), 0, Integer.MAX_VALUE, rounds);
-                    }
-                    value = obj.get("smart_doubling_push_cap");
-                    if (value != null && value.isJsonPrimitive()) {
-                        pushCap = clamp(value.getAsInt(), 1, Integer.MAX_VALUE, pushCap);
-                    }
-                    value = obj.get("smart_wildcard_expand_cap");
-                    if (value != null && value.isJsonPrimitive()) {
-                        wildcardCap = clamp(value.getAsInt(), 1, Integer.MAX_VALUE, wildcardCap);
-                    }
-                    value = obj.get("nei_overlay_enabled");
-                    if (value != null && value.isJsonPrimitive()) {
-                        overlay = value.getAsBoolean();
-                    }
-                    value = obj.get("nei_auto_upload_enabled");
-                    if (value != null && value.isJsonPrimitive()) {
-                        autoUpload = value.getAsBoolean();
-                    }
-                    value = obj.get("pin_row_enabled");
-                    if (value != null && value.isJsonPrimitive()) {
-                        pinRow = value.getAsBoolean();
-                    }
-                    value = obj.get("stock_monitor_presets");
-                    if (value != null && value.isJsonPrimitive()) {
-                        presets = value.getAsString();
-                    }
-                    value = obj.get("v7_textures");
-                    if (value != null && value.isJsonPrimitive()) {
-                        String raw = value.getAsString();
-                        if ("auto".equals(raw) || "on".equals(raw) || "off".equals(raw)) {
-                            v7 = raw;
-                        }
-                    }
-                    value = obj.get("stock_monitor_read_interval");
-                    if (value != null && value.isJsonPrimitive()) {
-                        smRead = clamp(value.getAsInt(), 5, 1200, smRead);
-                    }
-                    value = obj.get("stock_monitor_gui_interval");
-                    if (value != null && value.isJsonPrimitive()) {
-                        smGui = clamp(value.getAsInt(), 2, 40, smGui);
-                    }
-                    value = obj.get("quest_detect_interval");
-                    if (value != null && value.isJsonPrimitive()) {
-                        quest = clamp(value.getAsInt(), 20, 1200, quest);
-                    }
+            // 手动编辑常用 Windows 记事本；UTF-8 BOM 会让 Gson 在第一个 token 直接失败。
+            // 这里先按字节读取并剥掉 BOM，避免“文件明明改了但一直按旧值”的静默现象。
+            String text = new String(Files.readAllBytes(SETTINGS_FILE), StandardCharsets.UTF_8);
+            if (!text.isEmpty() && text.charAt(0) == '\uFEFF') {
+                text = text.substring(1);
+            }
+            JsonElement elem = GSON.fromJson(text, JsonElement.class);
+            if (elem == null || !elem.isJsonObject()) {
+                throw new IllegalStateException("root is not a JSON object");
+            }
+            JsonObject obj = elem.getAsJsonObject();
+            JsonElement value;
+            value = obj.get("io_port_rate");
+            if (value != null && value.isJsonPrimitive()) {
+                io = clamp(value.getAsInt(), 1, Integer.MAX_VALUE, io);
+            }
+            value = obj.get("smart_doubling_max_rounds");
+            if (value != null && value.isJsonPrimitive()) {
+                rounds = clamp(value.getAsInt(), 0, Integer.MAX_VALUE, rounds);
+            }
+            value = obj.get("smart_doubling_push_cap");
+            if (value != null && value.isJsonPrimitive()) {
+                pushCap = clamp(value.getAsInt(), 1, Integer.MAX_VALUE, pushCap);
+            }
+            value = obj.get("smart_wildcard_expand_cap");
+            if (value != null && value.isJsonPrimitive()) {
+                wildcardCap = clamp(value.getAsInt(), 1, Integer.MAX_VALUE, wildcardCap);
+            }
+            value = obj.get("nei_overlay_enabled");
+            if (value != null && value.isJsonPrimitive()) {
+                overlay = value.getAsBoolean();
+            }
+            value = obj.get("nei_auto_upload_enabled");
+            if (value != null && value.isJsonPrimitive()) {
+                autoUpload = value.getAsBoolean();
+            }
+            value = obj.get("pin_row_enabled");
+            if (value != null && value.isJsonPrimitive()) {
+                pinRow = value.getAsBoolean();
+            }
+            value = obj.get("stock_monitor_presets");
+            if (value != null && value.isJsonPrimitive()) {
+                presets = value.getAsString();
+            }
+            value = obj.get("v7_textures");
+            if (value != null && value.isJsonPrimitive()) {
+                String raw = value.getAsString();
+                if ("auto".equals(raw) || "on".equals(raw) || "off".equals(raw)) {
+                    v7 = raw;
                 }
             }
+            value = obj.get("stock_monitor_read_interval");
+            if (value != null && value.isJsonPrimitive()) {
+                smRead = clamp(value.getAsInt(), 5, 1200, smRead);
+            }
+            value = obj.get("stock_monitor_gui_interval");
+            if (value != null && value.isJsonPrimitive()) {
+                smGui = clamp(value.getAsInt(), 2, 40, smGui);
+            }
+            value = obj.get("quest_detect_interval");
+            if (value != null && value.isJsonPrimitive()) {
+                quest = clamp(value.getAsInt(), 20, 1200, quest);
+            }
+            lastReloadError = "";
         } catch (Throwable t) {
-            MyMod.LOG.warn("[AE2QoL] Failed to parse settings.json: " + t.getMessage());
+            lastReloadError = t.getMessage() == null ? t.toString() : t.getMessage();
+            MyMod.LOG.warn("[AE2QoL] Failed to parse settings.json (" + SETTINGS_FILE + "): " + lastReloadError);
         }
         exIOPortTransferContentsRate = io;
         smartDoublingMaxRounds = rounds;

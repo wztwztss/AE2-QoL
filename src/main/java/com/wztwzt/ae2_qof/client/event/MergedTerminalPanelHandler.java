@@ -559,6 +559,9 @@ public class MergedTerminalPanelHandler {
             case BUTTON_OVERLAY_ID:
                 boolean now = !OverlayConfig.isEnabled();
                 OverlayConfig.setEnabled(now);
+                // 合并终端没有 GuiUploadButtonHandler 的即时按钮刷新；这里同步显示，
+                // 否则开关已切换但按钮仍显示旧标签。
+                btnOverlay.displayString = now ? "OV" : "--";
                 break;
             case BUTTON_UPLOAD_ID:
                 if (gui != null) {
