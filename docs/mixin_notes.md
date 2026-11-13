@@ -9,7 +9,7 @@
 > 3. 参考其他模组Mixin实现：`E:\wzt\MC\modcreater\reference_src_290b3`（旧的 `reference_src_290b1_已过期` 已废弃）。
 
 > 当前基线：GTNH **2.9.0-beta-3** / MC 1.7.10 / 版本 `3.32.0-fix5`。
-> 清单与 `src/main/resources/mixins.ae2_qof.json` 逐条对齐（通用 **27** 条 + client **16** 条 = **43** 条；两份副本必须逐字节一致）。
+> 清单与 `src/main/resources/mixins.ae2_qof.json` 逐条对齐（通用 **31** 条 + client **18** 条 = **49** 条；两份副本必须逐字节一致）。
 > **3.32.0 未新增任何 Mixin**：自适应电网终端的"仓→主机"权威反查用的是 GT 的**公开**清单
 > （`MTEMultiBlockBase.mEnergyHatches` / `mDynamoHatches` / `getExoticEnergyHatches()`，javap 实例 jar 已确认），
 > 因此不需要再往 GT 里注入；旧的多方块注册表 Mixin（`MixinCommonBaseMetaTileEntityMultiblockRegistry`）保持不变。
@@ -17,7 +17,7 @@
 > （3.29.0 那轮只改了 `src/main/resources/` 那份）⇒ 两份不逐字节一致；已在 `b4a36e0` 补齐。
 > **3.35.0-fix16 再次发现同款漂移**：根副本缺 `gt.MixinSteamEntityCrusherTuning`（3.32.0-fix5 的
 > "第 6 个蒸汽 mixin"只加进了 `src/main/resources/` 那份），已在 fix16 一并补齐；
-> 现两份**逐字节一致（43 条 = mixins 27 + client 16）**，`cmp` 已校验。
+> 现两份**逐字节一致（49 条 = mixins 31 + client 18）**，`cmp` 已校验。
 > **改 mixin 配置永远两份一起改**——进 jar 的是 `src/main/resources` 那份。
 >
 > **3.28.0 起两处"已停用但仍入包"的注入**（用户决定停用线程，代码保留）：
