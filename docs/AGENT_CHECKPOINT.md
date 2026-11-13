@@ -7,7 +7,24 @@
 
 ---
 
-## 本轮：2026-11-11 · 4.5.0-fix18（服务器剪贴板失效 + MK.III/MK.IV 拆除按钮）
+## 本轮：2026-11-13 · 4.5.0-fix19（TenkeiTech 自带模板输入总线接入智能倍增）
+
+|项目|内容|
+|---|---|
+|工具平台 / 模型|DeepSeek Harness（DSH Web GUI）· DeepSeek-V4.1-Flash|
+|任务（用户原话）|「这个模组的样板舱室对我们的智能倍增没有任何效果，发配物品貌似是一份一份发，不是一次性全发，按照项目的要求是skill，进入第一步确定根因」→ 纠正「我说的不是超级样板总成，是其他的样板，那些自带样板的，自带模板的线材轧机的流体固化器的，以及卷板机的」→ 拍板「B１，默认自动倍增，关闭恢复它本身的机制」|
+|目标机器|TenkeiTech 1.1.2 三台自带模板输入总线：`MTEHatchAutoTemplateInputME`（固定模板-挤压/流体固化，基类）、`MTEHatchWiremillTemplateInputME`（线缆机）、`MTEHatchBenderTemplateInputME`（卷板机）；三台同源、后两者为 1.3KB final 子类|
+|根因（行号级证据）|① `MixinCraftingCPUCluster.java:488-505` 要求 `ISmartDoublingMedium && isSmartDoublingEnabled()`，否则 `return 1`；`MixinMTEHatchInputBus.java:39-41` 还要求 `ICraftingProvider`（三台满足，1.1.2 字节码已核）。三台 GUI `MTEAutoTemplateInputGui` 继承 `MTEHatchBaseGui → MTEMachineWithFluidScreenBaseGui → MTETieredMachineBlockBaseGui`，**未覆写** `createBottomLeftCornerFlow`（1.1.2 javap 仅见 `getBasePanelWidth/Height`、`doesAddGregTechLogo`、`createContentSection`），而现有开关只挂 GT 样板输入仓/GTNL 超级样板总成/PH 双口仓/AE2 接口 ⇒ flag 恒 false ⇒ `effectiveN=1`。② `MixinCraftingCPUCluster.java:516 HEAD(cancellable)`、`:530 ci.cancel()` 让 vanilla `executeCrafting` 方法体不执行，TenkeiTech 的多轮发配正是该方法体内的 `@Redirect`（`CraftingCPUClusterMixin:302-317`，分支含 `MTEHatchAutoTemplateInputME`）⇒ 对方批量静默失效|
+|用户拍板|**B1**：三台默认自动倍增；关闭开关时恢复 TenkeiTech 自身机制|
+|改动|① `mixin/gt/MixinMTEHatchInputBus.java` 开关三态（0 未设置/1 显式开/2 显式关）：未设置时三台默认开、其余 GT 仓默认关；`saveNBTData` 仅在显式态写 `ae2qolSmartDoubling` + `ae2qolSmartDoublingExplicit`；`loadNBTData` 旧键仅对非 TenkeiTech 仓兼容（三台忽略历史恒 false）。② 新增 `mixin/gt/MixinAutoTemplateInputGuiToggle.java`（client 段）：注入 `MTETieredMachineBlockBaseGui.createBottomLeftCornerFlow` RETURN，按机器类型过滤后追加 `ToggleButton`，复用 `BooleanSyncValue` + 坐标包 + `TooltipTextButton`。③ 新增 `compat/TenkeiTechIntegration.java`：`Class.forName` + `isInstance` 可选判定，缺失打 INFO。④ 新增 `compat/TenkeiTechNativeBatchBridge.java`：开关关闭时反射调用 `*$pushPatternBatch`（后缀+完整描述符匹配、缓存），读 `*$batchFactor` 得实际轮数；`>0` 成功 / `0` 拒绝不重试 / `-1` 不可用退回单轮。⑤ `mixin/ae/MixinCraftingCPUCluster.java` 原版逐轮分支接入桥，成功时补第 1 轮记账（`accountSmartPush(factor)` + `sum` 功率 + `taskValue -= 1`）|
+|刻意不动|GT/GTNL/PH 既有开关路径；三台的 `pushPattern` 接收契约（N× 必须整除单轮用量、只在批次窗口接收）；`MixinMTEHatchCraftingInputMEGui` 等既有 GUI mixin|
+|产物|`build/libs/AE2-QoL-4.5.0-fix19.jar`；`jar tf` 核对 3 个新类均入包、`mixins.ae2_qof.json` client 段含新 mixin；按用户要求**不部署游戏**，复制到 `D:\下载\需更新模组`|
+|待实测|见 CHANGELOG 4.5.0-fix19「待实测」4 项（三台 GUI 默认 ON、大订单一次进 N 轮且守恒、手动关闭回原生批量、移除 TenkeiTech 后降级可见）|
+|已知限制|原生批量桥依赖 TenkeiTech 1.1.2 的 mixin 私有方法名/字段名（按后缀匹配，上游改名时自动降级并留日志）；三台默认开会让其任务从原生批量切到我们的 N× 路径，物料守恒需实测|
+
+---
+
+## 上一轮：2026-11-11 · 4.5.0-fix18（服务器剪贴板失效 + MK.III/MK.IV 拆除按钮）
 
 |项目|内容|
 |---|---|
@@ -26,7 +43,7 @@
 
 ---
 
-## 上一轮：2026-11-11 · 4.5.0-fix17（智能倍增 PH 介质守恒修复）
+## 更早：2026-11-11 · 4.5.0-fix17（智能倍增 PH 介质守恒修复）
 
 |项目|内容|
 |---|---|

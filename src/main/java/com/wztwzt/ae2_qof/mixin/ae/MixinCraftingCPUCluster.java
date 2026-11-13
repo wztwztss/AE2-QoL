@@ -29,6 +29,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.wztwzt.ae2_qof.Config;
 import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.api.ISmartDoublingMedium;
+import com.wztwzt.ae2_qof.compat.TenkeiTechIntegration;
+import com.wztwzt.ae2_qof.compat.TenkeiTechNativeBatchBridge;
 import com.wztwzt.ae2_qof.network.CraftingCompletePacket;
 import com.wztwzt.ae2_qof.network.ModNetwork;
 import com.wztwzt.ae2_qof.network.SmartDoublingTogglePacket;
@@ -995,7 +997,55 @@ public abstract class MixinCraftingCPUCluster {
                         }
                     }
 
-                    if (!smartPushed && medium.pushPattern(details, craftingInventory)) {
+                    // TenkeiTech 三台自带模板仓：开关显式关闭时回退到它自己的原生批量。
+                    // 它的批量实现是 vanilla executeCrafting 方法体内的 @Redirect；我们的 HEAD cancel
+                    // 让方法体不再执行，因此必须主动调用。UNAVAILABLE(-1) 表示对方实现不存在：退回单轮推送。
+                    long nativeBatchRounds = TenkeiTechNativeBatchBridge.UNAVAILABLE;
+                    if (!smartPushed && effectiveN == 1 && TenkeiTechIntegration.isAutoTemplateHatch(medium)
+                        && medium instanceof ISmartDoublingMedium sdm && !sdm.isSmartDoublingEnabled()) {
+                        nativeBatchRounds = TenkeiTechNativeBatchBridge
+                            .tryPushNativeBatch(this, medium, details, craftingInventory, eg, cc);
+                    }
+
+                    if (nativeBatchRounds > 0L) {
+                        final int nativeRounds = (int) Math.min(nativeBatchRounds, (long) Integer.MAX_VALUE);
+                        this.somethingChanged = true;
+                        this.remainingOperations--;
+                        pushedPattern = true;
+
+                        // 原生实现已按 (nativeRounds-1) 轮扣任务值/扣电，并把额外原料 postChange 进机器；
+                        // 这里只补第 1 轮的记账，合计 nativeRounds 轮。
+                        eg.extractAEPower(sum, Actionable.MODULATE, PowerMultiplier.CONFIG);
+                        ae2qol$accountSmartPush(nativeRounds, details, craftingEntry.getValue());
+
+                        craftingInventory = null; // hand off complete!
+                        didPatternCraft = true;
+                        this.markDirty();
+
+                        knownBusyMediums.add(medium);
+
+                        executedTasks += nativeRounds;
+                        ae2qol$taskValueAdd(craftingEntry.getValue(), -1);
+                        if (ae2qol$taskValue(craftingEntry.getValue()) <= 0) {
+                            // This craftingEntry is done.
+                            break doWhileCraftingLoop;
+                        }
+
+                        if (this.remainingOperations == 0) {
+                            if (mediumListCheck != null) parallelismProvider.put(details, mediumListCheck);
+                            return;
+                        }
+
+                        final List<IAEStack<?>> condensedInputsForRetry = getExpandedCondensedInputs(details, cc);
+                        if (condensedInputsForRetry == null) {
+                            throw new IllegalStateException("Input-only pattern expansion failed");
+                        }
+                        if (!this.canCraft(details, condensedInputsForRetry)) {
+                            sr = ScheduledReason.NOT_ENOUGH_INGREDIENTS;
+                            break;
+                        }
+                    } else if (nativeBatchRounds < 0L && !smartPushed
+                        && medium.pushPattern(details, craftingInventory)) {
                         this.somethingChanged = true;
                         this.remainingOperations--;
                         pushedPattern = true;

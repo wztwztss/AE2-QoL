@@ -32,7 +32,10 @@
 | 通配样板**双入口**（3.20.0-fix24） | `src/main/java/com/wztwzt/ae2_qof/wildcard/ItemSmartWildcardPattern.java`：直接右键 → Wild 界面（`wildport`，先 `WildcardBridge.pushToWild` 再 `openGui(GUI_WILDCARD_PATTERN)`）；**Shift+右键** → 我们原有的四页签 MUI2 编辑器（`wildcard/WildcardEditorPanel.java`，含**内置电路 1~24** 与**不消耗物品**页） |
 | 加号/写回（3.20.0-fix25 → **3.20.0-fix31 改为就地生效**） | `src/main/java/com/wztwzt/ae2_qof/network/SmartWildcardRulesPacket.java`：**新增目标槽位**（`-1` = 旧行为），服务端优先写"窗口那张样板"、找不到才退回背包搜索（+ WARN）；`mixin/nei/MixinGuiOverlayButton.java` 的 GTNH-MUI 分支只认"当前主窗口就是 Wild 窗口"，命中即调用 `WildcardPatternWindow.applyDerivedFromNei` **就地刷新界面**（不再"关掉重开"），非 Wild 的 GTNH-MUI 窗口不再被误当成通配编辑器 |
 | 智能倍增（核心逻辑） | `src/main/java/com/wztwzt/ae2_qof/mixin/ae/MixinCraftingCPUCluster.java` |
-| 智能倍增（GT 仓最大轮数） | `src/main/java/com/wztwzt/ae2_qof/mixin/gt/MixinMTEHatchInputBus.java` |
+| 智能倍增（GT 仓最大轮数 / 三态开关） | `src/main/java/com/wztwzt/ae2_qof/mixin/gt/MixinMTEHatchInputBus.java`（4.5.0-fix19 起：未显式设置时 TenkeiTech 三台自带模板仓默认开，其余 GT 仓默认关） |
+| 智能倍增（TenkeiTech 三台 GUI 开关） | `src/main/java/com/wztwzt/ae2_qof/mixin/gt/MixinAutoTemplateInputGuiToggle.java`（注入 GT 基类 `createBottomLeftCornerFlow`，按机器类型过滤，一处覆盖线缆机/卷板机/固定模板） |
+| 智能倍增（TenkeiTech 可选探测） | `src/main/java/com/wztwzt/ae2_qof/compat/TenkeiTechIntegration.java` |
+| 智能倍增（TenkeiTech 原生批量回退桥） | `src/main/java/com/wztwzt/ae2_qof/compat/TenkeiTechNativeBatchBridge.java`（开关显式关闭时反射调用其 `*$pushPatternBatch`） |
 | 智能倍增（UI 开关） | `src/main/java/com/wztwzt/ae2_qof/mixin/gt/MixinMTEHatchCraftingInputMEGui.java` |
 | 智能倍增（GTNL 超级样板输入总成 GUI 开关，21504/21505） | `src/main/java/com/wztwzt/ae2_qof/mixin/gt/MixinSuperCraftingInputHatchMEGui.java` |
 | 智能倍增（配置） | `src/main/java/com/wztwzt/ae2_qof/Config.java` → `smartDoublingMaxRounds` |
@@ -128,7 +131,7 @@
 
 ## Mixin列表
 
-> 与 `src/main/resources/mixins.ae2_qof.json`（及根目录同内容副本）逐条对齐：通用段 30 条、client 段 17 条，共 **47 条**。
+> 与 `src/main/resources/mixins.ae2_qof.json`（及根目录同内容副本）逐条对齐：通用段 30 条、client 段 18 条，共 **48 条**。
 > 配置列统一为 `mixins.ae2_qof.json`，下表不再重复填写。
 
 | 段 | Mixin类路径 | 目标类 | 注入点/备注 |
@@ -139,7 +142,7 @@
 | 通用 | `mixin/ae/MixinContainerInterface.java` | `appeng.container.implementations.ContainerInterface` | `<init>` RETURN；`@GuiSync(30)` 倍增同步字段（避开 AE2 0/1/3~18 与 GTNL 19） |
 | 通用 | `mixin/ae/MixinPinsHolder.java` | `appeng.items.contents.PinsHolder` | `getCraftingPinsRows` Redirect；pin 行默认行为 |
 | 通用 | `mixin/ae/MixinPacketPickBlock.java` | `appeng.core.sync.packets.PacketPickBlock` | `serverPacketData` HEAD，`remap = false`（**fix52 起不再 cancellable**）；仅「无存量 + 有样板」时接管——判定同步完成，**开界面归队服务端 tick 线程**（`ServerTerminalHelper.scheduleServerTask`），因为 AE2 包处理器运行在网络线程上；其余一律放行原版 |
-| 通用 | `mixin/gt/MixinMTEHatchInputBus.java` | `gregtech.common.tileentities.hatches.crafting.MTEHatchInputBus` | `saveNBTData`/`loadNBTData` TAIL；`getMaxMultiplier` 返回配置上限 |
+| 通用 | `mixin/gt/MixinMTEHatchInputBus.java` | `gregtech.api.metatileentity.implementations.MTEHatchInputBus` | `saveNBTData`/`loadNBTData` TAIL；`getMaxMultiplier` 返回配置上限；**4.5.0-fix19** 开关改三态（`ae2qolSmartDoublingState`），未设置时 TenkeiTech 三台默认开，旧键仅对非 TenkeiTech 仓兼容 |
 | 通用 | `mixin/gt/MixinMTEMultiBlockBase.java` | `gregtech.api.metatileentity.implementations.MTEMultiBlockBase` | **`@Overwrite shouldCheckMaintenance` 返回 false（全局维护绕过，风险已知）** |
 | 通用 | `mixin/gt/MixinCommonBaseMetaTileEntityMultiblockRegistry.java` | `gregtech.api.metatileentity.CommonBaseMetaTileEntity` | `handleFirstTick` TAIL；多方块主机识别注册表（供上传目标识别多方块主机） |
 | 通用 | `mixin/gt/MixinProcessingLogicSpeed.java` | `gregtech.api.recipe.ProcessingLogic`（GT 跨配方并行） | threads>1 时接管 `process()`；EU/时长/输出合并的饱和判界 |
@@ -162,6 +165,7 @@
 | client | `mixin/ae/MixinGuiSuperInterface.java` | `com.science.gtnl.client.gui.GuiSuperInterface` | 同上；GTNL 可选依赖 |
 | client | `mixin/ae/MixinGuiSuperDualInterface.java` | `com.science.gtnl.client.gui.GuiSuperDualInterface` | 同上；方块形态多一个 sidelessMode 按钮 |
 | client | `mixin/gt/MixinMTEHatchCraftingInputMEGui.java` | `gregtech.common.gui.modularui.hatch.MTEHatchCraftingInputMEGui` | `<init>` TAIL、`createBottomLeftCornerFlow` RETURN；倍增开关 |
+| client | `mixin/gt/MixinAutoTemplateInputGuiToggle.java` | `gregtech.common.gui.modularui.singleblock.base.MTETieredMachineBlockBaseGui` | **4.5.0-fix19**：`<init>` TAIL 捕获机器、`createBottomLeftCornerFlow` RETURN 追加开关；仅对 `MTEHatchAutoTemplateInputME` 生效（TenkeiTech 可选） |
 | client | `mixin/gt/MixinSuperCraftingInputHatchMEGui.java` | `com.science.gtnl.common.gui.modularui.SuperCraftingInputHatchMEGui` | 同上；GTNL 21504/21505 |
 | client | `mixin/gt/MixinDualInputHatchUI.java` | `reobf.proghatches.gt.metatileentity.DualInputHatch` | `populateUI` RETURN；PH 可选依赖 |
 | client | `mixin/GuiContainerAccessor.java` | `net.minecraft.client.gui.inventory.GuiContainer` | 纯 Accessor：`guiLeft`/`guiTop`/`ySize` |

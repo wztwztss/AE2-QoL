@@ -52,6 +52,7 @@
     "ae.MixinGuiSuperInterface",
     "ae.MixinGuiSuperDualInterface",
     "gt.MixinMTEHatchCraftingInputMEGui",
+    "gt.MixinAutoTemplateInputGuiToggle",
     "gt.MixinSuperCraftingInputHatchMEGui",
     "gt.MixinDualInputHatchUI",
     "GuiContainerAccessor"

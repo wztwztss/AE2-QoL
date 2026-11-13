@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.wztwzt.ae2_qof.Config;
 import com.wztwzt.ae2_qof.api.ISmartDoublingMedium;
+import com.wztwzt.ae2_qof.compat.TenkeiTechIntegration;
 
 import appeng.api.networking.crafting.ICraftingPatternDetails;
 import appeng.api.networking.crafting.ICraftingProvider;
@@ -32,16 +33,33 @@ import gregtech.api.metatileentity.implementations.MTEHatchInputBus;
 @Mixin(MTEHatchInputBus.class)
 public abstract class MixinMTEHatchInputBus implements ISmartDoublingMedium {
 
+    /**
+     * 三态开关：0=未显式设置（按机器类型取默认）、1=显式开、2=显式关。
+     * <p>
+     * 4.5.0-fix19 起 TenkeiTech 三台自带模板输入仓默认开启智能倍增（B1 决策）；
+     * 其余 GT 仓在未设置时保持原来的默认关闭。用三态而不是布尔，是为了让
+     * “默认开”不被旧存档里无条件写入的 {@code ae2qolSmartDoubling=false} 钉死。
+     */
     @Unique
-    private boolean ae2qol$smartDoubling;
+    private byte ae2qol$smartDoublingState;
 
     @Override
     public boolean isSmartDoublingEnabled() {
-        return this instanceof ICraftingProvider && this.ae2qol$smartDoubling;
+        if (!(this instanceof ICraftingProvider)) {
+            return false;
+        }
+        if (this.ae2qol$smartDoublingState == 1) {
+            return true;
+        }
+        if (this.ae2qol$smartDoublingState == 2) {
+            return false;
+        }
+        return TenkeiTechIntegration.isAutoTemplateHatch(this);
     }
 
+    @Override
     public void setSmartDoubling(boolean enabled) {
-        this.ae2qol$smartDoubling = enabled;
+        this.ae2qol$smartDoublingState = (byte) (enabled ? 1 : 2);
     }
 
     @Override
@@ -53,11 +71,29 @@ public abstract class MixinMTEHatchInputBus implements ISmartDoublingMedium {
 
     @Inject(method = "saveNBTData", at = @At("TAIL"), remap = false)
     private void ae2qol$saveSmartDoubling(NBTTagCompound data, CallbackInfo ci) {
-        data.setBoolean("ae2qolSmartDoubling", this.ae2qol$smartDoubling);
+        if (this.ae2qol$smartDoublingState == 0) {
+            // 未显式拨动过：不写旧键，避免把“默认开”的机器在下次载入时钉成关闭。
+            data.removeTag("ae2qolSmartDoubling");
+            data.removeTag("ae2qolSmartDoublingExplicit");
+            return;
+        }
+        data.setBoolean("ae2qolSmartDoubling", this.ae2qol$smartDoublingState == 1);
+        data.setBoolean("ae2qolSmartDoublingExplicit", true);
     }
 
     @Inject(method = "loadNBTData", at = @At("TAIL"), remap = false)
     private void ae2qol$loadSmartDoubling(NBTTagCompound data, CallbackInfo ci) {
-        this.ae2qol$smartDoubling = data.getBoolean("ae2qolSmartDoubling");
+        if (data.getBoolean("ae2qolSmartDoublingExplicit")) {
+            this.ae2qol$smartDoublingState = (byte) (data.getBoolean("ae2qolSmartDoubling") ? 1 : 2);
+            return;
+        }
+        if (!data.hasKey("ae2qolSmartDoubling")) {
+            this.ae2qol$smartDoublingState = 0;
+            return;
+        }
+        // 旧存档只有无条件写入的 ae2qolSmartDoubling：非默认开的 GT 仓继续按历史值兼容；
+        // TenkeiTech 三台以前没有开关、该值恒为 false，不能当成“玩家关过”，否则默认开失效。
+        this.ae2qol$smartDoublingState = TenkeiTechIntegration.isAutoTemplateHatch(this) ? (byte) 0
+            : (byte) (data.getBoolean("ae2qolSmartDoubling") ? 1 : 2);
     }
 }

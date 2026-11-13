@@ -52,17 +52,18 @@
 7. **产出超堆不切叠**：`multiplyItems` 与 GT 一致（`ParallelHelper.addItemsLong:633-641` 单堆、仅按 `Integer.MAX_VALUE` 夹紧）；输出仓 `MTEHatchOutputBus.storePartial:185-216` 自行逐槽拆分。**不要**按 64 切叠（会把 5 个堆变成上万个 ItemStack）。
 8. **并行 P（3.30.0，3.30.0-fix2 调整默认）**：`moduleMaxParallel`（全局，默认 1）与 `oilDrillMaxParallel`（**抽油专用，默认 8**，0=跟随全局）经 `effectiveParallel()` / `effectiveOilDrillParallel()` 生效；**产出一律按 `total = n + 实扣到的追加份数` 放大，输入按 `(n×P − 1)` 份实扣**（扣不满按实得份数产出，严格配平）；**时长仍按 n** ⇒ 检查频率 20/n 与抗卡顿闸门都不受 P 影响。抽油无输入 ⇒ `total = n×P`。**并行不增加蒸汽消耗**（`lEUt` 只按 `steamCostMultiplier`/`steamFollowsSpeed` 缩放）——要按 P 倍收汽就把 `moduleSteamCostMultiplier` 设为 P。⚠️ 单次结算量 ×P，必须 ME 输出。
 
-### 智能倍增 (Smart Doubling) - 10个Mixin
+### 智能倍增 (Smart Doubling) - 11个Mixin
 
 | Mixin 类路径 | 目标类 | 注入点 | 风险/说明 |
 |---|---|---|---|
 | `mixin/ae/MixinDualityInterface.java` | `appeng.helpers.DualityInterface` | `writeToNBT` TAIL; `readFromNBT` TAIL; 实现 `ISmartDoublingMedium` | 为 ME 接口实现智能倍增能力。`getMaxMultiplier` 使用指数扩张+二分法探测最大可推送轮数。仅对非craftable、非流体、非假合成、非阻塞模式生效。开关通过NBT持久化。 |
 | `mixin/ae/MixinContainerInterface.java` | `appeng.container.implementations.ContainerInterface` | `<init>` RETURN; `@GuiSync(30)` 字段 | ME 接口容器增加智能倍增同步字段。同步id 30避免与AE2原有0/1/3~18和GTNL的19冲突。实现 `ISmartDoublingContainer`。 |
-| `mixin/ae/MixinCraftingCPUCluster.java` | `appeng.me.cluster.implementations.CraftingCPUCluster` | `submitJob` RETURN; `handleCraftBranchFailure` TAIL; `completeJob` TAIL; `executeCrafting` HEAD (cancellable) | 核心mixin：(1) 合成完成通知：捕获玩家提交任务信息，完成后发送CraftingCompletePacket；(2) 智能倍增：在executeCrafting HEAD注入，当存在启用智能倍增的介质且剩余轮数>1时接管整个tick。通过反射访问私有内部类。 |
+| `mixin/ae/MixinCraftingCPUCluster.java` | `appeng.me.cluster.implementations.CraftingCPUCluster` | `submitJob` RETURN; `handleCraftBranchFailure` TAIL; `completeJob` TAIL; `executeCrafting` HEAD (cancellable) | 核心mixin：(1) 合成完成通知：捕获玩家提交任务信息，完成后发送CraftingCompletePacket；(2) 智能倍增：在executeCrafting HEAD注入，当存在启用智能倍增的介质且剩余轮数>1时接管整个tick。通过反射访问私有内部类。**4.5.0-fix19**：开关显式关闭的 TenkeiTech 三台自带模板仓走 `TenkeiTechNativeBatchBridge` 反射调用其原生 `*$pushPatternBatch`（HEAD cancel 使对方方法体不执行，必须主动补调） |
 | `mixin/ae/MixinGuiInterface.java` | `appeng.client.gui.implementations.GuiInterface` | `addButtons` TAIL; `actionPerformed` TAIL; `drawFG` TAIL | 在原版ME接口GUI左侧按钮列末尾追加"智能倍增"开关按钮。点击时发送SmartDoublingTogglePacket。 |
 | `mixin/ae/MixinGuiSuperInterface.java` | `com.science.gtnl.client.gui.GuiSuperInterface` | `addButtons` TAIL; `func_146284_a` TAIL; `drawFG` TAIL | 在GTNL超级接口GUI追加智能倍增开关。仅当容器实现ISmartDoublingContainer时显示。GTNL为运行时可选依赖。 |
 | `mixin/ae/MixinGuiSuperDualInterface.java` | `com.science.gtnl.client.gui.GuiSuperDualInterface` | `addButtons` TAIL; `func_146284_a` TAIL; `drawFG` TAIL | 在GTNL超级二合一ME接口GUI追加智能倍增开关。方块形态多一个sidelessMode按钮，按钮列整体下移18像素。 |
-| `mixin/gt/MixinMTEHatchInputBus.java` | `gregtech.api.metatileentity.implementations.MTEHatchInputBus` | `saveNBTData` TAIL; `loadNBTData` TAIL; 实现 `ISmartDoublingMedium` | 为GT系样板输入仓实现智能倍增能力。仅当机器实现ICraftingProvider时倍增生效。getMaxMultiplier直接返回配置上限（GT仓缓冲无上限）。 |
+| `mixin/gt/MixinMTEHatchInputBus.java` | `gregtech.api.metatileentity.implementations.MTEHatchInputBus` | `saveNBTData` TAIL; `loadNBTData` TAIL; 实现 `ISmartDoublingMedium` | 为GT系样板输入仓实现智能倍增能力。仅当机器实现ICraftingProvider时倍增生效。getMaxMultiplier直接返回配置上限（GT仓缓冲无上限）。**4.5.0-fix19**：开关改三态（0 未设置/1 开/2 关）；未设置时 TenkeiTech `MTEHatchAutoTemplateInputME` 家族默认开、其余仓默认关；显式态才写 `ae2qolSmartDoublingExplicit`，旧存档的 `ae2qolSmartDoubling` 仅对非 TenkeiTech 仓兼容 |
+| `mixin/gt/MixinAutoTemplateInputGuiToggle.java` | `gregtech.common.gui.modularui.singleblock.base.MTETieredMachineBlockBaseGui` | `<init>` TAIL; `createBottomLeftCornerFlow` RETURN | **4.5.0-fix19**：TenkeiTech 三台自带模板输入总线（共用 `MTEAutoTemplateInputGui`）的智能倍增开关。按机器类型 `MTEHatchAutoTemplateInputME` 过滤；TenkeiTech 为运行时可选依赖（类探测 + `isInstance`） |
 | `mixin/gt/MixinMTEHatchCraftingInputMEGui.java` | `gregtech.common.gui.modularui.hatch.MTEHatchCraftingInputMEGui` | `<init>` TAIL; `createBottomLeftCornerFlow` RETURN | 在GT样板输入仓GUI（2714/2715）底部按钮行追加智能倍增开关。通过BooleanSyncValue双向同步。 |
 | `mixin/gt/MixinSuperCraftingInputHatchMEGui.java` | `com.science.gtnl.common.gui.modularui.SuperCraftingInputHatchMEGui` | `<init>` TAIL; `createBottomLeftCornerFlow` RETURN | 在GTNL超级样板输入总成(21504/21505)底部按钮行追加智能倍增开关。GTNL为运行时可选依赖。 |
 | `mixin/gt/MixinDualInputHatchUI.java` | `reobf.proghatches.gt.metatileentity.DualInputHatch` | `populateUI` RETURN | 在ProgrammableHatches的DualInputHatch（22130/22179）UI追加智能倍增开关。仅对实现ICraftingProvider的子类显示。PH为运行时可选依赖。 |
@@ -236,13 +237,13 @@
 
 ## 按功能域汇总
 
-> 与 `mixins.ae2_qof.json` 对齐，共 **43 条**（`mixins` 段 27 + `client` 段 16，逐条对应；
+> 与 `mixins.ae2_qof.json` 对齐，共 **48 条**（`mixins` 段 30 + `client` 段 18，逐条对应；
 > 3.35.0-fix16 摘除零注入的 `MixinBaseMetaTileEntityWaila` 后由 44 → 43；
 > 3.35.0-fix7 起 `MixinCommonBaseMetaTileEntityMultiblockRegistry` 另含 onUnload 注入）。
 
 | 功能域 | 文件数 | 涉及文件 |
 |--------|--------|----------|
-| 智能倍增 (Smart Doubling) | 10 | MixinDualityInterface, MixinContainerInterface, MixinCraftingCPUCluster, MixinGuiInterface, MixinGuiSuperInterface, MixinGuiSuperDualInterface, MixinMTEHatchInputBus, MixinMTEHatchCraftingInputMEGui, MixinDualInputHatchUI, MixinSuperCraftingInputHatchMEGui |
+| 智能倍增 (Smart Doubling) | 11 | MixinDualityInterface, MixinContainerInterface, MixinCraftingCPUCluster, MixinGuiInterface, MixinGuiSuperInterface, MixinGuiSuperDualInterface, MixinMTEHatchInputBus, MixinAutoTemplateInputGuiToggle, MixinMTEHatchCraftingInputMEGui, MixinDualInputHatchUI, MixinSuperCraftingInputHatchMEGui |
 | NEI 增强/覆盖层 | 6 | MixinGuiRecipe, MixinGuiOverlayButton, MixinDefaultOverlayHandler, MixinPanelWidgetClick, MixinNEIRecipeWidget, MixinPanelWidgetDraw |
 | 网络库存缓存/合成通知 | 2 | MixinGuiMEMonitorable, MixinCraftingCPUCluster |
 | 自动样板上传辅助 | 2 | MixinDefaultOverlayHandler, MixinRecipeHandlerRef |

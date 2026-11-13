@@ -1,3 +1,91 @@
+# 4.5.0-fix19 —— TenkeiTech 自带模板输入总线接入智能倍增（2026-11-13）
+
+## 需求（用户原话）
+
+「B１，默认自动倍增，关闭恢复它本身的机制」
+
+目标机器是 TenkeiTech 1.1.2 的三台**自带模板输入总线**：固定模板（挤压/流体固化，基类
+`MTEHatchAutoTemplateInputME`）、线缆机（`MTEHatchWiremillTemplateInputME`）、卷板机
+（`MTEHatchBenderTemplateInputME`）。用户明确纠正：**不是** ME 超级样板总成。
+
+## 现象
+
+这三台接在合成 CPU 上时没有智能倍增开关，发配表现为「一份一份发」。
+
+## 根因（行号级证据）
+
+1. **开关根本不存在（~95%）**：`MixinCraftingCPUCluster.java:488-505` 的倍率判定要求
+   `medium instanceof ISmartDoublingMedium && isSmartDoublingEnabled()`，否则 `return 1`；
+   `MixinMTEHatchInputBus.java:39-41` 的开关还要求 `ICraftingProvider`（三台都满足，1.1.2 字节码已核实）。
+   但三台 GUI `com.tenkeitech.gui.MTEAutoTemplateInputGui` 继承
+   `MTEHatchBaseGui → MTEMachineWithFluidScreenBaseGui → MTETieredMachineBlockBaseGui`，
+   **没有覆写** `createBottomLeftCornerFlow`（1.1.2 javap 仅见 `getBasePanelWidth/Height`、
+   `doesAddGregTechLogo`、`createContentSection`）。现有开关只挂在 GT 样板输入仓 / GTNL 超级样板总成 /
+   PH 双口仓 / AE2 接口 GUI——三台一个都不沾，flag 恒 false ⇒ `effectiveN=1`。
+2. **我们的整 tick 接管掐死对方原生批量（~90%）**：`MixinCraftingCPUCluster.java:516 @Inject(HEAD,
+   cancellable)`、`:530 ci.cancel()` 让 vanilla `executeCrafting` 方法体不执行，而 TenkeiTech 的
+   多轮发配正是该方法体内的 `@Redirect`（`com.tenkeitech.mixin.ae2.CraftingCPUClusterMixin:302-317`，
+   分支包含 `MTEHatchAutoTemplateInputME`）。方法体不跑 ⇒ 对方批量静默失效；三台 flag 又 false ⇒ 只进 1 轮。
+
+## 修复（B1：默认自动倍增；关闭恢复它本身机制）
+
+1. `mixin/gt/MixinMTEHatchInputBus.java`：开关改**三态**（0=未设置 / 1=显式开 / 2=显式关）。
+   未设置时仅 TenkeiTech 三台默认开，其余 GT 仓默认关；`setSmartDoubling` 才置显式态；
+   `saveNBTData` 只在显式态写 `ae2qolSmartDoubling` + `ae2qolSmartDoublingExplicit`；
+   `loadNBTData` 有显式标记按标记，否则旧键仅对非 TenkeiTech 仓生效
+   （三台忽略历史恒 false 的旧键，避免默认开被旧存档钉成关闭）。
+2. 新增 `mixin/gt/MixinAutoTemplateInputGuiToggle.java`（`client` 段）：注入
+   `MTETieredMachineBlockBaseGui.createBottomLeftCornerFlow` 的 RETURN，按机器类型过滤后追加
+   `ToggleButton`；复用 GT 版 `BooleanSyncValue` + 坐标包 + `TooltipTextButton` 写法，一处覆盖三台。
+3. 新增 `compat/TenkeiTechIntegration.java`：
+   `Class.forName("com.tenkeitech.machine.MTEHatchAutoTemplateInputME")` + `isInstance` 可选判定；
+   未装 TenkeiTech 时不影响任何 GT 仓，并打一条 INFO。
+4. 新增 `compat/TenkeiTechNativeBatchBridge.java`：开关显式关闭时，反射调用 TenkeiTech 注入到
+   `CraftingCPUCluster` 的 `*$pushPatternBatch(ICraftingMedium, ICraftingPatternDetails, InventoryCrafting,
+   IEnergyGrid, CraftingGridCache)Z`（按后缀 + 完整描述符匹配、缓存），并用 `*$batchFactor` 读取它本轮
+   实际发配轮数。返回值：`>0` 成功轮数；`0` 已尝试但被拒（本轮不重试，与原版语义一致）；
+   `-1` 不可用（退回单轮）。
+5. `mixin/ae/MixinCraftingCPUCluster.java` 原版逐轮分支接入桥：开关关闭且介质是三台之一时先走原生批量；
+   成功后按其契约补齐第 1 轮记账（`accountSmartPush(factor)` + `sum` 功率 + `taskValue -= 1`），
+   合计 factor 轮；失败/不可用按原版语义返回物品或退回单轮。
+
+## 影响面与风险
+
+- 默认开只作用于 `MTEHatchAutoTemplateInputME` 家族；GT 其它输入仓行为不变（未设置仍默认关）。
+- 关闭态不再降级为 1×：原生批量通过反射桥恢复；反射按「后缀 + 描述符」匹配，缺失只打一条日志并降级 1×。
+- 三台 GUI 共用基类，一处 mixin 覆盖全部；镜像 `MTEHatchAutoTemplateInputProxy` 不实现
+  `ICraftingProvider`，不显示开关、不参与倍增。
+- N× 推送仍受现有 `medium.isBusy()` 闸约束，必须落在 `MachinePatternBatch` 的接受窗口。
+- 反射依赖 TenkeiTech 1.1.2 的 mixin 私有方法名/字段名；上游改名时桥自动降级（日志可见）。
+
+## 验证结果（本地）
+
+- `.\gradlew.bat build --offline -x spotlessJavaCheck -x spotlessCheck` BUILD SUCCESSFUL；
+  产物 `build/libs/AE2-QoL-4.5.0-fix19.jar`。
+- `jar tf` 核对：`TenkeiTechIntegration`、`TenkeiTechNativeBatchBridge`、
+  `MixinAutoTemplateInputGuiToggle` 均入包；`mixins.ae2_qof.json` 的 `client` 段含新 mixin。
+
+## 待实测（用户端）
+
+| 项 | 预期 |
+|---|---|
+| 三台 GUI | 底部出现智能倍增开关，初始为 ON（默认） |
+| 大订单 | 一次进入 N 轮（池内数量一次跳 N），CPU 等待量按 N 记账，原料零回流 |
+| 手动关闭 | 首次走到原生批量时日志出现一条 INFO（`已回退到 TenkeiTech 原生批量（…）：本轮 factor=N`）；行为回到 TenkeiTech 自身批量（仍可一次进多轮，倍率按它的规则） |
+| 移除 TenkeiTech 的测试环境 | 开关不显示；桥降级单轮；日志有「未检测到 TenkeiTech」或「未找到原生批量方法」 |
+
+## 修改文件
+
+- `src/main/java/com/wztwzt/ae2_qof/mixin/gt/MixinMTEHatchInputBus.java`
+- `src/main/java/com/wztwzt/ae2_qof/mixin/ae/MixinCraftingCPUCluster.java`
+- `src/main/java/com/wztwzt/ae2_qof/mixin/gt/MixinAutoTemplateInputGuiToggle.java`（新增）
+- `src/main/java/com/wztwzt/ae2_qof/compat/TenkeiTechIntegration.java`（新增）
+- `src/main/java/com/wztwzt/ae2_qof/compat/TenkeiTechNativeBatchBridge.java`（新增）
+- `src/main/resources/mixins.ae2_qof.json`
+- `gradle.properties`、`src/main/resources/mcmod.info`（版本号 4.5.0-fix19）
+
+---
+
 # 4.5.0-fix18 —— 服务器剪贴板失效修复 + 样板总成拆除按钮（2026-11-11）
 
 ## 需求（用户原话）
