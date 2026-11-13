@@ -37,8 +37,8 @@ jobs:
             while IFS=$'\t' read -r id name; do
               case "$name" in
                 *-dev.jar|*-sources.jar)
-                  echo "Deleting $name from $tag"
-                  gh api -X DELETE "repos/${GITHUB_REPOSITORY}/releases/assets/${id}" || true
+                  echo "Deleting $name (id=$id) from $tag"
+                  gh release delete-asset "$tag" "$name" --yes || echo "delete-asset failed for $name"
                   ;;
               esac
             done
