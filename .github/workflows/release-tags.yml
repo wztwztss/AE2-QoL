@@ -37,7 +37,7 @@ jobs:
             case "$name" in
               *-dev.jar|*-sources.jar)
                 echo "Deleting non-mod asset: $name"
-                gh api -X DELETE "repos/${GITHUB_REPOSITORY}/releases/assets/${id}" || true
+                gh release delete-asset "$TAG" "$name" --yes || true
                 ;;
             esac
           done
