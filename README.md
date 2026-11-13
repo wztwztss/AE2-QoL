@@ -175,6 +175,8 @@ ServerUtilities 2.4.9→2.4.14）。升级过程暴露并修复了 4 处 API 断
 
 按绑定玩家/队伍的 BetterQuesting 进度检查 ME 库存，支持非消耗检索类任务；跳过消耗型提交，不把“网络中可见”当作消费。断网、玩家离线等情况受检测条件约束；NBT 变体与绑定持久化见审查报告。
 
+**4.5.0-fix20 修复**：邻居方块更新时父类 `BlockIOPort` 的 final `onNeighborBlockChange` 会把 `TileQuestDetector` 强转 `TileIOPort`，导致 `ClassCastException`；现由 AE2 Mixin 在实体不是 `TileIOPort` 时跳过该回调，普通 IO 端口行为不变（GitHub issue #1）。
+
 ### F17 · 无限存储元件
 
 并入 dancing snow 的 AE2 Infinity Cell，提供物品、流体、源质存储；**物品保存 UUID，实际内容位于世界存档，复制元件会共享同一后端库存**。

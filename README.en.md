@@ -178,6 +178,8 @@ Block, cable-part and wireless-handheld forms combine pattern editing with the i
 
 Checks ME stock for the bound player's/team's BetterQuesting non-consuming retrieval tasks. Consuming submissions are skipped: visibility is not consumption. Network/offline conditions apply; NBT variants and persistent owner binding have review findings.
 
+**4.5.0-fix20 fix**: on neighbour block updates, the parent `BlockIOPort`'s final `onNeighborBlockChange` cast `TileQuestDetector` to `TileIOPort` and crashed with `ClassCastException`. An AE2 Mixin now skips that callback when the tile is not a `TileIOPort`; normal IO Ports are unaffected (GitHub issue #1).
+
 ### F17 · Infinity Storage Cell
 
 Integrates dancing snow's AE2 Infinity Cell for items, fluids and essentia. **Items hold a UUID; contents live in the world save. Copies share the same backend inventory.**
