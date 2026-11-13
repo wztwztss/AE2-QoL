@@ -10,21 +10,16 @@ An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI patte
 > Client-only installs will show the GUIs but the features will not work; server-only installs leave clients without them.
 > (If a Modrinth page marks this mod as client-only, that metadata is wrong — this note is authoritative.)
 
-**Author: wztwzt · Current source version: 4.5.0-fix20 · Reference pack: GTNH 2.9.0-RC-2**
-
-> **4.5.0-fix20**: Fixes the `ClassCastException` in the ME Quest Detector on neighbour block updates
-> (GitHub issue #1). `BlockQuestDetector` reuses the `BlockIOPort` render pipeline, but the parent's final
-> `onNeighborBlockChange` casts `TileQuestDetector` to `TileIOPort`. A new AE2 Mixin skips that callback
-> when the tile is not a `TileIOPort`; normal IO Ports are unaffected. See the top of
-> [CHANGELOG.md](CHANGELOG.md).
+**Author: wztwzt · Current source version: 4.5.0-fix20 · Reference pack: GTNH 2.9.0 stable**
 
 > **4.5.0-fix19**: TenkeiTech's three built-in-template input buses (wiremill / bender / fixed-template
 > extruder & fluid solidifier) now default to smart doubling; switching the GUI toggle off falls back to
 > TenkeiTech's own batch dispatching (see the top of [CHANGELOG.md](CHANGELOG.md)).
 
-> **4.2.0 is the full RC-2 compatibility release.** The build baseline and dependency table moved to the
-> exact RC-2 versions, and it fixes the RC-2 regression where the MK.III / MK.IV pattern window fell back
-> to PH's stock 36 slots. **Versions 4.1.0-fix8 and older have a broken MK.III/IV pattern window on RC-2.**
+> **4.2.0 is the full GTNH 2.9.0 stable compatibility release.** The build baseline and dependency table
+> moved to the 2.9.0-series versions, and it fixes the 2.9.0 stable regression where the MK.III / MK.IV
+> pattern window fell back to PH's stock 36 slots. **Versions 4.1.0-fix8 and older have a broken
+> MK.III/IV pattern window on 2.9.0 stable.**
 
 
 ## Installation and upgrades
@@ -39,9 +34,9 @@ An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI patte
 
 The mod uses **GTNH fork APIs**, not arbitrary Forge 1.7.10/AE2/NEI combinations. See [dependencies.gradle](dependencies.gradle) and [gradle.properties](gradle.properties) for the full build declarations. A `compileOnly` declaration does not prove that startup without that integration has been tested.
 
-| Component | Build reference (4.2.0 / RC-2) | Compared instance |
+| Component | Build reference (4.2.0 / 2.9.0 stable) | Compared instance |
 |---|---|---|
-| Minecraft / Forge | 1.7.10 / 10.13.4.1614; MCP stable 12 | GTNH 2.9.0-RC-2 |
+| Minecraft / Forge | 1.7.10 / 10.13.4.1614; MCP stable 12 | GTNH 2.9.0 stable |
 | AE2 Unofficial | rv3-beta-1083-GTNH (instance jar + `rfg.deobf`) | Same |
 | AE2FluidCraft-Rework | 1.5.113-gtnh (instance jar + `rfg.deobf`) | Same |
 | GregTech | 5.09.54.205 | Same |
@@ -177,8 +172,6 @@ Block, cable-part and wireless-handheld forms combine pattern editing with the i
 ### F16 · ME Quest Detector
 
 Checks ME stock for the bound player's/team's BetterQuesting non-consuming retrieval tasks. Consuming submissions are skipped: visibility is not consumption. Network/offline conditions apply; NBT variants and persistent owner binding have review findings.
-
-**4.5.0-fix20 fix**: on neighbour block updates, the parent `BlockIOPort`'s final `onNeighborBlockChange` cast `TileQuestDetector` to `TileIOPort` and crashed with `ClassCastException`. An AE2 Mixin now skips that callback when the tile is not a `TileIOPort`; normal IO Ports are unaffected (GitHub issue #1).
 
 ### F17 · Infinity Storage Cell
 

@@ -9,19 +9,14 @@
 > 注册网络通道并运行线程引擎。只装客户端会出现"界面在但功能不生效/连不上"，只装服务端则客户端看不到相关界面与提示。
 > （Modrinth 页面上若有"客户端专用"标记，那是页面元数据不准，请以本条为准。）
 
-**作者：wztwzt · 当前源码版本：4.5.0-fix20 · 对照整合包：GTNH 2.9.0-RC-2**
-
-> **4.5.0-fix20**：修复「ME 任务检测器」在邻居方块更新时的 `ClassCastException`（GitHub issue #1）：
-> `BlockQuestDetector` 复用 `BlockIOPort` 渲染管线，但父类 final 的 `onNeighborBlockChange` 会把
-> `TileQuestDetector` 强转成 `TileIOPort`。新增 AE2 Mixin，在实体不是 `TileIOPort` 时跳过该回调；
-> 普通 IO 端口行为不变。详见 [CHANGELOG.md](CHANGELOG.md) 顶部。
+**作者：wztwzt · 当前源码版本：4.5.0-fix20 · 对照整合包：GTNH 2.9.0 正式版（稳定版）**
 
 > **4.5.0-fix19**：TenkeiTech 三台自带模板输入总线（线缆机 / 卷板机 / 固定模板-挤压与流体固化）
 > 默认接入智能倍增；在界面关闭开关时，回退到 TenkeiTech 自身的批量发配机制（详见 [CHANGELOG.md](CHANGELOG.md) 顶部）。
 
-> **4.2.0 是本模组对 GTNH 2.9.0-RC-2 的全量兼容版本**：编译基线与依赖表整体换到 RC-2 实机版本，
-> 并修掉了 RC-2 下 MK.III / MK.IV 样板窗退回原版 36 格的问题（详见 [CHANGELOG.md](CHANGELOG.md) 顶部）。
-> **旧版本（4.1.0-fix8 及更早）在 RC-2 上 MK.III/IV 的样板窗是坏的**，请勿混用。
+> **4.2.0 是本模组对 GTNH 2.9.0 正式版（稳定版）的全量兼容版本**：编译基线与依赖表整体换到 2.9.0 系列实机版本，
+> 并修掉了 2.9.0 正式版下 MK.III / MK.IV 样板窗退回原版 36 格的问题（详见 [CHANGELOG.md](CHANGELOG.md) 顶部）。
+> **旧版本（4.1.0-fix8 及更早）在 2.9.0 正式版上 MK.III/IV 的样板窗是坏的**，请勿混用。
 
 
 ## 安装与升级
@@ -36,9 +31,9 @@
 
 本项目使用 **GTNH 分支 API**，不是任意 Forge 1.7.10 装上 AE2/NEI 就能保证运行。完整声明见 [dependencies.gradle](dependencies.gradle) 与 [gradle.properties](gradle.properties)；`compileOnly` 不等于相关集成已经过缺模组启动验证。
 
-| 组件 | 当前编译依据（4.2.0 / RC-2） | 对照实例 |
+| 组件 | 当前编译依据（4.2.0 / 2.9.0 正式版） | 对照实例 |
 |---|---|---|
-| Minecraft / Forge | 1.7.10 / 10.13.4.1614；MCP stable 12 | GTNH 2.9.0-RC-2 |
+| Minecraft / Forge | 1.7.10 / 10.13.4.1614；MCP stable 12 | GTNH 2.9.0 正式版 |
 | AE2 Unofficial | rv3-beta-1083-GTNH（实例 jar + `rfg.deobf`） | 同左 |
 | AE2FluidCraft-Rework | 1.5.113-gtnh（实例 jar + `rfg.deobf`） | 同左 |
 | GregTech | 5.09.54.205 | 同左 |
@@ -54,7 +49,7 @@
 | StructureLib | 1.4.45 | 同左 |
 | 其它显式补齐 | GTNHLib 0.11.52、waila 1.19.34、JOML 1.10.8、fastutil 8.5.18 | 文件依赖不带传递依赖，必须显式声明 |
 
-4.2.0 把本表从 beta-3 基线整体换到 RC-2 基线（GT 133→205、AE2 1050→1083、AE2FC 106→113、
+4.2.0 把本表从 beta-3 基线整体换到 2.9.0 正式版基线（GT 133→205、AE2 1050→1083、AE2FC 106→113、
 MUI2 88→92、NEI 130→155、PH p24→p31、StructureLib 42→45、GuideNH 29→41、GTNL dev290→rc2、
 ServerUtilities 2.4.9→2.4.14）。升级过程暴露并修复了 4 处 API 断裂 + 1 处静默重写失效。
 
@@ -174,8 +169,6 @@ ServerUtilities 2.4.9→2.4.14）。升级过程暴露并修复了 4 处 API 断
 ### F16 · ME 任务检测器
 
 按绑定玩家/队伍的 BetterQuesting 进度检查 ME 库存，支持非消耗检索类任务；跳过消耗型提交，不把“网络中可见”当作消费。断网、玩家离线等情况受检测条件约束；NBT 变体与绑定持久化见审查报告。
-
-**4.5.0-fix20 修复**：邻居方块更新时父类 `BlockIOPort` 的 final `onNeighborBlockChange` 会把 `TileQuestDetector` 强转 `TileIOPort`，导致 `ClassCastException`；现由 AE2 Mixin 在实体不是 `TileIOPort` 时跳过该回调，普通 IO 端口行为不变（GitHub issue #1）。
 
 ### F17 · 无限存储元件
 
