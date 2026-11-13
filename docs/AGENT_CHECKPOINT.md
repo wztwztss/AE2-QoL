@@ -7,6 +7,22 @@
 
 ---
 
+## 本轮：2026-11-13 · 4.5.0-fix26（候选 1 无线分配器迁移 + 候选 5 混合自动上传）
+
+|项目|内容|
+|---|---|
+|工具平台 / 模型|Doubao（本地桌面 Agent）· 当前会话|
+|任务（用户原话）|「把1迁移了吧，然后听你的做混合版，然后默认关闭」|
+|候选 1|迁移 AE2Things 1.3.0 `BlockWirelessDistributor/TileWirelessDistributor/GuiWirelessDistributor` 的“ME 无线网络分配器（GT ME 仓室）”，按本仓结构重写：方块 + Tile + 容器 + 简化自绘 GUI + 3 个网络包；GUI id 130；只接受 GT `BaseMetaTileEntity`；1x1/3x3 区块、40 条、颜色/owner 校验；扫描/绑定显式触发，不在 tick 自动全连|
+|候选 1 关键修复|`onChunkUnload/invalidate` 销毁运行时连接前，把坐标转入 `pendingCoords`；`WORLD_NBT_WRITE` 同时写 active + pending 坐标并去重。否则先销毁后写 NBT 会写出空 `connections`，重载永久丢连接|
+|候选 5|混合自动上传，**默认关闭**（`settings.json` 的 `nei_auto_upload_enabled=false`）：NEI「+」填配方后服务端立即编码，客户端等输出槽同步 2 tick 后复用现有上传管线；唯一候选/remembered 直接放置，多候选打开 `GuiProviderSelect`；保留 `INJECT` 权限、稳定位置、失败回执、持久映射；`UploadPatternPacket` 增加 item/damage/NBT 重复样板拦截与回执|
+|刻意不动|上游 `ContainerWirelessDualInterfaceTerminal.tryPlacePattern` 的槽位写入路径（会绕过本仓权限/位置/回执）；现有上传策略 1/2/3；TenkeiTech/智能倍增等既有逻辑|
+|产物|`build/libs/AE2-QoL-4.5.0-fix26.jar`（构建通过后核对）；按用户要求复制到 `D:\下载\需更新模组`，**不部署游戏**|
+|待实测|分配器右键/Shift 右键、GUI 列表/绑定/解绑、颜色/半径、区块卸载重载恢复、GT 仓 owner 校验、Tier2 扫描性能/40 上限；自动上传开关开/关、单候选、多候选、重复样板|
+|已知限制|分配器 GUI 为简化自绘列表，不是上游 `Component/WirelessConnectorRepo` 的逐项复刻；方块为单类型 + Tile 颜色字段，不是上游 17 个 metadata 子物品。若后续要求完全对齐上游交互，需要再补搜索语法/行内按钮/颜色子物品|
+
+---
+
 ## 本轮插曲：2026-11-13 · 4.5.0-fix20（GitHub issue #1：ME 任务检测器邻居更新崩溃）
 
 |项目|内容|

@@ -145,6 +145,13 @@ public class UploadPatternPacket implements IMessage {
                     return;
                 }
 
+                if (hasDuplicatePattern(target, encodedPattern)) {
+                    MyMod.LOG.info("[Upload] duplicate pattern already present in {}", target.getClass()
+                        .getSimpleName());
+                    notify(player, "ae2_qof.info.upload_duplicate");
+                    return;
+                }
+
                 boolean placedInProvider = insertPatternIntoProvider(target, encodedPattern.copy());
                 if (!placedInProvider) {
                     // fix41：写入失败不再静默，明确告诉玩家原因（槽满 / 该机不收这类样板）
@@ -225,6 +232,28 @@ public class UploadPatternPacket implements IMessage {
                 }
             } catch (Exception ignored) {}
             return null;
+        }
+
+        /**
+         * 样板去重：与目标供应器现有样板逐槽比较 item/damage/NBT（NBT 含配方内容）。
+         * 上游 tryPlacePattern 同样拒绝 DUPLICATE；这里只在写入前检查，不改变原有槽位选择语义。
+         */
+        private boolean hasDuplicatePattern(ICraftingProvider provider, ItemStack pattern) {
+            if (!(provider instanceof IInterfaceViewable viewable)) {
+                return false;
+            }
+            IInventory patterns = viewable.getPatterns();
+            if (patterns == null) {
+                return false;
+            }
+            int limit = Math.min(viewable.rows() * viewable.rowSize(), patterns.getSizeInventory());
+            for (int i = 0; i < limit; i++) {
+                ItemStack existing = patterns.getStackInSlot(i);
+                if (existing != null && com.wztwzt.ae2_qof.util.ItemIdentity.same(existing, pattern)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private boolean insertPatternIntoProvider(ICraftingProvider provider, ItemStack pattern) {

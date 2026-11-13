@@ -12,6 +12,9 @@ import com.wztwzt.ae2_qof.merged.wireless.WirelessMergedGuiObject;
 import com.wztwzt.ae2_qof.wireless.BlockWirelessTransceiver;
 import com.wztwzt.ae2_qof.wireless.TileWirelessTransceiver;
 import com.wztwzt.ae2_qof.wireless.WirelessGuiHandler;
+import com.wztwzt.ae2_qof.wireless.distributor.BlockWirelessDistributor;
+import com.wztwzt.ae2_qof.wireless.distributor.ContainerWirelessDistributor;
+import com.wztwzt.ae2_qof.wireless.distributor.TileWirelessDistributor;
 
 import appeng.api.parts.IPart;
 import cpw.mods.fml.common.network.IGuiHandler;
@@ -55,6 +58,12 @@ public class MergedGuiHandler implements IGuiHandler {
                 return wirelessGuiHandler.getServerGuiElement(ID, player, world, x, y, z);
             }
         }
+        if (ID == BlockWirelessDistributor.GUI_ID) {
+            TileEntity te = world.getTileEntity(x, y, z);
+            if (te instanceof TileWirelessDistributor) {
+                return new ContainerWirelessDistributor(player.inventory, (TileWirelessDistributor) te);
+            }
+        }
         return null;
     }
 
@@ -78,6 +87,14 @@ public class MergedGuiHandler implements IGuiHandler {
             TileEntity te = world.getTileEntity(x, y, z);
             if (te instanceof TileWirelessTransceiver) {
                 return wirelessGuiHandler.getClientGuiElement(ID, player, world, x, y, z);
+            }
+        }
+        if (ID == BlockWirelessDistributor.GUI_ID) {
+            TileEntity te = world.getTileEntity(x, y, z);
+            if (te instanceof TileWirelessDistributor) {
+                return new com.wztwzt.ae2_qof.client.gui.GuiWirelessDistributor(
+                    player.inventory,
+                    (TileWirelessDistributor) te);
             }
         }
         return null;

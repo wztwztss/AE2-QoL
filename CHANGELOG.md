@@ -1,3 +1,115 @@
+# 4.5.0-fix26 —— 迁移 AE2Things 1.3.0 无线分配器 + 混合自动上传（2026-11-13）
+
+## 变更
+
+- 新增 **ME 无线网络分配器（GT ME 仓室）**，对应上游 `BlockWirelessDistributor` / `TileWirelessDistributor`
+  / `GuiWirelessDistributor` 的能力，但按本项目结构重写：
+  - 方块 `ae2qol.wireless_distributor`，GUI id `130`，贴图复用 AE2 `BlockWireless`；
+  - 只接受半径内的 GT `BaseMetaTileEntity`，通过 `AEApi.createGridConnection` 接到本网络；
+  - 支持 1x1 / 3x3 区块半径、颜色频道、最多 40 条连接；扫描与绑定由玩家显式触发，不在 tick 里自动全连；
+  - owner 校验：已有主人的 GT 仓室只允许同一 owner 的分配器连接；连接/断开/范围/颜色/扫描均由服务端校验；
+  - 世界 NBT 保存连接坐标，区块卸载时先销毁运行时连接、坐标转入 pending，重载后自动恢复，
+    避免“连接对象已销毁但 NBT 写出空列表”导致重载丢连接。
+- **NEI 转移后自动编码 + 混合自动上传**（默认关闭，`settings.json` 的 `nei_auto_upload_enabled=false`）：
+  - 开启后 NEI「+」把配方填入二合一终端，服务端随后立即编码，并用 `MergedTerminalResultPacket.autoUpload`
+    通知客户端；客户端等输出槽同步后调用现有上传管线。
+  - 上传语义保持本项目原样：`ISecurityGrid.INJECT` 权限校验、稳定位置（维度+坐标）定位、失败回执、
+    `remembered_providers.json` 持久映射；唯一候选直接放置，多候选打开现有 `GuiProviderSelect`。
+  - 不把上游 `ContainerWirelessDualInterfaceTerminal.tryPlacePattern` 的槽位写入路径搬进来，避免绕过权限/位置/回执。
+- `UploadPatternPacket` 增加样板去重：写入前按 item/damage/NBT 与目标供应器现有样板比较，
+  重复时回执 `ae2_qof.info.upload_duplicate`，不覆盖/重复插入（对应上游 `DUPLICATE` 失败原因）。
+
+## 验证
+
+- `JAVA_HOME=E:\java17`、离线 Gradle `build` 通过（`BUILD SUCCESSFUL`）。
+- 待实测：分配器右键/Shift 右键、GUI 列表与绑定/解绑、颜色/半径、区块卸载重载后的连接恢复、
+  GT ME 仓室 owner 校验、Tier2 3×3 扫描性能、40 条上限；NEI 自动上传开关打开后的单候选/多候选/重复样板路径；
+  关闭开关时 NEI 只填配方、不自动编码/上传。
+
+---
+
+# 4.5.0-fix25 —— F 模块虚拟槽绘制、Shift 滚轮与 NEI 编码事件补齐（2026-11-13）
+
+## 变更
+
+- 新增 `MergedVirtualPatternSlot`：面板非空槽改为按 AE2 原生 `VirtualMESlot` 的
+  `drawStackAndOverlay` 路径绘制，物品/流体栈使用 AE 栈显示，不再把流体当成普通物品图标。
+  真实槽位仍负责点击、NEI 拖拽与容器同步，避免替换整套容器协议带来的回归。
+- Shift+滚轮在样板格上改为 1.3.0 的“调整数量”语义；原同类型替换改由 Ctrl+Shift+滚轮触发。
+- 新增并抛出 `EncodeEvent`（NEI Alt + 编码按钮），为外部 NEI 集成/附属模组保留 1.3.0 兼容钩子。
+- 空白样板槽仍保留网络空白样板总数的虚拟显示。
+
+## 验证
+
+- `JAVA_HOME=E:\java17`、离线 Gradle `build` 通过。
+- 待实测：虚拟槽物品/流体图标与数量、Shift+滚轮数量、Ctrl+Shift 替换、Alt 编码事件。
+
+---
+
+# 4.5.0-fix24 —— F 模块补齐 1.3.0 输入格排序与面板状态持久化（2026-11-13）
+
+## 变更
+
+- 移植 1.3.0 `IPatternTerminal.sortCraftingItems()`：处理模式 Shift 点击「优先流体」按钮时，
+  按当前 `prioritize` 状态把扩展输入格中的流体/物品重新排列（优先流体开启则流体在前，否则物品在前）。
+- `combine` / `prioritize` 不再只存在于本次 GUI 会话：关闭界面时写入方块、部件、无线终端三种宿主 NBT，
+  重新打开或换客户端后由容器恢复，键名为 `apuSavedCombine` / `apuSavedPrioritize`。
+- 新增 `SORT_CRAFTING` 网络动作；客户端点击后先本地重排，再通知服务端权威重排。
+
+## 验证
+
+- `JAVA_HOME=E:\java17`、离线 Gradle `build` 通过（`BUILD SUCCESSFUL`）。
+- 待实测：处理模式 Shift 点优先按钮的排序结果、重开 GUI 后 combine/prioritize 状态恢复。
+
+---
+
+# 4.5.0-fix23 —— F 模块面板层补齐 AE2Things 1.3.0 交互（2026-11-13）
+
+## 变更
+
+- 面板新增 AE2FC 流体样板的「合并同类输入（combine）」与「优先流体（prioritize）」按钮，
+  位置、贴图状态与 1.3.0 `PatternPanel` 对齐；处理模式点击后同步到服务端 `PatternContainer`。
+- 处理模式 NEI 填充按上述状态处理：`combine` 合并同种输入/输出，`prioritize` 把流体排到物品前，
+  避免同一流体被拆成多格。
+- 编码按钮接入 1.3.0 的修饰键语义：Shift 编码后把产物放入玩家背包；
+  Ctrl+Shift 连输入槽里的空白样板一起放入背包。
+- `SlotPatternFake` 补 1.3.0 同名的 `getDisplayPositionOffset()`，供隐藏槽位偏移使用。
+- 仍保留本模组现有真实槽位、分页/反转与自定义上传/召回/交换按钮；未改用 MUI2
+  `VirtualMESlot` 虚拟槽体系，面板分区坐标继续按 1.3.0 的 133×202 布局绘制。
+
+## 验证
+
+- `JAVA_HOME=E:\java17`、离线 Gradle `build` 通过（`BUILD SUCCESSFUL`）。
+- 待实测：流体样板 combine/prioritize 按钮状态、Shift 编码入背包、处理模式 NEI 填充合并排序。
+
+---
+
+# 4.5.0-fix22 —— F 模块样板编码切换到 AE2Things 1.3.0 同源路径（2026-11-13）
+
+## 变更
+
+- F 模块「样板与接口二合一终端」的样板编码不再使用手搓的
+  `PatternContainer.encodeItemPattern` / `encodeFluidPattern`，改为
+  `AE2PatternEncoder`：把当前页/当前反转布局下可见的输入输出格转换成 AE2 原生
+  `IAEStackInventory`，调用 `appeng.helpers.PatternEncodingHelper.encode(...)`。
+- 这条路径与 AE2Things 1.3.0 的 `PatternContainer.encode()` → `IPatternTerminal.encode()`
+  → `PatternEncodingHelper` 一致，区别只在宿主适配层，避免 2.8 时期手搓编码的配方映射、
+  流体/物品判定与样板 NBT 写入偏差。
+- 编码仍保留本模组的面板槽位、分页、反转、快照与网络同步；尚未替换
+  `PatternPanel`/虚拟槽 GUI，后续按 1.3.0 继续。
+
+## 验证
+
+- `JAVA_HOME=E:\java17`、离线 Gradle 编译通过。
+- 待实测：合成/处理样板编码、物品/流体样板、分页与反转状态下的输入输出是否只取当前可见格。
+
+## 许可证
+
+- 按 AE2Things（asdflj，GPL-3.0）的移植口径，根 `LICENSE` 已替换为 GPL-3.0，
+  `CREDITS.md` / `README.md` / `README.en.md` 同步注明。
+
+---
+
 # 4.5.0-fix20 —— 修复 ME 任务检测器邻居更新 ClassCastException（2026-11-13）
 
 ## 现象

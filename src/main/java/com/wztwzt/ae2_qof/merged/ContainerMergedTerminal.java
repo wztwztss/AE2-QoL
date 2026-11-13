@@ -79,6 +79,11 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
         return grid;
     }
 
+    /** 供 1.3.0 原生编码桥读取宿主（IActionHost / 玩家上下文）。 */
+    public com.wztwzt.ae2_qof.api.IMergedTerminalHost getAnchor() {
+        return anchor;
+    }
+
     // ===== 样板编码面板 =====
 
     final PatternContainer patternContainer;
@@ -140,7 +145,11 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
         // 服务端：从宿主快照恢复上次编辑的面板格子与模式（跨 GUI 会话保留）
         if (Platform.isServer()) {
             this.patternContainer.restoreSnapshot(anchor.getSavedGrid(), anchor.getSavedCraftingMode());
+            this.patternContainer.setCombine(anchor.getSavedCombine());
+            this.patternContainer.setPrioritize(anchor.getSavedPrioritize());
             this.syncCraftingMode = anchor.getSavedCraftingMode();
+            this.syncCombine = anchor.getSavedCombine();
+            this.syncPrioritize = anchor.getSavedPrioritize();
         }
 
         this.bindPlayerInventory(inv, 14, 3);
@@ -150,12 +159,22 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
     @appeng.container.guisync.GuiSync(0)
     public boolean syncCraftingMode = true;
 
+    /** 流体样板合并设置同步（1.3.0 combine） */
+    @appeng.container.guisync.GuiSync(1)
+    public boolean syncCombine = false;
+
+    /** 流体样板优先设置同步（1.3.0 prioritize） */
+    @appeng.container.guisync.GuiSync(2)
+    public boolean syncPrioritize = false;
+
     @Override
     public void onContainerClosed(net.minecraft.entity.player.EntityPlayer player) {
         // 服务端：关闭 GUI 时把当前编辑内容写回宿主快照
         if (Platform.isServer()) {
             this.patternContainer.saveSnapshot(this.anchor.getSavedGrid());
             this.anchor.setSavedCraftingMode(this.patternContainer.isCraftingMode());
+            this.anchor.setSavedCombine(this.patternContainer.isCombine());
+            this.anchor.setSavedPrioritize(this.patternContainer.isPrioritize());
             this.anchor.markPersistDirty();
         }
         super.onContainerClosed(player);
@@ -167,6 +186,12 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
         this.patternContainer.detectAndSendChanges();
         if (Platform.isServer()) {
             this.syncCraftingMode = this.patternContainer.isCraftingMode();
+            this.syncCombine = this.patternContainer.isCombine();
+            this.syncPrioritize = this.patternContainer.isPrioritize();
+        } else {
+            // 客户端用服务端同步值刷新本地面板状态，保证按钮与 Shift 排序使用同一份状态
+            this.patternContainer.setCombine(this.syncCombine);
+            this.patternContainer.setPrioritize(this.syncPrioritize);
         }
         if (Platform.isClient()) return;
         super.detectAndSendChanges();
@@ -636,6 +661,33 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
     }
 
     @Override
+    public boolean isMergedCombine() {
+        return patternContainer.isCombine();
+    }
+
+    @Override
+    public void setMergedCombine(boolean combine) {
+        patternContainer.setCombine(combine);
+        this.syncCombine = combine;
+    }
+
+    @Override
+    public boolean isMergedPrioritize() {
+        return patternContainer.isPrioritize();
+    }
+
+    @Override
+    public void setMergedPrioritize(boolean prioritize) {
+        patternContainer.setPrioritize(prioritize);
+        this.syncPrioritize = prioritize;
+    }
+
+    @Override
+    public void mergedSortCrafting() {
+        patternContainer.sortCraftingItems();
+    }
+
+    @Override
     public boolean isMergedInverted() {
         return patternContainer.isInverted();
     }
@@ -660,6 +712,18 @@ public class ContainerMergedTerminal extends AEBaseContainer implements IContain
     @Override
     public String mergedEncode() {
         patternContainer.encode();
+        return patternContainer.getLastMachineName();
+    }
+
+    @Override
+    public String mergedEncodeAndMove() {
+        patternContainer.encodeAndMoveToInventory();
+        return patternContainer.getLastMachineName();
+    }
+
+    @Override
+    public String mergedEncodeAll() {
+        patternContainer.encodeAllItemAndMoveToInventory();
         return patternContainer.getLastMachineName();
     }
 

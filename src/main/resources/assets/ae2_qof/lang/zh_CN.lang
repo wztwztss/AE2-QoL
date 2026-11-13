@@ -384,6 +384,7 @@ ae2_qof.select_provider.use_selected=用选中机器
 ae2_qof.info.upload_target_missing=上传失败：目标机器已不存在（可能被拆除或所在区块重载），请重新选择供应器
 ae2_qof.info.upload_rejected=上传失败：目标机器拒绝了这张样板（样板槽已满，或该机器不接受这类样板）
 ae2_qof.info.upload_no_permission=上传失败：你在该 AE 网络上没有注入权限
+ae2_qof.info.upload_duplicate=上传失败：目标机器里已经有完全相同的样板（同物品、同 NBT）
 
 # ===== 编程样板输入总成 MK.III（ProgrammableHatches 可选依赖；仅装 PH 时注册，见 docs/MOD_MAP.md）=====
 gt.blockmachines.ae2qof.hatch.input.buffered.mirror.name=编程样板输入总成镜像
@@ -784,3 +785,41 @@ gui.wildcardpattern.tab_pairs=规则列表
 gui.wildcardpattern.title=通配样板配置
 
 ae2_qof.threads.tab.threads=线程
+
+tile.ae2qol.wireless_distributor.name=ME 无线网络分配器（GT ME 仓室）
+tile.ae2qol.wireless_distributor.tooltip.1=右键打开分配器界面，查看半径内的 GT ME 仓室
+tile.ae2qol.wireless_distributor.tooltip.2=Shift+右键扫描并自动连接半径内尚未接入 ME 网络的 GT ME 仓室
+tile.ae2qol.wireless_distributor.tooltip.3=支持 1x1 / 3x3 区块半径、颜色频道，最多 40 条连接
+tile.ae2qol.wireless_distributor.tooltip.4=只连接未接入其他 ME 网络的仓室；已有主人的仓室只允许其主人连接
+
+gui.ae2_qof.wireless_distributor.title=ME 无线网络分配器
+gui.ae2_qof.wireless_distributor.filter=筛选
+gui.ae2_qof.wireless_distributor.waiting=等待服务端数据...
+gui.ae2_qof.wireless_distributor.refresh=刷新
+gui.ae2_qof.wireless_distributor.scan=扫描并连接
+gui.ae2_qof.wireless_distributor.range=范围
+gui.ae2_qof.wireless_distributor.color=颜色
+gui.ae2_qof.wireless_distributor.link=绑定
+gui.ae2_qof.wireless_distributor.unlink=解绑
+gui.ae2_qof.wireless_distributor.info=已连接 %d/%d · 频道 %d/%d · 颜色 %s · 范围 %s
+gui.ae2_qof.wireless_distributor.columns=名称 / 坐标 / 状态
+gui.ae2_qof.wireless_distributor.status.available=可连接
+gui.ae2_qof.wireless_distributor.status.linked=已连接
+gui.ae2_qof.wireless_distributor.status.external=其他网络
+gui.ae2_qof.wireless_distributor.status.unavailable=不可用
+gui.ae2_qof.wireless_distributor.tooltip.pos=坐标：%s:%d,%d,%d
+gui.ae2_qof.wireless_distributor.tooltip.status=状态：%s · 颜色：%s
+gui.ae2_qof.wireless_distributor.tooltip.click=点击行选中，再用底部「绑定 / 解绑」
+gui.ae2_qof.wireless_distributor.scan_result=扫描完成，本次新增连接 %d 条（上限 %d）
+gui.ae2_qof.wireless_distributor.no_grid=分配器尚未接入可用的 ME 网络
+gui.ae2_qof.wireless_distributor.not_owner=你不是这个分配器的所有者
+gui.ae2_qof.wireless_distributor.link.success=已连接
+gui.ae2_qof.wireless_distributor.unlink.none=目标不在已连接列表中
+gui.ae2_qof.wireless_distributor.fail.invalid_target=目标不是 GT ME 仓室
+gui.ae2_qof.wireless_distributor.fail.dimension=目标不在同一维度
+gui.ae2_qof.wireless_distributor.fail.out_of_range=目标不在分配器范围内
+gui.ae2_qof.wireless_distributor.fail.max=连接数已达上限
+gui.ae2_qof.wireless_distributor.fail.unavailable=目标未就绪、已激活或不在可连接状态
+gui.ae2_qof.wireless_distributor.fail.color=目标颜色与分配器不兼容
+gui.ae2_qof.wireless_distributor.fail.owner=目标仓室属于其他玩家
+gui.ae2_qof.wireless_distributor.fail.failed=创建 ME 连接失败

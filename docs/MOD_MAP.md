@@ -64,7 +64,12 @@
 | GuideNH 游戏内指南（Markdown 资源，零代码集成） | `src/main/resources/assets/ae2_qof/guidenh/_zh_cn/*.md` + `_en_us/*.md` |
 | ↑ 页面 `icon:`/`item_ids:` 的写法 | 只能写**真实注册名**：`modid:name`；GT 机器写 `gregtech:gt.blockmachines:<MTE ID>`（需覆盖 NBT 时再接 `:{SNBT}`）。机器内部名**不是**物品名 —— 3.20.0-fix2 修过 5 页共 10 个文件的这类错误（见 CHANGELOG 记录 (24)） |
 | 二合一终端（样板编码/上传） | `src/main/java/com/wztwzt/ae2_qof/merged/PatternContainer.java` |
+| 二合一终端（1.3.0 原生编码桥） | `src/main/java/com/wztwzt/ae2_qof/merged/AE2PatternEncoder.java`：把可见输入/输出格转成 `IAEStackInventory`，调用 `appeng.helpers.PatternEncodingHelper`（与 AE2Things 1.3.0 `PatternContainer.encode()` 同路径） |
+| 二合一终端（虚拟槽绘制） | `src/main/java/com/wztwzt/ae2_qof/merged/MergedVirtualPatternSlot.java`：非空面板槽走 AE2 `VirtualMESlot.drawStackAndOverlay` 显示物品/流体与数量；真实槽继续负责点击/NEI/同步 |
+| 二合一终端（NEI 编码事件） | `src/main/java/com/wztwzt/ae2_qof/client/event/EncodeEvent.java`：Alt+编码按钮兼容事件，供外部 NEI 集成监听 |
 | 上传/撤回/交换网络包 | `src/main/java/com/wztwzt/ae2_qof/network/UploadPatternPacket.java` / `RecallPatternPacket.java` / `SwapPatternPacket.java` |
+| ME 无线网络分配器（GT ME 仓室，4.5.0-fix26） | `src/main/java/com/wztwzt/ae2_qof/wireless/distributor/`：`BlockWirelessDistributor`（GUI id 130）、`TileWirelessDistributor`（1x1/3x3 区块、40 条上限、颜色/owner、坐标 NBT + chunk unload pending）、`ContainerWirelessDistributor`；客户端 `client/gui/GuiWirelessDistributor`；三个网络包 `WirelessDistributorRequestPacket/ActionPacket/SyncPacket`。贴图复用 `appliedenergistics2:BlockWireless`，不依赖上游缺失的 `wireless_distributor.png` |
+| NEI 转移后混合自动上传（4.5.0-fix26，默认关闭） | `client/NeiRecipeCapture.fillMergedTerminal` 把 `Config.nei_auto_upload_enabled` 作为 auto 标记放进 `MergedTerminalActionPacket.FILL`；服务端 `FILL` 分支随后调 `merged.mergedEncode()` 并回 `MergedTerminalResultPacket(autoUpload=true)`；客户端 `MergedTerminalPanelHandler.scheduleAutoUpload` 等 2 tick 后走原上传管线。**不绕过** `UploadPatternPacket` 的 `ISecurityGrid.INJECT`、`ProviderLocator` 稳定位置、失败回执与 `remembered_providers.json`；唯一候选直接放置，多候选仍打开 `GuiProviderSelect`。`UploadPatternPacket` 新增 item/damage/NBT 重复样板拦截 |
 | NEI Tooltip 文字（fix42 单入口） | `src/main/java/com/wztwzt/ae2_qof/client/nei/NetworkTooltipHandler.java` → `handleItemTooltip`；`handleTooltip` 透传；在 `ClientProxy.init` 注册 |
 | NEI 叠加层（缓存） | `src/main/java/com/wztwzt/ae2_qof/client/NetworkInventoryCache.java` |
 | NEI 叠加层（渲染） | `src/main/java/com/wztwzt/ae2_qof/client/NetworkInventoryDrawHandler.java` |

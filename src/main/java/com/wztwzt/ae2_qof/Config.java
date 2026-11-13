@@ -57,6 +57,16 @@ public class Config {
     public static volatile boolean neiOverlayEnabled = true;
 
     /**
+     * NEI 转移后自动编码并尝试上传（热加载字段，默认 false）。
+     *
+     * <p>
+     * 开启后：NEI「+」把配方填入二合一终端后，服务端立即编码；客户端在编码产物同步到输出槽后
+     * 调用现有上传管线。上传仍是原有语义：唯一候选/持久映射命中自动放置，多候选打开选择界面。
+     * 默认关闭，避免玩家只想填配方时被自动编码/上传打断。
+     */
+    public static volatile boolean neiAutoUploadEnabled = false;
+
+    /**
      * 合成产物 pin 置顶行总开关（热加载字段，3.15.0）。
      * false 时终端 pin 行默认回退为关闭（玩家仍可在终端设置中手动开启）。
      */
@@ -165,6 +175,7 @@ public class Config {
         int pushCap = smartDoublingPushCap;
         int wildcardCap = smartWildcardExpandCap;
         boolean overlay = neiOverlayEnabled;
+        boolean autoUpload = neiAutoUploadEnabled;
         boolean pinRow = pinRowEnabled;
         String presets = stockMonitorPresets;
         String v7 = v7Textures;
@@ -203,6 +214,10 @@ public class Config {
                     if (value != null && value.isJsonPrimitive()) {
                         overlay = value.getAsBoolean();
                     }
+                    value = obj.get("nei_auto_upload_enabled");
+                    if (value != null && value.isJsonPrimitive()) {
+                        autoUpload = value.getAsBoolean();
+                    }
                     value = obj.get("pin_row_enabled");
                     if (value != null && value.isJsonPrimitive()) {
                         pinRow = value.getAsBoolean();
@@ -240,6 +255,7 @@ public class Config {
         smartDoublingPushCap = pushCap;
         smartWildcardExpandCap = wildcardCap;
         neiOverlayEnabled = overlay;
+        neiAutoUploadEnabled = autoUpload;
         pinRowEnabled = pinRow;
         stockMonitorPresets = presets;
         v7Textures = v7;
@@ -333,6 +349,9 @@ public class Config {
                     break;
                 case "nei_overlay_enabled":
                     neiOverlayEnabled = Boolean.parseBoolean(value.trim());
+                    break;
+                case "nei_auto_upload_enabled":
+                    neiAutoUploadEnabled = Boolean.parseBoolean(value.trim());
                     break;
                 case "pin_row_enabled":
                     pinRowEnabled = Boolean.parseBoolean(value.trim());
@@ -468,6 +487,7 @@ public class Config {
             root.addProperty("smart_doubling_push_cap", pushCap);
             root.addProperty("smart_wildcard_expand_cap", wildcardCap);
             root.addProperty("nei_overlay_enabled", overlay);
+            root.addProperty("nei_auto_upload_enabled", neiAutoUploadEnabled);
             root.addProperty("pin_row_enabled", pinRow);
             root.addProperty("stock_monitor_presets", presets);
             root.addProperty("v7_textures", v7);

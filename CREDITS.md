@@ -20,8 +20,14 @@
 - **用途**：直接使用 `com.glodblock.github.common.item.ItemFluidEncodedPattern`（流体样板），用于 `RecallPatternPacket` / `UploadPatternPacket`。
 - 纯流体识别（`ItemFluidPacket` damage 编码流体 ID）基于 ae2fc 的实现。
 
-### 4. AE2Things（`com.asdflj.ae2thing`）— 概念参考
-- **用途**：无限流体磁盘、创意单元等**概念**参考（未沿用其代码与贴图）。
+### 4. AE2Things（`com.asdflj.ae2thing`）— F 模块样板编码实现参考/移植
+- **用途**：F 模块「样板与接口二合一终端」的样板编码核心参考/移植自 AE2Things 1.3.0 的
+  `PatternContainer.encode()` → `IPatternTerminal.encode()` → `PatternEncodingHelper` 路径；
+  面板的流体 combine/prioritize 按钮、编码修饰键语义也按 1.3.0 补齐；
+  处理模式输入格 Shift 排序（`sortCraftingItems`）与按钮状态 NBT 持久化同样按 1.3.0 补齐；
+  面板非空槽的 `VirtualMESlot` 绘制路径与 NEI `EncodeEvent` 兼容钩子也已补入；
+  MUI2 `PatternPanel` 的完整虚拟槽容器/面板拖动体系仍为本项目现有真实槽实现，后续继续替换。
+- **作者**：asdflj。**许可证：GPL-3.0**；本仓库整体按 GPL-3.0 发布，保留原作者版权声明。
 
 ### 5. NotEnoughItems / NEI（`codechicken.nei.*`）— NEI 角标与 GUI
 - **用途**：NEI 配方页 AE 角标、tooltip 注入（mixin 修改 NEI 的 `GuiNEIRecipeWidget` 等）。
@@ -76,7 +82,7 @@
 | **AE2 (Applied-Energistics-2-Unofficial)** | `GTNewHorizons/Applied-Energistics-2-Unofficial` | **LGPL-3.0**；API **MIT**；**材质/模型 CC BY-NC-SA 3.0**；文本 CC0 | 代码可修改/分发，需保留版权声明并开放同许可；**材质非商业使用需署名、相同方式共享** |
 | **AE2FluidCraft-Rework (ae2fc)** | `GTNewHorizons/AE2FluidCraft-Rework` | **LGPL-3.0** | 代码可修改/分发，需注明来源并开源修改部分 |
 | **NotEnoughItems (NEI)** | `GTNewHorizons/NotEnoughItems` | 原代码 **MIT**；GTNH 修改 **LGPL-3.0** | 可用但请注明来源 |
-| **AE2Things (asdflj)** | `asdflj/AE2Things` | **GPL-3.0** | 本项目**未沿用**其代码与贴图（仅概念参考，无版权义务）；若未来沿用，衍生作品须以 GPL-3.0 开源 |
+| **AE2Things (asdflj)** | `asdflj/AE2Things` | **GPL-3.0** | F 模块样板编码核心参考/移植其 1.3.0 `PatternContainer.encode()`/`PatternEncodingHelper` 路径；本项目整体以 GPL-3.0 发布，保留版权声明与来源 |
 | **AE-Wireless-Transceiver** | `mynamexiaopiao/AE-Wireless-Transceiver` | 仓库无 LICENSE（默认保留所有权利）⚠️ | **已通过 B 站联系作者获得借用许可**；发布时请署名致谢 |
 | **Waila** | `ProfMobius` / `GTNewHorizons/waila` | **CC BY-NC-SA 4.0**（GTNH fork） | 非商业使用，需署名并相同方式共享 |
 
@@ -86,7 +92,7 @@
 
 - **当前策略：仅存档、不开放分发**。本仓库仅用于保存历代版本与源码，供作者本人备份使用，不向他人开放自由下载、修改或再分发。在此前提下，沿用上述来源代码与贴图作为个人存档使用，版权风险大幅降低。
 - **AE-Wireless-Transceiver（无线收发器）**：其仓库原本无许可证文件（默认保留所有权利）。代码作者（小飘 / mynamexiaopiao）已通过 B 站沟通确认同意借用其代码与贴图；贴图/美术作者（麦淇淋 / @麦淇淋）。发布或开放分发前请保留作者与美术署名，并保留本记录以备查证。
-- **AE2Things（GPL-3.0）**：本项目仅参考其"无限流体磁盘/创意单元"等**概念**，未沿用其代码与贴图（`ex_io_port` 贴图已核实为 AE2 原版 `BlockIOPort`，见材质表），故不触发 GPL 传染。
+- **AE2Things（GPL-3.0）**：F 模块样板编码核心参考/移植其 1.3.0 `PatternContainer.encode()` → `PatternEncodingHelper` 路径，不再属于“仅概念参考”；本项目整体以 GPL-3.0 发布，保留 asdflj 版权声明。面板的流体 combine/prioritize 按钮、编码修饰键语义、处理模式输入格 Shift 排序（`sortCraftingItems`）、按钮状态 NBT 持久化、非空槽 `VirtualMESlot` 绘制与 NEI `EncodeEvent` 兼容钩子也按 1.3.0 补齐；MUI2 `PatternPanel` 的完整虚拟槽容器/面板拖动体系仍为现有真实槽实现；无限流体磁盘/创意单元等仍为概念参考。
 - **AE2 材质（CC BY-NC-SA 3.0，非商业）**：`states.png`、`gui/wireless.png` 等 AE2 来源材质仅限非商业使用，需署名并相同方式共享。
 - 建议在仓库 README 中明确声明：**本仓库仅供个人存档，暂不开放分发**，以规避来源模组的版权风险。
 - 本清单基于 2026-08 在 GitHub 各仓库核实的信息，许可证可能变更，开放分发前请再次核对原仓库最新 LICENSE。

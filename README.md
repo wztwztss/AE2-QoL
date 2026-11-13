@@ -9,10 +9,7 @@
 > 注册网络通道并运行线程引擎。只装客户端会出现"界面在但功能不生效/连不上"，只装服务端则客户端看不到相关界面与提示。
 > （Modrinth 页面上若有"客户端专用"标记，那是页面元数据不准，请以本条为准。）
 
-**作者：wztwzt · 当前源码版本：4.5.0-fix21 · 对照整合包：GTNH 2.9.0 正式版（稳定版）**
-
-> **4.5.0-fix19**：TenkeiTech 三台自带模板输入总线（线缆机 / 卷板机 / 固定模板-挤压与流体固化）
-> 默认接入智能倍增；在界面关闭开关时，回退到 TenkeiTech 自身的批量发配机制（详见 [CHANGELOG.md](CHANGELOG.md) 顶部）。
+**作者：wztwzt · 当前源码版本：4.5.0-fix26 · 对照整合包：GTNH 2.9.0 正式版（稳定版）**
 
 > **4.2.0 是本模组对 GTNH 2.9.0 正式版（稳定版）的全量兼容版本**：编译基线与依赖表整体换到 2.9.0 系列实机版本，
 > 并修掉了 2.9.0 正式版下 MK.III / MK.IV 样板窗退回原版 36 格的问题（详见 [CHANGELOG.md](CHANGELOG.md) 顶部）。
@@ -22,7 +19,7 @@
 ## 安装与升级
 
 1. 关闭游戏/服务器，备份**完整世界存档和配置**，保留可回退的旧 JAR。无限存储元件的数据在世界存档内，不能只备份物品 NBT。
-2. 在与本项目匹配的 GTNH 环境中，用 `AE2-QoL-4.5.0-fix21.jar` 替换旧的 AE2 QoL JAR，不要同时保留多个版本。
+2. 在与本项目匹配的 GTNH 环境中，用 `AE2-QoL-4.5.0-fix26.jar` 替换旧的 AE2 QoL JAR，不要同时保留多个版本。
 3. **客户端与服务端使用同一版本**。fix41 改过上传相关网络包，不能只升级一端。
 4. 本 JAR 已并入 `aeinfinitycell`（内置元数据版本为 `1.0.5-ae2qol`，3.27.0 起并入上游 1.0.5 计数模型）；不要与原独立 AE2 Infinity Cell JAR 同时安装。迁移前备份，在副本存档中验证旧元件。
 5. 首次启动后检查日志、配置生成与 Mixin 加载，再在测试存档中验证所用功能。开发协作中，向测试实例部署仍须单独授权。
@@ -293,7 +290,7 @@ fix42 的独立脚本 [tooltip-fix42-regression.sh](docs/tooltip-fix42-regressio
 - **GTNH 团队 / Applied Energistics 2、NEI、AE2FluidCraft**：核心 API、终端、流体与配方生态。
 - **小飘（mynamexiaopiao）**：AE-Wireless-Transceiver 代码；**麦淇淋（@麦淇淋）**：无线方块、连接器与 GUI 美术。借用许可记录见 CREDITS。
 - **dancing snow（DancingSnow0517）**：AE2 Infinity Cell；原 MIT 文本随 JAR 保留。
-- **asdflj / AE2Things**：相关概念参考；强化 IO 贴图来源是 **AE2 原版 BlockIOPort**，不是 AE2Things。
+- **asdflj / AE2Things**：F 模块样板编码核心参考/移植其 1.3.0 `PatternContainer.encode()`/`PatternEncodingHelper` 路径；`PatternPanel`/虚拟槽 GUI 仍为现有实现，后续继续替换。本项目整体以 GPL-3.0 发布，保留原作者版权声明。强化 IO 贴图来源是 **AE2 原版 BlockIOPort**，不是 AE2Things。
 - **Waila、GT5-Unofficial、GT-Not-Leisure、GTLCore、Programmable-Hatches、ExtendedAE_Plus、ExampleMod1.7.10** 及其他被参考项目。
 
-AE2 来源材质包含非商业、署名与相同方式共享要求。个人存档声明不替代第三方许可；任何公开发布前须复核源码、材质、原作者授权及许可证，不能由本 README 推导出统一的再分发授权。
+本仓库代码以 **GPL-3.0** 发布（见根目录 `LICENSE`）；其中第三方来源代码/材质仍分别受其原许可证约束。AE2 来源材质包含非商业、署名与相同方式共享要求。个人存档声明不替代第三方许可；任何公开发布前须复核源码、材质、原作者授权及许可证，不能由本 README 推导出统一的再分发授权。

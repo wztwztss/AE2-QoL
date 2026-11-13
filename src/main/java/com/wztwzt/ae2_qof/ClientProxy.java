@@ -22,6 +22,7 @@ import com.wztwzt.ae2_qof.client.event.KeyInputHandler;
 import com.wztwzt.ae2_qof.client.event.KnifeNameCopyHandler;
 import com.wztwzt.ae2_qof.client.event.MergedTerminalPanelHandler;
 import com.wztwzt.ae2_qof.client.gui.GuiProviderSelect;
+import com.wztwzt.ae2_qof.client.gui.GuiWirelessDistributor;
 import com.wztwzt.ae2_qof.client.render.RenderBlockTransceiver;
 import com.wztwzt.ae2_qof.client.render.WirelessHighlightRenderer;
 import com.wztwzt.ae2_qof.common.RecipeMapNameConfig;
@@ -40,6 +41,7 @@ import com.wztwzt.ae2_qof.network.SwapPatternPacket;
 import com.wztwzt.ae2_qof.network.UploadFeedbackPacket;
 import com.wztwzt.ae2_qof.network.UploadPatternPacket;
 import com.wztwzt.ae2_qof.network.WirelessChannelSyncPacket;
+import com.wztwzt.ae2_qof.network.WirelessDistributorSyncPacket;
 import com.wztwzt.ae2_qof.network.WirelessHighlightPacket;
 import com.wztwzt.ae2_qof.util.RecipeNameUtil;
 import com.wztwzt.ae2_qof.wireless.gui.GuiWireless;
@@ -260,6 +262,12 @@ public class ClientProxy extends CommonProxy {
     }
 
     @Override
+    public void handleWirelessDistributorSync(final WirelessDistributorSyncPacket message) {
+        Minecraft.getMinecraft()
+            .func_152344_a(() -> GuiWirelessDistributor.applySync(message));
+    }
+
+    @Override
     public void handleWirelessHighlight(final WirelessHighlightPacket message) {
         Minecraft.getMinecraft()
             .func_152344_a(() -> {
@@ -433,7 +441,7 @@ public class ClientProxy extends CommonProxy {
         Minecraft.getMinecraft()
             .func_152344_a(() -> {
                 ClientState.mergedMachineName = message.machineName;
-                if (message.needsMapping) {
+                if (message.needsMapping && !message.autoUpload) {
                     // 无中文映射：弹出供应器选择/映射页，引导玩家为 recipeMap 命名
                     if (message.recipeMap != null && !message.recipeMap.isEmpty()) {
                         ClientState.lastRecipeMap = message.recipeMap;
@@ -443,6 +451,9 @@ public class ClientProxy extends CommonProxy {
                 } else {
                     // 编码成功后自动把机器名填入搜索框，过滤出刚编码的机器
                     GuiMergedTerminal.setSearchFieldText(message.machineName);
+                }
+                if (message.autoUpload) {
+                    com.wztwzt.ae2_qof.client.event.MergedTerminalPanelHandler.scheduleAutoUpload();
                 }
             });
     }

@@ -10,11 +10,7 @@ An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI patte
 > Client-only installs will show the GUIs but the features will not work; server-only installs leave clients without them.
 > (If a Modrinth page marks this mod as client-only, that metadata is wrong — this note is authoritative.)
 
-**Author: wztwzt · Current source version: 4.5.0-fix21 · Reference pack: GTNH 2.9.0 stable**
-
-> **4.5.0-fix19**: TenkeiTech's three built-in-template input buses (wiremill / bender / fixed-template
-> extruder & fluid solidifier) now default to smart doubling; switching the GUI toggle off falls back to
-> TenkeiTech's own batch dispatching (see the top of [CHANGELOG.md](CHANGELOG.md)).
+**Author: wztwzt · Current source version: 4.5.0-fix26 · Reference pack: GTNH 2.9.0 stable**
 
 > **4.2.0 is the full GTNH 2.9.0 stable compatibility release.** The build baseline and dependency table
 > moved to the 2.9.0-series versions, and it fixes the 2.9.0 stable regression where the MK.III / MK.IV
@@ -25,7 +21,7 @@ An AE2 quality-of-life mod for **Minecraft 1.7.10 / GT New Horizons**: NEI patte
 ## Installation and upgrades
 
 1. Stop the game/server and back up the **complete world and configuration**, retaining the previous JAR for rollback. Infinity Cell contents live in the world save; backing up item NBT alone is insufficient.
-2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-4.5.0-fix21.jar`. Do not retain multiple versions.
+2. In a matching GTNH installation, replace the old QoL JAR with `AE2-QoL-4.5.0-fix26.jar`. Do not retain multiple versions.
 3. **Use the same version on client and server.** fix41 changed upload-related packets; upgrading only one side is unsupported.
 4. This JAR includes `aeinfinitycell` (bundled metadata remains `1.0.4-ae2qol`). Do not also install the standalone AE2 Infinity Cell JAR. Test old cells in a copied world before migrating.
 5. Check startup logs, generated configuration and Mixin loading, then exercise the features you use in a test world. Deployment to the development test instance requires separate approval.
@@ -278,7 +274,7 @@ Adapted from **GaLicn's [AE2-Auto-Pattern-Upload](https://github.com/GaLicn/AE2-
 - **GTNH / Applied Energistics 2, NEI and AE2FluidCraft**: core APIs, terminals, fluid and recipe ecosystem.
 - **小飘 (mynamexiaopiao)**: AE-Wireless-Transceiver code; **麦淇淋 (@麦淇淋)**: wireless blocks, connectors and GUI artwork. Permission records are in CREDITS.
 - **dancing snow (DancingSnow0517)**: AE2 Infinity Cell; the original MIT license is retained in the JAR.
-- **asdflj / AE2Things**: conceptual references. Enhanced IO textures come from **AE2's original BlockIOPort**, not AE2Things.
+- **asdflj / AE2Things**: the F-module pattern encoding core references/ports its 1.3.0 `PatternContainer.encode()`/`PatternEncodingHelper` path; the `PatternPanel`/virtual-slot GUI remains the current implementation and will be replaced next. This project is distributed under GPL-3.0 with the original copyright notice preserved. Enhanced IO textures come from **AE2's original BlockIOPort**, not AE2Things.
 - **Waila, GT5-Unofficial, GT-Not-Leisure, GTLCore, Programmable-Hatches, ExtendedAE_Plus, ExampleMod1.7.10**, and the other referenced projects.
 
-AE2-sourced textures include non-commercial, attribution and share-alike requirements. Personal archival does not replace third-party permission. Any public release requires renewed review of code, artwork, author permissions and licenses; this README grants no blanket redistribution license.
+This repository's code is distributed under **GPL-3.0** (see the root `LICENSE`); third-party code and artwork remain subject to their own licenses. AE2-sourced textures include non-commercial, attribution and share-alike requirements. Personal archival does not replace third-party permission. Any public release requires renewed review of code, artwork, author permissions and licenses; this README grants no blanket redistribution license.

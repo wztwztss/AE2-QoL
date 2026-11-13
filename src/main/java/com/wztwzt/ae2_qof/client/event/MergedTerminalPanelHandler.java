@@ -12,6 +12,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.TickEvent;
 
 import org.lwjgl.input.Keyboard;
 
@@ -49,6 +51,8 @@ public class MergedTerminalPanelHandler {
     public static final int BUTTON_DOUBLE_ID = 942;
     public static final int BUTTON_SUB_ID = 944;
     public static final int BUTTON_BESUB_ID = 945;
+    public static final int BUTTON_COMBINE_ID = 943;
+    public static final int BUTTON_PRIORITIZE_ID = 946;
     public static final int BUTTON_UPLOAD_ID = 947;
     public static final int BUTTON_RECALL_ID = 948;
     public static final int BUTTON_SWAP_ID = 949;
@@ -71,14 +75,23 @@ public class MergedTerminalPanelHandler {
     public static boolean mergedCraftingMode = true;
     public static boolean mergedSubstitute = false;
     public static boolean mergedBeSubstitute = false;
+    public static boolean mergedCombine = false;
+    public static boolean mergedPrioritize = false;
     public static boolean mergedInverted = false;
     public static int mergedActivePage = 0;
+
+    /** NEI 自动上传：等待输出槽同步的 tick 计数（0=未排队） */
+    private static int pendingAutoUploadTicks = 0;
 
     public static GuiImgButton btnEncode;
     public static GuiImgButton btnSubEnabled;
     public static GuiImgButton btnSubDisabled;
     public static GuiImgButton btnBeSubEnabled;
     public static GuiImgButton btnBeSubDisabled;
+    public static com.glodblock.github.client.gui.GuiFCImgButton btnCombineEnabled;
+    public static com.glodblock.github.client.gui.GuiFCImgButton btnCombineDisabled;
+    public static com.glodblock.github.client.gui.GuiFCImgButton btnPrioEnabled;
+    public static com.glodblock.github.client.gui.GuiFCImgButton btnPrioDisabled;
     public static GuiImgButton btnClear;
     public static GuiImgButton btnDouble;
     public static GuiImgButton btnInvert;
@@ -120,6 +133,8 @@ public class MergedTerminalPanelHandler {
         mergedCraftingMode = true;
         mergedSubstitute = false;
         mergedBeSubstitute = false;
+        mergedCombine = false;
+        mergedPrioritize = false;
         mergedInverted = false;
         mergedActivePage = 0;
         ClientState.mergedMachineName = null;
@@ -180,6 +195,33 @@ public class MergedTerminalPanelHandler {
         btnBeSubDisabled.id = BUTTON_BESUB_ID;
         event.buttonList.add(btnBeSubEnabled);
         event.buttonList.add(btnBeSubDisabled);
+
+        // AE2FC 流体样板：合并同类输入 / 优先处理流体（1.3.0 PatternPanel 同款按钮）
+        btnCombineEnabled = new com.glodblock.github.client.gui.GuiFCImgButton(
+            0,
+            0,
+            "FORCE_COMBINE",
+            "DO_COMBINE");
+        btnCombineEnabled.setHalfSize(true);
+        btnCombineEnabled.id = BUTTON_COMBINE_ID;
+        btnCombineDisabled = new com.glodblock.github.client.gui.GuiFCImgButton(
+            0,
+            0,
+            "NOT_COMBINE",
+            "DONT_COMBINE");
+        btnCombineDisabled.setHalfSize(true);
+        btnCombineDisabled.id = BUTTON_COMBINE_ID;
+        event.buttonList.add(btnCombineEnabled);
+        event.buttonList.add(btnCombineDisabled);
+
+        btnPrioEnabled = new com.glodblock.github.client.gui.GuiFCImgButton(0, 0, "FORCE_PRIO", "DO_PRIO");
+        btnPrioEnabled.setHalfSize(true);
+        btnPrioEnabled.id = BUTTON_PRIORITIZE_ID;
+        btnPrioDisabled = new com.glodblock.github.client.gui.GuiFCImgButton(0, 0, "NOT_PRIO", "DONT_PRIO");
+        btnPrioDisabled.setHalfSize(true);
+        btnPrioDisabled.id = BUTTON_PRIORITIZE_ID;
+        event.buttonList.add(btnPrioEnabled);
+        event.buttonList.add(btnPrioDisabled);
 
         btnClear = new GuiImgButton(0, 0, appeng.api.config.Settings.ACTIONS, appeng.api.config.ActionItems.CLOSE);
         btnClear.setHalfSize(true);
@@ -267,10 +309,13 @@ public class MergedTerminalPanelHandler {
     }
 
     /** 每帧由 GUI drawFG 调用：按当前模式摆放按钮并刷新可见性。按钮使用绝对屏幕坐标，需加 guiLeft/guiTop */
-    public static void reposition(int baseX, int baseY, boolean crafting, boolean inverted, int activePage) {
+    public static void reposition(int baseX, int baseY, boolean crafting, boolean inverted, int activePage,
+        boolean combine, boolean prioritize) {
         mergedCraftingMode = crafting;
         mergedInverted = inverted;
         mergedActivePage = activePage;
+        mergedCombine = combine;
+        mergedPrioritize = prioritize;
 
         btnEncode.xPosition = baseX + MergedPanelLayout.ENCODE_BTN_X;
         btnEncode.yPosition = baseY + MergedPanelLayout.ENCODE_BTN_Y;
@@ -294,6 +339,14 @@ public class MergedTerminalPanelHandler {
             btnBeSubEnabled.yPosition = baseY + 24;
             btnBeSubDisabled.xPosition = baseX + 291;
             btnBeSubDisabled.yPosition = baseY + 24;
+            btnCombineEnabled.xPosition = -9000;
+            btnCombineEnabled.yPosition = -9000;
+            btnCombineDisabled.xPosition = -9000;
+            btnCombineDisabled.yPosition = -9000;
+            btnPrioEnabled.xPosition = -9000;
+            btnPrioEnabled.yPosition = -9000;
+            btnPrioDisabled.xPosition = -9000;
+            btnPrioDisabled.yPosition = -9000;
             btnClear.xPosition = baseX + 281;
             btnClear.yPosition = baseY + 14;
             btnDouble.xPosition = -9000;
@@ -314,6 +367,14 @@ public class MergedTerminalPanelHandler {
             btnBeSubEnabled.yPosition = baseY + 69;
             btnBeSubDisabled.xPosition = baseX + 306 + offset;
             btnBeSubDisabled.yPosition = baseY + 69;
+            btnCombineEnabled.xPosition = baseX + 296 + offset;
+            btnCombineEnabled.yPosition = baseY + 59;
+            btnCombineDisabled.xPosition = baseX + 296 + offset;
+            btnCombineDisabled.yPosition = baseY + 59;
+            btnPrioEnabled.xPosition = baseX + 306 + offset;
+            btnPrioEnabled.yPosition = baseY + 59;
+            btnPrioDisabled.xPosition = baseX + 306 + offset;
+            btnPrioDisabled.yPosition = baseY + 59;
             btnDouble.xPosition = baseX + 306 + offset;
             btnDouble.yPosition = baseY + 20;
             btnHalve.xPosition = baseX + 306 + offset;
@@ -331,6 +392,10 @@ public class MergedTerminalPanelHandler {
         btnSubDisabled.setVisibility(!mergedSubstitute);
         btnBeSubEnabled.setVisibility(mergedBeSubstitute);
         btnBeSubDisabled.setVisibility(!mergedBeSubstitute);
+        btnCombineEnabled.visible = mergedCombine;
+        btnCombineDisabled.visible = !mergedCombine;
+        btnPrioEnabled.visible = mergedPrioritize;
+        btnPrioDisabled.visible = !mergedPrioritize;
         processingScrollBar.setVisible(!crafting);
 
         // 上传在编码左边，召回在编码右边
@@ -405,8 +470,15 @@ public class MergedTerminalPanelHandler {
         switch (buttonId) {
             case BUTTON_ENCODE_ID:
                 ClientState.mergedMachineName = null;
+                int encodeFlags = (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)
+                    || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) ? (ctrl ? 3 : 1) : 0;
                 ModNetwork.CHANNEL.sendToServer(
-                    MergedTerminalActionPacket.encode(mergedCraftingMode, mergedSubstitute, mergedBeSubstitute));
+                    MergedTerminalActionPacket
+                        .encode(mergedCraftingMode, mergedSubstitute, mergedBeSubstitute, encodeFlags));
+                if (encodeFlags == 0 && (Keyboard.isKeyDown(Keyboard.KEY_LMENU)
+                    || Keyboard.isKeyDown(Keyboard.KEY_RMENU))) {
+                    MinecraftForge.EVENT_BUS.post(new EncodeEvent(true));
+                }
                 break;
             case BUTTON_CLEAR_ID:
                 ModNetwork.CHANNEL
@@ -450,6 +522,32 @@ public class MergedTerminalPanelHandler {
                     MergedTerminalActionPacket
                         .flag(MergedTerminalActionPacket.Action.SET_BE_SUBSTITUTE, mergedBeSubstitute));
                 break;
+            case BUTTON_COMBINE_ID:
+                mergedCombine = !mergedCombine;
+                ModNetwork.CHANNEL.sendToServer(
+                    MergedTerminalActionPacket.flag(MergedTerminalActionPacket.Action.SET_COMBINE, mergedCombine));
+                if (gui != null && gui.inventorySlots instanceof IMergedPatternTerminal merged) {
+                    merged.setMergedCombine(mergedCombine);
+                }
+                break;
+            case BUTTON_PRIORITIZE_ID:
+                // 与 1.3.0 PatternPanel 一致：Shift 点优先按钮只按当前状态重排输入格，不切换开关
+                if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
+                    ModNetwork.CHANNEL.sendToServer(
+                        MergedTerminalActionPacket.simple(MergedTerminalActionPacket.Action.SORT_CRAFTING));
+                    if (gui != null && gui.inventorySlots instanceof IMergedPatternTerminal merged) {
+                        merged.mergedSortCrafting();
+                    }
+                    break;
+                }
+                mergedPrioritize = !mergedPrioritize;
+                ModNetwork.CHANNEL.sendToServer(
+                    MergedTerminalActionPacket
+                        .flag(MergedTerminalActionPacket.Action.SET_PRIORITIZE, mergedPrioritize));
+                if (gui != null && gui.inventorySlots instanceof IMergedPatternTerminal merged) {
+                    merged.setMergedPrioritize(mergedPrioritize);
+                }
+                break;
             case BUTTON_INVERT_ID:
                 mergedInverted = !mergedInverted;
                 ModNetwork.CHANNEL.sendToServer(
@@ -491,6 +589,28 @@ public class MergedTerminalPanelHandler {
         GuiScreen current = Minecraft.getMinecraft().currentScreen;
         if (current instanceof GuiContainer gc && gc.inventorySlots instanceof IMergedPatternTerminal merged) {
             merged.setMergedCraftingMode(mergedCraftingMode);
+        }
+    }
+
+    /**
+     * NEI 自动上传：服务端编码结果到达后，等 2 tick 让容器把输出槽同步到客户端，再走现有上传管线。
+     * 不直接在这里判断「唯一/多候选」——都交给 RequestProvidersListPacket 之后已有的策略。
+     */
+    public static void scheduleAutoUpload() {
+        pendingAutoUploadTicks = 2;
+    }
+
+    @SubscribeEvent
+    public void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || pendingAutoUploadTicks <= 0) {
+            return;
+        }
+        if (--pendingAutoUploadTicks > 0) {
+            return;
+        }
+        GuiScreen screen = Minecraft.getMinecraft().currentScreen;
+        if (screen instanceof GuiContainer gui) {
+            handleUpload(gui);
         }
     }
 

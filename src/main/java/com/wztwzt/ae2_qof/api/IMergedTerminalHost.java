@@ -26,6 +26,16 @@ public interface IMergedTerminalHost extends IInterfaceTerminal {
 
     void setSavedCraftingMode(boolean v);
 
+    /** 面板流体样板：合并同类输入设置，随宿主 NBT 持久化 */
+    boolean getSavedCombine();
+
+    void setSavedCombine(boolean v);
+
+    /** 面板流体样板：优先流体设置，随宿主 NBT 持久化 */
+    boolean getSavedPrioritize();
+
+    void setSavedPrioritize(boolean v);
+
     /**
      * 持久化脏标记：方块 markDirty / 部件 host.markForSave / 无线物品 NBT 回写。
      * 上传/撤回等网络包写入样板槽后必须调用。

@@ -54,6 +54,10 @@ public class GuiMergedTerminal extends GuiInterfaceTerminal {
     /** Shift+中键重命名覆盖层 */
     private final MergedRenameOverlay renameOverlay = new MergedRenameOverlay();
 
+    /** 当前帧鼠标位置（GUI 局部坐标），供 func_146977_a 里的虚拟槽绘制使用 */
+    private int lastMouseX;
+    private int lastMouseY;
+
     public GuiMergedTerminal(InventoryPlayer ip, com.wztwzt.ae2_qof.api.IMergedTerminalHost anchor) {
         super(new ContainerMergedTerminal(ip, anchor));
     }
@@ -129,6 +133,8 @@ public class GuiMergedTerminal extends GuiInterfaceTerminal {
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         this.xSize = 209;
+        this.lastMouseX = mouseX;
+        this.lastMouseY = mouseY;
         super.drawScreen(mouseX, mouseY, partialTicks);
         this.xSize = FULL_X_SIZE;
         // Update overlay cursor blink
@@ -190,7 +196,8 @@ public class GuiMergedTerminal extends GuiInterfaceTerminal {
             // 模式取容器同步字段（打开时恢复上次保存的模式）
             boolean crafting = getMergedContainer().syncCraftingMode;
             MergedTerminalPanelHandler
-                .reposition(this.guiLeft, this.guiTop, crafting, pc.isInverted(), pc.getActivePage());
+                .reposition(this.guiLeft, this.guiTop, crafting, pc.isInverted(), pc.getActivePage(),
+                    getMergedContainer().syncCombine, getMergedContainer().syncPrioritize);
 
             String name = ClientState.mergedMachineName;
             String text = (name != null && !name.isEmpty()) ? "\u673a\u5668: " + name : "\u673a\u5668: -";
@@ -238,6 +245,19 @@ public class GuiMergedTerminal extends GuiInterfaceTerminal {
                 return;
             }
         } catch (Throwable ignored) {}
+        // 面板非空槽：用 AE2 原生 VirtualMESlot 的绘制路径显示物品/流体和数量；
+        // 点击、NEI 拖拽和容器同步仍由真实槽负责，因此不替换槽位体系。
+        if (isPanelSlot(s) && s.getHasStack() && s.xDisplayPosition > -8000) {
+            try {
+                appeng.api.storage.data.IAEStack<?> stack = PatternContainer.convertToAEStack(s.getStack());
+                if (stack != null) {
+                    MergedVirtualPatternSlot virtual = new MergedVirtualPatternSlot(
+                        s.xDisplayPosition, s.yDisplayPosition, stack);
+                    virtual.drawStackAndOverlay(this.mc, this.lastMouseX - this.guiLeft, this.lastMouseY - this.guiTop);
+                    return;
+                }
+            } catch (Throwable ignored) {}
+        }
         if (isPanelSlot(s) || !isInterfaceSlot(s)) {
             super.func_146977_a(s);
         }
@@ -506,30 +526,26 @@ public class GuiMergedTerminal extends GuiInterfaceTerminal {
         try {
             PatternContainer pc = getMergedContainer().patternContainer;
 
-            // 鼠标滚轮调整面板槽位数量：上滚 +1、下滚 -1、最小保持 1（清空请用左键取出或中键设 0；
-            // 对齐 GT 样板输入仓操作习惯）。Shift+滚轮保留给 OreDict 替换循环，输出格数量由配方决定禁止修改。
-            if (pc != null && !Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)
-                && !Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)
-                && isInPanel(x, y)) {
-                Slot slot = this.findSlotAt(x, y);
-                if (slot != null && isPanelSlot(slot) && slot.getHasStack() && !pc.isOutputSlot(slot)) {
-                    int cur = slot.getStack().stackSize;
-                    int next = wheel > 0 ? cur + 1 : Math.max(1, cur - 1);
-                    ModNetwork.CHANNEL.sendToServer(
-                        new com.wztwzt.ae2_qof.network.MergedTerminalSetStackPacket(slot.slotNumber, next));
-                    return true;
-                }
-            }
-
-            // Shift+滚轮：替换同类型物品
-            if (pc != null && (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT))
-                && isInPanel(x, y)) {
+            // 1.3.0 语义：Shift+滚轮在样板格上调整数量；Ctrl+Shift 保留本模组的同类型替换。
+            // 非 Shift 也允许调整数量，方便 GT 样板输入仓操作；输出格数量由配方决定禁止修改。
+            boolean shift = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT);
+            boolean ctrl = Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL);
+            if (pc != null && isInPanel(x, y)) {
                 Slot slot = this.findSlotAt(x, y);
                 if (slot != null && isPanelSlot(slot) && slot.getHasStack()) {
-                    int direction = wheel > 0 ? 1 : -1;
-                    ModNetwork.CHANNEL.sendToServer(
-                        new com.wztwzt.ae2_qof.network.MergedTerminalScrollReplacePacket(slot.slotNumber, direction));
-                    return true;
+                    if (shift && ctrl) {
+                        int direction = wheel > 0 ? 1 : -1;
+                        ModNetwork.CHANNEL.sendToServer(
+                            new com.wztwzt.ae2_qof.network.MergedTerminalScrollReplacePacket(slot.slotNumber, direction));
+                        return true;
+                    }
+                    if (!pc.isOutputSlot(slot)) {
+                        int cur = slot.getStack().stackSize;
+                        int next = wheel > 0 ? cur + 1 : Math.max(1, cur - 1);
+                        ModNetwork.CHANNEL.sendToServer(
+                            new com.wztwzt.ae2_qof.network.MergedTerminalSetStackPacket(slot.slotNumber, next));
+                        return true;
+                    }
                 }
             }
 

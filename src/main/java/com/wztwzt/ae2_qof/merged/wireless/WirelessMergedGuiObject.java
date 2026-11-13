@@ -42,6 +42,8 @@ public class WirelessMergedGuiObject implements IMergedTerminalHost, IPortableCe
     private static final String KEY_PATTERN = "apuPatternInv";
     private static final String KEY_SAVED_GRID = "apuSavedGrid";
     private static final String KEY_SAVED_MODE = "apuSavedMode";
+    private static final String KEY_SAVED_COMBINE = "apuSavedCombine";
+    private static final String KEY_SAVED_PRIORITIZE = "apuSavedPrioritize";
 
     private final EntityPlayer player;
     private final int inventorySlot;
@@ -50,6 +52,8 @@ public class WirelessMergedGuiObject implements IMergedTerminalHost, IPortableCe
     private final AppEngInternalInventory patternInv = new AppEngInternalInventory(this, 2);
     private final AppEngInternalInventory savedGrid = new AppEngInternalInventory(this, 73);
     private boolean savedCraftingMode = true;
+    private boolean savedCombine = false;
+    private boolean savedPrioritize = false;
 
     /** 打开时解析的目标网络存储（station 被拆后不再有效） */
     private IStorageGrid storage;
@@ -107,6 +111,8 @@ public class WirelessMergedGuiObject implements IMergedTerminalHost, IPortableCe
         if (tag.hasKey(KEY_PATTERN)) this.patternInv.readFromNBT(tag, KEY_PATTERN);
         if (tag.hasKey(KEY_SAVED_GRID)) this.savedGrid.readFromNBT(tag, KEY_SAVED_GRID);
         this.savedCraftingMode = tag.getBoolean(KEY_SAVED_MODE);
+        this.savedCombine = tag.getBoolean(KEY_SAVED_COMBINE);
+        this.savedPrioritize = tag.getBoolean(KEY_SAVED_PRIORITIZE);
     }
 
     private void resolveNetwork() {
@@ -131,6 +137,8 @@ public class WirelessMergedGuiObject implements IMergedTerminalHost, IPortableCe
         this.patternInv.writeToNBT(tag, KEY_PATTERN);
         this.savedGrid.writeToNBT(tag, KEY_SAVED_GRID);
         tag.setBoolean(KEY_SAVED_MODE, this.savedCraftingMode);
+        tag.setBoolean(KEY_SAVED_COMBINE, this.savedCombine);
+        tag.setBoolean(KEY_SAVED_PRIORITIZE, this.savedPrioritize);
         // 物品是玩家背包内引用，标记背包脏以确保持久化
         if (this.player != null) {
             this.player.inventory.markDirty();
@@ -157,6 +165,26 @@ public class WirelessMergedGuiObject implements IMergedTerminalHost, IPortableCe
     @Override
     public void setSavedCraftingMode(boolean v) {
         this.savedCraftingMode = v;
+    }
+
+    @Override
+    public boolean getSavedCombine() {
+        return savedCombine;
+    }
+
+    @Override
+    public void setSavedCombine(boolean v) {
+        this.savedCombine = v;
+    }
+
+    @Override
+    public boolean getSavedPrioritize() {
+        return savedPrioritize;
+    }
+
+    @Override
+    public void setSavedPrioritize(boolean v) {
+        this.savedPrioritize = v;
     }
 
     @Override

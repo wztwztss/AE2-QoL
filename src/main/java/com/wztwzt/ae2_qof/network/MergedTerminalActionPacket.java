@@ -26,6 +26,9 @@ public class MergedTerminalActionPacket implements IMessage {
         SET_MODE,
         SET_SUBSTITUTE,
         SET_BE_SUBSTITUTE,
+        SET_COMBINE,
+        SET_PRIORITIZE,
+        SORT_CRAFTING,
         FILL,
         SET_INVERTED,
         SET_PAGE
@@ -41,6 +44,8 @@ public class MergedTerminalActionPacket implements IMessage {
     private int[] cells = null;
     /** NEI 填充时客户端已识别的配方池 id（GT 处理配方），供服务端写入样板与映射判定 */
     private String recipeMap = null;
+    /** NEI 填充后是否立即编码并触发上传（Config.neiAutoUploadEnabled，默认 false） */
+    private boolean autoUpload = false;
 
     public MergedTerminalActionPacket() {
         this.action = Action.CLEAR;
@@ -61,16 +66,28 @@ public class MergedTerminalActionPacket implements IMessage {
     }
 
     public static MergedTerminalActionPacket encode(boolean crafting, boolean substitute, boolean beSubstitute) {
+        return encode(crafting, substitute, beSubstitute, 0);
+    }
+
+    /** flags：1=Shift（编码后入背包），3=Ctrl+Shift（产物+输入槽全部入背包）。 */
+    public static MergedTerminalActionPacket encode(boolean crafting, boolean substitute, boolean beSubstitute,
+        int flags) {
         MergedTerminalActionPacket p = new MergedTerminalActionPacket();
         p.action = Action.ENCODE;
         p.crafting = crafting;
         p.substitute = substitute;
         p.beSubstitute = beSubstitute;
+        p.value = flags;
         return p;
     }
 
     public static MergedTerminalActionPacket fill(ItemStack[] inputs, ItemStack[] outputs, boolean crafting,
         int[] cells, String recipeMap) {
+        return fill(inputs, outputs, crafting, cells, recipeMap, false);
+    }
+
+    public static MergedTerminalActionPacket fill(ItemStack[] inputs, ItemStack[] outputs, boolean crafting,
+        int[] cells, String recipeMap, boolean autoUpload) {
         MergedTerminalActionPacket p = new MergedTerminalActionPacket();
         p.action = Action.FILL;
         p.crafting = crafting;
@@ -78,6 +95,7 @@ public class MergedTerminalActionPacket implements IMessage {
         p.outputs = outputs != null ? outputs : new ItemStack[0];
         p.cells = cells;
         p.recipeMap = recipeMap;
+        p.autoUpload = autoUpload;
         return p;
     }
 
@@ -138,6 +156,7 @@ public class MergedTerminalActionPacket implements IMessage {
                     }
                 }
             }
+            this.autoUpload = buf.isReadable() && buf.readBoolean();
         } catch (Throwable t) {
             // 防御性解码：任何异常都不得导致玩家断连
             this.action = Action.CLEAR;
@@ -145,6 +164,7 @@ public class MergedTerminalActionPacket implements IMessage {
             this.outputs = new ItemStack[0];
             this.cells = null;
             this.recipeMap = null;
+            this.autoUpload = false;
         }
     }
 
@@ -176,6 +196,7 @@ public class MergedTerminalActionPacket implements IMessage {
             buf.writeShort(mapBytes.length);
             buf.writeBytes(mapBytes);
         }
+        buf.writeBoolean(this.autoUpload);
     }
 
     public static class Handler implements IMessageHandler<MergedTerminalActionPacket, IMessage> {
@@ -209,7 +230,14 @@ public class MergedTerminalActionPacket implements IMessage {
                     merged.setMergedCraftingMode(message.crafting);
                     merged.setMergedSubstitute(message.substitute);
                     merged.setMergedBeSubstitute(message.beSubstitute);
-                    String name = merged.mergedEncode();
+                    String name;
+                    if (message.value == 1) {
+                        name = merged.mergedEncodeAndMove();
+                    } else if (message.value == 3) {
+                        name = merged.mergedEncodeAll();
+                    } else {
+                        name = merged.mergedEncode();
+                    }
                     if (name != null && !name.isEmpty()) {
                         ModNetwork.CHANNEL.sendTo(
                             new MergedTerminalResultPacket(
@@ -235,6 +263,15 @@ public class MergedTerminalActionPacket implements IMessage {
                 case SET_BE_SUBSTITUTE:
                     merged.setMergedBeSubstitute(message.substitute);
                     break;
+                case SET_COMBINE:
+                    merged.setMergedCombine(message.substitute);
+                    break;
+                case SET_PRIORITIZE:
+                    merged.setMergedPrioritize(message.substitute);
+                    break;
+                case SORT_CRAFTING:
+                    merged.mergedSortCrafting();
+                    break;
                 case SET_INVERTED:
                     merged.setMergedInverted(message.crafting);
                     break;
@@ -248,6 +285,20 @@ public class MergedTerminalActionPacket implements IMessage {
                         message.crafting,
                         message.cells,
                         message.recipeMap);
+                    // 混合自动上传：NEI 转移完成后立即编码，客户端收到 autoUpload 标记后
+                    // 等产物同步到输出槽，再复用现有「唯一候选/持久映射/多候选选择」上传管线。
+                    if (message.autoUpload) {
+                        String autoName = merged.mergedEncode();
+                        if (autoName != null && !autoName.isEmpty()) {
+                            ModNetwork.CHANNEL.sendTo(
+                                new MergedTerminalResultPacket(
+                                    autoName,
+                                    merged.mergedEncodeRecipeMap(),
+                                    merged.mergedEncodeNeedsMapping(),
+                                    true),
+                                player);
+                        }
+                    }
                     break;
                 default:
                     break;

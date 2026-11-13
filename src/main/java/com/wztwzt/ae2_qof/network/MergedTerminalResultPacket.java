@@ -18,21 +18,30 @@ public class MergedTerminalResultPacket implements IMessage {
     public String machineName;
     public String recipeMap;
     public boolean needsMapping;
+    /** true 表示这次编码由 NEI 自动上传流程触发，客户端应在产物同步后调用上传管线 */
+    public boolean autoUpload;
 
     public MergedTerminalResultPacket() {
         this.machineName = "";
         this.recipeMap = null;
         this.needsMapping = false;
+        this.autoUpload = false;
     }
 
     public MergedTerminalResultPacket(String machineName) {
-        this(machineName, null, false);
+        this(machineName, null, false, false);
     }
 
     public MergedTerminalResultPacket(String machineName, String recipeMap, boolean needsMapping) {
+        this(machineName, recipeMap, needsMapping, false);
+    }
+
+    public MergedTerminalResultPacket(String machineName, String recipeMap, boolean needsMapping,
+        boolean autoUpload) {
         this.machineName = machineName != null ? machineName : "";
         this.recipeMap = recipeMap;
         this.needsMapping = needsMapping;
+        this.autoUpload = autoUpload;
     }
 
     @Override
@@ -59,10 +68,12 @@ public class MergedTerminalResultPacket implements IMessage {
                     this.recipeMap = new String(mapBytes, java.nio.charset.StandardCharsets.UTF_8);
                 }
             }
+            this.autoUpload = buf.isReadable() && buf.readBoolean();
         } catch (Throwable t) {
             this.machineName = "";
             this.recipeMap = null;
             this.needsMapping = false;
+            this.autoUpload = false;
         }
     }
 
@@ -78,6 +89,7 @@ public class MergedTerminalResultPacket implements IMessage {
             buf.writeInt(mapBytes.length);
             buf.writeBytes(mapBytes);
         }
+        buf.writeBoolean(this.autoUpload);
     }
 
     public static class Handler implements IMessageHandler<MergedTerminalResultPacket, IMessage> {

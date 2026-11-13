@@ -37,6 +37,8 @@ public class PartMergedTerminal extends AbstractPartTerminal implements IMergedT
     private final AppEngInternalInventory savedGrid = new AppEngInternalInventory(this, 73);
 
     private boolean savedCraftingMode = true;
+    private boolean savedCombine = false;
+    private boolean savedPrioritize = false;
 
     public PartMergedTerminal(final ItemStack is) {
         super(is);
@@ -62,6 +64,26 @@ public class PartMergedTerminal extends AbstractPartTerminal implements IMergedT
     @Override
     public void setSavedCraftingMode(boolean v) {
         this.savedCraftingMode = v;
+    }
+
+    @Override
+    public boolean getSavedCombine() {
+        return savedCombine;
+    }
+
+    @Override
+    public void setSavedCombine(boolean v) {
+        this.savedCombine = v;
+    }
+
+    @Override
+    public boolean getSavedPrioritize() {
+        return savedPrioritize;
+    }
+
+    @Override
+    public void setSavedPrioritize(boolean v) {
+        this.savedPrioritize = v;
     }
 
     @Override
@@ -112,6 +134,8 @@ public class PartMergedTerminal extends AbstractPartTerminal implements IMergedT
         this.patternInv.writeToNBT(data, "apuPatternInv");
         this.savedGrid.writeToNBT(data, "apuSavedGrid");
         data.setBoolean("apuSavedMode", this.savedCraftingMode);
+        data.setBoolean("apuSavedCombine", this.savedCombine);
+        data.setBoolean("apuSavedPrioritize", this.savedPrioritize);
     }
 
     @Override
@@ -120,6 +144,8 @@ public class PartMergedTerminal extends AbstractPartTerminal implements IMergedT
         this.patternInv.readFromNBT(data, "apuPatternInv");
         if (data.hasKey("apuSavedGrid")) this.savedGrid.readFromNBT(data, "apuSavedGrid");
         this.savedCraftingMode = data.getBoolean("apuSavedMode");
+        this.savedCombine = data.getBoolean("apuSavedCombine");
+        this.savedPrioritize = data.getBoolean("apuSavedPrioritize");
     }
 
     // ===== 右键打开 GUI =====

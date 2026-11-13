@@ -49,6 +49,19 @@ public interface IMergedPatternTerminal {
 
     void setMergedBeSubstitute(boolean beSubstitute);
 
+    /** AE2FC 流体样板：合并同类流体输入 */
+    boolean isMergedCombine();
+
+    void setMergedCombine(boolean combine);
+
+    /** AE2FC 流体样板：优先处理流体 */
+    boolean isMergedPrioritize();
+
+    void setMergedPrioritize(boolean prioritize);
+
+    /** 按当前流体优先状态重排扩展输入格（1.3.0 Shift 点优先按钮语义） */
+    void mergedSortCrafting();
+
     /** 是否反转输入/输出网格（AE 原生 4×4 面板布局） */
     boolean isMergedInverted();
 
@@ -65,6 +78,12 @@ public interface IMergedPatternTerminal {
      * @return 检测到的机器中文名；无内容/无空白样板/已编码槽占用时返回 null
      */
     String mergedEncode();
+
+    /** 编码后产物入背包（1.3.0 Shift 编码语义） */
+    String mergedEncodeAndMove();
+
+    /** 编码后产物+输入槽全部入背包（1.3.0 Ctrl+Shift 编码语义） */
+    String mergedEncodeAll();
 
     /** 最近一次编码写入的 apu:recipeMap（合成配方为 "crafting"，处理配方为 GT 配方池 id，可能为 null） */
     String mergedEncodeRecipeMap();

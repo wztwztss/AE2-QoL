@@ -28,12 +28,15 @@ import com.wztwzt.ae2_qof.network.ReplaceCandidatesPacket;
 import com.wztwzt.ae2_qof.network.SwapPatternPacket;
 import com.wztwzt.ae2_qof.network.UploadFeedbackPacket;
 import com.wztwzt.ae2_qof.network.WirelessChannelSyncPacket;
+import com.wztwzt.ae2_qof.network.WirelessDistributorSyncPacket;
 import com.wztwzt.ae2_qof.network.WirelessHighlightPacket;
 import com.wztwzt.ae2_qof.terminal.StockMonitorTerminal;
 import com.wztwzt.ae2_qof.tile.TileExIOPort;
 import com.wztwzt.ae2_qof.tile.TileQuestDetector;
 import com.wztwzt.ae2_qof.wireless.WirelessBlockEventListener;
 import com.wztwzt.ae2_qof.wireless.WirelessBlocks;
+import com.wztwzt.ae2_qof.wireless.distributor.BlockWirelessDistributor;
+import com.wztwzt.ae2_qof.wireless.distributor.TileWirelessDistributor;
 
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLInterModComms;
@@ -49,6 +52,8 @@ public class CommonProxy {
     public static BlockQuestDetector blockQuestDetector;
     public static ItemInfinityWaterLavaCell itemInfinityWaterLavaCell;
     public static BlockMergedTerminal blockMergedTerminal;
+    /** 4.5.0-fix26：ME 无线网络分配器（GT ME 仓室）。 */
+    public static BlockWirelessDistributor blockWirelessDistributor;
     public static com.wztwzt.ae2_qof.merged.part.ItemPartMergedTerminal itemPartMergedTerminal;
     public static com.wztwzt.ae2_qof.merged.wireless.ItemWirelessMergedTerminal itemWirelessMergedTerminal;
     public static AE2MaintenanceHatchUniversal maintenanceHatchUniversal;
@@ -90,6 +95,19 @@ public class CommonProxy {
             WirelessBlocks.preInit();
         } catch (Throwable t) {
             MyMod.LOG.error("[DIAG] WirelessBlocks.preInit() FAILED", t);
+            t.printStackTrace(System.err);
+        }
+        try {
+            blockWirelessDistributor = new BlockWirelessDistributor();
+            blockWirelessDistributor.setCreativeTab(AE2QoLCreativeTab.INSTANCE);
+            GameRegistry.registerBlock(
+                blockWirelessDistributor,
+                appeng.block.AEBaseItemBlock.class,
+                "wireless_distributor");
+            GameRegistry.registerTileEntity(TileWirelessDistributor.class, "wireless_distributorTile");
+            MyMod.LOG.info("[AE2QoL] ME 无线网络分配器已注册：wireless_distributor（4.5.0-fix26）");
+        } catch (Throwable t) {
+            MyMod.LOG.error("[DIAG] BlockWirelessDistributor registration FAILED", t);
             t.printStackTrace(System.err);
         }
         try {
@@ -552,6 +570,8 @@ public class CommonProxy {
 
     public void handleWirelessChannelSync(WirelessChannelSyncPacket message) {}
 
+    public void handleWirelessDistributorSync(WirelessDistributorSyncPacket message) {}
+
     public void handleWirelessHighlight(WirelessHighlightPacket message) {}
 
     public void handleHatchListSync(HatchListSyncPacket message) {}
@@ -575,6 +595,26 @@ public class CommonProxy {
 
     private void registerRecipes() {
         try {
+            if (blockWirelessDistributor != null) {
+                net.minecraft.item.ItemStack wireless = appeng.api.AEApi.instance()
+                    .definitions()
+                    .blocks()
+                    .wireless()
+                    .maybeStack(1)
+                    .orNull();
+                net.minecraft.item.ItemStack hub = appeng.api.AEApi.instance()
+                    .definitions()
+                    .blocks()
+                    .wirelessHub()
+                    .maybeStack(1)
+                    .orNull();
+                if (wireless != null && hub != null) {
+                    // 与上游 AE2Things 1.3.0 相同：AE2 无线接入点 + 无线集线器无序合成。
+                    GameRegistry.addShapelessRecipe(blockWirelessDistributor.stack(), hub, wireless);
+                } else {
+                    MyMod.LOG.warn("[AE2QoL] 未找到 AE2 wireless/wirelessHub，跳过无线分配器配方");
+                }
+            }
             if (blockExIOPort != null) {
                 GameRegistry.addShapedRecipe(
                     blockExIOPort.stack(),

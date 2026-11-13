@@ -234,5 +234,24 @@ public final class ModNetwork {
             com.wztwzt.ae2_qof.machindex.network.MachIndexSyncPacket.class,
             discriminator++,
             Side.SERVER);
+
+        // 4.6.0：ME 无线网络分配器（GT ME 仓室）列表/动作同步
+        CHANNEL.registerMessage(
+            WirelessDistributorRequestPacket.Handler.class,
+            WirelessDistributorRequestPacket.class,
+            discriminator++,
+            Side.SERVER);
+
+        CHANNEL.registerMessage(
+            WirelessDistributorActionPacket.Handler.class,
+            WirelessDistributorActionPacket.class,
+            discriminator++,
+            Side.SERVER);
+
+        CHANNEL.registerMessage(
+            WirelessDistributorSyncPacket.Handler.class,
+            WirelessDistributorSyncPacket.class,
+            discriminator++,
+            Side.CLIENT);
     }
 }

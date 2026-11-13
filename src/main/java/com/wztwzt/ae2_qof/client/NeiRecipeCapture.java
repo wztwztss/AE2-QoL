@@ -91,7 +91,13 @@ public final class NeiRecipeCapture {
         // 处理配方：随 FILL 包携带客户端已识别的配方池 id，服务端写入样板并用于映射判定
         String recipeMap = data.crafting ? null : ClientState.pendingRecipeMap;
         ModNetwork.CHANNEL.sendToServer(
-            MergedTerminalActionPacket.fill(data.inputs, data.outputs, data.crafting, data.cells, recipeMap));
+            MergedTerminalActionPacket.fill(
+                data.inputs,
+                data.outputs,
+                data.crafting,
+                data.cells,
+                recipeMap,
+                com.wztwzt.ae2_qof.Config.neiAutoUploadEnabled));
         // 自动把机器名填入搜索框，过滤出刚填充的机器
         if (!data.crafting && recipeMap != null && !recipeMap.isEmpty()) {
             ClientState.lastRecipeMap = recipeMap;

@@ -31,4 +31,9 @@ public class SlotPatternFake extends OptionalSlotFake {
     public boolean isHidden() {
         return this.hidden;
     }
+
+    /** 与 AE2Things 1.3.0 同名方法：供虚拟槽渲染/命中测试使用隐藏偏移。 */
+    public int getDisplayPositionOffset() {
+        return this.hidden ? POSITION_SHIFT : 0;
+    }
 }

@@ -43,6 +43,10 @@ public class TileMergedTerminal extends AENetworkTile
     /** 快照对应的编码模式 */
     private boolean savedCraftingMode = true;
 
+    /** 面板流体样板设置（1.3.0 combine/prioritize），随方块持久化 */
+    private boolean savedCombine = false;
+    private boolean savedPrioritize = false;
+
     /** 供电/频道状态（同步到客户端供 WAILA 等读取） */
     private boolean isPowered = false;
 
@@ -60,6 +64,22 @@ public class TileMergedTerminal extends AENetworkTile
 
     public void setSavedCraftingMode(boolean v) {
         this.savedCraftingMode = v;
+    }
+
+    public boolean getSavedCombine() {
+        return savedCombine;
+    }
+
+    public void setSavedCombine(boolean v) {
+        this.savedCombine = v;
+    }
+
+    public boolean getSavedPrioritize() {
+        return savedPrioritize;
+    }
+
+    public void setSavedPrioritize(boolean v) {
+        this.savedPrioritize = v;
     }
 
     @Override
@@ -129,6 +149,8 @@ public class TileMergedTerminal extends AENetworkTile
         this.patternInv.writeToNBT(data, "apuPatternInv");
         this.savedGrid.writeToNBT(data, "apuSavedGrid");
         data.setBoolean("apuSavedMode", this.savedCraftingMode);
+        data.setBoolean("apuSavedCombine", this.savedCombine);
+        data.setBoolean("apuSavedPrioritize", this.savedPrioritize);
     }
 
     @TileEvent(TileEventType.WORLD_NBT_READ)
@@ -136,6 +158,8 @@ public class TileMergedTerminal extends AENetworkTile
         this.patternInv.readFromNBT(data, "apuPatternInv");
         if (data.hasKey("apuSavedGrid")) this.savedGrid.readFromNBT(data, "apuSavedGrid");
         this.savedCraftingMode = data.getBoolean("apuSavedMode");
+        this.savedCombine = data.getBoolean("apuSavedCombine");
+        this.savedPrioritize = data.getBoolean("apuSavedPrioritize");
     }
 
     @Override

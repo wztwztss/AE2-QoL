@@ -75,6 +75,8 @@ public class PatternContainer implements IOptionalSlotHost {
     private boolean craftingMode = true;
     private boolean substitute = false;
     private boolean beSubstitute = false;
+    private boolean combine = false;
+    private boolean prioritize = false;
     private boolean inverted = false;
     private int activePage = 0;
 
@@ -261,11 +263,45 @@ public class PatternContainer implements IOptionalSlotHost {
     // ===== 编码 =====
 
     public void encode() {
+        // 1.3.0：编码交给 AE2 原生 PatternEncodingHelper（与 AE2Things PatternContainer.encode 同一路径）。
+        // 旧的手搓 encodeItemPattern/encodeFluidPattern 仅作为非本终端容器时的兜底保留。
+        if (container instanceof ContainerMergedTerminal cmt) {
+            if (AE2PatternEncoder.encode(this, cmt)) return;
+            MyMod.LOG.info("[Encode] AE2 native encoder returned false");
+            return;
+        }
         if (!craftingMode && checkHasFluidPattern()) {
             encodeFluidPattern();
         } else {
             encodeItemPattern();
         }
+    }
+
+    /** 1.3.0 编码按钮 Shift 语义：编码后把产物放进玩家背包。 */
+    public void encodeAndMoveToInventory() {
+        encode();
+        moveOutputToInventory(false);
+    }
+
+    /** 1.3.0 编码按钮 Ctrl+Shift 语义：编码后把产物与输入槽里的全部空白样板一起放进玩家背包。 */
+    public void encodeAllItemAndMoveToInventory() {
+        encode();
+        moveOutputToInventory(true);
+    }
+
+    private void moveOutputToInventory(boolean includeInput) {
+        ItemStack output = patternSlotOUT.getStack();
+        if (output == null) return;
+        ItemStack moved = output.copy();
+        if (includeInput && patternSlotIN.getStack() != null) {
+            moved.stackSize += patternSlotIN.getStack().stackSize;
+            patternSlotIN.putStack(null);
+        }
+        if (!playerInv.addItemStackToInventory(moved)) {
+            playerInv.player
+                .entityDropItem(moved, 0);
+        }
+        patternSlotOUT.putStack(null);
     }
 
     private void encodeItemPattern() {
@@ -485,7 +521,7 @@ public class PatternContainer implements IOptionalSlotHost {
      * 注意：FluidPatternDetails 要求流体输入/输出为 IAEFluidStack，否则 writeToStack 会把
      * 流体写成 ItemFluidDrop 物品（"液态氧液滴"），导致合成 CPU 无法识别为流体。
      */
-    private static IAEStack<?> convertToAEStack(ItemStack stack) {
+    public static IAEStack<?> convertToAEStack(ItemStack stack) {
         if (stack == null) return null;
         if (isFluidItem(stack)) {
             FluidStack fs = getFluidFromItem(stack);
@@ -597,6 +633,46 @@ public class PatternContainer implements IOptionalSlotHost {
             return input.toArray(new ItemStack[0]);
         }
         return null;
+    }
+
+    /** 1.3.0 原生编码器使用：只返回当前页/当前反转布局下可见的输入格。 */
+    public ItemStack[] getEncodingInputs() {
+        if (craftingMode) {
+            ItemStack[] inputs = new ItemStack[9];
+            for (int i = 0; i < 9; i++) inputs[i] = craftingInv.getStackInSlot(i);
+            return inputs;
+        }
+        ItemStack[] inputs = new ItemStack[CRAFTING_GRID_SLOTS];
+        for (int page = 0; page < CRAFTING_GRID_PAGES; page++) {
+            if (page != activePage) continue;
+            for (int y = 0; y < CRAFTING_GRID_HEIGHT; y++) {
+                for (int x = 0; x < CRAFTING_GRID_WIDTH; x++) {
+                    if (x > 0 && inverted) continue;
+                    inputs[x + y * CRAFTING_GRID_WIDTH] = craftingExSlots[x + y * CRAFTING_GRID_WIDTH
+                        + page * CRAFTING_GRID_SLOTS].getStack();
+                }
+            }
+        }
+        return inputs;
+    }
+
+    /** 1.3.0 原生编码器使用：只返回当前页/当前反转布局下可见的输出格。 */
+    public ItemStack[] getEncodingOutputs() {
+        if (craftingMode) {
+            return new ItemStack[] { getAndUpdateOutput() };
+        }
+        ItemStack[] outputs = new ItemStack[CRAFTING_GRID_SLOTS];
+        for (int page = 0; page < CRAFTING_GRID_PAGES; page++) {
+            if (page != activePage) continue;
+            for (int y = 0; y < CRAFTING_GRID_HEIGHT; y++) {
+                for (int x = 0; x < CRAFTING_GRID_WIDTH; x++) {
+                    if (x > 0 && !inverted) continue;
+                    outputs[x * CRAFTING_GRID_HEIGHT + y] = outputExSlots[x * CRAFTING_GRID_HEIGHT + y
+                        + page * CRAFTING_GRID_SLOTS].getStack();
+                }
+            }
+        }
+        return outputs;
     }
 
     private ItemStack[] getOutputs() {
@@ -730,8 +806,10 @@ public class PatternContainer implements IOptionalSlotHost {
         this.craftingMode = mode;
         this.pendingRecipeMap = recipeMap;
         applyRecipeMapMeta(recipeMap);
+        ItemStack[] fillInputs = mode ? inputs : normalizePanelStacks(inputs, combine, prioritize);
+        ItemStack[] fillOutputs = mode ? outputs : normalizePanelStacks(outputs, combine, false);
         for (int i = 0; i < CRAFTING_GRID_SLOTS * CRAFTING_GRID_PAGES; i++) {
-            ItemStack s = (inputs != null && i < inputs.length) ? inputs[i] : null;
+            ItemStack s = (fillInputs != null && i < fillInputs.length) ? fillInputs[i] : null;
             if (i < 9) craftingInv.setInventorySlotContents(i, null);
             craftingExSlots[i].putStack(s == null ? null : s.copy());
         }
@@ -750,11 +828,75 @@ public class PatternContainer implements IOptionalSlotHost {
             }
         }
         for (int j = 0; j < CRAFTING_GRID_SLOTS * CRAFTING_GRID_PAGES; j++) {
-            ItemStack s = (outputs != null && j < outputs.length) ? outputs[j] : null;
+            ItemStack s = (fillOutputs != null && j < fillOutputs.length) ? fillOutputs[j] : null;
             outputExSlots[j].putStack(s == null ? null : s.copy());
         }
         updateOrderOfOutputSlots();
         getAndUpdateOutput();
+    }
+
+    /**
+     * 1.3.0 的 combine/prioritize 语义：
+     * combine 合并同种输入（避免 NEI 把同一流体拆成多格），prioritize 把流体排在物品前。
+     * 仅处理模式使用；合成模式保持 3×3 原始布局。
+     */
+    private static ItemStack[] normalizePanelStacks(ItemStack[] src, boolean combine, boolean prioritize) {
+        if (src == null) return null;
+        List<ItemStack> stacks = new ArrayList<ItemStack>();
+        for (ItemStack stack : src) {
+            if (stack == null || stack.stackSize <= 0) continue;
+            if (combine) {
+                boolean merged = false;
+                for (ItemStack existing : stacks) {
+                    if (Platform.isSameItemPrecise(existing, stack)) {
+                        existing.stackSize = (int) Math.min(
+                            MAX_GHOST_STACK_SIZE,
+                            (long) existing.stackSize + stack.stackSize);
+                        merged = true;
+                        break;
+                    }
+                }
+                if (merged) continue;
+            }
+            stacks.add(stack.copy());
+        }
+        if (prioritize) {
+            List<ItemStack> fluids = new ArrayList<ItemStack>();
+            List<ItemStack> items = new ArrayList<ItemStack>();
+            for (ItemStack stack : stacks) {
+                (isFluidItem(stack) ? fluids : items).add(stack);
+            }
+            stacks.clear();
+            stacks.addAll(fluids);
+            stacks.addAll(items);
+        }
+        return stacks.toArray(new ItemStack[0]);
+    }
+
+    /**
+     * 1.3.0 `IPatternTerminal.sortCraftingItems()` 的等价实现：
+     * 优先流体开启时把流体排到扩展输入格前部，否则把物品排在前部。
+     * 仅重排非空格，保持格子总容量不变。
+     */
+    public void sortCraftingItems() {
+        List<ItemStack> items = new ArrayList<ItemStack>();
+        List<ItemStack> fluids = new ArrayList<ItemStack>();
+        for (int i = 0; i < craftingExInv.getSizeInventory(); i++) {
+            ItemStack stack = craftingExInv.getStackInSlot(i);
+            if (stack == null) continue;
+            (isFluidItem(stack) ? fluids : items).add(stack);
+        }
+        List<ItemStack> ordered = new ArrayList<ItemStack>(items.size() + fluids.size());
+        if (prioritize) {
+            ordered.addAll(fluids);
+        }
+        ordered.addAll(items);
+        if (!prioritize) {
+            ordered.addAll(fluids);
+        }
+        for (int i = 0; i < craftingExInv.getSizeInventory(); i++) {
+            craftingExInv.setInventorySlotContents(i, i < ordered.size() ? ordered.get(i) : null);
+        }
     }
 
     // ===== 槽变化时同步 =====
@@ -879,7 +1021,7 @@ public class PatternContainer implements IOptionalSlotHost {
         return r;
     }
 
-    private static ItemStack toDisplayItemStack(appeng.api.storage.data.IAEStack<?> s) {
+    static ItemStack toDisplayItemStack(appeng.api.storage.data.IAEStack<?> s) {
         if (s == null) return null;
         if (s instanceof appeng.api.storage.data.IAEFluidStack fs) {
             FluidStack fluid = fs.getFluidStack();
@@ -983,6 +1125,22 @@ public class PatternContainer implements IOptionalSlotHost {
 
     public void setBeSubstitute(boolean v) {
         this.beSubstitute = v;
+    }
+
+    public boolean isCombine() {
+        return combine;
+    }
+
+    public void setCombine(boolean v) {
+        this.combine = v;
+    }
+
+    public boolean isPrioritize() {
+        return prioritize;
+    }
+
+    public void setPrioritize(boolean v) {
+        this.prioritize = v;
     }
 
     public boolean isInverted() {
