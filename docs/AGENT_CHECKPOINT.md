@@ -18,6 +18,7 @@
 |修复|`GuiConfigScreen` 的 NEI 开关改为直接 `OverlayConfig.setEnabled` 写本地 `settings.json`（不经过 OP）；打开页面先 `Config.ensureFresh()`；`Config.reload` 剥离 BOM、记录 `lastReloadError`；`/ae2qof status` 输出实际配置文件路径与解析错误；合并终端 OV 按钮即时刷新标签|
 |刻意不动|其它 io/倍增字段仍由服务端 OP 校验；不改变服务端配置同步协议；不把 NEI 开关改成服务端全局设置|
 |产物|`build/libs/AE2-QoL-4.5.0-fix27.jar`（构建通过后核对）；按用户要求不替换游戏内 mods，复制到 `D:\下载\需更新模组`|
+|发布|tag `v4.5.0-fix27`；GitHub Actions `Release tagged build` run 33 成功；release 资产仅 `AE2-QoL-4.5.0-fix27.jar`、`-dev.jar`、`-sources.jar` 三个；issue #2 已由 `wztwztss` 回复|
 |待实测|单人未开作弊：配置页切换 NEI 开关立即生效并持久化；外部编辑 `settings.json`（含 UTF-8 BOM）后打开配置页/NEI 页面生效；`/ae2qof status` 显示正确路径与值|
 
 ---
