@@ -7,6 +7,22 @@
 
 ---
 
+## 本轮插曲：2026-11-13 · 4.5.0-fix20（GitHub issue #1：ME 任务检测器邻居更新崩溃）
+
+|项目|内容|
+|---|---|
+|工具平台 / 模型|Doubao（本地桌面 Agent）· 当前会话|
+|任务（用户原话）|「按A修完，并推送GitHub然后 https://github.com/wztwztss/AE2-QoL/issues/1 并且给这个人回复」|
+|Issue|GitHub issue #1（`skyjack2033`，2026-11-07）：stable 290 / `sciencenotleisure-dev-290`，日志 <https://mclo.gs/dvtUSSP>；标题「似乎与snl有异常？」|
+|根因（行号级证据）|`BlockQuestDetector.java:21` `extends BlockIOPort`；`:29` `setTileEntity(TileQuestDetector.class)`；`TileQuestDetector.java:39` `extends AENetworkTile`，非 `TileIOPort`。AE2 `BlockIOPort.func_149695_a`（`onNeighborBlockChange`）为 `public final`，字节码 `getTileEntity(...)` → `checkcast TileIOPort` → `updateRedstoneState()`；任何邻居更新落在任务检测器上即 `ClassCastException`。final 方法子类无法覆写，此前 `onBlockActivated` 修复覆盖不到。|
+|修复|新增 `mixin/ae/MixinBlockIOPortNeighborGuard.java`：`@Mixin(BlockIOPort.class, remap=false)`，`@Inject(method="func_149695_a", HEAD, cancellable)`；`world.getTileEntity(...)` 不是 `TileIOPort` 时 `ci.cancel()`。两份 `mixins.ae2_qof.json` 同步新增 `ae.MixinBlockIOPortNeighborGuard`。|
+|刻意不动|`BlockQuestDetector` 继承关系、`RenderBlockQuestDetector`、方块 ID、存档格式；普通 IO 端口/`TileExIOPort` 的红石行为。|
+|产物|`build/libs/AE2-QoL-4.5.0-fix20.jar`；按用户要求复制到 `D:\下载\需更新模组`，**不部署游戏**。|
+|待实测|任务检测器旁放置/破坏方块、相邻放第二个检测器不崩；普通 IO 端口红石/传输不变；启动 `mixin.log` 确认本 mixin 已应用。|
+|已知限制|若 AE2 改动 `func_149695_a` 名称/签名，`required:false` 配置下注入会静默失效，崩溃回归；升级 AE2 时必须 `javap` 复核。|
+
+---
+
 ## 本轮：2026-11-13 · 4.5.0-fix19（TenkeiTech 自带模板输入总线接入智能倍增）
 
 |项目|内容|

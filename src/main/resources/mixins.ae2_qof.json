@@ -8,6 +8,7 @@
   "mixins": [
     "ae.MixinCraftingCPUCluster",
     "ae.MixinTileIOPort",
+    "ae.MixinBlockIOPortNeighborGuard",
     "ae.MixinDualityInterface",
     "ae.MixinContainerInterface",
     "ae.MixinPinsHolder",

@@ -237,7 +237,7 @@
 
 ## 按功能域汇总
 
-> 与 `mixins.ae2_qof.json` 对齐，共 **48 条**（`mixins` 段 30 + `client` 段 18，逐条对应；
+> 与 `mixins.ae2_qof.json` 对齐，共 **49 条**（`mixins` 段 31 + `client` 段 18，逐条对应；
 > 3.35.0-fix16 摘除零注入的 `MixinBaseMetaTileEntityWaila` 后由 44 → 43；
 > 3.35.0-fix7 起 `MixinCommonBaseMetaTileEntityMultiblockRegistry` 另含 onUnload 注入）。
 
@@ -247,8 +247,14 @@
 | NEI 增强/覆盖层 | 6 | MixinGuiRecipe, MixinGuiOverlayButton, MixinDefaultOverlayHandler, MixinPanelWidgetClick, MixinNEIRecipeWidget, MixinPanelWidgetDraw |
 | 网络库存缓存/合成通知 | 2 | MixinGuiMEMonitorable, MixinCraftingCPUCluster |
 | 自动样板上传辅助 | 2 | MixinDefaultOverlayHandler, MixinRecipeHandlerRef |
-| 其他 QoL | 3 | TileDriveMixin, MixinTileIOPort, MixinPinsHolder |
+| 其他 QoL | 4 | TileDriveMixin, MixinTileIOPort, MixinPinsHolder, MixinBlockIOPortNeighborGuard |
 | Accessor | 1 | GuiContainerAccessor |
 | PH 扩容（编程样板输入总成 MK.III） | 1 | MixinPatternDualInputHatchAccess |
 | 万能维护仓 | 1 | MixinMTEMultiBlockBase |
 | 上传取物/材质/GT 注册与迁移 | 6 | MixinPacketPickBlock, MixinTextureMap, MixinBaseMetaTileEntityIdMigration, MixinProcessingLogicSpeed, MixinCommonBaseMetaTileEntityMultiblockRegistry, MixinGuiCraftConfirm |
+
+### ME 任务检测器邻居更新守卫（4.5.0-fix20）- 1 个 Mixin
+
+| Mixin 类路径 | 目标类 | 注入点 | 风险/说明 |
+|---|---|---|---|
+| `mixin/ae/MixinBlockIOPortNeighborGuard.java` | `appeng.block.storage.BlockIOPort` | `func_149695_a`（`onNeighborBlockChange`）HEAD，`cancellable`，`remap = false` | `BlockQuestDetector` 复用 `BlockIOPort` 渲染管线，实体却是 `TileQuestDetector`；父类 final 方法会 `checkcast TileIOPort`，邻居更新必崩。仅当 `world.getTileEntity(x,y,z)` 不是 `TileIOPort` 时 `ci.cancel()`；普通 IO 端口与 `TileExIOPort` 不受影响。若 AE2 改动/移除 `func_149695_a`，注入会失效（配置 `required:false`，不会打崩启动，但崩溃会回归），升级 AE2 时必须 `javap` 复核。 |

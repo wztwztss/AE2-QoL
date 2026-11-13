@@ -1,3 +1,77 @@
+# 4.5.0-fix20 —— 修复 ME 任务检测器邻居更新 ClassCastException（2026-11-13）
+
+## 现象
+
+GitHub issue #1（<https://github.com/wztwztss/AE2-QoL/issues/1>，报告者 `skyjack2033`）：
+在 GTNH stable 290 / `sciencenotleisure-dev-290` 环境放置「ME 任务检测器」时崩溃，日志
+<https://mclo.gs/dvtUSSP>。崩溃报告：
+
+```
+Description: Exception while updating neighbours
+java.lang.ClassCastException: com.wztwzt.ae2_qof.tile.TileQuestDetector
+    cannot be cast to appeng.tile.storage.TileIOPort
+    at appeng.block.storage.BlockIOPort.onNeighborBlockChange(BlockIOPort.java:40)
+```
+
+报告者怀疑 SNL，但调用链与 SNL 无关：`BlockEntityTagPlacement.placeItemIntoWorld`
+（GTNL/SNL 的放置路径）→ `World.markAndNotifyBlock` → `notifyBlockChange` →
+邻方块的 `onNeighborBlockChange`。日志中该环境为 `AE2-QoL-4.5.0-fix15.jar`、AE2
+`rv3-beta-1095-GTNH`；当前 fix19 源码仍保留同一继承关系，缺陷未修。
+
+## 根因（行号级证据）
+
+1. `block/BlockQuestDetector.java:21`：`extends BlockIOPort`（仅为复用 AE2 机器渲染管线）；
+   `:29` 构造里 `setTileEntity(TileQuestDetector.class)`。
+2. `tile/TileQuestDetector.java:39`：`extends AENetworkTile`，**不是** `TileIOPort`。
+3. AE2 `BlockIOPort` 的邻居回调 `func_149695_a`（`onNeighborBlockChange`）是 **`public final`**，
+   字节码先 `getTileEntity(...)`，再 `checkcast appeng/tile/storage/TileIOPort`，最后调用
+   `updateRedstoneState()`。任务检测器收到任何邻居更新时，`TileQuestDetector` 必然强转失败。
+4. 该方法为 final，子类无法覆写；此前修复右键崩溃的 `onBlockActivated` 覆盖（走
+   `BlockIOPort.onActivated` 的另一条强转路径）对它无效。
+
+## 修复
+
+新增 `mixin/ae/MixinBlockIOPortNeighborGuard.java`（通用段）：
+
+```java
+@Mixin(value = BlockIOPort.class, remap = false)
+@Inject(method = "func_149695_a", at = @At("HEAD"), cancellable = true, remap = false)
+if (!(world.getTileEntity(x, y, z) instanceof TileIOPort)) ci.cancel();
+```
+
+- 只在实体不是 `TileIOPort` 时跳过父类回调；普通 IO 端口（含 `TileExIOPort`）行为不变。
+- 覆盖所有 `BlockIOPort` 子类里「非 IO 端口实体」的情形，不再需要子类覆写 final 方法。
+- `mixins.ae2_qof.json` 根副本与 `src/main/resources` 副本同步新增条目。
+- 未改方块 ID、渲染器、存档格式；`BlockQuestDetector` 与 `RenderBlockQuestDetector` 保持原样。
+
+## 影响面与风险
+
+- 仅改变「`BlockIOPort` 的邻居回调遇到非 `TileIOPort` 实体」这一条路径；正常 IO 端口仍执行
+  `updateRedstoneState()`。
+- Mixin 配置沿用项目既有的 `required: false` + `injectors.defaultRequire: 1`；构建与入包需核对，
+  运行期以 `mixin.log` 是否出现本 mixin 为准。
+- 若未来 AE2 把 `func_149695_a` 改名或移除，注入会失效（配置不会打崩启动，但崩溃会回来）；
+  升级 AE2 时需重新 `javap` 核对。
+
+## 验证结果（本地）
+
+- `.\gradlew.bat build --offline -x spotlessJavaCheck -x spotlessCheck` 构建通过；
+  产物 `build/libs/AE2-QoL-4.5.0-fix20.jar`。
+- `jar tf` 核对 `MixinBlockIOPortNeighborGuard.class` 入包；两份 `mixins.ae2_qof.json` 均含
+  `ae.MixinBlockIOPortNeighborGuard`。
+- 未部署游戏；按用户要求只复制到 `D:\下载\需更新模组`。
+
+## 待实测（用户/报告者）
+
+| 项 | 预期 |
+|---|---|
+| 在任务检测器旁放置/破坏任意方块 | 不再崩溃，检测器继续工作 |
+| 相邻放置第二个任务检测器 | 不再崩溃 |
+| 普通 AE2 IO 端口 / 强化 IO 端口 | 红石状态与传输行为不变 |
+| 启动日志 | Mixin 成功应用（无 `MixinBlockIOPortNeighborGuard` 的注入失败错误） |
+
+---
+
 # 4.5.0-fix19 —— TenkeiTech 自带模板输入总线接入智能倍增（2026-11-13）
 
 ## 需求（用户原话）

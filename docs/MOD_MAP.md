@@ -42,6 +42,7 @@
 | 智能倍增（C2S 开关包） | `src/main/java/com/wztwzt/ae2_qof/network/SmartDoublingTogglePacket.java` |
 | 强化 IO 端口 | `src/main/java/com/wztwzt/ae2_qof/tile/TileExIOPort.java` |
 | 强化 IO 端口（Mixin） | `src/main/java/com/wztwzt/ae2_qof/mixin/ae/MixinTileIOPort.java` |
+| ME 任务检测器（邻居更新守卫，4.5.0-fix20） | `src/main/java/com/wztwzt/ae2_qof/mixin/ae/MixinBlockIOPortNeighborGuard.java`：`BlockQuestDetector` 复用 `BlockIOPort` 渲染管线，但父类 final 的 `onNeighborBlockChange` 会把 `TileQuestDetector` 强转 `TileIOPort`；本 mixin 在实体不是 `TileIOPort` 时跳过该回调 |
 | 库存检测覆盖板（主类） | `src/main/java/com/wztwzt/ae2_qof/cover/stockmonitor/StockMonitorCover.java` |
 | 库存检测覆盖板（数据类） | `src/main/java/com/wztwzt/ae2_qof/cover/stockmonitor/StockMonitorCoverData.java` |
 | 库存检测覆盖板（物品） | `src/main/java/com/wztwzt/ae2_qof/cover/stockmonitor/ItemStockMonitorCover.java` |
@@ -131,13 +132,14 @@
 
 ## Mixin列表
 
-> 与 `src/main/resources/mixins.ae2_qof.json`（及根目录同内容副本）逐条对齐：通用段 30 条、client 段 18 条，共 **48 条**。
+> 与 `src/main/resources/mixins.ae2_qof.json`（及根目录同内容副本）逐条对齐：通用段 31 条、client 段 18 条，共 **49 条**。
 > 配置列统一为 `mixins.ae2_qof.json`，下表不再重复填写。
 
 | 段 | Mixin类路径 | 目标类 | 注入点/备注 |
 |---|---|---|---|
 | 通用 | `mixin/ae/MixinCraftingCPUCluster.java` | `appeng.me.cluster.implementations.CraftingCPUCluster` | `submitJob` RETURN、`completeJob` TAIL、`executeCrafting` HEAD(cancellable)；合成通知 + 智能倍增；`knownBusyMediums` 冷却 |
 | 通用 | `mixin/ae/MixinTileIOPort.java` | `appeng.tile.storage.TileIOPort` | `transferContents` HEAD（@ModifyVariable）强化 IO 倍率；**fix51 追加** `tickingRequest` RETURN 注入 `ae2qol$fanOutExtraChannels`——对无限磁盘逐通道补搬。背景：AE2 的 `getInv` 每元件只取**第一个**匹配通道并 `break`，多通道元件因此只搬一个通道。仅放行 `ItemInfinityStorageCell`，单通道元件立即跳过 |
+| 通用 | `mixin/ae/MixinBlockIOPortNeighborGuard.java` | `appeng.block.storage.BlockIOPort` | `func_149695_a`（`onNeighborBlockChange`，**final**）HEAD(cancellable, `remap = false`)；实体不是 `TileIOPort` 时 `ci.cancel()`。4.5.0-fix20 修 `TileQuestDetector` 被强转 `TileIOPort` 的 `ClassCastException`（GitHub issue #1）；普通 IO 端口/`TileExIOPort` 行为不变 |
 | 通用 | `mixin/ae/MixinDualityInterface.java` | `appeng.helpers.DualityInterface` | `writeToNBT`/`readFromNBT` TAIL；实现 `ISmartDoublingMedium` |
 | 通用 | `mixin/ae/MixinContainerInterface.java` | `appeng.container.implementations.ContainerInterface` | `<init>` RETURN；`@GuiSync(30)` 倍增同步字段（避开 AE2 0/1/3~18 与 GTNL 19） |
 | 通用 | `mixin/ae/MixinPinsHolder.java` | `appeng.items.contents.PinsHolder` | `getCraftingPinsRows` Redirect；pin 行默认行为 |
