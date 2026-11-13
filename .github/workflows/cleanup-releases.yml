@@ -10,6 +10,9 @@ jobs:
   cleanup:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Delete package releases and non-mod assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
