@@ -1,0 +1,42 @@
+name: Cleanup legacy release assets
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete package releases and non-mod assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+
+          echo "=== Deleting legacy package releases ==="
+          gh release list --limit 100 --json tagName --jq '.[].tagName' |
+          while read -r tag; do
+            case "$tag" in
+              *-packages|latest-packages|master-packages)
+                echo "Deleting release: $tag"
+                gh release delete "$tag" --yes --cleanup-tag || true
+                ;;
+            esac
+          done
+
+          echo "=== Deleting -dev/-sources assets from mod releases ==="
+          gh release list --limit 100 --json tagName --jq '.[].tagName' |
+          while read -r tag; do
+            gh release view "$tag" --json assets --jq '.assets[] | "\(.id)\t\(.name)"' 2>/dev/null |
+            while IFS=$'\t' read -r id name; do
+              case "$name" in
+                *-dev.jar|*-sources.jar)
+                  echo "Deleting $name from $tag"
+                  gh api -X DELETE "repos/${GITHUB_REPOSITORY}/releases/assets/${id}" || true
+                  ;;
+              esac
+            done
+          done

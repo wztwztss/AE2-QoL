@@ -12,3 +12,29 @@ jobs:
   release-tags:
     uses: GTNewHorizons/GTNH-Actions-Workflows/.github/workflows/release-tags.yml@master
     secrets: inherit
+
+  clean-assets:
+    needs: release-tags
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Keep only the normal mod jar
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG not found; skip"
+            exit 0
+          fi
+          gh release view "$TAG" --json assets --jq '.assets[] | "\(.id)\t\(.name)"' |
+          while IFS=$'\t' read -r id name; do
+            case "$name" in
+              *-dev.jar|*-sources.jar)
+                echo "Deleting non-mod asset: $name"
+                gh api -X DELETE "repos/${GITHUB_REPOSITORY}/releases/assets/${id}" || true
+                ;;
+            esac
+          done
