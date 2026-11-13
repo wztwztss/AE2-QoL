@@ -156,36 +156,6 @@ public class CommonProxy {
             MyMod.LOG.error("[DIAG] ItemSmartWildcardPattern registration FAILED", t);
             t.printStackTrace(System.err);
         }
-        // 4.1.0：产线管理器——绑定卡物品 + Δ 采样 ticker（tick 事件在 cpw 总线上）
-        try {
-            com.wztwzt.ae2_qof.proline.ItemProductionLineCard prolineCard = new com.wztwzt.ae2_qof.proline.ItemProductionLineCard();
-            GameRegistry.registerItem(prolineCard, "proline_card", MyMod.MODID);
-            // 可发现性：生存获取——4 张纸 + 1 铁锭（形如纸 adamant 卡的通用习法）
-            try {
-                GameRegistry.addShapedRecipe(
-                    new net.minecraft.item.ItemStack(prolineCard),
-                    " p ",
-                    " i ",
-                    " p ",
-                    'p',
-                    new net.minecraft.item.ItemStack(net.minecraft.init.Items.paper),
-                    'i',
-                    new net.minecraft.item.ItemStack(net.minecraft.init.Items.iron_ingot));
-            } catch (Throwable t) {
-                MyMod.LOG.warn("[AE2QoL] 产线绑定卡合成配方注册失败（仅影响生存获取）", t);
-            }
-            MyMod.LOG.info("[AE2QoL] 产线绑定卡已注册：proline_card（4.1.0）");
-        } catch (Throwable t) {
-            MyMod.LOG.error("[DIAG] ItemProductionLineCard registration FAILED", t);
-            t.printStackTrace(System.err);
-        }
-        try {
-            com.wztwzt.ae2_qof.proline.ProLineSampler.register();
-            MyMod.LOG.info("[AE2QoL] 产线 Δ 采样服务已注册（4.1.0，10s/轮）");
-        } catch (Throwable t) {
-            MyMod.LOG.error("[DIAG] ProLineSampler registration FAILED", t);
-            t.printStackTrace(System.err);
-        }
         // 3.23.0：批量样板生成器（吞并 AE2PatternGen 的主要功能入口）
         try {
             smartPatternGenerator = new com.wztwzt.ae2_qof.generator.ItemSmartPatternGenerator();

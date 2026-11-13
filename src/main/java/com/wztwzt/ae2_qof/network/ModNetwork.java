@@ -225,12 +225,6 @@ public final class ModNetwork {
             SmartDoublingStatePacket.class,
             discriminator++,
             Side.CLIENT);
-        // 4.2.0：产线名称解析（客户端中文→key 回传）
-        CHANNEL.registerMessage(
-            com.wztwzt.ae2_qof.proline.network.ProLineResolvePacket.Handler.class,
-            com.wztwzt.ae2_qof.proline.network.ProLineResolvePacket.class,
-            discriminator++,
-            Side.SERVER);
 
         // 4.5.0-fix5：机器索引结果同步（C2S，分片）。
         // 专用服务器没有 NEI，扫不出「哪些机器能处理哪个配方」；任务库又是服务端权威，

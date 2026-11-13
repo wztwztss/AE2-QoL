@@ -82,7 +82,7 @@ public final class PatternClipboardGui {
 
     private static ModularPanel buildUI(ItemStackGuiData guiData, PanelSyncManager syncManager, UISettings settings) {
         // 4.4.0-fix2：构建期**绝不能**走 syncManager.getPlayer()（container 尚未建立 ⇒ NPE ⇒
-        // 服务器把玩家踢下线，与产线页 4.4.0-fix1 修的是同一类坑——这条纪律见 ProLinePage 头注）。
+        // 服务器把玩家踢下线；MUI2 面板构建期一律只使用工厂/同步值提供的上下文）。
         // 工厂入参 guiData 自带打开者：ItemStackGuiData.getPlayer() 在构建期可用且对本面板实例恒定。
         final EntityPlayer player = guiData.getPlayer();
         final ItemStack stack = guiData.getItemStack();
