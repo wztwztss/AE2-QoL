@@ -18,7 +18,7 @@
 |刻意不动|GT 全局电网账户/BigInteger 存储；四仓槽位/白名单/主机反查；WAILA 既有精确显示；`getGridEULong` 保留给旧兼容路径但不作为本轮显示/补电数据源；不扩面板高度、不改为滚动、不删任何功能|
 |产物|主 jar `build/libs/AE2-QoL-4.5.0-fix30.jar`（`2,067,898 B`，SHA256 `9B1DCC5078DAF1F0EE9CE787119EEE613E3093611658A73A7C4E69408B3ACD56`）；dev `2,062,099 B`，SHA256 `AAA8F4AC4BBBB5FADC9ECA42DCD1BE26ADDC367FEC0EB40ABCC37DA20EFEA5FA`；sources `1,557,344 B`，SHA256 `426D0FF796949DD428BE49890E60B96DBBEAFDE858769308642C976FC553931C`；交付副本 `D:\下载\需更新模组\AE2-QoL-4.5.0-fix30.jar`，未替换游戏内 mods|
 |验证|`compileJava --offline`、`spotlessApply --offline`、完整 `build --offline` 均通过；主 jar `mcmod.info` 版本双条 `4.5.0-fix30`；`jar tf` 含五个自适应类与 helper；交付副本 `2067898 B`、SHA256 `9B1DCC5078DAF1F0EE9CE787119EEE613E3093611658A73A7C4E69408B3ACD56` 与本地主 jar 一致|
-|发布|本轮未推送 GitHub、未创建 tag/release（仅本地构建与交付副本）；待用户确认后再同步|
+|发布|已推送 GitHub `master` 至 `1b5b575`（提交 `fix(adaptive): 修正电网终端页面偏移与 9.2E 显示上限（4.5.0-fix30）`）；未创建 tag/release；release 资产策略仍为主 jar / `-dev.jar` / `-sources.jar`|
 |待实测|设置/状态页首行不再下移、设置页内容完整；监控页余额超 9.22E 仍显示真实值且预测不再 `∞`；四仓 Grid 行超 9.22E 显示精确值；两补电仓超限电网下正常补电|
 
 ---
