@@ -15,7 +15,10 @@ public final class OverlayConfig {
         return Config.neiOverlayEnabled;
     }
 
-    public static void setEnabled(boolean enabled) {
-        Config.setNeiOverlayEnabled(enabled);
+    /**
+     * @return 是否成功写入 settings.json；失败时开关保持原值
+     */
+    public static boolean setEnabled(boolean enabled) {
+        return Config.setNeiOverlayEnabled(enabled);
     }
 }

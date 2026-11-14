@@ -17,6 +17,11 @@ public class ConfigUpdatePacket implements IMessage {
 
     public int io;
     public int rounds;
+    /**
+     * 协议兼容字段：NEI 叠加层已改为纯客户端本地设置，客户端不采用该值。
+     * 保留字段只是为了避免旧版本客户端因字节布局变化而解析失败。
+     */
+    @Deprecated
     public boolean overlay;
 
     public ConfigUpdatePacket() {}

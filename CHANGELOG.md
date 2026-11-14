@@ -1,3 +1,43 @@
+# 4.5.0-fix28 —— 配置读写/同步/GUI/命令审查项逐项修复（2026-11-14）
+
+## 审查范围
+
+- 基于 fix27 的只读审查结论，逐项修复配置读写、单机/多人同步、GUI 反馈、命令口径与文件编码问题。
+- 不重构配置系统以外的逻辑；不改变游戏内玩法参数语义。
+
+## 变更
+
+1. **单机未开作弊时非 NEI 字段不再被静默丢弃**：`GuiConfigScreen.applySingle` 检测 `Minecraft.isIntegratedServerRunning()`，
+   单机/局域网主机直接调用 `Config.applySetting` 写本地 `settings.json`；只有远程服务器才发 `ConfigSetPacket`。
+2. **写入改为“读当前文件 → 只改目标键 → 保留其它字段和未知键”**：`Config.setNeiOverlayEnabled`、`applySetting`、
+   `applyAll` 不再用内存静态字段全量重写；新增 `writeSettings` 读-改-写路径，避免覆盖玩家运行期间手动改的
+   `nei_auto_upload_enabled`、`stock_monitor_*`、`v7_textures`、`quest_detect_interval` 等。
+3. **写失败不再被当成成功**：`Config.applySetting`、`setNeiOverlayEnabled`、`applyAll` 返回布尔；
+   写入失败不改内存值、不更新 `lastLoadedMtime`，并记录 `lastWriteError`；GUI 显示真实失败原因。
+4. **写成功后清空旧的 `load_error`**：`writeSettings` 成功时同时清空 `lastReloadError`，`/ae2qof status` 不再显示过期解析错误。
+5. **`reload()` 改为全量解析成功后再提交**：任何字段解析失败直接保留整套旧值，不再出现“前几个字段已生效、后面还是旧值”的部分应用。
+6. **写入改为临时文件 + 原子替换**：先写 `settings.json.tmp`，再 `ATOMIC_MOVE`（不支持时回退 `REPLACE_EXISTING`）；
+   写入中途崩溃/被杀不会留下截断的正式文件；失败时原文件保持不变。
+7. **GUI 显示加载/写入错误并取消打开页面时的 1 秒节流**：`initGui` 直接 `Config.reload()`；加载失败时把
+   `load_error` 显示在页面上；`ConfigSetResultPacket` 回执到达后显示“服务器已确认/服务器拒绝”；
+   状态文字按成功/失败切换颜色。
+8. **多人 `/status` 口径标注**：`/ae2qof status` 的 `nei_overlay_enabled` 标注为 server value，并提示客户端本地值用
+   `/apu-overlay status` 查看；`/apu-overlay status` 输出本地 `settings=`、`load_error`、`write_error`。
+9. **overlay 协议半废弃清理**：`ConfigSetPacket` 拒绝 `nei_overlay_enabled` C2S 修改（旧客户端会收到“NEI 开关是客户端本地设置”的回执）；
+   `ConfigUpdatePacket.overlay` 保留为协议兼容字段并标记 `@Deprecated`，客户端继续忽略。
+10. **编码与显示细节**：`settings.json` 读取优先严格 UTF-8，失败回退 GBK/ANSI，继续剥离 UTF-8 BOM；
+    写回统一 UTF-8；读-改-写保留未知键；成功提示由红色改为绿色；修正“单机/局域网主机默认即 OP”的过期注释。
+
+## 验证
+
+- `JAVA_HOME=E:\java17`、离线 Gradle `build` 通过，产物 `build/libs/AE2-QoL-4.5.0-fix28.jar`。
+- 已用 Java 17 在本机验证 `ATOMIC_MOVE + REPLACE_EXISTING` 对已存在目标文件可用。
+- 待实测：单人未开作弊时配置页改 io/倍增/推送上限并重启；运行中手动改其它键后点应用，确认不被覆盖；
+  写保护/占用文件时 GUI 显示失败；远程服务器 OP/非 OP/无效值的回执；GBK 保存的 `settings.json` 读取；
+  `/ae2qof status` 与 `/apu-overlay status` 的多人口径。
+
+---
+
 # 4.5.0-fix27 —— 修单人配置页 NEI 开关不生效（2026-11-13）
 
 ## 现象

@@ -17,6 +17,7 @@ import com.wztwzt.ae2_qof.item.ItemNetworkDataStick;
 import com.wztwzt.ae2_qof.merged.BlockMergedTerminal;
 import com.wztwzt.ae2_qof.merged.MergedGuiHandler;
 import com.wztwzt.ae2_qof.merged.TileMergedTerminal;
+import com.wztwzt.ae2_qof.network.ConfigSetResultPacket;
 import com.wztwzt.ae2_qof.network.ConfigUpdatePacket;
 import com.wztwzt.ae2_qof.network.CraftingCompletePacket;
 import com.wztwzt.ae2_qof.network.CraftingResponsePacket;
@@ -583,6 +584,8 @@ public class CommonProxy {
     public void handleCraftingComplete(CraftingCompletePacket message) {}
 
     public void handleConfigUpdate(ConfigUpdatePacket message) {}
+
+    public void handleConfigSetResult(ConfigSetResultPacket message) {}
 
     public void handleMergedTerminalResult(MergedTerminalResultPacket message) {}
 

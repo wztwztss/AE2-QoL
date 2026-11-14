@@ -68,6 +68,7 @@
 | 二合一终端（虚拟槽绘制） | `src/main/java/com/wztwzt/ae2_qof/merged/MergedVirtualPatternSlot.java`：非空面板槽走 AE2 `VirtualMESlot.drawStackAndOverlay` 显示物品/流体与数量；真实槽继续负责点击/NEI/同步 |
 | 二合一终端（NEI 编码事件） | `src/main/java/com/wztwzt/ae2_qof/client/event/EncodeEvent.java`：Alt+编码按钮兼容事件，供外部 NEI 集成监听 |
 | 上传/撤回/交换网络包 | `src/main/java/com/wztwzt/ae2_qof/network/UploadPatternPacket.java` / `RecallPatternPacket.java` / `SwapPatternPacket.java` |
+| 配置修改回执包（4.5.0-fix28） | `src/main/java/com/wztwzt/ae2_qof/network/ConfigSetResultPacket.java`：S2C `key/success/message`；服务端在无权限、overlay 被拒、值非法、写入失败、成功时回包，GUI 据此显示真实结果 |
 | ME 无线网络分配器（GT ME 仓室，4.5.0-fix26） | `src/main/java/com/wztwzt/ae2_qof/wireless/distributor/`：`BlockWirelessDistributor`（GUI id 130）、`TileWirelessDistributor`（1x1/3x3 区块、40 条上限、颜色/owner、坐标 NBT + chunk unload pending）、`ContainerWirelessDistributor`；客户端 `client/gui/GuiWirelessDistributor`；三个网络包 `WirelessDistributorRequestPacket/ActionPacket/SyncPacket`。贴图复用 `appliedenergistics2:BlockWireless`，不依赖上游缺失的 `wireless_distributor.png` |
 | NEI 转移后混合自动上传（4.5.0-fix26，默认关闭） | `client/NeiRecipeCapture.fillMergedTerminal` 把 `Config.nei_auto_upload_enabled` 作为 auto 标记放进 `MergedTerminalActionPacket.FILL`；服务端 `FILL` 分支随后调 `merged.mergedEncode()` 并回 `MergedTerminalResultPacket(autoUpload=true)`；客户端 `MergedTerminalPanelHandler.scheduleAutoUpload` 等 2 tick 后走原上传管线。**不绕过** `UploadPatternPacket` 的 `ISecurityGrid.INJECT`、`ProviderLocator` 稳定位置、失败回执与 `remembered_providers.json`；唯一候选直接放置，多候选仍打开 `GuiProviderSelect`。`UploadPatternPacket` 新增 item/damage/NBT 重复样板拦截 |
 | NEI Tooltip 文字（fix42 单入口） | `src/main/java/com/wztwzt/ae2_qof/client/nei/NetworkTooltipHandler.java` → `handleItemTooltip`；`handleTooltip` 透传；在 `ClientProxy.init` 注册 |
@@ -132,8 +133,8 @@
 | 无线能源输入终端 | `src/main/java/com/wztwzt/ae2_qof/hatch/wireless/WirelessEnergyInputTerminal.java` |
 | 无线能源输出终端（ID 32110 / 输入 32111） | `src/main/java/com/wztwzt/ae2_qof/hatch/wireless/WirelessEnergyOutputTerminal.java` |
 | 网络数据棒（自适应电网配置读写） | `src/main/java/com/wztwzt/ae2_qof/item/ItemNetworkDataStick.java` |
-| 配置与热加载 | `src/main/java/com/wztwzt/ae2_qof/Config.java`（`smartDoublingMaxRounds`、`ioPortRate`、`v7Textures` 等；`ensureFresh()` 已 synchronized，见 P1-031；4.5.0-fix27 增加 BOM 容错、`getSettingsPath()`/`getLastReloadError()` 诊断） |
-| 游戏内配置页 NEI 开关 | `src/main/java/com/wztwzt/ae2_qof/client/gui/GuiConfigScreen.java`：`nei_overlay_enabled` 为客户端本地偏好，直接走 `OverlayConfig.setEnabled`/`Config.setNeiOverlayEnabled` 写 `settings.json`，**不经过 OP 校验**；其它 io/倍增字段仍走 `ConfigSetPacket` |
+| 配置与热加载 | `src/main/java/com/wztwzt/ae2_qof/Config.java`（`smartDoublingMaxRounds`、`ioPortRate`、`v7Textures` 等；`ensureFresh()` 已 synchronized，见 P1-031；4.5.0-fix27 增加 BOM 容错、`getSettingsPath()`/`getLastReloadError()` 诊断；4.5.0-fix28 改读-改-写 + 临时文件原子替换、`getLastWriteError()`、GBK/ANSI 回退、全量解析成功后才提交） |
+| 游戏内配置页 | `src/main/java/com/wztwzt/ae2_qof/client/gui/GuiConfigScreen.java`：`nei_overlay_enabled` 为客户端本地偏好，直接走 `OverlayConfig.setEnabled`/`Config.setNeiOverlayEnabled` 写 `settings.json`，**不经过 OP 校验**；io/倍增长按在单机/局域网主机直接 `Config.applySetting`，远程服务器才发 `ConfigSetPacket` 并等待 `ConfigSetResultPacket` 回执；页面打开时强制 `Config.reload()` 并显示 `load_error` |
 | 命令入口 | `src/main/java/com/wztwzt/ae2_qof/CommandAe2QoL.java`（`/ae2qof reload|status`、覆盖板 `smbind`） |
 
 ## Mixin列表

@@ -8,6 +8,8 @@ import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
 
@@ -189,8 +191,13 @@ public class GuiUploadButtonHandler {
 
         if (event.button.id == BUTTON_OVERLAY_ID && overlayButton != null && event.button == overlayButton) {
             boolean now = !OverlayConfig.isEnabled();
-            OverlayConfig.setEnabled(now);
-            overlayButton.displayString = now ? "OV" : "--";
+            boolean ok = OverlayConfig.setEnabled(now);
+            overlayButton.displayString = (ok ? now : OverlayConfig.isEnabled()) ? "OV" : "--";
+            if (!ok && event.gui.mc.thePlayer != null) {
+                event.gui.mc.thePlayer.addChatMessage(
+                    new ChatComponentText(
+                        EnumChatFormatting.RED + "[AE2QoL] NEI 开关写入 settings.json 失败，开关保持原值"));
+            }
             event.setCanceled(true);
         }
     }

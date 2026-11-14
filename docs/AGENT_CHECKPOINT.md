@@ -7,6 +7,21 @@
 
 ---
 
+## 本轮：2026-11-14 · 4.5.0-fix28（配置读写/同步/GUI/命令审查项逐项修复）
+
+|项目|内容|
+|---|---|
+|工具平台 / 模型|Doubao（本地桌面 Agent）· 当前会话|
+|任务（用户原话）|「逐项修复，修完发GitHub和release」|
+|范围|fix27 后只读审查的 P1/P2/P3 共 10 项：单机非 NEI 字段静默丢弃、全量重写覆盖手动修改、写失败当成功、`load_error` 不清空、解析失败部分应用、非原子写、GUI 不显示错误/1 秒节流、多人 `/status` 口径、overlay 协议半废弃、编码/未知键/成功提示颜色/注释|
+|核心修复|`Config` 新增读-改-写 + 临时文件原子替换、`lastWriteError`、GBK/ANSI 回退；`reload` 全量解析成功后才提交；`applySetting`/`setNeiOverlayEnabled`/`applyAll` 返回布尔且写成功才改内存；`GuiConfigScreen` 单机直接本地写入、远程等 `ConfigSetResultPacket` 回执、打开时强制 `reload` 并显示 `load_error`；`ConfigSetPacket` 拒绝 overlay C2S 并回执；`/apu-overlay status` 输出本地值/路径/错误|
+|刻意不动|不重构配置系统以外逻辑；`ConfigUpdatePacket.overlay` 保留为旧客户端字节兼容字段（`@Deprecated`，客户端仍忽略）；不把 NEI 开关改成服务端全局设置|
+|产物|`build/libs/AE2-QoL-4.5.0-fix28.jar`（2,163,647 B，SHA256 `A9606897E128654999AC391D568E0557EA79E6ECD0CDE1E980F7A6C5AEC520EE`）；按用户要求复制到 `D:\下载\需更新模组`，**不替换游戏内 mods**|
+|发布|待推送 tag `v4.5.0-fix28` 并创建 release；资产仍只保留主 jar、`-dev.jar`、`-sources.jar`|
+|待实测|单人未开作弊改 io/倍增/推送上限并重启；运行中手动改其它键后点应用不被覆盖；写保护/占用文件时 GUI 显示失败；远程 OP/非 OP/无效值回执；GBK 保存的 `settings.json`；`/ae2qof status` 与 `/apu-overlay status` 多人口径|
+
+---
+
 ## 本轮：2026-11-13 · 4.5.0-fix27（GitHub issue #2：单人配置页 NEI 开关不生效）
 
 |项目|内容|

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map.Entry;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
@@ -27,8 +28,8 @@ import cpw.mods.fml.relauncher.SideOnly;
 /**
  * 游戏内配置页面（Mods → AE2 QoL → Config）：
  * - 配置页：编辑 io_port_rate / smart_doubling_max_rounds / nei_overlay_enabled，
- *   io/倍增字段发送 C2S 包由服务端校验 OP 权限；NEI 开关是纯客户端渲染偏好，
- *   直接写本地 settings.json，不能经过 OP 校验（单人未开作弊时也必须生效）。
+ *   单机/局域网主机直接写本地 settings.json（避免单人未开作弊时被 OP 检查静默丢弃）；
+ *   远程服务器发送 C2S 并等待 ConfigSetResultPacket 回执；NEI 开关始终只写本地。
  * - 映射页（三个子页）：展示并编辑配方名映射（recipe_names.json）、记住的供应器
  * （remembered_providers.json），以及全部 GT 配方池 UID 参考（配方参考）。
  */
@@ -65,6 +66,7 @@ public class GuiConfigScreen extends GuiScreen {
     private GuiTextField refFilterField;
     private GuiTextField focusField;
     private String statusText;
+    private boolean statusError;
 
     private List<Entry<String, String>> mapEntries = new ArrayList<Entry<String, String>>();
     private List<Entry<String, String>> provEntries = new ArrayList<Entry<String, String>>();
@@ -81,13 +83,21 @@ public class GuiConfigScreen extends GuiScreen {
         this.page = 0;
         this.subTab = 0;
         this.statusText = "";
+        this.statusError = false;
     }
 
     @Override
     public void initGui() {
-        // 页面打开时先按 mtime 重读一次：外部编辑 settings.json 后，
-        // 不必等 NEI 下一次渲染才看到新值（尤其是 NEI 开关关闭时）。
-        Config.ensureFresh();
+        // 页面打开时强制重读一次：外部编辑 settings.json 后，不必等 mtime 节流或 NEI 下一帧。
+        // 读取失败时保留旧值，并把 load_error 显示在页面上，避免用户面对旧输入框却不知道文件坏了。
+        this.statusText = "";
+        this.statusError = false;
+        Config.reload();
+        String loadError = Config.getLastReloadError();
+        if (loadError != null && !loadError.isEmpty()) {
+            this.statusText = "配置加载失败：" + loadError;
+            this.statusError = true;
+        }
         this.buttonList.clear();
         int left = this.width / 2 - 110;
         int y0 = 40;
@@ -192,7 +202,12 @@ public class GuiConfigScreen extends GuiScreen {
 
         if (this.page == 0 || this.subTab != 2) {
             if (!this.statusText.isEmpty()) {
-                this.drawCenteredString(this.fontRendererObj, this.statusText, centerX, this.height - 102, 0xFF5555);
+                this.drawCenteredString(
+                    this.fontRendererObj,
+                    this.statusText,
+                    centerX,
+                    this.height - 102,
+                    this.statusError ? 0xFF5555 : 0x55FF55);
             }
         }
         super.drawScreen(mouseX, mouseY, partialTicks);
@@ -451,13 +466,16 @@ public class GuiConfigScreen extends GuiScreen {
         String status3 = this.applyOverlaySetting(this.overlayField.getText());
         String status4 = this.applySingle("smart_doubling_push_cap", this.pushCapField.getText());
         String combined = joinStatus(status, status2, status3, status4);
-        this.statusText = combined.isEmpty() ? "已应用（NEI 开关本地立即生效；io/倍增项在多人服务器需 OP 权限）" : combined;
+        this.statusText = combined.isEmpty()
+            ? "已应用（NEI 开关本地立即生效；单机/局域网主机直接写入；远程服务器以回执为准）"
+            : combined;
+        this.statusError = isErrorStatus(combined);
     }
 
     /**
      * NEI 叠加层是纯客户端渲染开关，不能像 io/倍增那样走需要 OP 的 ConfigSetPacket：
      * 单人未开作弊时服务端会丢弃该包，旧实现因此表现为“界面显示已应用但开关不变”。
-     * 这里直接写本地 settings.json（OverlayConfig 内部已保证只改 overlay 字段、不覆盖其它键）。
+     * 这里直接写本地 settings.json（Config 内部只改 overlay 字段、保留其它键）。
      */
     private String applyOverlaySetting(String value) {
         String trimmed = value == null ? "" : value.trim();
@@ -468,8 +486,12 @@ public class GuiConfigScreen extends GuiScreen {
         if (!lower.equals("true") && !lower.equals("false")) {
             return "nei_overlay_enabled 输入无效";
         }
-        OverlayConfig.setEnabled(Boolean.parseBoolean(lower));
+        boolean ok = OverlayConfig.setEnabled(Boolean.parseBoolean(lower));
         this.overlayField.setText(Boolean.toString(Config.neiOverlayEnabled));
+        if (!ok) {
+            String reason = Config.getLastWriteError();
+            return "nei_overlay_enabled 应用失败（" + (reason.isEmpty() ? "settings.json 写入失败" : reason) + "）";
+        }
         return "";
     }
 
@@ -479,10 +501,24 @@ public class GuiConfigScreen extends GuiScreen {
             return "请输入 " + key + " 的值";
         }
         if (!isParseable(key, trimmed)) {
-            return key + " 输入无效";
+            return key + " 输入无效或超出范围";
         }
-        ModNetwork.CHANNEL.sendToServer(new ConfigSetPacket(key, trimmed));
-        return "";
+        // 单机/局域网主机：客户端与服务端同 JVM，直接改本地文件，避免单人未开作弊时
+        // 被服务端的 OP 检查静默丢弃（issue #2 的同源问题）。
+        if (Minecraft.getMinecraft()
+            .isIntegratedServerRunning()) {
+            if (!Config.applySetting(key, trimmed)) {
+                String reason = Config.getLastWriteError();
+                return key + " 应用失败（" + (reason.isEmpty() ? "值无效或 settings.json 写入失败" : reason) + "）";
+            }
+            return "";
+        }
+        try {
+            ModNetwork.CHANNEL.sendToServer(new ConfigSetPacket(key, trimmed));
+            return "已发送 " + key + "，等待服务器确认";
+        } catch (Throwable t) {
+            return key + " 发送失败（" + t.getMessage() + "）";
+        }
     }
 
     private boolean isParseable(String key, String value) {
@@ -491,10 +527,32 @@ public class GuiConfigScreen extends GuiScreen {
                 String lower = value.toLowerCase(Locale.ROOT);
                 return lower.equals("true") || lower.equals("false");
             }
-            Integer.parseInt(value);
-            return true;
+            int parsed = Integer.parseInt(value);
+            if ("io_port_rate".equals(key) || "smart_doubling_push_cap".equals(key)
+                || "smart_wildcard_expand_cap".equals(key)) {
+                return parsed >= 1;
+            }
+            if ("smart_doubling_max_rounds".equals(key)) {
+                return parsed >= 0;
+            }
+            return false;
         } catch (Throwable t) {
             return false;
+        }
+    }
+
+    private boolean isErrorStatus(String value) {
+        return value.contains("失败") || value.contains("无效") || value.contains("拒绝") || value.contains("请输入");
+    }
+
+    /** 服务端回执到达（可能晚于点击“应用”，GUI 已关闭时 ClientProxy 会改走聊天栏）。 */
+    public void onServerConfigResult(String key, boolean success, String message) {
+        if (success) {
+            this.statusText = "服务器已确认：" + key;
+            this.statusError = false;
+        } else {
+            this.statusText = "服务器拒绝 " + key + (message == null || message.isEmpty() ? "" : "：" + message);
+            this.statusError = true;
         }
     }
 

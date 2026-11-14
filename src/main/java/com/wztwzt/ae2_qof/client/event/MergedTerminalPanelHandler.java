@@ -10,6 +10,8 @@ import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -558,10 +560,18 @@ public class MergedTerminalPanelHandler {
                 break;
             case BUTTON_OVERLAY_ID:
                 boolean now = !OverlayConfig.isEnabled();
-                OverlayConfig.setEnabled(now);
+                boolean ok = OverlayConfig.setEnabled(now);
                 // 合并终端没有 GuiUploadButtonHandler 的即时按钮刷新；这里同步显示，
-                // 否则开关已切换但按钮仍显示旧标签。
-                btnOverlay.displayString = now ? "OV" : "--";
+                // 否则开关已切换但按钮仍显示旧标签。写入失败时必须保持真实状态。
+                btnOverlay.displayString = (ok ? now : OverlayConfig.isEnabled()) ? "OV" : "--";
+                if (!ok) {
+                    if (Minecraft.getMinecraft().thePlayer != null) {
+                        Minecraft.getMinecraft()
+                            .thePlayer.addChatMessage(
+                                new ChatComponentText(
+                                    EnumChatFormatting.RED + "[AE2QoL] NEI 开关写入 settings.json 失败"));
+                    }
+                }
                 break;
             case BUTTON_UPLOAD_ID:
                 if (gui != null) {

@@ -1,10 +1,21 @@
 package com.wztwzt.ae2_qof;
 
 import java.io.File;
-import java.io.OutputStreamWriter;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import net.minecraftforge.common.config.Configuration;
 
@@ -116,6 +127,9 @@ public class Config {
     /** 最近一次解析 settings.json 的错误；供 /ae2qof status 暴露“改了但没加载”的原因。 */
     private static volatile String lastReloadError = "";
 
+    /** 最近一次写入 settings.json 的错误；与解析错误分开，避免“写失败”被误判成“值没变”。 */
+    private static volatile String lastWriteError = "";
+
     private static long lastCheck = 0L;
     private static long lastLoadedMtime = -1L;
 
@@ -178,11 +192,17 @@ public class Config {
         return lastReloadError;
     }
 
+    /** 最近一次 settings.json 写入失败原因；空串表示最近一次写入成功。 */
+    public static String getLastWriteError() {
+        return lastWriteError;
+    }
+
     /**
      * 立即重新读取配置文件（同时供 {@code /ae2qof reload} 命令调用）。
      */
     public static synchronized void reload() {
         if (SETTINGS_FILE == null) {
+            lastReloadError = "settings.json 未初始化";
             return;
         }
         int io = exIOPortTransferContentsRate;
@@ -199,17 +219,16 @@ public class Config {
         int quest = questDetectIntervalTicks;
         try {
             if (!Files.exists(SETTINGS_FILE)) {
-                writeFile(io, rounds, overlay, pinRow, presets, v7);
-                lastLoadedMtime = currentMtime();
-                lastReloadError = "";
+                boolean ok = writeFile(io, rounds, overlay, pinRow, presets, v7);
+                if (ok) {
+                    lastReloadError = "";
+                } else {
+                    lastReloadError = lastWriteError.isEmpty() ? "settings.json 缺失且默认写入失败" : lastWriteError;
+                    lastLoadedMtime = currentMtime();
+                }
                 return;
             }
-            // 手动编辑常用 Windows 记事本；UTF-8 BOM 会让 Gson 在第一个 token 直接失败。
-            // 这里先按字节读取并剥掉 BOM，避免“文件明明改了但一直按旧值”的静默现象。
-            String text = new String(Files.readAllBytes(SETTINGS_FILE), StandardCharsets.UTF_8);
-            if (!text.isEmpty() && text.charAt(0) == '\uFEFF') {
-                text = text.substring(1);
-            }
+            String text = readSettingsText();
             JsonElement elem = GSON.fromJson(text, JsonElement.class);
             if (elem == null || !elem.isJsonObject()) {
                 throw new IllegalStateException("root is not a JSON object");
@@ -267,26 +286,29 @@ public class Config {
             if (value != null && value.isJsonPrimitive()) {
                 quest = clamp(value.getAsInt(), 20, 1200, quest);
             }
+            // 只有整份文件解析成功后才提交，避免坏字段导致“前面的字段已生效、后面的还是旧值”。
+            exIOPortTransferContentsRate = io;
+            smartDoublingMaxRounds = rounds;
+            smartDoublingPushCap = pushCap;
+            smartWildcardExpandCap = wildcardCap;
+            neiOverlayEnabled = overlay;
+            neiAutoUploadEnabled = autoUpload;
+            pinRowEnabled = pinRow;
+            stockMonitorPresets = presets;
+            v7Textures = v7;
+            stockMonitorReadIntervalTicks = smRead;
+            stockMonitorGuiIntervalTicks = smGui;
+            questDetectIntervalTicks = quest;
+            // 同步到贴图工具：auto/on → 0/1 自动判定与强制开，off → -1 强制关闭
+            com.wztwzt.ae2_qof.util.ModTextures.forceMode = "off".equals(v7) ? -1 : ("on".equals(v7) ? 1 : 0);
             lastReloadError = "";
+            lastWriteError = "";
+            lastLoadedMtime = currentMtime();
         } catch (Throwable t) {
             lastReloadError = t.getMessage() == null ? t.toString() : t.getMessage();
             MyMod.LOG.warn("[AE2QoL] Failed to parse settings.json (" + SETTINGS_FILE + "): " + lastReloadError);
+            lastLoadedMtime = currentMtime();
         }
-        exIOPortTransferContentsRate = io;
-        smartDoublingMaxRounds = rounds;
-        smartDoublingPushCap = pushCap;
-        smartWildcardExpandCap = wildcardCap;
-        neiOverlayEnabled = overlay;
-        neiAutoUploadEnabled = autoUpload;
-        pinRowEnabled = pinRow;
-        stockMonitorPresets = presets;
-        v7Textures = v7;
-        stockMonitorReadIntervalTicks = smRead;
-        stockMonitorGuiIntervalTicks = smGui;
-        questDetectIntervalTicks = quest;
-        // 同步到贴图工具：auto/on → 0/1 自动判定与强制开，off → -1 强制关闭
-        com.wztwzt.ae2_qof.util.ModTextures.forceMode = "off".equals(v7) ? -1 : ("on".equals(v7) ? 1 : 0);
-        lastLoadedMtime = currentMtime();
     }
 
     /**
@@ -308,96 +330,68 @@ public class Config {
     }
 
     /**
-     * 保存 NEI 叠加层开关（保留 settings.json 中其它字段）。
+     * 保存 NEI 叠加层开关：只改 settings.json 的这一个键，保留文件里的其它字段和未知键。
      *
      * @param enabled 是否启用
+     * @return 是否成功写入；失败时内存值不改变，供 GUI 显示错误
      */
-    public static synchronized void setNeiOverlayEnabled(boolean enabled) {
-        neiOverlayEnabled = enabled;
-        if (SETTINGS_FILE == null) {
-            return;
+    public static synchronized boolean setNeiOverlayEnabled(boolean enabled) {
+        Map<String, Object> updates = new LinkedHashMap<String, Object>();
+        updates.put("nei_overlay_enabled", Boolean.valueOf(enabled));
+        if (!writeSettings(updates, true)) {
+            return false;
         }
-        writeFile(
-            exIOPortTransferContentsRate,
-            smartDoublingMaxRounds,
-            enabled,
-            pinRowEnabled,
-            stockMonitorPresets,
-            v7Textures);
-        lastLoadedMtime = currentMtime();
+        neiOverlayEnabled = enabled;
+        return true;
     }
 
     /**
      * 按 key/value 应用配置（供游戏内配置 GUI / 服务端 C2S 处理复用）：
-     * 校验 key 与取值范围，成功则更新字段、写回 settings.json 并刷新加载时间戳。
+     * 先校验并读取当前文件、只改目标键并原子写回；写入成功后才更新内存字段。
      *
-     * @param key   配置键（io_port_rate / smart_doubling_max_rounds / nei_overlay_enabled）
+     * @param key   配置键（io_port_rate / smart_doubling_max_rounds / nei_overlay_enabled 等）
      * @param value 新值
-     * @return 是否成功应用
+     * @return 是否成功应用；写入失败或值非法时返回 false，内存值保持不变
      */
     public static synchronized boolean applySetting(String key, String value) {
         if (key == null || value == null) {
             return false;
         }
+        // 清掉上一次写入错误，避免“值非法”时把旧错误当成本次原因回给客户端。
+        lastWriteError = "";
+        String trimmed = value.trim();
+        Object newValue;
         try {
             switch (key) {
                 case "io_port_rate":
-                    exIOPortTransferContentsRate = clamp(
-                        Integer.parseInt(value.trim()),
-                        1,
-                        Integer.MAX_VALUE,
-                        exIOPortTransferContentsRate);
+                    newValue = parseIntInRange(trimmed, 1, Integer.MAX_VALUE);
                     break;
                 case "smart_doubling_max_rounds":
-                    smartDoublingMaxRounds = clamp(
-                        Integer.parseInt(value.trim()),
-                        0,
-                        Integer.MAX_VALUE,
-                        smartDoublingMaxRounds);
+                    newValue = parseIntInRange(trimmed, 0, Integer.MAX_VALUE);
                     break;
                 case "smart_doubling_push_cap":
-                    smartDoublingPushCap = clamp(
-                        Integer.parseInt(value.trim()),
-                        1,
-                        Integer.MAX_VALUE,
-                        smartDoublingPushCap);
+                    newValue = parseIntInRange(trimmed, 1, Integer.MAX_VALUE);
                     break;
                 case "smart_wildcard_expand_cap":
-                    smartWildcardExpandCap = clamp(
-                        Integer.parseInt(value.trim()),
-                        1,
-                        Integer.MAX_VALUE,
-                        smartWildcardExpandCap);
+                    newValue = parseIntInRange(trimmed, 1, Integer.MAX_VALUE);
                     break;
                 case "nei_overlay_enabled":
-                    neiOverlayEnabled = Boolean.parseBoolean(value.trim());
+                    newValue = parseBooleanStrict(trimmed);
                     break;
                 case "nei_auto_upload_enabled":
-                    neiAutoUploadEnabled = Boolean.parseBoolean(value.trim());
+                    newValue = parseBooleanStrict(trimmed);
                     break;
                 case "pin_row_enabled":
-                    pinRowEnabled = Boolean.parseBoolean(value.trim());
+                    newValue = parseBooleanStrict(trimmed);
                     break;
                 case "stock_monitor_read_interval":
-                    stockMonitorReadIntervalTicks = clamp(
-                        Integer.parseInt(value.trim()),
-                        5,
-                        1200,
-                        stockMonitorReadIntervalTicks);
+                    newValue = parseIntInRange(trimmed, 5, 1200);
                     break;
                 case "stock_monitor_gui_interval":
-                    stockMonitorGuiIntervalTicks = clamp(
-                        Integer.parseInt(value.trim()),
-                        2,
-                        40,
-                        stockMonitorGuiIntervalTicks);
+                    newValue = parseIntInRange(trimmed, 2, 40);
                     break;
                 case "quest_detect_interval":
-                    questDetectIntervalTicks = clamp(
-                        Integer.parseInt(value.trim()),
-                        20,
-                        1200,
-                        questDetectIntervalTicks);
+                    newValue = parseIntInRange(trimmed, 20, 1200);
                     break;
                 default:
                     return false;
@@ -405,39 +399,71 @@ public class Config {
         } catch (Throwable t) {
             return false;
         }
-        if (SETTINGS_FILE != null) {
-            writeFile(
-                exIOPortTransferContentsRate,
-                smartDoublingMaxRounds,
-                neiOverlayEnabled,
-                pinRowEnabled,
-                stockMonitorPresets,
-                v7Textures);
-            lastLoadedMtime = currentMtime();
+        if (newValue == null) {
+            return false;
+        }
+        Map<String, Object> updates = new LinkedHashMap<String, Object>();
+        updates.put(key, newValue);
+        if (!writeSettings(updates, true)) {
+            return false;
+        }
+        switch (key) {
+            case "io_port_rate":
+                exIOPortTransferContentsRate = ((Integer) newValue).intValue();
+                break;
+            case "smart_doubling_max_rounds":
+                smartDoublingMaxRounds = ((Integer) newValue).intValue();
+                break;
+            case "smart_doubling_push_cap":
+                smartDoublingPushCap = ((Integer) newValue).intValue();
+                break;
+            case "smart_wildcard_expand_cap":
+                smartWildcardExpandCap = ((Integer) newValue).intValue();
+                break;
+            case "nei_overlay_enabled":
+                neiOverlayEnabled = ((Boolean) newValue).booleanValue();
+                break;
+            case "nei_auto_upload_enabled":
+                neiAutoUploadEnabled = ((Boolean) newValue).booleanValue();
+                break;
+            case "pin_row_enabled":
+                pinRowEnabled = ((Boolean) newValue).booleanValue();
+                break;
+            case "stock_monitor_read_interval":
+                stockMonitorReadIntervalTicks = ((Integer) newValue).intValue();
+                break;
+            case "stock_monitor_gui_interval":
+                stockMonitorGuiIntervalTicks = ((Integer) newValue).intValue();
+                break;
+            case "quest_detect_interval":
+                questDetectIntervalTicks = ((Integer) newValue).intValue();
+                break;
+            default:
+                return false;
         }
         return true;
     }
 
     /**
-     * 全量应用服务端同步的配置（供 S2C 登录同步复用）：校验后更新字段、写回 settings.json 并刷新加载时间戳。
-     * nei_overlay_enabled 为纯客户端渲染开关，不随服务端同步覆盖，保留客户端本地值（#48）。
+     * 全量应用服务端同步的配置（供 S2C 登录同步复用）：只更新 io/rounds 两个键，
+     * 保留文件里的客户端本地 NEI 开关、auto-upload 等其它字段；写入成功后才改内存。
      *
      * @param io     io_port_rate
      * @param rounds smart_doubling_max_rounds
+     * @return 是否写入成功
      */
-    public static synchronized void applyAll(int io, int rounds) {
-        exIOPortTransferContentsRate = clamp(io, 1, Integer.MAX_VALUE, exIOPortTransferContentsRate);
-        smartDoublingMaxRounds = clamp(rounds, 0, Integer.MAX_VALUE, smartDoublingMaxRounds);
-        if (SETTINGS_FILE != null) {
-            writeFile(
-                exIOPortTransferContentsRate,
-                smartDoublingMaxRounds,
-                neiOverlayEnabled,
-                pinRowEnabled,
-                stockMonitorPresets,
-                v7Textures);
-            lastLoadedMtime = currentMtime();
+    public static synchronized boolean applyAll(int io, int rounds) {
+        int newIo = clamp(io, 1, Integer.MAX_VALUE, exIOPortTransferContentsRate);
+        int newRounds = clamp(rounds, 0, Integer.MAX_VALUE, smartDoublingMaxRounds);
+        Map<String, Object> updates = new LinkedHashMap<String, Object>();
+        updates.put("io_port_rate", Integer.valueOf(newIo));
+        updates.put("smart_doubling_max_rounds", Integer.valueOf(newRounds));
+        if (!writeSettings(updates, true)) {
+            return false;
         }
+        exIOPortTransferContentsRate = newIo;
+        smartDoublingMaxRounds = newRounds;
+        return true;
     }
 
     private static int clamp(int value, int min, int max, int fallback) {
@@ -462,8 +488,153 @@ public class Config {
         }
     }
 
+    private static Integer parseIntInRange(String value, int min, int max) {
+        try {
+            int parsed = Integer.parseInt(value);
+            return parsed >= min && parsed <= max ? Integer.valueOf(parsed) : null;
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    private static Boolean parseBooleanStrict(String value) {
+        if ("true".equalsIgnoreCase(value)) {
+            return Boolean.TRUE;
+        }
+        if ("false".equalsIgnoreCase(value)) {
+            return Boolean.FALSE;
+        }
+        return null;
+    }
+
+    /** 读取 settings.json 的文本并剥离 BOM；UTF-8 优先，兼容 Windows 记事本另存的 GBK/ANSI。 */
+    private static String readSettingsText() throws IOException {
+        byte[] bytes = Files.readAllBytes(SETTINGS_FILE);
+        int offset = 0;
+        if (bytes.length >= 3 && bytes[0] == (byte) 0xEF && bytes[1] == (byte) 0xBB && bytes[2] == (byte) 0xBF) {
+            offset = 3;
+        }
+        byte[] body = offset == 0 ? bytes : Arrays.copyOfRange(bytes, offset, bytes.length);
+        String text;
+        try {
+            text = decodeStrict(body, StandardCharsets.UTF_8);
+        } catch (CharacterCodingException utf8Error) {
+            try {
+                text = decodeStrict(body, Charset.forName("GBK"));
+            } catch (Throwable gbkError) {
+                throw new IOException("settings.json 既不是 UTF-8 也不是 GBK", utf8Error);
+            }
+        }
+        if (!text.isEmpty() && text.charAt(0) == '\uFEFF') {
+            text = text.substring(1);
+        }
+        return text;
+    }
+
+    private static String decodeStrict(byte[] bytes, Charset charset) throws CharacterCodingException {
+        return charset.newDecoder()
+            .onMalformedInput(CodingErrorAction.REPORT)
+            .onUnmappableCharacter(CodingErrorAction.REPORT)
+            .decode(ByteBuffer.wrap(bytes))
+            .toString();
+    }
+
+    /** 内存中的完整设置对象；仅用于 settings.json 缺失时生成新文件。 */
+    private static JsonObject currentSettingsObject() {
+        JsonObject root = new JsonObject();
+        root.addProperty("io_port_rate", exIOPortTransferContentsRate);
+        root.addProperty("smart_doubling_max_rounds", smartDoublingMaxRounds);
+        root.addProperty("smart_doubling_push_cap", smartDoublingPushCap);
+        root.addProperty("smart_wildcard_expand_cap", smartWildcardExpandCap);
+        root.addProperty("nei_overlay_enabled", neiOverlayEnabled);
+        root.addProperty("nei_auto_upload_enabled", neiAutoUploadEnabled);
+        root.addProperty("pin_row_enabled", pinRowEnabled);
+        root.addProperty("stock_monitor_presets", stockMonitorPresets);
+        root.addProperty("v7_textures", v7Textures);
+        root.addProperty("stock_monitor_read_interval", stockMonitorReadIntervalTicks);
+        root.addProperty("stock_monitor_gui_interval", stockMonitorGuiIntervalTicks);
+        root.addProperty("quest_detect_interval", questDetectIntervalTicks);
+        return root;
+    }
+
+    private static void setJsonValue(JsonObject root, String key, Object value) {
+        if (value instanceof Boolean) {
+            root.addProperty(key, (Boolean) value);
+        } else if (value instanceof Number) {
+            root.addProperty(key, (Number) value);
+        } else {
+            root.addProperty(key, String.valueOf(value));
+        }
+    }
+
     /**
-     * 写入 settings.json。
+     * 读取当前文件（保留未知键和未修改字段），只更新指定键，再写临时文件并原子替换。
+     * 失败时不动原文件，也不更新加载时间戳；调用方据此决定是否提交内存值。
+     */
+    private static boolean writeSettings(Map<String, Object> updates, boolean preserveExisting) {
+        if (SETTINGS_FILE == null) {
+            lastWriteError = "settings.json 未初始化";
+            return false;
+        }
+        Path tmp = SETTINGS_FILE.resolveSibling(SETTINGS_FILE.getFileName().toString() + ".tmp");
+        try {
+            JsonObject root;
+            if (preserveExisting) {
+                if (Files.exists(SETTINGS_FILE)) {
+                    JsonElement elem = GSON.fromJson(readSettingsText(), JsonElement.class);
+                    if (elem == null || !elem.isJsonObject()) {
+                        throw new IllegalStateException("root is not a JSON object");
+                    }
+                    root = elem.getAsJsonObject();
+                } else {
+                    root = currentSettingsObject();
+                }
+            } else {
+                root = new JsonObject();
+            }
+            for (Map.Entry<String, Object> entry : updates.entrySet()) {
+                setJsonValue(root, entry.getKey(), entry.getValue());
+            }
+            Path parent = SETTINGS_FILE.toAbsolutePath()
+                .getParent();
+            if (parent != null && !Files.exists(parent)) {
+                Files.createDirectories(parent);
+            }
+            Files.write(
+                tmp,
+                GSON.toJson(root)
+                    .getBytes(StandardCharsets.UTF_8),
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING,
+                StandardOpenOption.WRITE);
+            try {
+                Files.move(
+                    tmp,
+                    SETTINGS_FILE,
+                    StandardCopyOption.ATOMIC_MOVE,
+                    StandardCopyOption.REPLACE_EXISTING);
+            } catch (AtomicMoveNotSupportedException e) {
+                Files.move(tmp, SETTINGS_FILE, StandardCopyOption.REPLACE_EXISTING);
+            } catch (FileAlreadyExistsException e) {
+                Files.move(tmp, SETTINGS_FILE, StandardCopyOption.REPLACE_EXISTING);
+            }
+            lastWriteError = "";
+            lastReloadError = "";
+            lastLoadedMtime = currentMtime();
+            return true;
+        } catch (Throwable t) {
+            lastWriteError = t.getMessage() == null ? t.toString() : t.getMessage();
+            MyMod.LOG.warn("[AE2QoL] Failed to write settings.json (" + SETTINGS_FILE + "): " + lastWriteError);
+            return false;
+        } finally {
+            try {
+                Files.deleteIfExists(tmp);
+            } catch (Throwable ignored) {}
+        }
+    }
+
+    /**
+     * 全量写入 settings.json（仅用于迁移/首次生成），保留旧调用点签名。
      *
      * @return 是否写入成功（P1-009：迁移逻辑依赖该返回值决定是否删除旧 cfg）
      */
@@ -498,34 +669,20 @@ public class Config {
 
     private static boolean writeFile(int ioRate, int rounds, boolean overlay, boolean pinRow, String presets, String v7,
         int pushCap, int wildcardCap, int smRead, int smGui, int quest) {
-        try {
-            Path parent = SETTINGS_FILE.getParent();
-            if (parent != null && !Files.exists(parent)) {
-                Files.createDirectories(parent);
-            }
-            JsonObject root = new JsonObject();
-            root.addProperty("io_port_rate", ioRate);
-            root.addProperty("smart_doubling_max_rounds", rounds);
-            root.addProperty("smart_doubling_push_cap", pushCap);
-            root.addProperty("smart_wildcard_expand_cap", wildcardCap);
-            root.addProperty("nei_overlay_enabled", overlay);
-            root.addProperty("nei_auto_upload_enabled", neiAutoUploadEnabled);
-            root.addProperty("pin_row_enabled", pinRow);
-            root.addProperty("stock_monitor_presets", presets);
-            root.addProperty("v7_textures", v7);
-            root.addProperty("stock_monitor_read_interval", smRead);
-            root.addProperty("stock_monitor_gui_interval", smGui);
-            root.addProperty("quest_detect_interval", quest);
-            try (OutputStreamWriter writer = new OutputStreamWriter(
-                Files.newOutputStream(SETTINGS_FILE),
-                StandardCharsets.UTF_8)) {
-                writer.write(GSON.toJson(root));
-            }
-            return true;
-        } catch (Throwable t) {
-            MyMod.LOG.warn("[AE2QoL] Failed to write settings.json: " + t.getMessage());
-            return false;
-        }
+        Map<String, Object> values = new LinkedHashMap<String, Object>();
+        values.put("io_port_rate", Integer.valueOf(ioRate));
+        values.put("smart_doubling_max_rounds", Integer.valueOf(rounds));
+        values.put("smart_doubling_push_cap", Integer.valueOf(pushCap));
+        values.put("smart_wildcard_expand_cap", Integer.valueOf(wildcardCap));
+        values.put("nei_overlay_enabled", Boolean.valueOf(overlay));
+        values.put("nei_auto_upload_enabled", Boolean.valueOf(neiAutoUploadEnabled));
+        values.put("pin_row_enabled", Boolean.valueOf(pinRow));
+        values.put("stock_monitor_presets", presets);
+        values.put("v7_textures", v7);
+        values.put("stock_monitor_read_interval", Integer.valueOf(smRead));
+        values.put("stock_monitor_gui_interval", Integer.valueOf(smGui));
+        values.put("quest_detect_interval", Integer.valueOf(quest));
+        return writeSettings(values, false);
     }
 
     private static long currentMtime() {

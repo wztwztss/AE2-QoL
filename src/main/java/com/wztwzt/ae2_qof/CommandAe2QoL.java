@@ -21,7 +21,8 @@ import com.wztwzt.ae2_qof.util.RecipeNameUtil;
  * - {@code /ae2qof reload}：立即热重载 {@code config/ae2_qof/settings.json} 与 {@code recipe_names.json}
  * - {@code /ae2qof status}：显示当前生效的配置值
  *
- * 服务端需要 OP 权限；单机/局域网主机默认即 OP，可直接使用。
+ * 服务端需要 OP 权限；单机未开作弊时服务端可能不把房主视为 OP，
+ * 因此单机配置修改走客户端本地写入（见 GuiConfigScreen），不依赖该命令权限。
  */
 public class CommandAe2QoL extends CommandBase {
 
@@ -67,7 +68,8 @@ public class CommandAe2QoL extends CommandBase {
             return;
         }
         if ("status".equalsIgnoreCase(args[0])) {
-            Config.ensureFresh();
+            // 强制重读：status 是排障入口，不应被 ensureFresh 的 1 秒节流挡住。
+            Config.reload();
             sender.addChatMessage(
                 new ChatComponentText(
                     "[AE2QoL] io_port_rate=" + Config.exIOPortTransferContentsRate
@@ -77,10 +79,13 @@ public class CommandAe2QoL extends CommandBase {
                         + Config.smartDoublingPushCap
                         + ", nei_overlay_enabled="
                         + Config.neiOverlayEnabled
+                        + " (server value; client local via /apu-overlay status)"
                         + ", settings="
                         + Config.getSettingsPath()
                         + (Config.getLastReloadError().isEmpty() ? ""
                             : ", load_error=" + Config.getLastReloadError())
+                        + (Config.getLastWriteError().isEmpty() ? ""
+                            : ", write_error=" + Config.getLastWriteError())
                         + ", recipe_mappings="
                         + RecipeNameUtil.getMappingsView()
                             .size()));

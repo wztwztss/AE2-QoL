@@ -1,6 +1,6 @@
 package com.wztwzt.ae2_qof.network;
 
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 
 import com.wztwzt.ae2_qof.Config;
 import com.wztwzt.ae2_qof.MyMod;
@@ -59,16 +59,26 @@ public class ConfigSetPacket implements IMessage {
         @Override
         public IMessage onMessage(ConfigSetPacket message, MessageContext ctx) {
             try {
-                final EntityPlayer player = ctx.getServerHandler().playerEntity;
-                if (player == null || message.key == null || message.value == null) {
-                    return null;
-                }
-                // 仅 OP（等级 2）可改配置，防非授权玩家篡改。
-                if (!player.canCommandSenderUseCommand(2, "ae2qof")) {
+                final EntityPlayerMP player = ctx.getServerHandler().playerEntity;
+                if (player == null) {
                     return null;
                 }
                 final String key = message.key;
                 final String value = message.value;
+                if (key == null || value == null) {
+                    sendResult(player, "", false, "无效的配置请求");
+                    return null;
+                }
+                // NEI 开关是客户端本地渲染偏好，不再接受 C2S 改写服务端文件。
+                if ("nei_overlay_enabled".equals(key)) {
+                    sendResult(player, key, false, "NEI 开关是客户端本地设置，请用配置页或 OV 按钮修改");
+                    return null;
+                }
+                // 仅 OP（等级 2）可改服务端配置，防非授权玩家篡改。
+                if (!player.canCommandSenderUseCommand(2, "ae2qof")) {
+                    sendResult(player, key, false, "需要 OP 权限等级 2");
+                    return null;
+                }
                 ServerTerminalHelper.scheduleServerTask(() -> {
                     try {
                         if (Config.applySetting(key, value)) {
@@ -77,10 +87,17 @@ public class ConfigSetPacket implements IMessage {
                                     Config.exIOPortTransferContentsRate,
                                     Config.smartDoublingMaxRounds,
                                     Config.neiOverlayEnabled));
+                            sendResult(player, key, true, "");
                         } else {
-                            MyMod.LOG.warn("[AE2QoL] Rejected config change " + key + "=" + value);
+                            String reason = Config.getLastWriteError();
+                            if (reason == null || reason.isEmpty()) {
+                                reason = "值无效或超出范围";
+                            }
+                            sendResult(player, key, false, reason);
+                            MyMod.LOG.warn("[AE2QoL] Rejected config change " + key + "=" + value + " (" + reason + ")");
                         }
                     } catch (Throwable t) {
+                        sendResult(player, key, false, "服务端应用配置失败");
                         MyMod.LOG.error("Config set failed", t);
                     }
                 });
@@ -88,6 +105,14 @@ public class ConfigSetPacket implements IMessage {
                 MyMod.LOG.error("Config set failed", t);
             }
             return null;
+        }
+
+        private static void sendResult(EntityPlayerMP player, String key, boolean success, String message) {
+            try {
+                ModNetwork.CHANNEL.sendTo(new ConfigSetResultPacket(key, success, message), player);
+            } catch (Throwable t) {
+                MyMod.LOG.warn("[AE2QoL] Failed to send config result: " + t.getMessage());
+            }
         }
     }
 }

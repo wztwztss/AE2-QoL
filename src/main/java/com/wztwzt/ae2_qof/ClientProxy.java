@@ -9,6 +9,7 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.command.CommandHandler;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
+import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.common.MinecraftForge;
@@ -21,12 +22,14 @@ import com.wztwzt.ae2_qof.client.event.GuiUploadButtonHandler;
 import com.wztwzt.ae2_qof.client.event.KeyInputHandler;
 import com.wztwzt.ae2_qof.client.event.KnifeNameCopyHandler;
 import com.wztwzt.ae2_qof.client.event.MergedTerminalPanelHandler;
+import com.wztwzt.ae2_qof.client.gui.GuiConfigScreen;
 import com.wztwzt.ae2_qof.client.gui.GuiProviderSelect;
 import com.wztwzt.ae2_qof.client.gui.GuiWirelessDistributor;
 import com.wztwzt.ae2_qof.client.render.RenderBlockTransceiver;
 import com.wztwzt.ae2_qof.client.render.WirelessHighlightRenderer;
 import com.wztwzt.ae2_qof.common.RecipeMapNameConfig;
 import com.wztwzt.ae2_qof.merged.GuiMergedTerminal;
+import com.wztwzt.ae2_qof.network.ConfigSetResultPacket;
 import com.wztwzt.ae2_qof.network.ConfigUpdatePacket;
 import com.wztwzt.ae2_qof.network.CraftingCompletePacket;
 import com.wztwzt.ae2_qof.network.CraftingResponsePacket;
@@ -429,9 +432,29 @@ public class ClientProxy extends CommonProxy {
                 try {
                     // overlay 字段仅作协议兼容保留：NEI 叠加层为纯客户端渲染开关，
                     // 不随服务端同步覆盖客户端本地值（#48）
-                    Config.applyAll(message.io, message.rounds);
+                    if (!Config.applyAll(message.io, message.rounds)) {
+                        MyMod.LOG.warn("[AE2QoL] Config sync write failed: " + Config.getLastWriteError());
+                    }
                 } catch (Throwable t) {
                     MyMod.LOG.error("Config update apply failed", t);
+                }
+            });
+    }
+
+    @Override
+    public void handleConfigSetResult(final ConfigSetResultPacket message) {
+        Minecraft.getMinecraft()
+            .func_152344_a(() -> {
+                GuiScreen screen = Minecraft.getMinecraft().currentScreen;
+                if (screen instanceof GuiConfigScreen) {
+                    ((GuiConfigScreen) screen).onServerConfigResult(message.key, message.success, message.message);
+                } else if (!message.success && Minecraft.getMinecraft().thePlayer != null) {
+                    Minecraft.getMinecraft().thePlayer.addChatMessage(
+                        new ChatComponentText(
+                            EnumChatFormatting.RED + "[AE2QoL] 服务器拒绝配置 "
+                                + message.key
+                                + "："
+                                + message.message));
                 }
             });
     }
