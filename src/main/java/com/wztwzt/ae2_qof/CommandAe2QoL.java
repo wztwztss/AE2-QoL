@@ -35,7 +35,7 @@ public class CommandAe2QoL extends CommandBase {
     public String getCommandUsage(ICommandSender sender) {
         return "/ae2qof reload | /ae2qof status | /ae2qof smbind <networkId> | /ae2qof wildcard [矿辞前缀] "
             + "| /ae2qof cell list [页] | /ae2qof cell info|archive|restore <uuid> "
-            + "| /ae2qof machindex status|validate|rebuild|clear_cache|clear";
+            + "| /ae2qof machindex status|validate|rebuild|export|clear_cache|clear";
     }
 
     @Override
@@ -346,6 +346,7 @@ public class CommandAe2QoL extends CommandBase {
             list.add("status");
             list.add("validate");
             list.add("rebuild");
+            list.add("export");
             list.add("clear_cache");
             list.add("clear");
         }

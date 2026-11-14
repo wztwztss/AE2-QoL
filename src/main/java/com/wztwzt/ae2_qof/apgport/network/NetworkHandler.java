@@ -37,8 +37,6 @@ public class NetworkHandler {
 
         INSTANCE.registerMessage(PacketSaveFields.Handler.class, PacketSaveFields.class, packetId++, Side.SERVER);
 
-        INSTANCE.registerMessage(PacketStorageAction.Handler.class, PacketStorageAction.class, packetId++, Side.SERVER);
-
         INSTANCE
             .registerMessage(PacketRecipeConflicts.Handler.class, PacketRecipeConflicts.class, packetId++, Side.CLIENT);
         INSTANCE.registerMessage(
@@ -71,10 +69,6 @@ public class NetworkHandler {
     }
 
     public static void sendSaveFieldsToServer(PacketSaveFields packet) {
-        INSTANCE.sendToServer(packet);
-    }
-
-    public static void sendStorageAction(PacketStorageAction packet) {
         INSTANCE.sendToServer(packet);
     }
 }

@@ -11,7 +11,6 @@ package com.wztwzt.ae2_qof.wildport;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
 
-import com.wztwzt.ae2_qof.wildport.item.ItemCompositeWildcardPattern;
 import com.wztwzt.ae2_qof.wildport.item.ItemWildcardPattern;
 
 import cpw.mods.fml.common.registry.GameRegistry;
@@ -19,7 +18,6 @@ import cpw.mods.fml.common.registry.GameRegistry;
 public final class ModItems {
 
     public static Item wildcardPattern;
-    public static Item compositeWildcardPattern;
 
     private ModItems() {}
 
@@ -27,11 +25,7 @@ public final class ModItems {
         wildcardPattern = new ItemWildcardPattern().setUnlocalizedName("wildcard_pattern")
             .setTextureName("wildcardpattern:wildcard_pattern")
             .setCreativeTab(CreativeTabs.tabMisc);
-        compositeWildcardPattern = new ItemCompositeWildcardPattern().setUnlocalizedName("composite_wildcard_pattern")
-            .setTextureName("wildcardpattern:wildcard_pattern")
-            .setCreativeTab(CreativeTabs.tabMisc);
 
         GameRegistry.registerItem(wildcardPattern, "wildcard_pattern");
-        GameRegistry.registerItem(compositeWildcardPattern, "composite_wildcard_pattern");
     }
 }

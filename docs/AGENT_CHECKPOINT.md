@@ -7,6 +7,23 @@
 
 ---
 
+## 本轮：2026-11-14 · 4.5.0-fix29（删除两个死入口 + 无线/Wild/命令/蒸汽自检修复）
+
+|项目|内容|
+|---|---|
+|工具平台 / 模型|Doubao（本地桌面 Agent）· 当前会话|
+|任务（用户原话）|「这俩都删除吧」＋「构建并发布 release」；承接只读审计后确认的其余问题|
+|范围|删除 APG 102 虚拟仓储/详情死入口；删除复合通配样板 GUI 141 死入口；修无线分配器 GUI ID、Wild「改」重开、`machindex export` 帮助/补全、GTNL 蒸汽自检；同步文档并发布|
+|核心修复|`BlockWirelessDistributor.GUI_ID` 130→142；`MessageReopenWildGui` 改开 `WildportIds.GUI_WILDCARD_PATTERN`（140）并传 `inventory.currentItem`；`CommandAe2QoL` machindex usage/补全加 `export`；`SteamElevatorTuning.TARGET_CLASSES` 加 `SteamEntityCrusherModule`（6 个）|
+|删除面|APG：`GuiPatternStorage`/`GuiPatternDetail`/`ContainerPatternStorage`/`ApgStubs`/`PatternStorage`/`PacketStorageAction` + 死代理/死物品注册 + 102 分支；复合：`ItemCompositeWildcardPattern`/`CompositeWildcardPatternWindow`/`CompositeWildcardPatternState`/`CompositeWildcardPatternGenerator`/`CompositeWildcardRecipe`/`MessageUpdateCompositeWildcardConfig` + 141 ID/handler/网络注册/`ModItems` 字段；`WildcardPatternGenerator` 复合分支全部剥离|
+|刻意不动|普通通配 130/140、`WildcardPatternWindow`、普通 state/config/entry/generator/details 保留；APG 101、`GuiPatternGen`、`RecipeCacheStorage`/`RecipeCacheService` 保留；线程引擎维持停用；旧库存终端 32101 不再列为当前失效|
+|产物|主 jar `2,068,869 B`，SHA256 `481C18A691DB114A36A4E8D1A544C76491C2E8D73EC3C8B1F39D92A37ADB3891`；dev `2,063,044 B`；sources `1,557,214 B`；交付副本 `D:\下载\需更新模组\AE2-QoL-4.5.0-fix29.jar`，未替换游戏内 mods|
+|验证|`compileJava --offline`、`spotlessApply --offline`、完整 `build --offline` 均通过；`jar tf` 复核删除类不在主 jar，普通通配类仍在|
+|发布|待 GitHub commit/tag/release（完成后补链接与 release 资产 SHA256）|
+|待实测|无线分配器右键打开列表界面；Wild「改」确认后回到 140 且槽位正确；`/ae2qof machindex export` 帮助/Tab；GTNL 蒸汽自检 6/6（屠宰场 Mixin 实际注入）；APG 101 与普通通配 130/140 回归|
+
+---
+
 ## 本轮：2026-11-14 · 4.5.0-fix28（配置读写/同步/GUI/命令审查项逐项修复）
 
 |项目|内容|

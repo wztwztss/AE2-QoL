@@ -10,7 +10,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
@@ -24,12 +23,10 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IIcon;
-import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.world.World;
 
 import org.lwjgl.input.Keyboard;
 
-import com.wztwzt.ae2_qof.apgport.storage.PatternStorage;
 import com.wztwzt.ae2_qof.apgport.util.I18nUtil;
 
 import appeng.api.features.INetworkEncodable;
@@ -53,7 +50,6 @@ import gregtech.api.recipe.RecipeMap;
 public class ItemPatternGenerator extends Item implements INetworkEncodable, IWirelessTermHandler {
 
     public static final int GUI_ID = 101;
-    public static final int GUI_ID_STORAGE = 102;
     private static final int MAX_PATTERN_TARGET_RESOLVE_DEPTH = 4;
 
     // NBT 键名
@@ -90,16 +86,8 @@ public class ItemPatternGenerator extends Item implements INetworkEncodable, IWi
 
     @Override
     public ItemStack onItemRightClick(ItemStack stack, World world, EntityPlayer player) {
-        if (player.isSneaking()) {
-            // Sneak + right click on block should be handled by onItemUseFirst (detect/export), not storage GUI.
-            MovingObjectPosition hit = getMovingObjectPositionFromPlayer(world, player, false);
-            if (hit != null && hit.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
-                return stack;
-            }
-        }
-
         if (!world.isRemote) {
-            int guiId = player.isSneaking() ? GUI_ID_STORAGE : GUI_ID;
+            int guiId = GUI_ID;
             cpw.mods.fml.common.FMLLog.info(
                 "[AE2PatternGen] SERVER SIDE: Requesting to open GUI %d for player %s with instance %s",
                 guiId,
@@ -117,7 +105,10 @@ public class ItemPatternGenerator extends Item implements INetworkEncodable, IWi
     }
 
     /**
-     * 蹲下右键方块 → 探测机器配方或导出样板到容器
+     * 蹲下右键方块 → 探测机器配方。
+     *
+     * <p>
+     * 4.5.0-fix29：APG 虚拟仓储/导出整套界面已删除，这里不再读取或写入 {@code PatternStorage}。
      */
     @Override
     public boolean onItemUseFirst(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side,
@@ -131,7 +122,6 @@ public class ItemPatternGenerator extends Item implements INetworkEncodable, IWi
             return true;
         }
 
-        // 1. 尝试探测 GT 机器配方表 (优先级: 主方块/控制器)
         if (te instanceof IGregTechTileEntity) {
             IGregTechTileEntity gte = (IGregTechTileEntity) te;
             IMetaTileEntity mte = gte.getMetaTileEntity();
@@ -145,72 +135,12 @@ public class ItemPatternGenerator extends Item implements INetworkEncodable, IWi
                         recipeMap.unlocalizedName));
                 return true;
             }
-        }
-
-        // 2. 如果不是 GT 主方块或探测失败，尝试作为普通容器导出样板
-        PatternInsertTarget insertTarget = resolveInsertTarget(te);
-        if (insertTarget == null) {
-            // 如果既不是可读取的 GT 机器也不是容器，提示错误
-            if (te instanceof IGregTechTileEntity) {
-                player.addChatMessage(msg(EnumChatFormatting.RED, "ae2patterngen.msg.item.machine_part_unsupported"));
-            } else {
-                player.addChatMessage(msg(EnumChatFormatting.RED, "ae2patterngen.msg.item.block_extract_unsupported"));
-            }
+            player.addChatMessage(msg(EnumChatFormatting.RED, "ae2patterngen.msg.item.machine_part_unsupported"));
             return true;
         }
 
-        // 执行原有导出逻辑
-        UUID uuid = player.getUniqueID();
-        if (PatternStorage.isEmpty(uuid)) {
-            player.addChatMessage(msg(EnumChatFormatting.YELLOW, "ae2patterngen.msg.item.storage_empty_export"));
-            return true;
-        }
-
-        IInventory inv = insertTarget.inventory;
-        PatternStorage.StorageSummary storageSummary = PatternStorage.getSummary(uuid);
-        List<ItemStack> patterns = PatternStorage.load(uuid);
-        List<ItemStack> remainingPatterns = new ArrayList<>(patterns.size());
-        int transferred = 0;
-        List<InsertAttemptPlan> insertPlans = buildInsertPlans(inv, side, insertTarget.preferredSlots);
-
-        for (int i = 0; i < patterns.size(); i++) {
-            ItemStack pattern = patterns.get(i);
-            if (tryInsertPattern(inv, pattern, insertPlans)) {
-                transferred++;
-            } else {
-                remainingPatterns.add(pattern);
-                // No slot can accept this pattern now; keep all remaining entries untouched.
-                for (int j = i + 1; j < patterns.size(); j++) {
-                    remainingPatterns.add(patterns.get(j));
-                }
-                break;
-            }
-        }
-
-        // 更新存储
-        if (remainingPatterns.isEmpty()) {
-            PatternStorage.clear(uuid);
-        } else {
-            if (!PatternStorage.save(uuid, remainingPatterns, storageSummary.source)) {
-                player.addChatMessage(msg(EnumChatFormatting.RED, "ae2patterngen.msg.item.storage_update_failed"));
-                return true;
-            }
-        }
-
-        inv.markDirty();
-
-        if (!remainingPatterns.isEmpty()) {
-            player.addChatMessage(
-                msg(
-                    EnumChatFormatting.GREEN,
-                    "ae2patterngen.msg.item.exported_with_remaining",
-                    transferred,
-                    remainingPatterns.size()));
-        } else {
-            player.addChatMessage(msg(EnumChatFormatting.GREEN, "ae2patterngen.msg.item.exported", transferred));
-        }
-
-        return true; // 消费事件
+        player.addChatMessage(msg(EnumChatFormatting.RED, "ae2patterngen.msg.item.block_extract_unsupported"));
+        return true;
     }
 
     private static RecipeMap<?> resolveRecipeMap(IMetaTileEntity mte) {

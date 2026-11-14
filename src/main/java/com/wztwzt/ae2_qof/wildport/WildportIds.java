@@ -9,7 +9,6 @@ package com.wztwzt.ae2_qof.wildport;
 public final class WildportIds {
 
     public static final int GUI_WILDCARD_PATTERN = 140;
-    public static final int GUI_COMPOSITE_WILDCARD_PATTERN = 141;
 
     private WildportIds() {}
 }

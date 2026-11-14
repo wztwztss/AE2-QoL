@@ -1,3 +1,39 @@
+# 4.5.0-fix29 —— 删除两个死入口 + 无线/Wild/命令/蒸汽自检修复（2026-11-14）
+
+## 审查范围
+
+- 基于只读审计确认的“用户可见入口、可直接复现”的问题；不重构无关逻辑。
+- 用户明确选择：APG 102 仓储/详情 **删除**，复合通配样板 GUI 141 **删除**；不强行接线，也不注册成新入口。
+
+## 变更
+
+1. **删除 APG 102 虚拟仓储/详情整族**：移除 `GuiPatternStorage` / `GuiPatternDetail` / `ContainerPatternStorage` / `ApgStubs`、`PatternStorage`、`PacketStorageAction`、`apgport` 的死代理与死物品注册；`ItemPatternGenerator` 不再有 `GUI_ID_STORAGE`、蹲下开 102 或导出仓储的分支；`GuiHandler` / `MergedGuiHandler` 只接受 101。**保留** APG 101 主生成器、`GuiPatternGen`、`RecipeCacheStorage` / `RecipeCacheService` 与其余网络包。
+2. **`PacketGeneratePatterns` 不再被旧仓储文件阻断**：原逻辑只要 `PatternStorage` 非空就拒绝生成；仓储删除后同步移除该检查，旧存档残留文件不再影响主生成器。
+3. **删除复合通配样板 GUI 141 整族**：移除 `ItemCompositeWildcardPattern` / `CompositeWildcardPatternWindow` / `CompositeWildcardPatternState` / `CompositeWildcardPatternGenerator` / `CompositeWildcardRecipe` / `MessageUpdateCompositeWildcardConfig`，以及 `WildportIds` 的 141、`WildcardGuiHandler` 的 141 分支、`WildcardNetwork` 的复合包注册、`ModItems` 的复合物品字段。`WildcardPatternGenerator` 中所有 composite 分支同步剥离；**普通通配样板 130/140、Wild 窗口、普通生成/计数/预览/候选材料路径保持不变**。
+4. **无线网络分配器 GUI ID 冲突修复**：`BlockWirelessDistributor.GUI_ID` 从 `130` 改为 `142`。130 被 `ItemSmartWildcardPattern` 占用且 `MergedGuiHandler` 先处理 130，导致分配器右键永远打不开；142 为空闲 ID，分配器分支现在可达。
+5. **Wild「改」按钮重开修复**：`MessageReopenWildGui` 从“打开 130、坐标固定 0”改为打开 `WildportIds.GUI_WILDCARD_PATTERN`（140），并把 `player.inventory.currentItem` 作为槽位传入；不再依赖快捷栏第 0 格，也不会打开旧 `GuiSmartWildcard`。
+6. **机器索引 `export` 帮助/Tab 补全**：`CommandAe2QoL` 的 `machindex` usage 与补全列表补上 `export`，与 `MachIndexCommand` 已有的 `case "export"` 对齐。
+7. **GTNL 蒸汽自检补漏**：`SteamElevatorTuning.TARGET_CLASSES` 增加 `SteamEntityCrusherModule`，自检从 5 个模块变为 6 个；`MixinSteamEntityCrusherTuning` 静默失败时不再被“5/5 通过”掩盖。
+8. **文档同步**：`docs/MOD_MAP.md` 更新 APG 102 已删除、分配器 GUI 142、复合 141 已删除、Wild 编辑器/NEI 已交付、PH 真实 modid；README 中英版本与 jar 名更新为 `4.5.0-fix29`；`CHANGELOG` 记录本版。
+
+## 刻意不动
+
+- 不恢复 APG 102 仓储写入；不把复合样板重新注册成物品/配方。
+- 不改变普通通配样板 130/140 的规则、展开、计数与预览逻辑。
+- 不把无线分配器已有存档数据迁移到新 GUI ID（GUI ID 只影响界面分发，不写入方块 NBT）。
+- 线程引擎保持“用户拍板停用”的现状，不当作 bug 修复。
+- 旧库存统计终端 32101 迁移缺口按用户实测“当前正常”处理，不列入本版修复。
+
+## 验证
+
+- `.\gradlew.bat compileJava --offline` 通过（Java 17）。
+- `.\gradlew.bat spotlessApply --offline` 通过；完整 `.\gradlew.bat build --offline` 通过（含 `spotlessJavaCheck` / `spotlessCheck` / `checkstyleMain` / `jar` / `reobfJar` / `sourcesJar`）。
+- 主 jar `build/libs/AE2-QoL-4.5.0-fix29.jar`：`2,068,869 B`，SHA256 `481C18A691DB114A36A4E8D1A544C76491C2E8D73EC3C8B1F39D92A37ADB3891`；`jar tf` 复核已无 `CompositeWildcard*`、`GuiPatternStorage`、`GuiPatternDetail`、`PatternStorage`、`PacketStorageAction`，普通通配 `WildcardPatternGenerator` 与 `WildportIds` 仍在包内。
+- `-dev.jar`：`2,063,044 B`，SHA256 `873D077D4EE1F125B69199F538BDE64DE4BD8366F925AE9AA54FF77A8F977C68`；`-sources.jar`：`1,557,214 B`，SHA256 `B194921DA8EF7F2CD63473C3CA471B435D4BE28E659CE4E0969144E54E65E5B3`。
+- 交付副本 `D:\下载\需更新模组\AE2-QoL-4.5.0-fix29.jar` 与本地主 jar SHA256 一致；**未替换游戏内 mods**。
+
+---
+
 # 4.5.0-fix28 —— 配置读写/同步/GUI/命令审查项逐项修复（2026-11-14）
 
 ## 审查范围

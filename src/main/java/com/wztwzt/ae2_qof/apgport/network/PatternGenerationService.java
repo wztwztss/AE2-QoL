@@ -32,8 +32,9 @@ public final class PatternGenerationService {
         }
 
         // ===== 3.29.0（AE2-QoL 的适配改动，文件头已注明来源）=====
-        // 搬运来的是它的原行为：**扣掉 AE2 空白样板** + 写入它自己的**虚拟仓储**（PatternStorage），
-        // 产物并不直接给玩家。本模组要的是"产物仍进背包"，所以这里改成：
+        // 搬运来的是它的原行为：**扣掉 AE2 空白样板** + 写入它自己的**虚拟仓储**（PatternStorage）。
+        // 4.5.0-fix29 已把仓储/详情界面与 PatternStorage 整族删除；本方法从一开始就改成“产物进背包”，
+        // 现在保留的只是这条适配说明。
         // ① 编码仍用搬运来的 PatternEncoder（与我们 SmartPatternGenerator 的编码语义一致：
         // in/out + crafting=false + 同时写 Count/Cnt）；
         // ② **不再消耗空白样板**（我们的生成器一直是不消耗的，行为保持一致）；

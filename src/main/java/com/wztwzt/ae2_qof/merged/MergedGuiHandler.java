@@ -120,8 +120,7 @@ public class MergedGuiHandler implements IGuiHandler {
             return client ? wildUiHandler.getClientGuiElement(ID, player, world, x, y, z)
                 : wildUiHandler.getServerGuiElement(ID, player, world, x, y, z);
         }
-        if (apgUiHandler != null && (ID == com.wztwzt.ae2_qof.apgport.item.ItemPatternGenerator.GUI_ID
-            || ID == com.wztwzt.ae2_qof.apgport.item.ItemPatternGenerator.GUI_ID_STORAGE)) {
+        if (apgUiHandler != null && ID == com.wztwzt.ae2_qof.apgport.item.ItemPatternGenerator.GUI_ID) {
             return client ? apgUiHandler.getClientGuiElement(ID, player, world, x, y, z)
                 : apgUiHandler.getServerGuiElement(ID, player, world, x, y, z);
         }

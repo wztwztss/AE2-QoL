@@ -6,7 +6,7 @@ package com.wztwzt.ae2_qof.wildport.network;
 import net.minecraft.entity.player.EntityPlayerMP;
 
 import com.wztwzt.ae2_qof.MyMod;
-import com.wztwzt.ae2_qof.wildcard.ItemSmartWildcardPattern;
+import com.wztwzt.ae2_qof.wildport.WildportIds;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -17,7 +17,7 @@ import io.netty.buffer.ByteBuf;
  * 客户端 → 服务端：**重新打开通配样板窗口**（3.22.0-fix53）。
  *
  * <h2>为什么需要它</h2>
- * 通配窗口（Wild 界面，GUI {@link ItemSmartWildcardPattern#GUI_ID}=130）是 GTNH-ModularUI 自绘界面，
+ * 通配窗口（Wild 界面，GUI {@link WildportIds#GUI_WILDCARD_PATTERN}=140）是 GTNH-ModularUI 自绘界面，
  * 里面**系统输入法不可用**，所以文本框旁加了「改」按钮走**原版输入框对话框**
  * （{@code client/gui/GuiTextInputDialog}）—— 而原版 GuiScreen 一打开就会把 MUI 窗口顶掉，
  * 关掉对话框后回到"没有界面"，用户观感就是"输入完界面就没了"。
@@ -54,8 +54,19 @@ public class MessageReopenWildGui implements IMessage {
             // （项目已验证机制），这正是"改"对话框确认后界面不回来的根因。
             com.wztwzt.ae2_qof.network.ServerTerminalHelper.scheduleServerTask(() -> {
                 try {
-                    player.openGui(MyMod.instance, ItemSmartWildcardPattern.GUI_ID, player.worldObj, 0, 0, 0);
-                    MyMod.LOG.info("[AE2QoL] 「改」对话框确认后已重开通配样板界面（GUI {})", ItemSmartWildcardPattern.GUI_ID);
+                    // 必须用 Wild 窗口自己的 140，并沿用玩家当前手持槽位；固定 x=0 会打开旧 130
+                    // （旧 130 读的是背包第 0 格，绝大多数快捷栏位置会直接失败）。
+                    player.openGui(
+                        MyMod.instance,
+                        WildportIds.GUI_WILDCARD_PATTERN,
+                        player.worldObj,
+                        player.inventory.currentItem,
+                        0,
+                        0);
+                    MyMod.LOG.info(
+                        "[AE2QoL] 「改」对话框确认后已重开 Wild 窗口（GUI {}，slot {}）",
+                        WildportIds.GUI_WILDCARD_PATTERN,
+                        player.inventory.currentItem);
                 } catch (Throwable t) {
                     MyMod.LOG.warn("[AE2QoL] 重开通配样板界面失败", t);
                 }

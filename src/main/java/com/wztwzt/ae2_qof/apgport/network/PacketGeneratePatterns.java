@@ -17,7 +17,6 @@ import com.wztwzt.ae2_qof.apgport.filter.CompositeFilter;
 import com.wztwzt.ae2_qof.apgport.filter.RecipeFilterFactory;
 import com.wztwzt.ae2_qof.apgport.recipe.RecipeEntry;
 import com.wztwzt.ae2_qof.apgport.storage.CacheQueryResult;
-import com.wztwzt.ae2_qof.apgport.storage.PatternStorage;
 import com.wztwzt.ae2_qof.apgport.storage.RecipeCacheService;
 import com.wztwzt.ae2_qof.apgport.util.I18nUtil;
 import com.wztwzt.ae2_qof.apgport.util.ItemStackUtil;
@@ -110,18 +109,7 @@ public class PacketGeneratePatterns implements IMessage {
                     return;
                 }
 
-                // 检查仓储是否有残留样板
-                if (!PatternStorage.isEmpty(uuid)) {
-                    PatternStorage.StorageSummary existing = PatternStorage.getSummary(uuid);
-                    send(
-                        player,
-                        EnumChatFormatting.RED,
-                        "ae2patterngen.msg.generate.storage_not_empty",
-                        existing.count,
-                        existing.source);
-                    return;
-                }
-
+                // 4.5.0-fix29：APG 虚拟仓储界面已删除，不再用旧仓储文件阻断生成。
                 CompositeFilter filter = RecipeFilterFactory.build(
                     message.outputOreDict,
                     message.inputOreDict,

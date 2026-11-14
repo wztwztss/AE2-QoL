@@ -28,7 +28,8 @@ import cpw.mods.fml.common.network.internal.FMLNetworkHandler;
  */
 public class BlockWirelessDistributor extends AEBaseTileBlock {
 
-    public static final int GUI_ID = 130;
+    // 142：原 130 与 ItemSmartWildcardPattern 的旧编辑器冲突，导致右键分配器打不开界面。
+    public static final int GUI_ID = 142;
 
     public BlockWirelessDistributor() {
         super(Material.iron);

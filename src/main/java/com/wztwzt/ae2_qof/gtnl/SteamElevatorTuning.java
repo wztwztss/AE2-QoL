@@ -139,7 +139,8 @@ public final class SteamElevatorTuning {
     public static final String MARKER_METHOD = "ae2qof$steamTuningApplied";
 
     private static final String[] TARGET_CLASSES = { PKG + "SteamBeeBreedingModule", PKG + "SteamOilDrillModule",
-        PKG + "SteamApiaryModule", PKG + "SteamGreenhouseModule", PKG + "SteamOreProcessorModule" };
+        PKG + "SteamApiaryModule", PKG + "SteamGreenhouseModule", PKG + "SteamOreProcessorModule",
+        PKG + "SteamEntityCrusherModule" };
     /** 数值指纹（二级）：类名 → 上游单份时长；仅用于"上游数值变了"的可见提示，不做拦截。 */
     private static final Map<String, Integer> EXPECTED_SINGLE = new HashMap<>();
     static {
