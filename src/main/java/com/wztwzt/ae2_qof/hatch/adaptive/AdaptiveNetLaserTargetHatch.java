@@ -15,8 +15,8 @@ import com.cleanroommc.modularui.factory.PosGuiData;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.screen.UISettings;
 import com.cleanroommc.modularui.value.sync.IntSyncValue;
-import com.cleanroommc.modularui.value.sync.LongSyncValue;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
+import com.cleanroommc.modularui.value.sync.StringSyncValue;
 import com.cleanroommc.modularui.widgets.TextWidget;
 import com.cleanroommc.modularui.widgets.layout.Flow;
 
@@ -234,10 +234,11 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
         IntSyncValue boundSync = new IntSyncValue(() -> helper.isBound() ? 1 : 0, v -> {});
         IntSyncValue voltageSync = new IntSyncValue(() -> helper.getCurrentVoltageTier(), v -> {});
         IntSyncValue ampSync = new IntSyncValue(() -> helper.getCurrentAmps(), v -> {});
-        LongSyncValue gridEUSync = new LongSyncValue(
+        StringSyncValue gridEUSync = new StringSyncValue(
             () -> helper.isBound() && helper.getNetworkOwner() != null
-                ? AdaptiveHatchHelper.getGridEULong(helper.getNetworkOwner())
-                : 0L,
+                ? AdaptiveHatchHelper.getGridEUBigInteger(helper.getNetworkOwner())
+                    .toString()
+                : "0",
             v -> {});
         syncManager.syncValue("aBD", boundSync);
         syncManager.syncValue("aVT", voltageSync);
@@ -273,24 +274,17 @@ public class AdaptiveNetLaserTargetHatch extends MTEHatchDynamo {
         })).size(260, 14));
 
         column.child(new TextWidget<>(IKey.dynamic(() -> {
-            long gridEU = gridEUSync.getLongValue();
-            return EnumChatFormatting.AQUA + StatCollector.translateToLocal(
-                "ae2_qof.gui.adaptive_hatch.grid_energy") + " " + EnumChatFormatting.WHITE + formatEU(gridEU) + " EU";
+            // 4.5.0-fix30：Grid 行走服务端精确串，不再经过 getGridEULong 的 9.22E 钳制。
+            return EnumChatFormatting.AQUA + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.grid_energy")
+                + " "
+                + EnumChatFormatting.WHITE
+                + AdaptiveHatchHelper.formatEUExact(AdaptiveHatchHelper.parseEUString(gridEUSync.getValue()))
+                + " EU";
         })).size(260, 14));
 
         panel.bindPlayerInventory();
         panel.child(column);
         return panel;
-    }
-
-    private static String formatEU(long eu) {
-        if (eu >= 1_000_000_000_000_000_000L) return String.format("%.2fE", eu / 1_000_000_000_000_000_000.0);
-        if (eu >= 1_000_000_000_000_000L) return String.format("%.2fP", eu / 1_000_000_000_000_000.0);
-        if (eu >= 1_000_000_000_000L) return String.format("%.2fT", eu / 1_000_000_000_000.0);
-        if (eu >= 1_000_000_000L) return String.format("%.2fG", eu / 1_000_000_000.0);
-        if (eu >= 1_000_000L) return String.format("%.2fM", eu / 1_000_000.0);
-        if (eu >= 1_000L) return String.format("%.1fK", eu / 1_000.0);
-        return String.valueOf(eu);
     }
 
     @Override

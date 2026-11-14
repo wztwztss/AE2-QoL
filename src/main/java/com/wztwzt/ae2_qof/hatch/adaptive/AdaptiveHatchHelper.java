@@ -509,6 +509,16 @@ public class AdaptiveHatchHelper {
         return formatEU(tag.getLong(WAILA_GRID));
     }
 
+    /** 4.5.0-fix30：StringSyncValue 承载的十进制电网余额安全解析（空/坏串 → 0）。 */
+    public static BigInteger parseEUString(String text) {
+        if (text == null || text.isEmpty()) return BigInteger.ZERO;
+        try {
+            return new BigInteger(text.trim());
+        } catch (NumberFormatException e) {
+            return BigInteger.ZERO;
+        }
+    }
+
     /** long 电网余额的 K/M/G/T/P/E 缩写（与各仓 GUI 同口径）。 */
     public static String formatEU(long eu) {
         if (eu >= 1_000_000_000_000_000_000L) return String.format("%.2fE", eu / 1_000_000_000_000_000_000.0);

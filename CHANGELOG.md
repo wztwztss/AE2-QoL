@@ -1,3 +1,42 @@
+# 4.5.0-fix30 —— 自适应电网 UI 偏移 + 9.2E 显示上限（2026-11-14）
+
+## 审查范围
+
+- 只修用户实测的两个问题：设置/状态页内容整体向下偏移；监控页电网蓄电到 `9.2E`（约 `Long.MAX_VALUE`）后不再增长/不显示真实值。
+- 同步四个自适应仓 GUI 的 Grid 行与两处补电逻辑，避免“终端显示无上限、仓 GUI/补电仍有 9.22E 语义”的半修状态。
+- 不改 GT 全局电网账户、不改四个仓的槽位/白名单/主机反查、不改 WAILA 既有精确显示。
+
+## 根因
+
+1. **页面偏移**：MUI2 2.3.92 的 `PagedWidget.addPage()` 只把子页加入列表并 `setEnabled(false)`，**不做 pos/size 布局**；`DimensionSizer.applyMarginAndPaddingToPos()` 在子页没有显式位置时会把父控件 padding 加到页面位置。`buildStatusTab` 用 `.size(CONTENT_W,0)`，`buildSettingsTab` / `buildFrequencyTab` 用 `.coverChildren()`，页面既无显式原点、高度又由内容决定；设置页内容实测约 `227px`，超过 `PAGE_H=180`，于是整体下移/被裁。`buildMonitorTab` / `buildHatchListTab` 也没有显式原点。
+2. **9.2E 显示上限**：监控页总量行走 `LongSyncValue` + `AdaptiveHatchHelper.getGridEULong()`，后者执行 `eu.min(BigInteger.valueOf(Long.MAX_VALUE)).longValue()`；客户端 `networkOwner == null` 时 `formatGridEUPrecise` 直接回退钳制值，固定显示 `9.22E`。预测行的 `biGridExact()` 在客户端同样返回 `ZERO`，导致预计耗尽时间显示 `∞`。统计行早已走 `StringSyncValue`，所以只有总量/预测漏改。
+3. **补电语义**：`AdaptiveNetHatch` / `AdaptiveNetLaserHatch` 仍先 `getGridEULong` 再 `Math.min`；虽然 `headroom` 不会超过 long，实际补电量未被压低，但代码仍保留 9.22E 钳制语义，与“无上限”目标不一致。
+
+## 变更
+
+1. **五个页面全部显式定位/定尺**：`buildStatusTab` / `buildSettingsTab` / `buildFrequencyTab` / `buildMonitorTab` 改为 `.pos(0,0).size(CONTENT_W,PAGE_H)`；`buildHatchListTab` 补 `.pos(0,0)`。页面不再依赖 MUI2 的隐式锚点，也不再把父 padding 算进页面位置。
+2. **设置页压回 180px**：混插提示 `40→28px`，页面 `childPadding(4→1)`；四行槽位与两行提示不变，内容约 `176px`，不再溢出 `PAGE_H=180`。
+3. **终端总量/预测改精确串**：`gridEUSync` 由 `LongSyncValue("wGE")` 改为 `StringSyncValue("wGX")`，服务端 getter 直接 `getGridEUBigInteger(owner).toString()`；监控页总量行与预测行都用 `biFromString` 解析同一串，不再读客户端 GT 全局账户。
+4. **四个仓 GUI 的 Grid 行改精确串**：`AdaptiveNetHatch` / `AdaptiveNetLaserHatch` / `AdaptiveNetDynamoHatch` / `AdaptiveNetLaserTargetHatch` 的 `LongSyncValue` 改为 `StringSyncValue`，显示走 `AdaptiveHatchHelper.parseEUString` + `formatEUExact`；删除各仓私有 `formatEU(long)`。
+5. **两处补电改 BigInteger 域取 min**：`AdaptiveNetHatch` / `AdaptiveNetLaserHatch` 先取 `getGridEUBigInteger(owner)`，`gridBig.min(BigInteger.valueOf(headroom)).longValue()` 补电；`lastGridEU` 仍保留 long 快照，供旧显示/兼容路径使用。`getGridEULong` 保留但不再是这两条链的数据源。
+6. **超大值显示兜底**：`AdaptiveNetTerminal.formatKMG(BigInteger)` 在 `E` 档仍 `>=1000` 时改用科学计数（如 `1.00e21`），避免 `1000000.00E` 巨串；这只是显示格式，不是数值上限。
+
+## 验证
+
+- `JAVA_HOME=E:\java17`、`.\gradlew.bat compileJava --offline` 通过。
+- `.\gradlew.bat spotlessApply --offline` 通过；完整 `.\gradlew.bat build --offline` 通过（含 `spotlessJavaCheck` / `spotlessCheck` / `checkstyleMain` / `jar` / `reobfJar` / `sourcesJar`）。
+- 主 jar `build/libs/AE2-QoL-4.5.0-fix30.jar`：`2,067,898 B`，SHA256 `9B1DCC5078DAF1F0EE9CE787119EEE613E3093611658A73A7C4E69408B3ACD56`；`-dev.jar`：`2,062,099 B`，SHA256 `AAA8F4AC4BBBB5FADC9ECA42DCD1BE26ADDC367FEC0EB40ABCC37DA20EFEA5FA`；`-sources.jar`：`1,557,344 B`，SHA256 `426D0FF796949DD428BE49890E60B96DBBEAFDE858769308642C976FC553931C`。
+- 主 jar 内 `mcmod.info` 两个条目的版本均为 `4.5.0-fix30`；`jar tf` 复核五个自适应类与 `AdaptiveHatchHelper` 均在包内。
+- 交付副本 `D:\下载\需更新模组\AE2-QoL-4.5.0-fix30.jar` 与本地主 jar 同大小、同 SHA256；**未替换游戏内 mods**。
+
+## 待实测
+
+- 打开终端设置/状态页，确认首行不再整体下移、设置页四行槽位与两行提示都完整可见。
+- 电网余额超过 `9.22E` 后，监控页总量继续显示真实值（如 `15.80E`），预测行不再因客户端余额为零显示 `∞`。
+- 四个仓 GUI 的 Grid 行在超 9.22E 时显示精确值；两处补电仓在电网超限时仍按 `halfStore - currentStored` 正常补电。
+
+---
+
 # 4.5.0-fix29 —— 删除两个死入口 + 无线/Wild/命令/蒸汽自检修复（2026-11-14）
 
 ## 审查范围

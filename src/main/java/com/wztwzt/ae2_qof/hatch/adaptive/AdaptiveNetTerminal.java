@@ -27,7 +27,6 @@ import com.cleanroommc.modularui.screen.UISettings;
 import com.cleanroommc.modularui.value.sync.DynamicLinkedSyncHandler;
 import com.cleanroommc.modularui.value.sync.GenericListSyncHandler;
 import com.cleanroommc.modularui.value.sync.IntSyncValue;
-import com.cleanroommc.modularui.value.sync.LongSyncValue;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
 import com.cleanroommc.modularui.value.sync.StringSyncValue;
 import com.cleanroommc.modularui.widgets.ButtonWidget;
@@ -740,11 +739,14 @@ public class AdaptiveNetTerminal extends MTEHatch {
             syncManager.syncValue("wHC" + i, hatchCountSyncs[i]);
         }
 
-        final LongSyncValue gridEUSync = new LongSyncValue(() -> {
-            if (networkOwner == null) return 0;
-            return AdaptiveHatchHelper.getGridEULong(networkOwner);
+        // 4.5.0-fix30：电网余额改由**服务端精确串**下发。旧 LongSyncValue 走 getGridEULong，
+        // 在 9.22E 处钳死；客户端又拿不到 GT 全局账户，总量行只能回退到钳制值。
+        final StringSyncValue gridEUBigSync = new StringSyncValue(() -> {
+            if (networkOwner == null) return "0";
+            return AdaptiveHatchHelper.getGridEUBigInteger(networkOwner)
+                .toString();
         }, v -> {});
-        syncManager.syncValue("wGE", gridEUSync);
+        syncManager.syncValue("wGX", gridEUBigSync);
 
         final StringSyncValue ownerSync = new StringSyncValue(
             () -> networkOwner != null ? networkOwner.toString() : "",
@@ -851,7 +853,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
             .addPage(buildFrequencyTab(frequencySync))
             .addPage(
                 buildMonitorTab(
-                    gridEUSync,
+                    gridEUBigSync,
                     change1hSync,
                     change10mSync,
                     avgOut10mSync,
@@ -879,7 +881,9 @@ public class AdaptiveNetTerminal extends MTEHatch {
     private Flow buildStatusTab(IntSyncValue frequencySync, IntSyncValue voltageTierSync, IntSyncValue[] hatchTierSyncs,
         IntSyncValue[] hatchAmpSyncs, IntSyncValue[] hatchCountSyncs, StringSyncValue ownerNameSync) {
         Flow tab = Flow.column()
-            .size(CONTENT_W, 0)
+            .pos(0, 0)
+            .size(CONTENT_W, PAGE_H)
+            .padding(0)
             .childPadding(4);
 
         tab.child(
@@ -960,9 +964,13 @@ public class AdaptiveNetTerminal extends MTEHatch {
     }
 
     private Flow buildSettingsTab(IntSyncValue[] hatchTierSyncs, IntSyncValue[] hatchAmpSyncs) {
+        // 4.5.0-fix30：PagedWidget 不布局子页；页面必须显式锚在 (0,0) 并占满视口。
+        // 旧实现 coverChildren 让页面高度随内容（设置页约 227px）漂移，超出 PAGE_H=180 后整体下移/被裁。
         Flow tab = Flow.column()
-            .coverChildren()
-            .childPadding(4);
+            .pos(0, 0)
+            .size(CONTENT_W, PAGE_H)
+            .padding(0)
+            .childPadding(1);
 
         tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.settings.title")).size(CONTENT_W, 16));
         tab.child(separator(CONTENT_W));
@@ -970,7 +978,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
         // 4.3.0-fix4（窗口④）：GT5u 的电压识别口径是"同机全部能源仓同档"（配方电压取平均、
         // 监控档位要求全等），混插必然降档 —— 在设置页明示，而不是让玩家以为坏了。
         tab.child(
-            new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.settings.mix_tier_hint")).size(CONTENT_W, 40));
+            new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.settings.mix_tier_hint")).size(CONTENT_W, 28));
 
         String[] slotLabels = { "ae2_qof.gui.adaptive_terminal.dynamo_slot",
             "ae2_qof.gui.adaptive_terminal.energy_slot", "ae2_qof.gui.adaptive_terminal.laser_source_slot",
@@ -1008,7 +1016,9 @@ public class AdaptiveNetTerminal extends MTEHatch {
 
     private Flow buildFrequencyTab(IntSyncValue frequencySync) {
         Flow tab = Flow.column()
-            .coverChildren()
+            .pos(0, 0)
+            .size(CONTENT_W, PAGE_H)
+            .padding(0)
             .childPadding(4);
 
         tab.child(new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.frequency.title")).size(CONTENT_W, 16));
@@ -1039,25 +1049,17 @@ public class AdaptiveNetTerminal extends MTEHatch {
         }
     }
 
-    /**
-     * 3.33.0-fix3：电网余额的 BigInteger 精确显示（去除 9.2E 显示上限）。
-     * <p>
-     * 为什么需要：{@code getGridEULong} 把电网钳到 {@code Long.MAX_VALUE}（9.22E），
-     * 用户电网已实测超过 9.2E —— 监控页"电网蓄电"从此永远停在同一数字上。
-     * 这里直接读 {@code BigInteger} 并用 {@link #formatKMG(BigInteger)} 格式化，
-     * 超过 9.22E 也能显示真实值（如 15.80E）。统计/补电等算术路径仍用 long 快照（够用）。
-     */
     // ==================== 3.35.0-fix23：统计 BigInteger 显示链 ====================
 
-    /**
-     * 把 StringSyncValue 承载的十进制串安全解析（空/失败 → 0）。
-     * StringSync 的值在上一次同步前可能为 null —— 面板首帧的兜底。
-     */
     /** 3.35.0-fix23：统计窗口比较用的 BigInteger 电网余额（静态；owner 未知 → 0）。 */
     private static BigInteger bigGrid(UUID owner) {
         return owner == null ? BigInteger.ZERO : AdaptiveHatchHelper.getGridEUBigInteger(owner);
     }
 
+    /**
+     * 把 StringSyncValue 承载的十进制串安全解析（空/失败 → 0）。
+     * StringSync 的值在上一次同步前可能为 null —— 面板首帧的兜底。
+     */
     private static BigInteger biFromString(String text) {
         if (text == null || text.isEmpty()) return BigInteger.ZERO;
         try {
@@ -1065,15 +1067,6 @@ public class AdaptiveNetTerminal extends MTEHatch {
         } catch (RuntimeException e) {
             return BigInteger.ZERO;
         }
-    }
-
-    /**
-     * 客户端可用的**精确电网余额**（与电网总能量行同源：owner 可知时读 helper 的 BigInteger
-     * 快照；不可知时回退钳制 long——与旧显示一致的可用上界）。
-     */
-    private BigInteger biGridExact() {
-        if (networkOwner == null) return BigInteger.ZERO;
-        return AdaptiveHatchHelper.getGridEUBigInteger(networkOwner);
     }
 
     /** 给 formatAmpTier（long 形参）的安培档名：绝对值封顶到 long——档位语义只看数量级。 */
@@ -1134,16 +1127,6 @@ public class AdaptiveNetTerminal extends MTEHatch {
         return sb.toString();
     }
 
-    private static String formatGridEUPrecise(long fallback, UUID owner) {
-        if (owner == null) return formatKMG(fallback);
-        BigInteger exact = AdaptiveHatchHelper.getGridEUBigInteger(owner);
-        if (exact.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) < 0) {
-            // 未超界：保持旧路径（含 0/负值的原样格式化），避免双轨显示不一致
-            return formatKMG(fallback);
-        }
-        return formatKMG(exact);
-    }
-
     private static String formatKMG(BigInteger eu) {
         if (eu.signum() < 0) return "-" + formatKMG(eu.negate());
         BigInteger thousand = BigInteger.valueOf(1000);
@@ -1153,6 +1136,11 @@ public class AdaptiveNetTerminal extends MTEHatch {
         while (val.compareTo(thousand) >= 0 && tier < suffixes.length - 1) {
             val = val.divide(thousand);
             tier++;
+        }
+        // 4.5.0-fix30：超过 E 量级时改用科学计数，避免 "1000000.00E" 这种无意义巨串。
+        // 这里只影响显示，不代表任何数值上限。
+        if (tier == suffixes.length - 1 && val.compareTo(thousand) >= 0) {
+            return formatScientificBig(eu);
         }
         // 保留两位小数：用余数手工拼（BigInteger 没有 %f）
         if (tier > 0) {
@@ -1245,10 +1233,13 @@ public class AdaptiveNetTerminal extends MTEHatch {
     private static final String[] MODE_KEYS = { "ae2_qof.gui.adaptive_terminal.monitor.mode_regular",
         "ae2_qof.gui.adaptive_terminal.monitor.mode_scientific", "ae2_qof.gui.adaptive_terminal.monitor.mode_kmg" };
 
-    private Flow buildMonitorTab(LongSyncValue gridEUSync, StringSyncValue change1hSync, StringSyncValue change10mSync,
-        StringSyncValue avgOut10mSync, StringSyncValue instantInputSync, StringSyncValue instantOutputSync) {
+    private Flow buildMonitorTab(StringSyncValue gridEUBigSync, StringSyncValue change1hSync,
+        StringSyncValue change10mSync, StringSyncValue avgOut10mSync, StringSyncValue instantInputSync,
+        StringSyncValue instantOutputSync) {
         Flow tab = Flow.column()
-            .size(CONTENT_W, 0)
+            .pos(0, 0)
+            .size(CONTENT_W, PAGE_H)
+            .padding(0)
             .childPadding(2);
         final int labelW = 130;
         final int valueW = CONTENT_W - labelW - 4;
@@ -1280,9 +1271,9 @@ public class AdaptiveNetTerminal extends MTEHatch {
                 .child(
                     new TextWidget<>(IKey.lang("ae2_qof.gui.adaptive_terminal.monitor.grid_energy")).size(labelW, 14))
                 .child(new TextWidget<>(IKey.dynamic(() -> {
-                    long gridEU = gridEUSync.getLongValue();
-                    // 3.33.0-fix3：电网余额 >9.22E 时走 BigInteger 精确显示（其余情况与旧路径一致）
-                    return EnumChatFormatting.WHITE + formatGridEUPrecise(gridEU, networkOwner) + " EU";
+                    // 4.5.0-fix30：总量与统计行走同一条服务端精确串；不再回退 getGridEULong 的 9.22E 钳制值。
+                    BigInteger gridEU = biFromString(gridEUBigSync.getValue());
+                    return EnumChatFormatting.WHITE + formatKMG(gridEU) + " EU";
                 })).size(valueW, 14)
                     .textAlign(com.cleanroommc.modularui.utils.Alignment.CenterRight)));
 
@@ -1341,7 +1332,7 @@ public class AdaptiveNetTerminal extends MTEHatch {
                 .child(new TextWidget<>(IKey.dynamic(() -> {
                     // 3.35.0-fix23：分子/分母都 BigInteger 精确（旧链被 9.22E 钳制 ⇒ 恒"无穷"）
                     BigInteger avgOut = biFromString(avgOut10mSync.getValue());
-                    BigInteger gridBig = biGridExact();
+                    BigInteger gridBig = biFromString(gridEUBigSync.getValue());
                     String timeStr;
                     if (avgOut.signum() <= 0 || gridBig.signum() <= 0) {
                         timeStr = "\u221e";
@@ -1423,6 +1414,8 @@ public class AdaptiveNetTerminal extends MTEHatch {
     private Flow buildHatchListTab(StringSyncValue ownerSync, IntSyncValue frequencySync,
         PanelSyncManager syncManager) {
         Flow tab = Flow.column()
+            .pos(0, 0)
+            .padding(0)
             .childPadding(2)
             .size(CONTENT_W, PAGE_H);
 

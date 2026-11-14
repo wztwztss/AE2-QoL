@@ -2,6 +2,7 @@ package com.wztwzt.ae2_qof.hatch.adaptive;
 
 import static gregtech.api.enums.GTValues.V;
 
+import java.math.BigInteger;
 import java.util.UUID;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -18,8 +19,8 @@ import com.cleanroommc.modularui.factory.PosGuiData;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.screen.UISettings;
 import com.cleanroommc.modularui.value.sync.IntSyncValue;
-import com.cleanroommc.modularui.value.sync.LongSyncValue;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
+import com.cleanroommc.modularui.value.sync.StringSyncValue;
 import com.cleanroommc.modularui.widgets.TextWidget;
 import com.cleanroommc.modularui.widgets.layout.Flow;
 
@@ -163,8 +164,11 @@ public class AdaptiveNetHatch extends MTEHatchEnergy {
             }
             // 3.32.0-fix4：consumed 是"这 4 tick 窗口"的增量，必须换算成 EU/t（否则列表实测放大 4 倍）
             helper.updateRealFlowEUt(consumed > 0 ? consumed : 0L);
-            long gridEU = AdaptiveHatchHelper.getGridEULong(owner);
+            BigInteger gridBig = AdaptiveHatchHelper.getGridEUBigInteger(owner);
+            long gridEU = gridBig.min(BigInteger.valueOf(Long.MAX_VALUE))
+                .longValue();
             helper.setLastGridEU(gridEU);
+            helper.setLastGridEUBigInteger(gridBig);
             long maxStore = maxEUStore();
             long halfStore = maxStore / 2;
             if (currentStored < halfStore) {
@@ -173,11 +177,11 @@ public class AdaptiveNetHatch extends MTEHatchEnergy {
                 // == min(halfStore-c, g)），但旧式在 gridEU 逼近 Long.MAX_VALUE（9.22e18，用户实测
                 // 已到 9.2E）时加法环绕成负数 ⇒ target 为负 ⇒ diff<0 ⇒ 补电被静默跳过，
                 // 只剩"恰好抽干到 0"才补一次 —— 表现为机器疯狂开关机。
-                // 新式全部是"小数减小数"，永不溢出；gridEU 已被 getGridEULong 钳到 ≤ Long.MAX_VALUE。
+                // 4.5.0-fix30：不再先钳到 long；直接在 BigInteger 域取 min，消除 9.22E 钳制语义。
                 long headroom = halfStore - currentStored; // currentStored < halfStore ⇒ 恒为正
-                long diff = Math.min(headroom, gridEU);
-                if (diff > 0) {
-                    aBase.increaseStoredEnergyUnits(diff, false);
+                BigInteger diffBig = gridBig.min(BigInteger.valueOf(headroom));
+                if (diffBig.signum() > 0) {
+                    aBase.increaseStoredEnergyUnits(diffBig.longValue(), false);
                 }
             }
             lastStoredEU = aBase.getStoredEU();
@@ -261,10 +265,11 @@ public class AdaptiveNetHatch extends MTEHatchEnergy {
         IntSyncValue boundSync = new IntSyncValue(() -> helper.isBound() ? 1 : 0, v -> {});
         IntSyncValue voltageSync = new IntSyncValue(() -> helper.getCurrentVoltageTier(), v -> {});
         IntSyncValue ampSync = new IntSyncValue(() -> helper.getCurrentAmps(), v -> {});
-        LongSyncValue gridEUSync = new LongSyncValue(
+        StringSyncValue gridEUSync = new StringSyncValue(
             () -> helper.isBound() && helper.getNetworkOwner() != null
-                ? AdaptiveHatchHelper.getGridEULong(helper.getNetworkOwner())
-                : 0L,
+                ? AdaptiveHatchHelper.getGridEUBigInteger(helper.getNetworkOwner())
+                    .toString()
+                : "0",
             v -> {});
         syncManager.syncValue("aBD", boundSync);
         syncManager.syncValue("aVT", voltageSync);
@@ -300,24 +305,17 @@ public class AdaptiveNetHatch extends MTEHatchEnergy {
         })).size(260, 14));
 
         column.child(new TextWidget<>(IKey.dynamic(() -> {
-            long gridEU = gridEUSync.getLongValue();
-            return EnumChatFormatting.AQUA + StatCollector.translateToLocal(
-                "ae2_qof.gui.adaptive_hatch.grid_energy") + " " + EnumChatFormatting.WHITE + formatEU(gridEU) + " EU";
+            // 4.5.0-fix30：Grid 行走服务端精确串，不再经过 getGridEULong 的 9.22E 钳制。
+            return EnumChatFormatting.AQUA + StatCollector.translateToLocal("ae2_qof.gui.adaptive_hatch.grid_energy")
+                + " "
+                + EnumChatFormatting.WHITE
+                + AdaptiveHatchHelper.formatEUExact(AdaptiveHatchHelper.parseEUString(gridEUSync.getValue()))
+                + " EU";
         })).size(260, 14));
 
         panel.bindPlayerInventory();
         panel.child(column);
         return panel;
-    }
-
-    private static String formatEU(long eu) {
-        if (eu >= 1_000_000_000_000_000_000L) return String.format("%.2fE", eu / 1_000_000_000_000_000_000.0);
-        if (eu >= 1_000_000_000_000_000L) return String.format("%.2fP", eu / 1_000_000_000_000_000.0);
-        if (eu >= 1_000_000_000_000L) return String.format("%.2fT", eu / 1_000_000_000_000.0);
-        if (eu >= 1_000_000_000L) return String.format("%.2fG", eu / 1_000_000_000.0);
-        if (eu >= 1_000_000L) return String.format("%.2fM", eu / 1_000_000.0);
-        if (eu >= 1_000L) return String.format("%.1fK", eu / 1_000.0);
-        return String.valueOf(eu);
     }
 
     @Override
