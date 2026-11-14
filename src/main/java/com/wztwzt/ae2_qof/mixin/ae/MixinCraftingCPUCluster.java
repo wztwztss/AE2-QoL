@@ -951,9 +951,10 @@ public abstract class MixinCraftingCPUCluster {
                                 }
                                 final long back = got.getStackSize() - consumeRounds * extraPer[x];
                                 if (back > 0) {
-                                    this.inventory
-                                        .injectItems(got.copy()
-                                            .setStackSize(back), Actionable.MODULATE);
+                                    this.inventory.injectItems(
+                                        got.copy()
+                                            .setStackSize(back),
+                                        Actionable.MODULATE);
                                 }
                                 extraStack[x] = null;
                             }
@@ -985,7 +986,9 @@ public abstract class MixinCraftingCPUCluster {
                                     return;
                                 }
 
-                                final List<IAEStack<?>> condensedInputsForRetry = getExpandedCondensedInputs(details, cc);
+                                final List<IAEStack<?>> condensedInputsForRetry = getExpandedCondensedInputs(
+                                    details,
+                                    cc);
                                 if (condensedInputsForRetry == null) {
                                     throw new IllegalStateException("Input-only pattern expansion failed");
                                 }
@@ -1001,8 +1004,10 @@ public abstract class MixinCraftingCPUCluster {
                     // 它的批量实现是 vanilla executeCrafting 方法体内的 @Redirect；我们的 HEAD cancel
                     // 让方法体不再执行，因此必须主动调用。UNAVAILABLE(-1) 表示对方实现不存在：退回单轮推送。
                     long nativeBatchRounds = TenkeiTechNativeBatchBridge.UNAVAILABLE;
-                    if (!smartPushed && effectiveN == 1 && TenkeiTechIntegration.isAutoTemplateHatch(medium)
-                        && medium instanceof ISmartDoublingMedium sdm && !sdm.isSmartDoublingEnabled()) {
+                    if (!smartPushed && effectiveN == 1
+                        && TenkeiTechIntegration.isAutoTemplateHatch(medium)
+                        && medium instanceof ISmartDoublingMedium sdm
+                        && !sdm.isSmartDoublingEnabled()) {
                         nativeBatchRounds = TenkeiTechNativeBatchBridge
                             .tryPushNativeBatch(this, medium, details, craftingInventory, eg, cc);
                     }
@@ -1044,140 +1049,144 @@ public abstract class MixinCraftingCPUCluster {
                             sr = ScheduledReason.NOT_ENOUGH_INGREDIENTS;
                             break;
                         }
-                    } else if (nativeBatchRounds < 0L && !smartPushed
-                        && medium.pushPattern(details, craftingInventory)) {
-                        this.somethingChanged = true;
-                        this.remainingOperations--;
-                        pushedPattern = true;
+                    } else
+                        if (nativeBatchRounds < 0L && !smartPushed && medium.pushPattern(details, craftingInventory)) {
+                            this.somethingChanged = true;
+                            this.remainingOperations--;
+                            pushedPattern = true;
 
-                        // 注意：useMulti 回退时（pushPatternMulti 拒绝接收）craftingInventory 只含
-                        // 1 轮材料（见上方 target 构造），必须走原版逐轮记账；仅 GT/其它
-                        // （!useMulti）单次收满 N× 缓冲才允许按 N 轮记账，
-                        // 否则会少产出 N-1 轮且白扣 (N-1)×sum 功率。
-                        if (!useMulti && effectiveN > 1) {
-                            // ---- 智能倍增（GT/其它）：pushPattern 一次收 N 轮 ----
-                            eg.extractAEPower(sum * effectiveN, Actionable.MODULATE, PowerMultiplier.CONFIG);
-                            ae2qol$accountSmartPush(effectiveN, details, craftingEntry.getValue());
+                            // 注意：useMulti 回退时（pushPatternMulti 拒绝接收）craftingInventory 只含
+                            // 1 轮材料（见上方 target 构造），必须走原版逐轮记账；仅 GT/其它
+                            // （!useMulti）单次收满 N× 缓冲才允许按 N 轮记账，
+                            // 否则会少产出 N-1 轮且白扣 (N-1)×sum 功率。
+                            if (!useMulti && effectiveN > 1) {
+                                // ---- 智能倍增（GT/其它）：pushPattern 一次收 N 轮 ----
+                                eg.extractAEPower(sum * effectiveN, Actionable.MODULATE, PowerMultiplier.CONFIG);
+                                ae2qol$accountSmartPush(effectiveN, details, craftingEntry.getValue());
 
-                            craftingInventory = null; // hand off complete!
-                            didPatternCraft = true;
-                            this.markDirty();
+                                craftingInventory = null; // hand off complete!
+                                didPatternCraft = true;
+                                this.markDirty();
 
-                            // GT 的 isBusy() 始终返回 false，需手动冷却防止每 tick 重复推送。
-                            knownBusyMediums.add(medium);
+                                // GT 的 isBusy() 始终返回 false，需手动冷却防止每 tick 重复推送。
+                                knownBusyMediums.add(medium);
 
-                            executedTasks += effectiveN;
-                            ae2qol$taskValueAdd(craftingEntry.getValue(), -effectiveN);
-                            if (ae2qol$taskValue(craftingEntry.getValue()) <= 0) {
-                                // This craftingEntry is done.
-                                break doWhileCraftingLoop;
-                            }
-
-                            if (this.remainingOperations == 0) {
-                                if (mediumListCheck != null) parallelismProvider.put(details, mediumListCheck);
-                                return;
-                            }
-
-                            final List<IAEStack<?>> condensedInputsForRetry = getExpandedCondensedInputs(details, cc);
-                            if (condensedInputsForRetry == null) {
-                                throw new IllegalStateException("Input-only pattern expansion failed");
-                            }
-                            if (!this.canCraft(details, condensedInputsForRetry)) {
-                                sr = ScheduledReason.NOT_ENOUGH_INGREDIENTS;
-                                break;
-                            }
-                        } else {
-                            // ---- 原版逐轮路径 ----
-                            eg.extractAEPower(sum, Actionable.MODULATE, PowerMultiplier.CONFIG);
-
-                            if (!ae2qol$finalOutputIsFakeCrafting() && ae2qol$finalOutputIsFinalPattern(details)) {
-                                if (medium instanceof DualityInterface di && di.isFakeCraftingMode()) {
-                                    ae2qol$finalOutputSetFakeCrafting();
-                                }
-                            }
-
-                            if (ae2qol$finalOutputIsFakeCrafting() && ae2qol$finalOutputIsFinalPattern(details)) {
-                                ae2qol$taskValueAdd(craftingEntry.getValue(), -1);
-
+                                executedTasks += effectiveN;
+                                ae2qol$taskValueAdd(craftingEntry.getValue(), -effectiveN);
                                 if (ae2qol$taskValue(craftingEntry.getValue()) <= 0) {
-                                    tasks.remove(details);
-                                    parallelismProvider.remove(details);
-                                    reasonProvider.remove(details);
-                                    craftingTaskIterator.remove();
+                                    // This craftingEntry is done.
+                                    break doWhileCraftingLoop;
+                                }
 
-                                    ae2qol$finalOutputPerformFakeCrafting(details);
+                                if (this.remainingOperations == 0) {
+                                    if (mediumListCheck != null) parallelismProvider.put(details, mediumListCheck);
+                                    return;
+                                }
 
+                                final List<IAEStack<?>> condensedInputsForRetry = getExpandedCondensedInputs(
+                                    details,
+                                    cc);
+                                if (condensedInputsForRetry == null) {
+                                    throw new IllegalStateException("Input-only pattern expansion failed");
+                                }
+                                if (!this.canCraft(details, condensedInputsForRetry)) {
+                                    sr = ScheduledReason.NOT_ENOUGH_INGREDIENTS;
                                     break;
-                                } else {
-                                    ae2qol$finalOutputPerformFakeCrafting(details);
-
-                                    continue;
                                 }
-                            }
+                            } else {
+                                // ---- 原版逐轮路径 ----
+                                eg.extractAEPower(sum, Actionable.MODULATE, PowerMultiplier.CONFIG);
 
-                            final CraftingDiagnosticSessionId diagnosticSessionId = ae2qol$consumeCraftSession(
-                                craftingEntry.getValue());
-                            final long outputObservedAtTick = diagnosticSessionId == null
-                                || !this.isCraftingDiagnosticsEnabled() ? 0L : ae2qol$getServerTick();
-                            // Process output items.
-                            for (final IAEStack<?> outputItemStack : details.getCondensedAEOutputs()) {
-                                if (outputObservedAtTick > 0L) {
-                                    ae2qol$recordExpectedOutput(
-                                        outputItemStack,
-                                        outputObservedAtTick,
-                                        diagnosticSessionId);
-                                }
-                                this.postChange(outputItemStack, this.machineSrc);
-                                this.waitingFor.add(outputItemStack.copy());
-                                this.postCraftingStatusChange(outputItemStack.copy());
-                            }
-
-                            if (details.isCraftable()) {
-                                FMLCommonHandler.instance()
-                                    .firePlayerCraftingEvent(
-                                        Platform.getPlayer((WorldServer) this.getWorld()),
-                                        details.getOutput(craftingInventory, this.getWorld()),
-                                        craftingInventory);
-                                for (int x = 0; x < craftingInventory.getSizeInventory(); x++) {
-                                    final ItemStack output = Platform
-                                        .getContainerItem(craftingInventory.getStackInSlot(x));
-                                    if (output != null) {
-                                        final IAEItemStack cItem = AEItemStack.create(output);
-                                        this.postChange(cItem, this.machineSrc);
-                                        this.waitingFor.add(cItem);
-                                        this.postCraftingStatusChange(cItem);
+                                if (!ae2qol$finalOutputIsFakeCrafting() && ae2qol$finalOutputIsFinalPattern(details)) {
+                                    if (medium instanceof DualityInterface di && di.isFakeCraftingMode()) {
+                                        ae2qol$finalOutputSetFakeCrafting();
                                     }
                                 }
-                            }
 
-                            craftingInventory = null; // hand off complete!
-                            didPatternCraft = true;
-                            this.markDirty();
+                                if (ae2qol$finalOutputIsFakeCrafting() && ae2qol$finalOutputIsFinalPattern(details)) {
+                                    ae2qol$taskValueAdd(craftingEntry.getValue(), -1);
 
-                            executedTasks += 1;
-                            ae2qol$taskValueAdd(craftingEntry.getValue(), -1);
-                            if (ae2qol$taskValue(craftingEntry.getValue()) <= 0) {
-                                // This craftingEntry is done.
-                                break doWhileCraftingLoop;
-                            }
+                                    if (ae2qol$taskValue(craftingEntry.getValue()) <= 0) {
+                                        tasks.remove(details);
+                                        parallelismProvider.remove(details);
+                                        reasonProvider.remove(details);
+                                        craftingTaskIterator.remove();
 
-                            if (this.remainingOperations == 0) {
-                                if (mediumListCheck != null) parallelismProvider.put(details, mediumListCheck);
-                                return;
-                            }
-                            // Smart blocking is fine sending the same recipe again.
-                            if (medium.getBlockingMode() == BlockingMode.BLOCKING) break;
+                                        ae2qol$finalOutputPerformFakeCrafting(details);
 
-                            final List<IAEStack<?>> condensedInputsForRetry = getExpandedCondensedInputs(details, cc);
-                            if (condensedInputsForRetry == null) {
-                                throw new IllegalStateException("Input-only pattern expansion failed");
-                            }
-                            if (!this.canCraft(details, condensedInputsForRetry)) {
-                                sr = ScheduledReason.NOT_ENOUGH_INGREDIENTS;
-                                break;
+                                        break;
+                                    } else {
+                                        ae2qol$finalOutputPerformFakeCrafting(details);
+
+                                        continue;
+                                    }
+                                }
+
+                                final CraftingDiagnosticSessionId diagnosticSessionId = ae2qol$consumeCraftSession(
+                                    craftingEntry.getValue());
+                                final long outputObservedAtTick = diagnosticSessionId == null
+                                    || !this.isCraftingDiagnosticsEnabled() ? 0L : ae2qol$getServerTick();
+                                // Process output items.
+                                for (final IAEStack<?> outputItemStack : details.getCondensedAEOutputs()) {
+                                    if (outputObservedAtTick > 0L) {
+                                        ae2qol$recordExpectedOutput(
+                                            outputItemStack,
+                                            outputObservedAtTick,
+                                            diagnosticSessionId);
+                                    }
+                                    this.postChange(outputItemStack, this.machineSrc);
+                                    this.waitingFor.add(outputItemStack.copy());
+                                    this.postCraftingStatusChange(outputItemStack.copy());
+                                }
+
+                                if (details.isCraftable()) {
+                                    FMLCommonHandler.instance()
+                                        .firePlayerCraftingEvent(
+                                            Platform.getPlayer((WorldServer) this.getWorld()),
+                                            details.getOutput(craftingInventory, this.getWorld()),
+                                            craftingInventory);
+                                    for (int x = 0; x < craftingInventory.getSizeInventory(); x++) {
+                                        final ItemStack output = Platform
+                                            .getContainerItem(craftingInventory.getStackInSlot(x));
+                                        if (output != null) {
+                                            final IAEItemStack cItem = AEItemStack.create(output);
+                                            this.postChange(cItem, this.machineSrc);
+                                            this.waitingFor.add(cItem);
+                                            this.postCraftingStatusChange(cItem);
+                                        }
+                                    }
+                                }
+
+                                craftingInventory = null; // hand off complete!
+                                didPatternCraft = true;
+                                this.markDirty();
+
+                                executedTasks += 1;
+                                ae2qol$taskValueAdd(craftingEntry.getValue(), -1);
+                                if (ae2qol$taskValue(craftingEntry.getValue()) <= 0) {
+                                    // This craftingEntry is done.
+                                    break doWhileCraftingLoop;
+                                }
+
+                                if (this.remainingOperations == 0) {
+                                    if (mediumListCheck != null) parallelismProvider.put(details, mediumListCheck);
+                                    return;
+                                }
+                                // Smart blocking is fine sending the same recipe again.
+                                if (medium.getBlockingMode() == BlockingMode.BLOCKING) break;
+
+                                final List<IAEStack<?>> condensedInputsForRetry = getExpandedCondensedInputs(
+                                    details,
+                                    cc);
+                                if (condensedInputsForRetry == null) {
+                                    throw new IllegalStateException("Input-only pattern expansion failed");
+                                }
+                                if (!this.canCraft(details, condensedInputsForRetry)) {
+                                    sr = ScheduledReason.NOT_ENOUGH_INGREDIENTS;
+                                    break;
+                                }
                             }
                         }
-                    }
 
                     sr = medium.getScheduledReason();
                 }

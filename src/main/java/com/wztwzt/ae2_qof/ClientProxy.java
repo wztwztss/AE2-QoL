@@ -451,10 +451,7 @@ public class ClientProxy extends CommonProxy {
                 } else if (!message.success && Minecraft.getMinecraft().thePlayer != null) {
                     Minecraft.getMinecraft().thePlayer.addChatMessage(
                         new ChatComponentText(
-                            EnumChatFormatting.RED + "[AE2QoL] 服务器拒绝配置 "
-                                + message.key
-                                + "："
-                                + message.message));
+                            EnumChatFormatting.RED + "[AE2QoL] 服务器拒绝配置 " + message.key + "：" + message.message));
                 }
             });
     }

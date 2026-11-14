@@ -53,12 +53,12 @@ public final class TenkeiTechNativeBatchBridge {
     /**
      * 尝试调用 TenkeiTech 的原生批量发配。
      *
-     * @param cluster            {@code CraftingCPUCluster} 实例（this）
-     * @param medium             样板介质（必须是 TenkeiTech 自带模板仓）
-     * @param details            样板
-     * @param craftingTable      仅含 1 轮原料的 ME 合成桌（对方实现会自行放大）
-     * @param energyGrid         能量网
-     * @param craftingGridCache  合成网格缓存
+     * @param cluster           {@code CraftingCPUCluster} 实例（this）
+     * @param medium            样板介质（必须是 TenkeiTech 自带模板仓）
+     * @param details           样板
+     * @param craftingTable     仅含 1 轮原料的 ME 合成桌（对方实现会自行放大）
+     * @param energyGrid        能量网
+     * @param craftingGridCache 合成网格缓存
      * @return 见类注释的返回值约定
      */
     public static long tryPushNativeBatch(Object cluster, ICraftingMedium medium, ICraftingPatternDetails details,
@@ -67,9 +67,7 @@ public final class TenkeiTechNativeBatchBridge {
         if (pushPatternBatch == null) {
             if (!missingLogged) {
                 missingLogged = true;
-                MyMod.LOG.info(
-                    "[AE2QoL] 未找到 TenkeiTech 原生批量方法（*{}），三台自带模板仓关闭开关时降级为单轮推送",
-                    METHOD_NAME_SUFFIX);
+                MyMod.LOG.info("[AE2QoL] 未找到 TenkeiTech 原生批量方法（*{}），三台自带模板仓关闭开关时降级为单轮推送", METHOD_NAME_SUFFIX);
             }
             return UNAVAILABLE;
         }

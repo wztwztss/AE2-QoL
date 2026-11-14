@@ -62,8 +62,7 @@ import gregtech.api.metatileentity.BaseMetaTileEntity;
  * <li>连接目标增加了 owner 校验：GT 机器有 owner 时，只允许分配器 owner 连接。</li>
  * </ul>
  */
-public class TileWirelessDistributor extends AENetworkTile
-    implements IColorableTile, IPowerChannelState {
+public class TileWirelessDistributor extends AENetworkTile implements IColorableTile, IPowerChannelState {
 
     public static final int MAX_SIZE = 40;
     public static final int MAX_SYNC_ENTRIES = 256;
@@ -397,8 +396,9 @@ public class TileWirelessDistributor extends AENetworkTile
     }
 
     private String linkTarget(BaseMetaTileEntity target) {
-        if (target == null || target.getProxy() == null || !target.getProxy()
-            .isReady()
+        if (target == null || target.getProxy() == null
+            || !target.getProxy()
+                .isReady()
             || target.getProxy()
                 .isActive()) {
             return "gui.ae2_qof.wireless_distributor.fail.unavailable";
@@ -423,8 +423,10 @@ public class TileWirelessDistributor extends AENetworkTile
         try {
             IGridConnection connection = AEApi.instance()
                 .createGridConnection(selfNode, targetNode);
-            connectionWrappers
-                .add(new GridConnectionWrapper(new DimensionalCoord(worldObj, target.xCoord, target.yCoord, target.zCoord), connection));
+            connectionWrappers.add(
+                new GridConnectionWrapper(
+                    new DimensionalCoord(worldObj, target.xCoord, target.yCoord, target.zCoord),
+                    connection));
             this.updateUsedChannels();
             this.markDirty();
             this.markForUpdate();
@@ -438,8 +440,9 @@ public class TileWirelessDistributor extends AENetworkTile
     }
 
     private boolean canLink(BaseMetaTileEntity target) {
-        if (target == null || target.getProxy() == null || !target.getProxy()
-            .isReady()
+        if (target == null || target.getProxy() == null
+            || !target.getProxy()
+                .isReady()
             || target.getProxy()
                 .isActive()) {
             return false;
@@ -614,9 +617,8 @@ public class TileWirelessDistributor extends AENetworkTile
         while (iterator.hasNext()) {
             GridConnectionWrapper wrapper = iterator.next();
             DimensionalCoord coord = wrapper.coord;
-            if (coord.getDimension() != worldObj.provider.dimensionId
-                || !worldObj.getChunkProvider()
-                    .chunkExists(coord.x >> 4, coord.z >> 4)) {
+            if (coord.getDimension() != worldObj.provider.dimensionId || !worldObj.getChunkProvider()
+                .chunkExists(coord.x >> 4, coord.z >> 4)) {
                 continue;
             }
             TileEntity tile = worldObj.getTileEntity(coord.x, coord.y, coord.z);

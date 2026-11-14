@@ -19,8 +19,8 @@ import appeng.api.networking.energy.IEnergyGrid;
 import appeng.api.networking.energy.IEnergySource;
 import appeng.api.networking.security.BaseActionSource;
 import appeng.api.networking.security.PlayerSource;
-import appeng.api.parts.IPatternTerminal;
 import appeng.api.networking.storage.IStorageGrid;
+import appeng.api.parts.IPatternTerminal;
 import appeng.api.storage.IMEMonitor;
 import appeng.api.storage.StorageName;
 import appeng.api.storage.data.IAEItemStack;
@@ -71,21 +71,20 @@ public final class AE2PatternEncoder {
             if (power == null) {
                 IEnergyGrid energyGrid = (IEnergyGrid) grid.getCache(IEnergyGrid.class);
                 if (energyGrid != null) {
-                    power = new ChannelPowerSrc(container.getAnchor().getActionableNode(), energyGrid);
+                    power = new ChannelPowerSrc(
+                        container.getAnchor()
+                            .getActionableNode(),
+                        energyGrid);
                 }
             }
             BaseActionSource action = container.getActionSource();
             if (action == null) action = new PlayerSource(player, container.getAnchor());
 
-            boolean encoded = PatternEncodingHelper.encode(
-                terminal,
-                power,
-                monitor,
-                action,
-                player.getCommandSenderName(),
-                player.worldObj);
+            boolean encoded = PatternEncodingHelper
+                .encode(terminal, power, monitor, action, player.getCommandSenderName(), player.worldObj);
             if (encoded) {
-                patternContainer.getPatternInv().markDirty();
+                patternContainer.getPatternInv()
+                    .markDirty();
                 MyMod.LOG.info("[Encode] AE2 native pattern encoder OK");
             }
             return encoded;
@@ -95,8 +94,8 @@ public final class AE2PatternEncoder {
         }
     }
 
-    private static IPatternTerminal createTerminal(PatternContainer patternContainer,
-        ContainerMergedTerminal container, IAEStackInventory inputs, IAEStackInventory outputs) {
+    private static IPatternTerminal createTerminal(PatternContainer patternContainer, ContainerMergedTerminal container,
+        IAEStackInventory inputs, IAEStackInventory outputs) {
         InvocationHandler handler = (proxy, method, args) -> {
             switch (method.getName()) {
                 case "getInventoryByName":
@@ -119,7 +118,8 @@ public final class AE2PatternEncoder {
                 case "removePatternEncodeListeners":
                     return null;
                 case "getActionableNode":
-                    return container.getAnchor().getActionableNode();
+                    return container.getAnchor()
+                        .getActionableNode();
                 case "getGrid":
                     return container.getGrid();
                 case "saveAEStackInv":

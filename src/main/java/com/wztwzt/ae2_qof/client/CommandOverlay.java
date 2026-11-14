@@ -33,12 +33,14 @@ public class CommandOverlay extends CommandBase {
                 .append(EnumChatFormatting.GRAY)
                 .append(" settings=")
                 .append(Config.getSettingsPath());
-            if (!Config.getLastReloadError().isEmpty()) {
+            if (!Config.getLastReloadError()
+                .isEmpty()) {
                 sb.append(EnumChatFormatting.RED)
                     .append(" load_error=")
                     .append(Config.getLastReloadError());
             }
-            if (!Config.getLastWriteError().isEmpty()) {
+            if (!Config.getLastWriteError()
+                .isEmpty()) {
                 sb.append(EnumChatFormatting.RED)
                     .append(" write_error=")
                     .append(Config.getLastWriteError());
@@ -49,10 +51,10 @@ public class CommandOverlay extends CommandBase {
         boolean current = OverlayConfig.isEnabled();
         boolean ok = OverlayConfig.setEnabled(!current);
         boolean now = ok ? !current : current;
-        String message = ok
-            ? EnumChatFormatting.GREEN + "[APU] NEI Overlay: " + (now ? "ON" : "OFF")
+        String message = ok ? EnumChatFormatting.GREEN + "[APU] NEI Overlay: " + (now ? "ON" : "OFF")
             : EnumChatFormatting.RED + "[APU] NEI Overlay 写入失败: "
-                + (Config.getLastWriteError().isEmpty() ? "settings.json 不可写" : Config.getLastWriteError());
+                + (Config.getLastWriteError()
+                    .isEmpty() ? "settings.json 不可写" : Config.getLastWriteError());
         sender.addChatMessage(new ChatComponentText(message));
     }
 

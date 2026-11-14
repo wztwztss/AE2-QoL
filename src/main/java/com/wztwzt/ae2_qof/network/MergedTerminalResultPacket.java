@@ -36,8 +36,7 @@ public class MergedTerminalResultPacket implements IMessage {
         this(machineName, recipeMap, needsMapping, false);
     }
 
-    public MergedTerminalResultPacket(String machineName, String recipeMap, boolean needsMapping,
-        boolean autoUpload) {
+    public MergedTerminalResultPacket(String machineName, String recipeMap, boolean needsMapping, boolean autoUpload) {
         this.machineName = machineName != null ? machineName : "";
         this.recipeMap = recipeMap;
         this.needsMapping = needsMapping;

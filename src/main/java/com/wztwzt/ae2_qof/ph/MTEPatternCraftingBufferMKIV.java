@@ -427,11 +427,8 @@ public class MTEPatternCraftingBufferMKIV extends PatternDualInputHatch {
                     t -> t.addLine(IKey.lang("ae2_qof.gui.pattern_buffer.dismantle"))
                         .addLine(IKey.lang("ae2_qof.gui.pattern_buffer.dismantle.hint")))
                 .syncHandler(
-                    PatternBufferWidgets.makeDismantleHandler(
-                        syncManager,
-                        "dismantle",
-                        () -> getBaseMetaTileEntity()))
-            .pos(3, 3 + 32 + 18 + 18 + 4 + 22));
+                    PatternBufferWidgets.makeDismantleHandler(syncManager, "dismantle", () -> getBaseMetaTileEntity()))
+                .pos(3, 3 + 32 + 18 + 18 + 4 + 22));
         page3.child(
             IKey.lang("ae2_qof.gui.pattern_buffer.dismantle")
                 .asWidget()

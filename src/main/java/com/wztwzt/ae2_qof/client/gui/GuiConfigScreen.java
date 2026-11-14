@@ -28,8 +28,8 @@ import cpw.mods.fml.relauncher.SideOnly;
 /**
  * 游戏内配置页面（Mods → AE2 QoL → Config）：
  * - 配置页：编辑 io_port_rate / smart_doubling_max_rounds / nei_overlay_enabled，
- *   单机/局域网主机直接写本地 settings.json（避免单人未开作弊时被 OP 检查静默丢弃）；
- *   远程服务器发送 C2S 并等待 ConfigSetResultPacket 回执；NEI 开关始终只写本地。
+ * 单机/局域网主机直接写本地 settings.json（避免单人未开作弊时被 OP 检查静默丢弃）；
+ * 远程服务器发送 C2S 并等待 ConfigSetResultPacket 回执；NEI 开关始终只写本地。
  * - 映射页（三个子页）：展示并编辑配方名映射（recipe_names.json）、记住的供应器
  * （remembered_providers.json），以及全部 GT 配方池 UID 参考（配方参考）。
  */
@@ -466,9 +466,7 @@ public class GuiConfigScreen extends GuiScreen {
         String status3 = this.applyOverlaySetting(this.overlayField.getText());
         String status4 = this.applySingle("smart_doubling_push_cap", this.pushCapField.getText());
         String combined = joinStatus(status, status2, status3, status4);
-        this.statusText = combined.isEmpty()
-            ? "已应用（NEI 开关本地立即生效；单机/局域网主机直接写入；远程服务器以回执为准）"
-            : combined;
+        this.statusText = combined.isEmpty() ? "已应用（NEI 开关本地立即生效；单机/局域网主机直接写入；远程服务器以回执为准）" : combined;
         this.statusError = isErrorStatus(combined);
     }
 

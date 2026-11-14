@@ -17,7 +17,8 @@ import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 /**
  * 样板总成 GUI 的按钮工厂（4.5.0-fix18「拆除」）。
  *
- * <p>为什么与 {@link PatternWindowWidgets} 分开：那个类照抄 PH 的内部类，注释里写明了
+ * <p>
+ * 为什么与 {@link PatternWindowWidgets} 分开：那个类照抄 PH 的内部类，注释里写明了
  * 「只用 MUI2 公开 API，PH 升级时复核一次」；拆除是纯本模组功能，不该混进那份复制品里，
  * 免得以后核对 PH API 时被本模组逻辑干扰。
  */
@@ -34,7 +35,8 @@ public final class PatternBufferWidgets {
      * 拆除按钮的同步 handler：**只在服务端执行**（{@code syncManager.isClient()} 守卫，
      * 与 {@code PatternClipboardGui} 的清空按钮同一套写法）。
      *
-     * <p>二次确认：样板总成里可能躺着上百个样板（MK.IV 360 格），误点代价高。第一次点击
+     * <p>
+     * 二次确认：样板总成里可能躺着上百个样板（MK.IV 360 格），误点代价高。第一次点击
      * 只发一条黄字提示并记 10 秒；10 秒内再点才执行。超时或已拆则重新计时。
      */
     public static InteractionSyncHandler makeDismantleHandler(PanelSyncManager syncManager, String key,
@@ -56,8 +58,8 @@ public final class PatternBufferWidgets {
                 PENDING_DISMANTLE.put(id, Long.valueOf(now + CONFIRM_WINDOW_MS));
                 player.addChatMessage(
                     new ChatComponentText(
-                        EnumChatFormatting.YELLOW + StatCollector.translateToLocal(
-                            "ae2_qof.gui.pattern_buffer.dismantle.confirm")));
+                        EnumChatFormatting.YELLOW
+                            + StatCollector.translateToLocal("ae2_qof.gui.pattern_buffer.dismantle.confirm")));
                 return;
             }
 

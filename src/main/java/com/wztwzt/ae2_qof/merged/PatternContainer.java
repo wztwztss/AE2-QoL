@@ -298,8 +298,7 @@ public class PatternContainer implements IOptionalSlotHost {
             patternSlotIN.putStack(null);
         }
         if (!playerInv.addItemStackToInventory(moved)) {
-            playerInv.player
-                .entityDropItem(moved, 0);
+            playerInv.player.entityDropItem(moved, 0);
         }
         patternSlotOUT.putStack(null);
     }
@@ -667,8 +666,8 @@ public class PatternContainer implements IOptionalSlotHost {
             for (int y = 0; y < CRAFTING_GRID_HEIGHT; y++) {
                 for (int x = 0; x < CRAFTING_GRID_WIDTH; x++) {
                     if (x > 0 && !inverted) continue;
-                    outputs[x * CRAFTING_GRID_HEIGHT + y] = outputExSlots[x * CRAFTING_GRID_HEIGHT + y
-                        + page * CRAFTING_GRID_SLOTS].getStack();
+                    outputs[x * CRAFTING_GRID_HEIGHT
+                        + y] = outputExSlots[x * CRAFTING_GRID_HEIGHT + y + page * CRAFTING_GRID_SLOTS].getStack();
                 }
             }
         }
@@ -849,9 +848,8 @@ public class PatternContainer implements IOptionalSlotHost {
                 boolean merged = false;
                 for (ItemStack existing : stacks) {
                     if (Platform.isSameItemPrecise(existing, stack)) {
-                        existing.stackSize = (int) Math.min(
-                            MAX_GHOST_STACK_SIZE,
-                            (long) existing.stackSize + stack.stackSize);
+                        existing.stackSize = (int) Math
+                            .min(MAX_GHOST_STACK_SIZE, (long) existing.stackSize + stack.stackSize);
                         merged = true;
                         break;
                     }

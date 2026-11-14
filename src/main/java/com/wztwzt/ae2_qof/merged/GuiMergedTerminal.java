@@ -195,9 +195,14 @@ public class GuiMergedTerminal extends GuiInterfaceTerminal {
 
             // 模式取容器同步字段（打开时恢复上次保存的模式）
             boolean crafting = getMergedContainer().syncCraftingMode;
-            MergedTerminalPanelHandler
-                .reposition(this.guiLeft, this.guiTop, crafting, pc.isInverted(), pc.getActivePage(),
-                    getMergedContainer().syncCombine, getMergedContainer().syncPrioritize);
+            MergedTerminalPanelHandler.reposition(
+                this.guiLeft,
+                this.guiTop,
+                crafting,
+                pc.isInverted(),
+                pc.getActivePage(),
+                getMergedContainer().syncCombine,
+                getMergedContainer().syncPrioritize);
 
             String name = ClientState.mergedMachineName;
             String text = (name != null && !name.isEmpty()) ? "\u673a\u5668: " + name : "\u673a\u5668: -";
@@ -252,7 +257,9 @@ public class GuiMergedTerminal extends GuiInterfaceTerminal {
                 appeng.api.storage.data.IAEStack<?> stack = PatternContainer.convertToAEStack(s.getStack());
                 if (stack != null) {
                     MergedVirtualPatternSlot virtual = new MergedVirtualPatternSlot(
-                        s.xDisplayPosition, s.yDisplayPosition, stack);
+                        s.xDisplayPosition,
+                        s.yDisplayPosition,
+                        stack);
                     virtual.drawStackAndOverlay(this.mc, this.lastMouseX - this.guiLeft, this.lastMouseY - this.guiTop);
                     return;
                 }
@@ -536,7 +543,9 @@ public class GuiMergedTerminal extends GuiInterfaceTerminal {
                     if (shift && ctrl) {
                         int direction = wheel > 0 ? 1 : -1;
                         ModNetwork.CHANNEL.sendToServer(
-                            new com.wztwzt.ae2_qof.network.MergedTerminalScrollReplacePacket(slot.slotNumber, direction));
+                            new com.wztwzt.ae2_qof.network.MergedTerminalScrollReplacePacket(
+                                slot.slotNumber,
+                                direction));
                         return true;
                     }
                     if (!pc.isOutputSlot(slot)) {

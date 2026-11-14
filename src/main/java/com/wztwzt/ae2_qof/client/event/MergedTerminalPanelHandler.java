@@ -14,8 +14,6 @@ import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.gameevent.TickEvent;
 
 import org.lwjgl.input.Keyboard;
 
@@ -39,6 +37,7 @@ import appeng.client.gui.widgets.GuiScrollbar;
 import appeng.client.gui.widgets.GuiTabButton;
 import appeng.core.localization.GuiText;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.TickEvent;
 
 /**
  * 二合一终端面板按钮：创建 AE 原生样式按钮、布局重定位与动作分发。
@@ -199,18 +198,10 @@ public class MergedTerminalPanelHandler {
         event.buttonList.add(btnBeSubDisabled);
 
         // AE2FC 流体样板：合并同类输入 / 优先处理流体（1.3.0 PatternPanel 同款按钮）
-        btnCombineEnabled = new com.glodblock.github.client.gui.GuiFCImgButton(
-            0,
-            0,
-            "FORCE_COMBINE",
-            "DO_COMBINE");
+        btnCombineEnabled = new com.glodblock.github.client.gui.GuiFCImgButton(0, 0, "FORCE_COMBINE", "DO_COMBINE");
         btnCombineEnabled.setHalfSize(true);
         btnCombineEnabled.id = BUTTON_COMBINE_ID;
-        btnCombineDisabled = new com.glodblock.github.client.gui.GuiFCImgButton(
-            0,
-            0,
-            "NOT_COMBINE",
-            "DONT_COMBINE");
+        btnCombineDisabled = new com.glodblock.github.client.gui.GuiFCImgButton(0, 0, "NOT_COMBINE", "DONT_COMBINE");
         btnCombineDisabled.setHalfSize(true);
         btnCombineDisabled.id = BUTTON_COMBINE_ID;
         event.buttonList.add(btnCombineEnabled);
@@ -472,13 +463,14 @@ public class MergedTerminalPanelHandler {
         switch (buttonId) {
             case BUTTON_ENCODE_ID:
                 ClientState.mergedMachineName = null;
-                int encodeFlags = (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)
-                    || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) ? (ctrl ? 3 : 1) : 0;
+                int encodeFlags = (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT))
+                    ? (ctrl ? 3 : 1)
+                    : 0;
                 ModNetwork.CHANNEL.sendToServer(
                     MergedTerminalActionPacket
                         .encode(mergedCraftingMode, mergedSubstitute, mergedBeSubstitute, encodeFlags));
-                if (encodeFlags == 0 && (Keyboard.isKeyDown(Keyboard.KEY_LMENU)
-                    || Keyboard.isKeyDown(Keyboard.KEY_RMENU))) {
+                if (encodeFlags == 0
+                    && (Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU))) {
                     MinecraftForge.EVENT_BUS.post(new EncodeEvent(true));
                 }
                 break;
@@ -566,10 +558,8 @@ public class MergedTerminalPanelHandler {
                 btnOverlay.displayString = (ok ? now : OverlayConfig.isEnabled()) ? "OV" : "--";
                 if (!ok) {
                     if (Minecraft.getMinecraft().thePlayer != null) {
-                        Minecraft.getMinecraft()
-                            .thePlayer.addChatMessage(
-                                new ChatComponentText(
-                                    EnumChatFormatting.RED + "[AE2QoL] NEI 开关写入 settings.json 失败"));
+                        Minecraft.getMinecraft().thePlayer.addChatMessage(
+                            new ChatComponentText(EnumChatFormatting.RED + "[AE2QoL] NEI 开关写入 settings.json 失败"));
                     }
                 }
                 break;

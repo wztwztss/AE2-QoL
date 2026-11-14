@@ -146,8 +146,10 @@ public class UploadPatternPacket implements IMessage {
                 }
 
                 if (hasDuplicatePattern(target, encodedPattern)) {
-                    MyMod.LOG.info("[Upload] duplicate pattern already present in {}", target.getClass()
-                        .getSimpleName());
+                    MyMod.LOG.info(
+                        "[Upload] duplicate pattern already present in {}",
+                        target.getClass()
+                            .getSimpleName());
                     notify(player, "ae2_qof.info.upload_duplicate");
                     return;
                 }

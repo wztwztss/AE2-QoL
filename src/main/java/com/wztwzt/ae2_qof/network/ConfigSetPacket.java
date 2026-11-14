@@ -94,7 +94,8 @@ public class ConfigSetPacket implements IMessage {
                                 reason = "值无效或超出范围";
                             }
                             sendResult(player, key, false, reason);
-                            MyMod.LOG.warn("[AE2QoL] Rejected config change " + key + "=" + value + " (" + reason + ")");
+                            MyMod.LOG
+                                .warn("[AE2QoL] Rejected config change " + key + "=" + value + " (" + reason + ")");
                         }
                     } catch (Throwable t) {
                         sendResult(player, key, false, "服务端应用配置失败");

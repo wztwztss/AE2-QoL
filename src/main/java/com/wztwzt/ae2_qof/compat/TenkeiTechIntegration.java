@@ -30,21 +30,15 @@ public final class TenkeiTechIntegration {
         }
         resolved = true;
         try {
-            autoTemplateHatchClass = Class.forName(
-                AUTO_TEMPLATE_HATCH_CLASS,
-                false,
-                TenkeiTechIntegration.class.getClassLoader());
+            autoTemplateHatchClass = Class
+                .forName(AUTO_TEMPLATE_HATCH_CLASS, false, TenkeiTechIntegration.class.getClassLoader());
         } catch (Throwable ignored) {
             autoTemplateHatchClass = null;
         }
         if (autoTemplateHatchClass != null) {
-            MyMod.LOG.info(
-                "[AE2QoL] 检测到 TenkeiTech 自带模板输入总线（{}）：智能倍增默认开启，关闭开关时回退其原生批量",
-                AUTO_TEMPLATE_HATCH_CLASS);
+            MyMod.LOG.info("[AE2QoL] 检测到 TenkeiTech 自带模板输入总线（{}）：智能倍增默认开启，关闭开关时回退其原生批量", AUTO_TEMPLATE_HATCH_CLASS);
         } else {
-            MyMod.LOG.info(
-                "[AE2QoL] 未检测到 TenkeiTech 自带模板输入总线（{}）：相关默认开关与原生批量回退均不生效",
-                AUTO_TEMPLATE_HATCH_CLASS);
+            MyMod.LOG.info("[AE2QoL] 未检测到 TenkeiTech 自带模板输入总线（{}）：相关默认开关与原生批量回退均不生效", AUTO_TEMPLATE_HATCH_CLASS);
         }
     }
 

@@ -65,13 +65,17 @@ public class GuiWirelessDistributor extends GuiContainer {
         this.buttonList.clear();
         int left = this.guiLeft;
         int top = this.guiTop;
-        this.buttonList.add(new GuiButton(0, left + 8, top + 158, 60, 18, tr("gui.ae2_qof.wireless_distributor.refresh")));
-        this.buttonList.add(new GuiButton(1, left + 72, top + 158, 60, 18, tr("gui.ae2_qof.wireless_distributor.scan")));
-        this.buttonList.add(new GuiButton(2, left + 136, top + 158, 60, 18, tr("gui.ae2_qof.wireless_distributor.range")));
-        this.buttonList.add(new GuiButton(3, left + 200, top + 158, 72, 18, tr("gui.ae2_qof.wireless_distributor.color")));
+        this.buttonList
+            .add(new GuiButton(0, left + 8, top + 158, 60, 18, tr("gui.ae2_qof.wireless_distributor.refresh")));
+        this.buttonList
+            .add(new GuiButton(1, left + 72, top + 158, 60, 18, tr("gui.ae2_qof.wireless_distributor.scan")));
+        this.buttonList
+            .add(new GuiButton(2, left + 136, top + 158, 60, 18, tr("gui.ae2_qof.wireless_distributor.range")));
+        this.buttonList
+            .add(new GuiButton(3, left + 200, top + 158, 72, 18, tr("gui.ae2_qof.wireless_distributor.color")));
         this.buttonList.add(new GuiButton(4, left + 8, top + 182, 84, 18, tr("gui.ae2_qof.wireless_distributor.link")));
-        this.buttonList.add(
-            new GuiButton(5, left + 96, top + 182, 84, 18, tr("gui.ae2_qof.wireless_distributor.unlink")));
+        this.buttonList
+            .add(new GuiButton(5, left + 96, top + 182, 84, 18, tr("gui.ae2_qof.wireless_distributor.unlink")));
         this.buttonList.add(new GuiButton(6, left + 184, top + 182, 40, 18, "<"));
         this.buttonList.add(new GuiButton(7, left + 228, top + 182, 44, 18, ">"));
 
@@ -99,8 +103,7 @@ public class GuiWirelessDistributor extends GuiContainer {
     private void requestList() {
         if (tile == null || requestSent) return;
         requestSent = true;
-        ModNetwork.CHANNEL.sendToServer(
-            new WirelessDistributorRequestPacket(tile.xCoord, tile.yCoord, tile.zCoord));
+        ModNetwork.CHANNEL.sendToServer(new WirelessDistributorRequestPacket(tile.xCoord, tile.yCoord, tile.zCoord));
         requestSent = false;
     }
 
@@ -165,7 +168,8 @@ public class GuiWirelessDistributor extends GuiContainer {
             return;
         }
         if (button.id == 7) {
-            this.scrollRow = Math.min(Math.max(0, filteredEntries().size() - VISIBLE_ROWS), this.scrollRow + VISIBLE_ROWS);
+            this.scrollRow = Math
+                .min(Math.max(0, filteredEntries().size() - VISIBLE_ROWS), this.scrollRow + VISIBLE_ROWS);
             return;
         }
 
@@ -228,8 +232,7 @@ public class GuiWirelessDistributor extends GuiContainer {
                 button.enabled = this.scrollRow + VISIBLE_ROWS < this.filteredEntries()
                     .size();
             } else if (button.id == 4) {
-                button.enabled = entry != null
-                    && entry.status == WirelessDistributorSyncPacket.STATUS_AVAILABLE
+                button.enabled = entry != null && entry.status == WirelessDistributorSyncPacket.STATUS_AVAILABLE
                     && data.getLinkedCount() < TileWirelessDistributor.MAX_SIZE;
             } else if (button.id == 5) {
                 button.enabled = entry != null && entry.status == WirelessDistributorSyncPacket.STATUS_LINKED;
@@ -286,7 +289,12 @@ public class GuiWirelessDistributor extends GuiContainer {
     @Override
     protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
         drawRect(this.guiLeft, this.guiTop, this.guiLeft + this.xSize, this.guiTop + this.ySize, 0xFF1A1A1A);
-        drawRect(this.guiLeft + 1, this.guiTop + 1, this.guiLeft + this.xSize - 1, this.guiTop + this.ySize - 1, 0xFF303030);
+        drawRect(
+            this.guiLeft + 1,
+            this.guiTop + 1,
+            this.guiLeft + this.xSize - 1,
+            this.guiTop + this.ySize - 1,
+            0xFF303030);
         drawRect(
             this.guiLeft + LIST_X - 2,
             this.guiTop + LIST_Y - 2,
@@ -298,34 +306,28 @@ public class GuiWirelessDistributor extends GuiContainer {
 
     @Override
     protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
-        this.fontRendererObj.drawString(
-            tr("gui.ae2_qof.wireless_distributor.title"),
-            8,
-            7,
-            0xFFFFFF);
+        this.fontRendererObj.drawString(tr("gui.ae2_qof.wireless_distributor.title"), 8, 7, 0xFFFFFF);
         this.fontRendererObj.drawString(tr("gui.ae2_qof.wireless_distributor.filter") + ":", 8, 35, 0xA0A0A0);
 
         if (data == null) {
-            this.fontRendererObj.drawString(
-                tr("gui.ae2_qof.wireless_distributor.waiting"),
-                10,
-                LIST_Y + 8,
-                0xC0C0C0);
+            this.fontRendererObj.drawString(tr("gui.ae2_qof.wireless_distributor.waiting"), 10, LIST_Y + 8, 0xC0C0C0);
         } else {
             String colorName = AEColor.fromOrdinal(data.getColor())
                 .name();
             String range = data.getRadius() == 0 ? "1x1" : "3x3";
             this.fontRendererObj.drawString(
-                trf("gui.ae2_qof.wireless_distributor.info", data.getLinkedCount(), TileWirelessDistributor.MAX_SIZE,
-                    data.getUsedChannels(), data.getMaxChannels(), colorName, range),
+                trf(
+                    "gui.ae2_qof.wireless_distributor.info",
+                    data.getLinkedCount(),
+                    TileWirelessDistributor.MAX_SIZE,
+                    data.getUsedChannels(),
+                    data.getMaxChannels(),
+                    colorName,
+                    range),
                 8,
                 18,
                 0xB0E0B0);
-            this.fontRendererObj.drawString(
-                tr("gui.ae2_qof.wireless_distributor.columns"),
-                10,
-                LIST_Y - 11,
-                0x808080);
+            this.fontRendererObj.drawString(tr("gui.ae2_qof.wireless_distributor.columns"), 10, LIST_Y - 11, 0x808080);
             this.drawEntryList();
         }
     }
@@ -349,11 +351,7 @@ public class GuiWirelessDistributor extends GuiContainer {
             this.fontRendererObj.drawString(name, LIST_X + 14, y + 2, 0xFFFFFF);
             String pos = entry.dimension + ":" + entry.x + "," + entry.y + "," + entry.z;
             this.fontRendererObj.drawString(pos, LIST_X + 132, y + 2, 0x909090);
-            this.fontRendererObj.drawString(
-                statusLabel(entry.status),
-                LIST_X + 210,
-                y + 2,
-                statusColor(entry.status));
+            this.fontRendererObj.drawString(statusLabel(entry.status), LIST_X + 210, y + 2, statusColor(entry.status));
         }
     }
 

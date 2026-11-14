@@ -1,18 +1,17 @@
 package com.wztwzt.ae2_qof.ph;
 
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 
+import com.wztwzt.ae2_qof.MyMod;
+import com.wztwzt.ae2_qof.mixin.ph.MixinPatternDualInputHatchAccess;
+
 import gregtech.api.GregTechAPI;
 import gregtech.api.interfaces.metatileentity.IMetaTileEntity;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
-
-import com.wztwzt.ae2_qof.MyMod;
-import com.wztwzt.ae2_qof.mixin.ph.MixinPatternDualInputHatchAccess;
 
 /**
  * 样板总成拆除（4.5.0-fix18）：MK.III / MK.IV GUI 的「拆除」按钮服务端逻辑。
@@ -61,8 +60,8 @@ public final class PatternBufferDismantle {
         final int metaId = gtTE.getMetaTileID();
 
         // 1. 序列化完整 TE NBT（含 Inventory / patternSlots / multiplier / customName / 朝向 / ME proxy）。
-        //    BaseMetaTileEntity.writeToNBT → saveMetaTileNBT → MTE.saveNBTData，与放置侧
-        //    setInitialValuesAsNBT → loadMetaTileNBT 完全对称，因此这份 NBT 重放即完整复活。
+        // BaseMetaTileEntity.writeToNBT → saveMetaTileNBT → MTE.saveNBTData，与放置侧
+        // setInitialValuesAsNBT → loadMetaTileNBT 完全对称，因此这份 NBT 重放即完整复活。
         final NBTTagCompound teNbt = new NBTTagCompound();
         te.writeToNBT(teNbt);
 
@@ -79,8 +78,8 @@ public final class PatternBufferDismantle {
         }
 
         // 4. 防复制：清空 TE 侧会被 GT breakBlock 掉落/PH onBlockDestroyed 退款的全部内容
-        //    —— 这些内容已经完整存在于物品 NBT 里（Inventory 标签 + patternSlots），
-        //    不清就会与物品 NBT 形成双份（掉一地样板 + 缓冲材料，同时物品里还带一份）。
+        // —— 这些内容已经完整存在于物品 NBT 里（Inventory 标签 + patternSlots），
+        // 不清就会与物品 NBT 形成双份（掉一地样板 + 缓冲材料，同时物品里还带一份）。
         clearTileContents(mte, gtTE);
 
         // 5. 清方块：此时 TE 已空，GT breakBlock 的掉落循环与 PH 的 refundAll 都无事可做。
@@ -88,20 +87,26 @@ public final class PatternBufferDismantle {
         world.removeTileEntity(x, y, z);
 
         // 6. 关掉玩家正开着的这台机器的 GUI —— 面板里的槽位/syncHandler 全都指向已销毁的 TE，
-        //    不关会留在客户端对空气操作（GT 自己的多块 GUI 也是这么收尾的：
-        //    MTEMultiBlockBaseGui :404 在机器消失后 player.closeScreen()）。
+        // 不关会留在客户端对空气操作（GT 自己的多块 GUI 也是这么收尾的：
+        // MTEMultiBlockBaseGui :404 在机器消失后 player.closeScreen()）。
         player.closeScreen();
 
         MyMod.LOG.info(
             "[AE2QoL] 样板总成已拆除（NBT 完整保留，样板随机器入包）@ d{} [{},{},{}] 玩家={} meta={}",
-            player.dimension, x, y, z, player.getCommandSenderName(), metaId);
+            player.dimension,
+            x,
+            y,
+            z,
+            player.getCommandSenderName(),
+            metaId);
         return true;
     }
 
     /**
      * 清空 TE 侧所有会被「掉落 / 退款」逻辑再吐一份的内容。
      *
-     * <p>两类来源：
+     * <p>
+     * 两类来源：
      * <ul>
      * <li>GT {@code BlockMachines.breakBlock}（reference :473-506）：遍历 {@code getSizeInventory()}，
      * 把每个非空槽掉成 EntityItem —— 缓冲里的物品/流体桶就在其中；</li>
@@ -111,8 +116,7 @@ public final class PatternBufferDismantle {
      * 两者内容都已经在物品 NBT 里（{@code Inventory} 标签 + {@code patternSlots}），
      * 因此这里必须清空，否则就是双份。
      */
-    private static void clearTileContents(IMetaTileEntity mte,
-        IGregTechTileEntity gtTE) {
+    private static void clearTileContents(IMetaTileEntity mte, IGregTechTileEntity gtTE) {
         // pattern[]：PH 的样板数组（通过 accessor mixin 跨包写）。
         try {
             final MixinPatternDualInputHatchAccess acc = (MixinPatternDualInputHatchAccess) mte;
@@ -147,8 +151,9 @@ public final class PatternBufferDismantle {
      * 多余键对放置侧 {@code setInitialValuesAsNBT} 无害（只读已知键）。
      */
     public static String displayName(ItemStack stack, String fallback) {
-        if (stack != null && stack.hasTagCompound() && stack.getTagCompound()
-            .hasKey("display")) {
+        if (stack != null && stack.hasTagCompound()
+            && stack.getTagCompound()
+                .hasKey("display")) {
             final String dn = stack.getTagCompound()
                 .getCompoundTag("display")
                 .getString("Name");
@@ -159,8 +164,7 @@ public final class PatternBufferDismantle {
 
     /** 把 TE 的 customName 同步写进物品 NBT 的原版 display.Name 标签（writeToNBT 只写 customName 键，不写 display）。 */
     public static void stampCustomName(ItemStack stack, TileEntity te) {
-        if (stack == null || te == null || !(te instanceof IGregTechTileEntity gtTE))
-            return;
+        if (stack == null || te == null || !(te instanceof IGregTechTileEntity gtTE)) return;
         final IMetaTileEntity mte = gtTE.getMetaTileEntity();
         String name = null;
         if (mte instanceof appeng.helpers.ICustomNameObject cno) {

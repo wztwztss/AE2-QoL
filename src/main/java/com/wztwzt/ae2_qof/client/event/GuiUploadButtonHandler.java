@@ -195,8 +195,7 @@ public class GuiUploadButtonHandler {
             overlayButton.displayString = (ok ? now : OverlayConfig.isEnabled()) ? "OV" : "--";
             if (!ok && event.gui.mc.thePlayer != null) {
                 event.gui.mc.thePlayer.addChatMessage(
-                    new ChatComponentText(
-                        EnumChatFormatting.RED + "[AE2QoL] NEI 开关写入 settings.json 失败，开关保持原值"));
+                    new ChatComponentText(EnumChatFormatting.RED + "[AE2QoL] NEI 开关写入 settings.json 失败，开关保持原值"));
             }
             event.setCanceled(true);
         }

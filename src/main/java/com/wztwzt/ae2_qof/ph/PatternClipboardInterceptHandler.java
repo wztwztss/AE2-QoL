@@ -4,14 +4,12 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
-
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 
 import com.wztwzt.ae2_qof.MyMod;
 import com.wztwzt.ae2_qof.item.ItemPatternClipboard;
 
-import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 
@@ -88,17 +86,16 @@ public class PatternClipboardInterceptHandler {
         // Buffered 的文件与锯子开关 / MTEHatchInputBus 的 openGui 都在里面）。
         // 同时取消事件：否则 GT 返回 false 后 item.onItemUse 会再跑一遍剪贴板（双重执行）。
         if (player.isSneaking()) {
-            final gregtech.api.interfaces.tileentity.IGregTechTileEntity gtTE =
-                (gregtech.api.interfaces.tileentity.IGregTechTileEntity) te;
+            final gregtech.api.interfaces.tileentity.IGregTechTileEntity gtTE = (gregtech.api.interfaces.tileentity.IGregTechTileEntity) te;
             final gregtech.api.interfaces.metatileentity.IMetaTileEntity mte = gtTE.getMetaTileEntity();
             if (mte == null) return;
 
             // 权限：手动调 MTE 层会跳过 GT 自己的两道校验，必须在这里补等价守卫，否则
             // 「非主人手持剪贴板 + 潜行右键」就能打开别人上锁/私有机器的 GUI。
-            //  - BlockMachines#onBlockActivated（reference :432-437）：非 remote 时先判 isUseableByPlayer，
-            //    不通过则 return true（不开 GUI）；
-            //  - BaseMetaTileEntity#onRightclick（:1417）：hasPermission = !privateAccess()
-            //    || (isServerSide() && 玩家 UUID == ownerUuid)。
+            // - BlockMachines#onBlockActivated（reference :432-437）：非 remote 时先判 isUseableByPlayer，
+            // 不通过则 return true（不开 GUI）；
+            // - BaseMetaTileEntity#onRightclick（:1417）：hasPermission = !privateAccess()
+            // || (isServerSide() && 玩家 UUID == ownerUuid)。
             // isUseableByPlayer（:896-903）本身已包含 canAccessData / playerOwnsThis(..,false) /
             // mTickTimer / 距离 64 / mMetaTileEntity.isAccessAllowed，直接复用它最省事且不重复实现策略。
             if (!gtTE.isUseableByPlayer(player)) {

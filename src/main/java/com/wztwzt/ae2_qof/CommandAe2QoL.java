@@ -82,10 +82,10 @@ public class CommandAe2QoL extends CommandBase {
                         + " (server value; client local via /apu-overlay status)"
                         + ", settings="
                         + Config.getSettingsPath()
-                        + (Config.getLastReloadError().isEmpty() ? ""
-                            : ", load_error=" + Config.getLastReloadError())
-                        + (Config.getLastWriteError().isEmpty() ? ""
-                            : ", write_error=" + Config.getLastWriteError())
+                        + (Config.getLastReloadError()
+                            .isEmpty() ? "" : ", load_error=" + Config.getLastReloadError())
+                        + (Config.getLastWriteError()
+                            .isEmpty() ? "" : ", write_error=" + Config.getLastWriteError())
                         + ", recipe_mappings="
                         + RecipeNameUtil.getMappingsView()
                             .size()));

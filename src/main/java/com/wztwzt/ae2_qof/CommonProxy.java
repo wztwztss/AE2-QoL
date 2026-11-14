@@ -101,10 +101,8 @@ public class CommonProxy {
         try {
             blockWirelessDistributor = new BlockWirelessDistributor();
             blockWirelessDistributor.setCreativeTab(AE2QoLCreativeTab.INSTANCE);
-            GameRegistry.registerBlock(
-                blockWirelessDistributor,
-                appeng.block.AEBaseItemBlock.class,
-                "wireless_distributor");
+            GameRegistry
+                .registerBlock(blockWirelessDistributor, appeng.block.AEBaseItemBlock.class, "wireless_distributor");
             GameRegistry.registerTileEntity(TileWirelessDistributor.class, "wireless_distributorTile");
             MyMod.LOG.info("[AE2QoL] ME 无线网络分配器已注册：wireless_distributor（4.5.0-fix26）");
         } catch (Throwable t) {

@@ -184,7 +184,9 @@ public class Config {
      * 避免玩家把旧 config/ae2_qof.cfg 当成现行配置文件。
      */
     public static String getSettingsPath() {
-        return SETTINGS_FILE == null ? "<not initialized>" : SETTINGS_FILE.toAbsolutePath().toString();
+        return SETTINGS_FILE == null ? "<not initialized>"
+            : SETTINGS_FILE.toAbsolutePath()
+                .toString();
     }
 
     /** 最近一次 settings.json 解析失败原因；空串表示最近一次加载成功。 */
@@ -576,7 +578,9 @@ public class Config {
             lastWriteError = "settings.json 未初始化";
             return false;
         }
-        Path tmp = SETTINGS_FILE.resolveSibling(SETTINGS_FILE.getFileName().toString() + ".tmp");
+        Path tmp = SETTINGS_FILE.resolveSibling(
+            SETTINGS_FILE.getFileName()
+                .toString() + ".tmp");
         try {
             JsonObject root;
             if (preserveExisting) {
@@ -608,11 +612,7 @@ public class Config {
                 StandardOpenOption.TRUNCATE_EXISTING,
                 StandardOpenOption.WRITE);
             try {
-                Files.move(
-                    tmp,
-                    SETTINGS_FILE,
-                    StandardCopyOption.ATOMIC_MOVE,
-                    StandardCopyOption.REPLACE_EXISTING);
+                Files.move(tmp, SETTINGS_FILE, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
             } catch (AtomicMoveNotSupportedException e) {
                 Files.move(tmp, SETTINGS_FILE, StandardCopyOption.REPLACE_EXISTING);
             } catch (FileAlreadyExistsException e) {
