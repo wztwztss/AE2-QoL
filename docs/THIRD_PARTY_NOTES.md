@@ -2,6 +2,8 @@
 
 > 本文档补充 `CREDITS.md`，**专门记录 3.23.0「智能通配样板」这批功能**涉及到的第三方来源、许可以及我们刻意采取的规避措施。
 > 目的：本仓库将来要发布到 GitHub（开源或不开源），需要能逐条追溯到"用了谁的东西、依据是什么、有没有再分发"。
+>
+> **4.5.0-fix29 备注**：APG 102 的 `PatternStorage`/`GuiPatternStorage`/`GuiPatternDetail`/`ContainerPatternStorage` 等，以及复合通配 141 的 `ItemCompositeWildcardPattern`/`CompositeWildcardPatternWindow`/`state`/`recipe`/`generator` 等已整族删除；下文「25 个文件 / 7,870 行」「65 个文件 / 9,983 行」保留为当时整窗搬运的历史记录，不再代表当前文件数。删除文件不再随本 jar 分发。
 
 ## 一、结论摘要
 

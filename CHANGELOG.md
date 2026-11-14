@@ -31,6 +31,8 @@
 - 主 jar `build/libs/AE2-QoL-4.5.0-fix29.jar`：`2,068,869 B`，SHA256 `481C18A691DB114A36A4E8D1A544C76491C2E8D73EC3C8B1F39D92A37ADB3891`；`jar tf` 复核已无 `CompositeWildcard*`、`GuiPatternStorage`、`GuiPatternDetail`、`PatternStorage`、`PacketStorageAction`，普通通配 `WildcardPatternGenerator` 与 `WildportIds` 仍在包内。
 - `-dev.jar`：`2,063,044 B`，SHA256 `873D077D4EE1F125B69199F538BDE64DE4BD8366F925AE9AA54FF77A8F977C68`；`-sources.jar`：`1,557,214 B`，SHA256 `B194921DA8EF7F2CD63473C3CA471B435D4BE28E659CE4E0969144E54E65E5B3`。
 - 交付副本 `D:\下载\需更新模组\AE2-QoL-4.5.0-fix29.jar` 与本地主 jar SHA256 一致；**未替换游戏内 mods**。
+- GitHub `master` 已推送至 `3ef98c2`；tag `v4.5.0-fix29` 已推送；release：`https://github.com/wztwztss/AE2-QoL/releases/tag/v4.5.0-fix29`，资产仅 `AE2-QoL-4.5.0-fix29.jar`、`-dev.jar`、`-sources.jar`。release 主 jar 同为 `2,068,869 B`，SHA256 `087FA09E993D1C23793FA49CED2B9B0F27138203B8C19AA60B704521D53E6B11`（CI 重新打包与本地构建存在压缩时间戳差异；已下载核对 `mcmod.info` 版本与删除/保留类清单一致）。
+- `Build and test` run 43548111660、`Release tagged build` run 43548131537 均成功。
 
 ---
 

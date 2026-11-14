@@ -19,7 +19,7 @@
 |刻意不动|普通通配 130/140、`WildcardPatternWindow`、普通 state/config/entry/generator/details 保留；APG 101、`GuiPatternGen`、`RecipeCacheStorage`/`RecipeCacheService` 保留；线程引擎维持停用；旧库存终端 32101 不再列为当前失效|
 |产物|主 jar `2,068,869 B`，SHA256 `481C18A691DB114A36A4E8D1A544C76491C2E8D73EC3C8B1F39D92A37ADB3891`；dev `2,063,044 B`；sources `1,557,214 B`；交付副本 `D:\下载\需更新模组\AE2-QoL-4.5.0-fix29.jar`，未替换游戏内 mods|
 |验证|`compileJava --offline`、`spotlessApply --offline`、完整 `build --offline` 均通过；`jar tf` 复核删除类不在主 jar，普通通配类仍在|
-|发布|待 GitHub commit/tag/release（完成后补链接与 release 资产 SHA256）|
+|发布|已推送 master `3ef98c2`、tag `v4.5.0-fix29`；release `https://github.com/wztwztss/AE2-QoL/releases/tag/v4.5.0-fix29`，资产为主 jar / `-dev.jar` / `-sources.jar`；release 主 jar `2,068,869 B`、SHA256 `087FA09E993D1C23793FA49CED2B9B0F27138203B8C19AA60B704521D53E6B11`（与本地同大小，内容核验一致）|
 |待实测|无线分配器右键打开列表界面；Wild「改」确认后回到 140 且槽位正确；`/ae2qof machindex export` 帮助/Tab；GTNL 蒸汽自检 6/6（屠宰场 Mixin 实际注入）；APG 101 与普通通配 130/140 回归|
 
 ---
